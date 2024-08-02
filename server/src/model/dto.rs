@@ -7,22 +7,24 @@ use super::chnot::Chnot;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotDeletionReq {
-    chnot_id: String,
+    pub chnot_id: String,
     /// logic or physical deletion
-    logic: bool,
+    pub logic: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotDeletionRsp {}
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryReq {
-    query: String,
+    pub query: String,
 
     // Paging
-    offset: usize,
-    limit: usize,
+    pub offset: u32,
+    pub limit: u32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryRsp {
-    result: Vec<Chnot>,
+    pub result: Vec<Chnot>,
 }
