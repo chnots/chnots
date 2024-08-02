@@ -6,20 +6,23 @@
 /// 
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChnotType {
-    MarkdownWithToent,
-}
+use strum::Display;
+use strum_macros::EnumString;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chnot {
-    id: String,
-    perm_id: String,
-    content: String,
-    r#type: ChnotType,
-    domain: String,
-    delete_time: DateTime<FixedOffset>,
-    insert_time: DateTime<FixedOffset>,
-    update_time: DateTime<FixedOffset>,
+    pub id: String,
+    pub perm_id: String,
+    pub content: String,
+    pub r#type: ChnotType,
+    pub domain: String,
+    pub delete_time: Option<DateTime<FixedOffset>>,
+    pub insert_time: DateTime<FixedOffset>,
+    pub update_time: DateTime<FixedOffset>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
+pub enum ChnotType {
+    #[strum(serialize = "mdwt")]
+    MarkdownWithToent,
 }
