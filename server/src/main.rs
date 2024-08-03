@@ -3,14 +3,14 @@ use arguments::Arguments;
 use chin_tools::wrapper::anyhow::AResult;
 use clap::Parser;
 use config::Config;
-use db::{MapperType, TableFounder};
+use mapper::{MapperType, TableFounder};
 use tracing::{info, Level};
 
 pub mod app;
 pub mod arguments;
 pub mod config;
 pub mod controller;
-pub mod db;
+pub mod mapper;
 pub mod model;
 
 #[tokio::main]

@@ -1,8 +1,6 @@
-use std::ops::Deref;
-
 use serde::Deserialize;
 
-use crate::db::MapperConfig;
+use crate::mapper::MapperConfig;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Server {

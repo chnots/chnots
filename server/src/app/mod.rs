@@ -1,11 +1,8 @@
 pub mod v1;
 
-use std::{
-    ops::{Deref, DerefMut},
-    sync::Arc,
-};
+use std::{ops::Deref, sync::Arc};
 
-use crate::{config::Config, db::MapperType};
+use crate::{config::Config, mapper::MapperType};
 
 pub struct AppState {
     pub mapper: MapperType,

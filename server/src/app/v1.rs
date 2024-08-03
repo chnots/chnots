@@ -1,13 +1,10 @@
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::wrapper::anyhow::AResult;
 
 use crate::{
-    db::ChnotMapper,
-    model::{
-        chnot::Chnot,
-        dto::{
-            ChnotDeletionReq, ChnotDeletionRsp, ChnotInsertionReq, ChnotInsertionRsp,
-            ChnotQueryReq, ChnotQueryRsp,
-        },
+    mapper::ChnotMapper,
+    model::dto::{
+        ChnotDeletionReq, ChnotDeletionRsp, ChnotInsertionReq, ChnotInsertionRsp, ChnotQueryReq,
+        ChnotQueryRsp,
     },
 };
 
