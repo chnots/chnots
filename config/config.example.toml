@@ -1,0 +1,11 @@
+[mapper]
+type = "postgres"
+user = "chnots"
+pass = "chnots"
+dbname = "chnots"
+host = "127.0.0.1"
+port = 5432
+
+[server]
+port = 3011
+
