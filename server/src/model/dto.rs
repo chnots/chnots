@@ -6,6 +6,14 @@ use serde::{Deserialize, Serialize};
 use super::chnot::Chnot;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotInsertionReq {
+    pub chnot: Chnot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotInsertionRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotDeletionReq {
     pub chnot_id: String,
     /// logic or physical deletion
