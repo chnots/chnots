@@ -8,7 +8,7 @@ use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::info;
 
-use super::{ChnotMapper, Db, TableFounder};
+use super::{ChnotInsertionReq, ChnotInsertionRsp, ChnotMapper, Db, TableFounder};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -122,7 +122,8 @@ impl TableFounder for Postgres {
 }
 
 impl ChnotMapper for Postgres {
-    async fn chnot_overwrite(&self, chnot: Chnot) -> EResult {
+    async fn chnot_overwrite(&self, req: ChnotInsertionReq) -> AResult<ChnotInsertionRsp> {
+        let ChnotInsertionReq { chnot } = req;
         let stmt = self.pool.get().await?;
 
         stmt.execute("update chnots set delete_time = CURRENT_TIMESTAMP where ring_id = $1 and delete_time is null", &[&chnot.perm_id]).await?;
@@ -141,7 +142,7 @@ impl ChnotMapper for Postgres {
         )
         .await?;
 
-        Ok(())
+        Ok(ChnotInsertionRsp {})
     }
 
     async fn chnot_delete(&self, req: super::ChnotDeletionReq) -> AResult<super::ChnotDeletionRsp> {
