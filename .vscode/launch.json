@@ -1,0 +1,32 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ntweb dev",
+      "cwd": "${workspaceFolder}/web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev"],
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'server'",
+      "cargo": {
+        "args": ["build", "--bin=chnots-server", "--package=chnots-server"],
+        "filter": {
+          "name": "chnots-server",
+          "kind": "bin"
+        }
+      },
+      "args": ["--config", "./data/config.example.toml"],
+      "cwd": "${workspaceFolder}",
+      "env": {}
+    }
+  ]
+}

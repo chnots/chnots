@@ -1,10 +1,11 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import { createRoot } from "react-dom/client";
+import "@/styles/tailwind.css";
+import "@/styles/global.css";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+import Chnots from "./pages/Chnots";
+
+(async () => {
+  const container = document.getElementById("root");
+  const root = createRoot(container as HTMLElement);
+  root.render(<Chnots />);
+})();
