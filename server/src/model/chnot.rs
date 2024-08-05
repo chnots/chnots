@@ -24,5 +24,6 @@ pub struct Chnot {
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
 pub enum ChnotType {
     #[strum(serialize = "mdwt")]
+    #[serde(rename = "mdwt")]
     MarkdownWithToent,
 }
