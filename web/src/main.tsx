@@ -2,10 +2,10 @@ import { createRoot } from "react-dom/client";
 import "@/styles/tailwind.css";
 import "@/styles/global.css";
 
-import Chnots from "./pages/Chnots";
+import App from "./App";
 
 (async () => {
   const container = document.getElementById("root");
   const root = createRoot(container as HTMLElement);
-  root.render(<Chnots />);
+  root.render(<App />);
 })();
