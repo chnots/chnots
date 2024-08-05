@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { MarkdownChnot } from "../components/ChnotEditor/MarkdownChnot";
-import useResponsiveWidth from "../hooks/useResponsiveWidth";
+import { MarkdownChnot } from "../../components/ChnotEditor/MarkdownChnot";
+import useResponsiveWidth from "../../hooks/useResponsiveWidth";
 
 const Chnots = () => {
   const { md } = useResponsiveWidth();
