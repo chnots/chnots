@@ -1,19 +1,105 @@
-import axios, { AxiosResponse } from "axios";
+// Adopted from https://juejin.cn/post/7237840998985072698
 
-axios.defaults.baseURL = "http://chinslt.com:3011/";
-console.log("axios base url: " + axios.defaults.baseURL);
+import axios from "axios";
+import type {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+  CreateAxiosDefaults,
+  InternalAxiosRequestConfig,
+} from "axios";
+// import { useUserInfoStore } from "~/stores";
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
 
-const requests = {
-  get: <T>(url: string) => axios.get<T>(url).then(responseBody),
-  getParams: <T>(url: string, paramsBody: {}) =>
-    axios.get<T>(url, { params: paramsBody }).then(responseBody),
+class Request {
+  private instance: AxiosInstance;
+  // 存放取消请求控制器Map
+  private abortControllerMap: Map<string, AbortController>;
 
-  post: <T>(url: string, body: {}) =>
-    axios.post<T>(url, body).then(responseBody),
-  put: <T>(url: string, body: {}) => axios.put<T>(url, body).then(responseBody),
-  del: <T>(url: string) => axios.delete<T>(url).then(responseBody),
-};
+  constructor(config: CreateAxiosDefaults) {
+    this.instance = axios.create(config);
 
-export default requests;
+    this.abortControllerMap = new Map();
+
+    // 请求拦截器
+    this.instance.interceptors.request.use(
+      (config: InternalAxiosRequestConfig) => {
+        /*         if (config.url !== "/login") {
+          const token = useUserInfoStore.getState().userInfo?.token;
+          if (token) config.headers!["x-token"] = token;
+        } */
+
+        const controller = new AbortController();
+        const url = config.url || "";
+        config.signal = controller.signal;
+        this.abortControllerMap.set(url, controller);
+
+        return config;
+      },
+      Promise.reject
+    );
+
+    // 响应拦截器
+    this.instance.interceptors.response.use(
+      (response: AxiosResponse) => {
+        const url = response.config.url || "";
+        this.abortControllerMap.delete(url);
+
+        return response.data;
+      },
+      (err) => {
+        /*        if (err.response?.status === 401) {
+          // 登录态失效，清空userInfo，跳转登录页
+          useUserInfoStore.setState({ userInfo: null });
+          window.location.href = `/login?redirect=${window.location.pathname}`;
+        } */
+
+        return Promise.reject(err);
+      }
+    );
+  }
+
+  // 取消全部请求
+  cancelAllRequest() {
+    for (const [, controller] of this.abortControllerMap) {
+      controller.abort();
+    }
+    this.abortControllerMap.clear();
+  }
+
+  // 取消指定的请求
+  cancelRequest(url: string | string[]) {
+    const urlList = Array.isArray(url) ? url : [url];
+    for (const _url of urlList) {
+      this.abortControllerMap.get(_url)?.abort();
+      this.abortControllerMap.delete(_url);
+    }
+  }
+
+  async request<T>(config: AxiosRequestConfig): Promise<T> {
+    return this.instance.request<T>(config).then(responseBody);
+  }
+
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.instance.get<T>(url, config);
+    return responseBody(response);
+  }
+
+  async post<T>(
+    url: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.post<T>(url, data, config);
+    return responseBody(response);
+  }
+}
+
+const request = new Request({
+  timeout: 20 * 1000,
+  baseURL: "http://chinslt.com:3011",
+});
+
+export default request;
