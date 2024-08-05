@@ -5,12 +5,24 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://chinslt.com:5173",
+      "webRoot": "${workspaceFolder}/web"
+    },
+    {
       "name": "ntweb dev",
       "cwd": "${workspaceFolder}/web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "type": "node"
     },
     {
@@ -18,13 +30,20 @@
       "request": "launch",
       "name": "Debug executable 'server'",
       "cargo": {
-        "args": ["build", "--bin=chnots-server", "--package=chnots-server"],
+        "args": [
+          "build",
+          "--bin=chnots-server",
+          "--package=chnots-server"
+        ],
         "filter": {
           "name": "chnots-server",
           "kind": "bin"
         }
       },
-      "args": ["--config", "./data/config.example.toml"],
+      "args": [
+        "--config",
+        "./data/config.example.toml"
+      ],
       "cwd": "${workspaceFolder}",
       "env": {}
     }
