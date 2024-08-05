@@ -3,7 +3,7 @@
 /// Ancients used knots to record events,
 /// so I use "knot" as the basic unit for my notebook,
 /// but the name "knot" is too repetitive, so I made a change.
-/// 
+///
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 use strum::Display;

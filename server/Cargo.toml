@@ -66,7 +66,7 @@ regex_static = "0.1.1"
 
 # TODO: https://github.com/aeghn/chin-tools
 chin-tools = { path = "/home/chin/Projects/chin-tools" }
-anyhow = "1.0.86"
+anyhow = { version = "1.0.86", features = ["backtrace"] }
 strum = "0.26.3"
 strum_macros = "0.26.4"
 
