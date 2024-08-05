@@ -1,6 +1,10 @@
 use std::ops::Deref;
 
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{
+    extract::{Path, Query, State},
+    routing::{get, post},
+    Json, Router,
+};
 use tracing::info;
 
 use crate::{
@@ -17,7 +21,7 @@ pub fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/chnot/overwrite", post(chnot_overwrite))
         .route("/api/v1/chnot/deletion", post(chnot_deletetion))
-        .route("/api/v1/chnot/query", post(chnot_query))
+        .route("/api/v1/chnot/query", get(chnot_query))
 }
 
 async fn chnot_overwrite(
@@ -42,7 +46,7 @@ async fn chnot_deletetion(
 
 async fn chnot_query(
     state: State<ShareAppState>,
-    Json(req): Json<ChnotQueryReq>,
+    Query(req): Query<ChnotQueryReq>,
 ) -> KResponse<ChnotQueryRsp> {
     info!("insert_node: {:?}", req);
     let app = state.0.deref();

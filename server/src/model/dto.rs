@@ -28,8 +28,8 @@ pub struct ChnotQueryReq {
     pub query: String,
 
     // Paging
-    pub offset: u32,
-    pub limit: u32,
+    pub offset: i64,
+    pub limit: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
