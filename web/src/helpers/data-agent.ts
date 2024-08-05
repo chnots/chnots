@@ -11,7 +11,7 @@ export interface ChnotOverwriteRsp {}
 export const overwriteChnot = async (
   req: ChnotOverwriteReq
 ): Promise<AxiosResponse<ChnotOverwriteRsp>> => {
-  return request.post(`api/vi/chnot/overwrite`, req);
+  return request.post(`api/v1/chnot/overwrite`, req);
 };
 
 export interface ChnotDeletionReq {
@@ -24,7 +24,7 @@ export interface ChnotDeletionRsp {}
 export const deleteChnot = async (
   req: ChnotDeletionReq
 ): Promise<AxiosResponse<ChnotDeletionRsp>> => {
-  return request.post(`api/vi/chnot/deletion`, { req });
+  return request.post(`api/v1/chnot/deletion`, { req });
 };
 
 export interface ChnotQueryReq {
@@ -40,5 +40,5 @@ export interface ChnotQueryRsp {
 export const queryChnot = async (
   req: ChnotQueryReq
 ): Promise<AxiosResponse<ChnotQueryRsp>> => {
-  return request.post(`api/vi/chnot/query`, { req });
+  return request.post(`api/v1/chnot/query`, { req });
 };
