@@ -7,6 +7,7 @@ export interface Chnot {
   perm_id: string;
   content: string;
   type: ChnotType;
+  domain: string;
   delete_time?: Date;
   insert_time: Date;
   update_time: Date;
