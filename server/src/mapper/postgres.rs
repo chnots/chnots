@@ -97,7 +97,7 @@ impl TableFounder for Postgres {
             "chnots",
             "create table chnots (
     id VARCHAR(40) NOT NULL,
-    ring_id VARCHAR(40) NOT NULL,
+    perm_id VARCHAR(40) NOT NULL,
 
     content TEXT NOT NULL,
     type VARCHAR(255) NOT NULL,
@@ -126,10 +126,10 @@ impl ChnotMapper for Postgres {
         let ChnotInsertionReq { chnot } = req;
         let stmt = self.pool.get().await?;
 
-        stmt.execute("update chnots set delete_time = CURRENT_TIMESTAMP where ring_id = $1 and delete_time is null", &[&chnot.perm_id]).await?;
+        stmt.execute("update chnots set delete_time = CURRENT_TIMESTAMP where perm_id = $1 and delete_time is null", &[&chnot.perm_id]).await?;
 
         stmt.execute(
-            "insert into chnots(id, perm_id, content, type, domain, insert_time, update_time)",
+            "insert into chnots(id, perm_id, content, type, domain, insert_time, update_time) values($1, $2, $3, $4, $5, $6, $7)",
             &[
                 &chnot.id,
                 &chnot.perm_id,
