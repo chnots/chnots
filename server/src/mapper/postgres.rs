@@ -165,17 +165,30 @@ impl ChnotMapper for Postgres {
     async fn chnot_query(&self, req: super::ChnotQueryReq) -> AResult<super::ChnotQueryRsp> {
         let stmt = self.pool.get().await?;
 
-        let col = stmt
+        let col = match req.query.as_ref() {
+            Some(query) => 
+                stmt
             .query(
                 "select * from chnots where content ilike $1 order by insert_time desc limit $2 offset $3",
-                &[&format!("%{}%", req.query), &req.limit, &req.offset],
-            )
-            .await?
+                &[&format!("%{}%", query), &req.page_size, &req.start_index],
+            ).await?
             .iter()
             .filter_map(|row| chnot_row_to_obj(row).ok())
-            .collect();
+            .collect()
+            ,
+            None => 
+                stmt
+            .query(
+                "select * from chnots order by insert_time desc limit $1 offset $2",
+                &[&req.page_size, &req.start_index],
+            ).await?
+            .iter()
+            .filter_map(|row| chnot_row_to_obj(row).ok())
+            .collect()  
+        };
+            
 
-        Ok(super::ChnotQueryRsp { result: col })
+        Ok(super::ChnotQueryRsp { data: col, next_start: req.start_index.saturating_add(req.page_size), this_start: req.start_index })
     }
 }
 

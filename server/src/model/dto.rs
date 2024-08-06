@@ -25,14 +25,16 @@ pub struct ChnotDeletionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryReq {
-    pub query: String,
+    pub query: Option<String>,
 
     // Paging
-    pub offset: i64,
-    pub limit: i64,
+    pub start_index: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryRsp {
-    pub result: Vec<Chnot>,
+    pub data: Vec<Chnot>,
+    pub next_start: i64,
+    pub this_start: i64,
 }
