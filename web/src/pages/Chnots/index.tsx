@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { MarkdownChnot } from "../../components/ChnotElem/MarkdownChnot";
+import { MarkdownChnot } from "../../components/ChnotContent/MarkdownChnot";
 import useResponsiveWidth from "../../hooks/useResponsiveWidth";
 import ChnotList from "@/components/ChnotList";
 
