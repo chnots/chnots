@@ -1,4 +1,3 @@
-import { AxiosResponse } from "axios";
 import request from "./request";
 import { Chnot } from "../model";
 
@@ -10,7 +9,7 @@ export interface ChnotOverwriteRsp {}
 
 export const overwriteChnot = async (
   req: ChnotOverwriteReq
-): Promise<AxiosResponse<ChnotOverwriteRsp>> => {
+): Promise<ChnotOverwriteRsp> => {
   return request.post(`api/v1/chnot/overwrite`, req);
 };
 
@@ -23,22 +22,24 @@ export interface ChnotDeletionRsp {}
 
 export const deleteChnot = async (
   req: ChnotDeletionReq
-): Promise<AxiosResponse<ChnotDeletionRsp>> => {
+): Promise<ChnotDeletionRsp> => {
   return request.post(`api/v1/chnot/deletion`, { req });
 };
 
 export interface ChnotQueryReq {
-  query: string;
-  offset: number;
-  limit: number;
+  query?: string;
+  start_index: number;
+  page_size: number;
 }
 
 export interface ChnotQueryRsp {
-  result: Chnot[];
+  data: Chnot[];
+  this_start: number;
+  next_start: number;
 }
 
 export const queryChnot = async (
   req: ChnotQueryReq
-): Promise<AxiosResponse<ChnotQueryRsp>> => {
-  return request.post(`api/v1/chnot/query`, { req });
+): Promise<ChnotQueryRsp> => {
+  return request.query(`api/v1/chnot/query`, req);
 };
