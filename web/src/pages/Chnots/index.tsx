@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import { MarkdownChnot } from "../../components/ChnotEditor/MarkdownChnot";
+import { MarkdownChnot } from "../../components/ChnotElem/MarkdownChnot";
 import useResponsiveWidth from "../../hooks/useResponsiveWidth";
+import ChnotList from "@/components/ChnotList";
 
 const Chnots = () => {
   const { md } = useResponsiveWidth();
@@ -14,6 +15,7 @@ const Chnots = () => {
       >
         <div className={clsx(md ? "w-[calc(100%-15rem)]" : "w-full")}>
           <MarkdownChnot className="mb-2" />
+          <ChnotList />
         </div>
       </div>
     </section>
