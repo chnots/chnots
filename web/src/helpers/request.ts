@@ -46,7 +46,7 @@ class Request {
         const url = response.config.url || "";
         this.abortControllerMap.delete(url);
 
-        return response.data;
+        return response;
       },
       (err) => {
         /*        if (err.response?.status === 401) {
@@ -83,6 +83,19 @@ class Request {
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.get<T>(url, config);
+    return responseBody(response);
+  }
+
+  async query<T>(
+    url: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.get<T>(url, {
+      ...config,
+      params: data,
+    });
     return responseBody(response);
   }
 
