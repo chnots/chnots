@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Chnot, ChnotType } from "@/model";
 import Icon from "../Icon";
 import { overwriteChnot } from "@/helpers/data-agent";
+import { ChnotViewState } from ".";
 
 export interface MarkdownChnotProps {
   showPreview?: boolean;
@@ -12,12 +13,6 @@ export interface MarkdownChnotProps {
   className?: string;
 
   chnot?: Chnot;
-}
-
-interface EditorState {
-  isUploadingResource: boolean;
-  isRequesting: boolean;
-  isComposing: boolean;
 }
 
 export const MarkdownChnot = (props: MarkdownChnotProps) => {
@@ -33,7 +28,7 @@ export const MarkdownChnot = (props: MarkdownChnotProps) => {
 
   const [content, setContent] = useState(props.chnot?.content);
 
-  const [state, setState] = useState<EditorState>({
+  const [state, setState] = useState<ChnotViewState>({
     isUploadingResource: false,
     isRequesting: false,
     isComposing: false,
