@@ -25,15 +25,30 @@ const editorTheme = EditorView.theme({
   ".cm-line": {
     background: "transparent !important",
   },
-  ".cm-focused": {
-    outline: "none !important",
-  },
-  ".cm-editor": {
-    outline: "none !important",
-  },
 });
 
-const MarkdownChnotEditor = ({ chnot }: { chnot: Chnot }) => {
+const MarkdownChnotEditor = ({
+  chnot: co,
+  unique,
+}: {
+  chnot: Chnot;
+  unique?: boolean;
+}) => {
+  const chnot =
+    unique || !co
+      ? {
+          id: uuid(),
+          perm_id: uuid(),
+          content: "",
+          domain: "public",
+          type: ChnotType.MarkdownWithToent,
+          insert_time: new Date(),
+          update_time: new Date(),
+        }
+      : {
+          co,
+        };
+
   const queryClient = useQueryClient();
 
   const [content, setContent] = useState(chnot.content);
@@ -109,7 +124,7 @@ const MarkdownChnotEditor = ({ chnot }: { chnot: Chnot }) => {
           highlightActiveLineGutter: false,
           foldGutter: false,
         }}
-        placeholder={"Tie a knot"}
+        placeholder={"Tie a Knot"}
       />
       <div className="shrink-0 flex flex-row justify-end items-center">
         <Button
@@ -162,7 +177,7 @@ export const MarkdownChnot = ({
         className ?? ""
       } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
     >
-      <MarkdownChnotEditor chnot={chnot} />
+      <MarkdownChnotEditor chnot={chnot} unique={true} />
     </div>
   );
 };
