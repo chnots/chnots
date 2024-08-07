@@ -3,7 +3,8 @@ import { useInView } from "react-intersection-observer";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChnotQueryRsp, queryChnot } from "@/helpers/data-agent";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { MarkdownChnot } from "../ChnotView/MarkdownChnot";
+import { ChnotViewMode } from "../ChnotView";
 
 export interface ChnotListProps {
   query?: string;
@@ -53,17 +54,13 @@ function ChnotList(props: ChnotListProps) {
               page && (
                 <React.Fragment key={page.next_start}>
                   {page.data.map((chnot) => (
-                    <p
-                      style={{
-                        border: "1px solid gray",
-                        borderRadius: "5px",
-                        padding: "10rem 1rem",
-                        background: `hsla(40%, 60%, 80%, 1)`,
-                      }}
-                      key={chnot.id}
-                    >
-                      {chnot.content}
-                    </p>
+                    <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
+                      <MarkdownChnot
+                        chnot={chnot}
+                        viewMode={ChnotViewMode.Preview}
+                        key={chnot.id}
+                      />
+                    </div>
                   ))}
                 </React.Fragment>
               )
@@ -83,7 +80,6 @@ function ChnotList(props: ChnotListProps) {
           </div>
         </>
       )}
-      <ReactQueryDevtools initialIsOpen />
     </div>
   );
 }
