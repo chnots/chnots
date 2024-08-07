@@ -1,9 +1,9 @@
 import { Dropdown, Menu, MenuButton, MenuItem } from "@mui/joy";
 import clsx from "clsx";
-import useCurrentUser from "@/hooks/useCurrentUser";
+import useCurrentDomain from "@/hooks/useCurrentUser";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
-import UserAvatar from "./UserAvatar";
+import DomainAvatar from "./DomainAvatar";
 
 interface Props {
   collapsed?: boolean;
@@ -12,9 +12,9 @@ interface Props {
 const UserBanner = (props: Props) => {
   const { collapsed } = props;
   const t = useTranslate();
-  const user = useCurrentUser();
-  const title = user ? user.nickname || user.username : "memos";
-  const avatarUrl = user ? user.avatarUrl : "/full-logo.webp";
+  const domain = useCurrentDomain();
+  const title = domain ? domain.domain : "Chnots";
+  const avatarUrl = domain ? domain.avatarUrl : "/full-logo.webp";
 
   const handleSignOut = async () => {
     // await authServiceClient.signOut({});
@@ -24,14 +24,14 @@ const UserBanner = (props: Props) => {
   return (
     <div className="relative w-full h-auto px-1 shrink-0">
       <Dropdown>
-        <MenuButton disabled={!user} slots={{ root: "div" }}>
+        <MenuButton disabled={!domain} slots={{ root: "div" }}>
           <div
             className={clsx(
-              "py-1 my-1 w-auto flex flex-row justify-start items-center cursor-pointer rounded-2xl border border-transparent text-gray-800 dark:text-gray-400",
+              "py-1 my-1 w-auto flex flex-row justify-center align-middle items-center cursor-pointer rounded-2xl border border-transparent text-gray-800 dark:text-gray-400",
               collapsed ? "px-1" : "px-3"
             )}
           >
-            <UserAvatar className="shadow shrink-0" avatarUrl={avatarUrl} />
+            <DomainAvatar className="shadow shrink-0" avatarUrl={avatarUrl} />
             {!collapsed && (
               <span className="ml-2 text-lg font-medium text-slate-800 dark:text-gray-300 shrink truncate">
                 {title}
