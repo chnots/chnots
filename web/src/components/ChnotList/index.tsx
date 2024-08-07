@@ -54,11 +54,13 @@ function ChnotList(props: ChnotListProps) {
               page && (
                 <React.Fragment key={page.next_start}>
                   {page.data.map((chnot) => (
-                    <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
+                    <div
+                      className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700"
+                      key={chnot.id}
+                    >
                       <MarkdownChnot
                         chnot={chnot}
                         viewMode={ChnotViewMode.Preview}
-                        key={chnot.id}
                       />
                     </div>
                   ))}
