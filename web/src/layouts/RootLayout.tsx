@@ -99,7 +99,7 @@ const RootLayout = () => {
             </div>
           </div>
         )}
-        <main className="w-full h-auto flex-grow shrink flex flex-col justify-start items-center">
+        <main className="w-full bg-gray-100 h-auto flex-grow shrink flex flex-col justify-start items-center">
           <Suspense fallback={<Loading />}>
             <Outlet />
           </Suspense>
