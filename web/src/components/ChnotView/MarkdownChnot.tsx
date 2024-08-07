@@ -1,4 +1,4 @@
-import { Button } from "@mui/joy";
+import { Button, Divider } from "@mui/joy";
 import { v4 as uuid } from "uuid";
 import { useRef, useState } from "react";
 import { Chnot, ChnotType } from "@/model";
@@ -22,6 +22,10 @@ export interface MarkdownChnotProps {
 }
 
 const editorTheme = EditorView.theme({
+  // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
+  "&.cm-editor.cm-focused": {
+    outline: "none",
+  },
   ".cm-line": {
     background: "transparent !important",
   },
@@ -45,10 +49,7 @@ const MarkdownChnotEditor = ({
           insert_time: new Date(),
           update_time: new Date(),
         }
-      : {
-          co,
-        };
-
+      : co;
   const queryClient = useQueryClient();
 
   const [content, setContent] = useState(chnot.content);
@@ -126,6 +127,8 @@ const MarkdownChnotEditor = ({
         }}
         placeholder={"Tie a Knot"}
       />
+      <Divider className="!mt-2 !mb-2" />
+
       <div className="shrink-0 flex flex-row justify-end items-center">
         <Button
           className="!font-normal"
