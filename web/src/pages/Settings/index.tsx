@@ -1,7 +1,7 @@
 import UnderConstruction from "../UnderConstruction";
 
-const Toents = () => {
+const Settings = () => {
   return <UnderConstruction />;
 };
 
-export default Toents;
+export default Settings;

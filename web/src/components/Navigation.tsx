@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { Routes } from "@/router";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
-import UserBanner from "./UserBanner";
+import DomainBanner from "./DomainBanner";
 
 interface NavLinkItem {
   id: string;
@@ -23,19 +23,27 @@ const Navigation = (props: Props) => {
   const t = useTranslate();
 
   const chnotNavLink: NavLinkItem = {
-    id: "header-home",
+    id: "header-chnots",
     path: Routes.Chnots,
-    title: t("common.home"),
-    icon: <Icon.Home className="w-6 h-auto opacity-70 shrink-0" />,
+    title: t("Chnots"),
+    icon: <Icon.BrainCircuit className="w-6 h-auto opacity-70 shrink-0" />,
   };
   const toentNavLink: NavLinkItem = {
-    id: "header-timeline",
+    id: "header-toent",
     path: Routes.Toents,
-    title: t("timeline.title"),
-    icon: <Icon.GanttChartSquare className="w-6 h-auto opacity-70 shrink-0" />,
+    title: t("Toents"),
+    icon: (
+      <Icon.CircleCheckBigIcon className="w-6 h-auto opacity-70 shrink-0" />
+    ),
+  };
+  const settingsNavLink: NavLinkItem = {
+    id: "header-settings",
+    path: Routes.Settings,
+    title: t("Settings"),
+    icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
-  const navLinks: NavLinkItem[] = [chnotNavLink, toentNavLink];
+  const navLinks: NavLinkItem[] = [chnotNavLink, toentNavLink, settingsNavLink];
 
   return (
     <header
@@ -44,7 +52,7 @@ const Navigation = (props: Props) => {
         className
       )}
     >
-      <UserBanner collapsed={collapsed} />
+      <DomainBanner collapsed={collapsed} />
       <div className="w-full px-1 py-2 flex flex-col justify-start items-start shrink-0 space-y-2">
         {navLinks.map((navLink) => (
           <NavLink

@@ -5,7 +5,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import Icon from "@/components/Icon";
 import Navigation from "@/components/Navigation";
-import useCurrentUser from "@/hooks/useCurrentUser";
+import useCurrentDomain from "@/hooks/useCurrentUser";
 import useResponsiveWidth from "@/hooks/useResponsiveWidth";
 import Loading from "@/pages/Loading";
 import { Routes } from "@/router";
@@ -13,7 +13,7 @@ import { Routes } from "@/router";
 const RootLayout = () => {
   const location = useLocation();
   const { sm } = useResponsiveWidth();
-  const currentUser = useCurrentUser();
+  const currentUser = useCurrentDomain();
   const [lastVisited] = useLocalStorage<string>("lastVisited", "/home");
   const [collapsed, setCollapsed] = useLocalStorage<boolean>(
     "navigation-collapsed",

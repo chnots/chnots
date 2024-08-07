@@ -1,9 +1,8 @@
-const useCurrentUser = () => {
+const useCurrentDomain = () => {
   return {
-    username: "public",
-    nickname: "public",
+    domain: "Public",
     avatarUrl: undefined,
   };
 };
 
-export default useCurrentUser;
+export default useCurrentDomain;
