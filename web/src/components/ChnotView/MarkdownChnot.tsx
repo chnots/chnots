@@ -11,6 +11,7 @@ import { languages } from "@codemirror/language-data";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface MarkdownChnotProps {
   viewMode: ChnotViewMode;
@@ -33,6 +34,8 @@ const editorTheme = EditorView.theme({
 });
 
 const MarkdownChnotEditor = ({ chnot }: { chnot: Chnot }) => {
+  const queryClient = useQueryClient();
+
   const [content, setContent] = useState(chnot.content);
 
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
@@ -77,6 +80,17 @@ const MarkdownChnotEditor = ({ chnot }: { chnot: Chnot }) => {
     }
   };
 
+  const mutation = useMutation({
+    mutationFn: handleSaveBtnClick,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chnots"] });
+    },
+  });
+
+  const handleSend = () => {
+    mutation.mutate();
+  };
+
   return (
     <div className="w-full">
       <CodeMirror
@@ -102,7 +116,7 @@ const MarkdownChnotEditor = ({ chnot }: { chnot: Chnot }) => {
           className="!font-normal"
           endDecorator={<Icon.Send className="w-4 h-auto" />}
           disabled={!content}
-          onClick={handleSaveBtnClick}
+          onClick={handleSend}
         >
           Save
         </Button>
