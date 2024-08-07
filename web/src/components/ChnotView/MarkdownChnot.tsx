@@ -146,9 +146,9 @@ const MarkdownChnotEditor = ({
 const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
   const update_time = new Date(chnot.update_time);
   const relativeTimeFormat =
-    Date.now() - update_time.getTime() > 1000 * 60 * 60 * 24
+    Date.now() - update_time.getTime() > 7 * 1000 * 60 * 60 * 24
       ? "datetime"
-      : "auto";
+      : "relative";
 
   return (
     <>
