@@ -143,6 +143,45 @@ const MarkdownChnotEditor = ({
   );
 };
 
+const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
+  const update_time = new Date(chnot.update_time);
+  const relativeTimeFormat =
+    Date.now() - update_time.getTime() > 1000 * 60 * 60 * 24
+      ? "datetime"
+      : "auto";
+
+  return (
+    <>
+      <div className="w-100% -mt-0.5 text-xs leading-tight text-gray-400 dark:text-gray-500 select-none">
+        <relative-time
+          datetime={update_time.toISOString()}
+          format={relativeTimeFormat}
+          tense="past"
+        ></relative-time>
+      </div>
+      <div
+        className={`w-100% flex flex-col justify-start items-start text-gray-800 dark:text-gray-400`}
+      >
+        <MarkdownPreview
+          source={chnot.content}
+          style={{
+            width: "100%",
+          }}
+          rehypeRewrite={(node, index, parent) => {
+            if (
+              node.tagName === "a" &&
+              parent &&
+              /^h(1|2|3|4|5|6)/.test(parent.tagName)
+            ) {
+              parent.children = parent.children.slice(1);
+            }
+          }}
+        />
+      </div>
+    </>
+  );
+};
+
 export const MarkdownChnot = ({
   chnot: co,
   className,
@@ -158,29 +197,19 @@ export const MarkdownChnot = ({
     update_time: new Date(),
   };
 
-  return viewMode === ChnotViewMode.Preview ? (
-    <MarkdownPreview
-      source={chnot.content}
-      style={{
-        width: "100%",
-      }}
-      rehypeRewrite={(node, index, parent) => {
-        if (
-          node.tagName === "a" &&
-          parent &&
-          /^h(1|2|3|4|5|6)/.test(parent.tagName)
-        ) {
-          parent.children = parent.children.slice(1);
-        }
-      }}
-    />
-  ) : (
-    <div
-      className={`${
-        className ?? ""
-      } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
-    >
-      <MarkdownChnotEditor chnot={chnot} unique={true} />
+  return (
+    <div className="w-full">
+      {viewMode === ChnotViewMode.Preview ? (
+        <MarkdownChnotViewer chnot={chnot} />
+      ) : (
+        <div
+          className={`${
+            className ?? ""
+          } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
+        >
+          <MarkdownChnotEditor chnot={chnot} unique={true} />
+        </div>
+      )}
     </div>
   );
 };
