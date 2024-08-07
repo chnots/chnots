@@ -12,3 +12,8 @@ export interface Chnot {
   insert_time: Date;
   update_time: Date;
 }
+
+export interface Domain {
+  name: string;
+  managers: string[];
+}

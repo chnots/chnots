@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { Chnot, ChnotType } from "@/model";
 import Icon from "../Icon";
 import { overwriteChnot } from "@/helpers/data-agent";
-import { ChnotViewMode, ChnotViewState } from ".";
+import { ChnotViewMode, ChnotViewState, DomainSelect } from ".";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 
@@ -12,6 +12,7 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDomainStore } from "@/store/v1/domain";
 
 export interface MarkdownChnotProps {
   viewMode: ChnotViewMode;
@@ -38,13 +39,15 @@ const MarkdownChnotEditor = ({
   chnot: Chnot;
   unique?: boolean;
 }) => {
+  const domainStore = useDomainStore();
+
   const chnot =
     unique || !co
       ? {
           id: uuid(),
           perm_id: uuid(),
           content: "",
-          domain: "public",
+          domain: domainStore.current.name,
           type: ChnotType.MarkdownWithToent,
           insert_time: new Date(),
           update_time: new Date(),
@@ -130,6 +133,7 @@ const MarkdownChnotEditor = ({
       <Divider className="!mt-2 !mb-2" />
 
       <div className="shrink-0 flex flex-row justify-end items-center">
+        <DomainSelect />
         <Button
           className="!font-normal"
           endDecorator={<Icon.Send className="w-4 h-auto" />}
@@ -152,25 +156,31 @@ const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
 
   return (
     <>
-      <div className="w-100% -mt-0.5 text-xs leading-tight text-gray-400 dark:text-gray-500 select-none">
+      <div className="w-100% -mt-0.5 text-xs flex flex-row leading-tight text-gray-400 dark:text-gray-500 select-none">
         <relative-time
           datetime={update_time.toISOString()}
           format={relativeTimeFormat}
           tense="past"
         ></relative-time>
+
+        <div className="text-xs ml-1 px-1 text-red-500 italic">
+          {chnot.domain}
+        </div>
       </div>
       <div
-        className={`w-100% flex flex-col justify-start items-start text-gray-800 dark:text-gray-400`}
+        className={`w-100% flex flex-col justify-start items-start text-gray-800 dark:text-gray-400 p-3`}
       >
         <MarkdownPreview
           source={chnot.content}
           style={{
             width: "100%",
           }}
-          rehypeRewrite={(node, index, parent) => {
+          rehypeRewrite={(node, _index, parent) => {
             if (
-              node.tagName === "a" &&
               parent &&
+              "tagName" in node &&
+              "tagName" in parent &&
+              node.tagName === "a" &&
               /^h(1|2|3|4|5|6)/.test(parent.tagName)
             ) {
               parent.children = parent.children.slice(1);
