@@ -1,7 +1,8 @@
 import clsx from "clsx";
-import { MarkdownChnot } from "../../components/ChnotContent/MarkdownChnot";
+import { MarkdownChnot } from "../../components/ChnotView/MarkdownChnot";
 import useResponsiveWidth from "../../hooks/useResponsiveWidth";
 import ChnotList from "@/components/ChnotList";
+import { ChnotViewMode } from "@/components/ChnotView";
 
 const Chnots = () => {
   const { md } = useResponsiveWidth();
@@ -14,7 +15,7 @@ const Chnots = () => {
         )}
       >
         <div className={clsx(md ? "w-[calc(100%-15rem)]" : "w-full")}>
-          <MarkdownChnot className="mb-2" />
+          <MarkdownChnot className="mb-2" viewMode={ChnotViewMode.Editor} />
           <ChnotList />
         </div>
       </div>

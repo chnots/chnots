@@ -18,3 +18,14 @@
     word-break: normal;
   }
 }
+
+/* https://github.com/uiwjs/react-markdown-preview/issues/200#issuecomment-1235548530 */
+@layer base {
+  ul {
+    @apply list-disc text-blue-900;
+  }
+
+  ol {
+    @apply list-decimal text-blue-900;
+  }
+}
