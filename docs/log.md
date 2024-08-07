@@ -79,3 +79,39 @@ create table toent_inst (
     update_time timestamptz NOT NULL
 )
 ```
+
+# 2408-07
+
+## 组件选择修改
+
+之前选择的 @uiw/react-markdown-editor 不太方便使用，查看 @uiw/react-markdown-editor 源码后，决定使用内部依赖的
+
+- @uiw/react-codemirror
+- @uiw/react-markdown-view
+
+## 0.0.1 版本
+
+在 0.0.1 版本希望达到以下目标
+
+模仿 memos 界面
+
+可选项有
+
+- Chnot 的命名域
+- Chnot 的修改、回复、删除功能
+- 检索功能
+- 粘贴图片功能
+- 支持标签功能
+- 支持 Toent 功能
+- 支持双向链接功能
+- 刷新页面后保留内容
+- 看板页面
+- 待办页面
+- 点击页面自动保存
+
+## WAIT Chnot 的命名域
+
+针对可见程度，目前只分为 private, work, public 三种。
+
+前端使用假的 store 来实现，要求这个 store 刷新页面后能返回原来的值。
+
