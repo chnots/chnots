@@ -1,5 +1,6 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
+import { useDomainStore } from "@/store/v1/domain";
 import axios from "axios";
 import type {
   AxiosInstance,
@@ -25,10 +26,10 @@ class Request {
     // 请求拦截器
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        /*         if (config.url !== "/login") {
-          const token = useUserInfoStore.getState().userInfo?.token;
-          if (token) config.headers!["x-token"] = token;
-        } */
+        if (config.url !== "/login") {
+          const domain = useDomainStore.getState().current.name;
+          if (domain) config.headers!["K-Domain"] = domain;
+        }
 
         const controller = new AbortController();
         const url = config.url || "";
@@ -46,6 +47,8 @@ class Request {
         const url = response.config.url || "";
         this.abortControllerMap.delete(url);
 
+        console.log("processing response.");
+
         return response;
       },
       (err) => {
@@ -54,6 +57,8 @@ class Request {
           useUserInfoStore.setState({ userInfo: null });
           window.location.href = `/login?redirect=${window.location.pathname}`;
         } */
+
+        console.log("unable to read response: ", err);
 
         return Promise.reject(err);
       }

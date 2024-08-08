@@ -5,6 +5,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChnotQueryRsp, queryChnot } from "@/helpers/data-agent";
 import { MarkdownChnot } from "../ChnotView/MarkdownChnot";
 import { ChnotViewMode } from "../ChnotView";
+import { useDomainStore } from "@/store/v1/domain";
 
 export interface ChnotListProps {
   query?: string;
@@ -12,6 +13,7 @@ export interface ChnotListProps {
 
 function ChnotList(props: ChnotListProps) {
   const [ref, inView] = useInView();
+  const domainStore = useDomainStore();
 
   const {
     data,
@@ -21,7 +23,7 @@ function ChnotList(props: ChnotListProps) {
     error,
     status,
   } = useInfiniteQuery({
-    queryKey: ["chnots", props.query],
+    queryKey: ["chnots", domainStore.current.name, props.query],
     queryFn: async ({ pageParam }): Promise<ChnotQueryRsp> => {
       const e = await queryChnot({
         query: props.query,
