@@ -5,7 +5,7 @@ use enum_dispatch::enum_dispatch;
 use postgres::{Postgres, PostgresConfig};
 use serde::Deserialize;
 
-use crate::model::dto::*;
+use crate::{app::ShareAppState, model::v1::dto::*};
 
 #[enum_dispatch]
 pub enum MapperType {
@@ -53,9 +53,15 @@ pub trait TableFounder {
 
 #[enum_dispatch(MapperType)]
 pub trait ChnotMapper {
-    async fn chnot_overwrite(&self, chnot: ChnotInsertionReq) -> AResult<ChnotInsertionRsp>;
-    async fn chnot_delete(&self, req: ChnotDeletionReq) -> AResult<ChnotDeletionRsp>;
-    async fn chnot_query(&self, req: ChnotQueryReq) -> AResult<ChnotQueryRsp>;
+    async fn chnot_overwrite(
+        &self,
+        req: ReqWrapper<ChnotInsertionReq>,
+    ) -> AResult<ChnotInsertionRsp>;
+    async fn chnot_delete(&self, req: ReqWrapper<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
+    async fn chnot_query(&self, req: ReqWrapper<ChnotQueryReq>) -> AResult<ChnotQueryRsp>;
 }
 
-pub trait Db: TableFounder + ChnotMapper {}
+#[enum_dispatch(MapperType)]
+pub trait Db: TableFounder + ChnotMapper {
+    fn set_app_state(&self, state: ShareAppState);
+}

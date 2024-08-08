@@ -7,8 +7,7 @@ use axum::{
     http::StatusCode,
     http::{
         header::{
-            ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
-            ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE,
+            ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
         },
         HeaderValue,
     },
@@ -60,16 +59,14 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
 pub async fn serve(app_state: ShareAppState) {
     let port = app_state.config.server.as_ref().map_or(3301, |e| e.port);
     let cors_layer = CorsLayer::new()
-        .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
+        .allow_headers(Any)
         .allow_methods(Any)
         .allow_origin(Any);
 
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(trace::DefaultMakeSpan::new().level(Level::DEBUG))
         .on_response(trace::DefaultOnResponse::new().level(Level::DEBUG))
-        .on_request(|req: &axum::http::Request<axum::body::Body>, _: &_| {
-            info!("request: {:?}", req);
-        });
+        .on_request(|_req: &_, _: &_| {});
 
     let app = Router::new()
         .merge(v1::routes())
