@@ -3,7 +3,8 @@ use arguments::Arguments;
 use chin_tools::wrapper::anyhow::AResult;
 use clap::Parser;
 use config::Config;
-use mapper::{MapperType, TableFounder};
+use mapper::{Db, MapperType, TableFounder};
+use model::v1::domains::Domains;
 use tracing::{info, Level};
 
 pub mod app;
@@ -12,6 +13,7 @@ pub mod config;
 pub mod controller;
 pub mod mapper;
 pub mod model;
+pub mod utils;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -32,9 +34,16 @@ async fn main() -> anyhow::Result<()> {
             let mapper = mapper?;
             mapper.ensure_tables().await?;
 
-            let state = AppState { config, mapper };
+            let state = AppState {
+                config,
+                mapper,
+                domains: Domains::new(),
+            };
+            let state: app::ShareAppState = state.into();
 
-            controller::serve(state.into()).await;
+            state.mapper.set_app_state(state.clone());
+
+            controller::serve(state).await;
         }
         Err(err) => {
             info!("unable to read err, creating default config to it. {}", err);

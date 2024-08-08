@@ -1,7 +1,8 @@
 use std::ops::Deref;
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -9,9 +10,9 @@ use tracing::info;
 
 use crate::{
     app::ShareAppState,
-    model::dto::{
-        ChnotDeletionReq, ChnotDeletionRsp, ChnotInsertionReq, ChnotInsertionRsp, ChnotQueryReq,
-        ChnotQueryRsp,
+    model::v1::dto::{
+        req_wrapper, ChnotDeletionReq, ChnotDeletionRsp, ChnotInsertionReq, ChnotInsertionRsp,
+        ChnotQueryReq, ChnotQueryRsp,
     },
 };
 
@@ -25,31 +26,34 @@ pub fn routes() -> Router<ShareAppState> {
 }
 
 async fn chnot_overwrite(
+    headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(chnot): Json<ChnotInsertionReq>,
+    Json(req): Json<ChnotInsertionReq>,
 ) -> KResponse<ChnotInsertionRsp> {
-    info!("insert_node: {:?}", chnot);
+    info!("insert_node: {:?}", req);
     let app = state.0.deref();
 
-    app.chnot_overwrite(chnot).await.into()
+    app.chnot_overwrite(req_wrapper(headers, req)).await.into()
 }
 
 async fn chnot_deletetion(
+    headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotDeletionReq>,
 ) -> KResponse<ChnotDeletionRsp> {
     info!("insert_node: {:?}", req);
     let app = state.0.deref();
 
-    app.chnot_deletion(req).await.into()
+    app.chnot_deletion(req_wrapper(headers, req)).await.into()
 }
 
 async fn chnot_query(
+    headers: HeaderMap,
     state: State<ShareAppState>,
     Query(req): Query<ChnotQueryReq>,
 ) -> KResponse<ChnotQueryRsp> {
     info!("insert_node: {:?}", req);
     let app = state.0.deref();
 
-    app.chnot_query(req).await.into()
+    app.chnot_query(req_wrapper(headers, req)).await.into()
 }

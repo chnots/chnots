@@ -27,3 +27,11 @@ pub enum ChnotType {
     #[serde(rename = "mdwt")]
     MarkdownWithToent,
 }
+
+use std::borrow::Cow;
+
+#[derive(Clone, Debug)]
+pub struct Domain {
+    pub manager: Vec<Cow<'static, str>>,
+    pub name: Cow<'static, str>,
+}

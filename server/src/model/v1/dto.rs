@@ -1,9 +1,35 @@
+use std::{fmt::Debug, ops::Deref};
+
+use axum::http::HeaderMap;
+
 /// DTO: Data Transfer Object
 ///
 /// All dtos should be put into this file.
 use serde::{Deserialize, Serialize};
 
-use super::chnot::Chnot;
+use super::db::chnot::Chnot;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ReqWrapper<E: Debug + Clone + Serialize> {
+    pub body: E,
+    pub domain: Option<String>,
+}
+
+pub fn req_wrapper<E: Debug + Clone + Serialize>(headers: HeaderMap, body: E) -> ReqWrapper<E> {
+    let domain: Option<String> = headers
+        .get("K-Domain")
+        .and_then(|v| v.to_str().ok().map(|e| e.to_string()));
+
+    ReqWrapper { body, domain }
+}
+
+impl<E: Debug + Clone + Serialize> Deref for ReqWrapper<E> {
+    type Target = E;
+
+    fn deref(&self) -> &Self::Target {
+        &self.body
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotInsertionReq {
@@ -38,3 +64,9 @@ pub struct ChnotQueryRsp {
     pub next_start: i64,
     pub this_start: i64,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DomainQueryReq {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DomainQueryRsp {}
