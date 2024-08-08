@@ -15,7 +15,6 @@ const responseBody = <T>(response: AxiosResponse<T>) => response.data;
 
 class Request {
   private instance: AxiosInstance;
-  // 存放取消请求控制器Map
   private abortControllerMap: Map<string, AbortController>;
 
   constructor(config: CreateAxiosDefaults) {
@@ -23,7 +22,6 @@ class Request {
 
     this.abortControllerMap = new Map();
 
-    // 请求拦截器
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         if (config.url !== "/login") {
@@ -41,13 +39,10 @@ class Request {
       Promise.reject
     );
 
-    // 响应拦截器
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => {
         const url = response.config.url || "";
         this.abortControllerMap.delete(url);
-
-        console.log("processing response.");
 
         return response;
       },
@@ -65,7 +60,6 @@ class Request {
     );
   }
 
-  // 取消全部请求
   cancelAllRequest() {
     for (const [, controller] of this.abortControllerMap) {
       controller.abort();
@@ -73,7 +67,6 @@ class Request {
     this.abortControllerMap.clear();
   }
 
-  // 取消指定的请求
   cancelRequest(url: string | string[]) {
     const urlList = Array.isArray(url) ? url : [url];
     for (const _url of urlList) {
