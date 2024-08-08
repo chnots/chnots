@@ -7,7 +7,7 @@ import { CssVarsProvider } from "@mui/joy";
 import { RouterProvider } from "react-router-dom";
 import router from "./router";
 import theme from "./theme";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 
 (async () => {
   const container = document.getElementById("root");
@@ -19,6 +19,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
         position="top-right"
         toastOptions={{ className: "dark:bg-zinc-700 dark:text-gray-300" }}
       /> */}
+      <Toaster position="top-right" />
     </CssVarsProvider>
   );
 })();

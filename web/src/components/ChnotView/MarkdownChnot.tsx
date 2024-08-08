@@ -13,6 +13,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDomainStore } from "@/store/v1/domain";
 import { useChnotStore } from "@/store/v1/chnot";
+import { toast } from "sonner";
 
 export interface MarkdownChnotProps {
   viewMode: ChnotViewMode;
@@ -89,6 +90,7 @@ const MarkdownChnotEditor = ({
     try {
       await chnotStore.overwriteChnot(req);
       setContent("");
+      toast.success("Tie a Knot Successfully!");
       chnotStore.refreshChnots();
     } finally {
       setState((state) => {
