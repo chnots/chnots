@@ -221,7 +221,7 @@ impl ChnotMapper for Postgres {
 
         let sql = extract_magic_sql_ph(sql.as_str());
 
-        let col = stmt
+        let col: Vec<Chnot> = stmt
             .query(sql.as_str(), &params)
             .await?
             .into_iter()
@@ -229,6 +229,7 @@ impl ChnotMapper for Postgres {
             .collect();
 
         Ok(super::ChnotQueryRsp {
+            has_more: col.len() >= req.page_size.try_into().unwrap(),
             data: col,
             next_start: req.start_index.saturating_add(req.page_size),
             this_start: req.start_index,
