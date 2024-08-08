@@ -63,6 +63,7 @@ pub struct ChnotQueryRsp {
     pub data: Vec<Chnot>,
     pub next_start: i64,
     pub this_start: i64,
+    pub has_more: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
