@@ -1,6 +1,11 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
 
-use crate::model::chnot::{Chnot, ChnotType};
+use crate::{
+    app::ShareAppState,
+    model::v1::db::chnot::{Chnot, ChnotType},
+    utils::sql_param_builder::{extract_magic_sql_ph, SqlParamBuilder},
+};
+use arc_swap::ArcSwap;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
@@ -8,7 +13,7 @@ use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::info;
 
-use super::{ChnotInsertionReq, ChnotInsertionRsp, ChnotMapper, Db, TableFounder};
+use super::{ChnotInsertionReq, ChnotInsertionRsp, ChnotMapper, Db, ReqWrapper, TableFounder};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -33,6 +38,7 @@ impl Into<deadpool_postgres::Config> for PostgresConfig {
 
 pub struct Postgres {
     pub pool: Pool,
+    app_state: ArcSwap<Option<ShareAppState>>,
 }
 
 fn chnot_row_to_obj(row: &Row) -> AResult<Chnot> {
@@ -55,7 +61,10 @@ impl Postgres {
         let pool = Into::<deadpool_postgres::Config>::into(config)
             .create_pool(None, tokio_postgres::NoTls)?;
 
-        Ok(Postgres { pool })
+        Ok(Postgres {
+            pool,
+            app_state: Default::default(),
+        })
     }
 
     async fn get_client(&self) -> AResult<Client> {
@@ -72,6 +81,10 @@ impl Postgres {
             .await
             .map(|e| e.is_empty())
             .map_err(anyhow::Error::new)
+    }
+
+    fn app_state(&self) -> Option<ShareAppState> {
+        self.app_state.load().as_ref().clone()
     }
 
     async fn create_table(&self, table_name: &str, create_sql: &str) -> EResult {
@@ -122,8 +135,11 @@ impl TableFounder for Postgres {
 }
 
 impl ChnotMapper for Postgres {
-    async fn chnot_overwrite(&self, req: ChnotInsertionReq) -> AResult<ChnotInsertionRsp> {
-        let ChnotInsertionReq { chnot } = req;
+    async fn chnot_overwrite(
+        &self,
+        req: ReqWrapper<ChnotInsertionReq>,
+    ) -> AResult<ChnotInsertionRsp> {
+        let chnot = &req.body.chnot;
         let stmt = self.pool.get().await?;
 
         stmt.execute("update chnots set delete_time = CURRENT_TIMESTAMP where perm_id = $1 and delete_time is null", &[&chnot.perm_id]).await?;
@@ -145,7 +161,10 @@ impl ChnotMapper for Postgres {
         Ok(ChnotInsertionRsp {})
     }
 
-    async fn chnot_delete(&self, req: super::ChnotDeletionReq) -> AResult<super::ChnotDeletionRsp> {
+    async fn chnot_delete(
+        &self,
+        req: ReqWrapper<super::ChnotDeletionReq>,
+    ) -> AResult<super::ChnotDeletionRsp> {
         let stmt = self.pool.get().await?;
 
         if req.logic {
@@ -162,37 +181,66 @@ impl ChnotMapper for Postgres {
         Ok(super::ChnotDeletionRsp {})
     }
 
-    async fn chnot_query(&self, req: super::ChnotQueryReq) -> AResult<super::ChnotQueryRsp> {
+    async fn chnot_query(
+        &self,
+        req: ReqWrapper<super::ChnotQueryReq>,
+    ) -> AResult<super::ChnotQueryRsp> {
         let stmt = self.pool.get().await?;
 
-        let col = match req.query.as_ref() {
-            Some(query) => 
-                stmt
-            .query(
-                "select * from chnots where content ilike $1 order by insert_time desc limit $2 offset $3",
-                &[&format!("%{}%", query), &req.page_size, &req.start_index],
-            ).await?
-            .iter()
-            .filter_map(|row| chnot_row_to_obj(row).ok())
-            .collect()
-            ,
-            None => 
-                stmt
-            .query(
-                "select * from chnots order by insert_time desc limit $1 offset $2",
-                &[&req.page_size, &req.start_index],
-            ).await?
-            .iter()
-            .filter_map(|row| chnot_row_to_obj(row).ok())
-            .collect()  
-        };
-            
+        let mut sql = "select * from chnots ".to_string();
 
-        Ok(super::ChnotQueryRsp { data: col, next_start: req.start_index.saturating_add(req.page_size), this_start: req.start_index })
+        let builder = SqlParamBuilder::new();
+        let builder = if let Some(query) = &req.query {
+            builder.ilike("content", query)
+        } else {
+            builder
+        };
+
+        let (params, values) = builder
+            .with(
+                "domain",
+                self.app_state()
+                    .unwrap()
+                    .domains
+                    .managed(req.domain.as_ref().unwrap().as_str())
+                    .to_vec(),
+            )
+            .fixed(format!(
+                " order by insert_time desc limit {} offset {}",
+                req.page_size, req.start_index
+            ))
+            .build();
+
+        sql.push_str(" where ");
+        sql.push_str(&params);
+
+        let params = values
+            .iter()
+            .map(|param| &*param as &(dyn ToSql + Sync))
+            .collect::<Vec<&(dyn ToSql + Sync)>>();
+
+        let sql = extract_magic_sql_ph(sql.as_str());
+
+        let col = stmt
+            .query(sql.as_str(), &params)
+            .await?
+            .into_iter()
+            .filter_map(|e| chnot_row_to_obj(&e).ok())
+            .collect();
+
+        Ok(super::ChnotQueryRsp {
+            data: col,
+            next_start: req.start_index.saturating_add(req.page_size),
+            this_start: req.start_index,
+        })
     }
 }
 
-impl Db for Postgres {}
+impl Db for Postgres {
+    fn set_app_state(&self, state: ShareAppState) {
+        self.app_state.store(Arc::new(Some(state)))
+    }
+}
 
 impl<'a> FromSql<'a> for ChnotType {
     fn from_sql(
