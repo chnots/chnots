@@ -17,7 +17,7 @@ const domains = [
     managers: ["private"],
   },
   {
-    name: "pivate",
+    name: "private",
     managers: [],
   },
 ];
