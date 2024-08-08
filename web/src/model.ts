@@ -8,6 +8,7 @@ export interface Chnot {
   content: string;
   type: ChnotType;
   domain: string;
+  pinned_time?: Date;
   delete_time?: Date;
   insert_time: Date;
   update_time: Date;

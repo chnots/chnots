@@ -3,7 +3,6 @@ import { v4 as uuid } from "uuid";
 import { useRef, useState } from "react";
 import { Chnot, ChnotType } from "@/model";
 import Icon from "../Icon";
-import { overwriteChnot } from "@/helpers/data-agent";
 import { ChnotViewMode, ChnotViewState, DomainSelect } from ".";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
@@ -13,6 +12,7 @@ import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDomainStore } from "@/store/v1/domain";
+import { useChnotStore } from "@/store/v1/chnot";
 
 export interface MarkdownChnotProps {
   viewMode: ChnotViewMode;
@@ -40,6 +40,7 @@ const MarkdownChnotEditor = ({
   unique?: boolean;
 }) => {
   const domainStore = useDomainStore();
+  const chnotStore = useChnotStore();
 
   const chnot =
     unique || !co
@@ -53,7 +54,6 @@ const MarkdownChnotEditor = ({
           update_time: new Date(),
         }
       : co;
-  const queryClient = useQueryClient();
 
   const [content, setContent] = useState(chnot.content);
 
@@ -87,8 +87,9 @@ const MarkdownChnotEditor = ({
       chnot: { ...chnot, id: uuid(), content: content ? content : "" },
     };
     try {
-      await overwriteChnot(req);
+      await chnotStore.overwriteChnot(req);
       setContent("");
+      chnotStore.refreshChnots();
     } finally {
       setState((state) => {
         return {
@@ -99,15 +100,8 @@ const MarkdownChnotEditor = ({
     }
   };
 
-  const mutation = useMutation({
-    mutationFn: handleSaveBtnClick,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chnots"] });
-    },
-  });
-
   const handleSend = () => {
-    mutation.mutate();
+    handleSaveBtnClick();
   };
 
   return (
@@ -155,8 +149,8 @@ const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
       : "relative";
 
   return (
-    <>
-      <div className="w-100% -mt-0.5 text-xs flex flex-row leading-tight text-gray-400 dark:text-gray-500 select-none">
+    <div className="w-full">
+      <div className="w-full -mt-0.5 text-xs flex flex-row leading-tight text-gray-400 dark:text-gray-500 select-none">
         <relative-time
           datetime={update_time.toISOString()}
           format={relativeTimeFormat}
@@ -188,7 +182,7 @@ const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
           }}
         />
       </div>
-    </>
+    </div>
   );
 };
 
@@ -207,19 +201,17 @@ export const MarkdownChnot = ({
     update_time: new Date(),
   };
 
-  return (
-    <div className="w-full">
-      {viewMode === ChnotViewMode.Preview ? (
-        <MarkdownChnotViewer chnot={chnot} />
-      ) : (
-        <div
-          className={`${
-            className ?? ""
-          } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
-        >
-          <MarkdownChnotEditor chnot={chnot} unique={true} />
-        </div>
-      )}
+  return viewMode === ChnotViewMode.Preview ? (
+    <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
+      <MarkdownChnotViewer chnot={chnot} />
+    </div>
+  ) : (
+    <div
+      className={`${
+        className ?? ""
+      } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
+    >
+      <MarkdownChnotEditor chnot={chnot} unique={true} />
     </div>
   );
 };

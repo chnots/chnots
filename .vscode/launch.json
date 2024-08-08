@@ -5,6 +5,32 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Launch",
+      "program": "${workspaceFolder}/server/target/debug/chnots",
+      "args": [
+        "--config",
+        "../config/config.example.toml"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "chnots server",
+      "cwd": "${workspaceFolder}/web",
+      "cargo": {
+        "args": [
+          "build",
+        ]
+      },
+      "args": [
+        "--config",
+        "../config/config.example.toml"
+      ]
+    },
+    {
       "name": "Launch Chrome",
       "request": "launch",
       "type": "chrome",
@@ -24,28 +50,6 @@
         "<node_internals>/**"
       ],
       "type": "node"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug executable 'server'",
-      "cargo": {
-        "args": [
-          "build",
-          "--bin=chnots-server",
-          "--package=chnots-server"
-        ],
-        "filter": {
-          "name": "chnots-server",
-          "kind": "bin"
-        }
-      },
-      "args": [
-        "--config",
-        "./data/config.example.toml"
-      ],
-      "cwd": "${workspaceFolder}",
-      "env": {}
     }
   ]
 }
