@@ -10,7 +10,6 @@ import { languages } from "@codemirror/language-data";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDomainStore } from "@/store/v1/domain";
 import { useChnotStore } from "@/store/v1/chnot";
 import { toast } from "sonner";
