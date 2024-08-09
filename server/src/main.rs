@@ -7,13 +7,13 @@ use mapper::{Db, MapperType, TableFounder};
 use model::v1::domains::Domains;
 use tracing::{info, Level};
 
-pub mod app;
-pub mod arguments;
-pub mod config;
-pub mod controller;
-pub mod mapper;
-pub mod model;
-pub mod utils;
+pub(crate) mod app;
+pub(crate) mod arguments;
+pub(crate) mod config;
+pub(crate) mod controller;
+pub(crate) mod mapper;
+pub(crate) mod model;
+pub(crate) mod utils;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
