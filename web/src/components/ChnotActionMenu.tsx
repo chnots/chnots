@@ -1,10 +1,11 @@
-/* import { Dropdown, Menu, MenuButton, MenuItem } from "@mui/joy";
+import { Dropdown, Menu, MenuButton, MenuItem } from "@mui/joy";
 import clsx from "clsx";
 import { useLocation } from "react-router-dom";
 import Icon from "@/components/Icon";
 import useNavigateTo from "@/hooks/useNavigateTo";
 import { useTranslate } from "@/utils/i18n";
 import { Chnot } from "@/model";
+import { useChnotStore } from "@/store/v1/chnot";
 
 interface Props {
   chnot: Chnot;
@@ -18,79 +19,48 @@ const ChnotActionMenu = (props: Props) => {
   const location = useLocation();
   const navigateTo = useNavigateTo();
 
+  const chnotStore = useChnotStore();
 
   const isInMemoDetailPage = location.pathname.startsWith(`/m/${chnot.id}`);
 
   const handleTogglePinMemoBtnClick = async () => {
     try {
-      if (chnot.pinned_time) {
-        await memoStore.updateMemo(
-          {
-            name: chnot.name,
-            pinned: false,
-          },
-          ["pinned"]
-        );
-      } else {
-        await memoStore.updateMemo(
-          {
-            name: chnot.name,
-            pinned: true,
-          },
-          ["pinned"]
-        );
-      }
+      await chnotStore.updateChnot({
+        chnot_id: chnot.id,
+        pinned: !chnot.pinned,
+        update_time: false,
+      });
     } catch (error) {
       // do nth
     }
   };
 
   const handleEditMemoClick = () => {
-    showMemoEditorDialog({
+    /*     showMemoEditorDialog({
       memoName: chnot.name,
       cacheKey: `${chnot.name}-${chnot.updateTime}`,
-    });
+    }); */
   };
 
   const handleToggleMemoStatusClick = async () => {
     try {
-      if (chnot.rowStatus === RowStatus.ARCHIVED) {
-        await memoStore.updateMemo(
-          {
-            name: chnot.name,
-            rowStatus: RowStatus.ACTIVE,
-          },
-          ["row_status"]
-        );
-        toast(t("message.restored-successfully"));
-      } else {
-        await memoStore.updateMemo(
-          {
-            name: chnot.name,
-            rowStatus: RowStatus.ARCHIVED,
-          },
-          ["row_status"]
-        );
-        toast.success(t("message.archived-successfully"));
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.response.data.message);
-      return;
-    }
-
-    if (isInMemoDetailPage) {
-      chnot.rowStatus === RowStatus.ARCHIVED
-        ? navigateTo("/")
-        : navigateTo("/archived");
+      await chnotStore.updateChnot({
+        chnot_id: chnot.id,
+        archive: !chnot.archive_time,
+        update_time: false,
+      });
+    } catch (error) {
+      // do nth
     }
   };
 
   const handleDeleteMemoClick = async () => {
     const confirmed = window.confirm(t("memo.delete-confirm"));
     if (confirmed) {
-      await memoStore.deleteMemo(chnot.name);
-      toast.success(t("message.deleted-successfully"));
+      await chnotStore.deleteChnot({
+        chnot_id: chnot.id,
+        logic: true,
+      });
       if (isInMemoDetailPage) {
         navigateTo("/");
       }
@@ -112,12 +82,12 @@ const ChnotActionMenu = (props: Props) => {
       <Menu className="text-sm" size="sm" placement="bottom-end">
         {!hiddenActions?.includes("pin") && (
           <MenuItem onClick={handleTogglePinMemoBtnClick}>
-            {chnot.pinned_time ? (
+            {chnot.pinned ? (
               <Icon.BookmarkMinus className="w-4 h-auto" />
             ) : (
               <Icon.BookmarkPlus className="w-4 h-auto" />
             )}
-            {chnot.pinned_time ? t("common.unpin") : t("common.pin")}
+            {chnot.pinned ? t("common.unpin") : t("common.pin")}
           </MenuItem>
         )}
         {!hiddenActions?.includes("edit") && (
@@ -127,14 +97,12 @@ const ChnotActionMenu = (props: Props) => {
           </MenuItem>
         )}
         <MenuItem color="warning" onClick={handleToggleMemoStatusClick}>
-          {chnot.rowStatus === RowStatus.ARCHIVED ? (
+          {chnot.archive_time ? (
             <Icon.ArchiveRestore className="w-4 h-auto" />
           ) : (
             <Icon.Archive className="w-4 h-auto" />
           )}
-          {chnot.rowStatus === RowStatus.ARCHIVED
-            ? t("common.restore")
-            : t("common.archive")}
+          {chnot.archive_time ? t("common.restore") : t("common.archive")}
         </MenuItem>
         <MenuItem color="danger" onClick={handleDeleteMemoClick}>
           <Icon.Trash className="w-4 h-auto" />
@@ -146,4 +114,3 @@ const ChnotActionMenu = (props: Props) => {
 };
 
 export default ChnotActionMenu;
- */

@@ -3,10 +3,11 @@ use std::{str::FromStr, sync::Arc};
 use crate::{
     app::ShareAppState,
     model::v1::db::chnot::{Chnot, ChnotType},
-    utils::sql_param_builder::{extract_magic_sql_ph, SqlParamBuilder},
+    utils::sql_param_builder::{self, extract_magic_sql_ph, SqlParamBuilder, MAGIC_SQL_PH},
 };
 use arc_swap::ArcSwap;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chrono::{DateTime, FixedOffset, Local};
 use deadpool_postgres::{Client, Pool};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use serde::Deserialize;
@@ -51,6 +52,8 @@ fn chnot_row_to_obj(row: &Row) -> AResult<Chnot> {
         delete_time: row.try_get("delete_time")?,
         insert_time: row.try_get("insert_time")?,
         update_time: row.try_get("update_time")?,
+        pinned: row.try_get("pinned")?,
+        archive_time: row.try_get("archive_time")?,
     };
 
     Ok(chnot)
@@ -145,10 +148,11 @@ impl ChnotMapper for Postgres {
         stmt.execute("update chnots set delete_time = CURRENT_TIMESTAMP where perm_id = $1 and delete_time is null", &[&chnot.perm_id]).await?;
 
         stmt.execute(
-            "insert into chnots(id, perm_id, content, type, domain, insert_time, update_time) values($1, $2, $3, $4, $5, $6, $7)",
+            "insert into chnots(id, perm_id, pinned, content, type, domain, insert_time, update_time) values($1, $2, $3, $4, $5, $6, $7, $8)",
             &[
                 &chnot.id,
                 &chnot.perm_id,
+                &chnot.pinned,
                 &chnot.content,
                 &chnot.r#type,
                 &chnot.domain,
@@ -169,7 +173,7 @@ impl ChnotMapper for Postgres {
 
         if req.logic {
             stmt.execute(
-                "update chnots set delete_time = CURRENT_TIMESTAMP where id = ?",
+                "update chnots set delete_time = CURRENT_TIMESTAMP where id = $1",
                 &[&req.chnot_id],
             )
             .await?;
@@ -234,6 +238,64 @@ impl ChnotMapper for Postgres {
             next_start: req.start_index.saturating_add(req.page_size),
             this_start: req.start_index,
         })
+    }
+
+    async fn chnot_update(
+        &self,
+        req: ReqWrapper<super::ChnotUpdateReq>,
+    ) -> AResult<super::ChnotUpdateRsp> {
+        let stmt = self.pool.get().await?;
+
+        let mut seg = String::new();
+        let mut args: Vec<Box<dyn ToSql + Sync + Send>> = vec![];
+        let mut init = true;
+        if let Some(pinned) = req.pinned {
+            if !init {
+                seg.push(',');
+            } else {
+                init = false;
+            }
+            seg.push_str("pinned = ");
+            seg.push_str(&MAGIC_SQL_PH);
+            args.push(Box::new(pinned));
+        }
+
+        if let Some(archive) = req.archive {
+            if !init {
+                seg.push(',');
+            } else {
+                init = false;
+            }
+            seg.push_str("archive_time = ");
+            seg.push_str(&MAGIC_SQL_PH);
+            if archive {
+                args.push(Box::new(Local::now()));
+            } else {
+                args.push(Box::new(None::<DateTime<FixedOffset>>));
+            }
+        }
+
+        let sql = sql_param_builder::extract_magic_sql_ph(
+            format!("update chnots set {} where id = {}", seg, MAGIC_SQL_PH).as_str(),
+        );
+        args.push(Box::new(req.chnot_id.to_string()));
+
+        let params = args
+            .iter()
+            .map(|param| param.as_ref())
+            .collect::<Vec<&(dyn ToSql + Sync + Send)>>();
+
+        stmt.execute(
+            sql.as_str(),
+            params
+                .iter()
+                .map(|e| *e as &(dyn ToSql + Sync))
+                .collect::<Vec<&(dyn ToSql + Sync)>>()
+                .as_slice(),
+        )
+        .await?;
+
+        Ok(super::ChnotUpdateRsp {})
     }
 }
 

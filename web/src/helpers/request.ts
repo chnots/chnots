@@ -9,6 +9,7 @@ import type {
   CreateAxiosDefaults,
   InternalAxiosRequestConfig,
 } from "axios";
+import { toast } from "sonner";
 // import { useUserInfoStore } from "~/stores";
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
@@ -53,7 +54,7 @@ class Request {
           window.location.href = `/login?redirect=${window.location.pathname}`;
         } */
 
-        console.log("unable to read response: ", err);
+        toast.error("Fail " + err);
 
         return Promise.reject(err);
       }

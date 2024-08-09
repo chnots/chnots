@@ -59,6 +59,8 @@ pub trait ChnotMapper {
     ) -> AResult<ChnotInsertionRsp>;
     async fn chnot_delete(&self, req: ReqWrapper<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
     async fn chnot_query(&self, req: ReqWrapper<ChnotQueryReq>) -> AResult<ChnotQueryRsp>;
+
+    async fn chnot_update(&self, req: ReqWrapper<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 }
 
 #[enum_dispatch(MapperType)]

@@ -35,7 +35,7 @@ export const MarkdownChnotEditor = ({
   const domainStore = useDomainStore();
   const chnotStore = useChnotStore();
 
-  const chnot =
+  const chnot: Chnot =
     unique || !co
       ? {
           id: uuid(),
@@ -45,6 +45,8 @@ export const MarkdownChnotEditor = ({
           type: ChnotType.MarkdownWithToent,
           insert_time: new Date(),
           update_time: new Date(),
+          archive_time: undefined,
+          pinned: false,
         }
       : co;
 
@@ -136,25 +138,7 @@ export const MarkdownChnotEditor = ({
 };
 
 export const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
-  const update_time = new Date(chnot.update_time);
-  const relativeTimeFormat =
-    Date.now() - update_time.getTime() > 7 * 1000 * 60 * 60 * 24
-      ? "datetime"
-      : "relative";
-
   return (
-    <div className="w-full">
-      <div className="w-full -mt-0.5 text-xs flex flex-row leading-tight text-gray-400 dark:text-gray-500 select-none">
-        <relative-time
-          datetime={update_time.toISOString()}
-          format={relativeTimeFormat}
-          tense="past"
-        ></relative-time>
-
-        <div className="text-xs ml-1 px-1 text-red-500 italic">
-          {chnot.domain}
-        </div>
-      </div>
       <div
         className={`w-100% flex flex-col justify-start items-start text-gray-800 dark:text-gray-400 p-3`}
       >
@@ -176,6 +160,5 @@ export const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
           }}
         />
       </div>
-    </div>
   );
 };
