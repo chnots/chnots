@@ -11,4 +11,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  build: {
+    // Tauri supports es2021
+    target: ["es2021", "chrome100", "safari13"],
+    outDir: "../web-dist",
+    emptyOutDir: true,
+    // don't minify for debug builds
+    minify: true,
+    // produce sourcemaps for debug builds
+    sourcemap: false,
+  },
 });
