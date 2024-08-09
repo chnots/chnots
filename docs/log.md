@@ -122,3 +122,9 @@ create table toent_inst (
 使用 Zustand 替代 react-query，因为我可能更需要自己管理数据。
 
 但是这部分并不急于替换，让我先把整体功能实现完。
+
+# 2408-09
+
+在实现后端过程中，发现一个很有用的工具 #[debug_handler]
+
+用来调试接口为啥报错。
