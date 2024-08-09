@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { useRef, useState } from "react";
 import { Chnot, ChnotType } from "@/model";
 import Icon from "../Icon";
-import { ChnotViewMode, ChnotViewState, DomainSelect } from ".";
+import { ChnotViewState } from ".";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 
@@ -13,14 +13,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { useDomainStore } from "@/store/v1/domain";
 import { useChnotStore } from "@/store/v1/chnot";
 import { toast } from "sonner";
-
-export interface MarkdownChnotProps {
-  viewMode: ChnotViewMode;
-
-  className?: string;
-
-  chnot?: Chnot;
-}
+import { DomainSelect } from "./DomainSelect";
 
 const editorTheme = EditorView.theme({
   // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
@@ -32,7 +25,7 @@ const editorTheme = EditorView.theme({
   },
 });
 
-const MarkdownChnotEditor = ({
+export const MarkdownChnotEditor = ({
   chnot: co,
   unique,
 }: {
@@ -142,7 +135,7 @@ const MarkdownChnotEditor = ({
   );
 };
 
-const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
+export const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
   const update_time = new Date(chnot.update_time);
   const relativeTimeFormat =
     Date.now() - update_time.getTime() > 7 * 1000 * 60 * 60 * 24
@@ -183,36 +176,6 @@ const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
           }}
         />
       </div>
-    </div>
-  );
-};
-
-export const MarkdownChnot = ({
-  chnot: co,
-  className,
-  viewMode,
-}: MarkdownChnotProps) => {
-  const chnot = co ?? {
-    id: uuid(),
-    perm_id: uuid(),
-    content: "",
-    domain: "public",
-    type: ChnotType.MarkdownWithToent,
-    insert_time: new Date(),
-    update_time: new Date(),
-  };
-
-  return viewMode === ChnotViewMode.Preview ? (
-    <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
-      <MarkdownChnotViewer chnot={chnot} />
-    </div>
-  ) : (
-    <div
-      className={`${
-        className ?? ""
-      } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
-    >
-      <MarkdownChnotEditor chnot={chnot} unique={true} />
     </div>
   );
 };

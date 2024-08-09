@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
-import { MarkdownChnot } from "../ChnotView/MarkdownChnot";
+import ChnotView from "../ChnotView";
 import { ChnotViewMode } from "../ChnotView";
 import { useChnotStore } from "@/store/v1/chnot";
 import { Button } from "@mui/joy";
@@ -39,7 +39,7 @@ function ChnotList(props: ChnotListProps) {
       {chnotPages.map((page) => (
         <React.Fragment key={page.index}>
           {page.chnots.map((chnot) => (
-            <MarkdownChnot
+            <ChnotView
               chnot={chnot}
               viewMode={ChnotViewMode.Preview}
               key={chnot.id}

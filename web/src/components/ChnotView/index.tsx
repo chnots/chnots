@@ -1,6 +1,6 @@
-import { Select, Option } from "@mui/joy";
-import Icon from "../Icon";
-import { useDomainStore } from "@/store/v1/domain";
+import { Chnot, ChnotType } from "@/model";
+import { v4 as uuid } from "uuid";
+import { MarkdownChnotEditor, MarkdownChnotViewer } from "./MarkdownChnot";
 
 export interface ChnotViewState {
   isUploadingResource: boolean;
@@ -14,50 +14,38 @@ export enum ChnotViewMode {
   Both = "both",
 }
 
-export const DomainSelect = () => {
-  const domainStore = useDomainStore();
+export interface ChnotViewProps {
+  viewMode: ChnotViewMode;
 
-  const handleMemoVisibilityChange = (domain: string) => {
-    domainStore.changeDomain(domain);
+  className?: string;
+
+  chnot?: Chnot;
+}
+
+const ChnotView = ({ chnot: co, className, viewMode }: ChnotViewProps) => {
+  const chnot = co ?? {
+    id: uuid(),
+    perm_id: uuid(),
+    content: "",
+    domain: "public",
+    type: ChnotType.MarkdownWithToent,
+    insert_time: new Date(),
+    update_time: new Date(),
   };
 
-  const domainIcon = (name: string, className: string, size: string) => {
-    if (name === "public") {
-      return <Icon.Globe2 className={className} size={size} />;
-    } else if (name === "work") {
-      return <Icon.BriefcaseBusiness className={className} size={size} />;
-    } else {
-      return <Icon.Notebook className={className} size={size} />;
-    }
-  };
-
-  return (
+  return viewMode === ChnotViewMode.Preview ? (
+    <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
+      <MarkdownChnotViewer chnot={chnot} />
+    </div>
+  ) : (
     <div
-      className="relative flex flex-row justify-start items-center border border-gray-300 rounded-lg mr-4"
-      onFocus={(e) => e.stopPropagation()}
+      className={`${
+        className ?? ""
+      } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
     >
-      <Select
-        variant="plain"
-        value={domainStore.current.name}
-        startDecorator={domainIcon(domainStore.current.name, "text-xs", "20px")}
-        onChange={(_, domain) => {
-          if (domain) {
-            handleMemoVisibilityChange(domain);
-          }
-        }}
-      >
-        {domainStore.domains().map((item) => {
-          return (
-            <Option
-              key={item.name}
-              value={item.name}
-              className="whitespace-nowrap"
-            >
-              {item.name}
-            </Option>
-          );
-        })}
-      </Select>
+      <MarkdownChnotEditor chnot={chnot} unique={true} />
     </div>
   );
 };
+
+export default ChnotView;
