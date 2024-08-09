@@ -25,6 +25,7 @@ use tracing::{info, Level};
 
 use crate::app::ShareAppState;
 
+mod asset;
 pub mod v1;
 
 pub struct KResponse<E: Serialize>(AResult<E>);
@@ -70,6 +71,7 @@ pub async fn serve(app_state: ShareAppState) {
 
     let app = Router::new()
         .merge(v1::routes())
+        .merge(asset::routes())
         .with_state(app_state)
         .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(
