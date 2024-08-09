@@ -32,6 +32,19 @@ impl<E: Debug + Clone + Serialize> Deref for ReqWrapper<E> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotUpdateReq {
+    pub chnot_id: String,
+
+    pub update_time: bool,
+
+    pub pinned: Option<bool>,
+    pub archive: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotUpdateRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotInsertionReq {
     pub chnot: Chnot,
 }

@@ -47,6 +47,15 @@ interface ChnotPage {
   index: number;
 }
 
+export interface ChnotUpdateReq {
+  chnot_id: string;
+
+  pinned?: boolean;
+  archive?: boolean;
+
+  update_time: boolean;
+}
+
 interface State {
   fetchMoreChnots(): unknown;
 
@@ -111,10 +120,13 @@ export const useChnotStore = create(
       await get().fetchMoreChnots();
     },
     deleteChnot: async (req: ChnotDeletionReq) => {
-      return request.post(`api/v1/chnot/deletion`, { req });
+      return request.post(`api/v1/chnot/deletion`, req);
     },
     overwriteChnot: async (req: ChnotOverwriteReq) => {
       return request.post(`api/v1/chnot/overwrite`, req);
+    },
+    updateChnot: async (req: ChnotUpdateReq) => {
+      return request.post(`api/v1/chnot/update`, req);
     },
   }))
 );

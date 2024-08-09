@@ -2,21 +2,27 @@ import { Select, Option } from "@mui/joy";
 import Icon from "../Icon";
 import { useDomainStore } from "@/store/v1/domain";
 
+export const DomainIcon = ({
+  name,
+  className,
+}: {
+  name: string;
+  className?: string;
+}) => {
+  if (name === "public") {
+    return <Icon.Globe2 className={className} />;
+  } else if (name === "work") {
+    return <Icon.BriefcaseBusiness className={className} />;
+  } else {
+    return <Icon.Notebook className={className} />;
+  }
+};
+
 export const DomainSelect = () => {
   const domainStore = useDomainStore();
 
   const handleMemoVisibilityChange = (domain: string) => {
     domainStore.changeDomain(domain);
-  };
-
-  const domainIcon = (name: string, className: string, size: string) => {
-    if (name === "public") {
-      return <Icon.Globe2 className={className} size={size} />;
-    } else if (name === "work") {
-      return <Icon.BriefcaseBusiness className={className} size={size} />;
-    } else {
-      return <Icon.Notebook className={className} size={size} />;
-    }
   };
 
   return (
@@ -27,7 +33,7 @@ export const DomainSelect = () => {
       <Select
         variant="plain"
         value={domainStore.current.name}
-        startDecorator={domainIcon(domainStore.current.name, "text-xs", "20px")}
+        startDecorator={<DomainIcon name={domainStore.current.name} />}
         onChange={(_, domain) => {
           if (domain) {
             handleMemoVisibilityChange(domain);
