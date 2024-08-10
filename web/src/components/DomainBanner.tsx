@@ -5,12 +5,9 @@ import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
 import DomainAvatar from "./DomainAvatar";
 
-interface Props {
-  collapsed?: boolean;
-}
+interface Props {}
 
 const UserBanner = (props: Props) => {
-  const { collapsed } = props;
   const t = useTranslate();
   const domain = useCurrentDomain();
   const title = domain ? domain.domain : "Chnots";
@@ -22,21 +19,18 @@ const UserBanner = (props: Props) => {
   };
 
   return (
-    <div className="relative w-full h-auto px-1 shrink-0">
+    <div className="relative h-auto px-1 shrink-0">
       <Dropdown>
         <MenuButton disabled={!domain} slots={{ root: "div" }}>
           <div
             className={clsx(
-              "py-1 my-1 w-auto flex flex-row justify-center align-middle items-center cursor-pointer rounded-2xl border border-transparent text-gray-800 dark:text-gray-400",
-              collapsed ? "px-1" : "px-3"
+              "py-1 my-1 w-auto flex flex-row justify-center align-middle items-center cursor-pointer rounded-2xl border border-transparent text-gray-800 dark:text-gray-400"
             )}
           >
             <DomainAvatar className="shadow shrink-0" avatarUrl={avatarUrl} />
-            {!collapsed && (
               <span className="ml-2 text-lg font-medium text-slate-800 dark:text-gray-300 shrink truncate">
                 {title}
               </span>
-            )}
           </div>
         </MenuButton>
         <Menu placement="bottom-start" style={{ zIndex: "9999" }}>
