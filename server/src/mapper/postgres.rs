@@ -210,7 +210,7 @@ impl ChnotMapper for Postgres {
                     .to_vec(),
             )
             .fixed(format!(
-                " order by insert_time desc limit {} offset {}",
+                " order by pinned desc, insert_time desc limit {} offset {}",
                 req.page_size, req.start_index
             ))
             .build();
