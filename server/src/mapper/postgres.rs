@@ -209,6 +209,7 @@ impl ChnotMapper for Postgres {
                     .managed(req.domain.as_ref().unwrap().as_str())
                     .to_vec(),
             )
+            .fixed(" and delete_time is null ")
             .fixed(format!(
                 " order by pinned desc, insert_time desc limit {} offset {}",
                 req.page_size, req.start_index

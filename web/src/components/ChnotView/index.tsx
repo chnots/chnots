@@ -5,6 +5,7 @@ import ChnotActionMenu from "../ChnotActionMenu";
 import { Tooltip } from "@mui/joy";
 import Icon from "../Icon";
 import { DomainIcon } from "./DomainSelect";
+import { useState } from "react";
 
 export interface ChnotViewState {
   isUploadingResource: boolean;
@@ -24,10 +25,17 @@ export interface ChnotViewProps {
   className?: string;
 
   chnot?: Chnot;
+
+  createInput: boolean;
 }
 
-const ChnotView = ({ chnot: co, className, viewMode }: ChnotViewProps) => {
-  const chnot: Chnot = co ?? {
+const ChnotView = ({
+  chnot: chnotIn,
+  className,
+  viewMode,
+  createInput,
+}: ChnotViewProps) => {
+  const chnot: Chnot = chnotIn || {
     id: uuid(),
     perm_id: uuid(),
     content: "",
@@ -39,13 +47,15 @@ const ChnotView = ({ chnot: co, className, viewMode }: ChnotViewProps) => {
     archive_time: undefined,
   };
 
+  const [chnotViewMode, setChnotViewMode] = useState(viewMode);
+
   const update_time = new Date(chnot.update_time);
   const relativeTimeFormat =
     Date.now() - update_time.getTime() > 7 * 1000 * 60 * 60 * 24
       ? "datetime"
       : "relative";
 
-  return viewMode === ChnotViewMode.Preview ? (
+  return chnotViewMode === ChnotViewMode.Preview ? (
     <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
       <div className="w-full flex flex-row justify-between items-center gap-2">
         <div className="w-full -mt-0.5 text-xs leading-tight text-gray-400 dark:text-gray-500 select-none">
@@ -68,7 +78,13 @@ const ChnotView = ({ chnot: co, className, viewMode }: ChnotViewProps) => {
             </Tooltip>
           )}
 
-          <ChnotActionMenu className="-ml-1" chnot={chnot} />
+          <ChnotActionMenu
+            className="-ml-1"
+            chnot={chnot}
+            changeMode={() => {
+              return setChnotViewMode(ChnotViewMode.Editor);
+            }}
+          />
         </div>
       </div>
       <div className="w-full">
@@ -81,7 +97,7 @@ const ChnotView = ({ chnot: co, className, viewMode }: ChnotViewProps) => {
         className ?? ""
       } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700`}
     >
-      <MarkdownChnotEditor chnot={chnot} unique={true} />
+      <MarkdownChnotEditor chnot={chnot} createInput={createInput} />
     </div>
   );
 };
