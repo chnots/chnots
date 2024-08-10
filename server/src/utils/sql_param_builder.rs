@@ -21,7 +21,6 @@ pub enum SqlParamValue {
     VecStr(Vec<String>),
     VecNum(Vec<i64>),
     ILike(String),
-    Raw(Vec<i64>),
     Fixed,
 }
 
@@ -68,11 +67,6 @@ impl SqlParamBuilder {
     pub fn ilike<T: Into<String>>(mut self, key: &str, value: T) -> Self {
         self.value_map
             .push((key.into(), SqlParamValue::ILike(value.into())));
-        self
-    }
-
-    pub fn raw(mut self, key: &str, value: Vec<i64>) -> Self {
-        self.value_map.push((key.into(), SqlParamValue::Raw(value)));
         self
     }
 
@@ -155,16 +149,6 @@ impl SqlParamBuilder {
                     sql.push_str(" ilike $");
                     sql.push_str(&v);
                     values.push(format!("%{}%", v));
-                }
-                SqlParamValue::Raw(v) => {
-                    sql.push_str(&key);
-                    sql.push_str(
-                        v.iter()
-                            .map(|e| e.to_string())
-                            .collect::<Vec<String>>()
-                            .join(", ")
-                            .as_str(),
-                    );
                 }
                 SqlParamValue::Fixed => {
                     sql.push_str(&key);

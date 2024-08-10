@@ -11,10 +11,11 @@ interface Props {
   chnot: Chnot;
   className?: string;
   hiddenActions?: ("edit" | "archive" | "delete" | "share" | "pin")[];
+  changeMode: () => void;
 }
 
 const ChnotActionMenu = (props: Props) => {
-  const { chnot, hiddenActions } = props;
+  const { chnot, hiddenActions, changeMode } = props;
   const t = useTranslate();
   const location = useLocation();
   const navigateTo = useNavigateTo();
@@ -36,10 +37,7 @@ const ChnotActionMenu = (props: Props) => {
   };
 
   const handleEditMemoClick = () => {
-    /*     showMemoEditorDialog({
-      memoName: chnot.name,
-      cacheKey: `${chnot.name}-${chnot.updateTime}`,
-    }); */
+    changeMode();
   };
 
   const handleToggleMemoStatusClick = async () => {

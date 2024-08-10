@@ -26,17 +26,17 @@ const editorTheme = EditorView.theme({
 });
 
 export const MarkdownChnotEditor = ({
-  chnot: co,
-  unique,
+  chnot: chnotIn,
+  createInput,
 }: {
   chnot: Chnot;
-  unique?: boolean;
+  createInput: boolean;
 }) => {
   const domainStore = useDomainStore();
   const chnotStore = useChnotStore();
 
   const chnot: Chnot =
-    unique || !co
+    createInput || !chnotIn
       ? {
           id: uuid(),
           perm_id: uuid(),
@@ -48,7 +48,7 @@ export const MarkdownChnotEditor = ({
           archive_time: undefined,
           pinned: false,
         }
-      : co;
+      : chnotIn;
 
   const [content, setContent] = useState(chnot.content);
 

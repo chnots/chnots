@@ -14,7 +14,12 @@ const Chnots = () => {
         )}
       >
         <div className={"w-full"}>
-          <ChnotView className="mb-2" viewMode={ChnotViewMode.Editor} />
+          <ChnotView
+            className="mb-2"
+            viewMode={ChnotViewMode.Editor}
+            chnot={undefined}
+            createInput={true}
+          />
           <ChnotList />
         </div>
       </div>
