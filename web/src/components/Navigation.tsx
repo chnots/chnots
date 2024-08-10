@@ -1,4 +1,3 @@
-import { Tooltip } from "@mui/joy";
 import clsx from "clsx";
 import { NavLink } from "react-router-dom";
 import { Routes } from "@/router";
@@ -14,12 +13,11 @@ interface NavLinkItem {
 }
 
 interface Props {
-  collapsed?: boolean;
   className?: string;
 }
 
 const Navigation = (props: Props) => {
-  const { collapsed, className } = props;
+  const { className } = props;
   const t = useTranslate();
 
   const chnotNavLink: NavLinkItem = {
@@ -48,18 +46,17 @@ const Navigation = (props: Props) => {
   return (
     <header
       className={clsx(
-        "w-full h-full overflow-auto flex flex-col justify-start items-start py-4 md:pt-6 z-30 hide-scrollbar",
+        "w-full overflow-auto flex flex-row justify-start items-center z-30 hide-scrollbar ",
         className
       )}
     >
-      <DomainBanner collapsed={collapsed} />
-      <div className="w-full px-1 py-2 flex flex-col justify-start items-start shrink-0 space-y-2">
+      <DomainBanner />
+      <div className="w-10" />
         {navLinks.map((navLink) => (
           <NavLink
             className={({ isActive }) =>
               clsx(
-                "px-2 py-2 rounded-2xl border flex flex-row items-center text-lg text-gray-800 dark:text-gray-400 hover:bg-white hover:border-gray-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800",
-                collapsed ? "" : "w-full px-4",
+              "rounded-2xl border flex flex-row items-start text-sm text-gray-800 dark:text-gray-400 hover:bg-white hover:border-gray-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 py-1 px-3 mx-2",
                 isActive
                   ? "bg-white drop-shadow-sm dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
                   : "border-transparent"
@@ -70,19 +67,10 @@ const Navigation = (props: Props) => {
             id={navLink.id}
             unstable_viewTransition
           >
-            {props.collapsed ? (
-              <Tooltip title={navLink.title} placement="right" arrow>
-                <div>{navLink.icon}</div>
-              </Tooltip>
-            ) : (
-              navLink.icon
-            )}
-            {!props.collapsed && (
+          {navLink.icon}
               <span className="ml-3 truncate">{navLink.title}</span>
-            )}
           </NavLink>
         ))}
-      </div>
     </header>
   );
 };
