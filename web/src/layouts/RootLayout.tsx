@@ -3,20 +3,20 @@ import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import Navigation from "@/components/Navigation";
-import useCurrentDomain from "@/hooks/useCurrentUser";
 import useResponsiveWidth from "@/hooks/useResponsiveWidth";
 import Loading from "@/pages/Loading";
 import { Routes } from "@/router";
+import useCurrentDomain from "@/hooks/useCurrentDomain";
 
 const RootLayout = () => {
   const location = useLocation();
   const { sm } = useResponsiveWidth();
-  const currentUser = useCurrentDomain();
+  const currentDomain = useCurrentDomain();
   const [lastVisited] = useLocalStorage<string>("lastVisited", "/home");
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!currentUser) {
+    if (!currentDomain) {
       if (
         ([Routes.ROOT, Routes.Chnots, Routes.Toents] as string[]).includes(
           location.pathname

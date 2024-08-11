@@ -1,5 +1,5 @@
 import { Select, Option } from "@mui/joy";
-import Icon from "../Icon";
+import Icon from "./Icon";
 import { useDomainStore } from "@/store/v1/domain";
 
 export const DomainIcon = ({
@@ -18,12 +18,14 @@ export const DomainIcon = ({
   }
 };
 
-export const DomainSelect = () => {
+export const DomainSelect = ({
+  domainName,
+  handleDomainChange,
+}: {
+  domainName: string;
+  handleDomainChange: (domain: string) => void;
+}) => {
   const domainStore = useDomainStore();
-
-  const handleMemoVisibilityChange = (domain: string) => {
-    domainStore.changeDomain(domain);
-  };
 
   return (
     <div
@@ -32,11 +34,11 @@ export const DomainSelect = () => {
     >
       <Select
         variant="plain"
-        value={domainStore.current.name}
-        startDecorator={<DomainIcon name={domainStore.current.name} />}
+        value={domainName}
+        startDecorator={<DomainIcon name={domainName} />}
         onChange={(_, domain) => {
           if (domain) {
-            handleMemoVisibilityChange(domain);
+            handleDomainChange(domain);
           }
         }}
       >

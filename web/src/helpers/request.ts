@@ -12,7 +12,6 @@ import type {
 } from "axios";
 import { toast } from "sonner";
 import { recursiveDateConversion } from "./axios-date-transformer";
-// import { useUserInfoStore } from "~/stores";
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
 

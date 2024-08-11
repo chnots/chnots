@@ -3,7 +3,8 @@ import { NavLink } from "react-router-dom";
 import { Routes } from "@/router";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
-import DomainBanner from "./DomainBanner";
+import { DomainSelect } from "./DomainSelect";
+import { useDomainStore } from "@/store/v1/domain";
 
 interface NavLinkItem {
   id: string;
@@ -18,6 +19,7 @@ interface Props {
 
 const Navigation = (props: Props) => {
   const { className } = props;
+  const domainStore = useDomainStore();
   const t = useTranslate();
 
   const chnotNavLink: NavLinkItem = {
@@ -50,7 +52,10 @@ const Navigation = (props: Props) => {
         className
       )}
     >
-      <DomainBanner />
+      <DomainSelect
+        handleDomainChange={domainStore.changeDomain}
+        domainName={domainStore.current.name}
+      />
       <div className="w-10" />
       {navLinks.map((navLink) => (
         <NavLink
