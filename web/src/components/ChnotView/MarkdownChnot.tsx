@@ -81,21 +81,21 @@ export const MarkdownChnotEditor = ({
 
     const doc = codeMirror.current?.view?.state.doc;
     if (doc) {
-    const req = {
+      const req = {
         chnot: { ...chnot, id: uuid(), content: doc.toString() },
-    };
-    try {
-      await chnotStore.overwriteChnot(req);
-      toast.success("Tie a Knot Successfully!");
-      chnotStore.refreshChnots();
-    } finally {
-      setState((state) => {
-        return {
-          ...state,
-          isRequesting: false,
-        };
-      });
-    }
+      };
+      try {
+        await chnotStore.overwriteChnot(req);
+        toast.success("Tie a Knot Successfully!");
+        chnotStore.refreshChnots();
+      } finally {
+        setState((state) => {
+          return {
+            ...state,
+            isRequesting: false,
+          };
+        });
+      }
       const state = EditorState.create({
         ...codeMirror.current?.state,
         doc: "",

@@ -8,7 +8,6 @@ import { DomainIcon } from "./DomainSelect";
 import { useState } from "react";
 import { useChnotStore } from "@/store/v1/chnot";
 import { ChnotCommentEditor, ChnotCommentViewer } from "./ChnotComments";
-import React from "react";
 
 export interface ChnotViewState {
   isUploadingResource: boolean;
@@ -111,18 +110,18 @@ const ChnotView = ({
           )}
           {editingComment && (
             <div className="w-full flex flex-row text-sm">
-          <ChnotCommentEditor
-            content={""}
-            handleSendCallback={function (content: string): void {
-              chnotStore.addComment({
-                id: uuid(),
-                content: content,
-                chnot_perm_id: chnot.perm_id,
-                insert_time: new Date(),
-              });
-            }}
-          />
-        </div>
+              <ChnotCommentEditor
+                content={""}
+                handleSendCallback={function (content: string): void {
+                  chnotStore.addComment({
+                    id: uuid(),
+                    content: content,
+                    chnot_perm_id: chnot.perm_id,
+                    insert_time: new Date(),
+                  });
+                }}
+              />
+            </div>
           )}
         </div>
       ) : (
