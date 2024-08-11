@@ -4,12 +4,16 @@ import Icon from "../Icon";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 
-import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import CodeMirror, {
+  EditorState,
+  type ReactCodeMirrorRef,
+} from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 
 import { Chnot, ChnotComment } from "@/store/v1/chnot";
 
 import MarkdownPreview from "@uiw/react-markdown-preview";
+import { chnotShortDate as chnotShortDate } from "@/utils/date-formater";
 
 const editorTheme = EditorView.theme({
   // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
@@ -22,14 +26,13 @@ const editorTheme = EditorView.theme({
 });
 
 export const ChnotCommentEditor = ({
-  content: _content,
+  content,
   handleSendCallback,
 }: {
   content: string;
   handleSendCallback: (content: string) => void;
 }) => {
-  const [content, setContent] = useState(_content);
-
+  console.log("=================== content reset");
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
 
   const extensions = [
@@ -39,20 +42,26 @@ export const ChnotCommentEditor = ({
   ];
 
   const handleSend = () => {
-    handleSendCallback(content);
+    const doc = codeMirror.current?.view?.state.doc;
+    if (doc) {
+      handleSendCallback(doc.toString());
+      const state = EditorState.create({
+        ...codeMirror.current?.state,
+        doc: "",
+        extensions,
+      });
+      codeMirror.current.view?.setState(state);
+    }
   };
 
   return (
-    <div className="w-full flex flex-row text-xs">
+    <>
       <CodeMirror
-        className={`chnot-md-inner`}
+        className="chnot-md-inner"
         extensions={extensions}
         ref={codeMirror}
-        onChange={(c) => {
-          setContent(c);
-        }}
         style={{
-          font: "serif",
+          flexGrow: "1",
         }}
         value={content}
         basicSetup={{
@@ -62,37 +71,31 @@ export const ChnotCommentEditor = ({
         }}
         placeholder={"Reply to this chnot."}
       />
-
-      <div className="shrink-0 flex flex-row juchnotsstify-end items-center">
-        <Button
-          className="!font-normal"
-          endDecorator={<Icon.Send className="w-4 h-auto" />}
-          disabled={!content}
-          onClick={handleSend}
-        >
-          Save
-        </Button>
-      </div>
-    </div>
+      <button onClick={handleSend} className="text-xs text-gray-400 mr-3">
+        <Icon.Check />
+      </button>
+    </>
   );
 };
 
 export const ChnotCommentViewer = ({ comment }: { comment: ChnotComment }) => {
   return (
     <div
-      className={`w-100% flex flex-row justify-start items-start text-gray-800 dark:text-gray-400 p-3`}
+      className={`w-full flex flex-row text-wrap break-words justify-start items-start text-gray-400 border-t py-2`}
     >
-      <span className="w-1/4 text-gray-300 px-2 text-sm">
-        {comment.insert_time}
+      <div>
+        <Icon.MessageCircleIcon width="24px" className="w-4" />
+      </div>
+      <span className="px-2 text-sm">
+        {chnotShortDate(comment.insert_time)}
       </span>
-      <div className="w-3/4">
         <MarkdownPreview
           source={comment.content}
           style={{
-            width: "100%",
-            fontSize: "0.9em",
+          flexGrow: "1",
+          fontSize: "0.875em",
+          wordWrap: "anywhere",
           }}
-          className="border-t"
           rehypeRewrite={(node, _index, parent) => {
             if (
               parent &&
@@ -106,6 +109,5 @@ export const ChnotCommentViewer = ({ comment }: { comment: ChnotComment }) => {
           }}
         />
       </div>
-    </div>
   );
 };

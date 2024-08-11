@@ -51,6 +51,7 @@ const ChnotView = ({
   };
 
   const [chnotViewMode, setChnotViewMode] = useState(viewMode);
+  const [editingComment, setEditingComment] = useState(false);
 
   const update_time = new Date(chnot.update_time);
   const chnotStore = useChnotStore();
@@ -91,7 +92,7 @@ const ChnotView = ({
                   return setChnotViewMode(ChnotViewMode.Editor);
                 }}
                 beginComment={function (): void {
-                  throw new Error("Function not implemented.");
+                  setEditingComment(true);
                 }}
               />
             </div>
@@ -108,6 +109,8 @@ const ChnotView = ({
               })}
             </div>
           )}
+          {editingComment && (
+            <div className="w-full flex flex-row text-sm">
           <ChnotCommentEditor
             content={""}
             handleSendCallback={function (content: string): void {
@@ -119,6 +122,8 @@ const ChnotView = ({
               });
             }}
           />
+        </div>
+          )}
         </div>
       ) : (
         <div
