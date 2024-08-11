@@ -16,7 +16,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { useDomainStore } from "@/store/v1/domain";
 import { useChnotStore } from "@/store/v1/chnot";
 import { toast } from "sonner";
-import { DomainSelect } from "./DomainSelect";
+import { DomainSelect } from "../DomainSelect";
 
 const editorTheme = EditorView.theme({
   // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
@@ -37,6 +37,7 @@ export const MarkdownChnotEditor = ({
 }) => {
   const domainStore = useDomainStore();
   const chnotStore = useChnotStore();
+  const [domain, setDomain] = useState(domainStore.current.name);
 
   const chnot: Chnot =
     createInput || !chnotIn
@@ -44,7 +45,7 @@ export const MarkdownChnotEditor = ({
           id: uuid(),
           perm_id: uuid(),
           content: "",
-          domain: domainStore.current.name,
+          domain: domain,
           type: ChnotType.MarkdownWithToent,
           insert_time: new Date(),
           update_time: new Date(),
@@ -82,7 +83,12 @@ export const MarkdownChnotEditor = ({
     const doc = codeMirror.current?.view?.state.doc;
     if (doc) {
       const req = {
-        chnot: { ...chnot, id: uuid(), content: doc.toString() },
+        chnot: {
+          ...chnot,
+          id: uuid(),
+          content: doc.toString(),
+          domain,
+        },
       };
       try {
         await chnotStore.overwriteChnot(req);
@@ -125,7 +131,7 @@ export const MarkdownChnotEditor = ({
       <Divider className="!mt-2 !mb-2" />
 
       <div className="shrink-0 flex flex-row juchnotsstify-end items-center">
-        <DomainSelect />
+        <DomainSelect handleDomainChange={setDomain} domainName={domain} />
         <Button
           className="!font-normal"
           endDecorator={<Icon.Send className="w-4 h-auto" />}

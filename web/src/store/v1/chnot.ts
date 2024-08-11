@@ -138,7 +138,7 @@ export const useChnotStore = create(
         };
       });
     },
-    changeQuery: async (query?: string) => {
+    changeKeyword: async (query?: string) => {
       set((state) => {
         return { ...state, query: query, startIndex: 0 };
       });

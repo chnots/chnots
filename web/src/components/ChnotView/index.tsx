@@ -4,7 +4,7 @@ import { MarkdownChnotEditor, MarkdownChnotViewer } from "./MarkdownChnot";
 import ChnotActionMenu from "../ChnotActionMenu";
 import { Tooltip } from "@mui/joy";
 import Icon from "../Icon";
-import { DomainIcon } from "./DomainSelect";
+import { DomainIcon } from "../DomainSelect";
 import { useState } from "react";
 import { useChnotStore } from "@/store/v1/chnot";
 import { ChnotCommentEditor, ChnotCommentViewer } from "./ChnotComments";
@@ -37,6 +37,7 @@ const ChnotView = ({
   viewMode,
   createInput,
 }: ChnotViewProps) => {
+  console.log("rerender chnot view");
   const chnot: Chnot = chnotIn || {
     id: uuid(),
     perm_id: uuid(),

@@ -5,34 +5,37 @@ import ChnotView from "../ChnotView";
 import { ChnotViewMode } from "../ChnotView";
 import { useChnotStore } from "@/store/v1/chnot";
 import { Button } from "@mui/joy";
+import useCurrentDomain from "@/hooks/useCurrentDomain";
 
 export interface ChnotListProps {
-  query?: string;
+  keyword?: string;
 }
 
 function ChnotList(props: ChnotListProps) {
   const [ref, inView] = useInView();
+  const domain = useCurrentDomain();
   const {
     fetchMoreChnots,
+    refreshChnots,
     isFetchingNextPage,
     hasNextPage,
     chnotPages,
-    changeQuery,
+    changeKeyword,
   } = useChnotStore();
 
   React.useEffect(() => {
-    changeQuery(props.query);
-  }, [changeQuery, props.query]);
-
-  useEffect(() => {
-    console.log("changed: ", chnotPages.length);
-  }, [chnotPages]);
+    changeKeyword(props.keyword);
+  }, [changeKeyword, props.keyword]);
 
   React.useEffect(() => {
     if (inView && !isFetchingNextPage && hasNextPage) {
       fetchMoreChnots();
     }
   }, [fetchMoreChnots, hasNextPage, inView, isFetchingNextPage]);
+
+  useEffect(() => {
+    refreshChnots();
+  }, [domain]);
 
   return (
     <div>
