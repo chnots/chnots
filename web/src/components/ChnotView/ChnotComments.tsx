@@ -1,5 +1,4 @@
-import { Button } from "@mui/joy";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import Icon from "../Icon";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
@@ -10,7 +9,7 @@ import CodeMirror, {
 } from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 
-import { Chnot, ChnotComment } from "@/store/v1/chnot";
+import { ChnotComment } from "@/store/v1/chnot";
 
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import { chnotShortDate as chnotShortDate } from "@/utils/date-formater";
@@ -89,25 +88,26 @@ export const ChnotCommentViewer = ({ comment }: { comment: ChnotComment }) => {
       <span className="px-2 text-sm">
         {chnotShortDate(comment.insert_time)}
       </span>
-        <MarkdownPreview
-          source={comment.content}
-          style={{
+      <MarkdownPreview
+        source={comment.content}
+        style={{
           flexGrow: "1",
           fontSize: "0.875em",
+          // @ts-ignore
           wordWrap: "anywhere",
-          }}
-          rehypeRewrite={(node, _index, parent) => {
-            if (
-              parent &&
-              "tagName" in node &&
-              "tagName" in parent &&
-              node.tagName === "a" &&
-              /^h(1|2|3|4|5|6)/.test(parent.tagName)
-            ) {
-              parent.children = parent.children.slice(1);
-            }
-          }}
-        />
-      </div>
+        }}
+        rehypeRewrite={(node, _index, parent) => {
+          if (
+            parent &&
+            "tagName" in node &&
+            "tagName" in parent &&
+            node.tagName === "a" &&
+            /^h(1|2|3|4|5|6)/.test(parent.tagName)
+          ) {
+            parent.children = parent.children.slice(1);
+          }
+        }}
+      />
+    </div>
   );
 };

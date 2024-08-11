@@ -89,6 +89,7 @@ class Request {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
+    // @ts-ignore
     return await this.instance.get<T>(url, {
       ...config,
       params: data,
@@ -101,6 +102,7 @@ class Request {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
+    // @ts-ignore
     return await this.instance.post<T>(url, data, config);
   }
 
@@ -110,6 +112,7 @@ class Request {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
+    // @ts-ignore
     return await this.instance.put<T>(url, data, config);
   }
 }

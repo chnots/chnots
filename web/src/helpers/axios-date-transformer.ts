@@ -1,9 +1,4 @@
 // Adopted from https://github.com/angelxmoreno/axios-date-transformer/blob/main/src/index.ts
-import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  CreateAxiosDefaults,
-} from "axios";
 
 export const recursiveDateConversion = (data: any): any => {
   if (typeof data === "object") {

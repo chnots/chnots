@@ -1,11 +1,8 @@
 import clsx from "clsx";
-import useResponsiveWidth from "../../hooks/useResponsiveWidth";
 import ChnotList from "@/components/ChnotList";
 import ChnotView, { ChnotViewMode } from "@/components/ChnotView";
 
 const Chnots = () => {
-  const { md } = useResponsiveWidth();
-
   return (
     <section className="w-full max-w-3xl min-h-full flex flex-col justify-start items-center sm:pt-3 md:pt-6 pb-8">
       <div

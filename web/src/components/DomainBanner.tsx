@@ -5,9 +5,7 @@ import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
 import DomainAvatar from "./DomainAvatar";
 
-interface Props {}
-
-const UserBanner = (props: Props) => {
+const UserBanner = () => {
   const t = useTranslate();
   const domain = useCurrentDomain();
   const title = domain ? domain.domain : "Chnots";
