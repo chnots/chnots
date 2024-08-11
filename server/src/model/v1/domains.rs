@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
-use super::db::chnot::Domain;
+use super::db::domain::Domain;
 
 pub struct Domains {
     pub managers: Arc<HashMap<String, Arc<Vec<String>>>>,

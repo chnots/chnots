@@ -97,7 +97,7 @@ create table toent_inst (
 
 可选项有
 
-- [X] Chnot 的命名域
+- [x] Chnot 的命名域
 - [ ] Chnot 的修改、回复、删除功能
 - [ ] 检索功能
 - [ ] 粘贴图片功能
@@ -109,13 +109,13 @@ create table toent_inst (
 - [ ] 待办页面
 - [ ] 点击页面自动保存
 
-## WAIT Chnot 的命名域
+## DONE Chnot 的命名域
 
 针对可见程度，目前只分为 private, work, public 三种。
 
 前端使用假的 store 来实现，要求这个 store 刷新页面后能返回原来的值。
 
-## WAIT 完整使用 zustand?
+## DONE 完整使用 zustand?
 
 目前我的场景来看，使用 react-query 貌似有点冗余，我其实只是需要其中的下拉刷新的部分，更多的可能暂时并不需要。
 

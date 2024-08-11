@@ -43,6 +43,7 @@ function ChnotList(props: ChnotListProps) {
               chnot={chnot}
               viewMode={ChnotViewMode.Preview}
               key={chnot.id}
+              createInput={false}
             />
           ))}
         </React.Fragment>

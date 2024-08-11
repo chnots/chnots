@@ -28,9 +28,9 @@ const UserBanner = (props: Props) => {
             )}
           >
             <DomainAvatar className="shadow shrink-0" avatarUrl={avatarUrl} />
-              <span className="ml-2 text-lg font-medium text-slate-800 dark:text-gray-300 shrink truncate">
-                {title}
-              </span>
+            <span className="ml-2 text-lg font-medium text-slate-800 dark:text-gray-300 shrink truncate">
+              {title}
+            </span>
           </div>
         </MenuButton>
         <Menu placement="bottom-start" style={{ zIndex: "9999" }}>

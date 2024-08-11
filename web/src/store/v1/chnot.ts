@@ -1,7 +1,31 @@
 import request from "@/helpers/request";
-import { Chnot } from "@/model";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
+
+export enum ChnotType {
+  MarkdownWithToent = "mdwt",
+}
+
+export interface ChnotComment {
+  id: string;
+  chnot_perm_id: string;
+  content: string;
+  insert_time: string;
+}
+
+export interface Chnot {
+  archive_time?: Date;
+  id: string;
+  perm_id: string;
+  content: string;
+  type: ChnotType;
+  domain: string;
+  pinned: boolean;
+  delete_time?: Date;
+  insert_time: Date;
+  update_time: Date;
+  comments?: ChnotComment[];
+}
 
 const getDefaultState = (): State => {
   return {
@@ -54,6 +78,15 @@ export interface ChnotUpdateReq {
   archive?: boolean;
 
   update_time: boolean;
+}
+
+export interface ChnotCommentAddReq {
+  id: string;
+
+  chnot_perm_id: string;
+  content: string;
+
+  insert_time: Date;
 }
 
 interface State {
@@ -127,6 +160,9 @@ export const useChnotStore = create(
     },
     updateChnot: async (req: ChnotUpdateReq) => {
       return request.post(`api/v1/chnot/update`, req);
+    },
+    addComment: async (req: ChnotCommentAddReq) => {
+      return request.put(`api/v1/chnot/comment`, req);
     },
   }))
 );

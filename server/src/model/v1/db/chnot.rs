@@ -30,10 +30,11 @@ pub enum ChnotType {
     MarkdownWithToent,
 }
 
-use std::borrow::Cow;
-
-#[derive(Clone, Debug)]
-pub struct Domain {
-    pub manager: Vec<Cow<'static, str>>,
-    pub name: Cow<'static, str>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotComment {
+    pub id: String,
+    pub chnot_perm_id: String,
+    pub content: String,
+    pub delete_time: Option<DateTime<FixedOffset>>,
+    pub insert_time: DateTime<FixedOffset>,
 }
