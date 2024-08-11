@@ -8,7 +8,10 @@ import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 
 import MarkdownPreview from "@uiw/react-markdown-preview";
-import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import CodeMirror, {
+  EditorState,
+  type ReactCodeMirrorRef,
+} from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { useDomainStore } from "@/store/v1/domain";
 import { useChnotStore } from "@/store/v1/chnot";
@@ -50,8 +53,6 @@ export const MarkdownChnotEditor = ({
         }
       : chnotIn;
 
-  const [content, setContent] = useState(chnot.content);
-
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
 
   const extensions = [
@@ -66,7 +67,7 @@ export const MarkdownChnotEditor = ({
     isComposing: false,
   });
 
-  const handleSaveBtnClick = async () => {
+  const handleSend = async () => {
     if (state.isRequesting) {
       return;
     }
@@ -78,12 +79,13 @@ export const MarkdownChnotEditor = ({
       };
     });
 
+    const doc = codeMirror.current?.view?.state.doc;
+    if (doc) {
     const req = {
-      chnot: { ...chnot, id: uuid(), content: content ? content : "" },
+        chnot: { ...chnot, id: uuid(), content: doc.toString() },
     };
     try {
       await chnotStore.overwriteChnot(req);
-      setContent("");
       toast.success("Tie a Knot Successfully!");
       chnotStore.refreshChnots();
     } finally {
@@ -94,10 +96,13 @@ export const MarkdownChnotEditor = ({
         };
       });
     }
-  };
-
-  const handleSend = () => {
-    handleSaveBtnClick();
+      const state = EditorState.create({
+        ...codeMirror.current?.state,
+        doc: "",
+        extensions,
+      });
+      codeMirror.current.view?.setState(state);
+    }
   };
 
   return (
@@ -106,13 +111,10 @@ export const MarkdownChnotEditor = ({
         className={`chnot-md-inner`}
         extensions={extensions}
         ref={codeMirror}
-        onChange={(c) => {
-          setContent(c);
-        }}
         style={{
           font: "serif",
         }}
-        value={content}
+        value={chnot.content}
         basicSetup={{
           lineNumbers: false,
           highlightActiveLineGutter: false,
@@ -127,7 +129,6 @@ export const MarkdownChnotEditor = ({
         <Button
           className="!font-normal"
           endDecorator={<Icon.Send className="w-4 h-auto" />}
-          disabled={!content}
           onClick={handleSend}
         >
           Save

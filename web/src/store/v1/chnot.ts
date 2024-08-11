@@ -10,7 +10,7 @@ export interface ChnotComment {
   id: string;
   chnot_perm_id: string;
   content: string;
-  insert_time: string;
+  insert_time: Date;
 }
 
 export interface Chnot {
