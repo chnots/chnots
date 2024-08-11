@@ -4,18 +4,19 @@ import { useLocation } from "react-router-dom";
 import Icon from "@/components/Icon";
 import useNavigateTo from "@/hooks/useNavigateTo";
 import { useTranslate } from "@/utils/i18n";
-import { Chnot } from "@/model";
+import { Chnot } from "@/store/v1/chnot";
 import { useChnotStore } from "@/store/v1/chnot";
 
 interface Props {
   chnot: Chnot;
   className?: string;
   hiddenActions?: ("edit" | "archive" | "delete" | "share" | "pin")[];
-  changeMode: () => void;
+  beginEditMode: () => void;
+  beginComment: () => void;
 }
 
 const ChnotActionMenu = (props: Props) => {
-  const { chnot, hiddenActions, changeMode } = props;
+  const { chnot, hiddenActions, beginEditMode, beginComment } = props;
   const t = useTranslate();
   const location = useLocation();
   const navigateTo = useNavigateTo();
@@ -37,7 +38,7 @@ const ChnotActionMenu = (props: Props) => {
   };
 
   const handleEditMemoClick = () => {
-    changeMode();
+    beginEditMode();
   };
 
   const handleToggleMemoStatusClick = async () => {
@@ -63,6 +64,10 @@ const ChnotActionMenu = (props: Props) => {
         navigateTo("/");
       }
     }
+  };
+
+  const handleReplyMemoClick = async () => {
+    beginComment();
   };
 
   return (
@@ -105,6 +110,11 @@ const ChnotActionMenu = (props: Props) => {
         <MenuItem color="danger" onClick={handleDeleteMemoClick}>
           <Icon.Trash className="w-4 h-auto" />
           {t("common.delete")}
+        </MenuItem>
+
+        <MenuItem onClick={handleReplyMemoClick}>
+          <Icon.Reply className="w-4 h-auto" />
+          {t("common.comment")}
         </MenuItem>
       </Menu>
     </Dropdown>

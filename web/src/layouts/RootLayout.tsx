@@ -55,8 +55,8 @@ const RootLayout = () => {
           <div
             className={clsx(
               "group flex flex-col justify-start items-start fixed top-0 left-0 select-none border-r dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 dark:bg-opacity-40 transition-all hover:shadow-sm w-full p-1 z-2 border-gray-300 border-b"
-              )}
-            >
+            )}
+          >
             <Navigation />
           </div>
         )}

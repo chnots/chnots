@@ -1,7 +1,7 @@
 import { Button, Divider } from "@mui/joy";
 import { v4 as uuid } from "uuid";
 import { useRef, useState } from "react";
-import { Chnot, ChnotType } from "@/model";
+import { Chnot, ChnotType } from "@/store/v1/chnot";
 import Icon from "../Icon";
 import { ChnotViewState } from ".";
 import { EditorView } from "@codemirror/view";
@@ -122,7 +122,7 @@ export const MarkdownChnotEditor = ({
       />
       <Divider className="!mt-2 !mb-2" />
 
-      <div className="shrink-0 flex flex-row justify-end items-center">
+      <div className="shrink-0 flex flex-row juchnotsstify-end items-center">
         <DomainSelect />
         <Button
           className="!font-normal"
@@ -139,26 +139,26 @@ export const MarkdownChnotEditor = ({
 
 export const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
   return (
-      <div
-        className={`w-100% flex flex-col justify-start items-start text-gray-800 dark:text-gray-400 p-3`}
-      >
-        <MarkdownPreview
-          source={chnot.content}
-          style={{
-            width: "100%",
-          }}
-          rehypeRewrite={(node, _index, parent) => {
-            if (
-              parent &&
-              "tagName" in node &&
-              "tagName" in parent &&
-              node.tagName === "a" &&
-              /^h(1|2|3|4|5|6)/.test(parent.tagName)
-            ) {
-              parent.children = parent.children.slice(1);
-            }
-          }}
-        />
-      </div>
+    <div
+      className={`w-100% flex flex-col justify-start items-start text-gray-800 dark:text-gray-400 p-3`}
+    >
+      <MarkdownPreview
+        source={chnot.content}
+        style={{
+          width: "100%",
+        }}
+        rehypeRewrite={(node, _index, parent) => {
+          if (
+            parent &&
+            "tagName" in node &&
+            "tagName" in parent &&
+            node.tagName === "a" &&
+            /^h(1|2|3|4|5|6)/.test(parent.tagName)
+          ) {
+            parent.children = parent.children.slice(1);
+          }
+        }}
+      />
+    </div>
   );
 };

@@ -32,8 +32,11 @@ impl Into<AResult<MapperType>> for MapperConfig {
 
 #[enum_dispatch(MapperType)]
 pub trait TableFounder {
-    /// Main table.
+    // Main table.
     async fn _ensure_table_chnots(&self) -> EResult;
+
+    // Comment table.
+    async fn _ensure_table_chnot_comments(&self) -> EResult;
 
     // Toent Definations.
     async fn _ensure_table_toent_defi(&self) -> EResult;
@@ -41,9 +44,10 @@ pub trait TableFounder {
     // Toent Instances.
     async fn _ensure_table_toent_inst(&self) -> EResult;
 
-    /// Build all tables
+    // Build all tables
     async fn ensure_tables(&self) -> EResult {
         self._ensure_table_chnots().await?;
+        self._ensure_table_chnot_comments().await?;
         self._ensure_table_toent_defi().await?;
         self._ensure_table_toent_inst().await?;
 
@@ -61,6 +65,16 @@ pub trait ChnotMapper {
     async fn chnot_query(&self, req: ReqWrapper<ChnotQueryReq>) -> AResult<ChnotQueryRsp>;
 
     async fn chnot_update(&self, req: ReqWrapper<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
+
+    async fn chnot_comment_add(
+        &self,
+        req: ReqWrapper<ChnotCommentAddReq>,
+    ) -> AResult<ChnotCommentAddRsp>;
+
+    async fn chnot_comment_delete(
+        &self,
+        req: ReqWrapper<ChnotCommentDeleteReq>,
+    ) -> AResult<ChnotCommentDeleteRsp>;
 }
 
 #[enum_dispatch(MapperType)]

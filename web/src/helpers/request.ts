@@ -107,6 +107,16 @@ class Request {
     const response = await this.instance.post<T>(url, data, config);
     return responseBody(response);
   }
+
+  async put<T>(
+    url: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.put<T>(url, data, config);
+    return responseBody(response);
+  }
 }
 
 const request = new Request({

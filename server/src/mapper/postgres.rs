@@ -2,7 +2,7 @@ use std::{str::FromStr, sync::Arc};
 
 use crate::{
     app::ShareAppState,
-    model::v1::db::chnot::{Chnot, ChnotType},
+    model::v1::db::chnot::{Chnot, ChnotComment, ChnotType},
     utils::sql_param_builder::{self, extract_magic_sql_ph, SqlParamBuilder, MAGIC_SQL_PH},
 };
 use arc_swap::ArcSwap;
@@ -12,9 +12,12 @@ use deadpool_postgres::{Client, Pool};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
-use tracing::info;
+use tracing::{error, info};
+use uuid::Uuid;
 
-use super::{ChnotInsertionReq, ChnotInsertionRsp, ChnotMapper, Db, ReqWrapper, TableFounder};
+use crate::model::v1::dto::*;
+
+use super::{ChnotMapper, Db, TableFounder};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -54,6 +57,18 @@ fn chnot_row_to_obj(row: &Row) -> AResult<Chnot> {
         update_time: row.try_get("update_time")?,
         pinned: row.try_get("pinned")?,
         archive_time: row.try_get("archive_time")?,
+    };
+
+    Ok(chnot)
+}
+
+fn map_row_to_chnot_comment(row: &Row) -> AResult<ChnotComment> {
+    let chnot = ChnotComment {
+        id: row.try_get("id")?,
+        chnot_perm_id: row.try_get("chnot_perm_id")?,
+        content: row.try_get("content")?,
+        insert_time: row.try_get("insert_time")?,
+        delete_time: row.try_get("delete_time")?,
     };
 
     Ok(chnot)
@@ -108,16 +123,14 @@ impl Postgres {
 }
 
 impl TableFounder for Postgres {
-    async fn _ensure_table_chnots(&self) -> EResult {
+    async fn _ensure_table_chnot_comments(&self) -> EResult {
         self.create_table(
-            "chnots",
-            "create table chnots (
+            "chnot_comments",
+            "create table chnot_comments (
     id VARCHAR(40) NOT NULL,
-    perm_id VARCHAR(40) NOT NULL,
+    chnot_perm_id VARCHAR(40) NOT NULL,
 
     content TEXT NOT NULL,
-    type VARCHAR(255) NOT NULL,
-    domain TEXT NOT NULL,
 
     delete_time timestamptz DEFAULT NULL,
     insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
@@ -134,6 +147,26 @@ impl TableFounder for Postgres {
 
     async fn _ensure_table_toent_inst(&self) -> EResult {
         Ok(())
+    }
+
+    async fn _ensure_table_chnots(&self) -> EResult {
+        self.create_table(
+            "chnots",
+            "create table chnots (
+    id VARCHAR(40) NOT NULL,
+    chnot_perm_id VARCHAR(40) NOT NULL,
+
+    content TEXT NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    domain TEXT NOT NULL,
+
+    delete_time timestamptz DEFAULT NULL,
+    insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
+    update_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
+    primary key (id)
+)",
+        )
+        .await
     }
 }
 
@@ -226,16 +259,48 @@ impl ChnotMapper for Postgres {
 
         let sql = extract_magic_sql_ph(sql.as_str());
 
-        let col: Vec<Chnot> = stmt
+        let chnots: Vec<Chnot> = stmt
             .query(sql.as_str(), &params)
             .await?
             .into_iter()
             .filter_map(|e| chnot_row_to_obj(&e).ok())
             .collect();
 
+        let sql = format!(
+            "select * from chnot_comments where chnot_perm_id in ({}) order by insert_time asc",
+            chnots
+                .iter()
+                .map(|e| format!("'{}'", e.perm_id))
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
+
+        let comments: Vec<ChnotComment> = stmt
+            .query(sql.as_str(), &[])
+            .await?
+            .iter()
+            .filter_map(|row| {
+                map_row_to_chnot_comment(row)
+                    .map_err(|err| error!("unable to map: {}", err))
+                    .ok()
+            })
+            .collect();
+
+        let mut chnot_with_comments = vec![];
+
+        for chnot in chnots.into_iter() {
+            let comments = comments
+                .iter()
+                .filter(|c| c.chnot_perm_id == chnot.perm_id)
+                .map(|c| c.clone())
+                .collect();
+            let chnot_with_comment = ChnotWithComment { chnot, comments };
+            chnot_with_comments.push(chnot_with_comment)
+        }
+
         Ok(super::ChnotQueryRsp {
-            has_more: col.len() >= req.page_size.try_into().unwrap(),
-            data: col,
+            has_more: chnot_with_comments.len() >= req.page_size.try_into().unwrap(),
+            data: chnot_with_comments,
             next_start: req.start_index.saturating_add(req.page_size),
             this_start: req.start_index,
         })
@@ -297,6 +362,46 @@ impl ChnotMapper for Postgres {
         .await?;
 
         Ok(super::ChnotUpdateRsp {})
+    }
+
+    async fn chnot_comment_add(
+        &self,
+        req: ReqWrapper<ChnotCommentAddReq>,
+    ) -> AResult<ChnotCommentAddRsp> {
+        let stmt = self.pool.get().await?;
+
+        stmt.execute(
+            "insert into chnot_comments(id, chnot_perm_id, content, insert_time) values($1,$2,$3,$4)",
+            &[
+                &Uuid::new_v4().to_string(),
+                &req.chnot_perm_id,
+                &req.content,
+                &req.insert_time,
+            ],
+        )
+        .await?;
+
+        Ok(ChnotCommentAddRsp {})
+    }
+
+    async fn chnot_comment_delete(
+        &self,
+        req: ReqWrapper<ChnotCommentDeleteReq>,
+    ) -> AResult<ChnotCommentDeleteRsp> {
+        let stmt = self.pool.get().await?;
+
+        if req.logic {
+            stmt.execute(
+                "update chnot_comments set delete_time = CURRENT_TIMESTAMP where id = $1",
+                &[&req.id],
+            )
+            .await?;
+        } else {
+            stmt.execute("delete from chnot_comments where id = $1", &[&req.id])
+                .await?;
+        }
+
+        Ok(super::ChnotCommentDeleteRsp {})
     }
 }
 

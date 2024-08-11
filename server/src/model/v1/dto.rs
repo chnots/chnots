@@ -2,12 +2,13 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::http::HeaderMap;
 
+use chrono::{DateTime, FixedOffset};
 /// DTO: Data Transfer Object
 ///
 /// All dtos should be put into this file.
 use serde::{Deserialize, Serialize};
 
-use super::db::chnot::Chnot;
+use super::db::chnot::{Chnot, ChnotComment};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ReqWrapper<E: Debug + Clone + Serialize> {
@@ -72,8 +73,15 @@ pub struct ChnotQueryReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotWithComment {
+    #[serde(flatten)]
+    pub chnot: Chnot,
+    pub(crate) comments: Vec<ChnotComment>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryRsp {
-    pub data: Vec<Chnot>,
+    pub data: Vec<ChnotWithComment>,
     pub next_start: i64,
     pub this_start: i64,
     pub has_more: bool,
@@ -84,3 +92,32 @@ pub struct DomainQueryReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DomainQueryRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotCommentAddReq {
+    pub chnot_perm_id: String,
+    pub content: String,
+    pub insert_time: DateTime<FixedOffset>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotCommentAddRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotCommentDeleteReq {
+    pub id: String,
+    pub logic: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotCommentDeleteRsp {}
+
+// We do not allow user to update comment.
+/* #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotCommentUpdateReq {
+    pub id: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotCommentUpdateRsp {} */

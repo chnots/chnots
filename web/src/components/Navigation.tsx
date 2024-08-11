@@ -52,25 +52,25 @@ const Navigation = (props: Props) => {
     >
       <DomainBanner />
       <div className="w-10" />
-        {navLinks.map((navLink) => (
-          <NavLink
-            className={({ isActive }) =>
-              clsx(
+      {navLinks.map((navLink) => (
+        <NavLink
+          className={({ isActive }) =>
+            clsx(
               "rounded-2xl border flex flex-row items-start text-sm text-gray-800 dark:text-gray-400 hover:bg-white hover:border-gray-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 py-1 px-3 mx-2",
-                isActive
-                  ? "bg-white drop-shadow-sm dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
-                  : "border-transparent"
-              )
-            }
-            key={navLink.id}
-            to={navLink.path}
-            id={navLink.id}
-            unstable_viewTransition
-          >
+              isActive
+                ? "bg-white drop-shadow-sm dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
+                : "border-transparent"
+            )
+          }
+          key={navLink.id}
+          to={navLink.path}
+          id={navLink.id}
+          unstable_viewTransition
+        >
           {navLink.icon}
-              <span className="ml-3 truncate">{navLink.title}</span>
-          </NavLink>
-        ))}
+          <span className="ml-3 truncate">{navLink.title}</span>
+        </NavLink>
+      ))}
     </header>
   );
 };
