@@ -5,11 +5,13 @@ import axios from "axios";
 import type {
   AxiosInstance,
   AxiosRequestConfig,
+  AxiosRequestTransformer,
   AxiosResponse,
   CreateAxiosDefaults,
   InternalAxiosRequestConfig,
 } from "axios";
 import { toast } from "sonner";
+import { recursiveDateConversion } from "./axios-date-transformer";
 // import { useUserInfoStore } from "~/stores";
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
@@ -45,7 +47,7 @@ class Request {
         const url = response.config.url || "";
         this.abortControllerMap.delete(url);
 
-        return response;
+        return recursiveDateConversion(response.data);
       },
       (err) => {
         /*        if (err.response?.status === 401) {
@@ -76,10 +78,6 @@ class Request {
     }
   }
 
-  async request<T>(config: AxiosRequestConfig): Promise<T> {
-    return this.instance.request<T>(config).then(responseBody);
-  }
-
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.get<T>(url, config);
     return responseBody(response);
@@ -91,11 +89,10 @@ class Request {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const response = await this.instance.get<T>(url, {
+    return await this.instance.get<T>(url, {
       ...config,
       params: data,
     });
-    return responseBody(response);
   }
 
   async post<T>(
@@ -104,8 +101,7 @@ class Request {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const response = await this.instance.post<T>(url, data, config);
-    return responseBody(response);
+    return await this.instance.post<T>(url, data, config);
   }
 
   async put<T>(
@@ -114,14 +110,33 @@ class Request {
     data?: any,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const response = await this.instance.put<T>(url, data, config);
-    return responseBody(response);
+    return await this.instance.put<T>(url, data, config);
   }
 }
+
+const dateTransformer = (data: any): any => {
+  if (data instanceof Date) {
+    // do your specific formatting here
+    return data.toISOString();
+  }
+  if (Array.isArray(data)) {
+    return data.map(dateTransformer);
+  }
+  if (typeof data === "object" && data !== null) {
+    return Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, dateTransformer(value)])
+    );
+  }
+  return data;
+};
 
 const request = new Request({
   timeout: 20 * 1000,
   baseURL: "http://chinslt.com:3011",
+  transformRequest: [
+    dateTransformer,
+    ...(axios.defaults.transformRequest as AxiosRequestTransformer[]),
+  ],
 });
 
 export default request;
