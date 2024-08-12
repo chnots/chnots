@@ -50,13 +50,9 @@ impl PgParamBuilder {
         self
     }
 
-    pub fn where_equal<T: Into<Box<dyn ToSql + Sync + Send>>>(
-        mut self,
-        key: &str,
-        value: T,
-    ) -> Self {
+    pub fn where_equal<T: ToSql + Sync + Send + 'static>(mut self, key: &str, value: T) -> Self {
         self.segs
-            .push((key.into(), SqlParamValue::WhereEqual(value.into())));
+            .push((key.into(), SqlParamValue::WhereEqual(Box::new(value))));
         self
     }
 
