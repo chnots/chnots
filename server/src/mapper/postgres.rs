@@ -3,7 +3,10 @@ use std::{str::FromStr, sync::Arc};
 use crate::{
     app::ShareAppState,
     model::v1::db::chnot::{Chnot, ChnotComment, ChnotType},
-    utils::sql_param_builder::{self, extract_magic_sql_ph, SqlParamBuilder, MAGIC_SQL_PH},
+    utils::{
+        pg_param_builder::PgParamBuilder,
+        sql_param_builder::{ self, extract_magic_sql_ph, MAGIC_SQL_PH},
+    },
 };
 use arc_swap::ArcSwap;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
@@ -168,6 +171,49 @@ impl TableFounder for Postgres {
         )
         .await
     }
+
+    async fn _ensure_table_llm_chat(&self) -> EResult {
+        self.create_table(
+            "llm_chat_history_v1",
+            "CREATE TABLE llm_chat_history_v1 (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            serie_id TEXT NOT NULL,
+            template_id TEXT NOT NULL,
+            llm_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            insert_time TIMESTAMPTZ NOT NULL
+        )",
+        )
+        .await?;
+
+        self.create_table(
+            "llm_chat_config",
+            "CREATE TABLE llm_chat_config (
+                id TEXT PRIMARY KEY,
+                config TEXT NOT NULL,
+                delete_time TIMESTAMPTZ,
+                insert_time TIMESTAMPTZ NOT NULL,
+                update_time TIMESTAMPTZ NOT NULL
+                )",
+        )
+        .await?;
+
+        self.create_table(
+            "llm_chat_template",
+            "CREATE TABLE llm_chat_template (
+                id TEXT PRIMARY KEY,
+                template TEXT NOT NULL,
+                delete_time TIMESTAMPTZ,
+                insert_time TIMESTAMPTZ NOT NULL,
+                update_time TIMESTAMPTZ NOT NULL
+                )",
+        )
+        .await?;
+
+        Ok(())
+    }
 }
 
 impl ChnotMapper for Postgres {
@@ -224,37 +270,29 @@ impl ChnotMapper for Postgres {
     ) -> AResult<super::ChnotQueryRsp> {
         let stmt = self.pool.get().await?;
 
-        let mut sql = "select * from chnots ".to_string();
-
-        let builder = SqlParamBuilder::new();
-        let builder = if let Some(query) = &req.query {
-            builder.ilike("content", query)
-        } else {
-            builder
-        };
-
-        let (params, values) = builder
-            .with(
+        let (sql, values) = PgParamBuilder::new("select * from chnots ")
+            .option_ilike("content", req.query.as_ref())
+            .where_in(
                 "domain",
                 self.app_state()
                     .unwrap()
                     .domains
                     .managed(req.domain.as_ref().unwrap().as_str())
-                    .to_vec(),
+                    .to_vec()
+                    .into_iter()
+                    .map(|e| Box::new(e) as Box<dyn ToSql + Sync + Send>)
+                    .collect(),
             )
-            .fixed(" and delete_time is null ")
-            .fixed(format!(
+            .where_null("delete_time", true)
+            .raw(
                 " order by pinned desc, insert_time desc limit {} offset {}",
-                req.page_size, req.start_index
-            ))
+                vec![Box::new(req.page_size), Box::new(req.start_index)],
+            )
             .build();
-
-        sql.push_str(" where ");
-        sql.push_str(&params);
 
         let params = values
             .iter()
-            .map(|param| &*param as &(dyn ToSql + Sync))
+            .map(|param| param.as_ref() as &(dyn ToSql + Sync))
             .collect::<Vec<&(dyn ToSql + Sync)>>();
 
         let sql = extract_magic_sql_ph(sql.as_str());
