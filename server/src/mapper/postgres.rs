@@ -5,7 +5,7 @@ use crate::{
     model::v1::db::chnot::{Chnot, ChnotComment, ChnotType},
     utils::{
         pg_param_builder::PgParamBuilder,
-        sql_param_builder::{ self, extract_magic_sql_ph, MAGIC_SQL_PH},
+        sql_param_builder::{self, extract_magic_sql_ph, MAGIC_SQL_PH},
     },
 };
 use arc_swap::ArcSwap;
@@ -272,17 +272,7 @@ impl ChnotMapper for Postgres {
 
         let (sql, values) = PgParamBuilder::new("select * from chnots ")
             .option_ilike("content", req.query.as_ref())
-            .where_in(
-                "domain",
-                self.app_state()
-                    .unwrap()
-                    .domains
-                    .managed(req.domain.as_ref().unwrap().as_str())
-                    .to_vec()
-                    .into_iter()
-                    .map(|e| Box::new(e) as Box<dyn ToSql + Sync + Send>)
-                    .collect(),
-            )
+            .where_equal("domain", req.domain.as_ref().unwrap().clone())
             .where_null("delete_time", true)
             .raw(
                 " order by pinned desc, insert_time desc limit {} offset {}",
