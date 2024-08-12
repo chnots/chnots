@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -9,6 +7,7 @@ use axum::{
 
 use crate::{
     app::ShareAppState,
+    controller::KResponse,
     mapper::ChnotMapper,
     model::v1::dto::{
         req_wrapper, ChnotCommentAddReq, ChnotCommentAddRsp, ChnotCommentDeleteReq,
@@ -16,8 +15,6 @@ use crate::{
         ChnotInsertionRsp, ChnotQueryReq, ChnotQueryRsp, ChnotUpdateReq, ChnotUpdateRsp,
     },
 };
-
-use super::KResponse;
 
 pub fn routes() -> Router<ShareAppState> {
     Router::new()
