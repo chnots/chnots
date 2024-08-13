@@ -1,2 +1,3 @@
-.cm-gutters {
+.wmde-markdown pre > code {
+  text-wrap: wrap !important;
 }
