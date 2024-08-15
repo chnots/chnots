@@ -1,11 +1,15 @@
+pub mod backup;
 pub mod postgres;
 
+use std::future::Future;
+
+use backup::{BackupTrait, DumpWrapper};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use enum_dispatch::enum_dispatch;
 use postgres::{Postgres, PostgresConfig};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-use crate::model::v1::dto::*;
+use crate::model::v1::{db::chnot::Chnot, dto::*};
 
 #[enum_dispatch]
 pub enum MapperType {
@@ -102,4 +106,18 @@ pub trait LLMChatMapper {
     ) -> AResult<LLMChatConfigOverwriteRsp>;
     async fn llm_chat_config_delete(req: LLMChatConfigDeleteReq)
         -> AResult<LLMChatConfigDeleteRsp>;
+}
+
+pub trait Mapper: TableFounder + ChnotMapper {}
+
+impl BackupTrait for MapperType {
+    async fn dump_chnots<F, R1>(&self, row_writer: F) -> EResult
+    where
+        F: Fn(DumpWrapper<Chnot>) -> R1,
+        R1: Future<Output = EResult>,
+    {
+        match self {
+            MapperType::Postgres(s) => s.dump_chnots(row_writer).await,
+        }
+    }
 }

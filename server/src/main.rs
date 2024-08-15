@@ -3,14 +3,13 @@ use arguments::Arguments;
 use chin_tools::wrapper::anyhow::AResult;
 use clap::Parser;
 use config::Config;
-use mapper::{MapperType, TableFounder};
+use mapper::{backup::filebackup::FileDumpWorker, MapperType, TableFounder};
 use model::v1::domains::Domains;
 use server::controller;
 use tracing::{info, Level};
 
 pub mod app;
 pub(crate) mod arguments;
-pub(crate) mod backup;
 pub(crate) mod config;
 pub(crate) mod mapper;
 pub(crate) mod model;
@@ -37,11 +36,14 @@ async fn main() -> anyhow::Result<()> {
             mapper.ensure_tables().await?;
 
             let state = AppState {
-                config,
+                config: config.clone(),
                 mapper,
                 domains: Domains::new(),
             };
             let state: ShareAppState = state.into();
+            if let Some(config) = config.backup.as_ref() {
+                FileDumpWorker::schudele(&state, config);
+            }
 
             controller::serve(state).await;
         }
