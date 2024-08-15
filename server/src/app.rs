@@ -1,6 +1,10 @@
 use std::{ops::Deref, sync::Arc};
 
-use crate::{config::Config, mapper::MapperType, model::v1::domains::Domains};
+use crate::{
+    config::Config,
+    mapper::{backup::filebackup::FileDumpWorker, MapperType},
+    model::v1::domains::Domains,
+};
 
 pub struct AppState {
     pub mapper: MapperType,

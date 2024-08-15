@@ -1,11 +1,15 @@
 use serde::Deserialize;
 
-use crate::{mapper::MapperConfig, server::ServerConfig};
+use crate::{
+    mapper::{backup::filebackup::FileBackupConfig, MapperConfig},
+    server::ServerConfig,
+};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub server: Option<ServerConfig>,
     pub mapper: MapperConfig,
+    pub backup: Option<FileBackupConfig>,
 }
 
 pub mod tests {

@@ -1,6 +1,4 @@
-use std::{str::FromStr, sync::Arc};
-
-use crate::app::ShareAppState;
+use std::{future::Future, str::FromStr};
 
 use crate::{
     model::v1::db::chnot::{Chnot, ChnotComment, ChnotType},
@@ -12,15 +10,19 @@ use crate::{
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local};
 use deadpool_postgres::{Client, Pool};
+use futures::{pin_mut, TryStreamExt};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio_postgres::Row;
 use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::model::v1::dto::*;
 
+use super::backup::{BackupTrait, DumpWrapper};
 use super::{ChnotMapper, TableFounder};
+
+const NO_PARAMS: Vec<&(dyn ToSql + Sync)> = Vec::new();
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -47,7 +49,7 @@ pub struct Postgres {
     pub pool: Pool,
 }
 
-fn chnot_row_to_obj(row: &Row) -> AResult<Chnot> {
+fn map_row_to_chnot(row: &Row) -> AResult<Chnot> {
     let chnot = Chnot {
         id: row.try_get("id")?,
         perm_id: row.try_get("perm_id")?,
@@ -283,7 +285,7 @@ impl ChnotMapper for Postgres {
             .query(sql.as_str(), &params)
             .await?
             .into_iter()
-            .filter_map(|e| chnot_row_to_obj(&e).ok())
+            .filter_map(|e| map_row_to_chnot(&e).ok())
             .collect();
 
         let sql = format!(
@@ -422,6 +424,27 @@ impl ChnotMapper for Postgres {
         }
 
         Ok(super::ChnotCommentDeleteRsp {})
+    }
+}
+
+impl BackupTrait for Postgres {
+    async fn dump_chnots<F, R1>(&self, row_writer: F) -> EResult
+    where
+        F: Fn(DumpWrapper<Chnot>) -> R1,
+        R1: Future<Output = EResult>,
+    {
+        let client = self.get_client().await?;
+        let rows = client.query_raw("select * from chnots", NO_PARAMS).await?;
+        pin_mut!(rows);
+
+
+        while let Some(row) = rows.try_next().await? {
+            if let Ok(obj) = map_row_to_chnot(&row) {
+                row_writer(DumpWrapper::of(obj, 1)).await?;
+            }
+        }
+
+        Ok(())
     }
 }
 
