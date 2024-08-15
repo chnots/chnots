@@ -1,18 +1,20 @@
-use app::AppState;
+use app::{AppState, ShareAppState};
 use arguments::Arguments;
 use chin_tools::wrapper::anyhow::AResult;
 use clap::Parser;
 use config::Config;
-use mapper::{Db, MapperType, TableFounder};
+use mapper::{MapperType, TableFounder};
 use model::v1::domains::Domains;
+use server::controller;
 use tracing::{info, Level};
 
-pub(crate) mod app;
+pub mod app;
 pub(crate) mod arguments;
+pub(crate) mod backup;
 pub(crate) mod config;
-pub(crate) mod controller;
 pub(crate) mod mapper;
 pub(crate) mod model;
+pub(crate) mod server;
 pub(crate) mod utils;
 
 #[tokio::main]
@@ -39,9 +41,7 @@ async fn main() -> anyhow::Result<()> {
                 mapper,
                 domains: Domains::new(),
             };
-            let state: app::ShareAppState = state.into();
-
-            state.mapper.set_app_state(state.clone());
+            let state: ShareAppState = state.into();
 
             controller::serve(state).await;
         }

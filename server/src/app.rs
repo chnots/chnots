@@ -1,5 +1,3 @@
-pub mod v1;
-
 use std::{ops::Deref, sync::Arc};
 
 use crate::{config::Config, mapper::MapperType, model::v1::domains::Domains};

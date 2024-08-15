@@ -1,19 +1,18 @@
-use axum::{
-    extract::{Query, State},
-    http::HeaderMap,
-    routing::{delete, get, post, put},
-    Json, Router,
-};
-
+use crate::app::ShareAppState;
 use crate::{
-    app::ShareAppState,
-    controller::KResponse,
     mapper::ChnotMapper,
     model::v1::dto::{
         req_wrapper, ChnotCommentAddReq, ChnotCommentAddRsp, ChnotCommentDeleteReq,
         ChnotCommentDeleteRsp, ChnotDeletionReq, ChnotDeletionRsp, ChnotInsertionReq,
         ChnotInsertionRsp, ChnotQueryReq, ChnotQueryRsp, ChnotUpdateReq, ChnotUpdateRsp,
     },
+    server::controller::KResponse,
+};
+use axum::{
+    extract::{Query, State},
+    http::HeaderMap,
+    routing::{delete, get, post, put},
+    Json, Router,
 };
 
 pub fn routes() -> Router<ShareAppState> {
@@ -32,6 +31,7 @@ async fn chnot_overwrite(
     Json(req): Json<ChnotInsertionReq>,
 ) -> KResponse<ChnotInsertionRsp> {
     state
+        .mapper
         .chnot_overwrite(req_wrapper(headers, req))
         .await
         .into()
@@ -42,7 +42,11 @@ async fn chnot_deletetion(
     state: State<ShareAppState>,
     Json(req): Json<ChnotDeletionReq>,
 ) -> KResponse<ChnotDeletionRsp> {
-    state.chnot_deletion(req_wrapper(headers, req)).await.into()
+    state
+        .mapper
+        .chnot_delete(req_wrapper(headers, req))
+        .await
+        .into()
 }
 
 async fn chnot_update(
@@ -50,7 +54,11 @@ async fn chnot_update(
     state: State<ShareAppState>,
     Json(req): Json<ChnotUpdateReq>,
 ) -> KResponse<ChnotUpdateRsp> {
-    state.chnot_update(req_wrapper(headers, req)).await.into()
+    state
+        .mapper
+        .chnot_update(req_wrapper(headers, req))
+        .await
+        .into()
 }
 
 async fn chnot_query(
@@ -58,7 +66,11 @@ async fn chnot_query(
     state: State<ShareAppState>,
     Query(req): Query<ChnotQueryReq>,
 ) -> KResponse<ChnotQueryRsp> {
-    state.chnot_query(req_wrapper(headers, req)).await.into()
+    state
+        .mapper
+        .chnot_query(req_wrapper(headers, req))
+        .await
+        .into()
 }
 
 async fn chnot_comment_add(

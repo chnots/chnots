@@ -5,7 +5,7 @@ use enum_dispatch::enum_dispatch;
 use postgres::{Postgres, PostgresConfig};
 use serde::Deserialize;
 
-use crate::{app::ShareAppState, model::v1::dto::*};
+use crate::model::v1::dto::*;
 
 #[enum_dispatch]
 pub enum MapperType {
@@ -102,9 +102,4 @@ pub trait LLMChatMapper {
     ) -> AResult<LLMChatConfigOverwriteRsp>;
     async fn llm_chat_config_delete(req: LLMChatConfigDeleteReq)
         -> AResult<LLMChatConfigDeleteRsp>;
-}
-
-#[enum_dispatch(MapperType)]
-pub trait Db: TableFounder + ChnotMapper {
-    fn set_app_state(&self, state: ShareAppState);
 }
