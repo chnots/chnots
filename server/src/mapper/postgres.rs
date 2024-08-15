@@ -1,14 +1,14 @@
 use std::{str::FromStr, sync::Arc};
 
+use crate::app::ShareAppState;
+
 use crate::{
-    app::ShareAppState,
     model::v1::db::chnot::{Chnot, ChnotComment, ChnotType},
     utils::{
         pg_param_builder::PgParamBuilder,
         sql_param_builder::{self, extract_magic_sql_ph, MAGIC_SQL_PH},
     },
 };
-use arc_swap::ArcSwap;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local};
 use deadpool_postgres::{Client, Pool};
@@ -20,7 +20,7 @@ use uuid::Uuid;
 
 use crate::model::v1::dto::*;
 
-use super::{ChnotMapper, Db, TableFounder};
+use super::{ChnotMapper, TableFounder};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -45,7 +45,6 @@ impl Into<deadpool_postgres::Config> for PostgresConfig {
 
 pub struct Postgres {
     pub pool: Pool,
-    app_state: ArcSwap<Option<ShareAppState>>,
 }
 
 fn chnot_row_to_obj(row: &Row) -> AResult<Chnot> {
@@ -82,10 +81,7 @@ impl Postgres {
         let pool = Into::<deadpool_postgres::Config>::into(config)
             .create_pool(None, tokio_postgres::NoTls)?;
 
-        Ok(Postgres {
-            pool,
-            app_state: Default::default(),
-        })
+        Ok(Postgres { pool })
     }
 
     async fn get_client(&self) -> AResult<Client> {
@@ -102,10 +98,6 @@ impl Postgres {
             .await
             .map(|e| e.is_empty())
             .map_err(anyhow::Error::new)
-    }
-
-    fn app_state(&self) -> Option<ShareAppState> {
-        self.app_state.load().as_ref().clone()
     }
 
     async fn create_table(&self, table_name: &str, create_sql: &str) -> EResult {
@@ -430,12 +422,6 @@ impl ChnotMapper for Postgres {
         }
 
         Ok(super::ChnotCommentDeleteRsp {})
-    }
-}
-
-impl Db for Postgres {
-    fn set_app_state(&self, state: ShareAppState) {
-        self.app_state.store(Arc::new(Some(state)))
     }
 }
 

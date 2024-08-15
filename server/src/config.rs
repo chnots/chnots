@@ -1,15 +1,10 @@
 use serde::Deserialize;
 
-use crate::mapper::MapperConfig;
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Server {
-    pub port: u16,
-}
+use crate::{mapper::MapperConfig, server::ServerConfig};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
-    pub server: Option<Server>,
+    pub server: Option<ServerConfig>,
     pub mapper: MapperConfig,
 }
 
