@@ -1,4 +1,4 @@
-import request from "@/helpers/request";
+import request from "@/utils/request";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 

@@ -48,19 +48,27 @@ const RootLayout = () => {
     <div className="w-full min-h-full">
       <div
         className={clsx(
-          "w-full transition-all mx-auto flex flex-row justify-center items-start"
+          "w-full transition-all mx-auto flex flex-row justify-center items-start",
+          "sm:pl-16"
         )}
       >
         {sm && (
           <div
             className={clsx(
-              "group flex flex-col justify-start items-start fixed top-0 left-0 select-none border-r dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 dark:bg-opacity-40 transition-all hover:shadow-sm w-full p-1 z-2 border-gray-300 border-b"
+              "group flex flex-col justify-start items-start fixed top-0 left-0 select-none border-r dark:border-zinc-800 h-full bg-zinc-50 dark:bg-zinc-800 dark:bg-opacity-40 transition-all hover:shadow-xl z-2",
+              "w-16 px-2"
             )}
           >
-            <Navigation />
+            <Navigation className="!h-auto" />
+            <div
+              className={clsx(
+                "w-full grow h-auto flex flex-col justify-end",
+                "items-center"
+              )}
+            ></div>
           </div>
         )}
-        <main className="w-full bg-gray-100 h-auto flex-grow shrink flex flex-col justify-start items-center mt-12">
+        <main className="w-full bg-gray-100 h-auto flex-grow shrink flex flex-col justify-start items-center">
           <Suspense fallback={<Loading />}>
             <Outlet />
           </Suspense>
