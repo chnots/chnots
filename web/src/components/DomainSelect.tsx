@@ -1,4 +1,9 @@
-import { Select, Option } from "@mui/joy";
+import IconButton from "@mui/joy/IconButton";
+import Menu from "@mui/joy/Menu";
+import MenuItem from "@mui/joy/MenuItem";
+import ListItemDecorator from "@mui/joy/ListItemDecorator";
+import MenuButton from "@mui/joy/MenuButton";
+import Dropdown from "@mui/joy/Dropdown";
 import Icon from "./Icon";
 import { useDomainStore } from "@/store/v1/domain";
 
@@ -18,42 +23,31 @@ export const DomainIcon = ({
   }
 };
 
-export const DomainSelect = ({
-  domainName,
-  handleDomainChange,
-}: {
-  domainName: string;
-  handleDomainChange: (domain: string) => void;
-}) => {
+export const DomainSelect = () => {
   const domainStore = useDomainStore();
 
   return (
-    <div
-      className="relative flex flex-row justify-start items-center border border-gray-300 rounded-lg mr-4"
-      onFocus={(e) => e.stopPropagation()}
-    >
-      <Select
-        variant="plain"
-        value={domainName}
-        startDecorator={<DomainIcon name={domainName} />}
-        onChange={(_, domain) => {
-          if (domain) {
-            handleDomainChange(domain);
-          }
+    <Dropdown>
+      <MenuButton
+        slots={{ root: IconButton }}
+        slotProps={{
+          root: { variant: "plain", color: "neutral" },
         }}
       >
+        <DomainIcon name={domainStore.current.name} />
+      </MenuButton>
+      <Menu placement="bottom-end">
         {domainStore.domains().map((item) => {
           return (
-            <Option
-              key={item.name}
-              value={item.name}
-              className="whitespace-nowrap"
-            >
+            <MenuItem onClick={() => domainStore.changeDomain(item.name)}>
+              <ListItemDecorator>
+                <DomainIcon name={item.name} />
+              </ListItemDecorator>
               {item.name}
-            </Option>
+            </MenuItem>
           );
         })}
-      </Select>
-    </div>
+      </Menu>
+    </Dropdown>
   );
 };

@@ -1,10 +1,10 @@
+import { Tooltip } from "@mui/joy";
 import clsx from "clsx";
 import { NavLink } from "react-router-dom";
 import { Routes } from "@/router";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
 import { DomainSelect } from "./DomainSelect";
-import { useDomainStore } from "@/store/v1/domain";
 
 interface NavLinkItem {
   id: string;
@@ -19,7 +19,6 @@ interface Props {
 
 const Navigation = (props: Props) => {
   const { className } = props;
-  const domainStore = useDomainStore();
   const t = useTranslate();
 
   const chnotNavLink: NavLinkItem = {
@@ -48,34 +47,33 @@ const Navigation = (props: Props) => {
   return (
     <header
       className={clsx(
-        "w-full overflow-auto flex flex-row justify-start items-center z-30 hide-scrollbar ",
+        "w-full h-full overflow-auto flex flex-col justify-center items-center py-4 md:pt-6 z-30 hide-scrollbar",
         className
       )}
     >
-      <DomainSelect
-        handleDomainChange={domainStore.changeDomain}
-        domainName={domainStore.current.name}
-      />
-      <div className="w-10" />
-      {navLinks.map((navLink) => (
-        <NavLink
-          className={({ isActive }) =>
-            clsx(
-              "rounded-2xl border flex flex-row items-start text-sm text-gray-800 dark:text-gray-400 hover:bg-white hover:border-gray-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 py-1 px-3 mx-2",
-              isActive
-                ? "bg-white drop-shadow-sm dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
-                : "border-transparent"
-            )
-          }
-          key={navLink.id}
-          to={navLink.path}
-          id={navLink.id}
-          unstable_viewTransition
-        >
-          {navLink.icon}
-          <span className="ml-3 truncate">{navLink.title}</span>
-        </NavLink>
-      ))}
+      <DomainSelect />
+      <div className="w-full px-1 py-2 flex flex-col justify-center items-center shrink-0 space-y-2">
+        {navLinks.map((navLink) => (
+          <NavLink
+            className={({ isActive }) =>
+              clsx(
+                "px-2 py-2 rounded-2xl border flex flex-row items-center text-lg text-gray-800 dark:text-gray-400 hover:bg-white hover:border-gray-200 dark:hover:border-zinc-700 dark:hover:bg-zinc-800",
+                isActive
+                  ? "bg-white drop-shadow-sm dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
+                  : "border-transparent"
+              )
+            }
+            key={navLink.id}
+            to={navLink.path}
+            id={navLink.id}
+            unstable_viewTransition
+          >
+            <Tooltip title={navLink.title} placement="right" arrow>
+              <div>{navLink.icon}</div>
+            </Tooltip>
+          </NavLink>
+        ))}
+      </div>
     </header>
   );
 };
