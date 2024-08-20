@@ -134,7 +134,7 @@ const dateTransformer = (data: any): any => {
 
 const request = new Request({
   timeout: 20 * 1000,
-  baseURL: "http://chinslt.com:3011",
+  baseURL: window.location.protocol + "//" + window.location.host,
   transformRequest: [
     dateTransformer,
     ...(axios.defaults.transformRequest as AxiosRequestTransformer[]),
