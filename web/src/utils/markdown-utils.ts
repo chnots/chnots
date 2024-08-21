@@ -1,7 +1,14 @@
-import * as TurndownService from "@joplin/turndown";
-import * as TurndownPluginGfm from "@joplin/turndown-plugin-gfm";
+// @ts-nocheck
+// adopted from https://github.com/docmost/docmost/blob/main/apps/server/src/integrations/export/turndown-utils.ts
 
-export function turndown(html: string): string {
+import * as TurndownPluginGfm from "@joplin/turndown-plugin-gfm";
+import TurndownService from "@joplin/turndown";
+
+export function html2mdAsync(html: string): Promise<string> {
+  return Promise.resolve(html2md(html));
+}
+
+export function html2md(html: string): string {
   const turndownService = new TurndownService({
     headingStyle: "atx",
     codeBlockStyle: "fenced",
