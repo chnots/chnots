@@ -125,56 +125,72 @@ pub struct ChnotCommentUpdateRsp {} */
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateListReq {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateListRsp {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateOverwriteReq {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateOverwriteRsp {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateDeleteReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateDeleteRsp {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryListReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryListRsp {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryDetailReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryDetailRsp {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryAddReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryAddRsp {}
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigListReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigListRsp {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigOverwriteReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigOverwriteRsp {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigDeleteReq {}
-#[derive(Debug, Clone, Serialize, Deserialize)]
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigDeleteRsp {}
