@@ -16,8 +16,9 @@ import { useDomainStore } from "@/store/v1/domain";
 import { useChnotStore } from "@/store/v1/chnot";
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
+import { useAttachmentStore } from "@/store/v1/attachment";
 
-const imageRE = /\.(?:png|jpe?g|gif|bmp|svg|tiff?)$/i;
+// const imageRE = /\.(?:png|jpe?g|gif|bmp|svg|tiff?)$/i;
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -31,90 +32,52 @@ const eventHandlers = EditorView.domEventHandlers({
       return false; // Let the default handler take over
     }
 
-    // Now that we have proper clipboardData to access, we have to determine if
-    // this is an image or a text call. Here, we have a set of problems.
-    //
-    // 1. OS images (and other files) will be represented as file items, so
-    //    data.types only includes "Files"
-    // 2. Firefox and Chrome will, if the user copies an image, have both the
-    //    type "Files" and "text/html", the latter of which often includes the
-    //    URL or the image data as a string.
-    // 3. Microsoft Office is a POS and will just write EVERYTHING to the
-    //    clipboard, i.e. "text/plain", "text/html", "text/rtf", and "image/png"
-    // 4. LibreOffice will also write plain, HTML, and RTF, but no image.
-    //
-    // In effect, we cannot rely on the presence of a "Files" type in the
-    // clipboard data to tell us whether we should initiate a paste image or
-    // paste text action.
-    //
-    // BUT, what I found out is that whenever the intention is to paste text,
-    // and an image only serves as a fallback, there will be "text/plain" in the
-    // clipboard. In other words, as long as there is "text/plain" in the
-    // clipboard, the user intends to paste text, not an image.
     const textIntention = data.types.includes("text/plain");
 
     const insertions: string[] = [];
     const allPromises: Array<Promise<void>> = [];
+
     if (textIntention && data.types.includes("text/html")) {
-      // The user intends to paste text, and there is formatted HTML in the
-      // clipboard that we need to turn into HTML.
       const html = data.getData("text/html");
-      console.log("Converting from HTML ...");
+      const plain = data.getData("text/plain");
+
       const promise = html2mdAsync(html)
         .then((md) => {
-          console.log("Done!");
-
-          insertions.push(md);
+          if (!md || md.length === 0) {
+            insertions.push(plain);
+            toast.info("Empty markdown conversation.");
+          } else {
+            insertions.push(md);
+          }
         })
-
         .catch((err) => {
           console.error(err);
-          // On error, fall back to the plain text
-          insertions.push(data.getData("text/plain"));
+          insertions.push(plain);
         });
 
-      allPromises.push(promise);env = ELECTRON_OZONE_PLATFORM_HINT,auto
+      allPromises.push(promise);
     } else if (textIntention) {
-      // The user intends to paste text, but there's only plain text in the
-      // clipboard.
-      const text = data.getData("text/plain");
-      insertions.push(text);
+      const plain = data.getData("text/plain");
+      insertions.push(plain);
     } else {
-      // The user intends to paste an image or a series of files
-
       for (const file of data.files) {
-        if (imageRE.test(file.name)) {
-          if (file.path === "") {
-            // This image resides only within the clipboard, so prompt the user
-            // to save it down. The command will already wrap everything into
-            // `![]()`.
-            allPromises.push(
-              new Promise((resolve, reject) => {
-                saveImageFromClipboard(basePath)
-                  .then((tag) => {
-                    if (tag !== undefined) {
-                      insertions.push(tag);
-                    }
-                    resolve();
-                  })
-                  .catch((err) => reject(err));
+        allPromises.push(
+          new Promise((resolve, reject) => {
+            useAttachmentStore
+              .getState()
+              .upload(file)
+              .then((resource) => {
+                if (resource !== undefined) {
+                  insertions.push(`{{ KMGC/RES/${resource.id} }}`);
+                }
+                resolve();
               })
-            );
-          } else {
-            // There is a path in the file item
-            insertions.push(
-              `![${file.name}](${normalizePathForInsertion(
-                file.path,
-                basePath
-              )})`
-            );
-          }
-        } else {
-          // Not an image, so simply link it.
-          insertions.push(
-            `[${file.name}](${normalizePathForInsertion(file.path, basePath)})`
-          );
-        }
+              .catch((err) => {
+                toast.info(`unable to handle ${file}, ${err}`);
+                reject(err);
+              });
+          })
+        );
       }
     }
 

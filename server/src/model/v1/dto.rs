@@ -1,6 +1,6 @@
 use std::{fmt::Debug, ops::Deref};
 
-use axum::http::HeaderMap;
+use axum::{extract::Multipart, http::HeaderMap};
 
 use chrono::{DateTime, FixedOffset};
 /// DTO: Data Transfer Object
@@ -8,7 +8,10 @@ use chrono::{DateTime, FixedOffset};
 /// All dtos should be put into this file.
 use serde::{Deserialize, Serialize};
 
-use super::db::chnot::{Chnot, ChnotComment};
+use super::db::{
+    chnot::{Chnot, ChnotComment},
+    resource::Resource,
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ReqWrapper<E: Debug + Clone + Serialize> {
@@ -125,72 +128,60 @@ pub struct ChnotCommentUpdateRsp {} */
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateListReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateListRsp {}
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateOverwriteReq {}
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateOverwriteRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateDeleteReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplateDeleteRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryListReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryListRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryDetailReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryDetailRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryAddReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatHistoryAddRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigListReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigListRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigOverwriteReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigOverwriteRsp {}
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigDeleteReq {}
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatConfigDeleteRsp {}
+
+pub type ResourceUploadReq = Multipart;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourceUploadRsp {
+    pub(crate) resources: Vec<Resource>,
+}

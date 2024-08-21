@@ -30,6 +30,7 @@ export function html2md(html: string): string {
     mathInline,
     mathBlock,
   ]);
+
   return turndownService.turndown(html).replaceAll("<br>", " ");
 }
 

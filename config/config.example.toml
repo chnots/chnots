@@ -7,8 +7,12 @@ host = "127.0.0.1"
 port = 5432
 
 [server]
-port = 3011
+port = 3012
 
 [backup]
-backup_dir = "/home/chin/files/docs/chnots"
+backup_dir = "/home/chin/files/docs/chnots/backup"
 period = 1800
+
+
+[attachment]
+base_dir = "/home/chin/files/docs/chnots/attachments"
