@@ -9,7 +9,10 @@ use enum_dispatch::enum_dispatch;
 use postgres::{Postgres, PostgresConfig};
 use serde::{Deserialize, Serialize};
 
-use crate::model::v1::{db::chnot::Chnot, dto::*};
+use crate::model::v1::{
+    db::{chnot::Chnot, resource::Resource},
+    dto::*,
+};
 
 #[enum_dispatch]
 pub enum MapperType {
@@ -50,10 +53,13 @@ pub trait TableFounder {
 
     async fn _ensure_table_llm_chat(&self) -> EResult;
 
+    async fn _ensure_table_resources(&self) -> EResult;
+
     // Build all tables
     async fn ensure_tables(&self) -> EResult {
         self._ensure_table_chnots().await?;
         self._ensure_table_chnot_comments().await?;
+        self._ensure_table_resources().await?;
         self._ensure_table_llm_chat().await?;
         self._ensure_table_toent_defi().await?;
         self._ensure_table_toent_inst().await?;
@@ -84,6 +90,19 @@ pub trait ChnotMapper {
     ) -> AResult<ChnotCommentDeleteRsp>;
 }
 
+#[enum_dispatch(MapperType)]
+pub trait ResourceMapper {
+    async fn insert_resource(
+        &self,
+        ori_file_name: &str,
+        id: String,
+        content_type: String,
+        domain: Option<String>,
+    ) -> anyhow::Result<Resource>;
+
+    async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
+}
+
 pub trait LLMChatMapper {
     async fn llm_chat_template_list(req: LLMChatTemplateListReq)
         -> AResult<LLMChatTemplateListRsp>;
@@ -108,7 +127,7 @@ pub trait LLMChatMapper {
         -> AResult<LLMChatConfigDeleteRsp>;
 }
 
-pub trait Mapper: TableFounder + ChnotMapper {}
+pub trait Mapper: TableFounder + ChnotMapper + ResourceMapper {}
 
 impl BackupTrait for MapperType {
     async fn dump_chnots<F, R1>(&self, row_writer: F) -> EResult

@@ -22,7 +22,7 @@ use tower_http::{
     trace::{self, TraceLayer},
 };
 use tracing::{info, Level};
-use v1::chnot;
+use v1::{chnot, resource};
 
 use crate::app::ShareAppState;
 
@@ -71,6 +71,7 @@ pub async fn serve(app_state: ShareAppState) {
         .on_request(|_req: &_, _: &_| {});
 
     let app = Router::new()
+        .merge(resource::routes())
         .merge(chnot::routes())
         .merge(asset::routes())
         .with_state(app_state)

@@ -1,7 +1,10 @@
 use std::{future::Future, str::FromStr};
 
 use crate::{
-    model::v1::db::chnot::{Chnot, ChnotComment, ChnotType},
+    model::v1::db::{
+        chnot::{Chnot, ChnotComment, ChnotType},
+        resource::Resource,
+    },
     utils::{
         pg_param_builder::PgParamBuilder,
         sql_param_builder::{self, extract_magic_sql_ph, MAGIC_SQL_PH},
@@ -19,7 +22,10 @@ use uuid::Uuid;
 
 use crate::model::v1::dto::*;
 
-use super::backup::{BackupTrait, DumpWrapper};
+use super::{
+    backup::{BackupTrait, DumpWrapper},
+    ResourceMapper,
+};
 use super::{ChnotMapper, TableFounder};
 
 const NO_PARAMS: Vec<&(dyn ToSql + Sync)> = Vec::new();
@@ -207,6 +213,24 @@ impl TableFounder for Postgres {
         .await?;
 
         Ok(())
+    }
+
+    async fn _ensure_table_resources(&self) -> EResult {
+        self.create_table(
+            "resources",
+            "create table resources (
+    id VARCHAR(40) PRIMARY KEY,
+
+    domain VARCHAR(100) NOT NULL,
+    ori_filename VARCHAR(300) NOT NULL,
+
+    content_type VARCHAR(100) NOT NULL,
+
+    delete_time TIMESTAMPTZ,
+    insert_time TIMESTAMPTZ NOT NULL
+)",
+        )
+        .await
     }
 }
 
@@ -437,7 +461,6 @@ impl BackupTrait for Postgres {
         let rows = client.query_raw("select * from chnots", NO_PARAMS).await?;
         pin_mut!(rows);
 
-
         while let Some(row) = rows.try_next().await? {
             if let Ok(obj) = map_row_to_chnot(&row) {
                 row_writer(DumpWrapper::of(obj, 1)).await?;
@@ -445,6 +468,51 @@ impl BackupTrait for Postgres {
         }
 
         Ok(())
+    }
+}
+
+impl ResourceMapper for Postgres {
+    async fn insert_resource(
+        &self,
+        ori_filename: &str,
+        id: String,
+        content_type: String,
+        domain: Option<String>,
+    ) -> AResult<Resource> {
+        let stmt = self.pool.get().await?;
+
+        let insert_time = chrono::Utc::now().to_owned();
+
+        stmt.execute(
+            "insert into resources(id, domain, ori_filename, content_type, insert_time) values ($1,$2,$3,$4, $5)",
+            &[&id, &domain, &ori_filename, &content_type, &insert_time],
+        )
+        .await
+        .map_err(|e| anyhow::Error::new(e))
+        .map(|_| Resource {
+            id,
+            domain,
+            ori_filename: ori_filename.to_string(),
+            content_type,
+            insert_time,
+            delete_time: None,
+        })
+    }
+
+    async fn query_resource_by_id(&self, id: &str) -> AResult<Resource> {
+        let stmt = self.pool.get().await?;
+        let row = stmt
+            .query_one("select * from resources where id = $1", &[&id])
+            .await?;
+
+        Ok(Resource {
+            id: row.try_get("id")?,
+            domain: row.try_get("domain")?,
+            ori_filename: row.try_get("ori_filename")?,
+            content_type: row.try_get("content_type")?,
+            insert_time: row.try_get("insert_time")?,
+            delete_time: row.try_get("delete_time")?,
+        })
     }
 }
 

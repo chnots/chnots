@@ -15,6 +15,7 @@ pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod server;
 pub(crate) mod utils;
+pub mod magics;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

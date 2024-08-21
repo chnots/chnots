@@ -6,10 +6,16 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct AttachmentConfig {
+    pub base_dir: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub server: Option<ServerConfig>,
     pub mapper: MapperConfig,
     pub backup: Option<FileBackupConfig>,
+    pub attachment: AttachmentConfig,
 }
 
 pub mod tests {

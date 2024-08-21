@@ -5,7 +5,6 @@ import axios from "axios";
 import type {
   AxiosInstance,
   AxiosRequestConfig,
-  AxiosRequestTransformer,
   AxiosResponse,
   CreateAxiosDefaults,
   InternalAxiosRequestConfig,
@@ -28,7 +27,9 @@ class Request {
       (config: InternalAxiosRequestConfig) => {
         if (config.url !== "/login") {
           const domain = useDomainStore.getState().current.name;
-          if (domain) config.headers!["K-Domain"] = domain;
+          if (domain) {
+            config.headers!["K-Domain"] = domain;
+          }
         }
 
         const controller = new AbortController();
@@ -116,29 +117,9 @@ class Request {
   }
 }
 
-const dateTransformer = (data: any): any => {
-  if (data instanceof Date) {
-    // do your specific formatting here
-    return data.toISOString();
-  }
-  if (Array.isArray(data)) {
-    return data.map(dateTransformer);
-  }
-  if (typeof data === "object" && data !== null) {
-    return Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [key, dateTransformer(value)])
-    );
-  }
-  return data;
-};
-
 const request = new Request({
   timeout: 20 * 1000,
-  baseURL: window.location.protocol + "//" + "chinslt.com:3011",
-  transformRequest: [
-    dateTransformer,
-    ...(axios.defaults.transformRequest as AxiosRequestTransformer[]),
-  ],
+  baseURL: window.location.protocol + "//" + "chinslt.com:3012",
 });
 
 export default request;
