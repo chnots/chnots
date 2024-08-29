@@ -33,8 +33,12 @@ pub enum ChnotType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotComment {
     pub id: String,
+
+    pub parent_id: Option<String>,
     pub chnot_perm_id: String,
+
     pub content: String,
+
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub insert_time: DateTime<FixedOffset>,
 }

@@ -179,7 +179,7 @@ impl PgParamBuilder {
                     sql.push_str(" ilike ");
                     push_ph!();
                     sql.push(')');
-                    values.push(Box::new(r));
+                    values.push(Box::new(format!("%{}%", r)));
                 }
                 SqlParamValue::WhereIsNull(r) => {
                     cond_with!();

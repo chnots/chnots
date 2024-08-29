@@ -73,15 +73,16 @@ fn map_row_to_chnot(row: &Row) -> AResult<Chnot> {
 }
 
 fn map_row_to_chnot_comment(row: &Row) -> AResult<ChnotComment> {
-    let chnot = ChnotComment {
+    let comment = ChnotComment {
         id: row.try_get("id")?,
         chnot_perm_id: row.try_get("chnot_perm_id")?,
         content: row.try_get("content")?,
         insert_time: row.try_get("insert_time")?,
         delete_time: row.try_get("delete_time")?,
+        parent_id: row.try_get("parent_id"),
     };
 
-    Ok(chnot)
+    Ok(comment)
 }
 
 impl Postgres {

@@ -1,1 +1,1 @@
-pub const KMGC_RESOURCE: &str = "/KMGC/RES/";
+pub const KMGC_RESOURCE: &str = "KMGC::RES::";
