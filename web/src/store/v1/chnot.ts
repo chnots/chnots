@@ -30,6 +30,7 @@ export interface Chnot {
 const getDefaultState = (): State => {
   return {
     fetchMoreChnots: () => {},
+    refreshChnots: () => {},
     chnotPages: [],
     pageSize: 20,
     startIndex: 0,
@@ -90,6 +91,7 @@ export interface ChnotCommentAddReq {
 }
 
 interface State {
+  refreshChnots(): unknown;
   fetchMoreChnots(): unknown;
 
   pageSize: number;
@@ -143,7 +145,7 @@ export const useChnotStore = create(
         return { ...state, query: query, startIndex: 0 };
       });
 
-      await get().fetchMoreChnots();
+      await get().refreshChnots();
     },
     refreshChnots: async () => {
       set((state) => {

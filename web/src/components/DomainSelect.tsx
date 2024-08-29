@@ -33,6 +33,7 @@ export const DomainSelect = () => {
         slotProps={{
           root: { variant: "plain", color: "neutral" },
         }}
+        size="lg"
       >
         <DomainIcon name={domainStore.current.name} />
       </MenuButton>

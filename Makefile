@@ -1,3 +1,5 @@
+webrun:
+	cd web && pnpm run dev
 build:
 	cd web && pnpm run build
 	cd server && cargo build --release

@@ -119,7 +119,7 @@ class Request {
 
 const request = new Request({
   timeout: 20 * 1000,
-  baseURL: window.location.protocol + "//" + "chinslt.com:3012",
+  baseURL: window.location.protocol + "//chinslt.com:3011",
 });
 
 export default request;
