@@ -99,6 +99,7 @@ pub struct DomainQueryRsp {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotCommentAddReq {
     pub chnot_perm_id: String,
+    pub parent_id: Option<String>,
     pub content: String,
     pub insert_time: DateTime<FixedOffset>,
 }
