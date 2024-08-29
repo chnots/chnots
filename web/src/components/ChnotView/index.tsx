@@ -1,13 +1,13 @@
 import { Chnot, ChnotType } from "@/store/v1/chnot";
 import { v4 as uuid } from "uuid";
-import { MarkdownChnotEditor, MarkdownChnotViewer } from "./MarkdownChnot";
+import { MarkdownChnotEditor } from "../ChnotMarkdown/Editor";
 import ChnotActionMenu from "../ChnotActionMenu";
 import { Tooltip } from "@mui/joy";
 import Icon from "../Icon";
 import { DomainIcon } from "../DomainSelect";
 import { useState } from "react";
 import { useChnotStore } from "@/store/v1/chnot";
-import { ChnotCommentEditor, ChnotCommentViewer } from "./ChnotComments";
+import { MarkdownChnotViewer } from "../ChnotMarkdown/Viewer";
 
 export interface ChnotViewState {
   isUploadingResource: boolean;
@@ -100,30 +100,6 @@ const ChnotView = ({
           <div className="w-full">
             <MarkdownChnotViewer chnot={chnot} />
           </div>
-          {chnot.comments && chnot.comments.length > 0 && (
-            <div className="w-full">
-              {chnot.comments.map((comment) => {
-                return (
-                  <ChnotCommentViewer comment={comment} key={comment.id} />
-                );
-              })}
-            </div>
-          )}
-          {editingComment && (
-            <div className="w-full flex flex-row text-sm">
-              <ChnotCommentEditor
-                content={""}
-                handleSendCallback={function (content: string): void {
-                  chnotStore.addComment({
-                    id: uuid(),
-                    content: content,
-                    chnot_perm_id: chnot.perm_id,
-                    insert_time: new Date(),
-                  });
-                }}
-              />
-            </div>
-          )}
         </div>
       ) : (
         <div

@@ -1,10 +1,11 @@
-import { Tooltip } from "@mui/joy";
+import { Divider, Tooltip } from "@mui/joy";
 import clsx from "clsx";
 import { NavLink } from "react-router-dom";
 import { Routes } from "@/router";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./Icon";
 import { DomainSelect } from "./DomainSelect";
+import SearchButton from "./SearchNavigation";
 
 interface NavLinkItem {
   id: string;
@@ -41,8 +42,19 @@ const Navigation = (props: Props) => {
     title: t("Settings"),
     icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
   };
+  const llmchatNavLink: NavLinkItem = {
+    id: "header-llmchat",
+    path: Routes.LLMChat,
+    title: t("LLM Chat"),
+    icon: <Icon.BotMessageSquare className="w-6 h-auto opacity-70 shrink-0" />,
+  };
 
-  const navLinks: NavLinkItem[] = [chnotNavLink, toentNavLink, settingsNavLink];
+  const navLinks: NavLinkItem[] = [
+    chnotNavLink,
+    toentNavLink,
+    llmchatNavLink,
+    settingsNavLink,
+  ];
 
   return (
     <header
@@ -52,6 +64,9 @@ const Navigation = (props: Props) => {
       )}
     >
       <DomainSelect />
+      <SearchButton />
+      <Divider className="!mt-4 !mb-2" />
+
       <div className="w-full px-1 py-2 flex flex-col justify-center items-center shrink-0 space-y-2">
         {navLinks.map((navLink) => (
           <NavLink

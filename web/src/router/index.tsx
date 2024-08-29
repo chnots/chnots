@@ -5,12 +5,14 @@ import Toents from "@/pages/Toents";
 import Chnots from "@/pages/Chnots";
 import RootLayout from "@/layouts/RootLayout";
 import Settings from "@/pages/Settings";
+import LLMChat from "@/pages/LLMChat";
 
 export enum Routes {
   ROOT = "/",
   Chnots = "/chnots",
   Toents = "/toents",
   Settings = "/settings",
+  LLMChat = "/llmchat",
 }
 
 const routes: RouteObject[] = [
@@ -33,6 +35,10 @@ const routes: RouteObject[] = [
       {
         path: Routes.Settings,
         element: <Settings />,
+      },
+      {
+        path: Routes.LLMChat,
+        element: <LLMChat />,
       },
     ],
   },

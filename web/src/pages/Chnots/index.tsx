@@ -1,16 +1,25 @@
 import clsx from "clsx";
 import ChnotList from "@/components/ChnotList";
 import ChnotView, { ChnotViewMode } from "@/components/ChnotView";
+import { useCommonStore } from "@/store/v1/common";
+import SearchPanel from "@/components/SearchPanel";
 
 const Chnots = () => {
+  const commonStore = useCommonStore();
+
   return (
-    <section className="w-full max-w-5xl min-h-full flex flex-col justify-start items-center sm:pt-3 md:pt-6 pb-8">
       <div
         className={clsx(
-          "w-full flex flex-row justify-start items-start px-4 sm:px-6 gap-4"
+        "w-full flex flex-row justify-center items-start px-4 sm:px-6 gap-4 m-4"
         )}
       >
-        <div className={clsx("w-[calc(100%-15rem)]")}>
+      {commonStore.getNaviSearch() && (
+        <div>
+          <SearchPanel />
+        </div>
+      )}
+
+      <div className={clsx("w-full max-w-2xl")}>
           <ChnotView
             className="mb-2"
             viewMode={ChnotViewMode.Editor}
@@ -19,7 +28,6 @@ const Chnots = () => {
           <ChnotList />
         </div>
       </div>
-    </section>
   );
 };
 
