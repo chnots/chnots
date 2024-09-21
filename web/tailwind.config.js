@@ -17,23 +17,80 @@ module.exports = {
       "6xl": "3rem",
     },
     extend: {
-      spacing: {
-        112: "28rem",
-        128: "32rem",
-        180: "45rem",
+      colors: {
+        // border: "hsl(var(--border))",
+        border: "var(--borderLine)",
+        input: "var(--borderLine)",
+        ring: "var(--borderLine)",
+        // ring: "hsl(var(--ring))",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        canvas: {
+          DEFAULT: "var(--canvasBackground)",
+          foreground: "var(--canvasForeground)",
+        },
+        panel: {
+          DEFAULT: "var(--panelBackground)",
+          foreground: "var(--panelForeground)",
+        },
+        sidebar: {
+          DEFAULT: "var(--sideItemBackground)",
+          active: "var(--sideItemActiveBackground)",
+          hover: "var(--sideItemHoverBackground)",
+        }
       },
-      zIndex: {
-        1: "1",
-        2: "2",
-        20: "20",
-        100: "100",
-        1000: "1000",
-        2000: "2000",
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
-      gridTemplateRows: {
-        7: "repeat(7, minmax(0, 1fr))",
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        'spin-slow': 'spin 2s linear infinite',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require("@tailwindcss/typography"),
+    require("tailwindcss-animate"),
+  ],
 };

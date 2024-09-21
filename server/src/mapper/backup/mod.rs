@@ -5,12 +5,12 @@ use std::future::Future;
 use chin_tools::wrapper::anyhow::EResult;
 use serde::{Deserialize, Serialize};
 
-use crate::model::v1::db::chnot::Chnot;
+use crate::model::db::chnot::ChnotRecord;
 
 pub trait BackupTrait {
     async fn dump_chnots<F, R1>(&self, row_writer: F) -> EResult
     where
-        F: Fn(DumpWrapper<Chnot>) -> R1,
+        F: Fn(DumpWrapper<ChnotRecord>) -> R1,
         R1: Future<Output = EResult>;
 }
 

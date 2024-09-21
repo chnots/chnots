@@ -1,10 +1,10 @@
 use crate::app::ShareAppState;
+use crate::model::dto::{kreq, Chnot};
 use crate::{
     mapper::ChnotMapper,
-    model::v1::dto::{
-        req_wrapper, ChnotCommentAddReq, ChnotCommentAddRsp, ChnotCommentDeleteReq,
-        ChnotCommentDeleteRsp, ChnotDeletionReq, ChnotDeletionRsp, ChnotInsertionReq,
-        ChnotInsertionRsp, ChnotQueryReq, ChnotQueryRsp, ChnotUpdateReq, ChnotUpdateRsp,
+    model::dto::{
+        ChnotDeletionReq, ChnotDeletionRsp, ChnotOverwriteRsp, ChnotOverwriteReq, ChnotQueryReq,
+        ChnotQueryRsp, ChnotUpdateReq, ChnotUpdateRsp,
     },
     server::controller::KResponse,
 };
@@ -17,22 +17,20 @@ use axum::{
 
 pub fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/chnot/overwrite", post(chnot_overwrite))
-        .route("/api/v1/chnot/update", post(chnot_update))
-        .route("/api/v1/chnot/deletion", post(chnot_deletetion))
-        .route("/api/v1/chnot/query", get(chnot_query))
-        .route("/api/v1/chnot/comment", delete(chnot_comment_deletetion))
-        .route("/api/v1/chnot/comment", put(chnot_comment_add))
+        .route("/api/v1/chnot", put(chnot_overwrite))
+        .route("/api/v1/chnot", delete(chnot_deletetion))
+        .route("/api/v1/chnot-query", post(chnot_query))
+        .route("/api/v1/chnot-update", post(chnot_update))
 }
 
 async fn chnot_overwrite(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotInsertionReq>,
-) -> KResponse<ChnotInsertionRsp> {
+    Json(req): Json<ChnotOverwriteReq>,
+) -> KResponse<ChnotOverwriteRsp> {
     state
         .mapper
-        .chnot_overwrite(req_wrapper(headers, req))
+        .chnot_overwrite(kreq(headers, req))
         .await
         .into()
 }
@@ -42,11 +40,7 @@ async fn chnot_deletetion(
     state: State<ShareAppState>,
     Json(req): Json<ChnotDeletionReq>,
 ) -> KResponse<ChnotDeletionRsp> {
-    state
-        .mapper
-        .chnot_delete(req_wrapper(headers, req))
-        .await
-        .into()
+    state.mapper.chnot_delete(kreq(headers, req)).await.into()
 }
 
 async fn chnot_update(
@@ -54,45 +48,13 @@ async fn chnot_update(
     state: State<ShareAppState>,
     Json(req): Json<ChnotUpdateReq>,
 ) -> KResponse<ChnotUpdateRsp> {
-    state
-        .mapper
-        .chnot_update(req_wrapper(headers, req))
-        .await
-        .into()
+    state.mapper.chnot_update(kreq(headers, req)).await.into()
 }
 
 async fn chnot_query(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<ChnotQueryReq>,
-) -> KResponse<ChnotQueryRsp> {
-    state
-        .mapper
-        .chnot_query(req_wrapper(headers, req))
-        .await
-        .into()
-}
-
-async fn chnot_comment_add(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<ChnotCommentAddReq>,
-) -> KResponse<ChnotCommentAddRsp> {
-    state
-        .mapper
-        .chnot_comment_add(req_wrapper(headers, req))
-        .await
-        .into()
-}
-
-async fn chnot_comment_deletetion(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<ChnotCommentDeleteReq>,
-) -> KResponse<ChnotCommentDeleteRsp> {
-    state
-        .mapper
-        .chnot_comment_delete(req_wrapper(headers, req))
-        .await
-        .into()
+    Json(req): Json<ChnotQueryReq>,
+) -> KResponse<ChnotQueryRsp<Vec<Chnot>>> {
+    state.chnot_query(kreq(headers, req)).await.into()
 }

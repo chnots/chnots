@@ -25,5 +25,6 @@ dist-ssr
 vite.config.js
 vite.config.d.ts
 tsconfig.node.tsbuildinfo
+tsconfig.app.json
 rsbuild.config.js
 rsbuild.config.d.ts

@@ -34,7 +34,7 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO chnots;
 ```sql
 create table chnots (
     id VARCHAR(40) NOT NULL,
-    ring_id VARCHAR(40) NOT NULL,
+    tree_id VARCHAR(40) NOT NULL,
 
     content TEXT NOT NULL,
     type VARCHAR(255) NOT NULL,
@@ -97,7 +97,7 @@ create table toent_inst (
 
 可选项有
 
-- [x] Chnot 的命名域
+- [X] Chnot 的命名域
 - [ ] Chnot 的修改、回复、删除功能
 - [ ] 检索功能
 - [ ] 粘贴图片功能
@@ -141,3 +141,4 @@ create table toent_inst (
 6. 自动备份
 
 上面的是最后记录到当前文件中, 后面的内容都应该更新到应用内.
+

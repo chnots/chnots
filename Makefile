@@ -1,20 +1,46 @@
-webrun:
-	cd web && pnpm run dev
-build:
-	cd web && pnpm run build
-	cd server && cargo build --release
+# 定义变量
+PNPM_INSTALL = pnpm install
+PNPM_BUILD = pnpm run build
+CARGO_BUILD = cargo build --release
+CARGO_CLEAN = cargo clean
 
-build-web:
-	cd vendor/turndown && git clean -xfd && pnpm install && pnpm run build
-	cd web && git clean -xfd && pnpm install && pnpm run build
+# 定义清理操作
+WEB_DIST = web-dist
+TURNDOWN_DIR = vendor/turndown
+TURNDOWN_PLUGIN_DIR = vendor/turndown-plugin-gfm
+WEB_DIR = web
+SERVER_DIR = server
+
+run-web:
+	cd $(WEB_DIR) && pnpm run dev
+
+run-server:
+	cd $(SERVER_DIR) && cargo run -- --config ../config/config.example.toml
+
+build-server:
+	cd $(SERVER_DIR) && $(CARGO_BUILD)
+
+build-turndown:
+	cd $(TURNDOWN_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
+
+build-turndown-plugin-gfm:
+	cd $(TURNDOWN_PLUGIN_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
+
+build-web-dir:
+	cd $(WEB_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
+
+build-web: build-turndown build-turndown-plugin-gfm build-web-dir
+
+build: build-web build-server
 
 install:
-	cd web && pnpm run build
-	cd server && cargo install --path .
-clean:
-	rm -rf web-dist
+	cd $(SERVER_DIR) && cargo install --path .
+
+clean-web-dist:
+	rm -rf $(WEB_DIST)
 
 clean-all:
-	rm -rf web-dist
-	cd server && cargo clean
-	cd web && pnpm run clean
+	clean-web-dist
+	cd $(SERVER_DIR) && $(CARGO_CLEAN)
+	cd $(WEB_DIR) && pnpm run clean
+

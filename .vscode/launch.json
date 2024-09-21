@@ -7,20 +7,13 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Launch",
-      "program": "${workspaceFolder}/server/target/debug/chnots",
-      "args": [
-        "--config",
-        "../config/config.example.toml"
-      ],
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
       "name": "chnots server",
-      "cwd": "${workspaceFolder}/web",
+      "cwd": "${workspaceFolder}/server",
       "cargo": {
+        "env": {
+          "RUST_LOG": "DEBUG"
+        },
+        "cwd": "${workspaceFolder}/server",
         "args": [
           "build",
         ]
@@ -29,13 +22,6 @@
         "--config",
         "../config/config.example.toml"
       ]
-    },
-    {
-      "name": "Launch Chrome",
-      "request": "launch",
-      "type": "chrome",
-      "url": "http://chinslt.com:5173",
-      "webRoot": "${workspaceFolder}/web"
     },
     {
       "name": "ntweb dev",

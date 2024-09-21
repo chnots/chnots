@@ -1,1 +1,1 @@
-# 类似 flomo, memos 的快速笔记录入工具。
+![preview](docs/data/preview.png)
