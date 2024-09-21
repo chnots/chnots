@@ -1,4 +1,4 @@
-export interface Domain {
+export interface Namespace {
   name: string;
   managers: string[];
 }

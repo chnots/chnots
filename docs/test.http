@@ -1,2 +1,0 @@
-###
-GET http://chinslt.com:3011/api/v1/chnot/query?query=123&limit=10&offset=100

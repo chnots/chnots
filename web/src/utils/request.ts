@@ -1,6 +1,6 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
-import { useDomainStore } from "@/store/v1/domain";
+import { useNamespaceStore } from "@/store/namespace";
 import axios from "axios";
 import type {
   AxiosInstance,
@@ -10,7 +10,7 @@ import type {
   InternalAxiosRequestConfig,
 } from "axios";
 import { toast } from "sonner";
-import { recursiveDateConversion } from "./axios-date-transformer";
+import { recursiveDateConversion } from "./date-utils";
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
 
@@ -26,9 +26,9 @@ class Request {
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         if (config.url !== "/login") {
-          const domain = useDomainStore.getState().current.name;
-          if (domain) {
-            config.headers!["K-Domain"] = domain;
+          const namespace = useNamespaceStore.getState().current.name;
+          if (namespace) {
+            config.headers!["K-namespace"] = namespace;
           }
         }
 
@@ -119,7 +119,9 @@ class Request {
 
 const request = new Request({
   timeout: 20 * 1000,
-  baseURL: window.location.protocol + "//chinslt.com:3011",
+  baseURL: import.meta.env.DEV
+    ? import.meta.env.PUBLIC_BACKEND_URL
+    : window.location.protocol + "//" + window.location.host,
 });
 
 export default request;

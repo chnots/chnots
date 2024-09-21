@@ -3,20 +3,159 @@ pub mod postgres;
 
 use std::future::Future;
 
+use anyhow::Ok;
 use backup::{BackupTrait, DumpWrapper};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use enum_dispatch::enum_dispatch;
-use postgres::{Postgres, PostgresConfig};
-use serde::{Deserialize, Serialize};
+use postgres::{resource, Postgres, PostgresConfig};
+use serde::Deserialize;
 
-use crate::model::v1::{
-    db::{chnot::Chnot, resource::Resource},
+use crate::model::{
+    db::{
+        chnot::ChnotRecord,
+        namespace::{NamespaceRecord, NamespaceRelation},
+        resource::Resource,
+    },
     dto::*,
 };
 
-#[enum_dispatch]
+pub trait ChnotMapper {
+    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
+    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
+    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
+    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
+
+    async fn ensure_table_chnot_record(&self) -> EResult;
+    async fn ensure_table_chnot_metadata(&self) -> EResult;
+}
+
+pub trait ResourceMapper {
+    async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource>;
+    async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
+
+    async fn ensure_table_resource(&self) -> EResult;
+}
+
+pub trait NamespaceMapper {
+    async fn read_all_namespaces(&self) -> AResult<Vec<NamespaceRecord>>;
+    async fn read_all_namespace_relations(&self) -> AResult<Vec<NamespaceRelation>>;
+
+    async fn ensure_table_namespace_record(&self) -> EResult;
+    async fn ensure_table_namespace_relation(&self) -> EResult;
+}
+
 pub enum MapperType {
-    Postgres,
+    Postgres(Postgres),
+}
+
+impl MapperType {
+    pub async fn ensure_tables(&self) -> EResult {
+        self.ensure_table_chnot_record().await?;
+        self.ensure_table_namespace_record().await?;
+        self.ensure_table_namespace_relation().await?;
+        self.ensure_table_chnot_metadata().await?;
+        self.ensure_table_resource().await?;
+
+        Ok(())
+    }
+}
+
+impl ChnotMapper for MapperType {
+    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
+        match self {
+            MapperType::Postgres(db) => db.chnot_overwrite(req).await,
+        }
+    }
+
+    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp> {
+        match self {
+            MapperType::Postgres(db) => db.chnot_delete(req).await,
+        }
+    }
+
+    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
+        match self {
+            MapperType::Postgres(db) => db.chnot_query(req).await,
+        }
+    }
+
+    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
+        match self {
+            MapperType::Postgres(db) => db.chnot_update(req).await,
+        }
+    }
+
+    async fn ensure_table_chnot_record(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_chnot_record().await,
+        }
+    }
+
+    async fn ensure_table_chnot_metadata(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_chnot_metadata().await,
+        }
+    }
+}
+
+impl ResourceMapper for MapperType {
+    async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource> {
+        match self {
+            MapperType::Postgres(db) => db.insert_resource(resource).await,
+        }
+    }
+
+    async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource> {
+        match self {
+            MapperType::Postgres(db) => db.query_resource_by_id(id).await,
+        }
+    }
+
+    async fn ensure_table_resource(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_resource().await,
+        }
+    }
+}
+
+impl NamespaceMapper for MapperType {
+    async fn read_all_namespaces(&self) -> AResult<Vec<NamespaceRecord>> {
+        match self {
+            MapperType::Postgres(db) => db.read_all_namespaces().await,
+        }
+    }
+
+    async fn read_all_namespace_relations(&self) -> AResult<Vec<NamespaceRelation>> {
+        match self {
+            MapperType::Postgres(db) => db.read_all_namespace_relations().await,
+        }
+    }
+
+    async fn ensure_table_namespace_record(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_namespace_record().await,
+        }
+    }
+
+    async fn ensure_table_namespace_relation(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_namespace_relation().await,
+        }
+    }
+}
+
+impl BackupTrait for MapperType {
+    async fn dump_chnots<F, R1>(&self, _: F) -> EResult
+    where
+        F: Fn(DumpWrapper<ChnotRecord>) -> R1,
+        R1: Future<Output = EResult>,
+    {
+        match self {
+            MapperType::Postgres(_) => {
+                tracing::error!("not implement dump logic");
+                Ok(())
+            }
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -33,110 +172,6 @@ impl Into<AResult<MapperType>> for MapperConfig {
                 let pg = Postgres::new(config)?;
                 Ok(MapperType::Postgres(pg))
             }
-        }
-    }
-}
-
-#[enum_dispatch(MapperType)]
-pub trait TableFounder {
-    // Main table.
-    async fn _ensure_table_chnots(&self) -> EResult;
-
-    // Comment table.
-    async fn _ensure_table_chnot_comments(&self) -> EResult;
-
-    // Toent Definations.
-    async fn _ensure_table_toent_defi(&self) -> EResult;
-
-    // Toent Instances.
-    async fn _ensure_table_toent_inst(&self) -> EResult;
-
-    async fn _ensure_table_llm_chat(&self) -> EResult;
-
-    async fn _ensure_table_resources(&self) -> EResult;
-
-    // Build all tables
-    async fn ensure_tables(&self) -> EResult {
-        self._ensure_table_chnots().await?;
-        self._ensure_table_chnot_comments().await?;
-        self._ensure_table_resources().await?;
-        self._ensure_table_llm_chat().await?;
-        self._ensure_table_toent_defi().await?;
-        self._ensure_table_toent_inst().await?;
-
-        Ok(())
-    }
-}
-
-#[enum_dispatch(MapperType)]
-pub trait ChnotMapper {
-    async fn chnot_overwrite(
-        &self,
-        req: ReqWrapper<ChnotInsertionReq>,
-    ) -> AResult<ChnotInsertionRsp>;
-    async fn chnot_delete(&self, req: ReqWrapper<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
-    async fn chnot_query(&self, req: ReqWrapper<ChnotQueryReq>) -> AResult<ChnotQueryRsp>;
-
-    async fn chnot_update(&self, req: ReqWrapper<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
-
-    async fn chnot_comment_add(
-        &self,
-        req: ReqWrapper<ChnotCommentAddReq>,
-    ) -> AResult<ChnotCommentAddRsp>;
-
-    async fn chnot_comment_delete(
-        &self,
-        req: ReqWrapper<ChnotCommentDeleteReq>,
-    ) -> AResult<ChnotCommentDeleteRsp>;
-}
-
-#[enum_dispatch(MapperType)]
-pub trait ResourceMapper {
-    async fn insert_resource(
-        &self,
-        ori_file_name: &str,
-        id: String,
-        content_type: String,
-        domain: Option<String>,
-    ) -> anyhow::Result<Resource>;
-
-    async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
-}
-
-pub trait LLMChatMapper {
-    async fn llm_chat_template_list(req: LLMChatTemplateListReq)
-        -> AResult<LLMChatTemplateListRsp>;
-    async fn llm_chat_template_overwrite(
-        req: LLMChatTemplateOverwriteReq,
-    ) -> AResult<LLMChatTemplateOverwriteRsp>;
-    async fn llm_chat_template_delete(
-        req: LLMChatTemplateDeleteReq,
-    ) -> AResult<LLMChatTemplateDeleteRsp>;
-
-    async fn llm_chat_history_list(req: LLMChatHistoryListReq) -> AResult<LLMChatHistoryListRsp>;
-    async fn llm_chat_history_detail(
-        req: LLMChatHistoryDetailReq,
-    ) -> AResult<LLMChatHistoryDetailRsp>;
-    async fn llm_chat_history_add(req: LLMChatHistoryAddReq) -> AResult<LLMChatHistoryAddRsp>;
-
-    async fn llm_chat_config_list(req: LLMChatConfigListReq) -> AResult<LLMChatConfigListRsp>;
-    async fn llm_chat_config_overwrite(
-        req: LLMChatConfigOverwriteReq,
-    ) -> AResult<LLMChatConfigOverwriteRsp>;
-    async fn llm_chat_config_delete(req: LLMChatConfigDeleteReq)
-        -> AResult<LLMChatConfigDeleteRsp>;
-}
-
-pub trait Mapper: TableFounder + ChnotMapper + ResourceMapper {}
-
-impl BackupTrait for MapperType {
-    async fn dump_chnots<F, R1>(&self, row_writer: F) -> EResult
-    where
-        F: Fn(DumpWrapper<Chnot>) -> R1,
-        R1: Future<Output = EResult>,
-    {
-        match self {
-            MapperType::Postgres(s) => s.dump_chnots(row_writer).await,
         }
     }
 }

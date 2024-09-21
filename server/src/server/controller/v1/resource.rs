@@ -3,12 +3,13 @@ use std::{ffi::OsStr, path::PathBuf};
 use axum::{
     body::{self, Bytes},
     extract::{Multipart, Path, State},
-    http::{header, HeaderName, StatusCode},
+    http::{header, HeaderMap, HeaderName, StatusCode},
     response::IntoResponse,
     routing::{get, put},
     Router,
 };
 use chin_tools::{utils::pathutils::split_uuid_to_file_name, wrapper::anyhow::AResult};
+use chrono::Local;
 use futures::{Stream, TryStreamExt};
 
 use tokio::{
@@ -19,8 +20,8 @@ use tokio_util::io::ReaderStream;
 use tracing::info;
 
 use crate::{
-    app::ShareAppState, config::AttachmentConfig, mapper::ResourceMapper,
-    model::v1::dto::ResourceUploadRsp, server::controller::KResponse,
+    app::ShareAppState, config::AttachmentConfig, mapper::{postgres::namespace, ResourceMapper},
+    model::{db::resource::Resource, dto::{read_namespace_from_header, ResourceUploadRsp}}, server::controller::KResponse,
 };
 
 pub fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
@@ -43,6 +44,7 @@ fn generate_resource_id(filename: &str) -> String {
 }
 
 async fn upload(
+    headers: HeaderMap,
     state: State<ShareAppState>,
     mut multipart: Multipart,
 ) -> AResult<ResourceUploadRsp> {
@@ -70,7 +72,14 @@ async fn upload(
         stream_to_file(field, &save_filepath).await?;
 
         let res = mapper
-            .insert_resource(&filename, id.clone(), content_type, Some("".to_string()))
+            .insert_resource(&Resource {
+                id,
+                namespace: read_namespace_from_header(&headers),
+                ori_filename: filename,
+                content_type,
+                delete_time: None,
+                insert_time: Local::now().into(),
+            })
             .await?;
         resources.push(res);
     }
@@ -142,8 +151,8 @@ pub fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
             "/api/v1/resource",
-            put(|state, mp| async {
-                let rsp: KResponse<ResourceUploadRsp> = upload(state, mp).await.into();
+            put(|headers, state, mp| async {
+                let rsp: KResponse<ResourceUploadRsp> = upload(headers, state, mp).await.into();
                 rsp
             }),
         )

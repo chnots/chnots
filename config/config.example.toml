@@ -1,18 +1,20 @@
 [mapper]
 type = "postgres"
-user = "chnots"
-pass = "chnots"
-dbname = "chnots"
-host = "127.0.0.1"
-port = 5432
+user = "chnotsdev"
+pass = "chnotsdev"
+dbname = "chnotsdev"
+host = "localhost"
+port =  5555
 
 [server]
 port = 3012
+tls_key = "/home/chin/files/private/bin/tls.key"
+tls_cert = "/home/chin/files/private/bin/tls.crt"
 
 [backup]
-backup_dir = "/home/chin/files/docs/chnots/backup"
+backup_dir = "/home/chin/chnots-dev/backup"
 period = 1800
 
 
 [attachment]
-base_dir = "/home/chin/files/docs/chnots/attachments"
+base_dir = "/home/chin/chnots-dev/attachments"

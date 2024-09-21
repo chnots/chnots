@@ -1,0 +1,40 @@
+@startuml ccc
+participant c [
+    Chnot
+    ----
+    id
+    meta_id
+    tree_id
+    content
+    delete_time
+    insert_time
+]
+
+participant h [
+    Chnot Hierarchy
+    ----
+    id
+    chnot_id
+    prev_chnot_id
+    parent_chnot_id
+    insert_time
+]
+
+participant n [
+    Nested Chnot Header
+    ----
+    id
+    category
+    ""title""
+    namespace
+    pinned
+    delete_time
+    insert_time
+    update_time
+]
+
+-> n: 覆盖
+
+
+
+@enduml

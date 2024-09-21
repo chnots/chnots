@@ -1,4 +1,7 @@
-use chin_tools::wrapper::anyhow::AResult;
+use std::{net::SocketAddr, path::PathBuf};
+
+use axum_server::tls_rustls::RustlsConfig;
+use chin_tools::wrapper::anyhow::{AResult, EResult};
 use serde::Serialize;
 use serde_json::json;
 
@@ -46,7 +49,7 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
                 res
             }
             Err(err) => {
-                tracing::error!("Error Occured: {}", err.backtrace());
+                tracing::error!("Error Occured: {}", err.to_string());
                 let mut res = Json(
                     json!({"msg": err.to_string(), "backstrace": err.backtrace().to_string()}),
                 )
@@ -58,7 +61,7 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
     }
 }
 
-pub async fn serve(app_state: ShareAppState) {
+pub async fn serve(app_state: ShareAppState) -> EResult {
     let port = app_state.config.server.as_ref().map_or(3301, |e| e.port);
     let cors_layer = CorsLayer::new()
         .allow_headers(Any)
@@ -74,7 +77,7 @@ pub async fn serve(app_state: ShareAppState) {
         .merge(resource::routes())
         .merge(chnot::routes())
         .merge(asset::routes())
-        .with_state(app_state)
+        .with_state(app_state.clone())
         .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(
             ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -93,10 +96,29 @@ pub async fn serve(app_state: ShareAppState) {
         .layer(cors_layer)
         .layer(trace_layer);
 
-    let server_url = format!("{}:{}", "0.0.0.0", port);
+    if let Some(config) = &app_state.config.server {
+        let tls_config = RustlsConfig::from_pem_file(
+            PathBuf::from(config.tls_cert.clone()),
+            PathBuf::from(config.tls_key.clone()),
+        )
+        .await?;
 
-    let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
-    info!("server: {}", server_url);
+        axum_server::bind_rustls(
+            SocketAddr::new(
+                std::net::IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0)),
+                port,
+            ),
+            tls_config,
+        )
+        .serve(app.into_make_service())
+        .await?;
+    } else {
+        let server_url = format!("{}:{}", "0.0.0.0", port);
 
-    axum::serve(listener, app).await.unwrap();
+        let listener = tokio::net::TcpListener::bind(&server_url).await?;
+        info!("server: {}", server_url);
+
+        axum::serve(listener, app).await?;
+    }
+    Ok(())
 }
