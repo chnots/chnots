@@ -1,24 +1,25 @@
-use std::{future::Future, str::FromStr};
+use std::{borrow::Cow, future::Future, str::FromStr, vec};
 
 use crate::{
     model::v1::db::{
-        chnot::{Chnot, ChnotComment, ChnotType},
+        chnot::{Chnot, ChnotHierarchy, ChnotType},
         resource::Resource,
     },
-    utils::{
-        pg_param_builder::PgParamBuilder,
-        sql_param_builder::{self, extract_magic_sql_ph, MAGIC_SQL_PH},
-    },
+    to_sqls,
+    utils::sql_param_builder::{LimitOffset, SimpleUpdater, SqlQuery, SqlValue, ValueType, Wheres},
 };
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use anyhow::{anyhow, Context};
+use chin_tools::{
+    utils::idutils,
+    wrapper::anyhow::{AResult, EResult},
+};
 use chrono::{DateTime, FixedOffset, Local};
-use deadpool_postgres::{Client, Pool};
-use futures::{pin_mut, TryStreamExt};
+use deadpool_postgres::{Client, Pool, PoolError};
+use futures::{pin_mut, stream::Collect, TryStreamExt};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tokio_postgres::Row;
-use tracing::{error, info};
-use uuid::Uuid;
+use tracing::info;
 
 use crate::model::v1::dto::*;
 
@@ -59,30 +60,34 @@ fn map_row_to_chnot(row: &Row) -> AResult<Chnot> {
     let chnot = Chnot {
         id: row.try_get("id")?,
         perm_id: row.try_get("perm_id")?,
-        content: row.try_get("content")?,
+        content: {
+            let s: String = row.try_get("content")?;
+            Cow::Owned(s)
+        },
         r#type: row.try_get("type")?,
         domain: row.try_get("domain")?,
         delete_time: row.try_get("delete_time")?,
         insert_time: row.try_get("insert_time")?,
-        update_time: row.try_get("update_time")?,
         pinned: row.try_get("pinned")?,
         archive_time: row.try_get("archive_time")?,
+        init_time: row.try_get("init_time")?,
+        rind_id: row.try_get("ring_id")?,
     };
 
     Ok(chnot)
 }
 
-fn map_row_to_chnot_comment(row: &Row) -> AResult<ChnotComment> {
-    let comment = ChnotComment {
+fn map_row_to_chnot_hierarchy(row: &Row) -> AResult<ChnotHierarchy> {
+    let chnot = ChnotHierarchy {
         id: row.try_get("id")?,
-        chnot_perm_id: row.try_get("chnot_perm_id")?,
-        content: row.try_get("content")?,
+
         insert_time: row.try_get("insert_time")?,
-        delete_time: row.try_get("delete_time")?,
-        parent_id: row.try_get("parent_id"),
+        parent_id: row.try_get("partent_id")?,
+        prev_id: row.try_get("prev_id")?,
+        chnot_id: row.try_get("chnot_id")?,
     };
 
-    Ok(comment)
+    Ok(chnot)
 }
 
 impl Postgres {
@@ -93,12 +98,12 @@ impl Postgres {
         Ok(Postgres { pool })
     }
 
-    async fn get_client(&self) -> AResult<Client> {
-        self.pool.get().await.map_err(anyhow::Error::new)
+    async fn client(&self) -> Result<Client, PoolError> {
+        self.pool.get().await
     }
 
     async fn check_if_table_not_exists(&self, table_name: &str) -> AResult<bool> {
-        let client = self.get_client().await?;
+        let client = self.client().await?;
         client
             .query(
                 "SELECT 1 FROM pg_tables WHERE  schemaname = 'public' AND tablename = $1",
@@ -113,7 +118,7 @@ impl Postgres {
         info!("begin to create table `{}'", table_name);
         if self.check_if_table_not_exists(table_name).await? {
             info!("table `{}' is not existed.", table_name);
-            let client = self.get_client().await?;
+            let client = self.client().await?;
             client
                 .execute(create_sql, &[])
                 .await
@@ -127,18 +132,23 @@ impl Postgres {
 }
 
 impl TableFounder for Postgres {
-    async fn _ensure_table_chnot_comments(&self) -> EResult {
+    async fn _ensure_table_chnots(&self) -> EResult {
         self.create_table(
-            "chnot_comments",
-            "create table chnot_comments (
+            "chnots",
+            "create table chnots (
     id VARCHAR(40) NOT NULL,
-    chnot_perm_id VARCHAR(40) NOT NULL,
+    perm_id VARCHAR(40) NOT NULL,
+    ring_id VARCHAR(40) NOT NULL,
 
     content TEXT NOT NULL,
+    type VARCHAR(255) NOT NULL,
+    domain TEXT NOT NULL,
+
+    pinned bool not null default false,
 
     delete_time timestamptz DEFAULT NULL,
     insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
-    update_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
+    init_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     primary key (id)
 )",
         )
@@ -151,26 +161,6 @@ impl TableFounder for Postgres {
 
     async fn _ensure_table_toent_inst(&self) -> EResult {
         Ok(())
-    }
-
-    async fn _ensure_table_chnots(&self) -> EResult {
-        self.create_table(
-            "chnots",
-            "create table chnots (
-    id VARCHAR(40) NOT NULL,
-    chnot_perm_id VARCHAR(40) NOT NULL,
-
-    content TEXT NOT NULL,
-    type VARCHAR(255) NOT NULL,
-    domain TEXT NOT NULL,
-
-    delete_time timestamptz DEFAULT NULL,
-    insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
-    update_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
-    primary key (id)
-)",
-        )
-        .await
     }
 
     async fn _ensure_table_llm_chat(&self) -> EResult {
@@ -233,20 +223,53 @@ impl TableFounder for Postgres {
         )
         .await
     }
+
+    async fn _ensure_table_chnot_hierarchies(&self) -> EResult {
+        self.create_table(
+            "chnot_hierarchies",
+            "create table chnot_hierarchies (
+    id VARCHAR(40) NOT NULL,
+
+    chnot_id VARCHAR(40) NOT NULL,
+    prev_id VARCHAR(40) comment 'prev chnot id',
+    parent_id VARCHAR(40) comment 'parent chnot id',
+
+    insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP
+)",
+        )
+        .await
+    }
 }
 
 impl ChnotMapper for Postgres {
-    async fn chnot_overwrite(
-        &self,
-        req: ReqWrapper<ChnotInsertionReq>,
-    ) -> AResult<ChnotInsertionRsp> {
+    async fn chnot_overwrite(&self, req: KReq<ChnotInsertionReq>) -> AResult<ChnotInsertionRsp> {
         let chnot = &req.body.chnot;
-        let stmt = self.pool.get().await?;
 
-        stmt.execute("update chnots set delete_time = CURRENT_TIMESTAMP where perm_id = $1 and delete_time is null", &[&chnot.perm_id]).await?;
+        let mut client = self.client().await?;
 
-        stmt.execute(
-            "insert into chnots(id, perm_id, pinned, content, type, domain, insert_time, update_time) values($1, $2, $3, $4, $5, $6, $7, $8)",
+        let transaction = client.build_transaction().start().await?;
+        let new_id = idutils::generate_uuid();
+
+        let old_id = transaction
+            .query_one(
+                "select id form chnots where perm_id = $1 and delete_time is null",
+                &[&req.chnot.perm_id],
+            )
+            .await
+            .and_then(|row| {
+                let id: String = row.try_get("id")?;
+                Ok(id)
+            })?;
+
+        transaction
+            .execute(
+                "update chnots set delete_time = CURRENT_TIMESTAMP where id = $1",
+                &[&old_id],
+            )
+            .await?;
+
+        transaction.execute(
+            "insert into chnots(id, perm_id, ring_id, pinned, content, type, domain, insert_time) values($1, $2, $3, $4, $5, $6, $7, $8, $9)",
             &[
                 &chnot.id,
                 &chnot.perm_id,
@@ -255,28 +278,64 @@ impl ChnotMapper for Postgres {
                 &chnot.r#type,
                 &chnot.domain,
                 &chnot.insert_time,
-                &chnot.update_time,
-            ],
+            ]
+        ).await?;
+
+        let hierarchies: Vec<ChnotHierarchy> = transaction
+            .query(
+                "select * from chnot_hierarchies where id = $1 or parent_id = $1 or prev_id = $1",
+                &[&old_id],
         )
-        .await?;
+            .await?
+            .iter()
+            .filter_map(|row| map_row_to_chnot_hierarchy(row).ok())
+            .filter_map(|mut ch| {
+                if ch.id == old_id {
+                    ch.id = new_id.clone();
+                } else if ch.prev_id.as_ref().map_or(false, |v| v == &old_id) {
+                    ch.prev_id.replace(new_id.clone());
+                } else if ch.parent_id.as_ref().map_or(false, |v| v == &old_id) {
+                    ch.parent_id.replace(new_id.clone());
+                };
+
+                ch.insert_time = chnot.insert_time.clone();
+
+                Some(ch)
+            })
+            .collect();
+
+        for h in hierarchies {
+            transaction.execute(
+                "insert into chnot_hierarchies (id, chnot_id, parent_id, prev_id, insert_time) values($1, $2, $3, $4, $5)",
+                &[
+                    &h.id,
+                    &h.chnot_id,
+                    &h.parent_id,
+                    &h.prev_id,
+                    &h.insert_time
+                ]
+            ).await?;
+        }
 
         Ok(ChnotInsertionRsp {})
     }
 
     async fn chnot_delete(
         &self,
-        req: ReqWrapper<super::ChnotDeletionReq>,
+        req: KReq<super::ChnotDeletionReq>,
     ) -> AResult<super::ChnotDeletionRsp> {
-        let stmt = self.pool.get().await?;
+        let client = self.client().await?;
 
         if req.logic {
-            stmt.execute(
+            client
+                .execute(
                 "update chnots set delete_time = CURRENT_TIMESTAMP where id = $1",
                 &[&req.chnot_id],
             )
             .await?;
         } else {
-            stmt.execute("delete from chnots where id = $1", &[&req.chnot_id])
+            client
+                .execute("delete from chnots where id = $1", &[&req.chnot_id])
                 .await?;
         }
 
@@ -285,170 +344,69 @@ impl ChnotMapper for Postgres {
 
     async fn chnot_query(
         &self,
-        req: ReqWrapper<super::ChnotQueryReq>,
-    ) -> AResult<super::ChnotQueryRsp> {
-        let stmt = self.pool.get().await?;
+        req: KReq<super::ChnotQueryReq>,
+    ) -> AResult<super::ChnotQueryRsp<Vec<ChnotWithRelation>>> {
+        let client = self.client().await?;
 
-        let (sql, values) = PgParamBuilder::new("select * from chnots ")
-            .option_ilike("content", req.query.as_ref())
-            .where_equal("domain", req.domain.as_ref().unwrap().clone())
-            .where_null("delete_time", true)
-            .raw(
-                " order by pinned desc, insert_time desc limit {} offset {}",
-                vec![Box::new(req.page_size), Box::new(req.start_index)],
-            )
-            .build();
+        let chnot_sql = SqlQuery::new()
+            .raw("SELECT DISTINCT ON (c.perm_id)")
+            .raw("c.*, ch.prev_id, ch.parent_id, ch.insert_time AS rel_insert_time")
+            .raw("from")
+            .sub("rs", SqlQuery::new()
+                .raw("select ring_id from chnots")
+                .wheres(Wheres::And(vec![
+                    Wheres::is_null("delete_time"),
+                    Wheres::equal("domain", req.domain.clone()),
+                    Wheres::if_some(req.query.as_ref(), |t| Wheres::ilike("content", t)),
+                ])).raw("group by perm_id")
+                .raw("order by MAX(case when pinned then 1 else 0 end) desc, MAX(insert_time) desc"))
+            .raw("LEFT JOIN chnots_test c ON rs.ring_id = c.ring_id")
+            .raw("LEFT JOIN chnot_hierarchies_tests ch ON c.id = ch.chnot_id")
+            .raw("ORDER BY c.perm_id, rel_insert_time DESC")
+            .build(&mut ValueType::dollar_number())
+            .context("unable to build SqlQuery for query chnots")?;
 
-        let params = values
-            .iter()
-            .map(|param| param.as_ref() as &(dyn ToSql + Sync))
-            .collect::<Vec<&(dyn ToSql + Sync)>>();
-
-        let sql = extract_magic_sql_ph(sql.as_str());
-
-        let chnots: Vec<Chnot> = stmt
-            .query(sql.as_str(), &params)
-            .await?
-            .into_iter()
-            .filter_map(|e| map_row_to_chnot(&e).ok())
-            .collect();
-
-        let sql = format!(
-            "select * from chnot_comments where chnot_perm_id in ({}) order by insert_time asc",
-            chnots
-                .iter()
-                .map(|e| format!("'{}'", e.perm_id))
-                .collect::<Vec<String>>()
-                .join(", ")
-        );
-
-        let comments: Vec<ChnotComment> = stmt
-            .query(sql.as_str(), &[])
+        let cs = client
+            .query(&chnot_sql.seg, to_sqls!(chnot_sql.values))
             .await?
             .iter()
             .filter_map(|row| {
-                map_row_to_chnot_comment(row)
-                    .map_err(|err| error!("unable to map: {}", err))
-                    .ok()
+                let chnot = map_row_to_chnot(row).ok()?;
+                Some(ChnotWithRelation {
+                    chnot: chnot,
+                    prev_id: row.try_get("prev_id").ok()?,
+                    parent_id: row.try_get("parent_id").ok()?,
+                })
             })
             .collect();
 
-        let mut chnot_with_comments = vec![];
-
-        for chnot in chnots.into_iter() {
-            let comments = comments
-                .iter()
-                .filter(|c| c.chnot_perm_id == chnot.perm_id)
-                .map(|c| c.clone())
-                .collect();
-            let chnot_with_comment = ChnotWithComment { chnot, comments };
-            chnot_with_comments.push(chnot_with_comment)
-        }
-
-        Ok(super::ChnotQueryRsp {
-            has_more: chnot_with_comments.len() >= req.page_size.try_into().unwrap(),
-            data: chnot_with_comments,
-            next_start: req.start_index.saturating_add(req.page_size),
-            this_start: req.start_index,
+        Ok(ChnotQueryRsp {
+            data: cs,
+            start_index: req.start_index,
         })
     }
 
     async fn chnot_update(
         &self,
-        req: ReqWrapper<super::ChnotUpdateReq>,
+        req: KReq<super::ChnotUpdateReq>,
     ) -> AResult<super::ChnotUpdateRsp> {
-        let stmt = self.pool.get().await?;
+        let client = self.client().await?;
 
-        let mut seg = String::new();
-        let mut args: Vec<Box<dyn ToSql + Sync + Send>> = vec![];
-        let mut init = true;
-        if let Some(pinned) = req.pinned {
-            if !init {
-                seg.push(',');
-            } else {
-                init = false;
-            }
-            seg.push_str("pinned = ");
-            seg.push_str(&MAGIC_SQL_PH);
-            args.push(Box::new(pinned));
-        }
-
-        if let Some(archive) = req.archive {
-            if !init {
-                seg.push(',');
-            } else {
-                init = false;
-            }
-            seg.push_str("archive_time = ");
-            seg.push_str(&MAGIC_SQL_PH);
-            if archive {
-                args.push(Box::new(Local::now()));
-            } else {
-                args.push(Box::new(None::<DateTime<FixedOffset>>));
-            }
-        }
-
-        let sql = sql_param_builder::extract_magic_sql_ph(
-            format!("update chnots set {} where id = {}", seg, MAGIC_SQL_PH).as_str(),
-        );
-        args.push(Box::new(req.chnot_id.to_string()));
-
-        let params = args
-            .iter()
-            .map(|param| param.as_ref())
-            .collect::<Vec<&(dyn ToSql + Sync + Send)>>();
-
-        stmt.execute(
-            sql.as_str(),
-            params
-                .iter()
-                .map(|e| *e as &(dyn ToSql + Sync))
-                .collect::<Vec<&(dyn ToSql + Sync)>>()
-                .as_slice(),
+        let su = SimpleUpdater::new("chnots")
+            .set_if_some("pinned", req.pinned)
+            .set_if_some(
+                "archive_time",
+                req.archive.map(|_| Local::now().fixed_offset()),
         )
-        .await?;
+            .filters(Wheres::Equal("id", (&req.chnot_id).into()).into());
+
+        let ss = su.build(ValueType::dollar_number());
+
+        if let Some(ss) = ss {
+            client.execute(ss.seg.as_str(), to_sqls!(ss.values)).await?;
+        }
 
         Ok(super::ChnotUpdateRsp {})
-    }
-
-    async fn chnot_comment_add(
-        &self,
-        req: ReqWrapper<ChnotCommentAddReq>,
-    ) -> AResult<ChnotCommentAddRsp> {
-        let stmt = self.pool.get().await?;
-
-        stmt.execute(
-            "insert into chnot_comments(id, chnot_perm_id, content, insert_time) values($1,$2,$3,$4)",
-            &[
-                &Uuid::new_v4().to_string(),
-                &req.chnot_perm_id,
-                &req.content,
-                &req.insert_time,
-            ],
-        )
-        .await?;
-
-        Ok(ChnotCommentAddRsp {})
-    }
-
-    async fn chnot_comment_delete(
-        &self,
-        req: ReqWrapper<ChnotCommentDeleteReq>,
-    ) -> AResult<ChnotCommentDeleteRsp> {
-        let stmt = self.pool.get().await?;
-
-        if req.logic {
-            stmt.execute(
-                "update chnot_comments set delete_time = CURRENT_TIMESTAMP where id = $1",
-                &[&req.id],
-            )
-            .await?;
-        } else {
-            stmt.execute("delete from chnot_comments where id = $1", &[&req.id])
-                .await?;
-        }
-
-        Ok(super::ChnotCommentDeleteRsp {})
     }
 }
 
@@ -458,7 +416,7 @@ impl BackupTrait for Postgres {
         F: Fn(DumpWrapper<Chnot>) -> R1,
         R1: Future<Output = EResult>,
     {
-        let client = self.get_client().await?;
+        let client = self.client().await?;
         let rows = client.query_raw("select * from chnots", NO_PARAMS).await?;
         pin_mut!(rows);
 
@@ -486,9 +444,8 @@ impl ResourceMapper for Postgres {
 
         stmt.execute(
             "insert into resources(id, domain, ori_filename, content_type, insert_time) values ($1,$2,$3,$4, $5)",
-            &[&id, &domain, &ori_filename, &content_type, &insert_time],
-        )
-        .await
+            &[&id, &domain, &ori_filename, &content_type, &insert_time]
+        ).await
         .map_err(|e| anyhow::Error::new(e))
         .map(|_| Resource {
             id,
@@ -551,4 +508,22 @@ impl ToSql for ChnotType {
     }
 
     to_sql_checked!();
+}
+
+impl<'a> Into<&'a (dyn ToSql + Sync + Send)> for &'a SqlValue<'a> {
+    fn into(self) -> &'a (dyn ToSql + Sync + Send) {
+        match self {
+            SqlValue::I8(v) => v,
+            SqlValue::I16(v) => v,
+            SqlValue::I32(v) => v,
+            SqlValue::I64(v) => v,
+            SqlValue::Str(v) => v,
+            SqlValue::Date(v) => v.as_ref(),
+            SqlValue::Bool(v) => v,
+            SqlValue::Opt(v) => match v {
+                Some(v) => v.as_ref().into(),
+                None => &None::<String>,
+            },
+        }
+    }
 }

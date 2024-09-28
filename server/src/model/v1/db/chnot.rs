@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -13,14 +15,15 @@ use strum_macros::EnumString;
 pub struct Chnot {
     pub id: String,
     pub perm_id: String,
-    pub content: String,
+    pub rind_id: String,
+    pub content: Cow<'static, str>,
     pub pinned: bool,
     pub r#type: ChnotType,
     pub domain: String,
     pub archive_time: Option<DateTime<FixedOffset>>,
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub insert_time: DateTime<FixedOffset>,
-    pub update_time: DateTime<FixedOffset>,
+    pub init_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
@@ -31,14 +34,12 @@ pub enum ChnotType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotComment {
+pub struct ChnotHierarchy {
     pub id: String,
 
+    pub chnot_id: String,
     pub parent_id: Option<String>,
-    pub chnot_perm_id: String,
+    pub prev_id: Option<String>,
 
-    pub content: String,
-
-    pub delete_time: Option<DateTime<FixedOffset>>,
     pub insert_time: DateTime<FixedOffset>,
 }

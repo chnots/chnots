@@ -43,7 +43,7 @@ pub trait TableFounder {
     async fn _ensure_table_chnots(&self) -> EResult;
 
     // Comment table.
-    async fn _ensure_table_chnot_comments(&self) -> EResult;
+    async fn _ensure_table_chnot_hierarchies(&self) -> EResult;
 
     // Toent Definations.
     async fn _ensure_table_toent_defi(&self) -> EResult;
@@ -58,7 +58,7 @@ pub trait TableFounder {
     // Build all tables
     async fn ensure_tables(&self) -> EResult {
         self._ensure_table_chnots().await?;
-        self._ensure_table_chnot_comments().await?;
+        self._ensure_table_chnot_hierarchies().await?;
         self._ensure_table_resources().await?;
         self._ensure_table_llm_chat().await?;
         self._ensure_table_toent_defi().await?;
@@ -70,24 +70,14 @@ pub trait TableFounder {
 
 #[enum_dispatch(MapperType)]
 pub trait ChnotMapper {
-    async fn chnot_overwrite(
+    async fn chnot_overwrite(&self, req: KReq<ChnotInsertionReq>) -> AResult<ChnotInsertionRsp>;
+    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
+    async fn chnot_query(
         &self,
-        req: ReqWrapper<ChnotInsertionReq>,
-    ) -> AResult<ChnotInsertionRsp>;
-    async fn chnot_delete(&self, req: ReqWrapper<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
-    async fn chnot_query(&self, req: ReqWrapper<ChnotQueryReq>) -> AResult<ChnotQueryRsp>;
+        req: KReq<ChnotQueryReq>,
+    ) -> AResult<ChnotQueryRsp<Vec<ChnotWithRelation>>>;
 
-    async fn chnot_update(&self, req: ReqWrapper<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
-
-    async fn chnot_comment_add(
-        &self,
-        req: ReqWrapper<ChnotCommentAddReq>,
-    ) -> AResult<ChnotCommentAddRsp>;
-
-    async fn chnot_comment_delete(
-        &self,
-        req: ReqWrapper<ChnotCommentDeleteReq>,
-    ) -> AResult<ChnotCommentDeleteRsp>;
+    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 }
 
 #[enum_dispatch(MapperType)]

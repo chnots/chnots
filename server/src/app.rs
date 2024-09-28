@@ -1,9 +1,15 @@
 use std::{ops::Deref, sync::Arc};
 
+use chin_tools::wrapper::anyhow::AResult;
+
 use crate::{
     config::Config,
-    mapper::{backup::filebackup::FileDumpWorker, MapperType},
-    model::v1::domains::Domains,
+    mapper::{ChnotMapper, MapperType},
+    model::v1::{
+        convert::construct_rings,
+        domains::Domains,
+        dto::{ChnotQueryReq, ChnotQueryRsp, ChnotRing, KReq},
+    },
 };
 
 pub struct AppState {
@@ -38,5 +44,19 @@ impl Deref for ShareAppState {
 impl Into<ShareAppState> for AppState {
     fn into(self) -> ShareAppState {
         ShareAppState(Arc::new(self))
+    }
+}
+
+impl AppState {
+    pub async fn chnot_query(
+        &self,
+        req: KReq<ChnotQueryReq>,
+    ) -> AResult<ChnotQueryRsp<Vec<ChnotRing>>> {
+        let res = self.mapper.chnot_query(req).await?;
+
+        Ok(ChnotQueryRsp {
+            data: construct_rings(res.data, false),
+            start_index: res.start_index,
+        })
     }
 }

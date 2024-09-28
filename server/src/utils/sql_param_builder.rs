@@ -336,7 +336,7 @@ impl<'a> SqlQuery<'a> {
         self
     }
 
-    pub fn filter(mut self, filter: Wheres<'a>) -> Self {
+    pub fn wheres(mut self, filter: Wheres<'a>) -> Self {
         self.segs.push(SimpleQueryType::Where(filter));
         self
     }
