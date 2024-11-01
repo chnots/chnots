@@ -106,7 +106,7 @@ impl Postgres {
         let client = self.client().await?;
         client
             .query(
-                "SELECT 1 FROM pg_tables WHERE  schemaname = 'public' AND tablename = $1",
+                "SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = $1",
                 &[&table_name.to_string()],
             )
             .await
@@ -273,6 +273,7 @@ impl ChnotMapper for Postgres {
             &[
                 &chnot.id,
                 &chnot.perm_id,
+                &chnot.rind_id,
                 &chnot.pinned,
                 &chnot.content,
                 &chnot.r#type,
@@ -285,7 +286,7 @@ impl ChnotMapper for Postgres {
             .query(
                 "select * from chnot_hierarchies where id = $1 or parent_id = $1 or prev_id = $1",
                 &[&old_id],
-        )
+            )
             .await?
             .iter()
             .filter_map(|row| map_row_to_chnot_hierarchy(row).ok())
@@ -306,7 +307,7 @@ impl ChnotMapper for Postgres {
 
         for h in hierarchies {
             transaction.execute(
-                "insert into chnot_hierarchies (id, chnot_id, parent_id, prev_id, insert_time) values($1, $2, $3, $4, $5)",
+                "insert into chnot_hierarchies (id, chnot_id, parent_id, prev_id, insert_time) values ($1, $2, $3, $4, $5)",
                 &[
                     &h.id,
                     &h.chnot_id,
@@ -329,10 +330,10 @@ impl ChnotMapper for Postgres {
         if req.logic {
             client
                 .execute(
-                "update chnots set delete_time = CURRENT_TIMESTAMP where id = $1",
-                &[&req.chnot_id],
-            )
-            .await?;
+                    "update chnots set delete_time = CURRENT_TIMESTAMP where id = $1",
+                    &[&req.chnot_id],
+                )
+                .await?;
         } else {
             client
                 .execute("delete from chnots where id = $1", &[&req.chnot_id])
@@ -397,7 +398,7 @@ impl ChnotMapper for Postgres {
             .set_if_some(
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
-        )
+            )
             .filters(Wheres::Equal("id", (&req.chnot_id).into()).into());
 
         let ss = su.build(ValueType::dollar_number());
@@ -446,15 +447,15 @@ impl ResourceMapper for Postgres {
             "insert into resources(id, domain, ori_filename, content_type, insert_time) values ($1,$2,$3,$4, $5)",
             &[&id, &domain, &ori_filename, &content_type, &insert_time]
         ).await
-        .map_err(|e| anyhow::Error::new(e))
-        .map(|_| Resource {
-            id,
-            domain,
-            ori_filename: ori_filename.to_string(),
-            content_type,
-            insert_time,
-            delete_time: None,
-        })
+            .map_err(|e| anyhow::Error::new(e))
+            .map(|_| Resource {
+                id,
+                domain,
+                ori_filename: ori_filename.to_string(),
+                content_type,
+                insert_time,
+                delete_time: None,
+            })
     }
 
     async fn query_resource_by_id(&self, id: &str) -> AResult<Resource> {

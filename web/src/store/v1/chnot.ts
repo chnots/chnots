@@ -24,7 +24,17 @@ export interface Chnot {
   delete_time?: Date;
   insert_time: Date;
   update_time: Date;
-  comments?: ChnotComment[];
+}
+
+export interface NestedChnot {
+  chnot: Chnot;
+  children: NestedChnot[];
+}
+
+export interface ChnotRing {
+  data: NestedChnot[];
+  ring_id: string;
+  type: ChnotType;
 }
 
 const getDefaultState = (): State => {
@@ -47,11 +57,9 @@ export interface ChnotQueryReq {
 }
 
 export interface ChnotQueryRsp {
-  data: Chnot[];
+  data: ChnotRing[];
 
-  this_start: number;
-  next_start: number;
-  has_more: boolean;
+  start_index: number;
 }
 
 export interface ChnotOverwriteReq {
@@ -68,7 +76,7 @@ export interface ChnotDeletionReq {
 export interface ChnotDeletionRsp {}
 
 interface ChnotPage {
-  chnots: Chnot[];
+  chnots: ChnotRing[];
   index: number;
 }
 
@@ -128,14 +136,14 @@ export const useChnotStore = create(
 
         arr.push({
           chnots: cs.data,
-          index: cs.this_start,
+          index: cs.start_index,
         });
 
         return {
           ...state,
           chnots: arr,
-          startIndex: cs.next_start,
-          hasNextPage: cs.has_more,
+          startIndex: cs.start_index + cs.data.length,
+          hasNextPage: cs.data.length >= read.pageSize,
           isFetchingNextPage: false,
         };
       });

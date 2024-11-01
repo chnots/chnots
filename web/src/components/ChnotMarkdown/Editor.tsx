@@ -3,7 +3,7 @@ import { v4 as uuid } from "uuid";
 import { useRef, useState } from "react";
 import { Chnot, ChnotType } from "@/store/v1/chnot";
 import Icon from "../Icon";
-import { ChnotViewState } from "../ChnotView";
+import { ChnotViewState } from "../ChnotRing";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 import CodeMirror, {

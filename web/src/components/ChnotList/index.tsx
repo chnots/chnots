@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
 
-import ChnotView from "../ChnotView";
-import { ChnotViewMode } from "../ChnotView";
+import ChnotRingView from "../ChnotRing";
+import { ChnotRingViewMode } from "../ChnotRing";
 import { useChnotStore } from "@/store/v1/chnot";
 import { Button } from "@mui/joy";
 import useCurrentDomain from "@/hooks/useCurrentDomain";
@@ -42,10 +42,10 @@ function ChnotList(props: ChnotListProps) {
       {chnotPages.map((page) => (
         <React.Fragment key={page.index}>
           {page.chnots.map((chnot) => (
-            <ChnotView
-              chnot={chnot}
-              viewMode={ChnotViewMode.Preview}
-              key={chnot.id}
+            <ChnotRingView
+              chnotRing={chnot}
+              viewMode={ChnotRingViewMode.Preview}
+              key={chnot.ring_id}
               createInput={false}
             />
           ))}

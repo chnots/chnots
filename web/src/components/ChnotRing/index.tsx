@@ -1,4 +1,4 @@
-import { Chnot, ChnotType } from "@/store/v1/chnot";
+import { Chnot, ChnotRing, ChnotRing as ChnotRingView, ChnotType } from "@/store/v1/chnot";
 import { v4 as uuid } from "uuid";
 import { MarkdownChnotEditor } from "../ChnotMarkdown/Editor";
 import ChnotActionMenu from "../ChnotActionMenu";
@@ -15,30 +15,30 @@ export interface ChnotViewState {
   isComposing: boolean;
 }
 
-export enum ChnotViewMode {
+export enum ChnotRingViewMode {
   Editor = "editor",
   Preview = "preview",
   Both = "both",
 }
 
-export interface ChnotViewProps {
-  viewMode: ChnotViewMode;
+export interface ChnotRingViewProps {
+  viewMode: ChnotRingViewMode;
 
   className?: string;
 
-  chnot?: Chnot;
+  chnotRing?: ChnotRing;
 
   createInput: boolean;
 }
 
-const ChnotView = ({
-  chnot: chnotIn,
+const ChnotRingView = ({
+  chnotRing: ring,
   className,
   viewMode,
   createInput,
-}: ChnotViewProps) => {
+}: ChnotRingViewProps) => {
   console.log("rerender chnot view");
-  const chnot: Chnot = chnotIn || {
+  const chnot: Chnot = ring || {
     id: uuid(),
     perm_id: uuid(),
     content: "",
@@ -62,7 +62,7 @@ const ChnotView = ({
 
   return (
     <div>
-      {chnotViewMode === ChnotViewMode.Preview ? (
+      {chnotViewMode === ChnotRingViewMode.Preview ? (
         <div className="group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700">
           <div className="w-full flex flex-row justify-between items-center gap-2">
             <div className="w-full -mt-0.5 text-xs leading-tight text-gray-400 dark:text-gray-500 select-none">
@@ -89,7 +89,7 @@ const ChnotView = ({
                 className="-ml-1"
                 chnot={chnot}
                 beginEditMode={() => {
-                  return setChnotViewMode(ChnotViewMode.Editor);
+                  return setChnotViewMode(ChnotRingViewMode.Editor);
                 }}
                 beginComment={function (): void {
                   setEditingComment(true);
@@ -114,4 +114,4 @@ const ChnotView = ({
   );
 };
 
-export default ChnotView;
+export default ChnotRingView;

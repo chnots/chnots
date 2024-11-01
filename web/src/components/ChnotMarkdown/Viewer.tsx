@@ -2,12 +2,6 @@ import { Chnot } from "@/store/v1/chnot";
 
 import MarkdownPreview from "@uiw/react-markdown-preview";
 
-
-
-function splitBodyAndComment(content: string) { 
-
-}
-
 export const MarkdownChnotViewer = ({ chnot }: { chnot: Chnot }) => {
   return (
     <div

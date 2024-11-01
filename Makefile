@@ -3,7 +3,8 @@ webrun:
 build:
 	cd web && pnpm run build
 	cd server && cargo build --release
-
+build-server:
+	cd server && cargo build --release
 build-web:
 	cd vendor/turndown && git clean -xfd && pnpm install && pnpm run build
 	cd web && git clean -xfd && pnpm install && pnpm run build
