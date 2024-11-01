@@ -1,7 +1,11 @@
-use std::{collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
+use std::{
+    collections::HashMap,
+    fmt::Display,
+    hash::Hash,
+    rc::Rc,
+};
 
 use anyhow::anyhow;
-use chrono::DateTime;
 
 pub struct TreeWrapper<T> {
     pub body: T,
@@ -133,11 +137,18 @@ where
                 .unwrap()
         };
 
+        if parent_map.is_empty() {
+            return TreeWrapper {
+                body: ext(parent),
+                children: vec![],
+            };
+        }
+
         let children: Vec<TreeWrapper<T>> =
-            if let Some(children) = parent_map.remove(id(parent.as_ref())) {
+            if let Some(children) = parent_map.remove(&id(parent.as_ref())) {
                 children
                     .into_iter()
-                    .map(|c| put_in_parent(c, parent_map, |e| id(e)))
+                    .map(|ele| put_in_parent(ele, parent_map, &id))
                     .collect()
             } else {
                 vec![]
@@ -153,4 +164,44 @@ where
         .into_iter()
         .map(|e| put_in_parent(e, &mut parent_map, |e| id(e)))
         .collect()
+}
+
+fn put_in_parent<K, T, F1>(
+    parent: Rc<T>,
+    parent_map: &mut HashMap<K, Vec<Rc<T>>>,
+    id: F1,
+) -> TreeWrapper<T>
+where
+    F1: Fn(&T) -> &K,
+    K: Eq + Hash + Clone + Display,
+{
+    let ext = |e: Rc<T>| {
+        Rc::<T>::try_unwrap(e)
+            .map_err(|e| anyhow!("unable to read {}", id(e.as_ref())))
+            .unwrap()
+    };
+
+    let mut stack = vec![(parent, Vec::new())];
+    let mut result = None;
+
+    while let Some((current, mut children)) = stack.pop() {
+        if let Some(child_nodes) = parent_map.remove(id(current.as_ref())) {
+            for child in child_nodes.into_iter().rev() {
+                stack.push((child, Vec::new()));
+            }
+        }
+
+        let wrapper = TreeWrapper {
+            body: ext(current),
+            children: children.into_iter().rev().collect(),
+        };
+
+        if stack.is_empty() {
+            result = Some(wrapper);
+        } else {
+            stack.last_mut().unwrap().1.push(wrapper);
+        }
+    }
+
+    result.unwrap()
 }

@@ -5,17 +5,17 @@ use crate::{
         chnot::{Chnot, ChnotHierarchy, ChnotType},
         resource::Resource,
     },
-    to_sqls,
-    utils::sql_param_builder::{LimitOffset, SimpleUpdater, SqlQuery, SqlValue, ValueType, Wheres},
+    to_sql,
+    util::sql_param_builder::{SimpleUpdater, SqlQuery, SqlValue, ValueType, Wheres},
 };
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use chin_tools::{
     utils::idutils,
     wrapper::anyhow::{AResult, EResult},
 };
-use chrono::{DateTime, FixedOffset, Local};
+use chrono::Local;
 use deadpool_postgres::{Client, Pool, PoolError};
-use futures::{pin_mut, stream::Collect, TryStreamExt};
+use futures::{pin_mut, TryStreamExt};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
@@ -367,13 +367,13 @@ impl ChnotMapper for Postgres {
             .context("unable to build SqlQuery for query chnots")?;
 
         let cs = client
-            .query(&chnot_sql.seg, to_sqls!(chnot_sql.values))
+            .query(&chnot_sql.seg, to_sql!(chnot_sql.values))
             .await?
             .iter()
             .filter_map(|row| {
                 let chnot = map_row_to_chnot(row).ok()?;
                 Some(ChnotWithRelation {
-                    chnot: chnot,
+                    chnot,
                     prev_id: row.try_get("prev_id").ok()?,
                     parent_id: row.try_get("parent_id").ok()?,
                 })
@@ -403,7 +403,7 @@ impl ChnotMapper for Postgres {
         let ss = su.build(ValueType::dollar_number());
 
         if let Some(ss) = ss {
-            client.execute(ss.seg.as_str(), to_sqls!(ss.values)).await?;
+            client.execute(ss.seg.as_str(), to_sql!(ss.values)).await?;
         }
 
         Ok(super::ChnotUpdateRsp {})

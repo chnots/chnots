@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! to_sqls {
+macro_rules! to_sql {
     ($values:expr) => {
         $values
             .iter()

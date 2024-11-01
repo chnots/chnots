@@ -3,7 +3,6 @@ use std::{fmt::Debug, ops::Deref};
 use axum::{extract::Multipart, http::HeaderMap};
 
 use chrono::{DateTime, FixedOffset};
-use clap::builder::Str;
 /// DTO: Data Transfer Object
 ///
 /// All dtos should be put into this file.

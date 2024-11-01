@@ -4,7 +4,7 @@ use chrono::DateTime;
 
 use crate::{
     model::v1::dto::NestedChnot,
-    utils::sort_util::{build_trees, TreeWrapper},
+    util::sort_util::{build_trees, TreeWrapper},
 };
 
 use super::dto::{ChnotRing, ChnotWithRelation};

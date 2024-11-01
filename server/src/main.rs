@@ -11,11 +11,11 @@ use tracing::{info, Level};
 pub mod app;
 pub(crate) mod arguments;
 pub(crate) mod config;
+pub mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod server;
-pub(crate) mod utils;
-pub mod magics;
+pub(crate) mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
             };
             let state: ShareAppState = state.into();
             if let Some(config) = config.backup.as_ref() {
-                FileDumpWorker::schudele(&state, config);
+                FileDumpWorker::schudele(&state, config).unwrap();
             }
 
             controller::serve(state).await;
