@@ -51,8 +51,6 @@ pub trait TableFounder {
     // Toent Instances.
     async fn _ensure_table_toent_inst(&self) -> EResult;
 
-    async fn _ensure_table_llm_chat(&self) -> EResult;
-
     async fn _ensure_table_resources(&self) -> EResult;
 
     // Build all tables
@@ -60,7 +58,6 @@ pub trait TableFounder {
         self._ensure_table_chnots().await?;
         self._ensure_table_chnot_hierarchies().await?;
         self._ensure_table_resources().await?;
-        self._ensure_table_llm_chat().await?;
         self._ensure_table_toent_defi().await?;
         self._ensure_table_toent_inst().await?;
 
@@ -91,30 +88,6 @@ pub trait ResourceMapper {
     ) -> anyhow::Result<Resource>;
 
     async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
-}
-
-pub trait LLMChatMapper {
-    async fn llm_chat_template_list(req: LLMChatTemplateListReq)
-        -> AResult<LLMChatTemplateListRsp>;
-    async fn llm_chat_template_overwrite(
-        req: LLMChatTemplateOverwriteReq,
-    ) -> AResult<LLMChatTemplateOverwriteRsp>;
-    async fn llm_chat_template_delete(
-        req: LLMChatTemplateDeleteReq,
-    ) -> AResult<LLMChatTemplateDeleteRsp>;
-
-    async fn llm_chat_history_list(req: LLMChatHistoryListReq) -> AResult<LLMChatHistoryListRsp>;
-    async fn llm_chat_history_detail(
-        req: LLMChatHistoryDetailReq,
-    ) -> AResult<LLMChatHistoryDetailRsp>;
-    async fn llm_chat_history_add(req: LLMChatHistoryAddReq) -> AResult<LLMChatHistoryAddRsp>;
-
-    async fn llm_chat_config_list(req: LLMChatConfigListReq) -> AResult<LLMChatConfigListRsp>;
-    async fn llm_chat_config_overwrite(
-        req: LLMChatConfigOverwriteReq,
-    ) -> AResult<LLMChatConfigOverwriteRsp>;
-    async fn llm_chat_config_delete(req: LLMChatConfigDeleteReq)
-        -> AResult<LLMChatConfigDeleteRsp>;
 }
 
 pub trait Mapper: TableFounder + ChnotMapper + ResourceMapper {}

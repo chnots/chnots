@@ -42,17 +42,10 @@ const Navigation = (props: Props) => {
     title: t("Settings"),
     icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
   };
-  const llmchatNavLink: NavLinkItem = {
-    id: "header-llmchat",
-    path: Routes.LLMChat,
-    title: t("LLM Chat"),
-    icon: <Icon.BotMessageSquare className="w-6 h-auto opacity-70 shrink-0" />,
-  };
 
   const navLinks: NavLinkItem[] = [
     chnotNavLink,
     toentNavLink,
-    llmchatNavLink,
     settingsNavLink,
   ];
 

@@ -163,49 +163,6 @@ impl TableFounder for Postgres {
         Ok(())
     }
 
-    async fn _ensure_table_llm_chat(&self) -> EResult {
-        self.create_table(
-            "llm_chat_history_v1",
-            "CREATE TABLE llm_chat_history_v1 (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            serie_id TEXT NOT NULL,
-            template_id TEXT NOT NULL,
-            llm_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            insert_time TIMESTAMPTZ NOT NULL
-        )",
-        )
-        .await?;
-
-        self.create_table(
-            "llm_chat_config",
-            "CREATE TABLE llm_chat_config (
-                id TEXT PRIMARY KEY,
-                config TEXT NOT NULL,
-                delete_time TIMESTAMPTZ,
-                insert_time TIMESTAMPTZ NOT NULL,
-                update_time TIMESTAMPTZ NOT NULL
-                )",
-        )
-        .await?;
-
-        self.create_table(
-            "llm_chat_template",
-            "CREATE TABLE llm_chat_template (
-                id TEXT PRIMARY KEY,
-                template TEXT NOT NULL,
-                delete_time TIMESTAMPTZ,
-                insert_time TIMESTAMPTZ NOT NULL,
-                update_time TIMESTAMPTZ NOT NULL
-                )",
-        )
-        .await?;
-
-        Ok(())
-    }
-
     async fn _ensure_table_resources(&self) -> EResult {
         self.create_table(
             "resources",

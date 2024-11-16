@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    hash::Hash,
-    rc::Rc,
-};
+use std::{collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
 
 use anyhow::anyhow;
 
