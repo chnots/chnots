@@ -1,10 +1,27 @@
-use std::{collections::HashMap, fmt::Display, hash::Hash, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+    hash::Hash,
+    process::id,
+    rc::Rc,
+    thread::panicking,
+};
 
 use anyhow::anyhow;
+use chin_tools::wayland::niri::model::KeyboardLayouts;
 
 pub struct TreeWrapper<T> {
     pub body: T,
     pub children: Vec<TreeWrapper<T>>,
+}
+
+impl<T> From<T> for TreeWrapper<T> {
+    fn from(value: T) -> Self {
+        Self {
+            body: value,
+            children: vec![],
+        }
+    }
 }
 
 fn sort_by_prev<K, T, C, F1, F2, F3>(
@@ -15,52 +32,54 @@ fn sort_by_prev<K, T, C, F1, F2, F3>(
     ya_ord: F3,
 ) where
     K: Eq + Hash + Clone,
-    T: Clone,
     C: Ord,
     F1: Fn(&T) -> &K,
     F2: Fn(&T) -> &Option<K>,
     F3: Fn(&T) -> &C,
 {
-    let mut result = vec![];
+    let mut sorted = vec![];
     {
-        let obj_map: HashMap<K, T> = elements
-            .iter()
-            .map(|e| (id(e).clone(), e.clone()))
-            .collect();
-        let mut next_map: HashMap<K, T> = HashMap::new();
-        let mut head_nodes: Vec<T> = vec![];
+        let ele_map: HashMap<K, &T> = elements.iter().map(|e| (id(e).to_owned(), e)).collect();
+        let mut next_map: HashMap<K, &T> = HashMap::new();
+        let mut head_nodes: Vec<&T> = vec![];
 
-        elements.into_iter().for_each(|cwr| {
-            if let Some(prev_id) = prev(cwr) {
-                if obj_map.contains_key(prev_id) {
-                    next_map.insert(prev_id.clone(), cwr.clone());
+        elements.iter().for_each(|ele| {
+            if let Some(prev_id) = prev(ele) {
+                // This element has previous node
+                if ele_map.contains_key(prev_id) {
+                    // We could find the previous node in the original vec.
+                    next_map.insert(prev_id.clone(), ele);
                 } else if !ignore_lost {
-                    head_nodes.push(cwr.clone());
+                    // Even the previous node, if the previous node is lost, we sort by another sort method.
+                    head_nodes.push(ele);
                 }
             } else {
-                head_nodes.push(cwr.clone());
+                head_nodes.push(ele);
             }
         });
 
         head_nodes.sort_by(|c1, c2| ya_ord(c1).cmp(ya_ord(c2)));
 
         for ele in head_nodes {
-            result.push(ele.clone());
+            sorted.push(ele);
             let mut p = &ele;
 
             while let Some(n) = next_map.get(id(p)) {
-                result.push(n.clone());
+                sorted.push(n);
                 p = n;
             }
         }
     }
 
-    if !ignore_lost {
-        elements.swap_with_slice(&mut result);
-    } else {
-        elements.clear();
-        elements.extend(result);
-    }
+    let mut new_index_map = HashMap::new();
+    sorted.iter().enumerate().for_each(|(index, ele)| {
+        new_index_map.insert(id(ele).to_owned(), index);
+    });
+
+    // We need only retain elements in the new index map.
+    elements.retain(|e| new_index_map.contains_key(id(e)));
+
+    elements.sort_by_cached_key(|e| *new_index_map.get(id(e)).unwrap_or(&0));
 }
 
 pub fn build_trees<K, T, C, F1, F2, F3, F4>(
@@ -79,124 +98,75 @@ where
     F3: Fn(&T) -> &Option<K>,
     F4: Fn(&T) -> &C,
 {
-    // parent_map and top_levels are orthogonal.
-    // so we could try unwrap them from Rc boxes.
-    let mut parent_map: HashMap<K, Vec<Rc<T>>> = HashMap::new();
-    let mut top_levels = vec![];
-
+    let mut filled: HashMap<K, TreeWrapper<T>> = Default::default();
+    let mut ele_vec: Vec<(TreeWrapper<T>, Vec<K>)> = Default::default();
     {
-        let ele_map: HashMap<K, Rc<T>> = elements
-            .into_iter()
-            .map(|e| (id(&e).clone(), Rc::new(e)))
-            .collect();
+        let mut parent_to_subs = HashMap::new();
 
-        for ele in ele_map.values() {
-            if let Some(pid) = parent(ele) {
-                if ele_map.contains_key(pid) {
-                    let vec = parent_map
-                        .entry(pid.to_owned())
-                        .or_insert_with(|| Vec::new());
-                    vec.push(ele.to_owned());
-                } else if !ignore_lost {
-                    top_levels.push(ele.clone());
+        for ele in elements.iter() {
+            let id = id(ele);
+            let parent = parent(ele);
+            if let Some(parent) = parent {
+                parent_to_subs
+                    .entry(parent.to_owned())
+                    .or_insert(vec![])
+                    .push(id.to_owned());
+            }
+        }
+
+        for ele in elements {
+            let key = id(&ele).to_owned();
+            if let Some(subs) = parent_to_subs.remove(&key) {
+                ele_vec.push((TreeWrapper::from(ele), subs));
+            } else {
+                filled.insert(key, TreeWrapper::from(ele));
+            }
+        }
+    }
+
+    let mut old_size = 0;
+    while old_size != ele_vec.len() || ele_vec.is_empty() {
+        old_size = ele_vec.len();
+        for (wrapper, vec) in ele_vec.iter_mut() {
+            vec.retain(|e| {
+                if filled.contains_key(e) {
+                    if let Some(ele) = filled.remove(e) {
+                        wrapper.children.push(ele);
+                    }
+                    false
+                } else {
+                    true
                 }
-            } else {
-                top_levels.push(ele.clone());
-            }
+            });
         }
+        let (fulled, others) = ele_vec.into_iter().partition(|(_, subs)| subs.is_empty());
 
-        parent_map.values_mut().for_each(|v| {
+        ele_vec = others;
+
+        filled.extend(fulled.into_iter().map(|(mut wrapper, _)| {
             sort_by_prev(
-                v,
+                &mut wrapper.children,
                 ignore_lost,
-                |e| id(e.as_ref()),
-                |e| prev(e.as_ref()),
-                |e| ya_ord(e.as_ref()),
-            )
-        });
+                |t| id(&t.body),
+                |t| prev(&t.body),
+                |t| ya_ord(&t.body),
+            );
+            (id(&wrapper.body).to_owned(), wrapper)
+        }));
     }
 
-    fn put_in_parent<K, T, F1>(
-        parent: Rc<T>,
-        parent_map: &mut HashMap<K, Vec<Rc<T>>>,
-        id: F1,
-    ) -> TreeWrapper<T>
-    where
-        F1: Fn(&T) -> &K,
-
-        K: Eq + Hash + Clone + Display,
-    {
-        let ext = |e: Rc<T>| {
-            Rc::<T>::try_unwrap(e)
-                .map_err(|e| anyhow!("unable to read {}", id(e.as_ref())))
-                .unwrap()
-        };
-
-        if parent_map.is_empty() {
-            return TreeWrapper {
-                body: ext(parent),
-                children: vec![],
-            };
-        }
-
-        let children: Vec<TreeWrapper<T>> =
-            if let Some(children) = parent_map.remove(&id(parent.as_ref())) {
-                children
-                    .into_iter()
-                    .map(|ele| put_in_parent(ele, parent_map, &id))
-                    .collect()
-            } else {
-                vec![]
-            };
-
-        TreeWrapper {
-            body: ext(parent),
-            children,
-        }
+    if !ele_vec.is_empty() {
+        tracing::error!("There are some single nodes in the vec");
     }
 
-    top_levels
-        .into_iter()
-        .map(|e| put_in_parent(e, &mut parent_map, |e| id(e)))
-        .collect()
-}
+    let mut result = filled.into_values().collect();
+    sort_by_prev(
+        &mut result,
+        ignore_lost,
+        |t| id(&t.body),
+        |t| prev(&t.body),
+        |t| ya_ord(&t.body),
+    );
 
-fn put_in_parent<K, T, F1>(
-    parent: Rc<T>,
-    parent_map: &mut HashMap<K, Vec<Rc<T>>>,
-    id: F1,
-) -> TreeWrapper<T>
-where
-    F1: Fn(&T) -> &K,
-    K: Eq + Hash + Clone + Display,
-{
-    let ext = |e: Rc<T>| {
-        Rc::<T>::try_unwrap(e)
-            .map_err(|e| anyhow!("unable to read {}", id(e.as_ref())))
-            .unwrap()
-    };
-
-    let mut stack = vec![(parent, Vec::new())];
-    let mut result = None;
-
-    while let Some((current, mut children)) = stack.pop() {
-        if let Some(child_nodes) = parent_map.remove(id(current.as_ref())) {
-            for child in child_nodes.into_iter().rev() {
-                stack.push((child, Vec::new()));
-            }
-        }
-
-        let wrapper = TreeWrapper {
-            body: ext(current),
-            children: children.into_iter().rev().collect(),
-        };
-
-        if stack.is_empty() {
-            result = Some(wrapper);
-        } else {
-            stack.last_mut().unwrap().1.push(wrapper);
-        }
-    }
-
-    result.unwrap()
+    result
 }
