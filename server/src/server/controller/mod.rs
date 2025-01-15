@@ -25,7 +25,7 @@ use tower_http::{
     trace::{self, TraceLayer},
 };
 use tracing::{info, Level};
-use v1::{chnot, resource};
+use v1::{chnot, resource, toent};
 
 use crate::app::ShareAppState;
 
@@ -77,6 +77,7 @@ pub async fn serve(app_state: ShareAppState) -> EResult {
         .merge(resource::routes())
         .merge(chnot::routes())
         .merge(asset::routes())
+        .merge(toent::routes())
         .with_state(app_state.clone())
         .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(
