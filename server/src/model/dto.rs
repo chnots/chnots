@@ -7,6 +7,9 @@ use axum::{extract::Multipart, http::HeaderMap};
 
 use serde::{Deserialize, Serialize};
 
+
+use crate::toent::PossibleToent;
+
 use super::db::{
     chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
     resource::Resource,
@@ -115,4 +118,14 @@ pub type ResourceUploadReq = Multipart;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUploadRsp {
     pub(crate) resources: Vec<Resource>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentGuessReq {
+    pub input: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentGuessRsp {
+    pub toents: Vec<PossibleToent>
 }

@@ -8,14 +8,15 @@ use server::controller;
 use tracing::Level;
 use tracing_log::LogTracer;
 
-pub mod app;
+pub(crate) mod app;
 pub(crate) mod arguments;
 pub(crate) mod config;
-pub mod magics;
+pub(crate) mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod server;
 pub(crate) mod util;
+pub(crate) mod toent;
 
 #[tokio::main]
 async fn main() -> EResult {
