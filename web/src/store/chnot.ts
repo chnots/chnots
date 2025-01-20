@@ -159,20 +159,26 @@ export const useChnotStore = create(
       return request.post(`api/v1/chnot/deletion`, req);
     },
     overwriteChnot: async (
-      req: ChnotOverwriteReq
+      req: ChnotOverwriteReq,
+      overwriteCache: boolean
     ): Promise<ChnotOverwriteRsp> => {
-      return request.put(`api/v1/chnot`, req);
-    },
-    insertChnotIntoCache: (chnot: Chnot) => {
-      set((state) => {
-        let cm = state.chnotMap;
-        if (cm.has(chnot.meta.id)) {
-          cm.set(chnot.meta.id, chnot);
-        } else {
-          cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
-        }
-        return { ...state, chnotMap: cm };
-      });
+      return request
+        .put<ChnotOverwriteRsp>(`api/v1/chnot`, req)
+        .then((value: ChnotOverwriteRsp) => {
+          if (overwriteCache) {
+            let chnot = value.chnot;
+            set((state) => {
+              let cm = state.chnotMap;
+              if (cm.has(chnot.meta.id)) {
+                cm.set(chnot.meta.id, chnot);
+              } else {
+                cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
+              }
+              return { ...state, chnotMap: cm };
+            });
+          }
+          return value;
+        });
     },
     updateChnot: async (req: ChnotUpdateReq) => {
       return request.post(`api/v1/chnot/update`, req);
