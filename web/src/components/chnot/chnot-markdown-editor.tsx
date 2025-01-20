@@ -67,7 +67,9 @@ const eventHandlers = EditorView.domEventHandlers({
               .upload(file)
               .then((resource) => {
                 if (resource !== undefined) {
-                  insertions.push(`{{ KMGC/RES/${resource.id} }}`);
+                  insertions.push(
+                    `![${new Date().toISOString()}](${resource.id})`
+                  );
                 }
                 resolve();
               })
