@@ -151,16 +151,20 @@ export const ChnotMarkdownEditor = ({}) => {
 
     if (content) {
       const req = {
-        chnot: { ...chnotRecord, id: uuid(), content: content },
+        chnot: {
+          ...chnotRecord,
+          id: uuid(),
+          content: content,
+          insert_time: new Date(),
+        },
         kind: "mdwt",
       };
       try {
-        const rsp = await chnotStore.overwriteChnot(req);
-        chnotStore.insertChnotIntoCache(rsp.chnot);
+        const rsp = await chnotStore.overwriteChnot(req, true);
         if (!currentChnot) {
           toast.success("Tie a Knot Successfully!");
         }
-        if (currentChnot?.meta.id !== rsp.chnot.meta.id) {
+        if (currentChnot?.record.id !== rsp.chnot.record.id) {
           chnotStore.setCurrentChnot(rsp.chnot);
         }
       } finally {
