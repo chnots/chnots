@@ -1,9 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
-    to_sql,
-    util::sql_builder::{LimitOffset, SimpleUpdater, SqlQuery, ValueType, Wheres},
+    mapper::ChnotMapper, model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord}, to_sql, util::sql_builder::{LimitOffset, SimpleUpdater, SqlQuery, ValueType, Wheres}
 };
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
@@ -11,10 +9,9 @@ use postgres_types::{to_sql_checked, FromSql, ToSql};
 use tokio_postgres::Row;
 use tracing_log::log;
 
-use crate::model::dto::*;
+use crate::model::dto::chnot::*;
 
-use super::ChnotMapper;
-use super::Postgres;
+use super::{KReq, Postgres};
 
 impl<'a> FromSql<'a> for ChnotKind {
     fn from_sql(
@@ -177,8 +174,8 @@ impl ChnotMapper for Postgres {
 
     async fn chnot_delete(
         &self,
-        req: KReq<super::ChnotDeletionReq>,
-    ) -> AResult<super::ChnotDeletionRsp> {
+        req: KReq<ChnotDeletionReq>,
+    ) -> AResult<ChnotDeletionRsp> {
         let client = self.client().await?;
 
         client
@@ -188,13 +185,13 @@ impl ChnotMapper for Postgres {
             )
             .await?;
 
-        Ok(super::ChnotDeletionRsp {})
+        Ok(ChnotDeletionRsp {})
     }
 
     async fn chnot_query(
         &self,
-        req: KReq<super::ChnotQueryReq>,
-    ) -> AResult<super::ChnotQueryRsp<Vec<Chnot>>> {
+        req: KReq<ChnotQueryReq>,
+    ) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
         let client = self.client().await?;
 
         let chnot_sql = SqlQuery::new()
@@ -275,8 +272,8 @@ impl ChnotMapper for Postgres {
 
     async fn chnot_update(
         &self,
-        req: KReq<super::ChnotUpdateReq>,
-    ) -> AResult<super::ChnotUpdateRsp> {
+        req: KReq<ChnotUpdateReq>,
+    ) -> AResult<ChnotUpdateRsp> {
         let client = self.client().await?;
 
         let su = SimpleUpdater::new("chnot_metadata")
@@ -293,6 +290,6 @@ impl ChnotMapper for Postgres {
             client.execute(ss.seg.as_str(), to_sql!(ss.values)).await?;
         }
 
-        Ok(super::ChnotUpdateRsp {})
+        Ok(ChnotUpdateRsp {})
     }
 }

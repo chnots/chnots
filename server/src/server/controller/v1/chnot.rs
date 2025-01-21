@@ -1,17 +1,18 @@
 use crate::app::ShareAppState;
-use crate::model::dto::{kreq, Chnot};
+use crate::model::dto::chnot::Chnot;
+use crate::model::dto::kreq;
 use crate::{
     mapper::ChnotMapper,
-    model::dto::{
-        ChnotDeletionReq, ChnotDeletionRsp, ChnotOverwriteRsp, ChnotOverwriteReq, ChnotQueryReq,
+    model::dto::chnot::{
+        ChnotDeletionReq, ChnotDeletionRsp, ChnotOverwriteReq, ChnotOverwriteRsp, ChnotQueryReq,
         ChnotQueryRsp, ChnotUpdateReq, ChnotUpdateRsp,
     },
     server::controller::KResponse,
 };
 use axum::{
-    extract::{Query, State},
+    extract::State,
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::{delete, post, put},
     Json, Router,
 };
 
