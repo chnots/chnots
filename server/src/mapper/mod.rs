@@ -15,8 +15,28 @@ use crate::model::{
         namespace::{NamespaceRecord, NamespaceRelation},
         resource::Resource,
     },
-    dto::*,
+    dto::{chnot::*, KReq},
 };
+
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(tag = "type")]
+pub enum MapperConfig {
+    #[serde(rename = "postgres")]
+    Postgres(PostgresConfig),
+}
+
+impl Into<AResult<MapperType>> for MapperConfig {
+    fn into(self) -> AResult<MapperType> {
+        match self {
+            MapperConfig::Postgres(config) => {
+                let pg = Postgres::new(config)?;
+                Ok(MapperType::Postgres(pg))
+            }
+        }
+    }
+}
+
 
 pub trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
@@ -158,20 +178,4 @@ impl BackupTrait for MapperType {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
-#[serde(tag = "type")]
-pub enum MapperConfig {
-    #[serde(rename = "postgres")]
-    Postgres(PostgresConfig),
-}
 
-impl Into<AResult<MapperType>> for MapperConfig {
-    fn into(self) -> AResult<MapperType> {
-        match self {
-            MapperConfig::Postgres(config) => {
-                let pg = Postgres::new(config)?;
-                Ok(MapperType::Postgres(pg))
-            }
-        }
-    }
-}
