@@ -3,6 +3,7 @@ import Icon from "./icon";
 import { useNamespaceStore } from "@/store/namespace";
 import { Namespace } from "@/model";
 import clsx from "clsx";
+import useParamState from "@/hooks/use-param-state";
 
 export const NamespaceIcon = ({
   name,
@@ -27,6 +28,7 @@ export const NamespaceIcon = ({
 export const NamespaceSelect = () => {
   const namespaceStore = useNamespaceStore();
   const [expandState, setExpandState] = useState(false);
+  const [, setParamState] = useParamState<string>("ns", "public");
 
   const clickToExpand = () => {
     setExpandState(true);
@@ -34,6 +36,7 @@ export const NamespaceSelect = () => {
   };
 
   const clickToSelect = (ns: Namespace) => {
+    setParamState(ns.name);
     namespaceStore.changeNamespace(ns.name);
     setExpandState(false);
   };
@@ -42,7 +45,7 @@ export const NamespaceSelect = () => {
     <div className="flex flex-col border rounded-2xl border-gray-200 p-2">
       {expandState ? (
         <div className=" space-y-4 bg-white">
-          {namespaceStore.namespaceMapByName.values().map((ns) => {
+          {[...namespaceStore.namespaceMapByName.values()].map((ns) => {
             return (
               <div
                 onClick={() => clickToSelect(ns)}

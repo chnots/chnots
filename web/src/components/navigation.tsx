@@ -5,9 +5,6 @@ import Icon from "./icon";
 import { NamespaceSelect } from "./namespace-select";
 import SearchButton from "./search-navigation";
 import { RoutePaths } from "@/router";
-import { SeparatorHorizontal } from "lucide-react";
-import { Tooltip } from "react-tooltip";
-import { v4 as uuid } from "uuid";
 
 interface NavLinkItem {
   id: string;

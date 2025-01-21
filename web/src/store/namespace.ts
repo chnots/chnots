@@ -7,28 +7,43 @@ interface State {
   current: Namespace;
 }
 
-const namespaces = [
-  {
-    name: "public",
-    managers: ["work", "private"],
-  },
-  {
-    name: "work",
-    managers: ["private"],
-  },
-  {
-    name: "private",
-    managers: [],
-  },
-];
+const namespaces = new Map<string, Namespace>([
+  [
+    "public",
+    {
+      name: "public",
+      managers: ["work", "private"],
+    },
+  ],
+  [
+    "work",
+    {
+      name: "work",
+      managers: ["private"],
+    },
+  ],
+  [
+    "private",
+    {
+      name: "private",
+      managers: [],
+    },
+  ],
+]);
 
 const getDefaultState = (): State => {
   return {
-    namespaceMapByName: namespaces.reduce((acc, v) => {
-      acc.set(v.name, v);
-      return acc;
-    }, new Map()),
-    current: namespaces[0],
+    namespaceMapByName: namespaces,
+    current: (() => {
+      const searchParams = new URLSearchParams(window.location.search.slice(1));
+      console.log("search params:", location.hash);
+      const ns = searchParams.get("ns");
+      if (ns === null || !namespaces.has(ns)) {
+        return namespaces.get("public")!;
+      }
+
+      return namespaces.get(ns)!;
+    })(),
   };
 };
 
@@ -36,21 +51,16 @@ export const useNamespaceStore = create(
   combine(getDefaultState(), (set, get) => ({
     getState: () => get(),
     fetchNamespaces: async () => {
-      const namespaceMap = get().namespaceMapByName;
-      for (const namespace of namespaces) {
-        namespaceMap.set(namespace.name, namespace);
-      }
-      set({ namespaceMapByName: namespaceMap });
+      set({ namespaceMapByName: namespaces });
       return namespaces;
     },
     changeNamespace: async (namespace: string) => {
       const newnamespace = get().namespaceMapByName.get(namespace);
+      const searchParams = new URLSearchParams(window.location.search.slice(1));
+      searchParams.set("ns", namespace);
       set({
         current: newnamespace,
       });
-    },
-    getCurrent: () => {
-      return get().current;
     },
     getNamespace: (namespaceName: string) => {
       return get().namespaceMapByName.get(namespaceName);

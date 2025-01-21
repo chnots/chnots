@@ -17,7 +17,7 @@ function ChnotList(props: ChnotListProps) {
     refreshChnots,
     isFetchingNextPage,
     hasNextPage,
-    chnotMap: chnotMap,
+    chnotMap,
     changeKeyword,
   } = useChnotStore();
 
@@ -37,7 +37,7 @@ function ChnotList(props: ChnotListProps) {
 
   return (
     <ul className="w-full p-2 space-y-2">
-      {chnotMap.values().map((chnot) => (
+      {[...chnotMap.values()].map((chnot) => (
         <ChnotListItem chnot={chnot} />
       ))}
       <div className="flex justify-center">
