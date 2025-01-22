@@ -7,11 +7,13 @@ import SettingsPage from "@/pages/settings-page";
 import App from "@/app";
 import { Toaster } from "sonner";
 import ErrorPage from "@/pages/error-page";
+import LLMChatPage from "./pages/llm-chat-page";
 
 export enum RoutePaths {
   ROOT = "/",
   Chnots = "/chnots",
   Toents = "/toents",
+  LLMChat = "/llmchat",
   Settings = "/settings",
 }
 
@@ -33,6 +35,10 @@ const routes: RouteObject[] = [
       {
         path: RoutePaths.Chnots,
         element: <ChnotPage />,
+      },
+      {
+        path: RoutePaths.LLMChat,
+        element: <LLMChatPage />,
       },
       {
         path: RoutePaths.Toents,

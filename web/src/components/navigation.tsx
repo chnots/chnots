@@ -27,6 +27,12 @@ const Navigation = (props: Props) => {
     title: t("Chnots"),
     icon: <Icon.BrainCircuit className="w-6 h-auto opacity-70 shrink-0" />,
   };
+  const llmChatNavLink: NavLinkItem = {
+    id: "header-llmchat",
+    path: RoutePaths.LLMChat,
+    title: t("LLM Chat"),
+    icon: <Icon.Bot className="w-6 h-auto opacity-70 shrink-0" />,
+  };
   const toentNavLink: NavLinkItem = {
     id: "header-toent",
     path: RoutePaths.Toents,
@@ -42,7 +48,12 @@ const Navigation = (props: Props) => {
     icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
-  const navLinks: NavLinkItem[] = [chnotNavLink, toentNavLink, settingsNavLink];
+  const navLinks: NavLinkItem[] = [
+    chnotNavLink,
+    llmChatNavLink,
+    toentNavLink,
+    settingsNavLink,
+  ];
 
   return (
     <header

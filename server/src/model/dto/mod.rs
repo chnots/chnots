@@ -1,4 +1,5 @@
 pub mod chnot;
+pub mod llmchat;
 
 /// DTO: Data Transfer Object
 ///

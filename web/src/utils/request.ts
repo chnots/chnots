@@ -12,8 +12,6 @@ import type {
 import { toast } from "sonner";
 import { recursiveDateConversion } from "./date-utils";
 
-const responseBody = <T>(response: AxiosResponse<T>) => response.data;
-
 class Request {
   private instance: AxiosInstance;
   private abortControllerMap: Map<string, AbortController>;
@@ -26,7 +24,7 @@ class Request {
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         if (config.url !== "/login") {
-          const namespace = useNamespaceStore.getState().current.name;
+          const namespace = useNamespaceStore.getState().currentNamespace.name;
           if (namespace) {
             config.headers!["K-namespace"] = namespace;
           }
@@ -79,8 +77,8 @@ class Request {
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.instance.get<T>(url, config);
-    return responseBody(response);
+    // @ts-ignore
+    return await this.instance.get<T>(url, config);
   }
 
   async query<T>(

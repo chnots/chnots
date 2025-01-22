@@ -51,7 +51,7 @@ export const NamespaceSelect = () => {
                 onClick={() => clickToSelect(ns)}
                 className={clsx(
                   "hover:cursor-pointer",
-                  namespaceStore.current.name === ns.name
+                  namespaceStore.currentNamespace.name === ns.name
                     ? "text-neutral-950"
                     : "text-neutral-400"
                 )}
@@ -63,7 +63,7 @@ export const NamespaceSelect = () => {
         </div>
       ) : (
         <div onClick={clickToExpand} className="hover:cursor-pointer">
-          <NamespaceIcon name={namespaceStore.current.name} />
+          <NamespaceIcon name={namespaceStore.currentNamespace.name} />
         </div>
       )}
     </div>

@@ -5,8 +5,8 @@ use crate::model::db::namespace::NamespaceRelation;
 use super::{
     backup::{BackupTrait, DumpWrapper},
     postgres::Postgres,
-    ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp, MapperConfig, MapperType,
-    NamespaceMapper, ResourceMapper,
+    ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp, LLMChatMapper,
+    MapperConfig, MapperType, NamespaceMapper, ResourceMapper,
 };
 use std::future::Future;
 
@@ -33,6 +33,10 @@ impl MapperType {
         self.ensure_table_namespace_relation().await?;
         self.ensure_table_chnot_metadata().await?;
         self.ensure_table_resource().await?;
+        self.ensure_table_llm_chat_bot().await?;
+        self.ensure_table_llm_chat_template().await?;
+        self.ensure_table_llm_chat_session().await?;
+        self.ensure_table_llm_chat_record().await?;
 
         Ok(())
     }
@@ -118,6 +122,131 @@ impl NamespaceMapper for MapperType {
     async fn ensure_table_namespace_relation(&self) -> EResult {
         match self {
             MapperType::Postgres(db) => db.ensure_table_namespace_relation().await,
+        }
+    }
+}
+
+impl LLMChatMapper for MapperType {
+    async fn llm_chat_overwrite_bot(
+        &self,
+        req: KReq<super::LLMChatOverwriteBotReq>,
+    ) -> AResult<super::LLMChatOverwriteBotRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_overwrite_bot(req).await,
+        }
+    }
+
+    async fn llm_chat_overwrite_template(
+        &self,
+        req: KReq<super::LLMChatOverwriteTemplateReq>,
+    ) -> AResult<super::LLMChatOverwriteTemplateRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_overwrite_template(req).await,
+        }
+    }
+
+    async fn llm_chat_insert_session(
+        &self,
+        req: KReq<super::LLMChatInsertSessionReq>,
+    ) -> AResult<super::LLMChatInsertSessionRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_insert_session(req).await,
+        }
+    }
+
+    async fn llm_chat_insert_record(
+        &self,
+        req: KReq<super::LLMChatInsertRecordReq>,
+    ) -> AResult<super::LLMChatInsertRecordRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_insert_record(req).await,
+        }
+    }
+
+    async fn llm_chat_list_bots(
+        &self,
+        req: KReq<super::LLMChatListBotReq>,
+    ) -> AResult<super::LLMChatListBotRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_list_bots(req).await,
+        }
+    }
+
+    async fn llm_chat_list_templates(
+        &self,
+        req: KReq<super::LLMChatListTemplateReq>,
+    ) -> AResult<super::LLMChatListTemplateRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_list_templates(req).await,
+        }
+    }
+
+    async fn llm_chat_list_sessions(
+        &self,
+        req: KReq<super::LLMChatListSessionReq>,
+    ) -> AResult<super::LLMChatListSessionRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_list_sessions(req).await,
+        }
+    }
+
+    async fn llm_chat_session_detail(
+        &self,
+        req: KReq<super::LLMChatSessionDetialReq>,
+    ) -> AResult<super::LLMChatSessionDetailRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_session_detail(req).await,
+        }
+    }
+
+    async fn llm_chat_delete_bot(
+        &self,
+        req: KReq<super::LLMChatDeleteBotReq>,
+    ) -> AResult<super::LLMChatDeleteBotRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_delete_bot(req).await,
+        }
+    }
+
+    async fn llm_chat_delete_template(
+        &self,
+        req: KReq<super::LLMChatDeleteTemplateReq>,
+    ) -> AResult<super::LLMChatDeleteTemplateRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_delete_template(req).await,
+        }
+    }
+
+    async fn llm_chat_delete_session(
+        &self,
+        req: KReq<super::LLMChatDeleteSessionReq>,
+    ) -> AResult<super::LLMChatDeleteSessionRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_delete_session(req).await,
+        }
+    }
+
+    async fn ensure_table_llm_chat_record(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_llm_chat_record().await,
+        }
+    }
+
+    async fn ensure_table_llm_chat_template(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_llm_chat_template().await,
+        }
+    }
+
+    async fn ensure_table_llm_chat_session(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_llm_chat_session().await,
+        }
+    }
+
+    async fn ensure_table_llm_chat_bot(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_llm_chat_bot().await,
         }
     }
 }

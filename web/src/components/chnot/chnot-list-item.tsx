@@ -25,7 +25,7 @@ export const ChnotListItem = React.forwardRef(
         )}
         onClick={handleClick}
         ref={ref}
-        id={chnot.record.id}
+        key={chnot.record.id}
       >
         <div className="text-xs"> {chnotShortDate(chnot.meta.insert_time)}</div>
         <div className="text-xs line-clamp-2 break-all">

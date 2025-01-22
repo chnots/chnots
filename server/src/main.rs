@@ -3,7 +3,7 @@ use arguments::Arguments;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use clap::Parser;
 use config::Config;
-use mapper::{backup::filebackup::FileDumpWorker, MapperType};
+use mapper::{backup::filedump::FileDumpWorker, MapperType};
 use server::controller;
 use tracing::Level;
 use tracing_log::LogTracer;
@@ -15,8 +15,8 @@ pub(crate) mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod server;
-pub(crate) mod util;
 pub(crate) mod toent;
+pub(crate) mod util;
 
 #[tokio::main]
 async fn main() -> EResult {
