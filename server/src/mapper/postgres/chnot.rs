@@ -274,7 +274,7 @@ impl ChnotMapper for Postgres {
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
-            .wheres(Wheres::equal("id", &req.chnot_meta_id).into());
+            .r#where(Wheres::equal("id", &req.chnot_meta_id).into());
 
         let ss = su.build(PlaceHolderType::dollar_number());
 

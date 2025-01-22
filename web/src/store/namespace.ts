@@ -4,7 +4,7 @@ import { combine } from "zustand/middleware";
 
 interface State {
   namespaceMapByName: Map<string, Namespace>;
-  current: Namespace;
+  currentNamespace: Namespace;
 }
 
 const namespaces = new Map<string, Namespace>([
@@ -34,7 +34,7 @@ const namespaces = new Map<string, Namespace>([
 const getDefaultState = (): State => {
   return {
     namespaceMapByName: namespaces,
-    current: (() => {
+    currentNamespace: (() => {
       const searchParams = new URLSearchParams(window.location.search.slice(1));
       console.log("search params:", location.hash);
       const ns = searchParams.get("ns");
@@ -59,7 +59,7 @@ export const useNamespaceStore = create(
       const searchParams = new URLSearchParams(window.location.search.slice(1));
       searchParams.set("ns", namespace);
       set({
-        current: newnamespace,
+        currentNamespace: newnamespace,
       });
     },
     getNamespace: (namespaceName: string) => {

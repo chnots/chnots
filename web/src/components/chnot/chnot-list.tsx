@@ -1,8 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useInView } from "react-intersection-observer";
 
 import { useChnotStore } from "@/store/chnot";
-import useCurrentnamespace from "@/hooks/use-current-namespace";
 import { ChnotListItem } from "./chnot-list-item";
 
 export interface ChnotListProps {
@@ -11,10 +10,8 @@ export interface ChnotListProps {
 
 function ChnotList(props: ChnotListProps) {
   const [ref, inView] = useInView();
-  const namespace = useCurrentnamespace();
   const {
     fetchMoreChnots,
-    refreshChnots,
     isFetchingNextPage,
     hasNextPage,
     chnotMap,
@@ -31,14 +28,10 @@ function ChnotList(props: ChnotListProps) {
     }
   }, [fetchMoreChnots, hasNextPage, inView, isFetchingNextPage]);
 
-  useEffect(() => {
-    refreshChnots();
-  }, [namespace]);
-
   return (
     <ul className="w-full p-2 space-y-2">
       {[...chnotMap.values()].map((chnot) => (
-        <ChnotListItem chnot={chnot} />
+        <ChnotListItem chnot={chnot} key={chnot.record.id} />
       ))}
       <div className="flex justify-center">
         {isFetchingNextPage ? (

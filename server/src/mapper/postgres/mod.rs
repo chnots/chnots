@@ -1,17 +1,13 @@
 pub mod chnot;
-pub mod resource;
+pub mod llmchat;
 pub mod namespace;
+pub mod resource;
 
-use crate::
-    util::sql_builder::SqlValue
-;
-use chin_tools::
-    wrapper::anyhow::{AResult, EResult}
-;
+use crate::util::sql_builder::SqlValue;
+use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
 use postgres_types::ToSql;
 use serde::Deserialize;
-
 
 use crate::model::dto::*;
 
@@ -82,6 +78,34 @@ impl<'a> Into<&'a (dyn ToSql + Sync + Send)> for &'a SqlValue<'a> {
                 Some(v) => v.as_ref().into(),
                 None => &None::<String>,
             },
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! to_sql {
+    ($values:expr) => {
+        $values
+            .iter()
+            .map(|e| {
+                let v: &(dyn postgres_types::ToSql + Sync + Send) = e.into();
+                v as &(dyn postgres_types::ToSql + Sync)
+            })
+            .collect::<Vec<&(dyn postgres_types::ToSql + Sync)>>()
+            .as_slice()
+    };
+}
+
+fn ok_map<F, T, E>(t: T, f: F) -> Option<E>
+where
+    F: FnOnce(T) -> AResult<E>,
+{
+    let res = f(t);
+    match res {
+        Ok(ok) => Some(ok),
+        Err(err) => {
+            tracing::error!("not ok, {}", err);
+            None
         }
     }
 }

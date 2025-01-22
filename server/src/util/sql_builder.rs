@@ -429,7 +429,7 @@ impl<'a> SqlUpdater<'a> {
         self
     }
 
-    pub fn wheres(mut self, wheres: Wheres<'a>) -> Self {
+    pub fn r#where(mut self, wheres: Wheres<'a>) -> Self {
         self.wheres = wheres;
         self
     }
