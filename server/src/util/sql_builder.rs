@@ -112,50 +112,59 @@ pub struct SqlSeg<'a> {
     pub values: Vec<SqlValue<'a>>,
 }
 
+pub enum ConjOp {
+    And,
+    Or,
+}
+
 pub enum Wheres<'a> {
-    Where(Box<Wheres<'a>>),
-    And(Vec<Box<Wheres<'a>>>),
-    Or(Vec<Box<Wheres<'a>>>),
+    Conj(ConjOp, Vec<Wheres<'a>>),
     In(&'a str, Vec<SqlValue<'a>>),
-    Equal(&'a str, SqlValue<'a>),
-    Ilike(&'a str, SqlValue<'a>),
-    IsNull(&'a str),
     Not(Box<Wheres<'a>>),
+    Compare(&'a str, &'a str, SqlValue<'a>), // key, operator, value
     None,
 }
 
 impl<'a> Wheres<'a> {
-    pub fn equal<T: Into<SqlValue<'a>>>(key: &'a str, v: T) -> Box<Self> {
-        Self::Equal(key, v.into()).into()
+    pub fn equal<T: Into<SqlValue<'a>>>(key: &'a str, v: T) -> Self {
+        Self::Compare(key, "=", v.into())
     }
 
-    pub fn ilike<T: AsRef<str>>(key: &'a str, v: T) -> Box<Self> {
-        Self::Ilike(key, Cow::Owned::<str>(format!("%{}%", v.as_ref())).into()).into()
+    pub fn ilike<T: AsRef<str>>(key: &'a str, v: T) -> Self {
+        Self::Compare(key, "ilike", format!("%{}%", v.as_ref()).into())
     }
 
-    pub fn is_null(key: &'a str) -> Box<Self> {
-        Self::IsNull(key).into()
+    pub fn is_null(key: &'a str) -> Self {
+        Self::Compare(key, "is", "null".into())
     }
 
-    pub fn if_some<T, F>(original: Option<T>, map: F) -> Box<Self>
+    pub fn if_some<T, F>(original: Option<T>, map: F) -> Self
     where
-        F: FnOnce(T) -> Box<Self>,
+        F: FnOnce(T) -> Self,
     {
         match original {
             Some(t) => map(t),
-            None => Box::new(Wheres::None),
+            None => Wheres::None,
         }
     }
+    pub fn and<T: Into<Vec<Wheres<'a>>>>(values: T) -> Self {
+        Self::Conj(ConjOp::And, values.into())
+    }
 
-    pub fn transform<T, F>(original: T, map: F) -> Box<Self>
+    pub fn or<T: Into<Vec<Wheres<'a>>>>(values: T) -> Self {
+        Self::Conj(ConjOp::Or, values.into())
+    }
+
+    pub fn transform<T, F>(original: T, map: F) -> Self
     where
-        F: FnOnce(T) -> Box<Self>,
+        F: FnOnce(T) -> Self,
     {
         map(original)
     }
-    pub fn is_in<T: Into<SqlValue<'a>>>(key: &'a str, values: Vec<T>) -> Box<Self> {
+
+    pub fn is_in<T: Into<SqlValue<'a>>>(key: &'a str, values: Vec<T>) -> Self {
         let s = Self::In(key, values.into_iter().map(|e| e.into()).collect());
-        Box::new(s)
+        s
     }
 
     pub fn build(self, value_type: &mut ValueType) -> Option<SqlSeg<'a>> {
@@ -163,7 +172,7 @@ impl<'a> Wheres<'a> {
         let mut values: Vec<SqlValue<'a>> = Vec::new();
 
         match self {
-            Wheres::And(fs) => {
+            Wheres::Conj(op, fs) => {
                 let vs: Vec<String> = fs
                     .into_iter()
                     .filter_map(|e| {
@@ -173,21 +182,12 @@ impl<'a> Wheres<'a> {
                         })
                     })
                     .collect();
+                let op = match op {
+                    ConjOp::And => " and ",
+                    ConjOp::Or => " or ",
+                };
 
-                seg.push_str(vs.join(" and ").as_str())
-            }
-            Wheres::Or(fs) => {
-                let vs: Vec<String> = fs
-                    .into_iter()
-                    .filter_map(|e| {
-                        e.build(value_type).map(|ss| {
-                            values.extend(ss.values);
-                            ss.seg
-                        })
-                    })
-                    .collect();
-
-                seg.push_str(vs.join(" or ").as_str())
+                seg.push_str(vs.join(op).as_str())
             }
             Wheres::In(key, fs) => {
                 seg.push_str(key);
@@ -201,13 +201,6 @@ impl<'a> Wheres<'a> {
                 seg.push_str(")");
                 values.extend(fs.into_iter())
             }
-            Wheres::Equal(key, value) => {
-                seg.push_str(key);
-                seg.push_str(" = ");
-
-                seg.push_str(&value_type.next());
-                values.push(value)
-            }
             Wheres::Not(fs) => {
                 seg.push_str(" not ( ");
                 if let Some(ss) = fs.build(value_type) {
@@ -219,29 +212,17 @@ impl<'a> Wheres<'a> {
                     return None;
                 }
             }
-            Wheres::Where(inner) => {
-                seg.push_str(" where ");
-                if let Some(ss) = inner.build(value_type) {
-                    seg.push_str(&ss.seg);
-
-                    values.extend(ss.values);
-                } else {
-                    return None;
-                }
+            Wheres::None => {
+                return None;
             }
-            Wheres::Ilike(key, value) => {
+            Wheres::Compare(key, operator, value) => {
                 seg.push_str(key);
-                seg.push_str(" ilike ");
+                seg.push_str(" ");
+                seg.push_str(operator);
+                seg.push_str(" ");
 
                 seg.push_str(&value_type.next());
                 values.push(value);
-            }
-            Wheres::IsNull(key) => {
-                seg.push_str(key);
-                seg.push_str(" is null ");
-            }
-            Wheres::None => {
-                return None;
             }
         }
 
@@ -260,7 +241,7 @@ impl<'a> SimpleUpdater<'a> {
         SimpleUpdater {
             table: &table,
             setters: vec![],
-            filters: Wheres::And(vec![]),
+            filters: Wheres::and([]),
         }
     }
 
