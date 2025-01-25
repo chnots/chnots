@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
 use crate::{
-    mapper::ChnotMapper, model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord}, to_sql, util::sql_builder::{LimitOffset, SimpleUpdater, SqlQuery, ValueType, Wheres}
+    mapper::ChnotMapper,
+    model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
+    to_sql,
+    util::sql_builder::{LimitOffset, SimpleUpdater, SqlQuery, ValueType, Wheres},
 };
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
@@ -108,7 +111,6 @@ impl ChnotMapper for Postgres {
 
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
         let chnot = &req.body.chnot;
-        
 
         let mut client = self.client().await?;
 
@@ -165,17 +167,14 @@ impl ChnotMapper for Postgres {
                     pin_time: None,
                     delete_time: None,
                     update_time: None,
-                    insert_time:req.insert_time,
+                    insert_time: req.insert_time,
                 },
                 record: req.chnot.clone(),
             },
         })
     }
 
-    async fn chnot_delete(
-        &self,
-        req: KReq<ChnotDeletionReq>,
-    ) -> AResult<ChnotDeletionRsp> {
+    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp> {
         let client = self.client().await?;
 
         client
@@ -188,17 +187,14 @@ impl ChnotMapper for Postgres {
         Ok(ChnotDeletionRsp {})
     }
 
-    async fn chnot_query(
-        &self,
-        req: KReq<ChnotQueryReq>,
-    ) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
+    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
         let client = self.client().await?;
 
         let chnot_sql = SqlQuery::new()
             .raw("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
             .raw("m.id as mid, m.namespace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time")
             .raw("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
-            .wheres(Wheres::And(
+            .wheres(Wheres::and(
                 [
                     // default without deleted chnot
                     Wheres::transform(req.with_deleted, |e| {
@@ -222,7 +218,6 @@ impl ChnotMapper for Postgres {
                         Wheres::ilike("content", content)
                     }),
                 ]
-                .into(),
             ))
             .raw("ORDER BY m.pin_time DESC, r.insert_time desc")
             .custom(
@@ -270,10 +265,7 @@ impl ChnotMapper for Postgres {
         })
     }
 
-    async fn chnot_update(
-        &self,
-        req: KReq<ChnotUpdateReq>,
-    ) -> AResult<ChnotUpdateRsp> {
+    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
         let client = self.client().await?;
 
         let su = SimpleUpdater::new("chnot_metadata")
@@ -282,7 +274,7 @@ impl ChnotMapper for Postgres {
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
-            .filters(Wheres::Equal("id", (&req.chnot_meta_id).into()).into());
+            .filters(Wheres::equal("id", &req.chnot_meta_id).into());
 
         let ss = su.build(ValueType::dollar_number());
 
