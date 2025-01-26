@@ -82,24 +82,24 @@ impl<'a, T: Into<SqlValue<'a>>> Into<SqlValue<'a>> for Option<T> {
     }
 }
 
-pub enum ValueType {
+pub enum PlaceHolderType {
     QustionMark,
     DollarNumber(i32),
 }
 
-impl ValueType {
+impl PlaceHolderType {
     pub fn dollar_number() -> Self {
-        ValueType::DollarNumber(0)
+        PlaceHolderType::DollarNumber(0)
     }
 
     pub fn question_mark() -> Self {
-        ValueType::QustionMark
+        PlaceHolderType::QustionMark
     }
 
     fn next(&mut self) -> String {
         match self {
-            ValueType::QustionMark => "?".to_owned(),
-            ValueType::DollarNumber(n) => {
+            PlaceHolderType::QustionMark => "?".to_owned(),
+            PlaceHolderType::DollarNumber(n) => {
                 *n += 1;
                 format!("${}", n)
             }
@@ -107,35 +107,46 @@ impl ValueType {
     }
 }
 
-pub struct SqlSeg<'a> {
-    pub seg: String,
-    pub values: Vec<SqlValue<'a>>,
-}
-
-pub enum ConjOp {
+pub enum WhereConjOp {
     And,
     Or,
 }
 
 pub enum Wheres<'a> {
-    Conj(ConjOp, Vec<Wheres<'a>>),
+    Conj(WhereConjOp, Vec<Wheres<'a>>),
     In(&'a str, Vec<SqlValue<'a>>),
     Not(Box<Wheres<'a>>),
-    Compare(&'a str, &'a str, SqlValue<'a>), // key, operator, value
+    Compare {
+        key: &'a str,
+        operator: &'a str,
+        value: SqlValue<'a>,
+    }, // key, operator, value
     None,
 }
 
 impl<'a> Wheres<'a> {
     pub fn equal<T: Into<SqlValue<'a>>>(key: &'a str, v: T) -> Self {
-        Self::Compare(key, "=", v.into())
+        Self::Compare {
+            key,
+            operator: "=",
+            value: v.into(),
+        }
     }
 
     pub fn ilike<T: AsRef<str>>(key: &'a str, v: T) -> Self {
-        Self::Compare(key, "ilike", format!("%{}%", v.as_ref()).into())
+        Self::Compare {
+            key,
+            operator: "ilike",
+            value: format!("%{}%", v.as_ref()).into(),
+        }
     }
 
     pub fn is_null(key: &'a str) -> Self {
-        Self::Compare(key, "is", "null".into())
+        Self::Compare {
+            key,
+            operator: "is",
+            value: "null".into(),
+        }
     }
 
     pub fn if_some<T, F>(original: Option<T>, map: F) -> Self
@@ -148,11 +159,11 @@ impl<'a> Wheres<'a> {
         }
     }
     pub fn and<T: Into<Vec<Wheres<'a>>>>(values: T) -> Self {
-        Self::Conj(ConjOp::And, values.into())
+        Self::Conj(WhereConjOp::And, values.into())
     }
 
     pub fn or<T: Into<Vec<Wheres<'a>>>>(values: T) -> Self {
-        Self::Conj(ConjOp::Or, values.into())
+        Self::Conj(WhereConjOp::Or, values.into())
     }
 
     pub fn transform<T, F>(original: T, map: F) -> Self
@@ -162,12 +173,16 @@ impl<'a> Wheres<'a> {
         map(original)
     }
 
-    pub fn is_in<T: Into<SqlValue<'a>>>(key: &'a str, values: Vec<T>) -> Self {
+    pub fn r#in<T: Into<SqlValue<'a>>>(key: &'a str, values: Vec<T>) -> Self {
         let s = Self::In(key, values.into_iter().map(|e| e.into()).collect());
         s
     }
 
-    pub fn build(self, value_type: &mut ValueType) -> Option<SqlSeg<'a>> {
+    pub fn none() -> Self {
+        Self::None
+    }
+
+    pub fn build(self, value_type: &mut PlaceHolderType) -> Option<SqlSeg<'a>> {
         let mut seg = String::new();
         let mut values: Vec<SqlValue<'a>> = Vec::new();
 
@@ -183,8 +198,8 @@ impl<'a> Wheres<'a> {
                     })
                     .collect();
                 let op = match op {
-                    ConjOp::And => " and ",
-                    ConjOp::Or => " or ",
+                    WhereConjOp::And => " and ",
+                    WhereConjOp::Or => " or ",
                 };
 
                 seg.push_str(vs.join(op).as_str())
@@ -215,7 +230,11 @@ impl<'a> Wheres<'a> {
             Wheres::None => {
                 return None;
             }
-            Wheres::Compare(key, operator, value) => {
+            Wheres::Compare {
+                key,
+                operator,
+                value,
+            } => {
                 seg.push_str(key);
                 seg.push_str(" ");
                 seg.push_str(operator);
@@ -230,120 +249,66 @@ impl<'a> Wheres<'a> {
     }
 }
 
-pub struct SimpleUpdater<'a> {
-    table: &'a str,
-    setters: Vec<(&'a str, SqlValue<'a>)>,
-    filters: Wheres<'a>,
+pub struct SqlSeg<'a> {
+    pub seg: String,
+    pub values: Vec<SqlValue<'a>>,
 }
 
-impl<'a> SimpleUpdater<'a> {
-    pub fn new(table: &'a str) -> Self {
-        SimpleUpdater {
-            table: &table,
-            setters: vec![],
-            filters: Wheres::and([]),
-        }
-    }
-
-    pub fn set_if_some<T: Into<SqlValue<'a>>>(mut self, key: &'a str, value: Option<T>) -> Self {
-        if let Some(v) = value {
-            self.setters.push((key, v.into()));
-        }
-
-        self
-    }
-
-    pub fn set<T: Into<SqlValue<'a>>>(mut self, key: &'a str, v: T) -> Self {
-        self.setters.push((key, v.into()));
-        self
-    }
-
-    pub fn filters(mut self, filters: Wheres<'a>) -> Self {
-        self.filters = filters;
-        self
-    }
-
-    pub fn build(self, mut value_type: ValueType) -> Option<SqlSeg<'a>> {
-        if self.setters.is_empty() {
-            return None;
-        }
-
-        let mut sb = String::new();
-        let mut values: Vec<SqlValue<'a>> = Vec::new();
-
-        sb.push_str(" update ");
-        sb.push_str(self.table);
-        sb.push_str(" set ");
-
-        let fields: Vec<String> = self
-            .setters
-            .into_iter()
-            .map(|(key, v)| {
-                values.push(v);
-                format!(" {} = {} ", key, value_type.next())
-            })
-            .collect();
-        sb.push_str(fields.join(", ").as_str());
-
-        if let Some(filters) = self.filters.build(&mut value_type) {
-            sb.push_str(" where ");
-            sb.push_str(filters.seg.as_str());
-
-            values.extend(filters.values);
-        }
-
-        Some(SqlSeg { seg: sb, values })
-    }
+pub trait CustomSqlSeg<'a> {
+    fn build(&self, value_type: &mut PlaceHolderType) -> Option<SqlSeg<'a>>;
 }
 
-pub enum SimpleQueryType<'a> {
+pub enum SqlSegType<'a> {
     Where(Wheres<'a>),
     Comma(Vec<&'a str>),
     Raw(&'a str),
-    Custom(Box<dyn QuerySeg<'a>>),
-    Sub { alias: &'a str, query: SqlQuery<'a> },
+    Custom(Box<dyn CustomSqlSeg<'a>>),
+    Sub {
+        alias: &'a str,
+        query: SqlSegBuilder<'a>,
+    },
 }
 
-pub struct SqlQuery<'a> {
-    segs: Vec<SimpleQueryType<'a>>,
+pub struct SqlSegBuilder<'a> {
+    segs: Vec<SqlSegType<'a>>,
 }
 
-impl<'a> SqlQuery<'a> {
+impl<'a> SqlSegBuilder<'a> {
     pub fn new() -> Self {
         Self { segs: vec![] }
     }
 
-    pub fn with_seg(mut self, seg: SimpleQueryType<'a>) -> Self {
+    pub fn seg(mut self, seg: SqlSegType<'a>) -> Self {
         self.segs.push(seg);
         self
     }
 
     pub fn raw(mut self, seg: &'a str) -> Self {
-        self.segs.push(SimpleQueryType::Raw(seg));
+        self.segs.push(SqlSegType::Raw(seg));
         self
     }
 
-    pub fn wheres(mut self, filter: Wheres<'a>) -> Self {
-        self.segs.push(SimpleQueryType::Where(filter));
+    pub fn r#where(mut self, wheres: Wheres<'a>) -> Self {
+        self.segs.push(SqlSegType::Where(wheres));
         self
     }
 
-    pub fn comma(mut self, filter: Vec<&'a str>) -> Self {
-        self.segs.push(SimpleQueryType::Comma(filter));
+    pub fn comma(mut self, values: Vec<&'a str>) -> Self {
+        self.segs.push(SqlSegType::Comma(values));
         self
     }
 
-    pub fn sub(mut self, alias: &'a str, query: SqlQuery<'a>) -> Self {
-        self.segs.push(SimpleQueryType::Sub { alias, query });
+    pub fn sub(mut self, alias: &'a str, query: SqlSegBuilder<'a>) -> Self {
+        self.segs.push(SqlSegType::Sub { alias, query });
         self
     }
 
-    pub fn custom(mut self, custom: Box<dyn QuerySeg<'a>>) -> Self {
-        self.segs.push(SimpleQueryType::Custom(custom));
+    pub fn custom(mut self, custom: Box<dyn CustomSqlSeg<'a>>) -> Self {
+        self.segs.push(SqlSegType::Custom(custom));
         self
     }
 
-    pub fn build(self, value_type: &mut ValueType) -> Option<SqlSeg<'a>> {
+    pub fn build(self, value_type: &mut PlaceHolderType) -> Option<SqlSeg<'a>> {
         if self.segs.is_empty() {
             return None;
         }
@@ -353,26 +318,26 @@ impl<'a> SqlQuery<'a> {
 
         for seg in self.segs {
             match seg {
-                SimpleQueryType::Where(wr) => {
+                SqlSegType::Where(wr) => {
                     if let Some(ss) = wr.build(value_type) {
                         sb.push_str(" where ");
                         sb.push_str(&ss.seg);
                         values.extend(ss.values)
                     }
                 }
-                SimpleQueryType::Comma(vs) => {
+                SqlSegType::Comma(vs) => {
                     sb.push_str(vs.join(", ").as_str());
                 }
-                SimpleQueryType::Raw(raw) => {
+                SqlSegType::Raw(raw) => {
                     sb.push_str(&raw);
                 }
-                SimpleQueryType::Custom(custom) => {
+                SqlSegType::Custom(custom) => {
                     if let Some(cs) = custom.build(value_type) {
                         sb.push_str(&cs.seg);
                         values.extend(cs.values)
                     }
                 }
-                SimpleQueryType::Sub { alias, query } => {
+                SqlSegType::Sub { alias, query } => {
                     if let Some(s) = query.build(value_type) {
                         sb.push_str(" (");
                         sb.push_str(&s.seg);
@@ -389,10 +354,6 @@ impl<'a> SqlQuery<'a> {
 
         Some(SqlSeg { seg: sb, values })
     }
-}
-
-pub trait QuerySeg<'a> {
-    fn build(&self, value_type: &mut ValueType) -> Option<SqlSeg<'a>>;
 }
 
 pub struct LimitOffset {
@@ -420,13 +381,13 @@ impl LimitOffset {
         self
     }
 
-    pub fn to_box(self) -> Box<dyn QuerySeg<'static>> {
+    pub fn to_box(self) -> Box<dyn CustomSqlSeg<'static>> {
         Box::new(self)
     }
 }
 
-impl<'a> QuerySeg<'a> for LimitOffset {
-    fn build(&self, _: &mut ValueType) -> Option<SqlSeg<'a>> {
+impl<'a> CustomSqlSeg<'a> for LimitOffset {
+    fn build(&self, _: &mut PlaceHolderType) -> Option<SqlSeg<'a>> {
         match self.offset {
             Some(v) => Some(SqlSeg {
                 seg: format!("limit {} offset {}", self.limit, v),
@@ -437,5 +398,71 @@ impl<'a> QuerySeg<'a> for LimitOffset {
                 values: vec![],
             }),
         }
+    }
+}
+
+pub struct SqlUpdater<'a> {
+    table: &'a str,
+    setters: Vec<(&'a str, SqlValue<'a>)>,
+    wheres: Wheres<'a>,
+}
+
+impl<'a> SqlUpdater<'a> {
+    pub fn new(table: &'a str) -> Self {
+        SqlUpdater {
+            table: &table,
+            setters: vec![],
+            wheres: Wheres::and([]),
+        }
+    }
+
+    pub fn set_if_some<T: Into<SqlValue<'a>>>(mut self, key: &'a str, value: Option<T>) -> Self {
+        if let Some(v) = value {
+            self.setters.push((key, v.into()));
+        }
+
+        self
+    }
+
+    pub fn set<T: Into<SqlValue<'a>>>(mut self, key: &'a str, v: T) -> Self {
+        self.setters.push((key, v.into()));
+        self
+    }
+
+    pub fn wheres(mut self, wheres: Wheres<'a>) -> Self {
+        self.wheres = wheres;
+        self
+    }
+
+    pub fn build(self, mut value_type: PlaceHolderType) -> Option<SqlSeg<'a>> {
+        if self.setters.is_empty() {
+            return None;
+        }
+
+        let mut sb = String::new();
+        let mut values: Vec<SqlValue<'a>> = Vec::new();
+
+        sb.push_str(" update ");
+        sb.push_str(self.table);
+        sb.push_str(" set ");
+
+        let fields: Vec<String> = self
+            .setters
+            .into_iter()
+            .map(|(key, v)| {
+                values.push(v);
+                format!(" {} = {} ", key, value_type.next())
+            })
+            .collect();
+        sb.push_str(fields.join(", ").as_str());
+
+        if let Some(filters) = self.wheres.build(&mut value_type) {
+            sb.push_str(" where ");
+            sb.push_str(filters.seg.as_str());
+
+            values.extend(filters.values);
+        }
+
+        Some(SqlSeg { seg: sb, values })
     }
 }

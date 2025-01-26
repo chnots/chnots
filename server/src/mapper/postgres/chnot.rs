@@ -4,7 +4,7 @@ use crate::{
     mapper::ChnotMapper,
     model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
     to_sql,
-    util::sql_builder::{LimitOffset, SimpleUpdater, SqlQuery, ValueType, Wheres},
+    util::sql_builder::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
 };
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
@@ -190,16 +190,16 @@ impl ChnotMapper for Postgres {
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
         let client = self.client().await?;
 
-        let chnot_sql = SqlQuery::new()
+        let chnot_sql = SqlSegBuilder::new()
             .raw("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
             .raw("m.id as mid, m.namespace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time")
             .raw("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
-            .wheres(Wheres::and(
+            .r#where(Wheres::and(
                 [
                     // default without deleted chnot
                     Wheres::transform(req.with_deleted, |e| {
                         if e.unwrap_or(false) {
-                            Wheres::None.into()
+                            Wheres::none()
                         } else {
                             Wheres::is_null("delete_time")
                         }
@@ -208,7 +208,7 @@ impl ChnotMapper for Postgres {
                     // TODO: group by perm id
                     Wheres::transform(req.with_omitted, |e| {
                         if e.unwrap_or(false) {
-                            Wheres::None.into()
+                            Wheres::none()
                         } else {
                             Wheres::is_null("omit_time")
                         }
@@ -223,7 +223,7 @@ impl ChnotMapper for Postgres {
             .custom(
                 LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)).to_box()
             )
-            .build(&mut ValueType::DollarNumber(0))
+            .build(&mut PlaceHolderType::DollarNumber(0))
             .expect("error occured when build sql");
 
         let cs = client
@@ -268,15 +268,15 @@ impl ChnotMapper for Postgres {
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
         let client = self.client().await?;
 
-        let su = SimpleUpdater::new("chnot_metadata")
+        let su = SqlUpdater::new("chnot_metadata")
             .set_if_some("pinned", req.pinned)
             .set_if_some(
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
-            .filters(Wheres::equal("id", &req.chnot_meta_id).into());
+            .wheres(Wheres::equal("id", &req.chnot_meta_id).into());
 
-        let ss = su.build(ValueType::dollar_number());
+        let ss = su.build(PlaceHolderType::dollar_number());
 
         if let Some(ss) = ss {
             client.execute(ss.seg.as_str(), to_sql!(ss.values)).await?;
