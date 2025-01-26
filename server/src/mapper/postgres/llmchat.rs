@@ -12,7 +12,7 @@ use crate::{
     util::sql_builder::{PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
 };
 
-use super::{ok_map, KReq, Postgres};
+use super::{KReq, Postgres};
 
 impl LLMChatMapper for Postgres {
     async fn llm_chat_overwrite_bot(
@@ -95,28 +95,26 @@ impl LLMChatMapper for Postgres {
             .build(&mut PlaceHolderType::dollar_number())
             .context("Unable to build args")?;
 
-        let bots = self
+        let bots: AResult<Vec<LLMChatBot>> = self
             .client()
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
             .iter()
-            .filter_map(|e| {
-                ok_map(e, |t| {
-                    let r = LLMChatBot {
-                        id: t.try_get("id")?,
-                        name: t.try_get("name")?,
-                        body: t.try_get("body")?,
-                        delete_time: t.try_get("delete_time")?,
-                        update_time: t.try_get("update_time")?,
-                        insert_time: t.try_get("insert_time")?,
-                    };
-                    Ok(r)
-                })
+            .map(|t| {
+                let r = LLMChatBot {
+                    id: t.try_get("id")?,
+                    name: t.try_get("name")?,
+                    body: t.try_get("body")?,
+                    delete_time: t.try_get("delete_time")?,
+                    update_time: t.try_get("update_time")?,
+                    insert_time: t.try_get("insert_time")?,
+                };
+                Ok(r)
             })
             .collect();
 
-        Ok(LLMChatListBotRsp { bots })
+        Ok(LLMChatListBotRsp { bots: bots? })
     }
 
     async fn llm_chat_list_templates(
@@ -130,29 +128,29 @@ impl LLMChatMapper for Postgres {
             .build(&mut PlaceHolderType::dollar_number())
             .context("Unable to build args")?;
 
-        let templates = self
+        let templates: AResult<Vec<LLMChatTemplate>> = self
             .client()
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
             .iter()
-            .filter_map(|e| {
-                ok_map(e, |t| {
-                    let r = LLMChatTemplate {
-                        id: t.try_get("id")?,
-                        name: t.try_get("name")?,
-                        delete_time: t.try_get("delete_time")?,
-                        update_time: t.try_get("update_time")?,
-                        insert_time: t.try_get("insert_time")?,
-                        prompt: t.try_get("prompt")?,
-                        icon_name: t.try_get("icon_name")?,
-                    };
-                    Ok(r)
-                })
+            .map(|t| {
+                let r = LLMChatTemplate {
+                    id: t.try_get("id")?,
+                    name: t.try_get("name")?,
+                    delete_time: t.try_get("delete_time")?,
+                    update_time: t.try_get("update_time")?,
+                    insert_time: t.try_get("insert_time")?,
+                    prompt: t.try_get("prompt")?,
+                    icon_name: t.try_get("icon_name")?,
+                };
+                Ok(r)
             })
             .collect();
 
-        Ok(LLMChatListTemplateRsp { templates })
+        Ok(LLMChatListTemplateRsp {
+            templates: templates?,
+        })
     }
 
     async fn llm_chat_list_sessions(
@@ -169,30 +167,30 @@ impl LLMChatMapper for Postgres {
             .build(&mut PlaceHolderType::dollar_number())
             .context("Unable to build args")?;
 
-        let sessions = self
+        let sessions: AResult<Vec<LLMChatSession>> = self
             .client()
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
             .iter()
-            .filter_map(|e| {
-                ok_map(e, |t| {
-                    let r = LLMChatSession {
-                        id: t.try_get("id")?,
-                        delete_time: t.try_get("delete_time")?,
-                        update_time: t.try_get("update_time")?,
-                        insert_time: t.try_get("insert_time")?,
-                        bot_id: t.try_get("bot_id")?,
-                        template_id: t.try_get("template_id")?,
-                        title: t.try_get("title")?,
-                        namespace: t.try_get("namespace")?,
-                    };
-                    Ok(r)
-                })
+            .map(|t| {
+                let r = LLMChatSession {
+                    id: t.try_get("id")?,
+                    delete_time: t.try_get("delete_time")?,
+                    update_time: t.try_get("update_time")?,
+                    insert_time: t.try_get("insert_time")?,
+                    bot_id: t.try_get("bot_id")?,
+                    template_id: t.try_get("template_id")?,
+                    title: t.try_get("title")?,
+                    namespace: t.try_get("namespace")?,
+                };
+                Ok(r)
             })
             .collect();
 
-        Ok(LLMChatListSessionRsp { sessions })
+        Ok(LLMChatListSessionRsp {
+            sessions: sessions?,
+        })
     }
 
     async fn llm_chat_session_detail(
@@ -209,28 +207,26 @@ impl LLMChatMapper for Postgres {
             .build(&mut PlaceHolderType::dollar_number())
             .context("Unable to build args")?;
 
-        let records = self
+        let records: AResult<Vec<LLMChatRecord>> = self
             .client()
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
             .iter()
-            .filter_map(|e| {
-                ok_map(e, |t| {
-                    let r = LLMChatRecord {
-                        id: t.try_get("id")?,
-                        insert_time: t.try_get("insert_time")?,
-                        session_id: t.try_get("session_id")?,
-                        pre_record_id: t.try_get("pre_record_id")?,
-                        content: t.try_get("content")?,
-                        role: t.try_get("role")?,
-                    };
-                    Ok(r)
-                })
+            .map(|t| {
+                let r = LLMChatRecord {
+                    id: t.try_get("id")?,
+                    insert_time: t.try_get("insert_time")?,
+                    session_id: t.try_get("session_id")?,
+                    pre_record_id: t.try_get("pre_record_id")?,
+                    content: t.try_get("content")?,
+                    role: t.try_get("role")?,
+                };
+                Ok(r)
             })
             .collect();
 
-        Ok(LLMChatSessionDetailRsp { records })
+        Ok(LLMChatSessionDetailRsp { records: records? })
     }
 
     async fn llm_chat_delete_bot(

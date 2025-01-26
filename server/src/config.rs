@@ -14,9 +14,10 @@ pub struct AttachmentConfig {
 pub struct Config {
     pub server: Option<ServerConfig>,
     pub mapper: MapperConfig,
-    pub backup: Option<FileBackupConfig>,
+    pub file_backup: Option<FileBackupConfig>,
     pub attachment: AttachmentConfig,
 }
+
 
 pub mod tests {
     #[test]

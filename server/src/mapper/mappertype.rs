@@ -1,9 +1,16 @@
 use chin_tools::wrapper::anyhow::{AResult, EResult};
+use serde::Serialize;
 
-use crate::model::db::namespace::NamespaceRelation;
+use crate::{
+    model::db::{chnot::ChnotMetadata, llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate}, namespace::NamespaceRelation},
+    util::sql_builder::PlaceHolderType,
+};
 
 use super::{
-    backup::{BackupTrait, DumpWrapper},
+    backup::{
+        tabledumpersql::TableDumperSqlBuilder, DbBackupTrait, DumpWrapper, TableDumpWriter,
+        TableDumpWriterEnum, TableDumpWriterType,
+    },
     postgres::Postgres,
     ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp, LLMChatMapper,
     MapperConfig, MapperType, NamespaceMapper, ResourceMapper,
@@ -251,17 +258,203 @@ impl LLMChatMapper for MapperType {
     }
 }
 
-impl BackupTrait for MapperType {
-    async fn dump_chnots<F, R1>(&self, _: F) -> EResult
-    where
-        F: Fn(DumpWrapper<ChnotRecord>) -> R1,
-        R1: Future<Output = EResult>,
-    {
+impl MapperType {
+    pub async fn dump_and_backup(&self, writer: TableDumpWriterEnum) -> EResult {
         match self {
-            MapperType::Postgres(_) => {
-                tracing::error!("not implement dump logic");
-                Ok(())
+            MapperType::Postgres(db) => {
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "chnot_record".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let chnot = ChnotRecord {
+                            id: row.try_get("id")?,
+                            meta_id: row.try_get("meta_id")?,
+                            content: row.try_get("content")?,
+                            omit_time: row.try_get("omit_time")?,
+                            insert_time: row.try_get("insert_time")?,
+                        };
+                        Ok(chnot)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "chnot_metadata".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let chnot = ChnotMetadata {
+                            id: row.try_get("id")?,
+                            namespace: row.try_get("namespace")?,
+                            kind: row.try_get("kind")?,
+                            pin_time: row.try_get("pin_time")?,
+                            delete_time: row.try_get("delete_time")?,
+                            update_time: row.try_get("update_time")?,
+                            insert_time: row.try_get("insert_time")?,
+                        };
+                        Ok(chnot)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "namespace_record".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = NamespaceRecord {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            name: row.try_get("name")?,
+                            delete_time: row.try_get("delete_time")?,
+                            update_time: row.try_get("update_time")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "namespace_relation".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = NamespaceRelation {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            delete_time: row.try_get("delete_time")?,
+                            update_time: row.try_get("update_time")?,
+                            sub_id: row.try_get("sub_id")?,
+                            parent_id: row.try_get("parent_id")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "resources".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = Resource {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            delete_time: row.try_get("delete_time")?,
+                            namespace: row.try_get("namespace")?,
+                            ori_filename: row.try_get("ori_filename")?,
+                            content_type: row.try_get("content_type")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "llm_chat_bot".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = LLMChatBot {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            delete_time: row.try_get("delete_time")?,
+                            name: row.try_get("name")?,
+                            body: row.try_get("body")?,
+                            update_time: row.try_get("update_time")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "llm_chat_record".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = LLMChatRecord {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            session_id: row.try_get("session_id")?,
+                            pre_record_id: row.try_get("pre_record_id")?,
+                            content: row.try_get("content")?,
+                            role: row.try_get("role")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "llm_chat_session".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = LLMChatSession {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            bot_id: row.try_get("bot_id")?,
+                            template_id: row.try_get("template_id")?,
+                            title: row.try_get("title")?,
+                            namespace: row.try_get("namespace")?,
+                            delete_time: row.try_get("delete_time")?,
+                            update_time: row.try_get("update_time")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
+                db.read_iterator(
+                    TableDumperSqlBuilder::new(
+                        "llm_chat_template".to_owned(),
+                        None,
+                        None,
+                        PlaceHolderType::DollarNumber(0),
+                    ),
+                    |row| {
+                        let obj = LLMChatTemplate {
+                            id: row.try_get("id")?,
+                            insert_time: row.try_get("insert_time")?,
+                            delete_time: row.try_get("delete_time")?,
+                            update_time: row.try_get("update_time")?,
+                            name: row.try_get("name")?,
+                            prompt: row.try_get("prompt")?,
+                            icon_name: row.try_get("icon_name")?,
+                        };
+                        Ok(obj)
+                    },
+                    &writer,
+                )
+                .await?;
             }
         }
+        Ok(())
     }
 }
