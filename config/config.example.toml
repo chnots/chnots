@@ -11,7 +11,7 @@ port = 3012
 tls_key = "/home/chin/files/private/bin/tls.key"
 tls_cert = "/home/chin/files/private/bin/tls.crt"
 
-[backup]
+[file_backup]
 backup_dir = "/home/chin/chnots-dev/backup"
 period = 1800
 

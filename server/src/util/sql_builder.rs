@@ -73,6 +73,12 @@ impl<'a> Into<SqlValue<'a>> for DateTime<FixedOffset> {
     }
 }
 
+impl<'a> Into<SqlValue<'a>> for &'a DateTime<FixedOffset> {
+    fn into(self) -> SqlValue<'a> {
+        SqlValue::Date(Cow::Borrowed(self))
+    }
+}
+
 impl<'a, T: Into<SqlValue<'a>>> Into<SqlValue<'a>> for Option<T> {
     fn into(self) -> SqlValue<'a> {
         SqlValue::Opt(self.map(|e| {
@@ -149,6 +155,14 @@ impl<'a> Wheres<'a> {
         }
     }
 
+    pub fn compare<T: Into<SqlValue<'a>>>(key: &'a str, operator: &'a str, v: T) -> Self {
+        Self::Compare {
+            key,
+            operator,
+            value: v.into(),
+        }
+    }
+
     pub fn if_some<T, F>(original: Option<T>, map: F) -> Self
     where
         F: FnOnce(T) -> Self,
@@ -158,6 +172,7 @@ impl<'a> Wheres<'a> {
             None => Wheres::None,
         }
     }
+
     pub fn and<T: Into<Vec<Wheres<'a>>>>(values: T) -> Self {
         Self::Conj(WhereConjOp::And, values.into())
     }
@@ -197,6 +212,9 @@ impl<'a> Wheres<'a> {
                         })
                     })
                     .collect();
+                if vs.len() == 0 {
+                    return None;
+                }
                 let op = match op {
                     WhereConjOp::And => " and ",
                     WhereConjOp::Or => " or ",
@@ -211,6 +229,9 @@ impl<'a> Wheres<'a> {
                     .iter()
                     .map(|_| value_type.next())
                     .collect::<Vec<String>>();
+                if fs.len() == 0 {
+                    return None;
+                }
                 seg.push_str(vs.join(",").as_str());
 
                 seg.push_str(")");
@@ -262,6 +283,7 @@ pub enum SqlSegType<'a> {
     Where(Wheres<'a>),
     Comma(Vec<&'a str>),
     Raw(&'a str),
+    RawOwned(String),
     Custom(Box<dyn CustomSqlSeg<'a>>),
     Sub {
         alias: &'a str,
@@ -285,6 +307,10 @@ impl<'a> SqlSegBuilder<'a> {
 
     pub fn raw(mut self, seg: &'a str) -> Self {
         self.segs.push(SqlSegType::Raw(seg));
+        self
+    }
+    pub fn raw_owned(mut self, seg: String) -> Self {
+        self.segs.push(SqlSegType::RawOwned(seg));
         self
     }
 
@@ -346,6 +372,10 @@ impl<'a> SqlSegBuilder<'a> {
                         values.extend(s.values);
                     }
                 }
+                SqlSegType::RawOwned(raw) => {
+                    sb.push_str(raw.as_str());
+                    
+                },
             };
             if !sb.ends_with(" ") {
                 sb.push(' ');

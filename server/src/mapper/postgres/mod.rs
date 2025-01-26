@@ -2,16 +2,24 @@ pub mod chnot;
 pub mod llmchat;
 pub mod namespace;
 pub mod resource;
+pub mod backup;
+
+use std::borrow::BorrowMut;
 
 use crate::util::sql_builder::SqlValue;
+use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
 use postgres_types::ToSql;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use tokio_postgres::Row;
 
 use crate::model::dto::*;
 
-use super::ChnotMapper;
+use super::{
+    backup::{tabledumpersql::TableDumperSqlBuilder, DbBackupTrait, DumpWrapper, TableDumpWriter, TableDumpWriterEnum},
+    ChnotMapper,
+};
 
 const NO_PARAMS: Vec<&(dyn ToSql + Sync)> = Vec::new();
 
@@ -86,26 +94,56 @@ impl<'a> Into<&'a (dyn ToSql + Sync + Send)> for &'a SqlValue<'a> {
 macro_rules! to_sql {
     ($values:expr) => {
         $values
-            .iter()
-            .map(|e| {
-                let v: &(dyn postgres_types::ToSql + Sync + Send) = e.into();
-                v as &(dyn postgres_types::ToSql + Sync)
-            })
-            .collect::<Vec<&(dyn postgres_types::ToSql + Sync)>>()
-            .as_slice()
+        .iter()
+        .map(|e| {
+            let v: &(dyn postgres_types::ToSql + Sync + Send) = e.into();
+            v as &(dyn postgres_types::ToSql + Sync)
+        })
+        .collect::<Vec<&(dyn postgres_types::ToSql + Sync)>>()
+        .as_slice()
     };
 }
 
-fn ok_map<F, T, E>(t: T, f: F) -> Option<E>
-where
-    F: FnOnce(T) -> AResult<E>,
-{
-    let res = f(t);
-    match res {
-        Ok(ok) => Some(ok),
-        Err(err) => {
-            tracing::error!("not ok, {}", err);
-            None
+impl DbBackupTrait for Postgres {
+    type RowType = Row;
+
+    async fn read_iterator<'a, F1, O: Serialize>(
+        &self,
+        sql_builder: TableDumperSqlBuilder<'a>,
+        convert_row_to_obj: F1,
+        writer: &TableDumpWriterEnum,
+    ) -> EResult
+    where
+        F1: Fn(Self::RowType) -> AResult<O>,
+    {
+        let table_name = sql_builder.table_name.clone();
+        let seg = sql_builder.build().context("unable to build dump sql")?;
+        let mut client = self.client().await?;
+        let stmt = client.transaction().await?;
+        let portal = stmt.bind(&seg.seg, &to_sql!(seg.values)).await?;
+        loop {
+            // poll batch_size rows from portal and send it to embedding thread via channel
+            let rows = stmt.query_portal(&portal, 10 as i32).await?;
+
+            if rows.len() == 0 {
+                break;
+            }
+
+            for row in rows {
+                match convert_row_to_obj(row) {
+                    Ok(obj) => {
+                        writer.write_one(DumpWrapper::of(obj, 1, &table_name)).await?;
+                    },
+                    Err(err) => {
+                        tracing::error!("unable to convert {}", err);
+                    },
+                }
+            }
+
         }
+
+        Ok(())
     }
+
+
 }
