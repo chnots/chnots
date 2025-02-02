@@ -127,6 +127,7 @@ pub enum Wheres<'a> {
         operator: &'a str,
         value: SqlValue<'a>,
     }, // key, operator, value
+    Raw(Cow<'a, str>),
     None,
 }
 
@@ -148,11 +149,7 @@ impl<'a> Wheres<'a> {
     }
 
     pub fn is_null(key: &'a str) -> Self {
-        Self::Compare {
-            key,
-            operator: "is",
-            value: "null".into(),
-        }
+        Self::compare_str(key, "is", "null")
     }
 
     pub fn compare<T: Into<SqlValue<'a>>>(key: &'a str, operator: &'a str, v: T) -> Self {
@@ -161,6 +158,10 @@ impl<'a> Wheres<'a> {
             operator,
             value: v.into(),
         }
+    }
+
+    pub fn compare_str<T: AsRef<str>>(key: &'a str, operator: &'a str, v: T) -> Self {
+        Self::Raw(Cow::Owned(format!("{} {} {}", key, operator, v.as_ref())))
     }
 
     pub fn if_some<T, F>(original: Option<T>, map: F) -> Self
@@ -263,6 +264,14 @@ impl<'a> Wheres<'a> {
 
                 seg.push_str(&value_type.next());
                 values.push(value);
+            }
+            Wheres::Raw(cow) => {
+                if !seg.ends_with(" ") {
+                    seg.push(' ');
+                }
+                seg.push_str(cow.as_ref());
+
+                seg.push(' ');
             }
         }
 
@@ -374,8 +383,7 @@ impl<'a> SqlSegBuilder<'a> {
                 }
                 SqlSegType::RawOwned(raw) => {
                     sb.push_str(raw.as_str());
-                    
-                },
+                }
             };
             if !sb.ends_with(" ") {
                 sb.push(' ');

@@ -10,6 +10,7 @@ use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use tokio_postgres::Row;
+use tracing::info;
 use tracing_log::log;
 
 use crate::model::dto::chnot::*;
@@ -225,6 +226,7 @@ impl ChnotMapper for Postgres {
             )
             .build(&mut PlaceHolderType::DollarNumber(0))
             .expect("error occured when build sql");
+        info!("sql is {}", chnot_sql.seg);
 
         let cs = client
             .query(&chnot_sql.seg, to_sql!(chnot_sql.values))
