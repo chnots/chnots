@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer utilities {
   .hide-scrollbar {
@@ -61,4 +59,6 @@
   ol {
     @apply list-decimal text-blue-900;
   }
+  /* 3.x tailwind behaiver*/
+  *,  ::after,  ::before,  ::backdrop,  ::file-selector-button {    border-color: var(--color-gray-200, currentColor);  }
 }
