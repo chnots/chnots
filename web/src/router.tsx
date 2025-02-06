@@ -7,7 +7,7 @@ import SettingsPage from "@/pages/settings-page";
 import App from "@/app";
 import { Toaster } from "sonner";
 import ErrorPage from "@/pages/error-page";
-import LLMChatPage from "./pages/llm-chat-page";
+import LLMChatPage from "./pages/llmchat-page";
 
 export enum RoutePaths {
   ROOT = "/",

@@ -28,3 +28,4 @@ tsconfig.node.tsbuildinfo
 tsconfig.app.json
 rsbuild.config.js
 rsbuild.config.d.ts
+tsconfig.tsbuildinfo
