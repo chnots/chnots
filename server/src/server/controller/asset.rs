@@ -13,7 +13,8 @@ pub fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/", get(index_handler))
         .route("/index.html", get(index_handler))
-        .route("/assets/*file", get(static_handler))
+        .route("/static/*file", get(static_handler))
+        .route("/chnots.svg", get(static_handler))
         .fallback_service(get(index_handler))
 }
 
