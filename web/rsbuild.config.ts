@@ -11,11 +11,18 @@ export default defineConfig({
     },
   },
   html: {
-    template: './index.html',
+    template: "./index.html",
   },
   source: {
     entry: {
-      index: './src/main.tsx',
+      index: "./src/main.tsx",
+    },
+  },
+  output: {
+    cleanDistPath: true,
+    // assetPrefix: "/assets/",
+    distPath: {
+      root: "../web-dist",
     },
   },
 });
