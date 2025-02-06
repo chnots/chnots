@@ -25,6 +25,7 @@ pub enum MapperType {
     Postgres(Postgres),
 }
 
+
 pub trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
     async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
@@ -59,7 +60,9 @@ pub trait LLMChatMapper {
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp>;
     async fn llm_chat_list_templates(&self, req: KReq<LLMChatListTemplateReq>) -> AResult<LLMChatListTemplateRsp>;
     async fn llm_chat_list_sessions(&self, req: KReq<LLMChatListSessionReq>) -> AResult<LLMChatListSessionRsp>;
+    async fn llm_chat_update_session(&self, req: KReq<LLMChatUpdateSessionReq>) -> AResult<LLMChatUpdateSessionRsp>;
     async fn llm_chat_session_detail(&self, req: KReq<LLMChatSessionDetialReq>) -> AResult<LLMChatSessionDetailRsp>;
+    async fn llm_chat_truncate_session(&self, req: KReq<LLMChatTruncateSessionReq>) -> AResult<LLMChatTruncateSessionRsp>;
 
     async fn llm_chat_delete_bot(&self, req: KReq<LLMChatDeleteBotReq>) -> AResult<LLMChatDeleteBotRsp>;
     async fn llm_chat_delete_template(&self, req: KReq<LLMChatDeleteTemplateReq>) -> AResult<LLMChatDeleteTemplateRsp>;

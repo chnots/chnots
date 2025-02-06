@@ -1,6 +1,6 @@
 use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use chrono::Local;
+use chrono::{FixedOffset, Local, Utc};
 
 use crate::{
     mapper::LLMChatMapper,
@@ -9,7 +9,10 @@ use crate::{
         dto::llmchat::*,
     },
     to_sql,
-    util::sql_builder::{PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
+    util::{
+        sort_util::sort_by_prev,
+        sql_builder::{PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
+    },
 };
 
 use super::{KReq, Postgres};
@@ -53,13 +56,14 @@ impl LLMChatMapper for Postgres {
         &self,
         req: KReq<LLMChatInsertSessionReq>,
     ) -> AResult<LLMChatInsertSessionRsp> {
+        let title: String = req.session.title.chars().into_iter().take(300).collect();
         self.client().await?.execute(
             "insert into llm_chat_session(id, bot_id, template_id, title, namespace, insert_time) values($1, $2, $3, $4, $5, $6)",
             &[
                 &req.session.id,
                 &req.session.bot_id,
                 &req.session.template_id,
-                &req.session.title,
+                &title,
                 &req.session.namespace,
                 &req.session.insert_time
             ]
@@ -199,10 +203,10 @@ impl LLMChatMapper for Postgres {
     ) -> AResult<LLMChatSessionDetailRsp> {
         let query = SqlSegBuilder::new()
             .raw("select * from llm_chat_record")
-            .r#where(Wheres::and([Wheres::equal(
-                "session_id",
-                req.session_id.clone(),
-            )]))
+            .r#where(Wheres::and([
+                Wheres::equal("session_id", req.session_id.clone()),
+                Wheres::is_null("omit_time"),
+            ]))
             .raw("order by insert_time desc")
             .build(&mut PlaceHolderType::dollar_number())
             .context("Unable to build args")?;
@@ -320,7 +324,7 @@ impl LLMChatMapper for Postgres {
                 id VARCHAR(40) PRIMARY KEY,
                 bot_id VARCHAR(40) NOT NULL REFERENCES llm_chat_bot(id),
                 template_id VARCHAR(40) NOT NULL REFERENCES llm_chat_template(id),
-                title VARCHAR(40) NOT NULL,
+                title VARCHAR(300) NOT NULL,
                 namespace VARCHAR(40) NOT NULL,
                 delete_time TIMESTAMPTZ,
                 update_time TIMESTAMPTZ,
@@ -338,11 +342,78 @@ impl LLMChatMapper for Postgres {
                 session_id VARCHAR(40) NOT NULL REFERENCES llm_chat_session(id),
                 pre_record_id VARCHAR(40),
                 content TEXT NOT NULL,
+                omit_time TIMESTAMPTZ,
                 role VARCHAR(40) NOT NULL,
                 insert_time TIMESTAMPTZ NOT NULL
             )",
         )
         .await?;
         Ok(())
+    }
+
+    async fn llm_chat_update_session(
+        &self,
+        req: KReq<LLMChatUpdateSessionReq>,
+    ) -> AResult<LLMChatUpdateSessionRsp> {
+        let updater = SqlUpdater::new("llm_chat_session")
+            .set_if_some("title", req.body.title.as_ref())
+            .r#where(Wheres::and([Wheres::equal("id", req.session_id.as_str())]))
+            .build(PlaceHolderType::DollarNumber(0))
+            .context("unable to build sql")?;
+
+        self.client()
+            .await?
+            .execute(&updater.seg, to_sql!(updater.values))
+            .await?;
+
+        Ok(LLMChatUpdateSessionRsp {})
+    }
+
+    async fn llm_chat_truncate_session(
+        &self,
+        req: KReq<LLMChatTruncateSessionReq>,
+    ) -> AResult<LLMChatTruncateSessionRsp> {
+        let mut records = self
+            .llm_chat_session_detail(KReq {
+                body: LLMChatSessionDetialReq {
+                    session_id: req.session_id.clone(),
+                },
+                namespace: req.namespace.clone(),
+            })
+            .await?
+            .records;
+
+        sort_by_prev(
+            &mut records,
+            false,
+            |r| &r.id,
+            |r| &r.pre_record_id,
+            |r| &r.insert_time,
+        );
+
+        let mut to_omit_ids = vec![];
+        let mut remove_flag = false;
+
+        for r in records {
+            if r.id == req.record_id_included {
+                remove_flag = true;
+            }
+            if remove_flag {
+                to_omit_ids.push(r.id);
+            }
+        }
+
+        let updater = SqlUpdater::new("llm_chat_record")
+            .set("omit_time", Local::now().fixed_offset())
+            .r#where(Wheres::r#in("id", to_omit_ids))
+            .build(PlaceHolderType::DollarNumber(0))
+            .context("unable to build seg")?;
+
+        self.client()
+            .await?
+            .execute(&updater.seg, to_sql!(updater.values))
+            .await?;
+        
+        Ok(LLMChatTruncateSessionRsp {})
     }
 }

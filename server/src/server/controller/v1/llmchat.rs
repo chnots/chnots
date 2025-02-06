@@ -1,7 +1,7 @@
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
-    routing::{delete, get, put},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 
@@ -23,7 +23,9 @@ pub fn routes() -> Router<ShareAppState> {
         .route("/api/v1/llmchat/session", put(session_insertion))
         .route("/api/v1/llmchat/session", delete(session_deletetion))
         .route("/api/v1/llmchat/session", get(session_detail))
+        .route("/api/v1/llmchat/session", post(session_updation))
         .route("/api/v1/llmchat/sessions", get(session_list))
+        .route("/api/v1/llmchat/truncate-session", post(session_truncation))
         .route("/api/v1/llmchat/record", put(record_insertion))
 }
 
@@ -142,6 +144,30 @@ async fn session_detail(
     state
         .mapper
         .llm_chat_session_detail(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn session_updation(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<LLMChatUpdateSessionReq>,
+) -> KResponse<LLMChatUpdateSessionRsp> {
+    state
+        .mapper
+        .llm_chat_update_session(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn session_truncation(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<LLMChatTruncateSessionReq>,
+) -> KResponse<LLMChatTruncateSessionRsp> {
+    state
+        .mapper
+        .llm_chat_truncate_session(kreq(headers, req))
         .await
         .into()
 }

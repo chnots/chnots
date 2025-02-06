@@ -2,8 +2,12 @@ use chin_tools::wrapper::anyhow::{AResult, EResult};
 use serde::Serialize;
 
 use crate::{
-    model::db::{chnot::ChnotMetadata, llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate}, namespace::NamespaceRelation},
-    util::sql_builder::PlaceHolderType,
+    model::db::{
+        chnot::ChnotMetadata,
+        llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
+        namespace::NamespaceRelation,
+    },
+    util::{sort_util, sql_builder::PlaceHolderType},
 };
 
 use super::{
@@ -201,8 +205,27 @@ impl LLMChatMapper for MapperType {
         &self,
         req: KReq<super::LLMChatSessionDetialReq>,
     ) -> AResult<super::LLMChatSessionDetailRsp> {
-        match self {
+        let mut raw_result = match self {
             MapperType::Postgres(db) => db.llm_chat_session_detail(req).await,
+        }?;
+
+        sort_util::sort_by_prev(
+            &mut raw_result.records,
+            false,
+            |r| &r.id,
+            |r| &r.pre_record_id,
+            |e| &e.insert_time,
+        );
+
+        Ok(raw_result)
+    }
+
+    async fn llm_chat_update_session(
+        &self,
+        req: KReq<crate::model::dto::llmchat::LLMChatUpdateSessionReq>,
+    ) -> AResult<crate::model::dto::llmchat::LLMChatUpdateSessionRsp> {
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_update_session(req).await,
         }
     }
 
@@ -255,6 +278,10 @@ impl LLMChatMapper for MapperType {
         match self {
             MapperType::Postgres(db) => db.ensure_table_llm_chat_bot().await,
         }
+    }
+    
+    async fn llm_chat_truncate_session(&self, req: KReq<crate::model::dto::llmchat::LLMChatTruncateSessionReq>) -> AResult<crate::model::dto::llmchat::LLMChatTruncateSessionRsp> {
+        todo!()
     }
 }
 

@@ -41,10 +41,31 @@ pub struct LLMChatListTemplateRsp {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatListSessionReq {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatListSessionRsp {
     pub(crate) sessions: Vec<LLMChatSession>,
 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatUpdateSessionReq {
+    pub title: Option<String>,
+    pub session_id: String,
+
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatUpdateSessionRsp {
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatTruncateSessionReq {
+    pub record_id_included: String,
+    pub session_id: String,
+
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatTruncateSessionRsp {
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionDetialReq {
     pub(crate) session_id: String,
