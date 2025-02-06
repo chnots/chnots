@@ -19,7 +19,7 @@ impl<T> From<T> for TreeWrapper<T> {
     }
 }
 
-fn sort_by_prev<K, T, C, F1, F2, F3>(
+pub fn sort_by_prev<K, T, C, F1, F2, F3>(
     elements: &mut Vec<T>,
     ignore_lost: bool,
     id: F1,
