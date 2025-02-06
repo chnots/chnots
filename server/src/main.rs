@@ -3,9 +3,15 @@ use arguments::Arguments;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use clap::Parser;
 use config::Config;
-use mapper::{backup::{filedump::{BackupType, FileDumpWorker}, TableDumpWriterEnum}, LLMChatMapper, MapperType};
+use mapper::{
+    backup::{
+        filedump::{BackupType, FileDumpWorker},
+        TableDumpWriterEnum,
+    },
+    LLMChatMapper, MapperType,
+};
 use server::controller;
-use tracing::Level;
+use tracing::{subscriber, Level};
 use tracing_log::LogTracer;
 
 pub(crate) mod app;
@@ -21,11 +27,15 @@ pub(crate) mod util;
 #[tokio::main]
 async fn main() -> EResult {
     let subscriber = tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .with_thread_ids(true)
         .with_line_number(true)
-        .with_timer(tracing_subscriber::fmt::time::time())
-        .finish();
+        .with_timer(tracing_subscriber::fmt::time::time());
+
+    #[cfg(debug_assertions)]
+    let subscriber = subscriber.with_max_level(Level::DEBUG);
+
+    let subscriber = subscriber.finish();
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
     LogTracer::init()?;
@@ -45,8 +55,14 @@ async fn main() -> EResult {
         let state = state.clone();
         std::thread::spawn(|| {
             futures::executor::block_on(async move {
-                let worker = FileDumpWorker::new(&state, "chnots", BackupType::All).await.unwrap();
-                state.mapper.dump_and_backup(TableDumpWriterEnum::File(worker)).await.unwrap();
+                let worker = FileDumpWorker::new(&state, "chnots", BackupType::All)
+                    .await
+                    .unwrap();
+                state
+                    .mapper
+                    .dump_and_backup(TableDumpWriterEnum::File(worker))
+                    .await
+                    .unwrap();
             });
         });
     }
