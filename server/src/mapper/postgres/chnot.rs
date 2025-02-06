@@ -7,7 +7,8 @@ use crate::{
     util::sql_builder::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
 };
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use chrono::Local;
+use chrono::{DateTime, FixedOffset, Local, TimeDelta};
+use distance::levenshtein;
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use tokio_postgres::Row;
 use tracing::info;
@@ -117,25 +118,18 @@ impl ChnotMapper for Postgres {
 
         let transaction = client.build_transaction().start().await?;
 
-        let old_id = transaction
+        let old_record = transaction
             .query_opt(
-                "select id from chnot_record where meta_id = $1 and omit_time is null",
+                "select id, content, insert_time from chnot_record where meta_id = $1 and omit_time is null",
                 &[&req.chnot.meta_id],
             )
             .await?
             .and_then(|row| {
                 let id: String = row.try_get("id").ok()?;
-                Some(id)
+                let content: String = row.try_get("content").ok()?;
+                let insert_time: DateTime<FixedOffset> = row.try_get("insert_time").ok()?;
+                Some((id, content, insert_time))
             });
-
-        if let Some(old_id) = old_id.as_ref() {
-            transaction
-                .execute(
-                    "update chnot_record set omit_time = $1 where id = $2",
-                    &[&chnot.insert_time, &old_id],
-                )
-                .await?;
-        }
 
         transaction.execute(
             "insert into chnot_metadata(id, insert_time, namespace, kind) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET update_time = $2",
@@ -147,10 +141,33 @@ impl ChnotMapper for Postgres {
             ]
         ).await?;
 
+        let id = if let Some((old_id, old_content, old_insert_time)) = old_record.as_ref() {
+            if levenshtein(&old_content, &chnot.content) <= 50
+                && chnot.insert_time.signed_duration_since(old_insert_time) < TimeDelta::hours(1)
+            {
+                old_id
+            } else {
+                &chnot.id
+            }
+        } else {
+            &chnot.id
+        };
+
+        if let Some((old_id, _, _)) = old_record.as_ref() {
+            if &chnot.id == id {
+                transaction
+                    .execute(
+                        "update chnot_record set omit_time = $1 where id = $2",
+                        &[&chnot.insert_time, &old_id],
+                    )
+                    .await?;
+            }
+        }
+
         transaction.execute(
-            "insert into chnot_record(id, meta_id, content, insert_time) values($1, $2, $3, $4)",
+            "insert into chnot_record(id, meta_id, content, insert_time) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET content = $3",
             &[
-                &chnot.id,
+                id,
                 &chnot.meta_id,
                 &chnot.content,
                 &chnot.insert_time
