@@ -1,5 +1,5 @@
+import { insertMapAtIndex } from "@/utils/map-utils";
 import request from "@/utils/request";
-import { StateEffect } from "@uiw/react-codemirror";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
@@ -9,11 +9,18 @@ type DateTime = Date;
 // LLMChatBot structure
 export interface LLMChatBot {
   id: string;
-  /*   name: string;
-  body: string;
+  name: string;
+  body: string ;
   delete_time?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-  insert_time: DateTime; */
+  insert_time: DateTime;
+}
+
+// the body of LLMChatBot body.
+export interface LLMChatBotBodyOpenAIV1 {
+  url: string;
+  token: string;
+  model_name: string;
 }
 
 // LLMChatTemplate structure
@@ -66,6 +73,7 @@ export interface LLMChatSessionDetailRsp {
 }
 
 interface State {
+  insertSession: (session: LLMChatSession) => void;
   refreshSessions: () => void;
   refreshTemplates: () => void;
   refreshBots: () => void;
@@ -81,6 +89,7 @@ const getDefaultState = (): State => {
     refreshSessions: () => {},
     refreshTemplates: () => {},
     refreshBots: () => {},
+    insertSession: (_session: LLMChatSession) => {},
     bots: new Map(),
     templates: new Map(),
     sessions: new Map(),
@@ -96,6 +105,7 @@ export const useLLMChatStore = create(
         return {
           ...state,
           bots: new Map(bots.bots.map((e) => [e.id, e])),
+          currentBot: bots.bots.at(0)
         };
       });
     },
@@ -133,9 +143,6 @@ export const useLLMChatStore = create(
     listTemplates: () => {
       return [...get().templates.values()];
     },
-    listSessions: () => {
-      return [...get().sessions.values()];
-    },
     fetchSessionRecords: async (session: LLMChatSession) => {
       return await request.get<LLMChatSessionDetailRsp>(
         `api/v1/llmchat/session`,
@@ -149,6 +156,16 @@ export const useLLMChatStore = create(
     insertSession: async (session: LLMChatSession) => {
       await request.put(`api/v1/llmchat/session`, {
         session: session,
+      });
+    },
+    unshiftSession: async (session: LLMChatSession) => {
+      await get().insertSession(session);
+      const sessions = get().sessions;
+      set((state) => {
+        return {
+          ...state,
+          sessions: insertMapAtIndex(0, session.id, session, sessions),
+        };
       });
     },
     insertRecord: async (record: LLMChatRecord) => {

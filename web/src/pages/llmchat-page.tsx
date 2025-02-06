@@ -13,7 +13,7 @@ const LLMChatPage = () => {
   }, [currentNamespace]);
 
   return (
-    <div className="bg-panel flex h-full max-h-full flex-1 overflow-hidden rounded-md shadow">
+    <div className="bg-panel flex h-full max-h-full flex-1 overflow-hidden rounded-md">
       <div className="shrink-0 border-r flex flex-col w-3/12">
         <div className="overflow-auto h-full bg-background text-gray-900">
           <LLMChatSessionList />

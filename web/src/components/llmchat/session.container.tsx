@@ -1,5 +1,4 @@
 import {
-  LLMChatBot,
   LLMChatRecord,
   LLMChatSession,
   LLMChatTemplate,
@@ -12,6 +11,7 @@ import { useNamespaceStore } from "@/store/namespace";
 import LLMChatBotSelect from "./bot-select.component";
 import Input from "./session-input.component";
 import { Record } from "./record.component";
+import { ResponseRecord } from "./response-record.component";
 
 const Header = () => {
   return (
@@ -21,58 +21,55 @@ const Header = () => {
   );
 };
 
-const Records = ({ records }: { records: LLMChatRecord[] }) => {
-  return (
-    <div className="h-full">
-      {records ? (
-        records
-          .toSorted((a, b) => {
-            return a.insert_time > b.insert_time ? 1 : -1;
-          })
-          .map((record) => {
-            return <Record record={record} />;
-          })
-      ) : (
-        <div>Loading</div>
-      )}
-    </div>
-  );
-};
-
 const LLMChatSessionContainer = () => {
   const {
     currentSession,
     currentBot,
-    insertSession,
     insertRecord,
     setCurrentSession,
     fetchSessionRecords,
+    unshiftSession,
   } = useLLMChatStore();
   const { currentNamespace } = useNamespaceStore();
 
   const [records, setRecords] = useState<LLMChatRecord[]>();
   const [answering, setAnswering] = useState<boolean>();
+  const [notPersistedId, setNotPersistedId] = useState<string>("");
+  const [triggerAnswer, setTriggerAnswer] = useState<boolean>(false);
 
   useEffect(() => {
-    if (currentSession) {
+    if (currentSession && currentSession.id !== notPersistedId) {
       fetchSessionRecords(currentSession).then((rsp) => {
         setRecords(rsp.records);
       });
     }
-  }, [currentSession]);
+  }, [currentSession, notPersistedId]);
+
+  useEffect(() => {
+    if (answering) {
+      setTriggerAnswer(false);
+    }
+  }, [answering]);
+
+  const appendRecord = async (record: LLMChatRecord) => {
+    console.log("begin to insert, ", record);
+    await insertRecord(record);
+    setRecords((rs) => [...rs!!, record]);
+  };
 
   const initSession = async (template: LLMChatTemplate) => {
     let session: LLMChatSession;
     if (!currentSession) {
+      const id = uuid().toString();
       session = {
-        id: uuid().toString(),
+        id: id,
         bot_id: currentBot ? currentBot.id : "1",
         template_id: template.id,
         title: "Untitled",
         namespace: currentNamespace.name,
         insert_time: new Date(),
       };
-      await insertSession(session);
+      setNotPersistedId(id);
     } else {
       session = currentSession;
     }
@@ -85,40 +82,86 @@ const LLMChatSessionContainer = () => {
       insert_time: new Date(),
     };
 
-    await insertRecord(record);
+    setRecords([record]);
+
     if (!currentSession) {
       setCurrentSession(session);
     }
   };
 
-  const onSend = async (msg: string) => {
+  const onSendUserMsg = async (msg: string) => {
     let record: LLMChatRecord = {
       id: uuid(),
       session_id: currentSession!!.id,
+      pre_record_id: records?.at(-1)?.id,
       content: msg,
       role: "user",
       insert_time: new Date(),
     };
+    if (
+      notPersistedId === currentSession?.id &&
+      records &&
+      records?.length > 0
+    ) {
+      const tmpCurSession = { ...currentSession, title: record.content };
+      setCurrentSession(tmpCurSession);
+      await unshiftSession(tmpCurSession);
 
-    await insertRecord(record);
-    setRecords((rs) => [...rs!!, record]);
+      for (const r of records) {
+        await insertRecord(r);
+      }
+
+      setNotPersistedId("");
+    }
+
+    await appendRecord(record);
+    setTriggerAnswer(true);
   };
 
   return (
     <div className="bg-panel flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
       <Header />
       <div className="h-full overflow-y-auto">
-        {records ? (
-          <Records records={records} />
+        {currentBot ? (
+          records && currentSession ? (
+            <div className="h-full">
+              {records && records.length > 0 ? (
+                <>
+                  {records
+                    .toSorted((a, b) => {
+                      return a.insert_time > b.insert_time ? 1 : -1;
+                    })
+                    .map((record) => {
+                      return <Record key={record.id} record={record} />;
+                    })}
+                  {records.at(-1)?.role === "user" ? (
+                    <ResponseRecord
+                      session={currentSession}
+                      records={records}
+                      appendRecord={appendRecord}
+                      setAnswering={setAnswering}
+                      triggerAnswer={triggerAnswer}
+                    />
+                  ) : (
+                    <></>
+                  )}
+                </>
+              ) : (
+                <div>None Records</div>
+              )}
+            </div>
+          ) : (
+            <LLMChatTemplateList
+              onClickTemplate={(template) => {
+                initSession(template);
+              }}
+            />
+          )
         ) : (
-          <LLMChatTemplateList
-            onClickTemplate={(template) => {
-              initSession(template);
-            }}
-          />
+          <div>Please add a bot</div>
         )}
       </div>
-      <Input onSend={onSend} disabled={answering || !currentSession} />
+      <Input onSend={onSendUserMsg} disabled={answering || !currentSession} />
     </div>
   );
 };

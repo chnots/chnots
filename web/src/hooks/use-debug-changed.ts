@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 
-const useDebugChanged = (title: string, value: any) => {
+const useDebugChanged = (value: any) => {
   useCallback(() => {
-    console.debug(`>> ${title} changed`);
+    console.error(`>> ${value} changed`);
   }, [value]);
 };
 

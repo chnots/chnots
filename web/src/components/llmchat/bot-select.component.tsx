@@ -1,6 +1,4 @@
-export interface LLMChatBotSelectProps {}
-
-function LLMChatBotSelect(props: LLMChatBotSelectProps) {
+function LLMChatBotSelect() {
   return <div className="relative inline-block text-left">default</div>;
 }
 
