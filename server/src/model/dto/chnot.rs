@@ -56,12 +56,15 @@ pub struct ChnotDeletionRsp {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryReq {
     pub query: Option<String>,
+    pub meta_id: Option<String>,
+    pub record_id: Option<String>,
+
+    pub with_deleted: Option<bool>,
+    pub with_omitted: Option<bool>,
 
     // Paging
     pub start_index: u64,
     pub page_size: u64,
-    pub with_deleted: Option<bool>,
-    pub with_omitted: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

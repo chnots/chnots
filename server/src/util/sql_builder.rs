@@ -132,7 +132,7 @@ pub enum Wheres<'a> {
 }
 
 impl<'a> Wheres<'a> {
-    pub fn equal<T: Into<SqlValue<'a>>>(key: &'a str, v: T) -> Self {
+    pub fn equal<'b: 'a, T: Into<SqlValue<'a>>>(key: &'b str, v: T) -> Self {
         Self::Compare {
             key,
             operator: "=",
@@ -152,7 +152,7 @@ impl<'a> Wheres<'a> {
         Self::compare_str(key, "is", "null")
     }
 
-    pub fn compare<T: Into<SqlValue<'a>>>(key: &'a str, operator: &'a str, v: T) -> Self {
+    pub fn compare<'b: 'a, T: Into<SqlValue<'a>>>(key: &'b str, operator: &'b str, v: T) -> Self {
         Self::Compare {
             key,
             operator,
