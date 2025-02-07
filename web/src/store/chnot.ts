@@ -106,6 +106,24 @@ interface State {
 export const useChnotStore = create(
   combine(getDefaultState(), (set, get) => ({
     getState: () => get(),
+    queryChnot: async ({
+      record_id,
+      meta_id,
+      with_omited,
+    }: {
+      record_id?: string;
+      meta_id?: string;
+      with_omited?: boolean;
+    }) => {
+      const cs: ChnotQueryRsp = await request.post(`api/v1/chnot-query`, {
+        record_id,
+        meta_id,
+        with_omited,
+        start_index: 0,
+        page_size: 1,
+      });
+      return cs.data.at(0);
+    },
     fetchMoreChnots: async () => {
       if (get().isFetchingNextPage) {
         return;

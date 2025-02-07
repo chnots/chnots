@@ -235,6 +235,14 @@ impl ChnotMapper for Postgres {
                     Wheres::if_some(req.query.as_ref(), |content| {
                         Wheres::ilike("content", content)
                     }),
+                    // TODO how to use as_ref?
+                    Wheres::if_some(req.record_id.to_owned(), |id| {
+                        Wheres::equal("r.id", id)
+                    }),
+                    // TODO how to use as_ref?
+                    Wheres::if_some(req.meta_id.to_owned(), |id| {
+                        Wheres::equal("r.meta_id", id)
+                    }),
                 ]
             ))
             .raw("ORDER BY m.pin_time DESC, r.insert_time desc")

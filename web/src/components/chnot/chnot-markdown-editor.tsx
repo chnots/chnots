@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
-import { useRef, useState } from "react";
-import { ChnotRecord } from "@/store/chnot";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { ChnotOverwriteReq } from "@/store/chnot";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
@@ -17,8 +17,6 @@ export interface ChnotEditState {
   isComposing: boolean;
 }
 
-// const imageRE = /\.(?:png|jpe?g|gif|bmp|svg|tiff?)$/i;
-
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
     // adopted from https://github.com/Zettlr/Zettlr/blob/develop/source/common/modules/markdown-editor/plugins/md-paste-drop-handlers.ts
@@ -26,7 +24,7 @@ const eventHandlers = EditorView.domEventHandlers({
 
     if (
       data === null ||
-        (data.types.length === 1 && data.types[0] === "text/plain")
+      (data.types.length === 1 && data.types[0] === "text/plain")
     ) {
       return false; // Let the default handler take over
     }
@@ -108,27 +106,16 @@ const editorTheme = EditorView.theme({
   },
 });
 
-export const ChnotMarkdownEditor = ({}) => {
-  console.log("ChnotMarkdownEditor changed");
-  const boxRef = React.useRef<HTMLDivElement>(null);
+const CMEditor: React.FC<{
+  metaId: string;
+  onChange: RefObject<(_content: string) => void>;
+}> = React.memo(({ metaId: meta_id, onChange }) => {
+  console.log("CMEditor changed");
 
-  const chnotStore = useChnotStore();
-  const currentChnot = chnotStore.getCurrentChnot();
-  const [editState, setEditState] = useState<ChnotEditState>({
-    isUploadingResource: false,
-    isRequesting: false,
-    isComposing: false,
-  });
+  const cmRef = React.useRef<HTMLDivElement>(null);
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
-
-  const chnotRecord: ChnotRecord = currentChnot
-    ? currentChnot.record
-    : {
-      id: uuid(),
-      meta_id: uuid(),
-      content: "",
-      insert_time: new Date(),
-    };
+  const [content, setContent] = useState<string>();
+  const { queryChnot } = useChnotStore();
 
   const extensions = [
     markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -137,76 +124,105 @@ export const ChnotMarkdownEditor = ({}) => {
     eventHandlers,
   ];
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const chnot = await queryChnot({ meta_id: meta_id });
+      setContent(chnot?.record.content);
+    };
+    fetchData();
+  }, [setContent, meta_id]);
 
-  const handleSend = async (content?: string) => {
-    setEditState((state) => {
-      return {
-        ...state,
-        isRequesting: true,
-      };
-    });
+  return (
+    <div className="w-full h-full" ref={cmRef}>
+      <CodeMirror
+        height={`${cmRef.current?.getBoundingClientRect().height ?? 0}px`}
+        extensions={extensions}
+        ref={codeMirror}
+        style={{
+          font: "serif",
+        }}
+        value={content}
+        basicSetup={{
+          lineNumbers: false,
+          highlightActiveLineGutter: false,
+          foldGutter: false,
+        }}
+        placeholder={"Chnot"}
+        onChange={(e) => onChange.current(e)}
+      />
+    </div>
+  );
+});
 
-    if (content) {
-      const req = {
-        chnot: {
-          ...chnotRecord,
-          id: uuid(),
-          content: content,
-          insert_time: new Date(),
-        },
-        kind: "mdwt",
-      };
-      try {
-        const rsp = await chnotStore.overwriteChnot(req, true);
-        if (!currentChnot) {
-          toast.success("Tie a Knot Successfully!");
+export const ChnotMarkdownEditor = ({}) => {
+  console.log("Frame changed");
+
+  const { currentChnot, setCurrentChnot, overwriteChnot } = useChnotStore();
+
+  const [editState, setEditState] = useState<ChnotEditState>({
+    isUploadingResource: false,
+    isRequesting: false,
+    isComposing: false,
+  });
+
+  const metaId = currentChnot ? currentChnot.meta.id : uuid();
+
+  const saveContent = useCallback(
+    async (content?: string) => {
+      setEditState((state) => {
+        return {
+          ...state,
+          isRequesting: true,
+        };
+      });
+
+      if (content) {
+        const req: ChnotOverwriteReq = {
+          chnot: {
+            id: uuid(),
+            content: content,
+            insert_time: new Date(),
+            meta_id: metaId,
+          },
+          kind: "mdwt",
+        };
+        try {
+          const rsp = await overwriteChnot(req, true);
+          if (!currentChnot) {
+            toast.success("Tie a Knot Successfully!");
+          }
+          if (currentChnot?.record.id !== rsp.chnot.record.id) {
+            setCurrentChnot(rsp.chnot);
+          }
+        } finally {
+          setEditState((state) => {
+            return {
+              ...state,
+              isRequesting: false,
+            };
+          });
         }
-        if (currentChnot?.record.id !== rsp.chnot.record.id) {
-          chnotStore.setCurrentChnot(rsp.chnot);
-        }
-      } finally {
-        setEditState((state) => {
-          return {
-            ...state,
-            isRequesting: false,
-          };
-        });
       }
-    }
-  };
+    },
+    [setCurrentChnot, currentChnot, setEditState, metaId]
+  );
 
   const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const handleChange = (content: string) => {
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      handleSend(content);
-    }, 1000);
-  };
+  const onChange = useCallback(
+    (content: string) => {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        saveContent(content);
+      }, 1000);
+    },
+    [saveContent]
+  );
+  const onChangeRef = useRef(onChange);
 
   return (
     <div className="w-full h-full">
-      <div className="border w-full">
-        {editState.isRequesting ? "Requesting" : "saved"}
-      </div>
-      <div className="w-full h-full" ref={boxRef}>
-        <CodeMirror
-          height={`${boxRef.current?.getBoundingClientRect().height ?? 0}px`}
-          extensions={extensions}
-          ref={codeMirror}
-          style={{
-            font: "serif",
-          }}
-          value={chnotRecord.content}
-          basicSetup={{
-            lineNumbers: false,
-            highlightActiveLineGutter: false,
-            foldGutter: false,
-          }}
-          placeholder={"Input something."}
-          onChange={(e) => handleChange(e)}
-        />
-      </div>
+      <div className="border w-full">{editState.isRequesting ? "R" : "S"}</div>
+      <CMEditor metaId={metaId} onChange={onChangeRef} />
     </div>
   );
 };

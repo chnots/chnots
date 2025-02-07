@@ -1,8 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
-const useDebugChanged = (value: any) => {
-  useCallback(() => {
-    console.error(`>> ${value} changed`);
+const useDebugChanged = (value: any, title?: string) => {
+  useEffect(() => {
+    console.info(`>> ${title ?? value} changed`);
   }, [value]);
 };
 
