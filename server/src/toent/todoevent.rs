@@ -66,7 +66,7 @@ impl EventBuilder for TodoEvent {
             let enum_len = enum_str.len();
             let upper_input = input.original.to_uppercase();
 
-            let distance = distance::levenshtein(enum_str, &upper_input);
+            let distance = textdistance::str::damerau_levenshtein(enum_str, &upper_input);
             if distance < enum_len {
                 let mut pos = ((1. - distance as f32 / enum_len as f32) * 256.0) as u8;
                 if enum_str.starts_with(&upper_input) {

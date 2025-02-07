@@ -1,5 +1,4 @@
 use std::str::FromStr;
-
 use crate::{
     mapper::ChnotMapper,
     model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
@@ -8,11 +7,10 @@ use crate::{
 };
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local, TimeDelta};
-use distance::levenshtein;
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use tokio_postgres::Row;
 use tracing::info;
-use tracing_log::log;
+use tracing_log::log::{self, log};
 
 use crate::model::dto::chnot::*;
 
@@ -112,6 +110,7 @@ impl ChnotMapper for Postgres {
     }
 
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
+        tracing::debug!("begin to overwrite chnot, {}", req.id);
         let chnot = &req.body.chnot;
 
         let mut client = self.client().await?;
@@ -142,7 +141,8 @@ impl ChnotMapper for Postgres {
         ).await?;
 
         let id = if let Some((old_id, old_content, old_insert_time)) = old_record.as_ref() {
-            if levenshtein(&old_content, &chnot.content) <= 50
+            let distince = textdistance::str::sift4_simple(&old_content, &chnot.content);
+            if distince <= 50
                 && chnot.insert_time.signed_duration_since(old_insert_time) < TimeDelta::hours(1)
             {
                 old_id
