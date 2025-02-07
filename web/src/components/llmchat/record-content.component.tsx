@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import MarkdownPreview from "@uiw/react-markdown-preview";
+import rehypeSanitize from "rehype-sanitize";
 import Icon from "../icon";
 
 const bgColor = (role: string) => {
@@ -30,9 +31,10 @@ const RecordContent = ({
   canGenerate?: boolean;
   onRegenerate?: () => void;
 }) => {
+  const rehypePlugins = [rehypeSanitize];
   return (
     <div className={clsx(bgColor(role), "p-3 border-b border-b-gray-200")}>
-      <MarkdownPreview source={content} style={{ padding: 16 }} />
+      <MarkdownPreview source={content} style={{ padding: 16 }} rehypePlugins={rehypePlugins} />
       {canAbort === true ? (
         <button onClick={onAbort}>
           <Icon.Ban />
