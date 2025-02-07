@@ -26,7 +26,7 @@ const eventHandlers = EditorView.domEventHandlers({
 
     if (
       data === null ||
-      (data.types.length === 1 && data.types[0] === "text/plain")
+        (data.types.length === 1 && data.types[0] === "text/plain")
     ) {
       return false; // Let the default handler take over
     }
@@ -114,19 +114,21 @@ export const ChnotMarkdownEditor = ({}) => {
 
   const chnotStore = useChnotStore();
   const currentChnot = chnotStore.getCurrentChnot();
-
-  const meta_id = uuid();
-  console.log(`${meta_id}`);
+  const [editState, setEditState] = useState<ChnotEditState>({
+    isUploadingResource: false,
+    isRequesting: false,
+    isComposing: false,
+  });
+  const codeMirror = useRef<ReactCodeMirrorRef>(null);
 
   const chnotRecord: ChnotRecord = currentChnot
     ? currentChnot.record
     : {
-        id: uuid(),
-        meta_id: meta_id,
-        content: "",
-        insert_time: new Date(),
-      };
-  const codeMirror = useRef<ReactCodeMirrorRef>(null);
+      id: uuid(),
+      meta_id: uuid(),
+      content: "",
+      insert_time: new Date(),
+    };
 
   const extensions = [
     markdown({ base: markdownLanguage, codeLanguages: languages }),
@@ -135,14 +137,9 @@ export const ChnotMarkdownEditor = ({}) => {
     eventHandlers,
   ];
 
-  const [state, setState] = useState<ChnotEditState>({
-    isUploadingResource: false,
-    isRequesting: false,
-    isComposing: false,
-  });
 
   const handleSend = async (content?: string) => {
-    setState((state) => {
+    setEditState((state) => {
       return {
         ...state,
         isRequesting: true,
@@ -168,7 +165,7 @@ export const ChnotMarkdownEditor = ({}) => {
           chnotStore.setCurrentChnot(rsp.chnot);
         }
       } finally {
-        setState((state) => {
+        setEditState((state) => {
           return {
             ...state,
             isRequesting: false,
@@ -178,9 +175,7 @@ export const ChnotMarkdownEditor = ({}) => {
     }
   };
 
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
-  );
+  const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleChange = (content: string) => {
     clearTimeout(timerRef.current);
@@ -192,7 +187,7 @@ export const ChnotMarkdownEditor = ({}) => {
   return (
     <div className="w-full h-full">
       <div className="border w-full">
-        {state.isRequesting ? "Requesting" : "saved"}
+        {editState.isRequesting ? "Requesting" : "saved"}
       </div>
       <div className="w-full h-full" ref={boxRef}>
         <CodeMirror
