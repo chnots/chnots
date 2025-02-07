@@ -38,9 +38,7 @@ export const ResponseRecord = ({
   const [answerState, setAnswerState] = useState(AnswerState.Initial);
   const [abortSingal, setAbortSignal] = useState<AbortController>();
   const [shouldAbort, setShouldAbort] = useState(false);
-  const [responseSessionId, setResponseSessionId] = useState<
-    string | undefined
-  >();
+  const [responseSessionId, setResponseSessionId] = useState<string>();
 
   useEffect(() => {
     setAnswering(
@@ -169,6 +167,10 @@ export const ResponseRecord = ({
     setAnswerState(AnswerState.Trigger);
   }
 
+  const onRegenerate = () => {
+    setAnswerState(AnswerState.Trigger);
+  };
+
   return (
     <RecordContent
       content={answer}
@@ -176,8 +178,10 @@ export const ResponseRecord = ({
       onAbort={() => {
         setShouldAbort(true);
       }}
-      canGenerate={true}
-      onRegenerate={() => {}}
+      canRegenerate={true}
+      onRegenerate={() => {
+        onRegenerate();
+      }}
       role={"answering-llm"}
     />
   );

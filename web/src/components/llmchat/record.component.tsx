@@ -5,7 +5,7 @@ export const Record = ({ record }: { record: LLMChatRecord }) => {
   return (
     <RecordContent
       content={record.content}
-      canGenerate={record.role === "assistant"}
+      canRegenerate={record.role === "assistant"}
       role={record.role}
       key={record.id}
     />
