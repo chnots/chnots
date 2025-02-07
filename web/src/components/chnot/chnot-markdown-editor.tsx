@@ -10,10 +10,17 @@ import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import { useAttachmentStore } from "@/store/attachment";
 import React from "react";
+import Icon from "../icon";
 
-export interface ChnotEditState {
+enum RequestState {
+  Saved,
+  Requesting,
+  Error,
+}
+
+interface ChnotEditState {
   isUploadingResource: boolean;
-  isRequesting: boolean;
+  requestState: RequestState;
   isComposing: boolean;
 }
 
@@ -108,8 +115,8 @@ const editorTheme = EditorView.theme({
 
 const CMEditor: React.FC<{
   metaId: string;
-  onChange: RefObject<(_content: string) => void>;
-}> = React.memo(({ metaId: meta_id, onChange }) => {
+  onChange: RefObject<(metaId: string, _content: string) => void>;
+}> = React.memo(({ metaId, onChange }) => {
   console.log("CMEditor changed");
 
   const cmRef = React.useRef<HTMLDivElement>(null);
@@ -126,11 +133,11 @@ const CMEditor: React.FC<{
 
   useEffect(() => {
     const fetchData = async () => {
-      const chnot = await queryChnot({ meta_id: meta_id });
+      const chnot = await queryChnot({ meta_id: metaId });
       setContent(chnot?.record.content);
     };
     fetchData();
-  }, [setContent, meta_id]);
+  }, [setContent, metaId]);
 
   return (
     <div className="w-full h-full" ref={cmRef}>
@@ -148,7 +155,7 @@ const CMEditor: React.FC<{
           foldGutter: false,
         }}
         placeholder={"Chnot"}
-        onChange={(e) => onChange.current(e)}
+        onChange={(e) => onChange.current(metaId, e)}
       />
     </div>
   );
@@ -161,18 +168,16 @@ export const ChnotMarkdownEditor = ({}) => {
 
   const [editState, setEditState] = useState<ChnotEditState>({
     isUploadingResource: false,
-    isRequesting: false,
+    requestState: RequestState.Saved,
     isComposing: false,
   });
 
-  const metaId = currentChnot ? currentChnot.meta.id : uuid();
-
   const saveContent = useCallback(
-    async (content?: string) => {
+    async (metaId: string, content?: string) => {
       setEditState((state) => {
         return {
           ...state,
-          isRequesting: true,
+          requestState: RequestState.Requesting,
         };
       });
 
@@ -186,33 +191,31 @@ export const ChnotMarkdownEditor = ({}) => {
           },
           kind: "mdwt",
         };
+        let requestState;
         try {
           const rsp = await overwriteChnot(req, true);
-          if (!currentChnot) {
-            toast.success("Tie a Knot Successfully!");
-          }
-          if (currentChnot?.record.id !== rsp.chnot.record.id) {
-            setCurrentChnot(rsp.chnot);
-          }
-        } finally {
-          setEditState((state) => {
-            return {
-              ...state,
-              isRequesting: false,
-            };
-          });
+          setCurrentChnot(rsp.chnot);
+          requestState = RequestState.Saved;
+        } catch {
+          requestState = RequestState.Error;
         }
+        setEditState((state) => {
+          return {
+            ...state,
+            requestState,
+          };
+        });
       }
     },
-    [setCurrentChnot, currentChnot, setEditState, metaId]
+    [setCurrentChnot, currentChnot, setEditState, editState]
   );
 
   const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
   const onChange = useCallback(
-    (content: string) => {
+    (metaId: string, content: string) => {
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
-        saveContent(content);
+        saveContent(metaId, content);
       }, 1000);
     },
     [saveContent]
@@ -221,8 +224,28 @@ export const ChnotMarkdownEditor = ({}) => {
 
   return (
     <div className="w-full h-full">
-      <div className="border w-full">{editState.isRequesting ? "R" : "S"}</div>
-      <CMEditor metaId={metaId} onChange={onChangeRef} />
+      <div className="border w-full p-2 flex items-center justify-center bg-gray-100 rounded-lg shadow-sm">
+        {editState.requestState === RequestState.Requesting ? (
+          <div className="flex items-center text-blue-600 transition-opacity duration-300 ease-in-out opacity-100">
+            <Icon.Loader2 className="animate-spin h-5 w-5 mr-2" />
+            <span>Requesting</span>
+          </div>
+        ) : editState.requestState === RequestState.Error ? (
+          <div className="flex items-center text-blue-600 transition-opacity duration-300 ease-in-out opacity-100">
+            <Icon.LucideMessageCircleQuestion className="animate-spin h-5 w-5 mr-2" />
+            <span>Requesting</span>
+          </div>
+        ) : (
+          <div className="flex items-center text-green-600 transition-opacity duration-300 ease-in-out opacity-100">
+            <Icon.CheckCircle className="h-5 w-5 mr-2" />
+            <span>Saved</span>
+          </div>
+        )}
+      </div>
+      <CMEditor
+        metaId={currentChnot?.meta.id ?? uuid()}
+        onChange={onChangeRef}
+      />
     </div>
   );
 };
