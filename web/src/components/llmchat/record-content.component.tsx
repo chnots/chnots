@@ -20,7 +20,7 @@ const RecordContent = ({
   role,
   content,
   canAbort,
-  canGenerate,
+  canRegenerate,
   onAbort,
   onRegenerate,
 }: {
@@ -28,13 +28,17 @@ const RecordContent = ({
   content: string;
   canAbort?: boolean;
   onAbort?: () => void;
-  canGenerate?: boolean;
+  canRegenerate?: boolean;
   onRegenerate?: () => void;
 }) => {
   const rehypePlugins = [rehypeSanitize];
   return (
     <div className={clsx(bgColor(role), "p-3 border-b border-b-gray-200")}>
-      <MarkdownPreview source={content} style={{ padding: 16 }} rehypePlugins={rehypePlugins} />
+      <MarkdownPreview
+        source={content}
+        style={{ padding: 16 }}
+        rehypePlugins={rehypePlugins}
+      />
       {canAbort === true ? (
         <button onClick={onAbort}>
           <Icon.Ban />
@@ -42,7 +46,7 @@ const RecordContent = ({
       ) : (
         <></>
       )}
-      {canGenerate === true ? (
+      {canRegenerate === true ? (
         <button onClick={onRegenerate}>
           <Icon.RotateCcw />
         </button>
