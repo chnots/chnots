@@ -156,5 +156,5 @@ pub fn routes() -> Router<ShareAppState> {
                 rsp
             }),
         )
-        .route("/api/v1/resource/:id", get(download))
+        .route("/api/v1/resource/{id}", get(download))
 }
