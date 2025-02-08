@@ -2,9 +2,9 @@ use std::{ffi::OsStr, path::PathBuf};
 
 use axum::{
     body::{self, Bytes},
-    extract::{Multipart, Path, State},
-    http::{header, HeaderMap, HeaderName, StatusCode},
-    response::IntoResponse,
+    extract::{Multipart, Path, Query, State},
+    http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
     routing::{get, put},
     Router,
 };
@@ -20,8 +20,20 @@ use tokio_util::io::ReaderStream;
 use tracing::info;
 
 use crate::{
-    app::ShareAppState, config::AttachmentConfig, mapper::{postgres::namespace, ResourceMapper},
-    model::{db::resource::Resource, dto::{read_namespace_from_header, ResourceUploadRsp}}, server::controller::KResponse,
+    app::ShareAppState,
+    config::AttachmentConfig,
+    mapper::ResourceMapper,
+    model::{
+        db::resource::Resource,
+        dto::{
+            kreq, read_namespace_from_header, InsertInlineResourceReq, InsertInlineResourceRsp,
+            QueryInlineResourceReq, QueryInlineResourceRsp, ResourceUploadRsp,
+        },
+    },
+    server::controller::{
+        asset::{asset_to_response, ContentEnum},
+        KResponse,
+    },
 };
 
 pub fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
@@ -147,6 +159,57 @@ pub async fn download(state: State<ShareAppState>, Path(id): Path<String>) -> im
     }
 }
 
+async fn query_inline_resource(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<QueryInlineResourceReq>,
+) -> KResponse<QueryInlineResourceRsp> {
+    state
+        .mapper
+        .query_inline_resource(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn insert_inline_resource(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<InsertInlineResourceReq>,
+) -> KResponse<InsertInlineResourceRsp> {
+    state
+        .mapper
+        .insert_inline_resource(&kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn query_svg(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Path(id): Path<String>,
+) -> Response {
+    let mut headers = headers.clone();
+    headers.append("K-namespace", HeaderValue::from_str("default").unwrap());
+    let rsp = query_inline_resource(
+        headers,
+        state,
+        Query(QueryInlineResourceReq {
+            id: Some(id.into()),
+            content_type: Some("svg".into()),
+            name_like: None,
+        }),
+    )
+    .await
+    .0
+    .ok();
+
+    let res = rsp
+        .and_then(|e| e.res.get(0).cloned())
+        .map(|e| ("image/svg+xml", ContentEnum::String(e.content.to_string())));
+
+    asset_to_response(res)
+}
+
 pub fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
@@ -157,4 +220,7 @@ pub fn routes() -> Router<ShareAppState> {
             }),
         )
         .route("/api/v1/resource/{id}", get(download))
+        .route("/api/v1/inline-resource", put(insert_inline_resource))
+        .route("/api/v1/inline-resource", get(query_inline_resource))
+        .route("/api/v1/inline-svg/{id}", get(query_svg))
 }

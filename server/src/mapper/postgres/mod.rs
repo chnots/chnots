@@ -4,22 +4,20 @@ pub mod namespace;
 pub mod resource;
 pub mod backup;
 
-use std::borrow::BorrowMut;
 
-use crate::util::sql_builder::SqlValue;
+use crate::{model::shared_str::SharedStr, util::sql_builder::SqlValue};
 use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
-use postgres_types::ToSql;
+use postgres_types::{to_sql_checked, FromSql, ToSql};
 use serde::{Deserialize, Serialize};
 use tokio_postgres::Row;
 
 use crate::model::dto::*;
 
-use super::{
-    backup::{tabledumpersql::TableDumperSqlBuilder, DbBackupTrait, DumpWrapper, TableDumpWriter, TableDumpWriterEnum},
-    ChnotMapper,
-};
+use super::
+    backup::{tabledumpersql::TableDumperSqlBuilder, DbBackupTrait, DumpWrapper, TableDumpWriter, TableDumpWriterEnum}
+;
 
 const NO_PARAMS: Vec<&(dyn ToSql + Sync)> = Vec::new();
 
@@ -86,7 +84,44 @@ impl<'a> Into<&'a (dyn ToSql + Sync + Send)> for &'a SqlValue<'a> {
                 Some(v) => v.as_ref().into(),
                 None => &None::<String>,
             },
+            SqlValue::SharedStr(shared_str) => shared_str,
         }
+    }
+}
+
+impl ToSql for SharedStr {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut tokio_util::bytes::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
+    where
+        Self: Sized,
+    {
+        self.to_string().to_sql(ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool
+    where
+        Self: Sized,
+    {
+        <String as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl<'a> FromSql<'a> for SharedStr {
+    fn from_sql(
+        ty: &tokio_postgres::types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        <&str as tokio_postgres::types::FromSql>::from_sql(ty, raw)
+            .and_then(|s| Ok(SharedStr::new(s)))
+    }
+
+    fn accepts(ty: &tokio_postgres::types::Type) -> bool {
+        <&str as tokio_postgres::types::FromSql>::accepts(ty)
     }
 }
 
@@ -144,6 +179,4 @@ impl DbBackupTrait for Postgres {
 
         Ok(())
     }
-
-
 }

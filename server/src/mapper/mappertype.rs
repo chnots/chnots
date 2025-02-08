@@ -2,11 +2,11 @@ use chin_tools::wrapper::anyhow::{AResult, EResult};
 use serde::Serialize;
 
 use crate::{
-    model::db::{
+    model::{db::{
         chnot::ChnotMetadata,
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::NamespaceRelation,
-    },
+    }, dto::InsertInlineResourceRsp},
     util::{sort_util, sql_builder::PlaceHolderType},
 };
 
@@ -44,6 +44,8 @@ impl MapperType {
         self.ensure_table_namespace_relation().await?;
         self.ensure_table_chnot_metadata().await?;
         self.ensure_table_resource().await?;
+        self.ensure_table_inline_resource().await?;
+
         self.ensure_table_llm_chat_bot().await?;
         self.ensure_table_llm_chat_template().await?;
         self.ensure_table_llm_chat_session().await?;
@@ -107,6 +109,30 @@ impl ResourceMapper for MapperType {
     async fn ensure_table_resource(&self) -> EResult {
         match self {
             MapperType::Postgres(db) => db.ensure_table_resource().await,
+        }
+    }
+
+    async fn insert_inline_resource(
+        &self,
+        req: &KReq<crate::model::dto::InsertInlineResourceReq>,
+    ) -> anyhow::Result<InsertInlineResourceRsp> {
+        match self {
+            MapperType::Postgres(db) => db.insert_inline_resource(req).await,
+        }
+    }
+
+    async fn query_inline_resource(
+        &self,
+        req: KReq<crate::model::dto::QueryInlineResourceReq>,
+    ) -> anyhow::Result<crate::model::dto::QueryInlineResourceRsp> {
+        match self {
+            MapperType::Postgres(db) => db.query_inline_resource(req).await,
+        }
+    }
+
+    async fn ensure_table_inline_resource(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_inline_resource().await,
         }
     }
 }
@@ -279,8 +305,11 @@ impl LLMChatMapper for MapperType {
             MapperType::Postgres(db) => db.ensure_table_llm_chat_bot().await,
         }
     }
-    
-    async fn llm_chat_truncate_session(&self, req: KReq<crate::model::dto::llmchat::LLMChatTruncateSessionReq>) -> AResult<crate::model::dto::llmchat::LLMChatTruncateSessionRsp> {
+
+    async fn llm_chat_truncate_session(
+        &self,
+        req: KReq<crate::model::dto::llmchat::LLMChatTruncateSessionReq>,
+    ) -> AResult<crate::model::dto::llmchat::LLMChatTruncateSessionRsp> {
         todo!()
     }
 }
@@ -408,6 +437,7 @@ impl MapperType {
                             name: row.try_get("name")?,
                             body: row.try_get("body")?,
                             update_time: row.try_get("update_time")?,
+                            svg_logo: row.try_get("svg_logo")?,
                         };
                         Ok(obj)
                     },
@@ -473,7 +503,7 @@ impl MapperType {
                             update_time: row.try_get("update_time")?,
                             name: row.try_get("name")?,
                             prompt: row.try_get("prompt")?,
-                            icon_name: row.try_get("icon_name")?,
+                            svg_logo: row.try_get("svg_logo")?,
                         };
                         Ok(obj)
                     },

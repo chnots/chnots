@@ -10,7 +10,8 @@ type DateTime = Date;
 export interface LLMChatBot {
   id: string;
   name: string;
-  body: string ;
+  body: string;
+  svg_logo?: string;
   delete_time?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
   insert_time: DateTime;
@@ -28,10 +29,10 @@ export interface LLMChatTemplate {
   id: string;
   name: string;
   prompt: string;
+  svg_logo?: string;
   delete_time?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
   insert_time: DateTime;
-  icon_name?: string;
 }
 
 // LLMChatSession structure
@@ -105,7 +106,7 @@ export const useLLMChatStore = create(
         return {
           ...state,
           bots: new Map(bots.bots.map((e) => [e.id, e])),
-          currentBot: bots.bots.at(0)
+          currentBot: bots.bots.at(0),
         };
       });
     },
@@ -176,6 +177,11 @@ export const useLLMChatStore = create(
     setCurrentSession: (session?: LLMChatSession) => {
       set((state) => {
         return { ...state, currentSession: session };
+      });
+    },
+    setCurrentBot: (bot?: LLMChatBot) => {
+      set((state) => {
+        return { ...state, currentBot: bot };
       });
     },
   }))

@@ -11,7 +11,10 @@ use crate::model::{
         namespace::{NamespaceRecord, NamespaceRelation},
         resource::Resource,
     },
-    dto::{chnot::*, KReq, llmchat::*},
+    dto::{
+        chnot::*, llmchat::*, InsertInlineResourceReq, InsertInlineResourceRsp, KReq,
+        QueryInlineResourceReq, QueryInlineResourceRsp,
+    },
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -24,7 +27,6 @@ pub enum MapperConfig {
 pub enum MapperType {
     Postgres(Postgres),
 }
-
 
 pub trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
@@ -39,8 +41,17 @@ pub trait ChnotMapper {
 pub trait ResourceMapper {
     async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource>;
     async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
+    async fn insert_inline_resource(
+        &self,
+        req: &KReq<InsertInlineResourceReq>,
+    ) -> anyhow::Result<InsertInlineResourceRsp>;
+    async fn query_inline_resource(
+        &self,
+        req: KReq<QueryInlineResourceReq>,
+    ) -> anyhow::Result<QueryInlineResourceRsp>;
 
     async fn ensure_table_resource(&self) -> EResult;
+    async fn ensure_table_inline_resource(&self) -> EResult;
 }
 
 pub trait NamespaceMapper {
@@ -52,21 +63,57 @@ pub trait NamespaceMapper {
 }
 
 pub trait LLMChatMapper {
-    async fn llm_chat_overwrite_bot(&self, req: KReq<LLMChatOverwriteBotReq>) -> AResult<LLMChatOverwriteBotRsp>;
-    async fn llm_chat_overwrite_template(&self, req: KReq<LLMChatOverwriteTemplateReq>) -> AResult<LLMChatOverwriteTemplateRsp>;
-    async fn llm_chat_insert_session(&self, req: KReq<LLMChatInsertSessionReq>) -> AResult<LLMChatInsertSessionRsp>;
-    async fn llm_chat_insert_record(&self, req: KReq<LLMChatInsertRecordReq>) -> AResult<LLMChatInsertRecordRsp>;
+    async fn llm_chat_overwrite_bot(
+        &self,
+        req: KReq<LLMChatOverwriteBotReq>,
+    ) -> AResult<LLMChatOverwriteBotRsp>;
+    async fn llm_chat_overwrite_template(
+        &self,
+        req: KReq<LLMChatOverwriteTemplateReq>,
+    ) -> AResult<LLMChatOverwriteTemplateRsp>;
+    async fn llm_chat_insert_session(
+        &self,
+        req: KReq<LLMChatInsertSessionReq>,
+    ) -> AResult<LLMChatInsertSessionRsp>;
+    async fn llm_chat_insert_record(
+        &self,
+        req: KReq<LLMChatInsertRecordReq>,
+    ) -> AResult<LLMChatInsertRecordRsp>;
 
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp>;
-    async fn llm_chat_list_templates(&self, req: KReq<LLMChatListTemplateReq>) -> AResult<LLMChatListTemplateRsp>;
-    async fn llm_chat_list_sessions(&self, req: KReq<LLMChatListSessionReq>) -> AResult<LLMChatListSessionRsp>;
-    async fn llm_chat_update_session(&self, req: KReq<LLMChatUpdateSessionReq>) -> AResult<LLMChatUpdateSessionRsp>;
-    async fn llm_chat_session_detail(&self, req: KReq<LLMChatSessionDetialReq>) -> AResult<LLMChatSessionDetailRsp>;
-    async fn llm_chat_truncate_session(&self, req: KReq<LLMChatTruncateSessionReq>) -> AResult<LLMChatTruncateSessionRsp>;
+    async fn llm_chat_list_templates(
+        &self,
+        req: KReq<LLMChatListTemplateReq>,
+    ) -> AResult<LLMChatListTemplateRsp>;
+    async fn llm_chat_list_sessions(
+        &self,
+        req: KReq<LLMChatListSessionReq>,
+    ) -> AResult<LLMChatListSessionRsp>;
+    async fn llm_chat_update_session(
+        &self,
+        req: KReq<LLMChatUpdateSessionReq>,
+    ) -> AResult<LLMChatUpdateSessionRsp>;
+    async fn llm_chat_session_detail(
+        &self,
+        req: KReq<LLMChatSessionDetialReq>,
+    ) -> AResult<LLMChatSessionDetailRsp>;
+    async fn llm_chat_truncate_session(
+        &self,
+        req: KReq<LLMChatTruncateSessionReq>,
+    ) -> AResult<LLMChatTruncateSessionRsp>;
 
-    async fn llm_chat_delete_bot(&self, req: KReq<LLMChatDeleteBotReq>) -> AResult<LLMChatDeleteBotRsp>;
-    async fn llm_chat_delete_template(&self, req: KReq<LLMChatDeleteTemplateReq>) -> AResult<LLMChatDeleteTemplateRsp>;
-    async fn llm_chat_delete_session(&self, req: KReq<LLMChatDeleteSessionReq>) -> AResult<LLMChatDeleteSessionRsp>;
+    async fn llm_chat_delete_bot(
+        &self,
+        req: KReq<LLMChatDeleteBotReq>,
+    ) -> AResult<LLMChatDeleteBotRsp>;
+    async fn llm_chat_delete_template(
+        &self,
+        req: KReq<LLMChatDeleteTemplateReq>,
+    ) -> AResult<LLMChatDeleteTemplateRsp>;
+    async fn llm_chat_delete_session(
+        &self,
+        req: KReq<LLMChatDeleteSessionReq>,
+    ) -> AResult<LLMChatDeleteSessionRsp>;
 
     async fn ensure_table_llm_chat_bot(&self) -> EResult;
     async fn ensure_table_llm_chat_template(&self) -> EResult;
