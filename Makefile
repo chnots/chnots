@@ -6,8 +6,6 @@ CARGO_CLEAN = cargo clean
 
 # 定义清理操作
 WEB_DIST = web-dist
-TURNDOWN_DIR = vendor/turndown
-TURNDOWN_PLUGIN_DIR = vendor/turndown-plugin-gfm
 WEB_DIR = web
 SERVER_DIR = server
 
@@ -20,16 +18,10 @@ run-server:
 build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)
 
-build-turndown:
-	cd $(TURNDOWN_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
-
-build-turndown-plugin-gfm:
-	cd $(TURNDOWN_PLUGIN_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
-
 build-web-dir:
 	cd $(WEB_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
 
-build-web: build-turndown build-turndown-plugin-gfm build-web-dir
+build-web: build-web-dir
 
 build: build-web build-server
 
