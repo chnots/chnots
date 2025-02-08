@@ -115,11 +115,18 @@ class Request {
   }
 }
 
+const baseURL = import.meta.env.DEV
+  ? import.meta.env.PUBLIC_BACKEND_URL
+  : window.location.protocol + "//" + window.location.host;
+
 const request = new Request({
-  timeout: 20 * 1000,
-  baseURL: import.meta.env.DEV
-    ? import.meta.env.PUBLIC_BACKEND_URL
-    : window.location.protocol + "//" + window.location.host,
+  timeout: 30 * 1000,
+  baseURL: baseURL,
 });
+
+
+export const concatURL = (suffix: string): string => {
+  return baseURL + suffix;
+};
 
 export default request;
