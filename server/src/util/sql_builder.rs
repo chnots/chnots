@@ -2,12 +2,15 @@ use std::borrow::Cow;
 
 use chrono::{DateTime, FixedOffset};
 
+use crate::model::shared_str::SharedStr;
+
 pub enum SqlValue<'a> {
     I8(i8),
     I16(i16),
     I32(i32),
     I64(i64),
     Str(Cow<'a, str>),
+    SharedStr(SharedStr),
     Date(Cow<'a, DateTime<FixedOffset>>),
     Bool(bool),
     Opt(Option<Box<SqlValue<'a>>>),
@@ -58,6 +61,12 @@ impl<'a> Into<SqlValue<'a>> for String {
 impl<'a> Into<SqlValue<'a>> for Cow<'a, str> {
     fn into(self) -> SqlValue<'a> {
         SqlValue::Str(self)
+    }
+}
+
+impl<'a> Into<SqlValue<'a>> for SharedStr {
+    fn into(self) -> SqlValue<'a> {
+        SqlValue::SharedStr(self)
     }
 }
 
