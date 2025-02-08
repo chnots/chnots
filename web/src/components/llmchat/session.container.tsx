@@ -1,6 +1,7 @@
 import {
   LLMChatRecord,
   LLMChatSession,
+  LLMChatSessionDetailRsp,
   LLMChatTemplate,
   useLLMChatStore,
 } from "@/store/llmchat";
@@ -15,7 +16,7 @@ import { ResponseRecord } from "./response-record.component";
 
 const Header = () => {
   return (
-    <div className=" text-white p-1 border-b h-8">
+    <div className="p-1 border-b">
       <LLMChatBotSelect />
     </div>
   );
@@ -39,9 +40,11 @@ const LLMChatSessionContainer = () => {
 
   useEffect(() => {
     if (currentSession && currentSession.id !== notPersistedId) {
-      fetchSessionRecords(currentSession).then((rsp) => {
-        setRecords(rsp.records);
-      });
+      fetchSessionRecords(currentSession).then(
+        (rsp: LLMChatSessionDetailRsp) => {
+          setRecords(rsp.records);
+        }
+      );
     }
   }, [currentSession, notPersistedId]);
 

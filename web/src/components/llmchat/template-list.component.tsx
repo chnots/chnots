@@ -1,7 +1,7 @@
 import { useLLMChatStore, LLMChatTemplate } from "@/store/llmchat";
 import Icon from "../icon";
-import LLMChatTemplateIcon from "./template-icon.component";
 import clsx from "clsx";
+import KSVG from "../svg";
 
 function LLMChatTemplateList({
   onClickTemplate,
@@ -22,13 +22,17 @@ function LLMChatTemplateList({
         <Icon.PlusCircle />
         <span>Add New Template</span>
       </button>
-      {items.map((item) => (
+      {items.map((item: LLMChatTemplate) => (
         <div
           key={item.id}
           onClick={() => onClickTemplate(item)}
           className={clsx(className, "hover:cursor-pointer")}
         >
-          <LLMChatTemplateIcon name={item.icon_name} />
+          {item.svg_logo ? (
+            <KSVG inner={item.svg_logo} />
+          ) : (
+            <Icon.MessageSquare />
+          )}
           <span>{item.name}</span>
         </div>
       ))}

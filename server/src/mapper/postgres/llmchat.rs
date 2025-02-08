@@ -113,6 +113,7 @@ impl LLMChatMapper for Postgres {
                     delete_time: t.try_get("delete_time")?,
                     update_time: t.try_get("update_time")?,
                     insert_time: t.try_get("insert_time")?,
+                    svg_logo: t.try_get("svg_logo")?,
                 };
                 Ok(r)
             })
@@ -146,7 +147,7 @@ impl LLMChatMapper for Postgres {
                     update_time: t.try_get("update_time")?,
                     insert_time: t.try_get("insert_time")?,
                     prompt: t.try_get("prompt")?,
-                    icon_name: t.try_get("icon_name")?,
+                    svg_logo: t.try_get("svg_logo")?,
                 };
                 Ok(r)
             })
@@ -295,7 +296,8 @@ impl LLMChatMapper for Postgres {
                 body TEXT NOT NULL,
                 delete_time TIMESTAMPTZ,
                 update_time TIMESTAMPTZ,
-                insert_time TIMESTAMPTZ NOT NULL
+                insert_time TIMESTAMPTZ NOT NULL,
+                svg_logo TEXT NULL
             )",
         )
         .await?;
@@ -311,7 +313,8 @@ impl LLMChatMapper for Postgres {
                 icon_name VARCHAR(200),
                 delete_time TIMESTAMPTZ,
                 update_time TIMESTAMPTZ,
-                insert_time TIMESTAMPTZ NOT NULL
+                insert_time TIMESTAMPTZ NOT NULL,
+                svg_logo TEXT NULL
             )",
         )
         .await?;
@@ -413,7 +416,7 @@ impl LLMChatMapper for Postgres {
             .await?
             .execute(&updater.seg, to_sql!(updater.values))
             .await?;
-        
+
         Ok(LLMChatTruncateSessionRsp {})
     }
 }

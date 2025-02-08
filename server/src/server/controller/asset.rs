@@ -1,8 +1,11 @@
+use std::borrow::Cow;
+
 use axum::{
     http::{header, StatusCode, Uri},
     response::{Html, IntoResponse, Response},
     routing::{get, Router},
 };
+use mime_guess::Mime;
 use rust_embed::RustEmbed;
 use tracing::info;
 
@@ -48,6 +51,25 @@ struct Asset;
 
 pub struct StaticFile<T>(pub T);
 
+pub enum ContentEnum {
+    Cow(Cow<'static, [u8]>),
+    String(String),
+}
+
+pub fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -> Response {
+    match data {
+        Some((mime, data)) => match data {
+            ContentEnum::Cow(data) => {
+                ([(header::CONTENT_TYPE, mime.as_ref())], data).into_response()
+            }
+            ContentEnum::String(data) => {
+                ([(header::CONTENT_TYPE, mime.as_ref())], data).into_response()
+            }
+        },
+        None => (StatusCode::NOT_FOUND, "404 Not Found").into_response(),
+    }
+}
+
 impl<T> IntoResponse for StaticFile<T>
 where
     T: Into<String>,
@@ -56,12 +78,11 @@ where
         let path = self.0.into();
         info!("get {:?}", path.as_str());
 
-        match Asset::get(path.as_str()) {
-            Some(content) => {
-                let mime = mime_guess::from_path(path).first_or_octet_stream();
-                ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
-            }
-            None => (StatusCode::NOT_FOUND, "404 Not Found").into_response(),
-        }
+        let data = Asset::get(path.as_str()).and_then(|ef| {
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
+            Some((mime, ContentEnum::Cow(ef.data)))
+        });
+
+        asset_to_response(data)
     }
 }

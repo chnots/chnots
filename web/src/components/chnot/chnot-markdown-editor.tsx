@@ -224,23 +224,22 @@ export const ChnotMarkdownEditor = ({}) => {
 
   return (
     <div className="w-full h-full">
-      <div className="border w-full p-2 flex items-center justify-center bg-gray-100 rounded-lg shadow-sm">
-        {editState.requestState === RequestState.Requesting ? (
-          <div className="flex items-center text-blue-600 transition-opacity duration-300 ease-in-out opacity-100">
-            <Icon.Loader2 className="animate-spin h-5 w-5 mr-2" />
-            <span>Requesting</span>
-          </div>
-        ) : editState.requestState === RequestState.Error ? (
-          <div className="flex items-center text-blue-600 transition-opacity duration-300 ease-in-out opacity-100">
-            <Icon.LucideMessageCircleQuestion className="animate-spin h-5 w-5 mr-2" />
-            <span>Requesting</span>
-          </div>
-        ) : (
-          <div className="flex items-center text-green-600 transition-opacity duration-300 ease-in-out opacity-100">
-            <Icon.CheckCircle className="h-5 w-5 mr-2" />
-            <span>Saved</span>
-          </div>
-        )}
+      <div className="border w-full p-1 flex bg-gray-100 rounded-lg shadow-sm">
+        <div className="">
+          {editState.requestState === RequestState.Requesting ? (
+            <div className="flex items-center text-blue-600 transition-opacity duration-300 ease-in-out opacity-100">
+              <Icon.Loader2 className="animate-spin h-5 w-5 mr-2" />
+            </div>
+          ) : editState.requestState === RequestState.Error ? (
+            <div className="flex items-center text-red-600 transition-opacity duration-300 ease-in-out opacity-100">
+              <Icon.LucideMessageCircleQuestion className="h-5 w-5 mr-2" />
+            </div>
+          ) : (
+            <div className="flex items-center text-green-600 transition-opacity duration-300 ease-in-out opacity-100">
+              <Icon.CheckCircle className="h-5 w-5 mr-2" />
+            </div>
+          )}
+        </div>
       </div>
       <CMEditor
         metaId={currentChnot?.meta.id ?? uuid()}
