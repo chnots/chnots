@@ -501,6 +501,7 @@ dependencies = [
  "axum 0.8.1",
  "axum-macros",
  "axum-server",
+ "base64",
  "bytes",
  "chin-tools",
  "chrono",
