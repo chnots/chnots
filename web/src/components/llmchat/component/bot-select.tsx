@@ -1,12 +1,12 @@
+import Icon from "@/components/icon";
+import KSVG from "@/components/svg";
 import { LLMChatBot, useLLMChatStore } from "@/store/llmchat";
 import React, { useState } from "react";
-import Icon from "../icon";
-import KSVG from "../svg";
 
 const BotComponent = ({ bot }: { bot: LLMChatBot }) => (
-  <div className="flex items-center cursor-pointer p-2 border border-gray-300 rounded hover:border-gray-400">
+  <div className="flex items-center cursor-pointer p-2  rounded hover:border-gray-400">
     {bot.svg_logo ? (
-      <KSVG inner={bot.svg_logo} className="w-8 h-8" />
+      <KSVG inner={bot.svg_logo} className="w-4 h-4" />
     ) : (
       <Icon.Bot />
     )}
@@ -29,7 +29,7 @@ const LLMChatBotSelect: React.FC<{}> = ({}) => {
   };
 
   return (
-    <div className="h-16">
+    <div className="">
       {currentBot ? (
         <div onClick={handleToggle}>
           <BotComponent bot={currentBot} />

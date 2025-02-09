@@ -19,7 +19,7 @@ build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)
 
 build-web-dir:
-	cd $(WEB_DIR) && git clean -xfd && $(PNPM_INSTALL) && $(PNPM_BUILD)
+	cd $(WEB_DIR) && $(PNPM_INSTALL) && $(PNPM_BUILD)
 
 build-web: build-web-dir
 

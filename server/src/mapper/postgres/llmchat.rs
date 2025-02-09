@@ -77,13 +77,14 @@ impl LLMChatMapper for Postgres {
         req: KReq<LLMChatInsertRecordReq>,
     ) -> AResult<LLMChatInsertRecordRsp> {
         self.client().await?.execute(
-            "insert into llm_chat_record(id, session_id, pre_record_id, content, role, insert_time) values($1, $2, $3, $4, $5, $6)",
+            "insert into llm_chat_record(id, session_id, pre_record_id, content, role, role_id, insert_time) values($1, $2, $3, $4, $5, $6, $7)",
             &[
                 &req.record.id,
                 &req.record.session_id,
                 &req.record.pre_record_id,
                 &req.record.content,
                 &req.record.role,
+                &req.record.role_id,
                 &req.record.insert_time
             ]
         ).await?;
@@ -226,6 +227,7 @@ impl LLMChatMapper for Postgres {
                     pre_record_id: t.try_get("pre_record_id")?,
                     content: t.try_get("content")?,
                     role: t.try_get("role")?,
+                    role_id: t.try_get("role_id")?,
                 };
                 Ok(r)
             })
@@ -347,6 +349,7 @@ impl LLMChatMapper for Postgres {
                 content TEXT NOT NULL,
                 omit_time TIMESTAMPTZ,
                 role VARCHAR(40) NOT NULL,
+                role_id VARCHAR(40),
                 insert_time TIMESTAMPTZ NOT NULL
             )",
         )
@@ -359,7 +362,14 @@ impl LLMChatMapper for Postgres {
         req: KReq<LLMChatUpdateSessionReq>,
     ) -> AResult<LLMChatUpdateSessionRsp> {
         let updater = SqlUpdater::new("llm_chat_session")
-            .set_if_some("title", req.body.title.as_ref())
+            .set_if_some("title", req.title.as_ref())
+            .trans_if_some("delete_time", req.delete, |flag| {
+                if flag {
+                    Some(Local::now().fixed_offset())
+                } else {
+                    None
+                }
+            })
             .r#where(Wheres::and([Wheres::equal("id", req.session_id.as_str())]))
             .build(PlaceHolderType::DollarNumber(0))
             .context("unable to build sql")?;
