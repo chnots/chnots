@@ -1,3 +1,21 @@
 .wmde-markdown pre>code {
   text-wrap: wrap !important;
 }
+/* Firefox 滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #999999 #f0f0f0;
+}
+
+/* Webkit 滚动条样式（Chrome, Safari等）*/
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #999999;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: #f0f0f0;
+}
