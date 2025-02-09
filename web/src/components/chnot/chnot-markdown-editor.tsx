@@ -70,7 +70,7 @@ const eventHandlers = EditorView.domEventHandlers({
             useAttachmentStore
               .getState()
               .upload(file)
-              .then((resource) => {
+              .then((resource?) => {
                 if (resource !== undefined) {
                   insertions.push(
                     `![${new Date().toISOString()}](${resource.id})`
@@ -125,7 +125,11 @@ const CMEditor: React.FC<{
   const { queryChnot } = useChnotStore();
 
   const extensions = [
-    markdown({ base: markdownLanguage, codeLanguages: languages }),
+    markdown({
+      base: markdownLanguage,
+      codeLanguages: languages,
+      addKeymap: true,
+    }),
     EditorView.lineWrapping,
     editorTheme,
     eventHandlers,

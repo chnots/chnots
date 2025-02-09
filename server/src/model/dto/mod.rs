@@ -8,7 +8,6 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::{extract::Multipart, http::HeaderMap};
 
-use clap::builder::Str;
 use serde::{Deserialize, Serialize};
 
 use super::{db::resource::{InlineResource, Resource}, shared_str::SharedStr};

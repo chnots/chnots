@@ -49,6 +49,7 @@ pub struct LLMChatListSessionRsp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatUpdateSessionReq {
     pub title: Option<String>,
+    pub delete: Option<bool>,
     pub session_id: String,
 
 }

@@ -459,6 +459,7 @@ impl MapperType {
                             pre_record_id: row.try_get("pre_record_id")?,
                             content: row.try_get("content")?,
                             role: row.try_get("role")?,
+                            role_id: row.try_get("role_id")?,
                         };
                         Ok(obj)
                     },

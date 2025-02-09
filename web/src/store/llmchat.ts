@@ -54,6 +54,7 @@ export interface LLMChatRecord {
   pre_record_id?: string; // Optional field
   content: string;
   role: string;
+  role_id?: string;
   insert_time: DateTime;
 }
 
@@ -71,6 +72,18 @@ export interface LLMChatListSessionRsp {
 
 export interface LLMChatSessionDetailRsp {
   records: LLMChatRecord[];
+}
+
+export interface LLMChatSessionUpdateReq {
+  session_id: string;
+  delete?: boolean;
+  title?: string;
+}
+
+export interface LLMChatSessionDetail {
+  session: LLMChatSession;
+  records: LLMChatRecord[];
+  persisted: boolean;
 }
 
 interface State {
@@ -166,6 +179,26 @@ export const useLLMChatStore = create(
         return {
           ...state,
           sessions: insertMapAtIndex(0, session.id, session, sessions),
+        };
+      });
+    },
+    updateSession: async (req: LLMChatSessionUpdateReq) => {
+      await request.post(`api/v1/llmchat/session`, {
+        ...req,
+      });
+    },
+    deleteCacheSession: async (sessionId: string) => {
+      set((state) => {
+        let sessions = state.sessions;
+        sessions.delete(sessionId);
+        let currentSession =
+          state.currentSession?.id === sessionId
+            ? undefined
+            : state.currentSession;
+        return {
+          ...state,
+          sessions,
+          currentSession,
         };
       });
     },

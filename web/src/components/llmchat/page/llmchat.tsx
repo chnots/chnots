@@ -1,5 +1,5 @@
-import LLMChatSessionList from "@/components/llmchat/session-list.component";
-import LLMChatSession from "@/components/llmchat/session.container";
+import LLMChatSessionList from "@/components/llmchat/component/session-list";
+import LLMChatSession from "@/components/llmchat/container/session";
 import { useLLMChatStore } from "@/store/llmchat";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect } from "react";

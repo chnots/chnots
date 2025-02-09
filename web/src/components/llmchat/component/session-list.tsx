@@ -1,5 +1,5 @@
 import { useLLMChatStore } from "@/store/llmchat";
-import { LLMChatSessionListItem } from "./session-list-item.component";
+import { LLMChatSessionListItem } from "./session-list-item";
 
 function LLMChatSessionList() {
   const { sessions } = useLLMChatStore();
