@@ -51,8 +51,12 @@ const LLMChatSessionContainer = () => {
     }
   }, [answering]);
 
-  const trySaveSession = async (detail: LLMChatSessionDetail) => {
+  const trySaveSession = async (
+    detail: LLMChatSessionDetail,
+    title: string
+  ) => {
     if (!detail.persisted) {
+      detail.session.title = title.substring(0, 400);
       await unshiftSession(detail.session);
       for (const record of detail.records) {
         await insertRecord(record);
@@ -106,8 +110,7 @@ const LLMChatSessionContainer = () => {
     session?: LLMChatSessionDetail
   ) => {
     if (session) {
-      session.session.title = record.content.substring(0, 400);
-      await trySaveSession(session);
+      await trySaveSession(session, record.content);
       await appendRecord(record);
       setTriggerAnswer(true);
       return true;
