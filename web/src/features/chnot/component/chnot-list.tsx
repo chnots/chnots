@@ -2,7 +2,7 @@ import React from "react";
 import { useInView } from "react-intersection-observer";
 
 import { useChnotStore } from "@/store/chnot";
-import { ChnotListItem } from "./chnot-list-item";
+import ChnotListItem from "./chnot-list-item";
 
 export interface ChnotListProps {
   keyword?: string;
@@ -43,7 +43,7 @@ function ChnotList(props: ChnotListProps) {
             disabled={!hasNextPage || isFetchingNextPage}
             className="border-none p-3 bg-transparent m-3 text-sm"
           >
-            "Load Newer"
+            Load Newer
           </button>
         ) : (
           <div className="text-xs m-5">~ End ~</div>

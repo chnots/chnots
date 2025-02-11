@@ -72,7 +72,7 @@ const LLMChatSessionContainer = () => {
       if (prev) {
         return {
           ...prev,
-          records: [...prev?.records, record],
+          records: [...prev.records, record],
           persisted: true,
         };
       } else {
@@ -83,7 +83,7 @@ const LLMChatSessionContainer = () => {
   };
 
   const initFleetSession = async (template: LLMChatTemplate) => {
-    let session: LLMChatSession = {
+    const session: LLMChatSession = {
       id: uuid(),
       bot_id: currentBot ? currentBot.id : "1",
       template_id: template.id,
@@ -92,7 +92,7 @@ const LLMChatSessionContainer = () => {
       insert_time: new Date(),
     };
 
-    let record: LLMChatRecord = {
+    const record: LLMChatRecord = {
       id: uuid(),
       session_id: session.id,
       content: template.prompt,

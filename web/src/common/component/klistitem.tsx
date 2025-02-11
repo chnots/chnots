@@ -28,4 +28,6 @@ const KListItem = React.forwardRef<HTMLLIElement, KListItemProps>(
   }
 );
 
+KListItem.displayName = "KListItem";
+
 export default KListItem;

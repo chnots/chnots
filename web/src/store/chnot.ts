@@ -68,8 +68,6 @@ export interface ChnotDeletionReq {
   logic: boolean;
 }
 
-export interface ChnotDeletionRsp {}
-
 export interface ChnotUpdateReq {
   chnot_id: string;
 
@@ -184,7 +182,7 @@ export const useChnotStore = create(
         .put<ChnotOverwriteRsp>(`api/v1/chnot`, req)
         .then((value: ChnotOverwriteRsp) => {
           if (overwriteCache) {
-            let chnot = value.chnot;
+            const chnot = value.chnot;
             set((state) => {
               let cm = state.chnotMap;
               if (cm.has(chnot.meta.id)) {

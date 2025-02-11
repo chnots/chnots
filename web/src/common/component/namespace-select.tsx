@@ -48,6 +48,7 @@ export const NamespaceSelect = () => {
           {[...namespaceStore.namespaceMapByName.values()].map((ns) => {
             return (
               <div
+                key={ns.name}
                 onClick={() => clickToSelect(ns)}
                 className={clsx(
                   "hover:cursor-pointer",
