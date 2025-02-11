@@ -15,7 +15,7 @@ const ChnotPage = () => {
 
   return (
     <div className="bg-panel flex h-full max-h-full flex-1 overflow-hidden rounded-md shadow">
-      <div className="shrink-0 border-r flex flex-col w-4/12">
+      <div className="shrink-0 flex flex-col w-4/12">
         <ChnotSearch />
         <div className="overflow-auto h-full bg-background text-gray-900">
           <ChnotList />

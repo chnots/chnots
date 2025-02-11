@@ -48,11 +48,11 @@ const App = () => {
   ) : (
     <>
       {sm && (
-        <div className="w-16 px-2 group flex flex-col justify-start items-start fixed top-0 left-0 select-none border-r dark:border-zinc-800 h-full bg-zinc-50 dark:bg-zinc-800 dark:bg-opacity-40 transition-all hover:shadow-xl z-2">
-          <Navigation className="!h-auto" />
+        <div className="w-16 flex flex-col justify-start items-start fixed top-0 left-0 select-none kborder h-full z-2 py-5 bg-secondary">
+          <Navigation />
         </div>
       )}
-      <div className="h-screen max-h-screen sm:pl-16">
+      <div className="h-screen max-h-screen sm:pl-16 bg-kbg">
         <Suspense fallback={<LoadingPage />}>
           <Outlet />
         </Suspense>

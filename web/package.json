@@ -19,6 +19,7 @@
         "@joplin/turndown": "^4.0.79",
         "@joplin/turndown-plugin-gfm": "^1.0.61",
         "@microsoft/fetch-event-source": "^2.0.1",
+        "@radix-ui/react-context-menu": "^2.2.6",
         "@tailwindcss/line-clamp": "^0.4.4",
         "@tailwindcss/postcss": "^4.0.3",
         "@tailwindcss/typography": "^0.5.16",
