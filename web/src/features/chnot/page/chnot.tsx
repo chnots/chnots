@@ -22,8 +22,10 @@ const ChnotPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-8 h-full">
-        <ChnotMarkdownEditor />
+      <div className="flex flex-row p-8 h-full justify-center w-full">
+        <div className="w-3xl max-w-3xl">
+          <ChnotMarkdownEditor />
+        </div>
       </div>
     </div>
   );
