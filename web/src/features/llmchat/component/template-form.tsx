@@ -37,8 +37,8 @@ const AddTemplate = ({
 
     const toInsert: LLMChatTemplate = {
       id: template ? template.id : v4(),
-      name: formData.name!!,
-      prompt: formData.prompt!!,
+      name: formData.name!,
+      prompt: formData.prompt!,
       svg_logo: formData.svg_logo,
       insert_time: new Date(),
     };

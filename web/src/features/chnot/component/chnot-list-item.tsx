@@ -1,10 +1,9 @@
 import { Chnot, useChnotStore } from "@/store/chnot";
-import clsx from "clsx";
 import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/utils/date-utils";
 import KListItem from "@/common/component/klistitem";
 
-export const ChnotListItem = React.forwardRef(
+const ChnotListItem = React.forwardRef(
   (props: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
     const { setCurrentChnot, currentChnot } = useChnotStore();
     const chnot = props.chnot;
@@ -31,3 +30,7 @@ export const ChnotListItem = React.forwardRef(
     );
   }
 );
+
+ChnotListItem.displayName = "ChnotListItem";
+
+export default ChnotListItem;

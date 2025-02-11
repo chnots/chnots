@@ -96,10 +96,10 @@ const BotForm = ({
   onClose: () => void;
 }) => {
   const [formData, setFormData] = useState<{
-    name?: string;
+    name: string;
     svg_logo?: string;
   }>({
-    name: bot?.name,
+    name: bot?.name ?? "",
     svg_logo: bot?.svg_logo,
   });
   const body = bot?.body
@@ -123,34 +123,27 @@ const BotForm = ({
       bodyRef.current.token.trim() === "" ||
       bodyRef.current.model_name.trim() === ""
     ) {
-      console.log(
-        "all fields",
-        formData?.name?.trim(),
-        bodyRef.current?.url,
-        bodyRef.current?.token,
-        bodyRef.current?.model_name
-      );
       alert("Please fill in all fields.");
       return;
-    }
+    } else {
+      const body: LLMChatBotBodyOpenAIV1 = {
+        url: bodyRef.current?.url,
+        token: bodyRef.current?.token,
+        model_name: bodyRef.current?.model_name,
+      };
 
-    const body: LLMChatBotBodyOpenAIV1 = {
-      url: bodyRef.current?.url,
-      token: bodyRef.current?.token,
-      model_name: bodyRef.current?.model_name,
-    };
+      const toInsert: LLMChatBot = {
+        id: bot ? bot.id : v4(),
+        name: formData.name,
+        svg_logo: formData.svg_logo,
+        insert_time: new Date(),
+        body: JSON.stringify(body),
+      };
 
-    const toInsert: LLMChatBot = {
-      id: bot ? bot.id : v4(),
-      name: formData.name!!,
-      svg_logo: formData.svg_logo,
-      insert_time: new Date(),
-      body: JSON.stringify(body),
-    };
-
-    const submiResult = await onSubmit(toInsert);
-    if (submiResult) {
-      onClose();
+      const submiResult = await onSubmit(toInsert);
+      if (submiResult) {
+        onClose();
+      }
     }
   };
 

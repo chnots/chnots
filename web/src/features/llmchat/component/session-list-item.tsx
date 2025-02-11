@@ -6,7 +6,7 @@ import KSVG from "@/common/component/svg";
 import Icon from "@/common/component/icon";
 import KListItem from "@/common/component/klistitem";
 
-export const LLMChatSessionListItem = React.forwardRef(
+const LLMChatSessionListItem = React.forwardRef(
   (props: { session: LLMChatSession }, ref: ForwardedRef<HTMLLIElement>) => {
     const {
       currentSession,
@@ -51,3 +51,6 @@ export const LLMChatSessionListItem = React.forwardRef(
     );
   }
 );
+
+LLMChatSessionListItem.displayName = "LLMChatSessionListItem";
+export default LLMChatSessionListItem;

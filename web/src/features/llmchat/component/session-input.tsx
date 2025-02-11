@@ -35,7 +35,7 @@ const LLMChatSessionInput = ({
     msg: string,
     sessionDetail: LLMChatSessionDetail
   ) => {
-    let record: LLMChatRecord = {
+    const record: LLMChatRecord = {
       id: uuid(),
       session_id: sessionDetail.session.id,
       pre_record_id: sessionDetail.records.at(-1)?.id,

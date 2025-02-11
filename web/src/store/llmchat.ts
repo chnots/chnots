@@ -91,9 +91,9 @@ interface State {
   refreshSessions: () => void;
   refreshTemplates: () => void;
   refreshBots: () => void;
-  bots: Map<String, LLMChatBot>;
-  templates: Map<String, LLMChatTemplate>;
-  sessions: Map<String, LLMChatSession>;
+  bots: Map<string, LLMChatBot>;
+  templates: Map<string, LLMChatTemplate>;
+  sessions: Map<string, LLMChatSession>;
   currentSession?: LLMChatSession;
   currentBot?: LLMChatBot;
 }
@@ -103,7 +103,7 @@ const getDefaultState = (): State => {
     refreshSessions: () => {},
     refreshTemplates: () => {},
     refreshBots: () => {},
-    insertSession: (_session: LLMChatSession) => {},
+    insertSession: (session: LLMChatSession) => {},
     bots: new Map(),
     templates: new Map(),
     sessions: new Map(),
@@ -158,12 +158,12 @@ export const useLLMChatStore = create(
       return [...get().templates.values()];
     },
     insertTemplate: async (template: LLMChatTemplate) => {
-      return await request.put<{}>(`api/v1/llmchat/template`, {
+      return await request.put<object>(`api/v1/llmchat/template`, {
         template,
       });
     },
     insertBot: async (bot: LLMChatBot) => {
-      return await request.put<{}>(`api/v1/llmchat/bot`, {
+      return await request.put<object>(`api/v1/llmchat/bot`, {
         bot,
       });
     },
@@ -199,9 +199,9 @@ export const useLLMChatStore = create(
     },
     deleteCacheSession: async (sessionId: string) => {
       set((state) => {
-        let sessions = state.sessions;
+        const sessions = state.sessions;
         sessions.delete(sessionId);
-        let currentSession =
+        const currentSession =
           state.currentSession?.id === sessionId
             ? undefined
             : state.currentSession;

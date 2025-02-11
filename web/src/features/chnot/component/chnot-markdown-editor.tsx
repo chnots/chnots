@@ -116,59 +116,66 @@ const editorTheme = EditorView.theme({
   },
 });
 
-const CMEditor: React.FC<{
-  metaId: string;
-  onChange: RefObject<(metaId: string, _content: string) => void>;
-}> = React.memo(({ metaId, onChange }) => {
-  console.log("CMEditor changed");
+const CMEditor = React.memo(
+  ({
+    metaId,
+    onChange,
+  }: {
+    metaId: string;
+    onChange: RefObject<(metaId: string, _content: string) => void>;
+  }) => {
+    console.log("CMEditor changed");
 
-  const cmRef = React.useRef<HTMLDivElement>(null);
-  const codeMirror = useRef<ReactCodeMirrorRef>(null);
-  const [content, setContent] = useState<string>();
-  const { queryChnot } = useChnotStore();
+    const cmRef = React.useRef<HTMLDivElement>(null);
+    const codeMirror = useRef<ReactCodeMirrorRef>(null);
+    const [content, setContent] = useState<string>();
+    const { queryChnot } = useChnotStore();
 
-  const extensions = [
-    markdown({
-      base: markdownLanguage,
-      codeLanguages: languages,
-      addKeymap: true,
-    }),
-    EditorView.lineWrapping,
-    editorTheme,
-    eventHandlers,
-  ];
+    const extensions = [
+      markdown({
+        base: markdownLanguage,
+        codeLanguages: languages,
+        addKeymap: true,
+      }),
+      EditorView.lineWrapping,
+      editorTheme,
+      eventHandlers,
+    ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const chnot = await queryChnot({ meta_id: metaId });
-      setContent(chnot?.record.content);
-    };
-    fetchData();
-  }, [setContent, metaId]);
+    useEffect(() => {
+      const fetchData = async () => {
+        const chnot = await queryChnot({ meta_id: metaId });
+        setContent(chnot?.record.content);
+      };
+      fetchData();
+    }, [setContent, metaId]);
 
-  return (
-    <div className="w-full h-full" ref={cmRef}>
-      <CodeMirror
-        height={`${cmRef.current?.getBoundingClientRect().height ?? 0}px`}
-        extensions={extensions}
-        ref={codeMirror}
-        style={{
-          font: "serif",
-        }}
-        value={content}
-        basicSetup={{
-          lineNumbers: false,
-          highlightActiveLineGutter: false,
-          foldGutter: false,
-        }}
-        placeholder={"Chnot"}
-        onChange={(e) => onChange.current(metaId, e)}
-      />
-    </div>
-  );
-});
+    return (
+      <div className="w-full h-full" ref={cmRef}>
+        <CodeMirror
+          height={`${cmRef.current?.getBoundingClientRect().height ?? 0}px`}
+          extensions={extensions}
+          ref={codeMirror}
+          style={{
+            font: "serif",
+          }}
+          value={content}
+          basicSetup={{
+            lineNumbers: false,
+            highlightActiveLineGutter: false,
+            foldGutter: false,
+          }}
+          placeholder={"Chnot"}
+          onChange={(e) => onChange.current(metaId, e)}
+        />
+      </div>
+    );
+  }
+);
 
-export const ChnotMarkdownEditor = ({}) => {
+CMEditor.displayName = "CMEditor";
+
+export const ChnotMarkdownEditor = () => {
   console.log("Frame changed");
 
   const { currentChnot, setCurrentChnot, overwriteChnot } = useChnotStore();

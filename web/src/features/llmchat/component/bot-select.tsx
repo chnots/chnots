@@ -32,7 +32,7 @@ const BotComponent = ({
   );
 };
 
-const LLMChatBotSelect: React.FC<{}> = ({}) => {
+const LLMChatBotSelect = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showBotForm, setShowBotForm] = useState(false);
   const selectedBotRef = useRef<LLMChatBot>(undefined);

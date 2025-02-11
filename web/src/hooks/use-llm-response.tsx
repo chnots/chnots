@@ -111,10 +111,10 @@ export const useLLMResponse = ({
             content: string | null;
           };
         }>;
-        let delta = choices.at(0)?.delta.content;
+        const delta = choices.at(0)?.delta.content;
         if (delta && delta.length > 0) {
           setResponseState((prev) => {
-            return { ...prev!!, answer: prev?.answer + delta };
+            return { ...prev!, answer: prev?.answer + delta };
           });
         }
       },
