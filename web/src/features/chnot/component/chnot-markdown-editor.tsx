@@ -11,6 +11,7 @@ import { html2mdAsync } from "@/utils/markdown-utils";
 import { useAttachmentStore } from "@/store/attachment";
 import React from "react";
 import Icon from "@/common/component/icon";
+import clsx from "clsx";
 
 enum RequestState {
   Saved,
@@ -120,9 +121,11 @@ const CMEditor = React.memo(
   ({
     metaId,
     onChange,
+    className,
   }: {
     metaId: string;
     onChange: RefObject<(metaId: string, _content: string) => void>;
+    className?: string;
   }) => {
     console.log("CMEditor changed");
 
@@ -151,7 +154,7 @@ const CMEditor = React.memo(
     }, [setContent, metaId]);
 
     return (
-      <div className="w-full h-full" ref={cmRef}>
+      <div className={clsx("w-full h-full", className)} ref={cmRef}>
         <CodeMirror
           height={`${cmRef.current?.getBoundingClientRect().height ?? 0}px`}
           extensions={extensions}
@@ -237,11 +240,11 @@ export const ChnotMarkdownEditor = () => {
   const onChangeRef = useRef(onChange);
 
   return (
-    <div className="w-full h-full">
-      <div className="border w-full p-1 flex bg-gray-100 rounded-lg shadow-sm">
-        <div className="">
+    <>
+      <div className="w-full p-1 flex space-x-2">
+        <div className="text-xs">
           {editState.requestState === RequestState.Requesting ? (
-            <div className="flex items-center text-blue-600 transition-opacity duration-300 ease-in-out opacity-100">
+            <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
               <Icon.Loader2 className="animate-spin h-5 w-5 mr-2" />
             </div>
           ) : editState.requestState === RequestState.Error ? (
@@ -249,16 +252,22 @@ export const ChnotMarkdownEditor = () => {
               <Icon.LucideMessageCircleQuestion className="h-5 w-5 mr-2" />
             </div>
           ) : (
-            <div className="flex items-center text-green-600 transition-opacity duration-300 ease-in-out opacity-100">
+            <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
               <Icon.CheckCircle className="h-5 w-5 mr-2" />
             </div>
           )}
         </div>
+        <div>{currentChnot?.meta.insert_time.toDateString()}</div>
+        <span>~</span>
+        <div>{currentChnot?.record.insert_time.toDateString()}</div>
       </div>
-      <CMEditor
-        metaId={currentChnot?.meta.id ?? uuid()}
-        onChange={onChangeRef}
-      />
-    </div>
+      <div className="w-full h-98/100">
+        <CMEditor
+          metaId={currentChnot?.meta.id ?? uuid()}
+          onChange={onChangeRef}
+          className="border kborder shadow-lg my-3"
+        />
+      </div>
+    </>
   );
 };
