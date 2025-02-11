@@ -13,7 +13,7 @@ const KButton = ({
   return (
     <div
       className={clsx(
-        "flex flex-row items-center kbutton hover:kbutton-focused rounded-xl px-2 py-2 space-x-2",
+        "flex flex-row items-center kbutton hover:kbutton-focused rounded-xl space-x-2",
         className
       )}
       onClick={onClick}

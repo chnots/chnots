@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { ReactNode, useCallback, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { LLMChatRecord, LLMChatSessionDetail } from "@/store/llmchat";
 import { v4 as uuid } from "uuid";
@@ -7,10 +7,12 @@ const LLMChatSessionInput = ({
   disabled,
   sessionDetail,
   appendRecord,
+  botSelect,
 }: {
   disabled: boolean;
   sessionDetail?: LLMChatSessionDetail;
   appendRecord: (record: LLMChatRecord) => Promise<boolean>;
+  botSelect?: ReactNode;
 }) => {
   const [message, setMessage] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -60,7 +62,7 @@ const LLMChatSessionInput = ({
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
-      <div className="flex flex-row max-w-3xl w-3xl p-2 rounded-2xl border kborder">
+      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-2xl border kborder">
         <textarea
           className="w-full p-1 h-auto max-h-60 border-none focus:outline-none focus:none resize-none"
           onChange={(e) => {
@@ -72,7 +74,8 @@ const LLMChatSessionInput = ({
           placeholder="Type your message..."
           ref={textareaRef}
         />
-        <div className="flex justify-end">
+        <div className="flex flex-row justify-between">
+          {botSelect}
           <button
             className="p-2 hover:bg-blue-100 h-auto w-auto rounded-xl"
             onClick={() => {

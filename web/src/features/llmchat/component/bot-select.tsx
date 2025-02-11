@@ -13,7 +13,7 @@ const BotComponent = ({
   settings?: () => void;
 }) => {
   return (
-    <KButton>
+    <KButton className="py-1 px-2">
       <div className="flex flex-row items-center space-x-2">
         {bot.svg_logo ? (
           <KSVG inner={bot.svg_logo} className="w-4 h-4" />
@@ -50,7 +50,7 @@ const LLMChatBotSelect = () => {
   };
 
   return (
-    <div className="">
+    <div>
       {currentBot ? (
         <div onClick={handleToggle}>
           <BotComponent bot={currentBot} />
@@ -59,11 +59,11 @@ const LLMChatBotSelect = () => {
         <div>None bots?</div>
       )}
       {isOpen && (
-        <ul className="absolute mt-2 py-2 rounded-md shadow-lg z-10 border border-gray-300 bg-white list-none">
+        <ul className="absolute mt-1 py-1 bottom-16 rounded-md shadow-lg z-10 border border-gray-300 bg-white list-none">
           {[...bots.values()].map((bot) => (
             <li
               key={bot.id}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer bg-white"
+              className="px-1 py-1 hover:bg-gray-100 cursor-pointer bg-white"
               onClick={() => handleSelect(bot.id)}
             >
               <BotComponent
@@ -76,17 +76,17 @@ const LLMChatBotSelect = () => {
             </li>
           ))}
           <li
-            className="px-4 py-2 hover:bg-gray-100 cursor-pointer bg-white"
+            className="px-1 py-1 hover:bg-gray-100 cursor-pointer bg-white"
             onClick={() => {
               selectedBotRef.current = undefined;
               setShowBotForm(true);
               setIsOpen(false);
             }}
           >
-            <div className="flex items-center cursor-pointer p-2 rounded hover:border-gray-400">
+            <KButton className="py-1 px-2">
               <Icon.PlusCircle />
-              <span className="ml-2">Add Bot</span>
-            </div>
+              <span className="ml-1">Add Bot</span>
+            </KButton>
           </li>
         </ul>
       )}
