@@ -7,15 +7,19 @@ import {
   useLLMChatStore,
 } from "@/store/llmchat";
 import LLMChatTemplateList from "./template-list";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { useNamespaceStore } from "@/store/namespace";
 import LLMChatSessionInput from "./session-input";
 import { Record } from "./record";
 import { ResponseRecord } from "./response-record";
-import Header from "./session-header";
+import LLMChatBotSelect from "./bot-select";
 
-const LLMChatSessionContainer = () => {
+const LLMChatSessionBody = ({
+  newSessionFlag,
+}: {
+  newSessionFlag?: number;
+}) => {
   const {
     currentSession,
     currentBot,
@@ -43,6 +47,10 @@ const LLMChatSessionContainer = () => {
       );
     }
   }, [currentSession, fleetDetail]);
+
+  useEffect(() => {
+    setFleetDetail(undefined);
+  }, [currentSession, newSessionFlag]);
 
   useEffect(() => {
     if (answering) {
@@ -120,12 +128,6 @@ const LLMChatSessionContainer = () => {
 
   return (
     <div className="bg-panel flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
-      <Header
-        onAdd={() => {
-          setCurrentSession(undefined);
-          setFleetDetail(undefined);
-        }}
-      />
       <div className="flex flex-row h-full overflow-y-auto justify-center w-full">
         {currentBot ? (
           fleetDetail ? (
@@ -154,11 +156,13 @@ const LLMChatSessionContainer = () => {
               )}
             </div>
           ) : (
-            <LLMChatTemplateList
-              onClickTemplate={(template) => {
-                initFleetSession(template);
-              }}
-            />
+            <div className={"flex flex-col h-full justify-center"}>
+              <LLMChatTemplateList
+                onClickTemplate={(template) => {
+                  initFleetSession(template);
+                }}
+              />
+            </div>
           )
         ) : (
           <div>Please add a bot</div>
@@ -170,9 +174,10 @@ const LLMChatSessionContainer = () => {
           return saveSessionAndRecord(record, fleetDetail);
         }}
         sessionDetail={fleetDetail}
+        botSelect={<LLMChatBotSelect />}
       />
     </div>
   );
 };
 
-export default LLMChatSessionContainer;
+export default LLMChatSessionBody;

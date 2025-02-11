@@ -121,7 +121,7 @@ const LLMChatTemplateList = ({
           template={selectedTemplate.current}
         />
       )}
-      <div className="flex flex-row flex-wrap p-3 m-3 text-sm space-x-2">
+      <div className="flex flex-row flex-wrap p-3 m-3 text-sm space-x-2 max-w-3xl">
         <button
           className={clsx(className, "bg-blue-50 hover:cursor-pointer")}
           onClick={() => setShowNewForm(true)}
