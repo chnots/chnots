@@ -42,7 +42,7 @@ export const NamespaceSelect = () => {
   };
 
   return (
-    <div className="flex flex-col border rounded-2xl border-gray-200 p-2">
+    <div className="flex flex-col kborder p-2">
       {expandState ? (
         <div className=" space-y-4 bg-white">
           {[...namespaceStore.namespaceMapByName.values()].map((ns) => {

@@ -13,7 +13,6 @@ import { useNamespaceStore } from "@/store/namespace";
 import LLMChatSessionInput from "../component/session-input";
 import { Record } from "../component/record";
 import { ResponseRecord } from "../component/response-record";
-import LLMChatBotSelect from "../component/bot-select";
 import Header from "../component/session-header";
 
 const LLMChatSessionContainer = () => {

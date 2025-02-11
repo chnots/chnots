@@ -23,11 +23,12 @@ impl LLMChatMapper for Postgres {
         req: KReq<LLMChatOverwriteBotReq>,
     ) -> AResult<LLMChatOverwriteBotRsp> {
         self.client().await?.execute(
-            "insert into llm_chat_bot(id, name, body, insert_time) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET update_time = $2",
+            "insert into llm_chat_bot(id, name, body, svg_logo, insert_time) values($1, $2, $3, $4,$5) on CONFLICT (id) DO UPDATE SET name = $2, body = $3, svg_logo=$4",
             &[
                 &req.bot.id,
                 &req.bot.name,
                 &req.bot.body,
+                &req.bot.svg_logo,
                 &req.bot.insert_time
             ]
         ).await?;
@@ -40,11 +41,12 @@ impl LLMChatMapper for Postgres {
         req: KReq<LLMChatOverwriteTemplateReq>,
     ) -> AResult<LLMChatOverwriteTemplateRsp> {
         self.client().await?.execute(
-            "insert into llm_chat_template(id, name, prompt, insert_time) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET update_time = $2",
+            "insert into llm_chat_template(id, name, prompt, svg_logo, insert_time) values($1, $2, $3, $4,$5) on CONFLICT (id) DO UPDATE SET update_time = CURRENT_TIMESTAMP, name = $2, prompt = $3, svg_logo=$4",
             &[
                 &req.template.id,
                 &req.template.name,
                 &req.template.prompt,
+                &req.template.svg_logo,
                 &req.template.insert_time
             ]
         ).await?;

@@ -23,6 +23,7 @@ const getAvatar = (role: string) => {
 
 const RecordContent = ({
   role,
+  roleName,
   logo,
   timestamp,
   content,
@@ -33,6 +34,7 @@ const RecordContent = ({
 }: {
   role: string;
   logo?: string;
+  roleName?: string;
   content: string;
   className?: string;
   timestamp?: Date;
@@ -62,8 +64,9 @@ const RecordContent = ({
         {role !== "user" && (logo ? <KSVG inner={logo} /> : getAvatar(role))}
       </div>
       <div className="flex-col">
-        <div className="text-gray-500 text-xs">
-          {timestamp?.toISOString() ?? "Now"}
+        <div className="text-gray-500 text-xs space-x-2">
+          <span>{roleName}</span>
+          <span>{timestamp?.toISOString() ?? "Now"}</span>
         </div>
         {role === "user" ? (
           <div className="border border-gray-200 rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap">

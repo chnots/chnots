@@ -157,6 +157,16 @@ export const useLLMChatStore = create(
     listTemplates: () => {
       return [...get().templates.values()];
     },
+    insertTemplate: async (template: LLMChatTemplate) => {
+      return await request.put<{}>(`api/v1/llmchat/template`, {
+        template,
+      });
+    },
+    insertBot: async (bot: LLMChatBot) => {
+      return await request.put<{}>(`api/v1/llmchat/bot`, {
+        bot,
+      });
+    },
     fetchSessionRecords: async (session: LLMChatSession) => {
       return await request.get<LLMChatSessionDetailRsp>(
         `api/v1/llmchat/session`,

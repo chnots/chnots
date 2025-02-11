@@ -10,13 +10,19 @@ export const Record = ({
 }) => {
   const { bots, templates } = useLLMChatStore();
   let logo: string | undefined;
+  let roleName: string | undefined;
   if (record.role_id) {
     if (record.role === "system") {
-      logo = templates.get(record.role_id)?.svg_logo;
+      const template = templates.get(record.role_id);
+      logo = template?.svg_logo;
+      roleName = template?.name;
     } else if (record.role === "assistant" && record.role_id) {
-      logo = bots.get(record.role_id)?.svg_logo;
+      const bot = bots.get(record.role_id);
+      logo = bot?.svg_logo;
+      roleName = bot?.name;
     }
   }
+
   return (
     <RecordContent
       className={className}
@@ -24,6 +30,7 @@ export const Record = ({
       timestamp={record.insert_time}
       onRegenerate={record.role === "assistant" ? () => {} : undefined}
       role={record.role}
+      roleName={roleName}
       logo={logo}
       key={record.id}
     />

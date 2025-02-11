@@ -1,64 +1,119 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
-@layer utilities {
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-      /* IE and Edge */
-      scrollbar-width: none;
-      /* Firefox */
-  }
-
-  /* Chrome, Safari and Opera */
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .word-break {
-    overflow-wrap: anywhere;
-    word-break: normal;
-  }
-}
+@variant dark (&:where(.dark, .dark *));
 
 /* https://github.com/uiwjs/react-markdown-preview/issues/200#issuecomment-1235548530 */
 @layer base {
-  :root {
-      --background: #fafafa;
-      --foreground: #282828;
-  
-      --card: 0 0% 100%;
-      --card-foreground: 20 14.3% 4.1%;
-  
-      --popover: 0 0% 100%;
-      --popover-foreground: 20 14.3% 4.1%;
-  
-      --primary: 24 9.8% 10%;
-      --primary-foreground: 60 9.1% 97.8%;
-  
-      --secondary: 60 4.8% 95.9%;
-      --secondary-foreground: 24 9.8% 10%;
-  
-      --muted: 60 4.8% 95.9%;
-      --muted-foreground: 25 5.3% 44.7%;
-  
-      --accent: 60 4.8% 95.9%;
-      --accent-foreground: 24 9.8% 10%;
-  
-      --destructive: 0 84.2% 60.2%;
-      --destructive-foreground: 60 9.1% 97.8%;
-  
-      --border: 20 5.9% 90%;
-      --input: 20 5.9% 90%;
-      --ring: 20 14.3% 4.1%;
-  
-      --radius: 0.5rem;
-    }
   ul {
-    @apply list-disc text-blue-900;
+    @apply list-disc;
   }
 
   ol {
-    @apply list-decimal text-blue-900;
+    @apply list-decimal;
   }
-  /* 3.x tailwind behaiver*/
-  *,  ::after,  ::before,  ::backdrop,  ::file-selector-button {    border-color: var(--color-gray-200, currentColor);  }
+}
+
+:root {
+  --kbg: #ffffff;
+  --kfg: #282828;
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(20 14.3% 4.1%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(20 14.3% 4.1%);
+  --primary: hsl(24 9.8% 10%);
+  --primary-foreground: hsl(60 9.1% 97.8%);
+  --secondary: #fafafa;
+  --secondary-foreground: hsl(24 9.8% 10%);
+  --muted: hsl(60 4.8% 95.9%);
+  --muted-foreground: hsl(25 5.3% 44.7%);
+  --accent: #ffffff;
+  --accent-foreground: #000;
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(60 9.1% 97.8%);
+  --cborder: #d4d4d4;
+  --input: hsl(20 5.9% 90%);
+  --ring: hsl(20 14.3% 4.1%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --kbg: #181818;
+  --kfg: #f0f0f0;
+  --card: #282828;
+  --card-foreground: #ddd;
+  --popover: #282828;
+  --popover-foreground: #ddd;
+  --primary: #333;
+  --primary-foreground: #eee;
+  --secondary: #444;
+  --secondary-foreground: #eee;
+  --muted: #444;
+  --muted-foreground: #ccc;
+  --accent: #444;
+  --accent-foreground: #eee;
+  --destructive: #800;
+  --destructive-foreground: #eee;
+  --cborder: #333;
+  --input: #333;
+  --ring: #444;
+}
+
+@theme {
+  --color-kbg: var(--kbg);
+  --color-kfg: var(--kfg);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-cborder: var(--cborder);
+  --color-cbutton: var(--cbutton);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-radius: var(--radius);
+}
+
+@layer utilities {
+  .kborder-transparent {
+    @apply border-transparent;
+  }
+
+  .kborder {
+    @apply border-cborder;
+  }
+
+  .wmde-markdown {
+    background-color: transparent !important;
+  }
+}
+
+@utility kbutton-muted {
+  @apply border border-transparent rounded-xl cursor-pointer;
+}
+
+@utility kbutton {
+  @apply border border-cborder rounded-xl cursor-pointer;
+}
+
+@utility kbutton-focused {
+  @apply border border-cborder rounded-xl bg-accent text-accent-foreground cursor-pointer;
 }

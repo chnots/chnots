@@ -101,6 +101,9 @@ const eventHandlers = EditorView.domEventHandlers({
 });
 
 const editorTheme = EditorView.theme({
+  "&.cm-editor": {
+    background: "transparent !important",
+  },
   // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
   "&.cm-editor.cm-focused": {
     outline: "none",
