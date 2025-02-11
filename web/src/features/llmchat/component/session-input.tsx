@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { LLMChatRecord, LLMChatSessionDetail } from "@/store/llmchat";
 import { v4 as uuid } from "uuid";
@@ -13,6 +13,8 @@ const LLMChatSessionInput = ({
   appendRecord: (record: LLMChatRecord) => Promise<boolean>;
 }) => {
   const [message, setMessage] = useState<string>();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const handleKeyDown = (e: {
     key: string;
     ctrlKey: any;
@@ -49,27 +51,40 @@ const LLMChatSessionInput = ({
     }
   };
 
+  const handleTextareaChange = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, []);
+
   return (
-    <div className="pl-3 p-1 max-h-50 border-t border-gray-300 flex items-start space-x-2">
-      <textarea
-        className="w-full p-1 rounded-md border-none focus:outline-none focus:none resize-none"
-        onChange={(e) => setMessage(e.target.value)}
-        value={message}
-        onKeyDown={handleKeyDown}
-        placeholder="Type your message..."
-      />
-      <div className="h-full p-2 border-l">
-        <button
-          className="p-2 hover:bg-blue-100 h-auto w-auto rounded-xl"
-          onClick={() => {
-            if (message && sessionDetail) {
-              handleSendUserMsg(message, sessionDetail);
-            }
+    <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
+      <div className="flex flex-row max-w-3xl w-3xl p-2 rounded-2xl border kborder">
+        <textarea
+          className="w-full p-1 h-auto max-h-60 border-none focus:outline-none focus:none resize-none"
+          onChange={(e) => {
+            handleTextareaChange();
+            setMessage(e.target.value);
           }}
-          disabled={disabled}
-        >
-          <Icon.Send></Icon.Send>
-        </button>
+          value={message}
+          onKeyDown={handleKeyDown}
+          placeholder="Type your message..."
+          ref={textareaRef}
+        />
+        <div className="flex justify-end">
+          <button
+            className="p-2 hover:bg-blue-100 h-auto w-auto rounded-xl"
+            onClick={() => {
+              if (message && sessionDetail) {
+                handleSendUserMsg(message, sessionDetail);
+              }
+            }}
+            disabled={disabled}
+          >
+            <Icon.Send></Icon.Send>
+          </button>
+        </div>
       </div>
     </div>
   );
