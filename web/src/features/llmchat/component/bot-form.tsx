@@ -1,4 +1,4 @@
-import KSVG from "@/components/svg";
+import KSVG from "@/common/component/svg";
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/store/llmchat";
 import React, { RefObject, useEffect, useRef, useState } from "react";
 import { v4 } from "uuid";

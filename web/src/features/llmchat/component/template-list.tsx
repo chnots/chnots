@@ -1,9 +1,9 @@
 import { useLLMChatStore, LLMChatTemplate } from "@/store/llmchat";
-import Icon from "../../icon";
+import Icon from "@/common/component/icon";
 import clsx from "clsx";
-import KSVG from "../../svg";
+import KSVG from "@/common/component/svg";
 import { RefObject, useEffect, useRef, useState } from "react";
-import AddTemplate from "@/components/llmchat/component/template-form";
+import AddTemplate from "@/features/llmchat/component/template-form";
 
 const ContextMenu = ({
   x,

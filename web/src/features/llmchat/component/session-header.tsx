@@ -1,6 +1,6 @@
-import Icon from "@/components/icon";
+import Icon from "@/common/component/icon";
 import LLMChatBotSelect from "./bot-select";
-import KButton from "@/container/kbutton";
+import KButton from "@/common/component/kbutton";
 
 const Header = ({ onAdd }: { onAdd: () => void }) => {
   return (

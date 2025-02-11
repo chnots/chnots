@@ -1,13 +1,13 @@
 // src/router/index.tsx
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
-import ToentPage from "@/pages/toent-page";
-import ChnotPage from "@/pages/chnot-page";
-import SettingsPage from "@/pages/settings-page";
+import ToentPage from "@/common/pages/toent-page";
+import ChnotPage from "@/features/chnot/page/chnot";
+import SettingsPage from "@/common/pages/settings-page";
 import App from "@/app";
 import { Toaster } from "sonner";
-import ErrorPage from "@/pages/error-page";
-import LLMChatPage from "./components/llmchat/page/llmchat";
+import ErrorPage from "@/common/pages/error-page";
+import LLMChatPage from "./features/llmchat/page/llmchat";
 
 export enum RoutePaths {
   ROOT = "/",

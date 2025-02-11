@@ -6,14 +6,14 @@ import {
   LLMChatTemplate,
   useLLMChatStore,
 } from "@/store/llmchat";
-import LLMChatTemplateList from "../component/template-list";
+import LLMChatTemplateList from "./template-list";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { useNamespaceStore } from "@/store/namespace";
-import LLMChatSessionInput from "../component/session-input";
-import { Record } from "../component/record";
-import { ResponseRecord } from "../component/response-record";
-import Header from "../component/session-header";
+import LLMChatSessionInput from "./session-input";
+import { Record } from "./record";
+import { ResponseRecord } from "./response-record";
+import Header from "./session-header";
 
 const LLMChatSessionContainer = () => {
   const {

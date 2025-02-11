@@ -1,8 +1,8 @@
 import { Chnot, useChnotStore } from "@/store/chnot";
 import clsx from "clsx";
 import React, { ForwardedRef } from "react";
-import { chnotShortDate } from "../../utils/date-utils";
-import KListItem from "@/container/klistitem";
+import { chnotShortDate } from "@/utils/date-utils";
+import KListItem from "@/common/component/klistitem";
 
 export const ChnotListItem = React.forwardRef(
   (props: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import Icon from "../../icon";
+import Icon from "@/common/component/icon";
 import { LLMChatRecord, LLMChatSessionDetail } from "@/store/llmchat";
 import { v4 as uuid } from "uuid";
 
