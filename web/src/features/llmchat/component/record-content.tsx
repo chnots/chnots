@@ -1,9 +1,9 @@
 import clsx from "clsx";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import rehypeSanitize from "rehype-sanitize";
-import Icon from "@/components/icon";
+import Icon from "@/common/component/icon";
 import { LLMChatBot, useLLMChatStore } from "@/store/llmchat";
-import KSVG from "@/components/svg";
+import KSVG from "@/common/component/svg";
 import { log } from "console";
 
 const getAvatar = (role: string) => {

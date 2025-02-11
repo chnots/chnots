@@ -1,4 +1,4 @@
-import KSVG from "@/components/svg";
+import KSVG from "@/common/component/svg";
 import { LLMChatTemplate } from "@/store/llmchat";
 import React, { useState } from "react";
 import { v4 } from "uuid";

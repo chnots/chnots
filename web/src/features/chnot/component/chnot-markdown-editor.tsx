@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import { useAttachmentStore } from "@/store/attachment";
 import React from "react";
-import Icon from "../icon";
+import Icon from "@/common/component/icon";
 
 enum RequestState {
   Saved,

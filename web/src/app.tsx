@@ -2,8 +2,8 @@ import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import useResponsiveWidth from "@/hooks/use-responsive-width";
-import LoadingPage from "@/pages/loading-page";
-import Navigation from "@/components/navigation";
+import LoadingPage from "@/common/pages/loading-page";
+import Navigation from "@/common/component/navigation";
 import { RoutePaths } from "@/router";
 import { useNamespaceStore } from "./store/namespace";
 

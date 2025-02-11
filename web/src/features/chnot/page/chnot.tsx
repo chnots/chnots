@@ -1,6 +1,6 @@
-import ChnotList from "@/components/chnot/chnot-list";
-import { ChnotMarkdownEditor } from "@/components/chnot/chnot-markdown-editor";
-import ChnotSearch from "@/components/chnot/chnot-search";
+import ChnotList from "@/features/chnot/component/chnot-list";
+import { ChnotMarkdownEditor } from "@/features/chnot/component/chnot-markdown-editor";
+import ChnotSearch from "@/features/chnot/component/chnot-search";
 import { useChnotStore } from "@/store/chnot";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect } from "react";

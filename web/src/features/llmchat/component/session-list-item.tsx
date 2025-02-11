@@ -1,10 +1,10 @@
 import { LLMChatSession, useLLMChatStore } from "@/store/llmchat";
 import clsx from "clsx";
 import React, { ForwardedRef } from "react";
-import RelativeTime from "../../relative-time";
-import KSVG from "@/components/svg";
-import Icon from "@/components/icon";
-import KListItem from "@/container/klistitem";
+import RelativeTime from "@/common/component/relative-time";
+import KSVG from "@/common/component/svg";
+import Icon from "@/common/component/icon";
+import KListItem from "@/common/component/klistitem";
 
 export const LLMChatSessionListItem = React.forwardRef(
   (props: { session: LLMChatSession }, ref: ForwardedRef<HTMLLIElement>) => {

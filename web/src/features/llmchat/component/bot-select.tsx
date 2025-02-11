@@ -1,9 +1,9 @@
-import Icon from "@/components/icon";
-import KSVG from "@/components/svg";
+import Icon from "@/common/component/icon";
+import KSVG from "@/common/component/svg";
 import { LLMChatBot, useLLMChatStore } from "@/store/llmchat";
 import React, { useRef, useState } from "react";
 import BotForm from "./bot-form";
-import KButton from "@/container/kbutton";
+import KButton from "@/common/component/kbutton";
 
 const BotComponent = ({
   bot,
