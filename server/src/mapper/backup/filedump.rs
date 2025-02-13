@@ -8,7 +8,7 @@ use tracing::info;
 
 use crate::app::ShareAppState;
 
-use super::TableDumpWriter;
+use super::TableRowCallback;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct FileBackupConfig {
@@ -28,8 +28,8 @@ pub struct FileDumpWorker {
     config: FileBackupConfig,
 }
 
-impl TableDumpWriter for FileDumpWorker {
-    async fn write_one<E: Serialize>(&self, obj: E) -> EResult {
+impl TableRowCallback for FileDumpWorker {
+    async fn callback<E: Serialize>(&self, obj: E) -> EResult {
         let obj = serde_json::to_string(&obj);
         if let Ok(obj) = obj {
             let mut w = self.writer.borrow_mut();
@@ -72,10 +72,13 @@ impl FileDumpWorker {
             };
             let filename = Self::build_file_name(file_prefix, end_time, Utc::now());
             let filepath = PathBuf::from(config.backup_dir.clone()).join(filename);
+            info!("backup filepath: {:?}", filepath.as_path());
+            
             let file = OpenOptions::new()
                 .append(true)
                 .create(true)
                 .open(filepath)?;
+            
             let writer = BufWriter::new(file);
 
             Ok(Self {

@@ -1,12 +1,12 @@
 use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use chrono::{FixedOffset, Local, Utc};
+use chrono::Local;
 
 use crate::{
     mapper::LLMChatMapper,
     model::{
         db::llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        dto::llmchat::*,
+        dto::{llmchat::*, KReq},
     },
     to_sql,
     util::{
@@ -15,7 +15,8 @@ use crate::{
     },
 };
 
-use super::{KReq, Postgres};
+use super::DeserializeMapper;
+use super::Postgres;
 
 impl LLMChatMapper for Postgres {
     async fn llm_chat_overwrite_bot(
@@ -107,19 +108,8 @@ impl LLMChatMapper for Postgres {
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
-            .iter()
-            .map(|t| {
-                let r = LLMChatBot {
-                    id: t.try_get("id")?,
-                    name: t.try_get("name")?,
-                    body: t.try_get("body")?,
-                    delete_time: t.try_get("delete_time")?,
-                    update_time: t.try_get("update_time")?,
-                    insert_time: t.try_get("insert_time")?,
-                    svg_logo: t.try_get("svg_logo")?,
-                };
-                Ok(r)
-            })
+            .into_iter()
+            .map(Self::to_llmchat_bot)
             .collect();
 
         Ok(LLMChatListBotRsp { bots: bots? })
@@ -141,19 +131,8 @@ impl LLMChatMapper for Postgres {
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
-            .iter()
-            .map(|t| {
-                let r = LLMChatTemplate {
-                    id: t.try_get("id")?,
-                    name: t.try_get("name")?,
-                    delete_time: t.try_get("delete_time")?,
-                    update_time: t.try_get("update_time")?,
-                    insert_time: t.try_get("insert_time")?,
-                    prompt: t.try_get("prompt")?,
-                    svg_logo: t.try_get("svg_logo")?,
-                };
-                Ok(r)
-            })
+            .into_iter()
+            .map(Self::to_llmchat_template)
             .collect();
 
         Ok(LLMChatListTemplateRsp {
@@ -180,20 +159,8 @@ impl LLMChatMapper for Postgres {
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
-            .iter()
-            .map(|t| {
-                let r = LLMChatSession {
-                    id: t.try_get("id")?,
-                    delete_time: t.try_get("delete_time")?,
-                    update_time: t.try_get("update_time")?,
-                    insert_time: t.try_get("insert_time")?,
-                    bot_id: t.try_get("bot_id")?,
-                    template_id: t.try_get("template_id")?,
-                    title: t.try_get("title")?,
-                    namespace: t.try_get("namespace")?,
-                };
-                Ok(r)
-            })
+            .into_iter()
+            .map(Self::to_llmchat_session)
             .collect();
 
         Ok(LLMChatListSessionRsp {
@@ -220,19 +187,8 @@ impl LLMChatMapper for Postgres {
             .await?
             .query(query.seg.as_str(), to_sql!(query.values))
             .await?
-            .iter()
-            .map(|t| {
-                let r = LLMChatRecord {
-                    id: t.try_get("id")?,
-                    insert_time: t.try_get("insert_time")?,
-                    session_id: t.try_get("session_id")?,
-                    pre_record_id: t.try_get("pre_record_id")?,
-                    content: t.try_get("content")?,
-                    role: t.try_get("role")?,
-                    role_id: t.try_get("role_id")?,
-                };
-                Ok(r)
-            })
+            .into_iter()
+            .map(Self::to_llmchat_record)
             .collect();
 
         Ok(LLMChatSessionDetailRsp { records: records? })

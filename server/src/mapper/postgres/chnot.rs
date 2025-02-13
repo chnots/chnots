@@ -1,20 +1,19 @@
-use std::str::FromStr;
 use crate::{
     mapper::ChnotMapper,
-    model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
+    model::{db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord}, dto::KReq},
     to_sql,
     util::sql_builder::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
 };
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local, TimeDelta};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
+use std::str::FromStr;
 use tokio_postgres::Row;
-use tracing::info;
-use tracing_log::log::{self, log};
+use tracing::{error, info};
 
 use crate::model::dto::chnot::*;
 
-use super::{KReq, Postgres};
+use super::Postgres;
 
 impl<'a> FromSql<'a> for ChnotKind {
     fn from_sql(
@@ -50,32 +49,6 @@ impl ToSql for ChnotKind {
     }
 
     to_sql_checked!();
-}
-
-fn map_row_to_chnot_record(row: &Row) -> AResult<ChnotRecord> {
-    let chnot = ChnotRecord {
-        id: row.try_get("id")?,
-        meta_id: row.try_get("meta_id")?,
-        content: row.try_get("content")?,
-        omit_time: row.try_get("delete_time")?,
-        insert_time: row.try_get("insert_time")?,
-    };
-
-    Ok(chnot)
-}
-
-fn map_row_to_chnot_metadata(row: &Row) -> AResult<ChnotMetadata> {
-    let header = ChnotMetadata {
-        id: row.try_get("id")?,
-        insert_time: row.try_get("insert_time")?,
-        delete_time: row.try_get("delete_time")?,
-        update_time: row.try_get("update_time")?,
-        namespace: row.try_get("namespace")?,
-        pin_time: row.try_get("pin_time")?,
-        kind: row.try_get("kind")?,
-    };
-
-    Ok(header)
 }
 
 impl ChnotMapper for Postgres {
@@ -278,7 +251,7 @@ impl ChnotMapper for Postgres {
             })
             .filter_map(|e: AResult<Chnot>| {
                 if e.is_err() {
-                    log::error!("unable to remap: {:?}", e.err());
+                    error!("unable to remap: {:?}", e.err());
                     None
                 } else {
                     e.ok()

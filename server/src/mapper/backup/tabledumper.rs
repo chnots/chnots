@@ -1,15 +1,19 @@
-use chrono::{DateTime, FixedOffset};
+use anyhow::Context;
+use chin_tools::wrapper::anyhow::{AResult, EResult};
+use serde::Serialize;
 
 use crate::util::sql_builder::{PlaceHolderType, SqlSeg, SqlSegBuilder, Wheres};
 
-pub struct TableDumperSqlBuilder<'a> {
+use super::TableRowCallbackEnum;
+
+pub struct TableDumpSql<'a> {
     pub table_name: String,
     start_seg: Option<Wheres<'a>>,
     end_seg: Option<Wheres<'a>>,
     ph_type: PlaceHolderType,
 }
 
-impl<'a> TableDumperSqlBuilder<'a> {
+impl<'a> TableDumpSql<'a> {
     pub fn new(
         table_name: String,
         start_seg: Option<Wheres<'a>>,
@@ -36,6 +40,18 @@ impl<'a> TableDumperSqlBuilder<'a> {
                 PlaceHolderType::QustionMark => PlaceHolderType::QustionMark,
                 PlaceHolderType::DollarNumber(_) => PlaceHolderType::DollarNumber(0),
             })
-
     }
+}
+
+pub trait TableIterator {
+    type RowType;
+
+    async fn read_iterator<'b, F1, O: Serialize>(
+        &self,
+        sql_seg: TableDumpSql<'b>,
+        convert_row_to_obj: F1,
+        writer: &TableRowCallbackEnum,
+    ) -> EResult
+    where
+        F1: Fn(Self::RowType) -> AResult<O>;
 }

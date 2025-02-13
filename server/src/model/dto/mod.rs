@@ -1,5 +1,6 @@
 pub mod chnot;
 pub mod llmchat;
+pub mod kv;
 
 /// DTO: Data Transfer Object
 ///
@@ -8,12 +9,12 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::{extract::Multipart, http::HeaderMap};
 
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use super::{db::resource::{InlineResource, Resource}, shared_str::SharedStr};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct KReq<E: Debug + Clone + Serialize> {
+pub struct KReq<E: Debug + Clone + DeserializeOwned> {
     pub body: E,
     pub namespace: String,
 }
@@ -25,14 +26,14 @@ pub fn read_namespace_from_header(headers: &HeaderMap) -> String {
         .unwrap()
 }
 
-pub fn kreq<E: Debug + Clone + Serialize>(headers: HeaderMap, body: E) -> KReq<E> {
+pub fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
     KReq {
         body,
         namespace: read_namespace_from_header(&headers),
     }
 }
 
-impl<E: Debug + Clone + Serialize> Deref for KReq<E> {
+impl<E: Debug + Clone + DeserializeOwned> Deref for KReq<E> {
     type Target = E;
 
     fn deref(&self) -> &Self::Target {
