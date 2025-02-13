@@ -1,13 +1,11 @@
 import {
   LLMChatBot,
   LLMChatBotBodyOpenAIV1,
-  LLMChatRecord,
   LLMChatSessionDetail,
 } from "@/store/llmchat";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { v4 as uuid } from "uuid";
 
 export enum AnswerStep {
   Initial,
