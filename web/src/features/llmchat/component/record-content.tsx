@@ -59,7 +59,7 @@ const RecordContent = ({
   return (
     <div
       className={clsx(
-        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-8",
+        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-20",
         className,
         role === "user" && "justify-end"
       )}
@@ -74,7 +74,7 @@ const RecordContent = ({
         </div>
         <div className={limitedHeight ? "h-40 overflow-hidden" : ""}>
           {role === "user" ? (
-            <div className="border border-gray-200 rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap">
+            <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap bg-secondary">
               {content}
             </div>
           ) : (
