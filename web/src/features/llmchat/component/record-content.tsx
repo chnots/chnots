@@ -28,6 +28,8 @@ const RecordContent = ({
   timestamp,
   content,
   className,
+  limitedHeight,
+  setLimitedHeight,
   onAbort,
   onRegenerate,
   onCopy,
@@ -38,6 +40,8 @@ const RecordContent = ({
   content: string;
   className?: string;
   timestamp?: Date;
+  limitedHeight?: boolean;
+  setLimitedHeight?: () => void;
   onAbort?: () => void;
   onRegenerate?: () => void;
   onCopy?: () => void;
@@ -68,17 +72,19 @@ const RecordContent = ({
           <span>{roleName}</span>
           <span>{timestamp?.toISOString() ?? "Now"}</span>
         </div>
-        {role === "user" ? (
-          <div className="border border-gray-200 rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap">
-            {content}
-          </div>
-        ) : (
-          <MarkdownPreview
-            source={content}
-            rehypePlugins={rehypePlugins}
-            className="mr-4 text-sm"
-          />
-        )}
+        <div className={limitedHeight ? "h-40 overflow-hidden" : ""}>
+          {role === "user" ? (
+            <div className="border border-gray-200 rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap">
+              {content}
+            </div>
+          ) : (
+            <MarkdownPreview
+              source={content}
+              rehypePlugins={rehypePlugins}
+              className="mr-4 text-sm"
+            />
+          )}
+        </div>
         <div className="space-x-2 mt-1">
           {onAbort && (
             <button
@@ -98,6 +104,16 @@ const RecordContent = ({
               tabIndex={0}
             >
               <Icon.RotateCcw className="h-4 w-4 text-gray-700" />
+            </button>
+          )}
+          {limitedHeight !== undefined && (
+            <button
+              onClick={setLimitedHeight}
+              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
+              aria-label="Regenerate"
+              tabIndex={0}
+            >
+              <Icon.Ellipsis className="h-4 w-4 text-gray-700" />
             </button>
           )}
           <button

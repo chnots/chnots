@@ -366,7 +366,7 @@ impl LLMChatMapper for Postgres {
         let mut remove_flag = false;
 
         for r in records {
-            if r.id == req.record_id_included {
+            if r.id == req.remove_rid_included {
                 remove_flag = true;
             }
             if remove_flag {

@@ -80,6 +80,11 @@ export interface LLMChatSessionUpdateReq {
   title?: string;
 }
 
+export interface LLMChatSessionTruncateReq {
+  session_id: string;
+  remove_rid_included: string;
+}
+
 export interface LLMChatSessionDetail {
   session: LLMChatSession;
   records: LLMChatRecord[];
@@ -197,6 +202,12 @@ export const useLLMChatStore = create(
         ...req,
       });
     },
+    truncateSession: async (req: LLMChatSessionTruncateReq) => {
+      await request.post(`api/v1/llmchat/truncate-session`, {
+        ...req,
+      });
+    },
+
     deleteCacheSession: async (sessionId: string) => {
       set((state) => {
         const sessions = state.sessions;
