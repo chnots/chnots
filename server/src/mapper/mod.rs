@@ -17,7 +17,7 @@ use crate::model::{
     },
     dto::{
         chnot::*,
-        kv::{OverwriteKVReq, OverwriteKVRsp, QueryKVReq, QueryKVRsp},
+        kv::*,
         llmchat::*,
         InsertInlineResourceReq, InsertInlineResourceRsp, KReq, QueryInlineResourceReq,
         QueryInlineResourceRsp,
@@ -129,8 +129,9 @@ pub trait LLMChatMapper {
 }
 
 pub trait KVMapper {
-    async fn overwrite_kv(&self, req: KReq<OverwriteKVReq>) -> AResult<OverwriteKVRsp>;
-    async fn query_kv(&self, req: KReq<QueryKVReq>) -> AResult<QueryKVRsp>;
+    async fn kv_overwrite(&self, req: KReq<KVOverwriteReq>) -> AResult<KVOverwriteRsp>;
+    async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp>;
+    async fn kv_delete(&self, req: KReq<KVDeleteReq>) -> AResult<KVDeleteRsp>;
     async fn ensure_table_kv(&self) -> EResult;
 }
 

@@ -3,9 +3,9 @@ use chin_tools::wrapper::anyhow::AResult;
 use chrono::Local;
 
 use crate::{
-    mapper::KVMapper,
+    mapper::{KVDeleteRsp, KVMapper},
     model::dto::{
-        kv::{OverwriteKVReq, OverwriteKVRsp, QueryKVReq, QueryKVRsp},
+        kv::{KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp},
         KReq,
     },
     to_sql,
@@ -17,10 +17,10 @@ use super::DeserializeMapper;
 use super::Postgres;
 
 impl KVMapper for Postgres {
-    async fn overwrite_kv(
+    async fn kv_overwrite(
         &self,
-        req: KReq<OverwriteKVReq>,
-    ) -> chin_tools::wrapper::anyhow::AResult<OverwriteKVRsp> {
+        req: KReq<KVOverwriteReq>,
+    ) -> chin_tools::wrapper::anyhow::AResult<KVOverwriteRsp> {
         self.client().await?
         .execute(
             "insert into kv(key, content, insert_time) values ($1,$2,$3) on conflict(key) do update set content = $2, update_time = $4",
@@ -32,10 +32,10 @@ impl KVMapper for Postgres {
             ]
         ).await?;
 
-        Ok(OverwriteKVRsp {})
+        Ok(KVOverwriteRsp {})
     }
 
-    async fn query_kv(&self, req: KReq<QueryKVReq>) -> AResult<QueryKVRsp> {
+    async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp> {
         let query = SqlSegBuilder::new()
             .raw("select * from kv")
             .r#where(Wheres::and([Wheres::equal("key", req.key.as_str())]))
@@ -53,7 +53,19 @@ impl KVMapper for Postgres {
             None => None,
         };
 
-        Ok(QueryKVRsp { kv })
+        Ok(KVQueryRsp { kv })
+    }
+
+    async fn kv_delete(&self, req: KReq<crate::mapper::KVDeleteReq>) -> AResult<crate::mapper::KVDeleteRsp> {
+        self.client().await?
+        .execute(
+            "delete form kv where key = $1",
+            &[
+                &req.key,
+            ]
+        ).await?;
+
+        Ok(KVDeleteRsp {})
     }
 
     async fn ensure_table_kv(&self) -> chin_tools::wrapper::anyhow::EResult {
