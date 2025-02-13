@@ -62,7 +62,7 @@ const LLMChatSessionInput = ({
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
-      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-2xl border kborder">
+      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-2xl border kborder shadow-xl">
         <textarea
           className="w-full p-1 h-auto max-h-60 border-none focus:outline-none focus:none resize-none"
           onChange={(e) => {
@@ -85,7 +85,7 @@ const LLMChatSessionInput = ({
             }}
             disabled={disabled}
           >
-            <Icon.Send></Icon.Send>
+            <Icon.Send />
           </button>
         </div>
       </div>

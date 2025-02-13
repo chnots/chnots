@@ -64,7 +64,7 @@ const LLMChatTemplateList = ({
   const { listTemplates, insertTemplate, refreshTemplates } = useLLMChatStore();
   const [showNewForm, setShowNewForm] = useState(false);
   const [contextMenuVisable, setContextMenuVisable] = useState<boolean>();
-  const selectedTemplate = useRef<LLMChatTemplate>(null);
+  const selectedTemplate = useRef<LLMChatTemplate>(undefined);
   const [contextMenuPosition, setContextMenuPosition] = useState({
     x: 0,
     y: 0,
@@ -108,7 +108,7 @@ const LLMChatTemplateList = ({
 
   return (
     <div>
-      {showNewForm && selectedTemplate.current && (
+      {showNewForm && (
         <AddTemplate
           onClose={() => {
             setShowNewForm(false);
