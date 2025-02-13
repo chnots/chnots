@@ -313,27 +313,33 @@ impl MapperType {
 }
 
 impl KVMapper for MapperType {
-    async fn overwrite_kv(
+    async fn kv_overwrite(
         &self,
-        req: KReq<crate::model::dto::kv::OverwriteKVReq>,
-    ) -> AResult<crate::model::dto::kv::OverwriteKVRsp> {
+        req: KReq<crate::model::dto::kv::KVOverwriteReq>,
+    ) -> AResult<crate::model::dto::kv::KVOverwriteRsp> {
         match self {
-            MapperType::Postgres(db) => db.overwrite_kv(req).await,
+            MapperType::Postgres(db) => db.kv_overwrite(req).await,
         }
     }
 
-    async fn query_kv(
+    async fn kv_query(
         &self,
-        req: KReq<crate::model::dto::kv::QueryKVReq>,
-    ) -> AResult<crate::model::dto::kv::QueryKVRsp> {
+        req: KReq<crate::model::dto::kv::KVQueryReq>,
+    ) -> AResult<crate::model::dto::kv::KVQueryRsp> {
         match self {
-            MapperType::Postgres(db) => db.query_kv(req).await,
+            MapperType::Postgres(db) => db.kv_query(req).await,
         }
     }
 
     async fn ensure_table_kv(&self) -> EResult {
         match self {
             MapperType::Postgres(db) => db.ensure_table_kv().await,
+        }
+    }
+
+    async fn kv_delete(&self, req: KReq<super::KVDeleteReq>) -> AResult<super::KVDeleteRsp> {
+        match self {
+            MapperType::Postgres(db) => db.kv_delete(req).await,
         }
     }
 }
