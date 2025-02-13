@@ -1,5 +1,3 @@
-
-
 use repeater::{is_repeater_seg, is_repeater_start};
 
 use crate::model::score::PossibleScore;

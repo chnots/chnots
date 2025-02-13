@@ -3,8 +3,10 @@ use std::{fmt::Display, ops::Deref};
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
-use crate::{model::score::PossibleScore, toent::{EventBuilder, GuessType}};
-
+use crate::{
+    model::score::PossibleScore,
+    toent::{EventBuilder, GuessType},
+};
 
 #[derive(Clone, Deserialize, Serialize, Default, Debug)]
 pub struct Unit(Option<i32>);
@@ -316,7 +318,6 @@ pub fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Result<i32> 
 #[cfg(test)]
 mod test {
     use crate::toent::{timeevent::timeenum::base::BaseTime, EventBuilder};
-
 
     #[test]
     fn test_all() {

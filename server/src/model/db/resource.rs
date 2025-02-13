@@ -1,7 +1,5 @@
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 
 use crate::model::shared_str::SharedStr;
 

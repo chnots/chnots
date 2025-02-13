@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;

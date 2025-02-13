@@ -1,4 +1,3 @@
-
 use strum::{AsRefStr, EnumIter, EnumString};
 
 #[derive(Clone, Debug, EnumString, AsRefStr, EnumIter)]

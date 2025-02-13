@@ -1,4 +1,11 @@
-use std::{cell::RefCell, fs::{File, OpenOptions}, io::{BufWriter, Write}, path::PathBuf, rc::Rc, time::UNIX_EPOCH};
+use std::{
+    cell::RefCell,
+    fs::{File, OpenOptions},
+    io::{BufWriter, Write},
+    path::PathBuf,
+    rc::Rc,
+    time::UNIX_EPOCH,
+};
 
 use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
@@ -73,12 +80,12 @@ impl FileDumpWorker {
             let filename = Self::build_file_name(file_prefix, end_time, Utc::now());
             let filepath = PathBuf::from(config.backup_dir.clone()).join(filename);
             info!("backup filepath: {:?}", filepath.as_path());
-            
+
             let file = OpenOptions::new()
                 .append(true)
                 .create(true)
                 .open(filepath)?;
-            
+
             let writer = BufWriter::new(file);
 
             Ok(Self {

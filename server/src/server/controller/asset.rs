@@ -5,7 +5,6 @@ use axum::{
     response::{Html, IntoResponse, Response},
     routing::{get, Router},
 };
-use mime_guess::Mime;
 use rust_embed::RustEmbed;
 use tracing::info;
 

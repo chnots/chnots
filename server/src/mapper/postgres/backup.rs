@@ -2,7 +2,6 @@ use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use serde::Serialize;
 use tokio_postgres::Row;
-use tracing::info;
 
 use crate::{
     mapper::{
@@ -65,7 +64,7 @@ impl BackupMapper for Postgres {
     ) -> EResult
     where
         F1: Fn(Self::RowType) -> AResult<O>,
-    {   
+    {
         let table_name = sql_builder.table_name.clone();
 
         let seg = sql_builder.build().context("unable to build dump sql")?;

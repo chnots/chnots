@@ -3,7 +3,10 @@ use std::ops::Deref;
 use chrono::{DateTime, Datelike, FixedOffset, Timelike, Utc};
 use regex::Regex;
 
-use crate::{model::score::PossibleScore, toent::{timeevent::equals_any, EventBuilder, GuessType}};
+use crate::{
+    model::score::PossibleScore,
+    toent::{timeevent::equals_any, EventBuilder, GuessType},
+};
 
 use super::{
     base::{convert_time_to_secs, BaseTime},
@@ -145,7 +148,6 @@ impl Timestamp for WesTime {
 
 #[cfg(test)]
 mod test {
-
 
     use crate::toent::EventBuilder;
 

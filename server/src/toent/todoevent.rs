@@ -5,7 +5,6 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use serde::{de, Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-
 use crate::model::{score::PossibleScore, todo::TodoEvent};
 
 use super::{EventBuilder, GuessType};

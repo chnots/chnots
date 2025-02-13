@@ -115,9 +115,8 @@ pub async fn serve(app_state: ShareAppState) -> EResult {
         .serve(app.into_make_service())
         .await?;
     } else {
-        
         let server_url = format!("{}:{}", "0.0.0.0", port);
-        info!("begin to listen on {}",server_url);
+        info!("begin to listen on {}", server_url);
         let listener = tokio::net::TcpListener::bind(&server_url).await?;
         info!("server: {}", server_url);
 

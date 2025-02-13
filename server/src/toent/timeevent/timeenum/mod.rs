@@ -4,9 +4,10 @@ pub mod westen;
 
 use chrono::{DateTime, Utc};
 
-
-
-use crate::{model::score::PossibleScore, toent::{EventBuilder, GuessType}};
+use crate::{
+    model::score::PossibleScore,
+    toent::{EventBuilder, GuessType},
+};
 
 use self::{chinese::ChnTime, westen::WesTime};
 

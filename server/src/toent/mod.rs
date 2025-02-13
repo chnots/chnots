@@ -4,7 +4,6 @@ use crate::model::score::PossibleScore;
 
 use self::{eventenum::EventEnum, timeevent::TimeEvent};
 
-
 pub mod eventenum;
 pub mod timeevent;
 pub mod todoevent;
@@ -104,7 +103,6 @@ where
 use chin_tools::utils::idutils;
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PossibleToent {
     id: String,
@@ -163,7 +161,8 @@ mod test {
 
         let r = PossibleToent::from_standard("2024-02-12 12:00:00 -8:00 .*5d ,10H =10t **10d =10d");
         println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12 **10d =10d");
+        let r =
+            PossibleToent::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12 **10d =10d");
         println!("{:?}", r.unwrap().event.standard_str());
 
         let r = PossibleToent::from_standard(
