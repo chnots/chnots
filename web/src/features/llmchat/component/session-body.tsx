@@ -7,7 +7,7 @@ import {
   useLLMChatStore,
 } from "@/store/llmchat";
 import LLMChatTemplateList from "./template-list";
-import { RefObject, useEffect, useState } from "react";
+import { RefObject, useCallback, useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { useNamespaceStore } from "@/store/namespace";
 import LLMChatSessionInput from "./session-input";
@@ -33,9 +33,10 @@ const LLMChatSessionBody = ({
   const [fleetDetail, setFleetDetail] = useState<LLMChatSessionDetail>();
   const [answering, setAnswering] = useState<boolean>(false);
   const [triggerAnswer, setTriggerAnswer] = useState<boolean>(false);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
-  useEffect(() => {
-    if (currentSession && currentSession.id !== fleetDetail?.session?.id) {
+  const refresh = useCallback(() => {
+    if (currentSession)
       fetchSessionRecords(currentSession).then(
         (rsp: LLMChatSessionDetailRsp) => {
           setFleetDetail({
@@ -45,8 +46,17 @@ const LLMChatSessionBody = ({
           });
         }
       );
+  }, [currentSession, fleetDetail, setFleetDetail, fetchSessionRecords]);
+
+  useEffect(() => {
+    if (currentSession && currentSession.id !== fleetDetail?.session?.id) {
+      refresh();
     }
   }, [currentSession, fleetDetail]);
+
+  useEffect(() => {
+    refresh();
+  }, [refreshTrigger]);
 
   useEffect(() => {
     setFleetDetail(undefined);
@@ -139,7 +149,16 @@ const LLMChatSessionBody = ({
                       return a.insert_time > b.insert_time ? 1 : -1;
                     })
                     .map((record) => {
-                      return <Record key={record.id} record={record} />;
+                      return (
+                        <Record
+                          key={record.id}
+                          record={record}
+                          refreshTrigger={() => {
+                            setRefreshTrigger((prev) => prev + 1);
+                            setTriggerAnswer(true);
+                          }}
+                        />
+                      );
                     })}
                   {fleetDetail.records.at(-1)?.role === "user" && (
                     <ResponseRecord

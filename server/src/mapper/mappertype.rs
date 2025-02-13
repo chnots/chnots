@@ -300,7 +300,9 @@ impl LLMChatMapper for MapperType {
         &self,
         req: KReq<crate::model::dto::llmchat::LLMChatTruncateSessionReq>,
     ) -> AResult<crate::model::dto::llmchat::LLMChatTruncateSessionRsp> {
-        todo!()
+        match self {
+            MapperType::Postgres(db) => db.llm_chat_truncate_session(req).await,
+        }
     }
 }
 

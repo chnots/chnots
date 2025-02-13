@@ -57,7 +57,7 @@ pub struct LLMChatUpdateSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTruncateSessionReq {
-    pub record_id_included: String,
+    pub remove_rid_included: String,
     pub session_id: String,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
