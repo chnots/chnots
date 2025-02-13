@@ -6,12 +6,12 @@ use config::Config;
 use mapper::{
     backup::{
         filedump::{BackupType, FileDumpWorker},
-        TableDumpWriterEnum,
+        TableRowCallbackEnum,
     },
     LLMChatMapper, MapperType,
 };
 use server::controller;
-use tracing::{subscriber, Level};
+use tracing::{info, subscriber, Level};
 use tracing_log::LogTracer;
 
 pub(crate) mod app;
@@ -58,11 +58,13 @@ async fn main() -> EResult {
                 let worker = FileDumpWorker::new(&state, "chnots", BackupType::All)
                     .await
                     .unwrap();
+                info!("Begin to backup.");
                 state
                     .mapper
-                    .dump_and_backup(TableDumpWriterEnum::File(worker))
+                    .dump_and_backup(TableRowCallbackEnum::File(worker))
                     .await
                     .unwrap();
+                info!("Finished to backup.");
             });
         });
     }

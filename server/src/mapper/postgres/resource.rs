@@ -10,6 +10,7 @@ use crate::{
     to_sql,
     util::sql_builder::{PlaceHolderType, SqlSegBuilder, Wheres},
 };
+use super::DeserializeMapper;
 
 use super::Postgres;
 
@@ -82,14 +83,7 @@ impl ResourceMapper for Postgres {
             .query_one("select * from resources where id = $1", &[&id])
             .await?;
 
-        Ok(Resource {
-            id: row.try_get("id")?,
-            namespace: row.try_get("namespace")?,
-            ori_filename: row.try_get("ori_filename")?,
-            content_type: row.try_get("content_type")?,
-            insert_time: row.try_get("insert_time")?,
-            delete_time: row.try_get("delete_time")?,
-        })
+        Self::to_resource(row)
     }
 
     async fn insert_inline_resource(

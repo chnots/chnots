@@ -5,6 +5,7 @@ use crate::{
     mapper::NamespaceMapper,
     model::db::namespace::{NamespaceRecord, NamespaceRelation},
 };
+use super::DeserializeMapper;
 
 use super::Postgres;
 
@@ -18,16 +19,8 @@ impl NamespaceMapper for Postgres {
             )
             .await?;
         let nrs = rows
-            .iter()
-            .map(|e| {
-                Ok(NamespaceRecord {
-                    id: e.try_get("id")?,
-                    name: e.try_get("name")?,
-                    delete_time: e.try_get("delete_time")?,
-                    update_time: e.try_get("update_time")?,
-                    insert_time: e.try_get("insert_time")?,
-                })
-            })
+            .into_iter()
+            .map(Self::to_namespace_record)
             .filter_map(|e: AResult<NamespaceRecord>| e.ok())
             .collect();
 
@@ -43,17 +36,8 @@ impl NamespaceMapper for Postgres {
             )
             .await?;
         let nrs = rows
-            .iter()
-            .map(|e| {
-                Ok(NamespaceRelation {
-                    id: e.try_get("id")?,
-                    delete_time: e.try_get("delete_time")?,
-                    update_time: e.try_get("update_time")?,
-                    insert_time: e.try_get("insert_time")?,
-                    sub_id: e.try_get("sub_id")?,
-                    parent_id: e.try_get("parent_id")?,
-                })
-            })
+            .into_iter()
+            .map(Self::to_namespace_relation)
             .filter_map(|e: AResult<NamespaceRelation>| e.ok())
             .collect();
 
@@ -63,12 +47,12 @@ impl NamespaceMapper for Postgres {
     async fn ensure_table_namespace_record(&self) -> EResult {
         self.create_table(
             "create table IF NOT EXISTS namespace_record (
-    id VARCHAR(40) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    delete_time TIMESTAMPTZ,
-    update_time TIMESTAMPTZ,
-    insert_time TIMESTAMPTZ NOT NULL
-)",
+                id VARCHAR(40) PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                delete_time TIMESTAMPTZ,
+                update_time TIMESTAMPTZ,
+                insert_time TIMESTAMPTZ NOT NULL
+            )",
         )
         .await?;
 
@@ -96,13 +80,13 @@ impl NamespaceMapper for Postgres {
     async fn ensure_table_namespace_relation(&self) -> EResult {
         self.create_table(
             "create table IF NOT EXISTS namespace_relation (
-    id VARCHAR(40) PRIMARY KEY,
-    sub_id varchar(40),
-    parent_id varchar(40),
-    delete_time TIMESTAMPTZ,
-    update_time TIMESTAMPTZ,
-    insert_time TIMESTAMPTZ NOT NULL
-)",
+            id VARCHAR(40) PRIMARY KEY,
+            sub_id varchar(40),
+            parent_id varchar(40),
+            delete_time TIMESTAMPTZ,
+            update_time TIMESTAMPTZ,
+            insert_time TIMESTAMPTZ NOT NULL
+        )",
         )
         .await
     }

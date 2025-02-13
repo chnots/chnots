@@ -1,23 +1,25 @@
+pub mod backup;
 pub mod chnot;
+pub mod kv;
 pub mod llmchat;
 pub mod namespace;
 pub mod resource;
-pub mod backup;
 
-
-use crate::{model::shared_str::SharedStr, util::sql_builder::SqlValue};
-use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tokio_postgres::Row;
 
-use crate::model::dto::*;
+use crate::{
+    model::{
+        db::{chnot::*, kv::KV, llmchat::*, namespace::*, resource::Resource},
+        shared_str::SharedStr,
+    },
+    util::sql_builder::SqlValue,
+};
 
-use super::
-    backup::{tabledumpersql::TableDumperSqlBuilder, DbBackupTrait, DumpWrapper, TableDumpWriter, TableDumpWriterEnum}
-;
+use super::DeserializeMapper;
 
 const NO_PARAMS: Vec<&(dyn ToSql + Sync)> = Vec::new();
 
@@ -129,54 +131,138 @@ impl<'a> FromSql<'a> for SharedStr {
 macro_rules! to_sql {
     ($values:expr) => {
         $values
-        .iter()
-        .map(|e| {
-            let v: &(dyn postgres_types::ToSql + Sync + Send) = e.into();
-            v as &(dyn postgres_types::ToSql + Sync)
-        })
-        .collect::<Vec<&(dyn postgres_types::ToSql + Sync)>>()
-        .as_slice()
+            .iter()
+            .map(|e| {
+                let v: &(dyn postgres_types::ToSql + Sync + Send) = e.into();
+                v as &(dyn postgres_types::ToSql + Sync)
+            })
+            .collect::<Vec<&(dyn postgres_types::ToSql + Sync)>>()
+            .as_slice()
     };
 }
 
-impl DbBackupTrait for Postgres {
+impl DeserializeMapper for Postgres {
     type RowType = Row;
 
-    async fn read_iterator<'a, F1, O: Serialize>(
-        &self,
-        sql_builder: TableDumperSqlBuilder<'a>,
-        convert_row_to_obj: F1,
-        writer: &TableDumpWriterEnum,
-    ) -> EResult
-    where
-        F1: Fn(Self::RowType) -> AResult<O>,
-    {
-        let table_name = sql_builder.table_name.clone();
-        let seg = sql_builder.build().context("unable to build dump sql")?;
-        let mut client = self.client().await?;
-        let stmt = client.transaction().await?;
-        let portal = stmt.bind(&seg.seg, &to_sql!(seg.values)).await?;
-        loop {
-            // poll batch_size rows from portal and send it to embedding thread via channel
-            let rows = stmt.query_portal(&portal, 10 as i32).await?;
+    fn to_chnot_meta(row: Self::RowType) -> AResult<ChnotMetadata> {
+        let chnot = ChnotMetadata {
+            id: row.try_get("id")?,
+            namespace: row.try_get("namespace")?,
+            kind: row.try_get("kind")?,
+            pin_time: row.try_get("pin_time")?,
+            delete_time: row.try_get("delete_time")?,
+            update_time: row.try_get("update_time")?,
+            insert_time: row.try_get("insert_time")?,
+        };
+        Ok(chnot)
+    }
 
-            if rows.len() == 0 {
-                break;
-            }
+    fn to_chnot_record(row: Self::RowType) -> AResult<ChnotRecord> {
+        let chnot = ChnotRecord {
+            id: row.try_get("id")?,
+            meta_id: row.try_get("meta_id")?,
+            content: row.try_get("content")?,
+            omit_time: row.try_get("omit_time")?,
+            insert_time: row.try_get("insert_time")?,
+        };
+        Ok(chnot)
+    }
 
-            for row in rows {
-                match convert_row_to_obj(row) {
-                    Ok(obj) => {
-                        writer.write_one(DumpWrapper::of(obj, 1, &table_name)).await?;
-                    },
-                    Err(err) => {
-                        tracing::error!("unable to convert {}", err);
-                    },
-                }
-            }
+    fn to_llmchat_bot(row: Self::RowType) -> AResult<LLMChatBot> {
+        let obj = LLMChatBot {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            delete_time: row.try_get("delete_time")?,
+            name: row.try_get("name")?,
+            body: row.try_get("body")?,
+            update_time: row.try_get("update_time")?,
+            svg_logo: row.try_get("svg_logo")?,
+        };
+        Ok(obj)
+    }
 
-        }
+    fn to_llmchat_template(row: Self::RowType) -> AResult<LLMChatTemplate> {
+        let obj = LLMChatTemplate {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            delete_time: row.try_get("delete_time")?,
+            update_time: row.try_get("update_time")?,
+            name: row.try_get("name")?,
+            prompt: row.try_get("prompt")?,
+            svg_logo: row.try_get("svg_logo")?,
+        };
+        Ok(obj)
+    }
 
-        Ok(())
+    fn to_llmchat_session(row: Self::RowType) -> AResult<LLMChatSession> {
+        let obj = LLMChatSession {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            bot_id: row.try_get("bot_id")?,
+            template_id: row.try_get("template_id")?,
+            title: row.try_get("title")?,
+            namespace: row.try_get("namespace")?,
+            delete_time: row.try_get("delete_time")?,
+            update_time: row.try_get("update_time")?,
+        };
+        Ok(obj)
+    }
+
+    fn to_llmchat_record(row: Self::RowType) -> AResult<LLMChatRecord> {
+        let obj = LLMChatRecord {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            session_id: row.try_get("session_id")?,
+            pre_record_id: row.try_get("pre_record_id")?,
+            content: row.try_get("content")?,
+            role: row.try_get("role")?,
+            role_id: row.try_get("role_id")?,
+        };
+        Ok(obj)
+    }
+
+    fn to_namespace_record(row: Self::RowType) -> AResult<NamespaceRecord> {
+        let obj = NamespaceRecord {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            name: row.try_get("name")?,
+            delete_time: row.try_get("delete_time")?,
+            update_time: row.try_get("update_time")?,
+        };
+        Ok(obj)
+    }
+
+    fn to_namespace_relation(row: Self::RowType) -> AResult<NamespaceRelation> {
+        let obj = NamespaceRelation {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            delete_time: row.try_get("delete_time")?,
+            update_time: row.try_get("update_time")?,
+            sub_id: row.try_get("sub_id")?,
+            parent_id: row.try_get("parent_id")?,
+        };
+        Ok(obj)
+    }
+
+    fn to_resource(row: Self::RowType) -> AResult<Resource> {
+        let obj = Resource {
+            id: row.try_get("id")?,
+            insert_time: row.try_get("insert_time")?,
+            delete_time: row.try_get("delete_time")?,
+            namespace: row.try_get("namespace")?,
+            ori_filename: row.try_get("ori_filename")?,
+            content_type: row.try_get("content_type")?,
+        };
+        Ok(obj)
+    }
+
+    fn to_kv(row: Self::RowType) -> AResult<KV> {
+        let obj = KV {
+            insert_time: row.try_get("insert_time")?,
+            key: row.try_get("key")?,
+            value: row.try_get("value")?,
+            update_time: row.try_get("update_time")?,
+        };
+        Ok(obj)
     }
 }
