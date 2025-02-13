@@ -3,9 +3,13 @@ use std::{
     vec,
 };
 
-use crate::{model::score::PossibleScore, toent::{timeevent::timeenum::base::{BaseTime, Unit}, EventBuilder, GuessType}};
-
-
+use crate::{
+    model::score::PossibleScore,
+    toent::{
+        timeevent::timeenum::base::{BaseTime, Unit},
+        EventBuilder, GuessType,
+    },
+};
 
 #[derive(Clone, Debug, Default)]
 pub struct TimeInterval {
@@ -112,7 +116,6 @@ impl EventBuilder for TimeInterval {
 
 #[cfg(test)]
 mod test {
-
 
     use crate::toent::EventBuilder;
 

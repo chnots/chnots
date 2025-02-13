@@ -9,7 +9,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::{
     db::{
-        chnot::{ChnotMetadata, ChnotRecord}, kv::KV, llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate}, namespace::{NamespaceRecord, NamespaceRelation}, resource::Resource
+        chnot::{ChnotMetadata, ChnotRecord},
+        kv::KV,
+        llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
+        namespace::{NamespaceRecord, NamespaceRelation},
+        resource::Resource,
     },
     dto::{
         chnot::*,

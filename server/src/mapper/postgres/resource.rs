@@ -1,6 +1,7 @@
 use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 
+use super::DeserializeMapper;
 use crate::{
     mapper::ResourceMapper,
     model::{
@@ -10,7 +11,6 @@ use crate::{
     to_sql,
     util::sql_builder::{PlaceHolderType, SqlSegBuilder, Wheres},
 };
-use super::DeserializeMapper;
 
 use super::Postgres;
 
@@ -116,12 +116,8 @@ impl ResourceMapper for Postgres {
                 Wheres::if_some(req.content_type.to_owned(), |e| {
                     Wheres::equal("content_type", e)
                 }),
-                Wheres::if_some(req.id.to_owned(), |e| {
-                    Wheres::equal("id", e)
-                }),
-                Wheres::if_some(req.name_like.to_owned(), |e| {
-                    Wheres::ilike("name", e)
-                }),
+                Wheres::if_some(req.id.to_owned(), |e| Wheres::equal("id", e)),
+                Wheres::if_some(req.name_like.to_owned(), |e| Wheres::ilike("name", e)),
             ]))
             .raw("order by insert_time desc")
             .build(&mut PlaceHolderType::dollar_number())

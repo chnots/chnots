@@ -1,6 +1,9 @@
 use crate::{
     mapper::ChnotMapper,
-    model::{db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord}, dto::KReq},
+    model::{
+        db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
+        dto::KReq,
+    },
     to_sql,
     util::sql_builder::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
 };
@@ -8,7 +11,6 @@ use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local, TimeDelta};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use std::str::FromStr;
-use tokio_postgres::Row;
 use tracing::{error, info};
 
 use crate::model::dto::chnot::*;

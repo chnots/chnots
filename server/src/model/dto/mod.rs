@@ -1,6 +1,6 @@
 pub mod chnot;
-pub mod llmchat;
 pub mod kv;
+pub mod llmchat;
 
 /// DTO: Data Transfer Object
 ///
@@ -11,7 +11,10 @@ use axum::{extract::Multipart, http::HeaderMap};
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use super::{db::resource::{InlineResource, Resource}, shared_str::SharedStr};
+use super::{
+    db::resource::{InlineResource, Resource},
+    shared_str::SharedStr,
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct KReq<E: Debug + Clone + DeserializeOwned> {
@@ -56,12 +59,11 @@ pub struct ResourceUploadRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InsertInlineResourceReq {
-    pub res: InlineResource
+    pub res: InlineResource,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineResourceRsp {
-}
+pub struct InsertInlineResourceRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryInlineResourceReq {
@@ -72,6 +74,5 @@ pub struct QueryInlineResourceReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryInlineResourceRsp {
-    pub res: Vec<InlineResource>
+    pub res: Vec<InlineResource>,
 }
-

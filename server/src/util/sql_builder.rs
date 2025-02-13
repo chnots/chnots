@@ -471,14 +471,18 @@ impl<'a> SqlUpdater<'a> {
         self
     }
 
-
-    pub fn trans_if_some<T: Into<SqlValue<'a>>, F: FnOnce(V) -> T, V>(mut self, key: &'a str, value: Option<V>, trans: F) -> Self {
+    pub fn trans_if_some<T: Into<SqlValue<'a>>, F: FnOnce(V) -> T, V>(
+        mut self,
+        key: &'a str,
+        value: Option<V>,
+        trans: F,
+    ) -> Self {
         if let Some(v) = value {
             self.setters.push((key, trans(v).into()));
         }
 
         self
-    }    
+    }
 
     pub fn set<T: Into<SqlValue<'a>>>(mut self, key: &'a str, v: T) -> Self {
         self.setters.push((key, v.into()));

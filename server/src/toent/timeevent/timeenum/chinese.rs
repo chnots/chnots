@@ -1,6 +1,7 @@
-
-
-use crate::{model::score::PossibleScore, toent::{timeevent::contains_any, EventBuilder, GuessType}};
+use crate::{
+    model::score::PossibleScore,
+    toent::{timeevent::contains_any, EventBuilder, GuessType},
+};
 
 use super::{base::BaseTime, Timestamp};
 
@@ -92,7 +93,6 @@ impl EventBuilder for ChnTime {
 #[cfg(test)]
 mod test {
     use crate::toent::{timeevent::timeenum::chinese::ChnTime, EventBuilder};
-
 
     #[test]
     fn test() {

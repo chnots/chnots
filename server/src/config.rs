@@ -18,7 +18,6 @@ pub struct Config {
     pub attachment: AttachmentConfig,
 }
 
-
 pub mod tests {
     #[test]
     fn test_db_deserialize() {

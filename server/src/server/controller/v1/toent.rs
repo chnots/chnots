@@ -2,9 +2,7 @@ use axum::{routing::post, Json, Router};
 
 use crate::{
     app::ShareAppState,
-    model::dto::
-        chnot::{ToentGuessReq, ToentGuessRsp}
-    ,
+    model::dto::chnot::{ToentGuessReq, ToentGuessRsp},
     server::controller::KResponse,
     toent::PossibleToent,
 };

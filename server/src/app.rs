@@ -1,10 +1,13 @@
-use std::{ops::Deref, sync::Arc};
 use chin_tools::wrapper::anyhow::AResult;
+use std::{ops::Deref, sync::Arc};
 
 use crate::{
     config::Config,
     mapper::{ChnotMapper, MapperType},
-    model::dto::{chnot::{Chnot, ChnotQueryReq, ChnotQueryRsp}, KReq},
+    model::dto::{
+        chnot::{Chnot, ChnotQueryReq, ChnotQueryRsp},
+        KReq,
+    },
 };
 
 pub struct AppState {

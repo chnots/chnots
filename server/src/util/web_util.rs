@@ -1,7 +1,5 @@
-use base64::prelude::*;
-
 pub fn web_svg_src(s: Option<String>) -> Option<String> {
-/*     if let Some(s) = s {
+    /*     if let Some(s) = s {
         if !s.starts_with("data:image") {
             Some(format!(
                 "data:image/svg+xml;base64,{}",
@@ -13,5 +11,5 @@ pub fn web_svg_src(s: Option<String>) -> Option<String> {
     } else {
         None
     } */
-   s
+    s
 }

@@ -9,9 +9,8 @@ pub struct LLMChatBot {
     pub svg_logo: Option<String>,
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub update_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,    
+    pub insert_time: DateTime<FixedOffset>,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTemplate {
@@ -21,7 +20,7 @@ pub struct LLMChatTemplate {
     pub svg_logo: Option<String>,
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub update_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,    
+    pub insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,7 +32,7 @@ pub struct LLMChatSession {
     pub namespace: String,
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub update_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,    
+    pub insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

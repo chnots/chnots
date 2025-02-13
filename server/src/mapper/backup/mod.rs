@@ -14,7 +14,11 @@ pub struct DumpWrapper<E: Serialize> {
 
 impl<E: Serialize> DumpWrapper<E> {
     pub fn of(body: E, version: usize, table: &str) -> DumpWrapper<E> {
-        Self { body, version, table: table.to_owned() }
+        Self {
+            body,
+            version,
+            table: table.to_owned(),
+        }
     }
 }
 
@@ -30,9 +34,7 @@ pub enum TableRowCallbackEnum {
 impl TableRowCallback for TableRowCallbackEnum {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult {
         match self {
-            TableRowCallbackEnum::File(file_dump_worker) => {
-                file_dump_worker.callback(obj).await
-            },
+            TableRowCallbackEnum::File(file_dump_worker) => file_dump_worker.callback(obj).await,
             TableRowCallbackEnum::Network() => todo!(),
         }
     }

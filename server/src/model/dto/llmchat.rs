@@ -51,21 +51,17 @@ pub struct LLMChatUpdateSessionReq {
     pub title: Option<String>,
     pub delete: Option<bool>,
     pub session_id: String,
-
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LLMChatUpdateSessionRsp {
-}
+pub struct LLMChatUpdateSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTruncateSessionReq {
     pub record_id_included: String,
     pub session_id: String,
-
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LLMChatTruncateSessionRsp {
-}
+pub struct LLMChatTruncateSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionDetialReq {

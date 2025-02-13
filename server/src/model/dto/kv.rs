@@ -9,14 +9,13 @@ pub struct QueryKVReq {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct QueryKVRsp {
-    pub kv: Option<KV>
+    pub kv: Option<KV>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct OverwriteKVReq {
-    pub kv: KV
+    pub kv: KV,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct OverwriteKVRsp {
-}
+pub struct OverwriteKVRsp {}

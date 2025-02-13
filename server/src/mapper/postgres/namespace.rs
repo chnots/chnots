@@ -1,11 +1,11 @@
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
 
+use super::DeserializeMapper;
 use crate::{
     mapper::NamespaceMapper,
     model::db::namespace::{NamespaceRecord, NamespaceRelation},
 };
-use super::DeserializeMapper;
 
 use super::Postgres;
 

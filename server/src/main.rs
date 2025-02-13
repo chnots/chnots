@@ -8,10 +8,10 @@ use mapper::{
         filedump::{BackupType, FileDumpWorker},
         TableRowCallbackEnum,
     },
-    LLMChatMapper, MapperType,
+    MapperType,
 };
 use server::controller;
-use tracing::{info, subscriber, Level};
+use tracing::{info, Level};
 use tracing_log::LogTracer;
 
 pub(crate) mod app;

@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    hash::Hash,
-    
-};
+use std::{collections::HashMap, fmt::Display, hash::Hash};
 
 pub struct TreeWrapper<T> {
     pub body: T,
