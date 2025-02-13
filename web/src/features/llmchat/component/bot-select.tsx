@@ -1,7 +1,7 @@
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import { LLMChatBot, useLLMChatStore } from "@/store/llmchat";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import BotForm from "./bot-form";
 import KButton from "@/common/component/kbutton";
 
@@ -13,21 +13,21 @@ const BotComponent = ({
   settings?: () => void;
 }) => {
   return (
-    <KButton className="py-1 px-2">
-      <div className="flex flex-row items-center space-x-2">
+    <KButton className="py-1 px-2 text-xs justify-between">
+      <div className="flex flex-row space-x-2">
         {bot.svg_logo ? (
           <KSVG inner={bot.svg_logo} className="w-4 h-4" />
         ) : (
           <Icon.Bot />
         )}
         <span>{bot.name}</span>
-        {settings && (
-          <Icon.SettingsIcon
-            onClick={settings}
-            className="size-4 hover:animate-spin justify-self-end"
-          />
-        )}
       </div>
+      {settings && (
+        <Icon.SettingsIcon
+          onClick={settings}
+          className="size-4 hover:animate-spin"
+        />
+      )}
     </KButton>
   );
 };
@@ -50,7 +50,7 @@ const LLMChatBotSelect = () => {
   };
 
   return (
-    <div>
+    <div className="flex flex-col justify-center">
       {currentBot ? (
         <div onClick={handleToggle}>
           <BotComponent bot={currentBot} />
@@ -83,8 +83,8 @@ const LLMChatBotSelect = () => {
               setIsOpen(false);
             }}
           >
-            <KButton className="py-1 px-2">
-              <Icon.PlusCircle />
+            <KButton className="py-1 px-2 text-xs">
+              <Icon.PlusCircle className="w-4 h-4" />
               <span className="ml-1">Add Bot</span>
             </KButton>
           </li>
