@@ -5,6 +5,7 @@ import { useChnotStore } from "@/store/chnot";
 import React from "react";
 import Icon from "@/common/component/icon";
 import { CodeMirrorEditorMemo } from "@/common/component/codemirror-md-editor";
+import useDebounce from "@/hooks/use-debounce";
 
 enum RequestState {
   Saved,
@@ -68,16 +69,11 @@ export const ChnotMarkdownEditor = () => {
     [setCurrentChnot, currentChnot, setEditState, editState]
   );
 
-  const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-  const onChange = useCallback(
-    (metaId: string, content: string) => {
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        saveContent(metaId, content);
-      }, 1000);
-    },
-    [saveContent]
-  );
+  const onChange = useDebounce((metaId: string, content: string) => {
+    console.log("begin to save ", content);
+    saveContent(metaId, content);
+  }, 1000);
+
   const onChangeRef = useRef(onChange);
   const fetchContent = useCallback(
     async (id: string) => {
