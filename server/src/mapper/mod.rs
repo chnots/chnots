@@ -1,6 +1,7 @@
 pub mod dump;
 pub mod mappertype;
 pub mod postgres;
+pub mod sqlite;
 
 use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
 use chin_tools::wrapper::anyhow::{AResult, EResult};

@@ -21,8 +21,6 @@ use crate::{
 
 use super::DeserializeMapper;
 
-const NO_PARAMS: Vec<&(dyn ToSql + Sync)> = Vec::new();
-
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
     user: String,
