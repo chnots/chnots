@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::{
-    mapper::{backup::filedump::FileBackupConfig, MapperConfig},
+    mapper::{dump::filedump::FileBackupConfig, MapperConfig},
     server::ServerConfig,
 };
 

@@ -1,8 +1,8 @@
-pub mod backup;
+pub mod dump;
 pub mod mappertype;
 pub mod postgres;
 
-use backup::{tabledumper::TableDumpSql, TableRowCallbackEnum};
+use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use postgres::{Postgres, PostgresConfig};
 use serde::{Deserialize, Serialize};
@@ -135,10 +135,10 @@ pub trait KVMapper {
     async fn ensure_table_kv(&self) -> EResult;
 }
 
-pub trait BackupMapper {
+pub trait DumpMapper {
     type RowType;
 
-    async fn dump_and_backup(&self, writer: TableRowCallbackEnum) -> EResult;
+    async fn dump_and_callback(&self, callback: &TableRowCallbackEnum) -> EResult;
 
     async fn read_iterator<'a, F1, O: Serialize>(
         &self,

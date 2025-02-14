@@ -1,9 +1,4 @@
-use chin_tools::wrapper::anyhow::{AResult, EResult};
-use serde::Serialize;
-
 use crate::util::sql_builder::{PlaceHolderType, SqlSeg, SqlSegBuilder, Wheres};
-
-use super::TableRowCallbackEnum;
 
 pub struct TableDumpSql<'a> {
     pub table_name: String,
@@ -40,17 +35,4 @@ impl<'a> TableDumpSql<'a> {
                 PlaceHolderType::DollarNumber(_) => PlaceHolderType::DollarNumber(0),
             })
     }
-}
-
-pub trait TableIterator {
-    type RowType;
-
-    async fn read_iterator<'b, F1, O: Serialize>(
-        &self,
-        sql_seg: TableDumpSql<'b>,
-        convert_row_to_obj: F1,
-        writer: &TableRowCallbackEnum,
-    ) -> EResult
-    where
-        F1: Fn(Self::RowType) -> AResult<O>;
 }
