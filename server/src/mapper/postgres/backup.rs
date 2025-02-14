@@ -5,8 +5,8 @@ use tokio_postgres::Row;
 
 use crate::{
     mapper::{
-        backup::{tabledumper::TableDumpSql, DumpWrapper, TableRowCallback, TableRowCallbackEnum},
-        BackupMapper, DeserializeMapper,
+        dump::{tabledumpsql::TableDumpSql, DumpWrapper, TableRowCallback, TableRowCallbackEnum},
+        DumpMapper, DeserializeMapper,
     },
     to_sql,
     util::sql_builder::PlaceHolderType,
@@ -14,12 +14,12 @@ use crate::{
 
 use super::Postgres;
 
-impl BackupMapper for Postgres {
+impl DumpMapper for Postgres {
     type RowType = Row;
 
-    async fn dump_and_backup(
+    async fn dump_and_callback(
         &self,
-        writer: crate::mapper::backup::TableRowCallbackEnum,
+        callback: &TableRowCallbackEnum,
     ) -> chin_tools::wrapper::anyhow::EResult {
         let s = |name: &'static str| {
             TableDumpSql::new(
@@ -30,27 +30,27 @@ impl BackupMapper for Postgres {
             )
         };
 
-        self.read_iterator(s("chnot_record"), Self::to_chnot_record, &writer)
+        self.read_iterator(s("chnot_record"), Self::to_chnot_record, &callback)
             .await?;
-        self.read_iterator(s("chnot_metadata"), Self::to_chnot_meta, &writer)
+        self.read_iterator(s("chnot_metadata"), Self::to_chnot_meta, &callback)
             .await?;
-        self.read_iterator(s("namespace_record"), Self::to_namespace_record, &writer)
+        self.read_iterator(s("namespace_record"), Self::to_namespace_record, &callback)
             .await?;
         self.read_iterator(
             s("namespace_relation"),
             Self::to_namespace_relation,
-            &writer,
+            &callback,
         )
         .await?;
-        self.read_iterator(s("resources"), Self::to_resource, &writer)
+        self.read_iterator(s("resources"), Self::to_resource, &callback)
             .await?;
-        self.read_iterator(s("llm_chat_bot"), Self::to_llmchat_bot, &writer)
+        self.read_iterator(s("llm_chat_bot"), Self::to_llmchat_bot, &callback)
             .await?;
-        self.read_iterator(s("llm_chat_record"), Self::to_llmchat_record, &writer)
+        self.read_iterator(s("llm_chat_record"), Self::to_llmchat_record, &callback)
             .await?;
-        self.read_iterator(s("llm_chat_session"), Self::to_llmchat_session, &writer)
+        self.read_iterator(s("llm_chat_session"), Self::to_llmchat_session, &callback)
             .await?;
-        self.read_iterator(s("llm_chat_template"), Self::to_llmchat_template, &writer)
+        self.read_iterator(s("llm_chat_template"), Self::to_llmchat_template, &callback)
             .await?;
 
         Ok(())
@@ -60,7 +60,7 @@ impl BackupMapper for Postgres {
         &self,
         sql_builder: TableDumpSql<'a>,
         convert_row_to_obj: F1,
-        writer: &TableRowCallbackEnum,
+        callback: &TableRowCallbackEnum,
     ) -> EResult
     where
         F1: Fn(Self::RowType) -> AResult<O>,
@@ -82,7 +82,7 @@ impl BackupMapper for Postgres {
             for row in rows {
                 match convert_row_to_obj(row) {
                     Ok(obj) => {
-                        writer
+                        callback
                             .callback(DumpWrapper::of(obj, 1, &table_name))
                             .await?;
                     }

@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::{
-    backup::TableRowCallbackEnum, postgres::Postgres, BackupMapper, ChnotDeletionRsp, ChnotMapper,
+    dump::TableRowCallbackEnum, postgres::Postgres, DumpMapper, ChnotDeletionRsp, ChnotMapper,
     ChnotOverwriteReq, ChnotOverwriteRsp, KVMapper, LLMChatMapper, MapperConfig, MapperType,
     NamespaceMapper, ResourceMapper,
 };
@@ -307,9 +307,9 @@ impl LLMChatMapper for MapperType {
 }
 
 impl MapperType {
-    pub async fn dump_and_backup(&self, writer: TableRowCallbackEnum) -> EResult {
+    pub async fn dump_and_backup(&self, writer: &TableRowCallbackEnum) -> EResult {
         match self {
-            MapperType::Postgres(db) => db.dump_and_backup(writer).await,
+            MapperType::Postgres(db) => db.dump_and_callback(writer).await,
         }
     }
 }

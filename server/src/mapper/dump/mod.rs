@@ -1,5 +1,5 @@
 pub mod filedump;
-pub mod tabledumper;
+pub mod tabledumpsql;
 
 use chin_tools::wrapper::anyhow::EResult;
 use filedump::FileDumpWorker;
