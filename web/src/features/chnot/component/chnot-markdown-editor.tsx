@@ -40,31 +40,29 @@ export const ChnotMarkdownEditor = () => {
         };
       });
 
-      if (content) {
-        const req: ChnotOverwriteReq = {
-          chnot: {
-            id: uuid(),
-            content: content,
-            insert_time: new Date(),
-            meta_id: metaId,
-          },
-          kind: "mdwt",
-        };
-        let requestState;
-        try {
-          const rsp = await overwriteChnot(req, true);
-          setCurrentChnot(rsp.chnot);
-          requestState = RequestState.Saved;
-        } catch {
-          requestState = RequestState.Error;
-        }
-        setEditState((state) => {
-          return {
-            ...state,
-            requestState,
-          };
-        });
+      const req: ChnotOverwriteReq = {
+        chnot: {
+          id: uuid(),
+          content: content ?? "",
+          insert_time: new Date(),
+          meta_id: metaId,
+        },
+        kind: "mdwt",
+      };
+      let requestState;
+      try {
+        const rsp = await overwriteChnot(req, true);
+        setCurrentChnot(rsp.chnot);
+        requestState = RequestState.Saved;
+      } catch {
+        requestState = RequestState.Error;
       }
+      setEditState((state) => {
+        return {
+          ...state,
+          requestState,
+        };
+      });
     },
     [setCurrentChnot, currentChnot, setEditState, editState]
   );
