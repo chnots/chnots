@@ -3,14 +3,11 @@ use std::{
     vec,
 };
 
-use crate::{
-    model::score::PossibleScore,
-    toent::{
+use crate::toent::{
         timeevent::timeenum::base::{BaseTime, Unit},
         EventBuilder, GuessType,
-    },
-};
-
+    };
+use super::PossibleScore;
 #[derive(Clone, Debug, Default)]
 pub struct TimeInterval {
     base: BaseTime,

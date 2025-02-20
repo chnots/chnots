@@ -1,7 +1,11 @@
 use anyhow::Context;
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{
+    utils::sort_util::sort_by_prev,
+    wrapper::anyhow::{AResult, EResult},
+};
 use chrono::Local;
 
+use super::sql::{Wheres, SqlSegBuilder, PlaceHolderType, SqlUpdater};
 use crate::{
     mapper::LLMChatMapper,
     model::{
@@ -9,10 +13,6 @@ use crate::{
         dto::{llmchat::*, KReq},
     },
     to_sql,
-    util::{
-        sort_util::sort_by_prev,
-        sql_builder::{PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
-    },
 };
 
 use super::DeserializeMapper;

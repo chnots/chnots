@@ -1,7 +1,7 @@
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
-use crate::model::shared_str::SharedStr;
+use chin_tools::SharedStr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KV {

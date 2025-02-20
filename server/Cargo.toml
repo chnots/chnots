@@ -63,7 +63,7 @@ uuid = "1.11.0"
 regex_static = "0.1.1"
 
 # TODO: https://github.com/aeghn/chin-tools
-chin-tools = { path = "../../chin-tools" }
+chin-tools = { path = "/home/chin/Projects/chin-tools", features = ["postgres"]}
 anyhow = { version = "1", features = ["backtrace"] }
 strum = "0.26.3"
 strum_macros = "0.26.4"

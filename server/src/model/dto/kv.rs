@@ -1,6 +1,7 @@
+use chin_tools::shared_str::SharedStr;
 use serde::{Deserialize, Serialize};
 
-use crate::model::{db::kv::KV, shared_str::SharedStr};
+use crate::model::db::kv::KV;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct KVQueryReq {

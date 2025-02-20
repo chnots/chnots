@@ -9,9 +9,9 @@ use crate::{
         DumpMapper, DeserializeMapper,
     },
     to_sql,
-    util::sql_builder::PlaceHolderType,
 };
 
+use super::sql::PlaceHolderType;
 use super::Postgres;
 
 impl DumpMapper for Postgres {

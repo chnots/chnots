@@ -1,12 +1,13 @@
 use std::ops::Deref;
 
-use crate::model::score::PossibleScore;
-
 use self::{eventenum::EventEnum, timeevent::TimeEvent};
 
 pub mod eventenum;
 pub mod timeevent;
 pub mod todoevent;
+use chin_tools::utils::id_util;
+use chin_tools::wrapper::score::PossibleScore;
+use serde::{Deserialize, Serialize};
 
 #[inline]
 pub fn retain_parts<F>(input: &str, retain_func: F) -> Vec<&str>
@@ -100,9 +101,6 @@ where
     fn standard_str(&self) -> String;
 }
 
-use chin_tools::utils::idutils;
-use serde::{Deserialize, Serialize};
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PossibleToent {
     id: String,
@@ -115,7 +113,7 @@ impl PossibleToent {
         let parts = retain_parts(input, |e| !e.is_empty());
 
         Ok(PossibleToent {
-            id: idutils::generate_uuid(),
+            id: id_util::generate_uuid(),
             input: input.to_owned(),
             event: EventEnum::from_standard(&parts)?,
         })
@@ -128,7 +126,7 @@ impl PossibleToent {
         let res = guess_res
             .into_iter()
             .map(|e| PossibleToent {
-                id: idutils::generate_uuid(),
+                id: id_util::generate_uuid(),
                 input: input.to_owned(),
                 event: e.0,
             })

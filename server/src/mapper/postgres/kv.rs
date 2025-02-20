@@ -1,5 +1,6 @@
 use anyhow::Context;
-use chin_tools::wrapper::anyhow::AResult;
+use chin_tools::AResult;
+use super::sql::{PlaceHolderType, SqlSegBuilder, Wheres};
 use chrono::Local;
 
 use crate::{
@@ -9,7 +10,6 @@ use crate::{
         KReq,
     },
     to_sql,
-    util::sql_builder::{PlaceHolderType, SqlSegBuilder, Wheres},
 };
 
 use super::DeserializeMapper;

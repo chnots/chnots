@@ -1,8 +1,7 @@
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{utils::sort_util, wrapper::anyhow::{AResult, EResult}};
 
 use crate::{
     model::{db::namespace::NamespaceRelation, dto::InsertInlineResourceRsp},
-    util::sort_util,
 };
 
 use super::{

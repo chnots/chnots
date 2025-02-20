@@ -1,4 +1,4 @@
-use crate::util::sql_builder::{PlaceHolderType, SqlSeg, SqlSegBuilder, Wheres};
+use chin_tools::sql::{PlaceHolderType, SqlSeg, SqlSegBuilder, Wheres};
 
 pub struct TableDumpSql<'a> {
     pub table_name: String,

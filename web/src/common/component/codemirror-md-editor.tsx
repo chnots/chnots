@@ -1,8 +1,8 @@
 import { RefObject, useEffect, useRef, useState } from "react";
-import { EditorView } from "@codemirror/view";
+import { EditorView, KeyBinding } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { deleteMarkupBackward, insertNewlineContinueMarkup, markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import { useAttachmentStore } from "@/store/attachment";
@@ -101,6 +101,11 @@ const editorTheme = EditorView.theme({
   },
 });
 
+export const markdownKeymap: readonly KeyBinding[] = [
+  {key: "Enter", run: insertNewlineContinueMarkup},
+  {key: "Backspace", run: deleteMarkupBackward}
+]
+
 const CodeMirrorEditor = ({
   id,
   onChange,
@@ -112,18 +117,20 @@ const CodeMirrorEditor = ({
   fetchDefaultValue: (id: string) => Promise<string | undefined>;
   className?: string;
 }) => {
-  console.log("CodeMirrorEditor changed", new Date());
-
   const cmRef = React.useRef<HTMLDivElement>(null);
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
   const [content, setContent] = useState<string>();
-
-  const extensions = [
+  const md = 
     markdown({
       base: markdownLanguage,
       codeLanguages: languages,
       addKeymap: true,
-    }),
+      completeHTMLTags: false
+    });
+    md.support;
+
+  const extensions = [
+    md,
     EditorView.lineWrapping,
     editorTheme,
     eventHandlers,

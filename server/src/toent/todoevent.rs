@@ -1,11 +1,12 @@
 use std::str::FromStr;
 
+use super::PossibleScore;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use serde::{de, Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use crate::model::{score::PossibleScore, todo::TodoEvent};
+use crate::model::todo::TodoEvent;
 
 use super::{EventBuilder, GuessType};
 
