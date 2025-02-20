@@ -2,12 +2,10 @@ use std::fmt;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::{
-    model::{score::PossibleScore, todo::TodoEvent},
-    toent::retain_not_empty_parts,
-};
+use crate::{model::todo::TodoEvent, toent::retain_not_empty_parts};
 
 use super::{timeevent::TimeEvent, EventBuilder, GuessType};
+use super::PossibleScore;
 
 #[derive(Clone, Debug)]
 pub enum EventEnum {

@@ -1,9 +1,6 @@
-use crate::{
-    model::score::PossibleScore,
-    toent::{timeevent::contains_any, EventBuilder, GuessType},
-};
-
+use super::PossibleScore;
 use super::{base::BaseTime, Timestamp};
+use crate::toent::{timeevent::contains_any, EventBuilder, GuessType};
 
 #[derive(Clone, Debug)]
 pub struct ChnTime {

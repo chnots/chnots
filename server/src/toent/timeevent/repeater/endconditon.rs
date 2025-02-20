@@ -1,11 +1,8 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{
-    model::score::PossibleScore,
-    toent::{timeevent::timeenum::TimeEnum, EventBuilder, GuessType},
-};
-
+use crate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, GuessType};
+use super::PossibleScore;
 use super::interval::TimeInterval;
 
 #[derive(Clone, Debug)]

@@ -3,10 +3,8 @@ use std::{fmt::Display, ops::Deref};
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    model::score::PossibleScore,
-    toent::{EventBuilder, GuessType},
-};
+use crate::toent::{EventBuilder, GuessType};
+use super::PossibleScore;
 
 #[derive(Clone, Deserialize, Serialize, Default, Debug)]
 pub struct Unit(Option<i32>);

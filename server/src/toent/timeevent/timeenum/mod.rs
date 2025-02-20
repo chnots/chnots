@@ -4,12 +4,9 @@ pub mod westen;
 
 use chrono::{DateTime, Utc};
 
-use crate::{
-    model::score::PossibleScore,
-    toent::{EventBuilder, GuessType},
-};
-
 use self::{chinese::ChnTime, westen::WesTime};
+use super::PossibleScore;
+use crate::toent::{EventBuilder, GuessType};
 
 pub trait TimestampNow {
     fn now_time() -> Self;

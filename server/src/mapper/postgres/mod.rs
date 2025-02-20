@@ -7,17 +7,11 @@ pub mod resource;
 
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
-use postgres_types::{to_sql_checked, FromSql, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
+use chin_tools::sql;
 
-use crate::{
-    model::{
-        db::{chnot::*, kv::KV, llmchat::*, namespace::*, resource::Resource},
-        shared_str::SharedStr,
-    },
-    util::sql_builder::SqlValue,
-};
+use crate::model::db::{chnot::*, kv::KV, llmchat::*, namespace::*, resource::Resource};
 
 use super::DeserializeMapper;
 
@@ -67,61 +61,6 @@ impl Postgres {
             .map_err(anyhow::Error::new)?;
 
         Ok(())
-    }
-}
-
-impl<'a> Into<&'a (dyn ToSql + Sync + Send)> for &'a SqlValue<'a> {
-    fn into(self) -> &'a (dyn ToSql + Sync + Send) {
-        match self {
-            SqlValue::I8(v) => v,
-            SqlValue::I16(v) => v,
-            SqlValue::I32(v) => v,
-            SqlValue::I64(v) => v,
-            SqlValue::Str(v) => v,
-            SqlValue::Date(v) => v.as_ref(),
-            SqlValue::Bool(v) => v,
-            SqlValue::Opt(v) => match v {
-                Some(v) => v.as_ref().into(),
-                None => &None::<String>,
-            },
-            SqlValue::SharedStr(shared_str) => shared_str,
-        }
-    }
-}
-
-impl ToSql for SharedStr {
-    fn to_sql(
-        &self,
-        ty: &postgres_types::Type,
-        out: &mut tokio_util::bytes::BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
-    where
-        Self: Sized,
-    {
-        self.to_string().to_sql(ty, out)
-    }
-
-    fn accepts(ty: &postgres_types::Type) -> bool
-    where
-        Self: Sized,
-    {
-        <String as ToSql>::accepts(ty)
-    }
-
-    to_sql_checked!();
-}
-
-impl<'a> FromSql<'a> for SharedStr {
-    fn from_sql(
-        ty: &tokio_postgres::types::Type,
-        raw: &'a [u8],
-    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        <&str as tokio_postgres::types::FromSql>::from_sql(ty, raw)
-            .and_then(|s| Ok(SharedStr::new(s)))
-    }
-
-    fn accepts(ty: &tokio_postgres::types::Type) -> bool {
-        <&str as tokio_postgres::types::FromSql>::accepts(ty)
     }
 }
 

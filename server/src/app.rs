@@ -15,12 +15,6 @@ pub struct AppState {
     pub config: Config,
 }
 
-impl AppState {
-    pub fn new(mapper: MapperType, config: Config) -> Self {
-        AppState { mapper, config }
-    }
-}
-
 #[derive(Clone)]
 pub struct ShareAppState(Arc<AppState>);
 

@@ -1,7 +1,7 @@
+use chin_tools::SharedStr;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::model::shared_str::SharedStr;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Resource {

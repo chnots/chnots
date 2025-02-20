@@ -8,7 +8,7 @@ use axum::{
     routing::{get, put},
     Router,
 };
-use chin_tools::{utils::pathutils::split_uuid_to_file_name, wrapper::anyhow::AResult};
+use chin_tools::{utils::path_util::split_uuid_to_file_name, wrapper::anyhow::AResult};
 use chrono::Local;
 use futures::{Stream, TryStreamExt};
 

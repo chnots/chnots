@@ -1,10 +1,9 @@
 import clsx from "clsx";
-import MarkdownPreview from "@uiw/react-markdown-preview";
 import rehypeSanitize from "rehype-sanitize";
 import Icon from "@/common/component/icon";
-import { LLMChatBot, useLLMChatStore } from "@/store/llmchat";
 import KSVG from "@/common/component/svg";
-import { log } from "console";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const getAvatar = (role: string) => {
   switch (role) {
@@ -54,8 +53,6 @@ const RecordContent = ({
     }
   };
 
-  const rehypePlugins = [rehypeSanitize];
-
   return (
     <div
       className={clsx(
@@ -67,22 +64,25 @@ const RecordContent = ({
       <div className="w-8">
         {role !== "user" && (logo ? <KSVG inner={logo} /> : getAvatar(role))}
       </div>
-      <div className="flex-col">
+      <div className="flex-col overflow-y-hidden">
         <div className="text-gray-500 text-xs space-x-2">
           <span>{roleName}</span>
           <span>{timestamp?.toISOString() ?? "Now"}</span>
         </div>
-        <div className={limitedHeight ? "h-40 overflow-hidden" : ""}>
+        <div className={clsx(limitedHeight && "h-40 overflow-hidden")}>
           {role === "user" ? (
             <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap bg-secondary">
               {content}
             </div>
           ) : (
-            <MarkdownPreview
-              source={content}
-              rehypePlugins={rehypePlugins}
-              className="mr-4 text-sm"
-            />
+            <ReactMarkdown
+              className={
+                "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
+              }
+              remarkPlugins={[remarkGfm]}
+            >
+              {content}
+            </ReactMarkdown>
           )}
         </div>
         <div className="space-x-2 mt-1">

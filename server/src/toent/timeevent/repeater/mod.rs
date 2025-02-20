@@ -5,12 +5,9 @@ use strum::{AsRefStr, EnumString};
 pub mod endconditon;
 pub mod interval;
 
-use crate::{
-    model::score::PossibleScore,
-    toent::{EventBuilder, GuessType},
-};
-
 use self::{endconditon::EndCondition, interval::TimeInterval};
+use super::PossibleScore;
+use crate::toent::{EventBuilder, GuessType};
 
 use super::starts_any;
 

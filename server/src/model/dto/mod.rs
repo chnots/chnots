@@ -9,11 +9,11 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::{extract::Multipart, http::HeaderMap};
 
+use chin_tools::shared_str::SharedStr;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use super::{
     db::resource::{InlineResource, Resource},
-    shared_str::SharedStr,
 };
 
 #[derive(Debug, Clone, Serialize)]

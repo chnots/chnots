@@ -5,8 +5,8 @@ use crate::{
         dto::KReq,
     },
     to_sql,
-    util::sql_builder::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres},
 };
+use super::sql::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local, TimeDelta};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
