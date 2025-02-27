@@ -2,10 +2,12 @@ import { v4 as uuid } from "uuid";
 import { useCallback, useRef, useState } from "react";
 import { ChnotOverwriteReq } from "@/store/chnot";
 import { useChnotStore } from "@/store/chnot";
-import React from "react";
 import Icon from "@/common/component/icon";
 import { CodeMirrorEditorMemo } from "@/common/component/codemirror-md-editor";
 import useDebounce from "@/hooks/use-debounce";
+import { useNamespaceStore } from "@/store/namespace";
+import { NamespaceIcon } from "@/common/component/namespace-select";
+import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 
 enum RequestState {
   Saved,
@@ -22,8 +24,20 @@ interface ChnotEditState {
 export const ChnotMarkdownEditor = () => {
   console.log("Frame changed");
 
-  const { currentChnot, setCurrentChnot, overwriteChnot, queryChnot } =
-    useChnotStore();
+  const { namespaces, currentNamespace } = useNamespaceStore();
+  const {
+    currentChnotIndex,
+    chnotMap,
+    setCurrentChnot,
+    overwriteChnot,
+    queryChnot,
+    updateChnot,
+    validateChnotCache,
+  } = useChnotStore();
+
+  const currentChnot = currentChnotIndex
+    ? chnotMap.get(currentChnotIndex)
+    : undefined;
 
   const [editState, setEditState] = useState<ChnotEditState>({
     isUploadingResource: false,
@@ -64,7 +78,7 @@ export const ChnotMarkdownEditor = () => {
         };
       });
     },
-    [setCurrentChnot, currentChnot, setEditState, editState]
+    [setCurrentChnot, setEditState, editState]
   );
 
   const onChange = useDebounce((metaId: string, content: string) => {
@@ -99,6 +113,39 @@ export const ChnotMarkdownEditor = () => {
             </div>
           )}
         </div>
+        {currentChnot && (
+          <Menu
+            menuButton={
+              <MenuButton>
+                <NamespaceIcon
+                  name={currentChnot?.meta.namespace}
+                ></NamespaceIcon>
+              </MenuButton>
+            }
+            transition
+          >
+            {namespaces().map((e) => (
+              <MenuItem
+                key={e.name}
+                onClick={() => {
+                  if (currentChnot) {
+                    updateChnot({
+                      meta_id: currentChnot.meta.id,
+                      update_time: false,
+                      namespace: e.name,
+                    }).then((_) => {
+                      if (e.name !== currentNamespace.name) {
+                        validateChnotCache([currentChnot.meta.id]);
+                      }
+                    });
+                  }
+                }}
+              >
+                {e.name}
+              </MenuItem>
+            ))}
+          </Menu>
+        )}
         <div>{currentChnot?.meta.insert_time.toDateString()}</div>
         <span>~</span>
         <div>{currentChnot?.record.insert_time.toDateString()}</div>

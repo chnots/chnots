@@ -5,12 +5,14 @@ import KListItem from "@/common/component/klistitem";
 
 const ChnotListItem = React.forwardRef(
   (props: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
-    const { setCurrentChnot, currentChnot } = useChnotStore();
+    const { setCurrentChnot, getCurrentChnot } = useChnotStore();
     const chnot = props.chnot;
 
     const handleClick = (_: React.MouseEvent) => {
       setCurrentChnot(chnot);
     };
+
+    const currentChnot = getCurrentChnot();
 
     const isSelected = currentChnot?.record.id === chnot.record.id;
 
