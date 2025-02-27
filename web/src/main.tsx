@@ -2,6 +2,8 @@ import "@github/relative-time-element";
 import { createRoot } from "react-dom/client";
 import "@/styles/tailwind.css";
 import "@/styles/global.css";
+import "@szhsin/react-menu/dist/index.css";
+import "@szhsin/react-menu/dist/transitions/zoom.css";
 
 import { RouterProvider } from "react-router-dom";
 

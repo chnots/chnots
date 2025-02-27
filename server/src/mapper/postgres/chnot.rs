@@ -1,3 +1,4 @@
+use super::sql::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres};
 use crate::{
     mapper::ChnotMapper,
     model::{
@@ -6,7 +7,6 @@ use crate::{
     },
     to_sql,
 };
-use super::sql::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, Local, TimeDelta};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
@@ -105,6 +105,14 @@ impl ChnotMapper for Postgres {
                 Some((id, content, insert_time))
             });
 
+        let meta_insert_time: Option<DateTime<FixedOffset>> = transaction
+            .query_opt(
+                "select insert_time from chnot_metadata where id = $1",
+                &[&req.meta_id],
+            )
+            .await?
+            .and_then(|e| e.try_get("insert_time").ok());
+
         transaction.execute(
             "insert into chnot_metadata(id, insert_time, namespace, kind) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET update_time = $2",
             &[
@@ -140,12 +148,13 @@ impl ChnotMapper for Postgres {
         }
 
         transaction.execute(
-            "insert into chnot_record(id, meta_id, content, insert_time) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET content = $3",
+            "insert into chnot_record(id, meta_id, content, insert_time) values($1, $2, $3, $4) on CONFLICT (id) DO UPDATE SET content=$3,id=$5,insert_time=$4",
             &[
                 id,
                 &chnot.meta_id,
                 &chnot.content,
-                &chnot.insert_time
+                &chnot.insert_time,
+                &chnot.id
             ]
         ).await?;
 
@@ -160,7 +169,7 @@ impl ChnotMapper for Postgres {
                     pin_time: None,
                     delete_time: None,
                     update_time: None,
-                    insert_time: req.insert_time,
+                    insert_time: meta_insert_time.unwrap_or(req.insert_time.clone()),
                 },
                 record: req.chnot.clone(),
             },
@@ -276,7 +285,8 @@ impl ChnotMapper for Postgres {
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
-            .r#where(Wheres::equal("id", &req.chnot_meta_id).into());
+            .set_if_some("namespace", req.body.namespace.as_ref())
+            .r#where(Wheres::equal("id", &req.meta_id).into());
 
         let ss = su.build(PlaceHolderType::dollar_number());
 

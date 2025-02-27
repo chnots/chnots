@@ -66,7 +66,7 @@ export const useNamespaceStore = create(
       return get().namespaceMapByName.get(namespaceName);
     },
     namespaces: () => {
-      return Object.values(get().namespaceMapByName);
+      return [...get().namespaceMapByName.values()];
     },
   }))
 );

@@ -13,7 +13,9 @@ pub struct Chnot {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotUpdateReq {
-    pub chnot_meta_id: String,
+    pub meta_id: String,
+
+    pub namespace: Option<String>,
 
     pub update_time: bool,
 

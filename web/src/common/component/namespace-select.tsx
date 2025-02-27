@@ -9,7 +9,7 @@ export const NamespaceIcon = ({
   name,
   className,
 }: {
-  name: string;
+  name?: string;
   className?: string;
 }) => {
   if (name === "public") {
@@ -20,8 +20,10 @@ export const NamespaceIcon = ({
         className={clsx(className, "w-6 h-auto shrink-0")}
       />
     );
-  } else {
+  } else if (name === "private") {
     return <Icon.Notebook className={clsx(className, "w-6 h-auto shrink-0")} />;
+  } else {
+    return <Icon.Dice1 className={clsx(className, "w-6 h-auto shrink-0")} />;
   }
 };
 

@@ -1,7 +1,9 @@
 import { insertMapAtIndex } from "@/utils/map-utils";
 import request from "@/utils/request";
+import { validate } from "uuid";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
+import { useNamespaceStore } from "./namespace";
 
 export enum ChnotType {
   MarkdownWithToent = "mdwt",
@@ -69,7 +71,9 @@ export interface ChnotDeletionReq {
 }
 
 export interface ChnotUpdateReq {
-  chnot_id: string;
+  meta_id: string;
+
+  namespace?: string;
 
   pinned?: boolean;
   archive?: boolean;
@@ -95,7 +99,7 @@ interface State {
   query?: string;
 
   chnotMap: Map<string, Chnot>;
-  currentChnot?: Chnot;
+  currentChnotIndex?: string;
 
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
@@ -172,7 +176,7 @@ export const useChnotStore = create(
       await get().fetchMoreChnots();
     },
     deleteChnot: async (req: ChnotDeletionReq) => {
-      return request.post(`api/v1/chnot/deletion`, req);
+      return request.post(`api/v1/chnot-deletion`, req);
     },
     overwriteChnot: async (
       req: ChnotOverwriteReq,
@@ -197,15 +201,56 @@ export const useChnotStore = create(
         });
     },
     updateChnot: async (req: ChnotUpdateReq) => {
-      return request.post(`api/v1/chnot/update`, req);
+      return request.post(`api/v1/chnot-update`, req);
     },
     setCurrentChnot: (chnot?: Chnot) => {
       set((state) => {
-        return { ...state, currentChnot: chnot };
+        return { ...state, currentChnotIndex: chnot?.meta.id };
       });
     },
     getCurrentChnot: () => {
-      return get().currentChnot;
+      const read = get();
+      return read.currentChnotIndex
+        ? read.chnotMap.get(read.currentChnotIndex)
+        : undefined;
+    },
+    validateChnotCache: (toRemoves: string[]) => {
+      const map = get().chnotMap;
+
+      const toRemove = Array.from(
+        map
+          .values()
+          .filter((e) => {
+            const result =
+              e.meta.namespace ==
+              useNamespaceStore.getState().currentNamespace.name;
+            return !result;
+          })
+          .map((e) => {
+            return e.record.id;
+          })
+      );
+
+      for (const key of toRemove) {
+        map.delete(key);
+      }
+
+      for (const key of toRemoves) {
+        map.delete(key);
+      }
+
+      console.log("===", toRemove);
+
+      set((prev) => {
+        return {
+          ...prev,
+          chnotMap: map,
+          currentChnotIndex:
+            prev.currentChnotIndex && map.has(prev.currentChnotIndex)
+              ? prev.currentChnotIndex
+              : undefined,
+        };
+      });
     },
   }))
 );
