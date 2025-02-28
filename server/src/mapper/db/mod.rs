@@ -4,6 +4,7 @@ pub mod kv;
 pub mod llmchat;
 pub mod namespace;
 pub mod resource;
+pub mod helper;
 
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
