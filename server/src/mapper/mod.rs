@@ -1,11 +1,11 @@
 pub mod dump;
 pub mod mappertype;
-pub mod postgres;
+pub mod db;
 pub mod sqlite;
 
 use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use postgres::{Postgres, PostgresConfig};
+use db::{Postgres, PostgresConfig};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{
