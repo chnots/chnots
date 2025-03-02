@@ -5,6 +5,9 @@ import Icon from "./icon";
 import { NamespaceSelect } from "./namespace-select";
 import SearchButton from "./search-navigation";
 import { RoutePaths } from "@/router";
+import { useNamespaceStore } from "@/store/namespace";
+import KButton from "./kbutton";
+import { useCommonStore } from "@/store/common";
 
 interface NavLinkItem {
   id: string;
@@ -20,6 +23,8 @@ interface Props {
 const Navigation = (props: Props) => {
   const { className } = props;
   const t = useTranslate();
+  const { currentNamespace, changeNamespace } = useNamespaceStore();
+  const { toggleSidebar } = useCommonStore();
 
   const chnotNavLink: NavLinkItem = {
     id: "header-chnots",
@@ -58,26 +63,36 @@ const Navigation = (props: Props) => {
   return (
     <header
       className={clsx(
-        "w-full h-full overflow-auto flex flex-col justify-center items-center py-4 md:pt-6 z-30 hide-scrollbar bg-secondary",
+        "w-full overflow-auto flex flex-row items-center z-30 hide-scrollbar bg-secondary border-b kborder space-x-4 py-1 pl-5",
         className
       )}
     >
-      <NamespaceSelect />
+      <KButton
+        onClick={() => {
+          toggleSidebar();
+        }}
+      >
+        <Icon.List />
+      </KButton>
+      <NamespaceSelect
+        onSelect={(ns) => {
+          changeNamespace(ns);
+        }}
+        currentNamespace={currentNamespace.name}
+      />
       <SearchButton />
-      <div className="w-full px-1 py-2 flex flex-col justify-center items-center shrink-0 space-y-2">
-        {navLinks.map((navLink) => (
-          <NavLink
-            className={({ isActive }) =>
-              clsx("p-2", isActive ? "kbutton-focused" : "kbutton-muted")
-            }
-            key={navLink.id}
-            to={navLink.path}
-            id={navLink.id}
-          >
-            <div>{navLink.icon}</div>
-          </NavLink>
-        ))}
-      </div>
+      {navLinks.map((navLink) => (
+        <NavLink
+          className={({ isActive }) =>
+            clsx("p-2", isActive ? "kbutton-focused" : "kbutton-muted")
+          }
+          key={navLink.id}
+          to={navLink.path}
+          id={navLink.id}
+        >
+          <div>{navLink.icon}</div>
+        </NavLink>
+      ))}
     </header>
   );
 };

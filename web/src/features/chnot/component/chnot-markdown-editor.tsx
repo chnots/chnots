@@ -6,8 +6,10 @@ import Icon from "@/common/component/icon";
 import { CodeMirrorEditorMemo } from "@/common/component/codemirror-md-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { useNamespaceStore } from "@/store/namespace";
-import { NamespaceIcon } from "@/common/component/namespace-select";
-import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
+import { NamespaceSelect } from "@/common/component/namespace-select";
+import clsx from "clsx";
+import useResizeObserver from "@react-hook/resize-observer";
+import { observe } from "react-intersection-observer";
 
 enum RequestState {
   Saved,
@@ -21,10 +23,8 @@ interface ChnotEditState {
   isComposing: boolean;
 }
 
-export const ChnotMarkdownEditor = () => {
-  console.log("Frame changed");
-
-  const { namespaces, currentNamespace } = useNamespaceStore();
+export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
+  const { currentNamespace } = useNamespaceStore();
   const {
     currentChnotIndex,
     chnotMap,
@@ -81,12 +81,19 @@ export const ChnotMarkdownEditor = () => {
     [setCurrentChnot, setEditState, editState]
   );
 
-  const onChange = useDebounce((metaId: string, content: string) => {
-    console.log("begin to save ", content);
-    saveContent(metaId, content);
-  }, 1000);
+  const onChangeCallback = useCallback(() => {
+    useDebounce((metaId: string, content: string) => {
+      console.log("begin to save ", content);
+      saveContent(metaId, content);
+    }, 1000);
+  }, []);
 
-  const onChangeRef = useRef(onChange);
+  const cmRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  useResizeObserver<HTMLDivElement>(cmRef, (entry) => {
+    setHeight(entry.contentRect.height);
+  });
+
   const fetchContent = useCallback(
     async (id: string) => {
       const chnot = await queryChnot({ meta_id: id });
@@ -96,8 +103,8 @@ export const ChnotMarkdownEditor = () => {
   );
 
   return (
-    <>
-      <div className="w-full p-1 flex space-x-2">
+    <div className={clsx(className, "p-1 flex flex-col h-full")}>
+      <div className={"w-full flex-row flex space-x-2"}>
         <div className="text-xs">
           {editState.requestState === RequestState.Requesting ? (
             <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
@@ -114,50 +121,41 @@ export const ChnotMarkdownEditor = () => {
           )}
         </div>
         {currentChnot && (
-          <Menu
-            menuButton={
-              <MenuButton>
-                <NamespaceIcon
-                  name={currentChnot?.meta.namespace}
-                ></NamespaceIcon>
-              </MenuButton>
-            }
-            transition
-          >
-            {namespaces().map((e) => (
-              <MenuItem
-                key={e.name}
-                onClick={() => {
-                  if (currentChnot) {
-                    updateChnot({
-                      meta_id: currentChnot.meta.id,
-                      update_time: false,
-                      namespace: e.name,
-                    }).then((_) => {
-                      if (e.name !== currentNamespace.name) {
-                        validateChnotCache([currentChnot.meta.id]);
-                      }
-                    });
+          <NamespaceSelect
+            onSelect={(ns) => {
+              if (currentChnot) {
+                updateChnot({
+                  meta_id: currentChnot.meta.id,
+                  update_time: false,
+                  namespace: ns,
+                }).then((_) => {
+                  if (ns !== currentNamespace.name) {
+                    validateChnotCache([currentChnot.meta.id]);
                   }
-                }}
-              >
-                {e.name}
-              </MenuItem>
-            ))}
-          </Menu>
+                });
+              }
+            }}
+            currentNamespace={currentNamespace.name}
+          />
         )}
         <div>{currentChnot?.meta.insert_time.toDateString()}</div>
         <span>~</span>
         <div>{currentChnot?.record.insert_time.toDateString()}</div>
       </div>
-      <div className="w-full h-98/100">
-        <CodeMirrorEditorMemo
-          onChange={onChangeRef}
-          className="border kborder shadow-lg my-3"
-          id={currentChnot?.meta.id ?? uuid()}
-          fetchDefaultValue={fetchContent}
-        />
+
+      <div
+        className="h-full border kborder shadow-lg p-0 x-0 overflow-auto" // this part could resize when I add overflow-auto, magic?
+        ref={cmRef}
+      >
+        {height && (
+          <CodeMirrorEditorMemo
+            onChange={onChangeCallback}
+            id={currentChnot?.meta.id ?? uuid()}
+            fetchDefaultValue={fetchContent}
+            height={height}
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 };

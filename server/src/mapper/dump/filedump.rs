@@ -57,46 +57,47 @@ impl FileDumpWorker {
         file_prefix: &str,
         backup_type: BackupType,
     ) -> AResult<Self> {
-        if let Some(config) = app_state.config.file_backup.clone() {
-            std::fs::create_dir_all(&config.backup_dir)?;
-            let mut read_dir = std::fs::read_dir(config.backup_dir.clone())?;
-            let end_time = match backup_type {
-                BackupType::Period => {
-                    let mut end_time = UNIX_EPOCH.into();
-                    while let Some(Ok(next)) = read_dir.next() {
-                        let filename = next.file_name().to_string_lossy().to_string();
-                        if filename.starts_with(file_prefix) {
-                            if let Ok((start, end)) = Self::grab_filename_dt(filename.as_str()) {
-                                if end > end_time {
-                                    end_time = end;
-                                };
-                            }
+        let config = app_state
+            .config
+            .file_backup
+            .clone()
+            .context("Unable to find file backup config")?;
+        std::fs::create_dir_all(&config.backup_dir)?;
+        let mut read_dir = std::fs::read_dir(config.backup_dir.clone())?;
+        let end_time = match backup_type {
+            BackupType::Period => {
+                let mut end_time = UNIX_EPOCH.into();
+                while let Some(Ok(next)) = read_dir.next() {
+                    let filename = next.file_name().to_string_lossy().to_string();
+                    if filename.starts_with(file_prefix) {
+                        if let Ok((start, end)) = Self::grab_filename_dt(filename.as_str()) {
+                            if end > end_time {
+                                end_time = end;
+                            };
                         }
                     }
-                    end_time
                 }
-                BackupType::All => UNIX_EPOCH.into(),
-            };
-            let filename = Self::build_file_name(file_prefix, end_time, Utc::now());
-            let filepath = PathBuf::from(config.backup_dir.clone()).join(filename);
-            info!("backup filepath: {:?}", filepath.as_path());
+                end_time
+            }
+            BackupType::All => UNIX_EPOCH.into(),
+        };
+        let filename = Self::build_file_name(file_prefix, end_time, Utc::now());
+        let filepath = PathBuf::from(config.backup_dir.clone()).join(filename);
+        info!("backup filepath: {:?}", filepath.as_path());
 
-            let file = OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(filepath)?;
+        let file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(filepath)?;
 
-            let writer = BufWriter::new(file);
+        let writer = BufWriter::new(file);
 
-            Ok(Self {
-                start_timestamp: end_time,
-                config,
-                file_prefix: file_prefix.to_owned(),
-                writer: Rc::new(RefCell::new(writer)),
-            })
-        } else {
-            anyhow::bail!("no file backup config")
-        }
+        Ok(Self {
+            start_timestamp: end_time,
+            config,
+            file_prefix: file_prefix.to_owned(),
+            writer: Rc::new(RefCell::new(writer)),
+        })
     }
 
     fn grab_filename_dt(filename: &str) -> AResult<(DateTime<Utc>, DateTime<Utc>)> {

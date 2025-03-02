@@ -2,12 +2,18 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import { EditorView, KeyBinding } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { deleteMarkupBackward, insertNewlineContinueMarkup, markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import {
+  deleteMarkupBackward,
+  insertNewlineContinueMarkup,
+  markdown,
+  markdownLanguage,
+} from "@codemirror/lang-markdown";
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import { useAttachmentStore } from "@/store/attachment";
 import React from "react";
 import clsx from "clsx";
+import useResizeObserver from "use-resize-observer";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -102,39 +108,34 @@ const editorTheme = EditorView.theme({
 });
 
 export const markdownKeymap: readonly KeyBinding[] = [
-  {key: "Enter", run: insertNewlineContinueMarkup},
-  {key: "Backspace", run: deleteMarkupBackward}
-]
+  { key: "Enter", run: insertNewlineContinueMarkup },
+  { key: "Backspace", run: deleteMarkupBackward },
+];
 
 const CodeMirrorEditor = ({
   id,
   onChange,
   className,
   fetchDefaultValue,
+  height,
 }: {
   id: string;
-  onChange: RefObject<(metaId: string, content: string) => void>;
+  onChange: (metaId: string, content: string) => void;
   fetchDefaultValue: (id: string) => Promise<string | undefined>;
   className?: string;
+  height: number;
 }) => {
-  const cmRef = React.useRef<HTMLDivElement>(null);
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
   const [content, setContent] = useState<string>();
-  const md = 
-    markdown({
-      base: markdownLanguage,
-      codeLanguages: languages,
-      addKeymap: true,
-      completeHTMLTags: false
-    });
-    md.support;
 
-  const extensions = [
-    md,
-    EditorView.lineWrapping,
-    editorTheme,
-    eventHandlers,
-  ];
+  const md = markdown({
+    base: markdownLanguage,
+    codeLanguages: languages,
+    addKeymap: true,
+    completeHTMLTags: false,
+  });
+
+  const extensions = [md, EditorView.lineWrapping, editorTheme, eventHandlers];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -145,24 +146,22 @@ const CodeMirrorEditor = ({
   }, [setContent, id]);
 
   return (
-    <div className={clsx("w-full h-full", className)} ref={cmRef}>
-      <CodeMirror
-        height={`${cmRef.current?.getBoundingClientRect().height ?? 0}px`}
-        extensions={extensions}
-        ref={codeMirror}
-        style={{
-          font: "serif",
-        }}
-        value={content}
-        basicSetup={{
-          lineNumbers: false,
-          highlightActiveLineGutter: false,
-          foldGutter: false,
-        }}
-        placeholder={"Chnot"}
-        onChange={(e) => onChange.current(id, e)}
-      />
-    </div>
+    <CodeMirror
+      height={`${height}px`}
+      extensions={extensions}
+      ref={codeMirror}
+      style={{
+        font: "serif",
+      }}
+      value={content}
+      basicSetup={{
+        lineNumbers: false,
+        highlightActiveLineGutter: false,
+        foldGutter: true,
+      }}
+      placeholder={"Chnot"}
+      onChange={(e) => onChange(id, e)}
+    />
   );
 };
 
