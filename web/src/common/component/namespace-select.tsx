@@ -1,11 +1,9 @@
-import { useState } from "react";
 import Icon from "./icon";
 import { useNamespaceStore } from "@/store/namespace";
-import { Namespace } from "@/model";
 import clsx from "clsx";
-import useParamState from "@/hooks/use-param-state";
+import { Menu, MenuButton, MenuItem } from "@szhsin/react-menu";
 
-export const NamespaceIcon = ({
+const NamespaceIcon = ({
   name,
   className,
 }: {
@@ -27,48 +25,34 @@ export const NamespaceIcon = ({
   }
 };
 
-export const NamespaceSelect = () => {
-  const namespaceStore = useNamespaceStore();
-  const [expandState, setExpandState] = useState(false);
-  const [, setParamState] = useParamState<string>("ns", "public");
-
-  const clickToExpand = () => {
-    setExpandState(true);
-    namespaceStore.fetchNamespaces();
-  };
-
-  const clickToSelect = (ns: Namespace) => {
-    setParamState(ns.name);
-    namespaceStore.changeNamespace(ns.name);
-    setExpandState(false);
-  };
-
+export const NamespaceSelect = ({
+  onSelect,
+  currentNamespace,
+}: {
+  onSelect: (namespace: string) => void;
+  currentNamespace: string;
+}) => {
+  const { namespaces } = useNamespaceStore();
   return (
-    <div className="flex flex-col kborder p-2">
-      {expandState ? (
-        <div className=" space-y-4 bg-white">
-          {[...namespaceStore.namespaceMapByName.values()].map((ns) => {
-            return (
-              <div
-                key={ns.name}
-                onClick={() => clickToSelect(ns)}
-                className={clsx(
-                  "hover:cursor-pointer",
-                  namespaceStore.currentNamespace.name === ns.name
-                    ? "text-neutral-950"
-                    : "text-neutral-400"
-                )}
-              >
-                <NamespaceIcon name={ns.name} />
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div onClick={clickToExpand} className="hover:cursor-pointer">
-          <NamespaceIcon name={namespaceStore.currentNamespace.name} />
-        </div>
-      )}
-    </div>
+    <Menu
+      menuButton={
+        <MenuButton>
+          <NamespaceIcon name={currentNamespace}></NamespaceIcon>
+        </MenuButton>
+      }
+      transition
+      className={"p-2"}
+    >
+      {namespaces().map((e) => (
+        <MenuItem
+          key={e.name}
+          onClick={() => {
+            onSelect(e.name);
+          }}
+        >
+          {e.name}
+        </MenuItem>
+      ))}
+    </Menu>
   );
 };

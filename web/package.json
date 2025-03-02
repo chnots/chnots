@@ -19,6 +19,7 @@
     "@joplin/turndown": "^4.0.79",
     "@joplin/turndown-plugin-gfm": "^1.0.61",
     "@microsoft/fetch-event-source": "^2.0.1",
+    "@react-hook/resize-observer": "^2.0.2",
     "@szhsin/react-menu": "^4.3.0",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/postcss": "^4.0.3",
@@ -40,6 +41,7 @@
     "sonner": "^1.7.4",
     "tailwindcss": "4.0.0",
     "tailwindcss-animate": "^1.0.7",
+    "use-resize-observer": "^9.1.0",
     "uuid": "11.0.5",
     "zustand": "5.0.3"
   },

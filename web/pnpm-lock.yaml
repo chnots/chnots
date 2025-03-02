@@ -35,6 +35,9 @@ importers:
       '@microsoft/fetch-event-source':
         specifier: ^2.0.1
         version: 2.0.1
+      '@react-hook/resize-observer':
+        specifier: ^2.0.2
+        version: 2.0.2(react@19.0.0)
       '@szhsin/react-menu':
         specifier: ^4.3.0
         version: 4.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -98,6 +101,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.0.0)
+      use-resize-observer:
+        specifier: ^9.1.0
+        version: 9.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       uuid:
         specifier: 11.0.5
         version: 11.0.5
@@ -483,6 +489,9 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
+  '@juggle/resize-observer@3.4.0':
+    resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
+
   '@lezer/common@1.2.3':
     resolution: {integrity: sha512-w7ojc8ejBqr2REPsWxJjrMFsA/ysDCFICn8zEOR9mrqzOu2amhITYuLD8ag6XZf0CFXDrhKqw7+tW8cX66NaDA==}
 
@@ -566,6 +575,21 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@react-hook/latest@1.0.3':
+    resolution: {integrity: sha512-dy6duzl+JnAZcDbNTfmaP3xHiKtbXYOaz3G51MGVljh548Y8MWzTr+PHLOfvpypEVW9zwvl+VyKjbWKEVbV1Rg==}
+    peerDependencies:
+      react: '>=16.8'
+
+  '@react-hook/passive-layout-effect@1.2.1':
+    resolution: {integrity: sha512-IwEphTD75liO8g+6taS+4oqz+nnroocNfWVHWz7j+N+ZO2vYrc6PV1q7GQhuahL0IOR7JccFTsFKQ/mb6iZWAg==}
+    peerDependencies:
+      react: '>=16.8'
+
+  '@react-hook/resize-observer@2.0.2':
+    resolution: {integrity: sha512-tzKKzxNpfE5TWmxuv+5Ae3IF58n0FQgQaWJmcbYkjXTRZATXxClnTprQ2uuYygYTpu1pqbBskpwMpj6jpT1djA==}
+    peerDependencies:
+      react: '>=18'
 
   '@rsbuild/core@1.2.3':
     resolution: {integrity: sha512-lUCt8gQe9E2PI3srcEJ1Na3GQYmsYuvAqK0f/k00HM0pEjrbOFC9Xq2kR85UoXHFqlTCIw/fLLDe91PKRCbKAw==}
@@ -2512,6 +2536,12 @@ packages:
   url-parse@1.5.10:
     resolution: {integrity: sha512-WypcfiRhfeUP9vvF0j6rw0J3hrWrw6iZv3+22h6iRMJ/8z1Tj6XfLP4DsUix5MhMPnXpiHDoKyoZ/bdCkwBCiQ==}
 
+  use-resize-observer@9.1.0:
+    resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
+    peerDependencies:
+      react: 16.8.0 - 18
+      react-dom: 16.8.0 - 18
+
   use-sync-external-store@1.4.0:
     resolution: {integrity: sha512-9WXSPC5fMv61vaupRkCKCxsPxBocVnwakBEkMIHHpkTTg6icbJtg6jzgtLDm4bl3cSHAca52rYWih0k4K3PfHw==}
     peerDependencies:
@@ -3144,6 +3174,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
+  '@juggle/resize-observer@3.4.0': {}
+
   '@lezer/common@1.2.3': {}
 
   '@lezer/cpp@1.1.2':
@@ -3273,6 +3305,20 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.0
+
+  '@react-hook/latest@1.0.3(react@19.0.0)':
+    dependencies:
+      react: 19.0.0
+
+  '@react-hook/passive-layout-effect@1.2.1(react@19.0.0)':
+    dependencies:
+      react: 19.0.0
+
+  '@react-hook/resize-observer@2.0.2(react@19.0.0)':
+    dependencies:
+      '@react-hook/latest': 1.0.3(react@19.0.0)
+      '@react-hook/passive-layout-effect': 1.2.1(react@19.0.0)
+      react: 19.0.0
 
   '@rsbuild/core@1.2.3':
     dependencies:
@@ -5706,6 +5752,12 @@ snapshots:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
+
+  use-resize-observer@9.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+    dependencies:
+      '@juggle/resize-observer': 3.4.0
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
 
   use-sync-external-store@1.4.0(react@19.0.0):
     dependencies:

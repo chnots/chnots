@@ -46,18 +46,16 @@ const App = () => {
   return !initialized ? (
     <LoadingPage />
   ) : (
-    <>
-      {sm && (
-        <div className="w-16 flex flex-col justify-start items-start fixed top-0 left-0 select-none kborder h-full z-2 py-5 bg-secondary">
-          <Navigation />
-        </div>
-      )}
-      <div className="h-screen max-h-screen sm:pl-16 bg-kbg">
+    <div className="h-screen max-h-screen flex flex-col">
+      <div className="w-full h-12 justify-start items-start fixed top-0 left-0 select-none kborder z-2 bg-secondary border-b">
+        <Navigation />
+      </div>
+      <div className="bg-kbg w-full h-full flex-1 pt-12">
         <Suspense fallback={<LoadingPage />}>
           <Outlet />
         </Suspense>
       </div>
-    </>
+    </div>
   );
 };
 
