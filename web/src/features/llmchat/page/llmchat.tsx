@@ -18,6 +18,8 @@ const LLMChatPage = () => {
 
   return (
     <div className="flex flex-row w-full h-full max-h-full overflow-hidden">
+      <title>{`LLM Chat`}</title>
+
       <div className="flex flex-col items-between bg-secondary border-r kborder w-3/12 h-full">
         {showSidebar && (
           <div className="overflow-auto h-full">

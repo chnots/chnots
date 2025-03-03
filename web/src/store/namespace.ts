@@ -55,9 +55,8 @@ export const useNamespaceStore = create(
       return namespaces;
     },
     changeNamespace: async (namespace: string) => {
+      console.log("change ns:", namespace);
       const newnamespace = get().namespaceMapByName.get(namespace);
-      const searchParams = new URLSearchParams(window.location.search.slice(1));
-      searchParams.set("ns", namespace);
       set({
         currentNamespace: newnamespace,
       });
