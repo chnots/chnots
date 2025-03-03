@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import React, { ReactElement, Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import useResponsiveWidth from "@/hooks/use-responsive-width";
@@ -9,10 +9,25 @@ import { useNamespaceStore } from "./store/namespace";
 
 const App = () => {
   const location = useLocation();
-  const { sm } = useResponsiveWidth();
   const { currentNamespace } = useNamespaceStore();
   const [lastVisited] = useLocalStorage<string>("lastVisited", "/home");
   const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.getElementsByTagName("head")[0].appendChild(link);
+    }
+    if (currentNamespace.name === "private") {
+      link.href = "/chnots-private.svg";
+    } else if (currentNamespace.name === "public") {
+      link.href = "/chnots.svg";
+    } else {
+      link.href = "/chnots-protect.svg";
+    }
+  }, [currentNamespace]);
 
   useEffect(() => {
     if (!currentNamespace) {

@@ -8,6 +8,7 @@ import { RoutePaths } from "@/router";
 import { useNamespaceStore } from "@/store/namespace";
 import KButton from "./kbutton";
 import { useCommonStore } from "@/store/common";
+import useParamState from "@/hooks/use-param-state";
 
 interface NavLinkItem {
   id: string;
@@ -25,6 +26,7 @@ const Navigation = (props: Props) => {
   const t = useTranslate();
   const { currentNamespace, changeNamespace } = useNamespaceStore();
   const { toggleSidebar } = useCommonStore();
+  const [, setNamespaceParam] = useParamState<string>("ns", "public");
 
   const chnotNavLink: NavLinkItem = {
     id: "header-chnots",
@@ -77,6 +79,7 @@ const Navigation = (props: Props) => {
       <NamespaceSelect
         onSelect={(ns) => {
           changeNamespace(ns);
+          setNamespaceParam(ns);
         }}
         currentNamespace={currentNamespace.name}
       />
