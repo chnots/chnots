@@ -81,12 +81,13 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
     [setCurrentChnot, setEditState, editState]
   );
 
-  const onChangeCallback = useCallback(() => {
-    useDebounce((metaId: string, content: string) => {
-      console.log("begin to save ", content);
-      saveContent(metaId, content);
-    }, 1000);
-  }, []);
+  
+  const onChange = useDebounce((metaId: string, content: string) => {
+    console.log("begin to save ", content);
+    saveContent(metaId, content);
+  }, 1000);
+
+  const onChangeRef = useRef(onChange);
 
   const cmRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -149,7 +150,7 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
       >
         {height && (
           <CodeMirrorEditorMemo
-            onChange={onChangeCallback}
+            onChange={onChangeRef.current}
             id={currentChnot?.meta.id ?? uuid()}
             fetchDefaultValue={fetchContent}
             height={height}
