@@ -1,7 +1,9 @@
 use crate::app::ShareAppState;
 use crate::mapper::KVMapper;
 use crate::model::dto::kreq;
-use crate::model::dto::kv::{KVDeleteReq, KVDeleteRsp, KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp};
+use crate::model::dto::kv::{
+    KVDeleteReq, KVDeleteRsp, KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp,
+};
 use crate::server::controller::KResponse;
 use axum::extract::Path;
 use axum::routing::get;
@@ -16,7 +18,7 @@ pub fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/kv", put(kv_overwrite))
         .route("/api/v1/kv", get(kv_query))
-        .route("/api/v1/kv", delete(kv_delete)) 
+        .route("/api/v1/kv", delete(kv_delete))
 }
 
 async fn kv_overwrite(

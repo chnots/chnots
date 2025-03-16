@@ -5,7 +5,7 @@ use chin_tools::{
 };
 use chrono::Local;
 
-use super::sql::{Wheres, SqlSegBuilder, PlaceHolderType, SqlUpdater};
+use super::sql::{PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres};
 use crate::{
     mapper::LLMChatMapper,
     model::{

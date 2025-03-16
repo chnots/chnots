@@ -3,12 +3,12 @@ use std::ops::Deref;
 use chrono::{DateTime, Datelike, FixedOffset, Timelike, Utc};
 use regex::Regex;
 
-use crate::toent::{timeevent::equals_any, EventBuilder, GuessType};
 use super::PossibleScore;
 use super::{
     base::{convert_time_to_secs, BaseTime},
     Timestamp, TimestampNow,
 };
+use crate::toent::{timeevent::equals_any, EventBuilder, GuessType};
 
 pub const CAL_TYPE: &str = "wes";
 

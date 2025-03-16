@@ -1,9 +1,9 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, GuessType};
-use super::PossibleScore;
 use super::interval::TimeInterval;
+use super::PossibleScore;
+use crate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, GuessType};
 
 #[derive(Clone, Debug)]
 

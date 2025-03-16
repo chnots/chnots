@@ -1,10 +1,13 @@
-use chin_tools::{utils::sort_util, wrapper::anyhow::{AResult, EResult}};
+use chin_tools::{
+    utils::sort_util,
+    wrapper::anyhow::{AResult, EResult},
+};
 
 use crate::model::{db::namespace::NamespaceRelation, dto::InsertInlineResourceRsp};
 
 use super::{
-    dump::TableRowCallbackEnum, db::Postgres, DumpMapper, ChnotDeletionRsp, ChnotMapper,
-    ChnotOverwriteReq, ChnotOverwriteRsp, KVMapper, LLMChatMapper, MapperConfig, MapperType,
+    db::Postgres, dump::TableRowCallbackEnum, ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq,
+    ChnotOverwriteRsp, DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType,
     NamespaceMapper, ResourceMapper,
 };
 

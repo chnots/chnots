@@ -75,6 +75,7 @@ impl ChnotMapper for Postgres {
     namespace VARCHAR(100) NOT NULL,
     kind VARCHAR(100) NOT NULL,
     pin_time timestamptz DEFAULT NULL,
+    archive_time timestamptz DEFAULT NULL,
     delete_time timestamptz DEFAULT NULL,    
     update_time timestamptz DEFAULT NULL,
     insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
@@ -215,6 +216,13 @@ impl ChnotMapper for Postgres {
                             Wheres::is_null("omit_time")
                         }
                     }),
+                    Wheres::transform(req.with_archived, |e| {
+                        if e.unwrap_or(false) {
+                            Wheres::compare_str("m.archive_time", "is not", "null")
+                        } else {
+                            Wheres::none()
+                        }
+                    }),
                     Wheres::equal("namespace", req.namespace.clone()),
                     Wheres::if_some(req.query.as_ref(), |content| {
                         Wheres::ilike("content", content)
@@ -229,7 +237,7 @@ impl ChnotMapper for Postgres {
                     }),
                 ]
             ))
-            .raw("ORDER BY m.pin_time DESC, r.insert_time desc")
+            .raw("ORDER BY m.pin_time DESC, m.insert_time desc")
             .custom(
                 LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)).to_box()
             )

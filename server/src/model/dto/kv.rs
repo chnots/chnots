@@ -21,10 +21,9 @@ pub struct KVOverwriteReq {
 #[derive(Clone, Debug, Serialize)]
 pub struct KVOverwriteRsp {}
 
-
 #[derive(Clone, Debug, Deserialize)]
 pub struct KVDeleteReq {
-    pub key: SharedStr
+    pub key: SharedStr,
 }
 
 #[derive(Clone, Debug, Serialize)]

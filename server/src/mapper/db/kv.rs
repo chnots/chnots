@@ -1,6 +1,6 @@
+use super::sql::{PlaceHolderType, SqlSegBuilder, Wheres};
 use anyhow::Context;
 use chin_tools::AResult;
-use super::sql::{PlaceHolderType, SqlSegBuilder, Wheres};
 use chrono::Local;
 
 use crate::{
@@ -56,14 +56,14 @@ impl KVMapper for Postgres {
         Ok(KVQueryRsp { kv })
     }
 
-    async fn kv_delete(&self, req: KReq<crate::mapper::KVDeleteReq>) -> AResult<crate::mapper::KVDeleteRsp> {
-        self.client().await?
-        .execute(
-            "delete form kv where key = $1",
-            &[
-                &req.key,
-            ]
-        ).await?;
+    async fn kv_delete(
+        &self,
+        req: KReq<crate::mapper::KVDeleteReq>,
+    ) -> AResult<crate::mapper::KVDeleteRsp> {
+        self.client()
+            .await?
+            .execute("delete form kv where key = $1", &[&req.key])
+            .await?;
 
         Ok(KVDeleteRsp {})
     }

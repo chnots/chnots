@@ -1,11 +1,11 @@
+pub mod db;
 pub mod dump;
 pub mod mappertype;
-pub mod db;
 pub mod sqlite;
 
-use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use db::{Postgres, PostgresConfig};
+use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{
@@ -17,11 +17,8 @@ use crate::model::{
         resource::Resource,
     },
     dto::{
-        chnot::*,
-        kv::*,
-        llmchat::*,
-        InsertInlineResourceReq, InsertInlineResourceRsp, KReq, QueryInlineResourceReq,
-        QueryInlineResourceRsp,
+        chnot::*, kv::*, llmchat::*, InsertInlineResourceReq, InsertInlineResourceRsp, KReq,
+        QueryInlineResourceReq, QueryInlineResourceRsp,
     },
 };
 

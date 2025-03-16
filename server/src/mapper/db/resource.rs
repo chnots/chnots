@@ -8,12 +8,11 @@ use crate::{
         db::resource::{InlineResource, Resource},
         dto::{InsertInlineResourceRsp, KReq, QueryInlineResourceRsp},
     },
-    to_sql
+    to_sql,
 };
 
-
+use super::sql::{PlaceHolderType, SqlSegBuilder, Wheres};
 use super::Postgres;
-use super::sql::{Wheres, SqlSegBuilder, PlaceHolderType};
 
 impl ResourceMapper for Postgres {
     async fn ensure_table_resource(&self) -> EResult {

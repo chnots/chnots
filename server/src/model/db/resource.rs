@@ -2,7 +2,6 @@ use chin_tools::SharedStr;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Resource {
     pub id: String,

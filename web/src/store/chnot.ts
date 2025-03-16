@@ -217,7 +217,7 @@ export const useChnotStore = create(
     validateChnotCache: (toRemoves: string[]) => {
       const map = get().chnotMap;
 
-      const toRemove = Array.from(
+      const toRemove2 = Array.from(
         map
           .values()
           .filter((e) => {
@@ -231,15 +231,13 @@ export const useChnotStore = create(
           })
       );
 
-      for (const key of toRemove) {
+      for (const key of toRemove2) {
         map.delete(key);
       }
 
       for (const key of toRemoves) {
         map.delete(key);
       }
-
-      console.log("===", toRemove);
 
       set((prev) => {
         return {

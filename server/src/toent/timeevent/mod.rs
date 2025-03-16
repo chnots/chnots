@@ -1,7 +1,6 @@
 use super::PossibleScore;
 use repeater::{is_repeater_seg, is_repeater_start};
 
-
 use self::{repeater::Repeater, timeenum::TimeEnum};
 
 use super::{EventBuilder, GuessType};

@@ -4,8 +4,8 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::{model::todo::TodoEvent, toent::retain_not_empty_parts};
 
-use super::{timeevent::TimeEvent, EventBuilder, GuessType};
 use super::PossibleScore;
+use super::{timeevent::TimeEvent, EventBuilder, GuessType};
 
 #[derive(Clone, Debug)]
 pub enum EventEnum {

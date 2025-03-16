@@ -12,9 +12,7 @@ use axum::{extract::Multipart, http::HeaderMap};
 use chin_tools::shared_str::SharedStr;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use super::{
-    db::resource::{InlineResource, Resource},
-};
+use super::db::resource::{InlineResource, Resource};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct KReq<E: Debug + Clone + DeserializeOwned> {

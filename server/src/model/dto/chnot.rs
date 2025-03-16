@@ -63,6 +63,7 @@ pub struct ChnotQueryReq {
 
     pub with_deleted: Option<bool>,
     pub with_omitted: Option<bool>,
+    pub with_archived: Option<bool>,
 
     // Paging
     pub start_index: u64,

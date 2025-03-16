@@ -6,7 +6,7 @@ use tokio_postgres::Row;
 use crate::{
     mapper::{
         dump::{tabledumpsql::TableDumpSql, DumpWrapper, TableRowCallback, TableRowCallbackEnum},
-        DumpMapper, DeserializeMapper,
+        DeserializeMapper, DumpMapper,
     },
     to_sql,
 };
