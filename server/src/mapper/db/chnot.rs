@@ -217,10 +217,10 @@ impl ChnotMapper for Postgres {
                         }
                     }),
                     Wheres::transform(req.with_archived, |e| {
-                        if e.unwrap_or(false) {
-                            Wheres::compare_str("m.archive_time", "is not", "null")
+                        if !e.unwrap_or(false) {
+                            Wheres::is_null("m.archive_time")
                         } else {
-                            Wheres::none()
+                            Wheres::none()                           
                         }
                     }),
                     Wheres::equal("namespace", req.namespace.clone()),
@@ -297,8 +297,8 @@ impl ChnotMapper for Postgres {
             .r#where(Wheres::equal("id", &req.meta_id).into());
 
         let ss = su.build(PlaceHolderType::dollar_number());
-
         if let Some(ss) = ss {
+            info!("sql is {}, {:?}", ss.seg, req.body);
             client.execute(ss.seg.as_str(), to_sql!(ss.values)).await?;
         }
 
