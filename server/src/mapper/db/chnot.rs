@@ -1,14 +1,19 @@
 use super::sql::{LimitOffset, PlaceHolderType, SqlSegBuilder, SqlUpdater, Wheres};
 use crate::{
-    mapper::ChnotMapper,
+    mapper::{ChnotMapper, DeserializeMapper},
     model::{
-        db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord},
+        db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord, ChnotTag},
         dto::KReq,
     },
     to_sql,
+    util::string_util::get_hashtags,
 };
-use chin_tools::wrapper::anyhow::{AResult, EResult};
-use chrono::{DateTime, FixedOffset, Local, TimeDelta};
+use anyhow::Context;
+use chin_tools::{
+    utils::id_util,
+    wrapper::anyhow::{AResult, EResult},
+};
+use chrono::{DateTime, FixedOffset, Local, TimeDelta, Utc};
 use postgres_types::{to_sql_checked, FromSql, ToSql};
 use std::str::FromStr;
 use tracing::{error, info};
@@ -161,6 +166,19 @@ impl ChnotMapper for Postgres {
 
         transaction.commit().await?;
 
+        self.chnot_tag_delete(vec![&chnot.meta_id]).await?;
+
+        let tags = get_hashtags(&chnot.content);
+        for tag in tags {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: req.namespace.clone(),
+                tag: tag.to_owned(),
+                chnot_meta_id: chnot.meta_id.clone(),
+                insert_time: Utc::now().fixed_offset(),
+            }).await?;
+        }
+
         Ok(ChnotOverwriteRsp {
             chnot: Chnot {
                 meta: ChnotMetadata {
@@ -197,6 +215,14 @@ impl ChnotMapper for Postgres {
             .raw("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
             .raw("m.id as mid, m.namespace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time")
             .raw("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
+            .some_then(req.tag_keyword.as_ref(), |tag, ss| {
+                ss.raw("inner join")
+                .sub("ct", SqlSegBuilder::new().raw("select * from chnot_tag").r#where(Wheres::and([
+                    Wheres::equal("namespace", req.namespace.to_owned()),
+                    Wheres::ilike("tag", tag)
+                ])))
+                .raw("on r.meta_id = ct.chnot_meta_id")
+            })
             .r#where(Wheres::and(
                 [
                     // default without deleted chnot
@@ -220,10 +246,10 @@ impl ChnotMapper for Postgres {
                         if !e.unwrap_or(false) {
                             Wheres::is_null("m.archive_time")
                         } else {
-                            Wheres::none()                           
+                            Wheres::none()
                         }
                     }),
-                    Wheres::equal("namespace", req.namespace.clone()),
+                    Wheres::equal("m.namespace", req.namespace.clone()),
                     Wheres::if_some(req.query.as_ref(), |content| {
                         Wheres::ilike("content", content)
                     }),
@@ -239,7 +265,7 @@ impl ChnotMapper for Postgres {
             ))
             .raw("ORDER BY m.pin_time DESC, m.insert_time desc")
             .custom(
-                LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)).to_box()
+                LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index))
             )
             .build(&mut PlaceHolderType::DollarNumber(0))
             .expect("error occured when build sql");
@@ -303,5 +329,109 @@ impl ChnotMapper for Postgres {
         }
 
         Ok(ChnotUpdateRsp {})
+    }
+
+    async fn ensure_table_chnot_tag(&self) -> EResult {
+        self.create_table(
+            "create table IF NOT EXISTS chnot_tag (
+    id VARCHAR(40) NOT NULL,
+    chnot_meta_id VARCHAR(100) NOT NULL,
+    namespace VARCHAR(40) not NULL,
+    tag VARCHAR(512) NOT NULL,
+    insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
+    primary key (id)
+)",
+        )
+        .await
+    }
+
+    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp> {
+        let ChnotTagQueryReq {
+            query,
+            page_size,
+            start_index,
+        } = req.body;
+        let ns = req.namespace;
+        let query = SqlSegBuilder::new()
+            .raw("select * from chnot_tag")
+            .r#where(Wheres::and([
+                Wheres::if_some(query, |query| Wheres::ilike("tag", query)),
+                Wheres::equal("namespace", ns),
+            ]))
+            .raw("order by insert_time desc")
+            .custom(LimitOffset::new(page_size).offset(start_index))
+            .build(&mut PlaceHolderType::dollar_number())
+            .context("Unable to build args")?;
+
+        let res: AResult<Vec<ChnotTag>> = self
+            .client()
+            .await?
+            .query(query.seg.as_str(), to_sql!(query.values))
+            .await?
+            .into_iter()
+            .map(Self::to_chnot_tag)
+            .collect();
+
+        Ok(ChnotTagQueryRsp {
+            data: res?,
+            start_index,
+        })
+    }
+
+    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagNamesRsp> {
+        let ChnotTagQueryReq {
+            query,
+            page_size,
+            start_index,
+        } = req.body;
+        let ns = req.namespace;
+
+        let query = SqlSegBuilder::new()
+            .raw("select distinct tag from chnot_tag")
+            .r#where(Wheres::and([
+                Wheres::if_some(query, |query| Wheres::ilike("tag", query)),
+                Wheres::equal("namespace", ns),
+            ]))
+            .raw("order by tag desc")
+            .custom(LimitOffset::new(page_size).offset(start_index))
+            .build(&mut PlaceHolderType::dollar_number())
+            .context("Unable to build args")?;
+
+        let res: AResult<Vec<String>> = self
+            .client()
+            .await?
+            .query(query.seg.as_str(), to_sql!(query.values))
+            .await?
+            .into_iter()
+            .map(|e| Ok(e.try_get("tag")?))
+            .collect();
+
+        Ok(ChnotTagNamesRsp {
+            data: res?,
+            start_index,
+        })
+    }
+
+    async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult {
+        self.client()
+            .await?
+            .execute(
+                "insert into chnot_tag(id, chnot_meta_id, namespace, tag) values ($1, $2, $3, $4)",
+                &[&req.id, &req.chnot_meta_id, &req.namespace, &req.tag],
+            )
+            .await?;
+
+        Ok(())
+    }
+
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
+        let client = self.client().await?;
+        for e in chnot_meta_ids {
+            client
+                .execute("delete from chnot_tag where chnot_meta_id = $1", &[&e])
+                .await?;
+        }
+
+        Ok(())
     }
 }

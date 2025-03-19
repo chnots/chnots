@@ -1,4 +1,4 @@
-import { ChnotRecord, ChnotMetadata } from "./db";
+import { ChnotRecord, ChnotMetadata, ChnotTag } from "./db";
 
 export interface Chnot {
   record: ChnotRecord;
@@ -8,6 +8,8 @@ export interface Chnot {
 export interface ChnotQueryReq {
   record_id?: string;
   meta_id?: string;
+  tag_keyword?: string;
+  
   with_omited?: boolean;
   query?: string;
   start_index: number;
@@ -52,4 +54,23 @@ export interface ChnotCommentAddReq {
   content: string;
 
   insert_time: Date;
+}
+
+export interface ChnotTagQueryReq {
+  query?: string;
+
+  start_index: number;
+  page_size: number;
+}
+
+export interface ChnotTagQueryRsp {
+  data: ChnotTag[];
+
+  start_index: number;
+}
+
+export interface ChnotTagNamesRsp {
+  data: string[];
+
+  start_index: number;
 }

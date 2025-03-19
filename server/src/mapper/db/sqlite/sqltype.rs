@@ -91,11 +91,10 @@ impl DerefMut for Timestamptz {
 
 #[cfg(test)]
 pub mod tests {
-    use anyhow::Context;
     use chin_tools::wrapper::anyhow::AResult;
     use chrono::{FixedOffset, NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
 
-    use crate::mapper::sqlite::sqltype::Timestamptz;
+    use super::Timestamptz;
 
     #[test]
     fn convert() -> AResult<()> {

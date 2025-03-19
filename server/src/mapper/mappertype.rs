@@ -33,6 +33,7 @@ impl MapperType {
         self.ensure_table_namespace_record().await?;
         self.ensure_table_namespace_relation().await?;
         self.ensure_table_chnot_metadata().await?;
+        self.ensure_table_chnot_tag().await?;
         self.ensure_table_resource().await?;
         self.ensure_table_inline_resource().await?;
 
@@ -79,6 +80,36 @@ impl ChnotMapper for MapperType {
     async fn ensure_table_chnot_metadata(&self) -> EResult {
         match self {
             MapperType::Postgres(db) => db.ensure_table_chnot_metadata().await,
+        }
+    }
+
+    async fn ensure_table_chnot_tag(&self) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.ensure_table_chnot_tag().await,
+        }
+    }
+
+    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp> {
+        match self {
+            MapperType::Postgres(db) => db.chnot_tag_query(req).await,
+        }
+    }
+
+    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagNamesRsp> {
+        match self {
+            MapperType::Postgres(db) => db.chnot_tag_names(req).await,
+        }
+    }
+
+    async fn chnot_tag_insert(&self, req: crate::model::db::chnot::ChnotTag) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.chnot_tag_insert(req).await,
+        }
+    }
+
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
+        match self {
+            MapperType::Postgres(db) => db.chnot_tag_delete(chnot_meta_ids).await,
         }
     }
 }

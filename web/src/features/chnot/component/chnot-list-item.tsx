@@ -7,10 +7,9 @@ import { Chnot } from "@/store/chnot/dto";
 import { chnotUpdate } from "@/store/chnot/service";
 
 const ChnotListItem = React.forwardRef(
-  (props: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
+  ({ chnot }: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
     const { setCurrentChnot, getCurrentChnot, validateChnotCache } =
       useChnotStore();
-    const chnot = props.chnot;
 
     const handleClick = (_: React.MouseEvent) => {
       setCurrentChnot(chnot);
@@ -20,9 +19,9 @@ const ChnotListItem = React.forwardRef(
 
     const isSelected = currentChnot?.record.id === chnot.record.id;
 
-    const title = chnot.record.content.startsWith("#")
+    const title = chnot.record.content.startsWith("# ")
       ? chnot.record.content.split("\n")[0]
-      : chnot.record.content;
+      : chnot.record.content.substring(0, 500);
 
     const handleDelete = async () => {
       await chnotUpdate({
@@ -39,9 +38,8 @@ const ChnotListItem = React.forwardRef(
         onClick={handleClick}
         ref={ref}
         key={chnot.record.id}
-        className="flex-col"
       >
-        <div className="flex flex-row justify-between">
+        <div className="relative flex flex-row justify-between">
           <div className="text-xs">
             {chnotShortDate(chnot.meta.insert_time)}
           </div>
@@ -53,7 +51,7 @@ const ChnotListItem = React.forwardRef(
           </div>
         </div>
 
-        <div className="text-xs line-clamp-2 break-all">{title}</div>
+        <div className="relative text-xs line-clamp-2 break-all">{title}</div>
       </KListItem>
     );
   }

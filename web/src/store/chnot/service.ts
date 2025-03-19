@@ -5,6 +5,8 @@ import {
   ChnotOverwriteRsp,
   ChnotQueryReq,
   ChnotQueryRsp,
+  ChnotTagNamesRsp,
+  ChnotTagQueryReq,
   ChnotUpdateReq,
 } from "./dto";
 
@@ -26,4 +28,10 @@ export const chnotOverwrite = async (
 
 export const chnotUpdate = async (req: ChnotUpdateReq) => {
   return await request.post(`api/v1/chnot-update`, req);
+};
+
+export const chnotTagNames = async (
+  req: ChnotTagQueryReq
+): Promise<ChnotTagNamesRsp> => {
+  return await request.post(`api/v1/chnot-tag-names`, req);
 };

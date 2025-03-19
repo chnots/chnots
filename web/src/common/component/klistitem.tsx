@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import React, { HTMLProps } from "react";
+import React from "react";
 import { ForwardedRef, ReactNode } from "react";
 
 type KListItemProps = {
@@ -8,22 +8,24 @@ type KListItemProps = {
   className?: string;
 } & Omit<React.LiHTMLAttributes<HTMLLIElement>, "className">;
 
-const KListItem = React.forwardRef<HTMLLIElement, KListItemProps>(
+const KListItem = React.forwardRef(
   (props: KListItemProps, ref: ForwardedRef<HTMLLIElement>) => {
     const { children, focused, className, ...rest } = props;
     return (
-      <li
-        className={clsx(
-          "flex p-3 pl-6 gap-1 relative select-none w-full group text-xs space-x-2",
-          "hover:kbutton-focused",
-          focused ? "kbutton-focused" : "kbutton border-transparent",
-          className
-        )}
-        ref={ref}
-        {...rest}
-      >
-        {children}
-      </li>
+      <div>
+        <li
+          className={clsx(
+            "list-none rounded-sm p-3 grid gap-1 relative select-none group",
+            "hover:kbutton-focused",
+            focused ? "kbutton-focused" : "kbutton border-transparent",
+            className
+          )}
+          ref={ref}
+          {...rest}
+        >
+          {children}
+        </li>
+      </div>
     );
   }
 );

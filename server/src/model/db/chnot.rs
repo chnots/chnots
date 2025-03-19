@@ -29,6 +29,15 @@ pub struct ChnotMetadata {
     pub insert_time: DateTime<FixedOffset>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotTag {
+    pub id: String,
+    pub namespace: String,
+    pub tag: String,
+    pub chnot_meta_id: String,
+    pub insert_time: DateTime<FixedOffset>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
 pub enum ChnotKind {
     #[strum(serialize = "mdwt")]

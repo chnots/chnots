@@ -19,6 +19,7 @@ const getDefaultState = (): State => {
     query: undefined,
     isFetchingNextPage: false,
     hasNextPage: true,
+    isShowingTags: false,
   };
 };
 
@@ -35,29 +36,14 @@ interface State {
 
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
+  isShowingTags: boolean;
+
+  tagKeyword?: string;
 }
 
 export const useChnotStore = create(
   combine(getDefaultState(), (set, get) => ({
     getState: () => get(),
-    queryChnot: async ({
-      record_id,
-      meta_id,
-      with_omited,
-    }: {
-      record_id?: string;
-      meta_id?: string;
-      with_omited?: boolean;
-    }) => {
-      const cs: ChnotQueryRsp = await chnotQuery({
-        record_id,
-        meta_id,
-        with_omited,
-        start_index: 0,
-        page_size: 1,
-      });
-      return cs.data.at(0);
-    },
     fetchMoreChnots: async () => {
       if (get().isFetchingNextPage) {
         return;
@@ -72,6 +58,7 @@ export const useChnotStore = create(
 
       const read = get();
       const cs: ChnotQueryRsp = await chnotQuery({
+        tag_keyword: read.tagKeyword,
         start_index: read.chnotMap.size,
         page_size: read.pageSize,
         query: read.query,
@@ -130,6 +117,11 @@ export const useChnotStore = create(
     setCurrentChnot: (chnot?: Chnot) => {
       set((state) => {
         return { ...state, currentChnotIndex: chnot?.meta.id };
+      });
+    },
+    setTagKeyword: (tagKeyword?: string) => {
+      set((state) => {
+        return { ...state, tagKeyword: tagKeyword };
       });
     },
     getCurrentChnot: () => {

@@ -8,10 +8,12 @@ import { useLLMChatStore } from "@/store/llmchat/store";
 import { llmchatSessionUpdate } from "@/store/llmchat/service";
 
 const LLMChatSessionListItem = React.forwardRef(
-  (props: { session: LLMChatSession }, ref: ForwardedRef<HTMLLIElement>) => {
+  (
+    { session }: { session: LLMChatSession },
+    ref: ForwardedRef<HTMLLIElement>
+  ) => {
     const { currentSession, setCurrentSession, templates, deleteCacheSession } =
       useLLMChatStore();
-    const session = props.session;
     const logo = templates.get(session.template_id)?.svg_logo;
 
     const handleDelete = async () => {

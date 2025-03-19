@@ -1,5 +1,5 @@
 use crate::app::ShareAppState;
-use crate::model::dto::chnot::Chnot;
+use crate::model::dto::chnot::{Chnot, ChnotTagNamesRsp, ChnotTagQueryReq, ChnotTagQueryRsp};
 use crate::model::dto::kreq;
 use crate::{
     mapper::ChnotMapper,
@@ -22,6 +22,8 @@ pub fn routes() -> Router<ShareAppState> {
         .route("/api/v1/chnot", delete(chnot_deletetion))
         .route("/api/v1/chnot-query", post(chnot_query))
         .route("/api/v1/chnot-update", post(chnot_update))
+        .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
+        .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
 }
 
 async fn chnot_overwrite(
@@ -58,4 +60,28 @@ async fn chnot_query(
     Json(req): Json<ChnotQueryReq>,
 ) -> KResponse<ChnotQueryRsp<Vec<Chnot>>> {
     state.chnot_query(kreq(headers, req)).await.into()
+}
+
+async fn chnot_tag_query(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotTagQueryReq>,
+) -> KResponse<ChnotTagQueryRsp> {
+    state
+        .mapper
+        .chnot_tag_query(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn chnot_tag_names(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotTagQueryReq>,
+) -> KResponse<ChnotTagNamesRsp> {
+    state
+        .mapper
+        .chnot_tag_names(kreq(headers, req))
+        .await
+        .into()
 }

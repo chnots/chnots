@@ -28,13 +28,13 @@ export const llmchatSessionList = async (): Promise<LLMChatListSessionRsp> => {
 };
 
 export const llmchatTemplateAdd = async (template: LLMChatTemplate) => {
-  return await request.put<object>(`api/v1/llmchat/template`, {
+  return await request.put(`api/v1/llmchat/template`, {
     template,
   });
 };
 
 export const llmchatBotAdd = async (bot: LLMChatBot) => {
-  return await request.put<object>(`api/v1/llmchat/bot`, {
+  return await request.put(`api/v1/llmchat/bot`, {
     bot,
   });
 };

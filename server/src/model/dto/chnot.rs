@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::toent::PossibleToent;
+use crate::{model::db::chnot::ChnotTag, toent::PossibleToent};
 use serde::{Deserialize, Serialize};
 
 use crate::model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord};
@@ -60,6 +60,7 @@ pub struct ChnotQueryReq {
     pub query: Option<String>,
     pub meta_id: Option<String>,
     pub record_id: Option<String>,
+    pub tag_keyword: Option<String>,
 
     pub with_deleted: Option<bool>,
     pub with_omitted: Option<bool>,
@@ -84,4 +85,27 @@ pub struct ToentGuessReq {
 #[derive(Clone, Debug, Serialize)]
 pub struct ToentGuessRsp {
     pub toents: Vec<PossibleToent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotTagQueryReq {
+    pub query: Option<String>,
+
+    // Paging
+    pub start_index: u64,
+    pub page_size: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotTagQueryRsp {
+    pub data: Vec<ChnotTag>,
+
+    pub start_index: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotTagNamesRsp {
+    pub data: Vec<String>,
+
+    pub start_index: u64,
 }

@@ -1,5 +1,3 @@
-import Icon from "@/common/component/icon";
-import KButton from "@/common/component/kbutton";
 import ChnotList from "@/features/chnot/component/chnot-list";
 import { ChnotMarkdownEditor } from "@/features/chnot/component/chnot-markdown-editor";
 import ChnotSearch from "@/features/chnot/component/chnot-search";
@@ -7,6 +5,7 @@ import { useChnotStore } from "@/store/chnot/store";
 import { useCommonStore } from "@/store/common";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect } from "react";
+import ChnotTagList from "../component/chnot-tag-list";
 
 const ChnotPage = () => {
   const { refreshChnots } = useChnotStore();
@@ -20,15 +19,17 @@ const ChnotPage = () => {
     <div className="bg-panel flex h-full max-h-full rounded-md">
       <title>{`Chnots`}</title>
       {showSidebar && (
-        <div className="shrink-0 border-r kborder flex flex-col w-3/12 bg-secondary">
-          <ChnotSearch />
-          <div className="overflow-auto h-full bg-background ">
+        <div className="grid grid-cols-2 flex-1">
+          <div className="max-h-full h-full overflow-auto">
+            <ChnotTagList />
+          </div>
+          <div className="max-h-full h-full overflow-auto">
             <ChnotList />
           </div>
         </div>
       )}
 
-      <div className="flex flex-col w-full h-full justify-center items-center p-4">
+      <div className="flex-1 justify-center items-center p-4">
         <ChnotMarkdownEditor className="w-full max-w-3xl h-full" />
       </div>
     </div>

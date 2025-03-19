@@ -19,3 +19,11 @@ export interface ChnotMetadata {
   update_time?: Date;
   insert_time: Date;
 }
+
+export interface ChnotTag {
+  id: string;
+  namespace: string;
+  tag: string;
+  chnot_meta_id: string;
+  insert_time: Date;
+}

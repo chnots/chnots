@@ -40,25 +40,22 @@ class Request {
       Promise.reject
     );
 
-    this.instance.interceptors.response.use(
-      (response: AxiosResponse) => {
-        const url = response.config.url || "";
-        this.abortControllerMap.delete(url);
+    const formatResponse = (response: AxiosResponse) => {
+      const url = response.config.url || "";
+      this.abortControllerMap.delete(url);
 
-        return recursiveDateConversion(response.data);
-      },
-      (err) => {
-        /*        if (err.response?.status === 401) {
-          // 登录态失效，清空userInfo，跳转登录页
-          useUserInfoStore.setState({ userInfo: null });
-          window.location.href = `/login?redirect=${window.location.pathname}`;
-        } */
+      const data = recursiveDateConversion(response.data);
+      response.data = data;
+      return response;
+    };
 
-        toast.error("Fail " + err);
+    const reject = (err: Error) => {
+      toast.error("Fail " + err);
 
-        return Promise.reject(err);
-      }
-    );
+      return Promise.reject(err);
+    };
+
+    this.instance.interceptors.response.use(formatResponse, reject);
   }
 
   cancelAllRequest() {
@@ -76,42 +73,33 @@ class Request {
     }
   }
 
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    // @ts-ignore
-    return await this.instance.get<T>(url, config);
+  async get<T, E>(
+    url: string,
+    config?: AxiosRequestConfig,
+    params?: E
+  ): Promise<T> {
+    return (
+      await this.instance.get<T>(url, {
+        ...config,
+        params,
+      })
+    ).data;
   }
 
-  async query<T>(
+  async post<T, E>(
     url: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data?: any,
+    data?: E,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    // @ts-ignore
-    return await this.instance.get<T>(url, {
-      ...config,
-      params: data,
-    });
+    return (await this.instance.post<T>(url, data, config)).data;
   }
 
-  async post<T>(
+  async put<T, E>(
     url: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data?: any,
+    data?: E,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    // @ts-ignore
-    return await this.instance.post<T>(url, data, config);
-  }
-
-  async put<T>(
-    url: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data?: any,
-    config?: AxiosRequestConfig
-  ): Promise<T> {
-    // @ts-ignore
-    return await this.instance.put<T>(url, data, config);
+    return (await this.instance.put<T>(url, data, config)).data;
   }
 }
 
@@ -123,7 +111,6 @@ const request = new Request({
   timeout: 30 * 1000,
   baseURL: baseURL,
 });
-
 
 export const concatURL = (suffix: string): string => {
   return baseURL + suffix;

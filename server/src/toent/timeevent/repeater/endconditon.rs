@@ -11,7 +11,7 @@ pub struct Times {
     count: u32,
 }
 
-static TIMES_REGEX: Lazy<Regex> = regex_static::lazy_regex!(r"^(\d+)t$");
+static TIMES_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\d+)t$");
 
 impl EventBuilder for Times {
     fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {

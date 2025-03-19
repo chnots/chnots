@@ -5,6 +5,7 @@ pub mod kv;
 pub mod llmchat;
 pub mod namespace;
 pub mod resource;
+pub mod sqlite;
 
 use chin_tools::sql;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
@@ -200,6 +201,17 @@ impl DeserializeMapper for Postgres {
             key: row.try_get("key")?,
             value: row.try_get("value")?,
             update_time: row.try_get("update_time")?,
+        };
+        Ok(obj)
+    }
+
+    fn to_chnot_tag(row: Self::RowType) -> AResult<ChnotTag> {
+        let obj = ChnotTag {
+            id: row.try_get("id")?,
+            namespace: row.try_get("namespace")?,
+            tag: row.try_get("tag")?,
+            chnot_meta_id: row.try_get("chnot_meta_id")?,
+            insert_time: row.try_get("insert_time")?,
         };
         Ok(obj)
     }

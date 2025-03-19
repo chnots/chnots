@@ -1,7 +1,6 @@
 pub mod db;
 pub mod dump;
 pub mod mappertype;
-pub mod sqlite;
 
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use db::{Postgres, PostgresConfig};
@@ -10,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::{
     db::{
-        chnot::{ChnotMetadata, ChnotRecord},
+        chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
         kv::KV,
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::{NamespaceRecord, NamespaceRelation},
@@ -39,8 +38,14 @@ pub trait ChnotMapper {
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 
+    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp>;
+    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagNamesRsp>;
+    async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult;
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult;
+
     async fn ensure_table_chnot_record(&self) -> EResult;
     async fn ensure_table_chnot_metadata(&self) -> EResult;
+    async fn ensure_table_chnot_tag(&self) -> EResult;
 }
 
 pub trait ResourceMapper {
@@ -153,6 +158,7 @@ pub trait DeserializeMapper {
 
     fn to_chnot_meta(row: Self::RowType) -> AResult<ChnotMetadata>;
     fn to_chnot_record(row: Self::RowType) -> AResult<ChnotRecord>;
+    fn to_chnot_tag(row: Self::RowType) -> AResult<ChnotTag>;
 
     fn to_llmchat_bot(row: Self::RowType) -> AResult<LLMChatBot>;
     fn to_llmchat_template(row: Self::RowType) -> AResult<LLMChatTemplate>;

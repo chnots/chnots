@@ -9,7 +9,7 @@ import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import { ChnotOverwriteReq } from "@/store/chnot/dto";
 import { useChnotStore } from "@/store/chnot/store";
-import { chnotUpdate } from "@/store/chnot/service";
+import { chnotQuery, chnotUpdate } from "@/store/chnot/service";
 
 enum RequestState {
   Saved,
@@ -30,7 +30,6 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
     chnotMap,
     setCurrentChnot,
     overwriteChnot,
-    queryChnot,
     validateChnotCache,
   } = useChnotStore();
 
@@ -93,13 +92,14 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
     setHeight(entry.contentRect.height);
   });
 
-  const fetchContent = useCallback(
-    async (id: string) => {
-      const chnot = await queryChnot({ meta_id: id });
-      return chnot?.record.content;
-    },
-    [queryChnot]
-  );
+  const fetchContent = useCallback(async (id: string) => {
+    const chnots = await chnotQuery({
+      meta_id: id,
+      start_index: 0,
+      page_size: 1,
+    });
+    return chnots.data[0]?.record.content;
+  }, []);
 
   return (
     <div className={clsx(className, "p-1 flex flex-col h-full")}>
