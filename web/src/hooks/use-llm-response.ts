@@ -1,8 +1,5 @@
-import {
-  LLMChatBot,
-  LLMChatBotBodyOpenAIV1,
-  LLMChatSessionDetail,
-} from "@/store/llmchat";
+import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/store/llmchat/db";
+import { LLMChatSessionDetail } from "@/store/llmchat/dto";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";

@@ -1,17 +1,15 @@
-import { Chnot, useChnotStore } from "@/store/chnot";
 import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/utils/date-utils";
 import KListItem from "@/common/component/klistitem";
 import Icon from "@/common/component/icon";
+import { useChnotStore } from "@/store/chnot/store";
+import { Chnot } from "@/store/chnot/dto";
+import { chnotUpdate } from "@/store/chnot/service";
 
 const ChnotListItem = React.forwardRef(
   (props: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
-    const {
-      setCurrentChnot,
-      getCurrentChnot,
-      updateChnot,
-      validateChnotCache,
-    } = useChnotStore();
+    const { setCurrentChnot, getCurrentChnot, validateChnotCache } =
+      useChnotStore();
     const chnot = props.chnot;
 
     const handleClick = (_: React.MouseEvent) => {
@@ -27,7 +25,7 @@ const ChnotListItem = React.forwardRef(
       : chnot.record.content;
 
     const handleDelete = async () => {
-      await updateChnot({
+      await chnotUpdate({
         meta_id: chnot.meta.id,
         archive: true,
         update_time: false,

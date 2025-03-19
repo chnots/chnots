@@ -1,14 +1,11 @@
-import {
-  LLMChatBot,
-  LLMChatRecord,
-  LLMChatSessionDetail,
-} from "@/store/llmchat";
 import RecordContent from "./record-content";
 import {
   AnswerStep,
   ResponseState,
   useLLMResponse,
 } from "@/hooks/use-llm-response";
+import { LLMChatBot, LLMChatRecord } from "@/store/llmchat/db";
+import { LLMChatSessionDetail } from "@/store/llmchat/dto";
 import { useCallback } from "react";
 import { v4 as uuid } from "uuid";
 export const ResponseRecord = ({

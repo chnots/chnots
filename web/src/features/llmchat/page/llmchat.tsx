@@ -1,10 +1,10 @@
 import SessionList from "@/features/llmchat/component/session-list";
 import SessionBody from "@/features/llmchat/component/session-body";
-import { useLLMChatStore } from "@/store/llmchat";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect, useState } from "react";
 import AddButton from "../component/session-add-button";
 import { useCommonStore } from "@/store/common";
+import { useLLMChatStore } from "@/store/llmchat/store";
 
 const LLMChatPage = () => {
   const { refreshAll, setCurrentSession } = useLLMChatStore();

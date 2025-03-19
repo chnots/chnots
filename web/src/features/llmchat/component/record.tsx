@@ -1,6 +1,8 @@
-import { LLMChatRecord, useLLMChatStore } from "@/store/llmchat";
+import { LLMChatRecord } from "@/store/llmchat/db";
+import { useLLMChatStore } from "@/store/llmchat/store";
 import RecordContent from "./record-content";
 import { useState } from "react";
+import { llmchatSessionTruncate } from "@/store/llmchat/service";
 
 export const Record = ({
   record,
@@ -11,7 +13,7 @@ export const Record = ({
   className?: string;
   refreshTrigger?: () => void;
 }) => {
-  const { bots, templates, truncateSession } = useLLMChatStore();
+  const { bots, templates } = useLLMChatStore();
   const [limitHeight, setLimitHeight] = useState(
     record.role === "system" ? true : undefined
   );
@@ -37,7 +39,7 @@ export const Record = ({
       onRegenerate={
         record.role === "assistant"
           ? async () => {
-              await truncateSession({
+              await llmchatSessionTruncate({
                 session_id: record.session_id,
                 remove_rid_included: record.id,
               });

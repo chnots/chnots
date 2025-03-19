@@ -1,36 +1,14 @@
 import { insertMapAtIndex } from "@/utils/map-utils";
-import request from "@/utils/request";
-import { validate } from "uuid";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { useNamespaceStore } from "./namespace";
-
-export enum ChnotType {
-  MarkdownWithToent = "mdwt",
-}
-
-export interface ChnotRecord {
-  id: string;
-  meta_id: string;
-  content: string;
-  omit_time?: Date;
-  insert_time: Date;
-}
-
-export interface ChnotMetadata {
-  id: string;
-  namespace: string;
-  kind: string;
-  pin_time?: Date;
-  delete_time?: Date;
-  update_time?: Date;
-  insert_time: Date;
-}
-
-export interface Chnot {
-  record: ChnotRecord;
-  meta: ChnotMetadata;
-}
+import { useNamespaceStore } from "../namespace";
+import {
+  Chnot,
+  ChnotQueryRsp,
+  ChnotOverwriteReq,
+  ChnotOverwriteRsp,
+} from "./dto";
+import { chnotOverwrite, chnotQuery } from "./service";
 
 const getDefaultState = (): State => {
   return {
@@ -43,52 +21,6 @@ const getDefaultState = (): State => {
     hasNextPage: true,
   };
 };
-
-export interface ChnotQueryReq {
-  query?: string;
-  start_index: number;
-  page_size: number;
-}
-
-export interface ChnotQueryRsp {
-  data: Chnot[];
-
-  start_index: number;
-}
-
-export interface ChnotOverwriteReq {
-  chnot: ChnotRecord;
-  kind: string;
-}
-
-export interface ChnotOverwriteRsp {
-  chnot: Chnot;
-}
-
-export interface ChnotDeletionReq {
-  chnot_id: string;
-  logic: boolean;
-}
-
-export interface ChnotUpdateReq {
-  meta_id: string;
-
-  namespace?: string;
-
-  pinned?: boolean;
-  archive?: boolean;
-
-  update_time: boolean;
-}
-
-export interface ChnotCommentAddReq {
-  id: string;
-
-  chnot_meta_id: string;
-  content: string;
-
-  insert_time: Date;
-}
 
 interface State {
   refreshChnots(): unknown;
@@ -117,7 +49,7 @@ export const useChnotStore = create(
       meta_id?: string;
       with_omited?: boolean;
     }) => {
-      const cs: ChnotQueryRsp = await request.post(`api/v1/chnot-query`, {
+      const cs: ChnotQueryRsp = await chnotQuery({
         record_id,
         meta_id,
         with_omited,
@@ -139,7 +71,7 @@ export const useChnotStore = create(
       });
 
       const read = get();
-      const cs: ChnotQueryRsp = await request.post(`api/v1/chnot-query`, {
+      const cs: ChnotQueryRsp = await chnotQuery({
         start_index: read.chnotMap.size,
         page_size: read.pageSize,
         query: read.query,
@@ -175,33 +107,25 @@ export const useChnotStore = create(
 
       await get().fetchMoreChnots();
     },
-    deleteChnot: async (req: ChnotDeletionReq) => {
-      return request.post(`api/v1/chnot-deletion`, req);
-    },
     overwriteChnot: async (
       req: ChnotOverwriteReq,
       overwriteCache: boolean
     ): Promise<ChnotOverwriteRsp> => {
-      return request
-        .put<ChnotOverwriteRsp>(`api/v1/chnot`, req)
-        .then((value: ChnotOverwriteRsp) => {
-          if (overwriteCache) {
-            const chnot = value.chnot;
-            set((state) => {
-              let cm = state.chnotMap;
-              if (cm.has(chnot.meta.id)) {
-                cm.set(chnot.meta.id, chnot);
-              } else {
-                cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
-              }
-              return { ...state, chnotMap: cm };
-            });
-          }
-          return value;
-        });
-    },
-    updateChnot: async (req: ChnotUpdateReq) => {
-      return request.post(`api/v1/chnot-update`, req);
+      return chnotOverwrite(req).then((value: ChnotOverwriteRsp) => {
+        if (overwriteCache) {
+          const chnot = value.chnot;
+          set((state) => {
+            let cm = state.chnotMap;
+            if (cm.has(chnot.meta.id)) {
+              cm.set(chnot.meta.id, chnot);
+            } else {
+              cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
+            }
+            return { ...state, chnotMap: cm };
+          });
+        }
+        return value;
+      });
     },
     setCurrentChnot: (chnot?: Chnot) => {
       set((state) => {

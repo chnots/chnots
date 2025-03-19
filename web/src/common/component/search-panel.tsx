@@ -1,14 +1,14 @@
-import { useChnotStore } from "@/store/chnot";
+import { useChnotStore } from "@/store/chnot/store";
 import DebounceInput from "./debounce-input";
 
 const SearchPanel = () => {
-  const chnotStore = useChnotStore();
+  const { changeKeyword } = useChnotStore();
 
   return (
     <div className="h-full">
       <DebounceInput
         handleDebounce={function (value: string): void {
-          chnotStore.changeKeyword(value);
+          changeKeyword(value);
         }}
         debounceTimeout={300}
       ></DebounceInput>

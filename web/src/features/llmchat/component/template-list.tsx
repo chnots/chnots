@@ -1,9 +1,11 @@
-import { useLLMChatStore, LLMChatTemplate } from "@/store/llmchat";
 import Icon from "@/common/component/icon";
 import clsx from "clsx";
 import KSVG from "@/common/component/svg";
 import { RefObject, useEffect, useRef, useState } from "react";
 import AddTemplate from "@/features/llmchat/component/template-form";
+import { LLMChatTemplate } from "@/store/llmchat/db";
+import { useLLMChatStore } from "@/store/llmchat/store";
+import { llmchatTemplateAdd } from "@/store/llmchat/service";
 
 const ContextMenu = ({
   x,
@@ -61,7 +63,7 @@ const LLMChatTemplateList = ({
 }: {
   onClickTemplate: (template: LLMChatTemplate) => void;
 }) => {
-  const { listTemplates, insertTemplate, refreshTemplates } = useLLMChatStore();
+  const { listTemplates, refreshTemplates } = useLLMChatStore();
   const [showNewForm, setShowNewForm] = useState(false);
   const [contextMenuVisable, setContextMenuVisable] = useState<boolean>();
   const selectedTemplate = useRef<LLMChatTemplate>(undefined);
@@ -114,7 +116,7 @@ const LLMChatTemplateList = ({
             setShowNewForm(false);
           }}
           onSubmit={async (template) => {
-            await insertTemplate(template);
+            await llmchatTemplateAdd(template);
             await refreshTemplates();
             return true;
           }}

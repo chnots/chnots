@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorView, KeyBinding } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
@@ -10,10 +10,8 @@ import {
 } from "@codemirror/lang-markdown";
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
-import { useAttachmentStore } from "@/store/attachment";
 import React from "react";
-import clsx from "clsx";
-import useResizeObserver from "use-resize-observer";
+import { useAttachmentStore } from "@/store/attchment/store";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {

@@ -1,25 +1,21 @@
-import { LLMChatSession, useLLMChatStore } from "@/store/llmchat";
-import clsx from "clsx";
 import React, { ForwardedRef } from "react";
 import RelativeTime from "@/common/component/relative-time";
 import KSVG from "@/common/component/svg";
 import Icon from "@/common/component/icon";
 import KListItem from "@/common/component/klistitem";
+import { LLMChatSession } from "@/store/llmchat/db";
+import { useLLMChatStore } from "@/store/llmchat/store";
+import { llmchatSessionUpdate } from "@/store/llmchat/service";
 
 const LLMChatSessionListItem = React.forwardRef(
   (props: { session: LLMChatSession }, ref: ForwardedRef<HTMLLIElement>) => {
-    const {
-      currentSession,
-      setCurrentSession,
-      templates,
-      updateSession,
-      deleteCacheSession,
-    } = useLLMChatStore();
+    const { currentSession, setCurrentSession, templates, deleteCacheSession } =
+      useLLMChatStore();
     const session = props.session;
     const logo = templates.get(session.template_id)?.svg_logo;
 
     const handleDelete = async () => {
-      await updateSession({
+      await llmchatSessionUpdate({
         session_id: session.id,
         delete: true,
       });

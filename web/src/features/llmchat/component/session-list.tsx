@@ -1,4 +1,4 @@
-import { useLLMChatStore } from "@/store/llmchat";
+import { useLLMChatStore } from "@/store/llmchat/store";
 import LLMChatSessionListItem from "./session-list-item";
 
 function LLMChatSessionList() {

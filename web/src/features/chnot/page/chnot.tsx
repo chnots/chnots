@@ -3,7 +3,7 @@ import KButton from "@/common/component/kbutton";
 import ChnotList from "@/features/chnot/component/chnot-list";
 import { ChnotMarkdownEditor } from "@/features/chnot/component/chnot-markdown-editor";
 import ChnotSearch from "@/features/chnot/component/chnot-search";
-import { useChnotStore } from "@/store/chnot";
+import { useChnotStore } from "@/store/chnot/store";
 import { useCommonStore } from "@/store/common";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect } from "react";

@@ -1,11 +1,3 @@
-import {
-  LLMChatRecord,
-  LLMChatSession,
-  LLMChatSessionDetail,
-  LLMChatSessionDetailRsp,
-  LLMChatTemplate,
-  useLLMChatStore,
-} from "@/store/llmchat";
 import LLMChatTemplateList from "./template-list";
 import { RefObject, useCallback, useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
@@ -14,20 +6,28 @@ import LLMChatSessionInput from "./session-input";
 import { Record } from "./record";
 import { ResponseRecord } from "./response-record";
 import LLMChatBotSelect from "./bot-select";
+import {
+  LLMChatRecord,
+  LLMChatTemplate,
+  LLMChatSession,
+} from "@/store/llmchat/db";
+import {
+  LLMChatSessionDetail,
+  LLMChatSessionDetailRsp,
+} from "@/store/llmchat/dto";
+import { useLLMChatStore } from "@/store/llmchat/store";
+import {
+  llmchatRecordInsert,
+  llmchatSessionRecords,
+} from "@/store/llmchat/service";
 
 const LLMChatSessionBody = ({
   newSessionFlag,
 }: {
   newSessionFlag?: number;
 }) => {
-  const {
-    currentSession,
-    currentBot,
-    insertRecord,
-    setCurrentSession,
-    fetchSessionRecords,
-    unshiftSession,
-  } = useLLMChatStore();
+  const { currentSession, currentBot, setCurrentSession, unshiftSession } =
+    useLLMChatStore();
   const { currentNamespace } = useNamespaceStore();
 
   const [fleetDetail, setFleetDetail] = useState<LLMChatSessionDetail>();
@@ -37,7 +37,7 @@ const LLMChatSessionBody = ({
 
   const refresh = useCallback(() => {
     if (currentSession)
-      fetchSessionRecords(currentSession).then(
+      llmchatSessionRecords(currentSession.id).then(
         (rsp: LLMChatSessionDetailRsp) => {
           setFleetDetail({
             session: currentSession,
@@ -46,7 +46,7 @@ const LLMChatSessionBody = ({
           });
         }
       );
-  }, [currentSession, fleetDetail, setFleetDetail, fetchSessionRecords]);
+  }, [currentSession, fleetDetail, setFleetDetail]);
 
   useEffect(() => {
     if (currentSession && currentSession.id !== fleetDetail?.session?.id) {
@@ -76,7 +76,7 @@ const LLMChatSessionBody = ({
       detail.session.title = title.substring(0, 400);
       await unshiftSession(detail.session);
       for (const record of detail.records) {
-        await insertRecord(record);
+        await llmchatRecordInsert(record);
       }
       setFleetDetail({ ...detail, persisted: true });
       setCurrentSession(detail.session);
@@ -85,7 +85,7 @@ const LLMChatSessionBody = ({
 
   const appendRecord = async (record: LLMChatRecord) => {
     console.log("begin to insert, ", record);
-    await insertRecord(record);
+    await llmchatRecordInsert(record);
     setFleetDetail((prev) => {
       if (prev) {
         return {

@@ -1,8 +1,8 @@
 import React from "react";
 import { useInView } from "react-intersection-observer";
 
-import { useChnotStore } from "@/store/chnot";
 import ChnotListItem from "./chnot-list-item";
+import { useChnotStore } from "@/store/chnot/store";
 
 export interface ChnotListProps {
   keyword?: string;

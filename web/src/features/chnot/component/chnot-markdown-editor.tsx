@@ -1,7 +1,5 @@
 import { v4 as uuid } from "uuid";
 import { useCallback, useRef, useState } from "react";
-import { ChnotOverwriteReq } from "@/store/chnot";
-import { useChnotStore } from "@/store/chnot";
 import Icon from "@/common/component/icon";
 import { CodeMirrorEditorMemo } from "@/common/component/codemirror-md-editor";
 import useDebounce from "@/hooks/use-debounce";
@@ -9,7 +7,9 @@ import { useNamespaceStore } from "@/store/namespace";
 import { NamespaceSelect } from "@/common/component/namespace-select";
 import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
-import { observe } from "react-intersection-observer";
+import { ChnotOverwriteReq } from "@/store/chnot/dto";
+import { useChnotStore } from "@/store/chnot/store";
+import { chnotUpdate } from "@/store/chnot/service";
 
 enum RequestState {
   Saved,
@@ -31,7 +31,6 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
     setCurrentChnot,
     overwriteChnot,
     queryChnot,
-    updateChnot,
     validateChnotCache,
   } = useChnotStore();
 
@@ -81,7 +80,6 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
     [setCurrentChnot, setEditState, editState]
   );
 
-  
   const onChange = useDebounce((metaId: string, content: string) => {
     console.log("begin to save ", content);
     saveContent(metaId, content);
@@ -125,7 +123,7 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
           <NamespaceSelect
             onSelect={(ns) => {
               if (currentChnot) {
-                updateChnot({
+                chnotUpdate({
                   meta_id: currentChnot.meta.id,
                   update_time: false,
                   namespace: ns,

@@ -1,0 +1,3 @@
+interface ResourceUploadRsp {
+  resources: Resource[];
+}

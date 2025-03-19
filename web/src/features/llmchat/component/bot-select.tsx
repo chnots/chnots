@@ -1,9 +1,9 @@
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
-import { LLMChatBot, useLLMChatStore } from "@/store/llmchat";
 import { useRef, useState } from "react";
 import BotForm from "./bot-form";
 import KButton from "@/common/component/kbutton";
+import { LLMChatBot } from "@/store/llmchat/db";
 
 const BotComponent = ({
   bot,
@@ -108,3 +108,13 @@ const LLMChatBotSelect = () => {
 };
 
 export default LLMChatBotSelect;
+function useLLMChatStore(): {
+  bots: any;
+  currentBot: any;
+  setCurrentBot: any;
+  insertBot: any;
+  refreshBots: any;
+} {
+  throw new Error("Function not implemented.");
+}
+

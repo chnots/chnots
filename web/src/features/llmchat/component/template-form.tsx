@@ -1,5 +1,5 @@
 import KSVG from "@/common/component/svg";
-import { LLMChatTemplate } from "@/store/llmchat";
+import { LLMChatTemplate } from "@/store/llmchat/db";
 import React, { useState } from "react";
 import { v4 } from "uuid";
 

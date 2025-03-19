@@ -1,7 +1,8 @@
 import { ReactNode, useCallback, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
-import { LLMChatRecord, LLMChatSessionDetail } from "@/store/llmchat";
 import { v4 as uuid } from "uuid";
+import { LLMChatRecord } from "@/store/llmchat/db";
+import { LLMChatSessionDetail } from "@/store/llmchat/dto";
 
 const LLMChatSessionInput = ({
   disabled,
