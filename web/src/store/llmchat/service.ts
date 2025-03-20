@@ -43,9 +43,7 @@ export const llmchatSessionRecords = async (
   session_id: string
 ): Promise<LLMChatSessionDetailRsp> => {
   return await request.get(`api/v1/llmchat/session`, {
-    params: {
-      session_id,
-    },
+    session_id,
   });
 };
 

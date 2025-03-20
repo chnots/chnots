@@ -2,7 +2,7 @@ import { useLLMChatStore } from "@/store/llmchat/store";
 import LLMChatSessionListItem from "./session-list-item";
 
 function LLMChatSessionList() {
-  const { sessions, setCurrentSession } = useLLMChatStore();
+  const { sessions } = useLLMChatStore();
 
   return (
     <ul className="w-full p-2 space-y-2">

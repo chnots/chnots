@@ -23,39 +23,34 @@ class Request {
 
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        if (config.url !== "/login") {
-          const namespace = useNamespaceStore.getState().currentNamespace.name;
-          if (namespace) {
-            config.headers!["K-namespace"] = namespace;
-          }
-        }
+        const namespace = useNamespaceStore.getState().currentNamespace.name;
+        config.headers!["K-namespace"] = namespace;
 
         const controller = new AbortController();
         const url = config.url || "";
         config.signal = controller.signal;
+
         this.abortControllerMap.set(url, controller);
 
         return config;
       },
       Promise.reject
     );
+    this.instance.interceptors.response.use(
+      (response: AxiosResponse) => {
+        const url = response.config.url || "";
+        this.abortControllerMap.delete(url);
 
-    const formatResponse = (response: AxiosResponse) => {
-      const url = response.config.url || "";
-      this.abortControllerMap.delete(url);
+        const data = recursiveDateConversion(response.data);
+        response.data = data;
+        return response;
+      },
+      (err: Error) => {
+        toast.error("Axios Error Occured! " + err);
 
-      const data = recursiveDateConversion(response.data);
-      response.data = data;
-      return response;
-    };
-
-    const reject = (err: Error) => {
-      toast.error("Fail " + err);
-
-      return Promise.reject(err);
-    };
-
-    this.instance.interceptors.response.use(formatResponse, reject);
+        return Promise.reject(err);
+      }
+    );
   }
 
   cancelAllRequest() {
@@ -75,13 +70,12 @@ class Request {
 
   async get<T, E>(
     url: string,
-    config?: AxiosRequestConfig,
-    params?: E
+    params?: E,    
   ): Promise<T> {
+    console.log("get")
     return (
       await this.instance.get<T>(url, {
-        ...config,
-        params,
+        params
       })
     ).data;
   }
@@ -89,17 +83,16 @@ class Request {
   async post<T, E>(
     url: string,
     data?: E,
-    config?: AxiosRequestConfig
   ): Promise<T> {
-    return (await this.instance.post<T>(url, data, config)).data;
+    return (await this.instance.post<T>(url, data)).data;
   }
 
   async put<T, E>(
     url: string,
     data?: E,
-    config?: AxiosRequestConfig
+    headers?: Record<string, string>
   ): Promise<T> {
-    return (await this.instance.put<T>(url, data, config)).data;
+    return (await this.instance.put<T>(url, data)).data;
   }
 }
 
@@ -111,9 +104,5 @@ const request = new Request({
   timeout: 30 * 1000,
   baseURL: baseURL,
 });
-
-export const concatURL = (suffix: string): string => {
-  return baseURL + suffix;
-};
 
 export default request;

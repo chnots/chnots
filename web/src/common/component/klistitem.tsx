@@ -12,20 +12,18 @@ const KListItem = React.forwardRef(
   (props: KListItemProps, ref: ForwardedRef<HTMLLIElement>) => {
     const { children, focused, className, ...rest } = props;
     return (
-      <div>
         <li
           className={clsx(
-            "list-none rounded-sm p-3 grid gap-1 relative select-none group",
+            "list-none p-3 relative select-none group kbutton text-xs",
             "hover:kbutton-focused",
-            focused ? "kbutton-focused" : "kbutton border-transparent",
+            focused ? "kbutton-focused" : "border-transparent",
             className
           )}
           ref={ref}
           {...rest}
         >
           {children}
-        </li>
-      </div>
+      </li>
     );
   }
 );

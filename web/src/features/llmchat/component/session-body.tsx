@@ -84,7 +84,6 @@ const LLMChatSessionBody = ({
   };
 
   const appendRecord = async (record: LLMChatRecord) => {
-    console.log("begin to insert, ", record);
     await llmchatRecordInsert(record);
     setFleetDetail((prev) => {
       if (prev) {

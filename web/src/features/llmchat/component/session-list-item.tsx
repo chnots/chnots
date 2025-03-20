@@ -32,19 +32,20 @@ const LLMChatSessionListItem = React.forwardRef(
         focused={currentSession?.id === session.id}
         key={session.id}
         ref={ref}
+        className="relative flex-col space-y-1"
       >
-        <div>{logo ? <KSVG inner={logo} /> : <Icon.MessageCircle />}</div>
-        <div className="w-full">
-          <div className="flex flex-row justify-between">
+        <div className="flex flex-row justify-between">
+          <div className="flex flex-row">
+            {logo ? <KSVG className="!w-4 !h-4 mr-2" inner={logo} /> : <Icon.MessageCircle className="h-4" />}
             <RelativeTime date={session.insert_time} />
-            <div className="opacity-0 hover:opacity-100">
-              <button onClick={handleDelete}>
-                <Icon.X className="h-4" />
-              </button>
-            </div>
           </div>
-          <div className="text-xs line-clamp-2 break-all">{session.title}</div>
+          <div className="opacity-0 hover:opacity-100">
+            <button onClick={handleDelete}>
+              <Icon.X className="h-4" />
+            </button>
+          </div>
         </div>
+        <div className="text-xs line-clamp-2 break-all">{session.title}</div>
       </KListItem>
     );
   }
