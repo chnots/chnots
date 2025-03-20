@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import BotForm from "./bot-form";
 import KButton from "@/common/component/kbutton";
 import { LLMChatBot } from "@/store/llmchat/db";
+import { useLLMChatStore } from "@/store/llmchat/store";
+import { llmchatBotAdd } from "@/store/llmchat/service";
 
 const BotComponent = ({
   bot,
@@ -41,8 +43,7 @@ const LLMChatBotSelect = () => {
     setIsOpen(!isOpen);
   };
 
-  const { bots, currentBot, setCurrentBot, insertBot, refreshBots } =
-    useLLMChatStore();
+  const { bots, currentBot, setCurrentBot, refreshBots } = useLLMChatStore();
 
   const handleSelect = (id: string) => {
     setCurrentBot(bots.get(id));
@@ -93,7 +94,7 @@ const LLMChatBotSelect = () => {
       {showBotForm && (
         <BotForm
           onSubmit={async (bot) => {
-            await insertBot(bot);
+            await llmchatBotAdd(bot);
             await refreshBots();
             return true;
           }}
@@ -108,13 +109,3 @@ const LLMChatBotSelect = () => {
 };
 
 export default LLMChatBotSelect;
-function useLLMChatStore(): {
-  bots: any;
-  currentBot: any;
-  setCurrentBot: any;
-  insertBot: any;
-  refreshBots: any;
-} {
-  throw new Error("Function not implemented.");
-}
-

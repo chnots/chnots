@@ -61,11 +61,11 @@ const App = () => {
   return !initialized ? (
     <LoadingPage />
   ) : (
-    <div className="h-screen max-h-screen flex flex-col">
-      <div className="w-full h-12 justify-start items-start fixed top-0 left-0 select-none kborder z-2 bg-secondary border-b">
+    <div className="h-screen max-h-screen flex flex-row">
+      <div className="h-full justify-start items-start select-none kborder z-2 bg-secondary border-b w-16">
         <Navigation />
       </div>
-      <div className="bg-kbg w-full h-full flex-1 pt-12">
+      <div className="bg-kbg w-full h-full">
         <Suspense fallback={<LoadingPage />}>
           <Outlet />
         </Suspense>

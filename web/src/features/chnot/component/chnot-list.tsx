@@ -1,16 +1,11 @@
-import React from "react";
-import { useInView } from "react-intersection-observer";
+import { useEffect } from "react";
 
 import ChnotListItem from "./chnot-list-item";
 import { useChnotStore } from "@/store/chnot/store";
 import KPageList from "@/common/component/kpagelist";
 import ChnotSearch from "./chnot-search";
 
-export interface ChnotListProps {
-  keyword?: string;
-}
-
-function ChnotList(props: ChnotListProps) {
+function ChnotList({ keyword }: { keyword?: string }) {
   const {
     fetchMoreChnots,
     isFetchingNextPage,
@@ -19,13 +14,14 @@ function ChnotList(props: ChnotListProps) {
     changeKeyword,
   } = useChnotStore();
 
-  React.useEffect(() => {
-    changeKeyword(props.keyword);
-  }, [changeKeyword, props.keyword]);
+  useEffect(() => {
+    changeKeyword(keyword);
+  }, [changeKeyword, keyword]);
 
   return (
     <div className="relative">
       <ChnotSearch />
+      
       <KPageList
         onFetchMore={fetchMoreChnots}
         isFetchingNextPage={isFetchingNextPage}

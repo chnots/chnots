@@ -17,12 +17,12 @@ interface NavLinkItem {
   icon: React.ReactNode;
 }
 
-interface Props {
+const Navigation = ({
+  className,
+}: {
   className?: string;
-}
-
-const Navigation = (props: Props) => {
-  const { className } = props;
+  orientation?: "vertical" | "horizontal";
+}) => {
   const t = useTranslate();
   const { currentNamespace, changeNamespace } = useNamespaceStore();
   const { toggleSidebar } = useCommonStore();
@@ -63,9 +63,9 @@ const Navigation = (props: Props) => {
   ];
 
   return (
-    <header
+    <div
       className={clsx(
-        "w-full overflow-auto flex flex-row items-center z-30 hide-scrollbar bg-secondary border-b kborder space-x-4 py-1 pl-5",
+        "h-full overflow-auto flex flex-col items-center z-30 hide-scrollbar bg-secondary border-b kborder space-y-2 py-1",
         className
       )}
     >
@@ -83,7 +83,6 @@ const Navigation = (props: Props) => {
         }}
         currentNamespace={currentNamespace.name}
       />
-      <SearchButton />
       {navLinks.map((navLink) => (
         <NavLink
           className={({ isActive }) =>
@@ -96,7 +95,7 @@ const Navigation = (props: Props) => {
           <div>{navLink.icon}</div>
         </NavLink>
       ))}
-    </header>
+    </div>
   );
 };
 

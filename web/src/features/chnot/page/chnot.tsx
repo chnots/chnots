@@ -1,6 +1,5 @@
 import ChnotList from "@/features/chnot/component/chnot-list";
 import { ChnotMarkdownEditor } from "@/features/chnot/component/chnot-markdown-editor";
-import ChnotSearch from "@/features/chnot/component/chnot-search";
 import { useChnotStore } from "@/store/chnot/store";
 import { useCommonStore } from "@/store/common";
 import { useNamespaceStore } from "@/store/namespace";
@@ -21,10 +20,10 @@ const ChnotPage = () => {
       {showSidebar && (
         <div className="grid grid-cols-2 flex-1">
           <div className="max-h-full h-full overflow-auto">
-            <ChnotTagList />
+            <ChnotTagList key={currentNamespace.name} />
           </div>
           <div className="max-h-full h-full overflow-auto">
-            <ChnotList />
+            <ChnotList key={currentNamespace.name} />
           </div>
         </div>
       )}
