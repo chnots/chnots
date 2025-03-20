@@ -5,9 +5,11 @@ import ChnotTagListItem from "./chnot-tag-list-item";
 import { chnotTagNames } from "@/store/chnot/service";
 import KInput from "@/common/component/kinput";
 import { useChnotStore } from "@/store/chnot/store";
+import KButton from "@/common/component/kbutton";
+import Icon from "@/common/component/icon";
 
 function ChnotTagList() {
-  const { setTagKeyword, tagKeyword, refreshChnots } = useChnotStore();
+  const { setTagKeyword, setCurrentChnot, tagKeyword, refreshChnots } = useChnotStore();
 
   const [keyword, setKeyword] = useState<string>();
   const [isFetchingNextPage, setIsFetchingNextPage] = useState<boolean>(false);
@@ -36,19 +38,25 @@ function ChnotTagList() {
 
   useEffect(() => {
     refreshChnots();
+    setCurrentChnot()
   }, [tagKeyword]);
 
   return (
     <div className="max-h-full">
-      <KInput
-        onChange={(input) => {
-          setKeyword(input);
-          setStartIndex(0);
-          setHasNextPage(true);
-        }}
-      />
+      <div className="flex flex-row">
+        <KButton onClick={() => { setKeyword(undefined); setTagKeyword(undefined) }}>
+          <Icon.CircleX />
+        </KButton>
+        <KInput
+          onChange={(input) => {
+            setKeyword(input);
+            setStartIndex(0);
+            setHasNextPage(true);
+          }}
+        />
+      </div>
       <KPageList
-        onFetchMore={() => {}}
+        onFetchMore={() => { }}
         isFetchingNextPage={isFetchingNextPage}
         hasNextPage={hasNextPage}
       >
