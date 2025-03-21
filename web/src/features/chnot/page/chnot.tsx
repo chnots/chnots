@@ -16,7 +16,7 @@ const ChnotPage = () => {
 
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md">
-      <title>{`Chnots`}</title>
+      <title>Chnots</title>
       {showSidebar && (
         <div className="grid grid-cols-2 flex-1">
           <div className="max-h-full h-full overflow-auto">

@@ -9,7 +9,9 @@ import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import { ChnotOverwriteReq } from "@/store/chnot/dto";
 import { useChnotStore } from "@/store/chnot/store";
-import { chnotQuery, chnotUpdate } from "@/store/chnot/service";
+import { chnotQuery, chnotTagNames, chnotUpdate, toentGuess } from "@/store/chnot/service";
+import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { markdownLanguage } from "@codemirror/lang-markdown";
 
 enum RequestState {
   Saved,
@@ -21,6 +23,28 @@ interface ChnotEditState {
   isUploadingResource: boolean;
   requestState: RequestState;
   isComposing: boolean;
+}
+
+
+const chnotCompletions = async (context: CompletionContext): Promise<CompletionResult | null> => {
+  const word = context.matchBefore(/#[^# ]*|<[^<>]*/)
+  let options;
+  if (!word || word?.from == word?.to && !context.explicit) {
+    return null
+  } else if (word.text.startsWith("#")) {
+    options = (await chnotTagNames({ query: word.text, start_index: 0, page_size: 20 })).data.map((name) => { return { "label": name, "type": "hashtag" } })
+  } else if (word.text.startsWith("<")) {
+    options = (await toentGuess({ input: word.text.replace("<", "") })).toents.map((toent) => { return { "label": `<${toent.event}>`, "type": "hashtag" } })
+  } else {
+    return null;
+  }
+  console.debug("options: ", options)
+
+  return {
+    from: word.from,
+    options: options,
+    filter: false
+  }
 }
 
 export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
@@ -41,6 +65,12 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
     isUploadingResource: false,
     requestState: RequestState.Saved,
     isComposing: false,
+  });
+
+  const cmRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  useResizeObserver<HTMLDivElement>(cmRef, (entry) => {
+    setHeight(entry.contentRect.height);
   });
 
   const saveContent = useCallback(
@@ -80,17 +110,12 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
   );
 
   const onChange = useDebounce((metaId: string, content: string) => {
-    console.log("begin to save ", content);
     saveContent(metaId, content);
   }, 1000);
 
   const onChangeRef = useRef(onChange);
 
-  const cmRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | undefined>(undefined);
-  useResizeObserver<HTMLDivElement>(cmRef, (entry) => {
-    setHeight(entry.contentRect.height);
-  });
+
 
   const fetchContent = useCallback(async (id: string) => {
     const chnots = await chnotQuery({
@@ -148,10 +173,11 @@ export const ChnotMarkdownEditor = ({ className }: { className?: string }) => {
       >
         {height && (
           <CodeMirrorEditorMemo
-            onChange={onChangeRef.current}
+            onChangeRef={onChangeRef}
             id={currentChnot?.meta.id ?? uuid()}
             fetchDefaultValue={fetchContent}
             height={height}
+            autoCompletion={chnotCompletions}
           />
         )}
       </div>

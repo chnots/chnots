@@ -1,3 +1,4 @@
+import exp from "constants";
 import { ChnotRecord, ChnotMetadata, ChnotTag } from "./db";
 
 export interface Chnot {
@@ -73,4 +74,18 @@ export interface ChnotTagNamesRsp {
   data: string[];
 
   start_index: number;
+}
+
+export interface Toent {
+  id: string;
+  input: string;
+  event: string;
+}
+
+export interface ToentGuessReq {
+  input: string;
+}
+
+export interface ToentGuessRsp {
+  toents: Toent[]
 }

@@ -8,6 +8,8 @@ import {
   ChnotTagNamesRsp,
   ChnotTagQueryReq,
   ChnotUpdateReq,
+  ToentGuessReq,
+  ToentGuessRsp,
 } from "./dto";
 
 export const chnotQuery = async (
@@ -35,3 +37,7 @@ export const chnotTagNames = async (
 ): Promise<ChnotTagNamesRsp> => {
   return await request.post(`api/v1/chnot-tag-names`, req);
 };
+
+export const toentGuess = async (req: ToentGuessReq): Promise<ToentGuessRsp> => {
+  return await request.post(`api/v1/toent-guess`, req);
+}

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { EditorView, KeyBinding } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
-import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import CodeMirror, { Extension, type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import {
   deleteMarkupBackward,
   insertNewlineContinueMarkup,
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import React from "react";
 import { useAttachmentStore } from "@/store/attchment/store";
+import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { autocompletion } from "@codemirror/autocomplete";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -110,18 +112,21 @@ export const markdownKeymap: readonly KeyBinding[] = [
   { key: "Backspace", run: deleteMarkupBackward },
 ];
 
+
 const CodeMirrorEditor = ({
   id,
-  onChange,
   className,
-  fetchDefaultValue,
   height,
+  fetchDefaultValue,
+  onChangeRef,
+  autoCompletion,
 }: {
-  id: string;
-  onChange: (metaId: string, content: string) => void;
-  fetchDefaultValue: (id: string) => Promise<string | undefined>;
+    id: string;
   className?: string;
   height: number;
+    fetchDefaultValue: (id: string) => Promise<string | undefined>;
+    onChangeRef: RefObject<(metaId: string, content: string) => void>;
+    autoCompletion: (context: CompletionContext) => Promise<CompletionResult | null>,
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
   const [content, setContent] = useState<string>();
@@ -130,10 +135,18 @@ const CodeMirrorEditor = ({
     base: markdownLanguage,
     codeLanguages: languages,
     addKeymap: true,
-    completeHTMLTags: false,
+    completeHTMLTags: true,
+
   });
 
-  const extensions = [md, EditorView.lineWrapping, editorTheme, eventHandlers];
+
+  const _extensions = [md, EditorView.lineWrapping, editorTheme, eventHandlers,
+    autocompletion({
+      override: [
+        (context) => autoCompletion(context),
+      ],
+    })
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -146,7 +159,7 @@ const CodeMirrorEditor = ({
   return (
     <CodeMirror
       height={`${height}px`}
-      extensions={extensions}
+      extensions={_extensions}
       ref={codeMirror}
       style={{
         font: "serif",
@@ -158,7 +171,7 @@ const CodeMirrorEditor = ({
         foldGutter: true,
       }}
       placeholder={"Chnot"}
-      onChange={(e) => onChange(id, e)}
+      onChange={(e) => onChangeRef.current(id, e)}
     />
   );
 };
