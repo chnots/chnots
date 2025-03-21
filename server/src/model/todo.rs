@@ -1,6 +1,6 @@
 use strum::{AsRefStr, EnumIter, EnumString};
 
-#[derive(Clone, Debug, EnumString, AsRefStr, EnumIter)]
+#[derive(Clone, Debug, EnumString, AsRefStr, EnumIter, PartialEq)]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum TodoEvent {
     Todo,

@@ -5,13 +5,13 @@ use std::{
 
 use super::PossibleScore;
 use crate::toent::{
-    timeevent::timeenum::base::{BaseTime, Unit},
-    EventBuilder, GuessType,
+    timeevent::timeenum::base::{BaseTime, NoneOrI32},
+    EventBuilder, RawInputSegs,
 };
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct TimeInterval {
     base: BaseTime,
-    week: Unit,
+    week: NoneOrI32,
 }
 
 impl Deref for TimeInterval {
@@ -29,14 +29,10 @@ impl DerefMut for TimeInterval {
 }
 
 impl EventBuilder for TimeInterval {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        match Self::from_standard(&input.segs) {
-            Ok(v) => {
-                vec![(v, PossibleScore::Yes(10))]
-            }
-            Err(_) => {
-                vec![]
-            }
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+        match Self::from_standard(&gt) {
+            Ok(v) => Some(vec![(v, PossibleScore::Yes(10))]),
+            Err(_) => None,
         }
     }
 
@@ -44,10 +40,10 @@ impl EventBuilder for TimeInterval {
         true
     }
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let mut num = String::new();
         let mut interval = TimeInterval::default();
-        for c in segs[0].chars() {
+        for c in gt.spans[0].chars() {
             match c {
                 '0'..='9' => num.push(c),
                 'y' => {
@@ -74,8 +70,10 @@ impl EventBuilder for TimeInterval {
                     interval.second = i32::from_str_radix(&num, 10)?.into();
                     num = String::new();
                 }
-                'w' => interval.week = i32::from_str_radix(&num, 10)?.into(),
-
+                'w' => {
+                    interval.week = i32::from_str_radix(&num, 10)?.into();
+                    num = String::new();
+                }
                 '-' => {
                     if num.len() == 0 {
                         num.push('-');
@@ -91,7 +89,7 @@ impl EventBuilder for TimeInterval {
 
     fn standard_str(&self) -> String {
         let mut result = String::new();
-        let mut push_func = |v: &Unit, u: char| match v.as_ref() {
+        let mut push_func = |v: &NoneOrI32, u: char| match v.as_ref() {
             Some(i) => {
                 result.push_str(&i.to_string());
                 result.push(u);
@@ -114,13 +112,13 @@ impl EventBuilder for TimeInterval {
 #[cfg(test)]
 mod test {
 
-    use crate::toent::EventBuilder;
+    use crate::toent::{EventBuilder, RawInputSegs};
 
     use super::TimeInterval;
 
     #[test]
     fn test() {
-        let ti = TimeInterval::from_standard(&["1d2m444w"]).unwrap();
+        let ti = TimeInterval::from_standard(&RawInputSegs::from("1d2m444w")).unwrap();
         println!("{}", ti.standard_str());
     }
 }

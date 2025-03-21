@@ -4,12 +4,12 @@ use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
 use super::PossibleScore;
-use crate::toent::{EventBuilder, GuessType};
+use crate::toent::{EventBuilder, RawInputSegs};
 
-#[derive(Clone, Deserialize, Serialize, Default, Debug)]
-pub struct Unit(Option<i32>);
+#[derive(Clone, Deserialize, Serialize, Default, Debug, PartialEq)]
+pub struct NoneOrI32(Option<i32>);
 
-impl Display for Unit {
+impl Display for NoneOrI32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             Some(v) => {
@@ -22,55 +22,45 @@ impl Display for Unit {
     }
 }
 
-impl From<i32> for Unit {
+impl From<i32> for NoneOrI32 {
     fn from(value: i32) -> Self {
         Self(Some(value))
     }
 }
 
-impl From<u32> for Unit {
+impl From<u32> for NoneOrI32 {
     fn from(value: u32) -> Self {
         Self(Some(value as i32))
     }
 }
 
-impl From<&str> for Unit {
+impl From<&str> for NoneOrI32 {
     fn from(value: &str) -> Self {
         match i32::from_str_radix(value, 10) {
-            Ok(i) => Unit(Some(i)),
-            Err(_) => Unit(None),
+            Ok(i) => NoneOrI32(Some(i)),
+            Err(_) => NoneOrI32(None),
         }
     }
 }
 
-impl From<String> for Unit {
+impl From<String> for NoneOrI32 {
     fn from(value: String) -> Self {
         match i32::from_str_radix(value.as_str(), 10) {
-            Ok(i) => Unit(Some(i)),
-            Err(_) => Unit(None),
+            Ok(i) => NoneOrI32(Some(i)),
+            Err(_) => NoneOrI32(None),
         }
     }
 }
 
-impl From<Option<&&str>> for Unit {
-    fn from(value: Option<&&str>) -> Self {
-        match value {
-            Some(v) => Unit::from(*v),
-            None => Unit(None),
-        }
+impl<T> From<Option<T>> for NoneOrI32
+where
+    T: Into<NoneOrI32>,
+{
+    fn from(value: Option<T>) -> Self {
+        value.map_or(NoneOrI32(None), |v| v.into())
     }
 }
-
-impl From<Option<String>> for Unit {
-    fn from(value: Option<String>) -> Self {
-        match value {
-            Some(v) => Unit::from(v),
-            None => Unit(None),
-        }
-    }
-}
-
-impl Deref for Unit {
+impl Deref for NoneOrI32 {
     type Target = Option<i32>;
 
     fn deref(&self) -> &Self::Target {
@@ -78,14 +68,14 @@ impl Deref for Unit {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct BaseTime {
-    pub year: Unit,
-    pub month: Unit,
-    pub day: Unit,
-    pub hour: Unit,
-    pub minute: Unit,
-    pub second: Unit,
+    pub year: NoneOrI32,
+    pub month: NoneOrI32,
+    pub day: NoneOrI32,
+    pub hour: NoneOrI32,
+    pub minute: NoneOrI32,
+    pub second: NoneOrI32,
 }
 
 pub enum TimeUnit {
@@ -168,7 +158,8 @@ impl EventBuilder for BaseTime {
             ))
     }
 
-    fn from_standard(standard: &[&str]) -> anyhow::Result<Self> {
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+        let standard = &gt.spans;
         if standard.len() != 2 && standard.len() != 1 {
             anyhow::bail!(
                 "There should be like '2022-12-02' '20:00:00', found {:?}",
@@ -239,14 +230,10 @@ impl EventBuilder for BaseTime {
         }
     }
 
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        match Self::from_standard(&input.segs) {
-            Ok(base) => {
-                vec![(base, PossibleScore::Likely(100))]
-            }
-            Err(_) => {
-                vec![]
-            }
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+        match Self::from_standard(&gt) {
+            Ok(base) => Some(vec![(base, PossibleScore::Likely(100))]),
+            Err(_) => None,
         }
     }
 }
@@ -254,12 +241,12 @@ impl EventBuilder for BaseTime {
 impl Default for BaseTime {
     fn default() -> Self {
         Self {
-            year: Unit::default(),
-            month: Unit::default(),
-            day: Unit::default(),
-            hour: Unit::default(),
-            minute: Unit::default(),
-            second: Unit::default(),
+            year: NoneOrI32::default(),
+            month: NoneOrI32::default(),
+            day: NoneOrI32::default(),
+            hour: NoneOrI32::default(),
+            minute: NoneOrI32::default(),
+            second: NoneOrI32::default(),
         }
     }
 }
@@ -322,11 +309,11 @@ mod test {
         // println!("{:?}", BaseTimestamp::from_standard(&["asdasd"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12:03"]));
-        println!("{:?}", BaseTime::from_standard(&["12-03"]));
-        println!("{:?}", BaseTime::from_standard(&["12-03-04"]));
-        println!("{:?}", BaseTime::from_standard(&["12-03-04", "12"]));
-        println!("{:?}", BaseTime::from_standard(&["12-03-04", "12:12"]));
-        println!("{:?}", BaseTime::from_standard(&["12-03-04", "12:12:12"]));
+        println!("{:?}", BaseTime::from_standard(&"12-03".into()));
+        println!("{:?}", BaseTime::from_standard(&"12-03-04".into()));
+        println!("{:?}", BaseTime::from_standard(&"12-03-04 12".into()));
+        println!("{:?}", BaseTime::from_standard(&"12-03-04 12:12".into()));
+        println!("{:?}", BaseTime::from_standard(&"12-03-04 2:12:12".into()));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e", "asdasd"]));
     }

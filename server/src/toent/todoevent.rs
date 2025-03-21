@@ -8,7 +8,7 @@ use strum::IntoEnumIterator;
 
 use crate::model::todo::TodoEvent;
 
-use super::{EventBuilder, GuessType};
+use super::{EventBuilder, RawInputSegs};
 
 impl Serialize for TodoEvent {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -59,36 +59,36 @@ impl<'de> Deserialize<'de> for TodoCreateType {
 }
 
 impl EventBuilder for TodoEvent {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
         let mut result = vec![];
         for ele in TodoEvent::iter() {
             let enum_str = ele.as_ref();
             let enum_len = enum_str.len();
-            let upper_input = input.original.to_uppercase();
+            let upper_input = gt.original.to_uppercase();
 
             let distance = textdistance::str::damerau_levenshtein(enum_str, &upper_input);
             if distance < enum_len {
-                let mut pos = ((1. - distance as f32 / enum_len as f32) * 256.0) as u8;
+                let mut score = ((1. - distance as f32 / enum_len as f32) * 256.0) as u8;
                 if enum_str.starts_with(&upper_input) {
-                    pos = pos / 2 + 128;
+                    score = score / 2 + 128;
                 }
-                if pos < 128 {
+                if score < 128 {
                     continue;
                 }
-                result.push((ele, PossibleScore::Num(pos)));
+                result.push((ele, PossibleScore::Num(score)));
             }
         }
 
-        result
+        Some(result)
     }
 
     fn is_valid(&self) -> bool {
         true
     }
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        match segs.get(0) {
-            Some(s) => Ok(Self::from_str(s)?),
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+        match gt.spans.get(0) {
+            Some(s) => Ok(Self::from_str(s.text)?),
             None => {
                 anyhow::bail!("There should at least one seg to deserialize TodoEnum")
             }

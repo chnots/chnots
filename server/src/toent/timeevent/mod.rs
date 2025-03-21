@@ -1,9 +1,11 @@
+use repeater::{endconditon::EndCondition, interval::TimeInterval};
+use timeenum::{westen::WesTime, Timestamp};
+
 use super::PossibleScore;
-use repeater::{is_repeater_seg, is_repeater_start};
 
 use self::{repeater::Repeater, timeenum::TimeEnum};
 
-use super::{EventBuilder, GuessType};
+use super::{EventBuilder, RawInputSegs};
 
 pub mod repeater;
 pub mod timeenum;
@@ -23,121 +25,169 @@ fn contains_any(input: &str, anys: &[&str]) -> bool {
         .any(|e| input.contains(e.to_ascii_lowercase().as_str()))
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimeEvent {
-    base: TimeEnum,
-    repeaters: Option<Vec<Repeater>>,
+    base: Option<TimeEnum>,
+    reminder: Option<Repeater>,
 }
 
 impl From<TimeEnum> for TimeEvent {
     fn from(value: TimeEnum) -> Self {
         Self {
-            base: value,
-            repeaters: None,
+            base: Some(value),
+            reminder: None,
         }
     }
 }
 
 impl TimeEvent {
-    pub fn sep_base_and_others<'a>(segs: &[&'a str]) -> (Vec<&'a str>, Vec<Vec<&'a str>>) {
-        let mut base: Vec<&str> = vec![];
-        let mut others: Vec<Vec<&str>> = vec![];
-        let mut sub_other: Vec<&str> = vec![];
+    pub fn now() -> Self {
+        TimeEvent {
+            base: Some(TimeEnum::Wes(WesTime::now_time())),
+            reminder: None,
+        }
+    }
+}
 
-        let mut base_end = false;
-        for ele in segs {
-            if !is_repeater_seg(ele) && !base_end {
-                base.push(ele)
+#[derive(Default)]
+pub(crate) struct InputSegs<'a> {
+    pub(crate) base: Option<RawInputSegs<'a>>,
+    pub(crate) interval: Option<RawInputSegs<'a>>,
+    pub(crate) alert: Option<RawInputSegs<'a>>,
+    pub(crate) end: Option<RawInputSegs<'a>>,
+}
+
+impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
+    type Error = anyhow::Error;
+
+    fn try_from(gt: &'a RawInputSegs<'a>) -> Result<Self, Self::Error> {
+        let mut input_segs = InputSegs::default();
+
+        enum ParseStep {
+            Base,
+            Interval,
+            Alert,
+            End,
+        }
+        let mut parse_step = ParseStep::Base;
+        let mut temp: Vec<crate::toent::Span<'_>> = vec![];
+
+        let convert_temp = |temp: Vec<crate::toent::Span<'a>>| {
+            if !temp.is_empty() {
+                let start = temp.first().unwrap().start_in;
+                let end = temp.last().unwrap().end_ex;
+                let gt = RawInputSegs {
+                    original: &gt.original,
+                    spans: temp,
+                };
+                Some(gt)
             } else {
-                base_end = true;
-                if is_repeater_start(ele) {
-                    if !sub_other.is_empty() {
-                        others.push(sub_other);
-                    }
-                    sub_other = vec![ele];
-                } else {
-                    sub_other.push(ele)
-                }
+                None
+            }
+        };
+
+        for span in &gt.spans {
+            let seg = span.text;
+            if Repeater::alter_start(seg) {
+                input_segs.alert.replace(RawInputSegs {
+                    original: seg,
+                    spans: vec![*span],
+                });
+            } else if Repeater::interval_start(seg) {
+                input_segs.interval.replace(RawInputSegs {
+                    original: seg,
+                    spans: vec![*span],
+                });
+            } else if Repeater::end_start(seg) {
+                parse_step = ParseStep::End;
+                input_segs.base = convert_temp(temp);
+                temp = vec![];
+                temp.push(*span);
+            } else {
+                temp.push(*span);
             }
         }
-        if !sub_other.is_empty() {
-            others.push(sub_other);
+
+        match parse_step {
+            ParseStep::Base => {
+                input_segs.base = convert_temp(temp);
+            }
+
+            ParseStep::End => {
+                input_segs.end = convert_temp(temp);
+            }
+            _ => {}
         }
 
-        (base, others)
+        Ok(input_segs)
     }
 }
 
 impl EventBuilder for TimeEvent {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        let (base, repeaters) = input.groups();
-        let bases: Vec<(TimeEnum, PossibleScore)> = TimeEnum::guess(&base);
-        let guess_repeaters: Vec<Vec<(Repeater, PossibleScore)>> =
-            repeaters.into_iter().map(|e| Repeater::guess(&e)).collect();
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+        let Ok(input_segs) = InputSegs::try_from(gt) else {
+            return None;
+        };
 
-        if guess_repeaters.iter().all(|v| v.is_empty()) {
-            bases.into_iter().map(|(v, p)| (v.into(), p)).collect()
-        } else {
-            let mut repeaters = vec![];
-            for ele in guess_repeaters {
-                if !ele.is_empty() {
-                    repeaters.push(ele[0].clone().0)
-                }
-            }
-            bases
-                .into_iter()
-                .map(|(v, p)| {
+        let bases = input_segs.base.map(|e| TimeEnum::guess(&e));
+
+        let repeaters = Repeater::guess_from_segs(
+            input_segs.interval.as_ref(),
+            input_segs.end.as_ref(),
+            input_segs.alert.as_ref(),
+        );
+
+        if let Some(Some(vs)) = bases {
+            let guesses = vs
+                .iter()
+                .map(|(base, score)| {
                     (
-                        TimeEvent {
-                            base: v,
-                            repeaters: Some(repeaters.clone()),
+                        Self {
+                            base: Some(base.clone()),
+                            reminder: repeaters.get(0).map(|(e, _)| e.clone()),
                         },
-                        p,
+                        *score,
                     )
                 })
-                .collect()
+                .collect();
+            Some(guesses)
+        } else {
+            None
         }
     }
 
     fn is_valid(&self) -> bool {
-        self.base.is_valid()
-            && (self.repeaters.is_none()
-                || self
-                    .repeaters
-                    .as_ref()
-                    .unwrap()
-                    .iter()
-                    .all(|e| e.is_valid()))
+        self.base.as_ref().map_or(true, |e| e.is_valid())
+            && self.reminder.as_ref().map_or(true, |e| e.is_valid())
     }
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        let (base, others) = Self::sep_base_and_others(segs);
-        let repeaters = if others.is_empty() {
-            None
-        } else {
-            let mut repeaters = vec![];
-            for ele in others.iter() {
-                repeaters.push(Repeater::from_standard(ele.as_slice())?)
-            }
-            Some(repeaters)
-        };
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+        let input_segs = InputSegs::try_from(gt)?;
 
-        Ok(TimeEvent {
-            base: TimeEnum::from_standard(base.as_slice())?,
-            repeaters,
-        })
+        let base = if let Some(base) = input_segs.base {
+            Some(TimeEnum::from_standard(&base)?)
+        } else {
+            None
+        };
+        let reminder = Some(Repeater::standard_from_segs(
+            input_segs.interval.as_ref(),
+            input_segs.end.as_ref(),
+            input_segs.alert.as_ref(),
+        )?);
+
+        Ok(TimeEvent { base, reminder })
     }
 
     fn standard_str(&self) -> String {
         let mut res = String::new();
 
-        res.push_str(self.base.standard_str().as_str());
+        if let Some(base) = self.base.as_ref() {
+            res.push_str(base.standard_str().as_str());
+        }
 
-        if let Some(repeaters) = &self.repeaters {
-            for rep in repeaters.iter() {
-                res.push(' ');
-                res.push_str(rep.standard_str().as_str());
-            }
+        if let Some(rep) = &self.reminder {
+            res.push(' ');
+            res.push_str(rep.standard_str().as_str());
         }
 
         res

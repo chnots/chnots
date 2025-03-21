@@ -1,60 +1,113 @@
 use std::ops::Deref;
 
-use self::{eventenum::EventEnum, timeevent::TimeEvent};
+use self::eventenum::EventEnum;
 
 pub mod eventenum;
 pub mod timeevent;
 pub mod todoevent;
-use chin_tools::utils::id_util;
-use chin_tools::wrapper::score::PossibleScore;
+use chin_tools::{wrapper::score::PossibleScore, AResult};
 use serde::{Deserialize, Serialize};
 
-#[inline]
-pub fn retain_parts<F>(input: &str, retain_func: F) -> Vec<&str>
-where
-    F: FnMut(&&str) -> bool,
-{
-    input
-        .split(" ")
-        .filter(|e| e.len() > 0)
-        .filter(retain_func)
-        .collect()
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Span<'a> {
+    text: &'a str,
+    start_in: usize,
+    end_ex: usize,
 }
 
-#[inline]
-pub fn retain_not_empty_parts(input: &str) -> Vec<&str> {
-    retain_parts(input, |e| !e.is_empty())
+impl<'a> Deref for Span<'a> {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.text
+    }
 }
 
-pub struct GuessType<'a> {
-    original: &'a str,
-    segs: Vec<&'a str>,
+#[derive(Debug, Clone)]
+pub(crate) struct RawInputSegs<'a> {
+    pub(crate) original: &'a str,
+    pub(crate) spans: Vec<Span<'a>>,
 }
 
-impl<'a> From<&'a str> for GuessType<'a> {
-    fn from(value: &'a str) -> Self {
-        GuessType {
-            original: &value,
-            segs: retain_not_empty_parts(&value),
+impl<'a> RawInputSegs<'a> {
+    pub fn sub_start(&self, start: usize) -> RawInputSegs<'a> {
+        RawInputSegs {
+            original: self.original,
+            spans: self.spans.as_slice()[start..].into(),
+        }
+    }
+
+    pub fn remove_first_prefix(&self, key: &str) -> RawInputSegs<'a> {
+        let mut other = self.clone();
+        let first = other.spans.get_mut(0);
+        if let Some(f) = first {
+            if f.starts_with(key) {
+                f.text = &f.text[key.len()..]
+            }
+        }
+        other
+    }
+
+    pub fn sub_range(&self, start: usize, end: usize) -> Self {
+        RawInputSegs {
+            original: &self.original,
+            spans: self
+                .spans
+                .iter()
+                .filter(|s| s.start_in >= start && s.end_ex <= end)
+                .map(|s| *s)
+                .collect(),
         }
     }
 }
 
-impl<'a> Deref for GuessType<'a> {
-    type Target = [&'a str];
+impl<'a> From<&'a str> for RawInputSegs<'a> {
+    fn from(input: &'a str) -> Self {
+        let mut spans = Vec::new();
+        let mut start = 0;
+        for (i, c) in input.char_indices() {
+            if c == ' ' {
+                let word = &input[start..i];
+                if !word.is_empty() {
+                    spans.push(Span {
+                        text: word,
+                        start_in: start,
+                        end_ex: i,
+                    });
+                }
+                start = i + 1;
+            }
+        }
+        if start < input.len() {
+            spans.push(Span {
+                text: &input[start..],
+                start_in: start,
+                end_ex: input.len(),
+            });
+        }
 
-    fn deref(&self) -> &Self::Target {
-        self.segs.as_slice()
+        RawInputSegs {
+            original: &input,
+            spans,
+        }
     }
 }
 
-impl<'a> AsRef<str> for GuessType<'a> {
+impl<'a> Deref for RawInputSegs<'a> {
+    type Target = [Span<'a>];
+
+    fn deref(&self) -> &Self::Target {
+        self.spans.as_slice()
+    }
+}
+
+impl<'a> AsRef<str> for RawInputSegs<'a> {
     fn as_ref(&self) -> &str {
         &self.original
     }
 }
 
-impl<'a> GuessType<'a> {
+impl<'a> RawInputSegs<'a> {
     fn full_contains_ig_case(&self, segs: &[&str]) -> bool {
         let lower = self.original.to_ascii_lowercase();
         segs.iter().any(|e| lower.contains(&e.to_lowercase()))
@@ -64,28 +117,15 @@ impl<'a> GuessType<'a> {
     where
         F: FnMut(&str) -> bool,
     {
-        GuessType {
+        RawInputSegs {
             original: self.original,
-            segs: self.segs.iter().filter(|e| filter(e)).map(|e| *e).collect(),
-        }
-    }
-
-    fn groups(&self) -> (GuessType, Vec<GuessType>) {
-        let (base, repeaters) = TimeEvent::sep_base_and_others(&self.segs);
-
-        (
-            GuessType {
-                original: &self.original,
-                segs: base,
-            },
-            repeaters
-                .into_iter()
-                .map(|e| GuessType {
-                    original: &self.original,
-                    segs: e,
-                })
+            spans: self
+                .spans
+                .iter()
+                .filter(|e| filter(e.text))
+                .map(|e| *e)
                 .collect(),
-        )
+        }
     }
 }
 
@@ -93,98 +133,78 @@ pub trait EventBuilder
 where
     Self: Sized,
 {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)>;
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>>;
 
     fn is_valid(&self) -> bool;
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self>;
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self>;
     fn standard_str(&self) -> String;
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PossibleToent {
-    id: String,
     input: String,
     event: EventEnum,
 }
 
 impl PossibleToent {
     pub fn from_standard(input: &str) -> anyhow::Result<PossibleToent> {
-        let parts = retain_parts(input, |e| !e.is_empty());
-
         Ok(PossibleToent {
-            id: id_util::generate_uuid(),
             input: input.to_owned(),
-            event: EventEnum::from_standard(&parts)?,
+            event: EventEnum::from_standard(&RawInputSegs::from(input))?,
         })
     }
 
     pub fn guess(input: &str) -> Vec<PossibleToent> {
-        let mut guess_res = EventEnum::guess(&input.into());
-        guess_res.sort_by(|e1, e2| e1.1.cmp(&e2.1));
+        if let Some(mut guesses) = EventEnum::guess(&input.into()) {
+            guesses.sort_by(|e1, e2| e2.1.cmp(&e1.1));
 
-        let res = guess_res
-            .into_iter()
-            .map(|e| PossibleToent {
-                id: id_util::generate_uuid(),
-                input: input.to_owned(),
-                event: e.0,
-            })
-            .collect();
+            let res = guesses
+                .into_iter()
+                .map(|e| PossibleToent {
+                    input: input.to_owned(),
+                    event: e.0,
+                })
+                .collect();
 
-        res
+            res
+        } else {
+            vec![]
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-
-    use crate::toent::EventBuilder;
+    use std::fmt::Debug;
 
     use super::PossibleToent;
 
+    fn print_and_compare<T: Debug + PartialEq>(t1: T, t2: T) {
+        println!("===================");
+        println!("t1: {t1:?}");
+        println!("t2: {t2:?}");
+        assert!(t1 == t2)
+    }
+    fn t_same(guess: &str, standard: &str) {
+        print_and_compare(
+            PossibleToent::guess(guess).get(0).map(|e| &e.event),
+            PossibleToent::from_standard(standard)
+                .ok()
+                .as_ref()
+                .map(|e| &e.event),
+        );
+    }
+
     #[test]
     fn test() {
-        let r = PossibleToent::from_standard("TODO");
-        println!("{:?}", r);
-
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 ..5d ,10H **10d =10d");
-        println!("{:?}", r.unwrap().event.standard_str());
-
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H **10d =10d");
-        println!("{:?}", r.unwrap().event.standard_str());
-
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H **10d =10d");
-        println!("{:?}", r.unwrap().event.standard_str());
-
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 -8:00 .*5d ,10H =10t **10d =10d");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r =
-            PossibleToent::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12 **10d =10d");
-        println!("{:?}", r.unwrap().event.standard_str());
-
-        let r = PossibleToent::from_standard(
-            "2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12-12 12:00 **10d =10d",
+        t_same("done", "DONE");
+        t_same("ns 2025-12-26", "农 2025-12-26");
+        t_same("ns 2025-12-26 =10d", "农 2025-12-26 =10d");
+        t_same(
+            "2025-12-26 12:00:00 +8:00 =2025-12-27 12:00:00",
+            "2025-12-26 12:00:00 +8:00 =2025-12-27 12:00:00",
         );
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =10m **10d =10d");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00 +8:00");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12 12:00:00");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12 12:00");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12 12");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02");
-        println!("{:?}", r.unwrap().event.standard_str());
-        let r = PossibleToent::from_standard("2024-02-12");
-        println!("{:?}", r.unwrap().event.standard_str());
-
-        let r = PossibleToent::guess("todo");
-        println!("{:?}", r);
-        let r = PossibleToent::guess("now ..5d ,10H =10m **10d =10d");
-        println!("{:?}", r);
+        println!("{:?}", PossibleToent::guess("2502-12"))
     }
 }

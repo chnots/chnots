@@ -2,12 +2,12 @@ use std::fmt;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::{model::todo::TodoEvent, toent::retain_not_empty_parts};
+use crate::model::todo::TodoEvent;
 
 use super::PossibleScore;
-use super::{timeevent::TimeEvent, EventBuilder, GuessType};
+use super::{timeevent::TimeEvent, EventBuilder, RawInputSegs};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum EventEnum {
     Time(TimeEvent),
     Todo(TodoEvent),
@@ -40,7 +40,7 @@ impl<'de> Deserialize<'de> for EventEnum {
             where
                 E: de::Error,
             {
-                EventEnum::from_standard(retain_not_empty_parts(value).as_slice())
+                EventEnum::from_standard(&RawInputSegs::from(value))
                     .map_err(|e| de::Error::custom(e))
             }
         }
@@ -62,14 +62,27 @@ impl From<TodoEvent> for EventEnum {
 }
 
 impl EventBuilder for EventEnum {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        let todo_vec = TodoEvent::guess(input);
-        let time_vec = TimeEvent::guess(input);
-
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
         let mut result = vec![];
-        result.extend(todo_vec.into_iter().map(|(v1, v2)| (v1.into(), v2)));
-        result.extend(time_vec.into_iter().map(|(v1, v2)| (v1.into(), v2)));
-        result
+        if gt.is_empty() {
+            result.push((TodoEvent::Todo.into(), PossibleScore::Maybe(0)));
+            result.push((TimeEvent::now().into(), PossibleScore::Maybe(0)));
+        }
+        if let Some(todo_vec) = TodoEvent::guess(gt) {
+            result.extend(
+                todo_vec
+                    .into_iter()
+                    .map(|(event, score)| (event.into(), score)),
+            );
+        }
+        if let Some(time_vec) = TimeEvent::guess(gt) {
+            result.extend(
+                time_vec
+                    .into_iter()
+                    .map(|(event, score)| (event.into(), score)),
+            );
+        }
+        Some(result)
     }
 
     fn is_valid(&self) -> bool {
@@ -79,31 +92,22 @@ impl EventBuilder for EventEnum {
         }
     }
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let event: EventEnum;
-        if let Ok(v) = TodoEvent::from_standard(segs) {
-            event = v.into();
+        if let Ok(todo_event) = TodoEvent::from_standard(gt) {
+            event = todo_event.into();
+        } else if let Ok(time_event) = TimeEvent::from_standard(gt) {
+            event = time_event.into();
         } else {
-            match TimeEvent::from_standard(segs) {
-                Ok(v) => {
-                    event = v.into();
-                }
-                Err(err) => {
-                    anyhow::bail!(
-                        "input {:?} could not be parsed by todo enum or time enum: {}",
-                        segs,
-                        err
-                    );
-                }
-            }
-        }
+            anyhow::bail!("input {gt:?} could not be parsed by todo enum or time enum",);
+        };
         Ok(event)
     }
 
     fn standard_str(&self) -> String {
         match self {
-            EventEnum::Time(v) => v.standard_str(),
-            EventEnum::Todo(v) => v.standard_str(),
+            EventEnum::Time(v) => v.standard_str().trim().to_owned(),
+            EventEnum::Todo(v) => v.standard_str().trim().to_owned(),
         }
     }
 }

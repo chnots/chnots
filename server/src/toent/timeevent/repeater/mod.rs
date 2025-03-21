@@ -1,55 +1,59 @@
-use std::str::FromStr;
-
-use strum::{AsRefStr, EnumString};
+use chin_tools::AResult;
+use strum::AsRefStr;
 
 pub mod endconditon;
 pub mod interval;
+pub mod timers;
 
 use self::{endconditon::EndCondition, interval::TimeInterval};
-use super::PossibleScore;
-use crate::toent::{EventBuilder, GuessType};
+use super::{InputSegs, PossibleScore};
+use crate::toent::{EventBuilder, RawInputSegs};
 
 use super::starts_any;
 
-#[derive(Clone, Debug, Default, EnumString, AsRefStr)]
+#[derive(Clone, Debug, Default, AsRefStr, PartialEq)]
 pub enum RepeatType {
     #[default]
-    #[strum(serialize = "..")]
-    OnceAfter, // ,,
-    #[strum(serialize = ",,")]
-    OnceBegin, // ..
-    #[strum(serialize = "**")]
-    RepeatEvent, // **
+    #[strum(serialize = ".")]
+    Once,
+    #[strum(serialize = "*")]
+    RepeatEvent,
     #[strum(serialize = ".*")]
-    RepeatTodo, // .*
+    RepeatTodo,
 }
 
-pub fn is_repeater_start(input: &str) -> bool {
-    input.starts_with(",,")
-        || input.starts_with("..")
-        || input.starts_with("**")
-        || input.starts_with(".*")
+impl TryFrom<Option<&str>> for RepeatType {
+    type Error = anyhow::Error;
+
+    fn try_from(s: Option<&str>) -> Result<Self, Self::Error> {
+        if let Some(s) = s {
+            let r = if s == RepeatType::Once.as_ref() {
+                RepeatType::Once
+            } else if s == RepeatType::RepeatEvent.as_ref() {
+                RepeatType::RepeatEvent
+            } else if s == RepeatType::RepeatTodo.as_ref() {
+                RepeatType::RepeatTodo
+            } else {
+                anyhow::bail!("unable to deser this: {}", s)
+            };
+
+            Ok(r)
+        } else {
+            Ok(Self::default())
+        }
+    }
 }
 
-pub fn is_repeater_seg(input: &str) -> bool {
-    is_repeater_start(input) || input.starts_with("=") || input.starts_with(",")
-}
-
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Repeater {
-    repeat_type: RepeatType,        // ..|,,|**|.*
-    interval: Option<TimeInterval>, // ..|,,|**|.*
-    alert: Option<TimeInterval>,    // ,
-    end_cond: Option<EndCondition>, // =
+    interval: Option<(TimeInterval, RepeatType)>,
+    alert: Option<TimeInterval>,
+    end_cond: Option<EndCondition>,
 }
-
-const TYPE_INTERVAL: i32 = 1;
-const TYPE_ALERT: i32 = 2;
-const TYPE_END: i32 = 3;
 
 impl Repeater {
     pub fn interval_start(seg: &str) -> bool {
-        starts_any(seg, &[",,", "..", "**", ".*"])
+        starts_any(seg, &[".", ".*", "*"])
     }
 
     pub fn alter_start(seg: &str) -> bool {
@@ -63,88 +67,59 @@ impl Repeater {
     pub fn repeater_start(seg: &str) -> bool {
         Self::interval_start(seg) || Self::alter_start(seg) || Self::end_start(seg)
     }
-}
 
-impl EventBuilder for Repeater {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        if let Ok(standard) = Self::from_standard(&input.segs) {
-            vec![(standard, PossibleScore::Likely(100))]
+    pub fn guess_from_segs(
+        interval: Option<&RawInputSegs>,
+        end: Option<&RawInputSegs>,
+        alert: Option<&RawInputSegs>,
+    ) -> Vec<(Self, PossibleScore)> {
+        if let Ok(segs) = Self::standard_from_segs(interval, end, alert) {
+            vec![(segs, PossibleScore::Likely(255))]
         } else {
             vec![]
         }
     }
 
-    fn is_valid(&self) -> bool {
-        true
-    }
-
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        if segs.is_empty() {
-            anyhow::bail!("Unable to parse {:?}", segs);
-        }
-
-        let mut interval = None;
-        let mut alert = None;
-        let mut end = None;
-        let mut rtype: RepeatType = Default::default();
-
-        let mut cur: (Vec<&str>, i32) = (vec![], -1);
-
-        let mut last: Option<(Vec<&str>, i32)> = None;
-
-        let mut builder = |olds: &mut Option<(Vec<&str>, i32)>| -> anyhow::Result<()> {
-            if let Some((segs_inner, last_type)) = olds {
-                if segs_inner.is_empty() {
-                    return Ok(());
-                }
-
-                if last_type == &TYPE_INTERVAL {
-                    interval = Some(TimeInterval::from_standard(&segs_inner.as_slice())?)
-                } else if last_type == &TYPE_ALERT {
-                    alert = Some(TimeInterval::from_standard(&segs_inner.as_slice())?)
-                } else if last_type == &TYPE_END {
-                    end = Some(EndCondition::from_standard(&segs_inner.as_slice())?)
-                }
-            }
-            Ok(())
+    pub fn standard_from_segs(
+        interval: Option<&RawInputSegs>,
+        end: Option<&RawInputSegs>,
+        alert: Option<&RawInputSegs>,
+    ) -> AResult<Self> {
+        let interval = if let Some(e) = interval {
+            let repeat_type = RepeatType::try_from(e.get(0).map(|e| e.text))?;
+            Some((TimeInterval::from_standard(&e)?, repeat_type))
+        } else {
+            None
         };
 
-        for ele in segs {
-            if Self::interval_start(ele) {
-                last.replace(cur);
-                cur = (vec![&ele[2..]], TYPE_INTERVAL);
+        let alert = if let Some(e) = alert {
+            Some(TimeInterval::from_standard(&e)?)
+        } else {
+            None
+        };
 
-                if let Ok(v) = RepeatType::from_str(&ele[..2]) {
-                    rtype = v;
-                }
-            } else if Self::alter_start(&ele) {
-                last.replace(cur);
-                cur = (vec![&ele[1..]], TYPE_ALERT);
-            } else if Self::end_start(&ele) {
-                last.replace(cur);
-                cur = (vec![&ele[1..]], TYPE_END);
-            } else {
-                cur.0.push(ele);
-            }
-
-            builder(&mut last)?;
-        }
-        builder(&mut last)?;
-        builder(&mut Some(cur))?;
+        let end = if let Some(e) = end {
+            Some(EndCondition::from_standard(&e)?)
+        } else {
+            None
+        };
 
         Ok(Repeater {
-            repeat_type: rtype,
             interval,
             alert,
             end_cond: end,
         })
     }
 
-    fn standard_str(&self) -> String {
-        let mut res = String::new();
-        res.push_str(self.repeat_type.as_ref());
+    pub fn is_valid(&self) -> bool {
+        true
+    }
 
-        if let Some(interval) = &self.interval {
+    pub fn standard_str(&self) -> String {
+        let mut res = String::new();
+
+        if let Some((interval, rt)) = &self.interval {
+            res.push_str(rt.as_ref());
             res.push_str(interval.standard_str().as_str());
         }
 
@@ -154,30 +129,9 @@ impl EventBuilder for Repeater {
         }
 
         if let Some(end_cond) = &self.end_cond {
-            res.push_str(" =");
             res.push_str(end_cond.standard_str().as_str());
         }
 
         res
-    }
-}
-
-#[cfg(test)]
-mod test {
-
-    use crate::toent::EventBuilder;
-
-    use super::Repeater;
-
-    #[test]
-    fn test() {
-        let v = Repeater::from_standard(&["..10d", ",10H", "=2t"]);
-        println!("{}", v.unwrap().standard_str());
-        let v = Repeater::from_standard(&["**10d", "=2022-12-23"]);
-        println!("{}", v.unwrap().standard_str());
-        let v = Repeater::from_standard(&[",,10d", "=3w"]);
-        println!("{}", v.unwrap().standard_str());
-        let v = Repeater::from_standard(&[".*20d", ",10H", "=2t"]);
-        println!("{}", v.unwrap().standard_str());
     }
 }

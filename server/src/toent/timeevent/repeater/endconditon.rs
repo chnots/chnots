@@ -1,51 +1,12 @@
-use once_cell::sync::Lazy;
-use regex::Regex;
-
 use super::interval::TimeInterval;
+pub use super::timers::Times;
 use super::PossibleScore;
-use crate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, GuessType};
+use crate::toent::{
+    timeevent::{timeenum::TimeEnum, InputSegs},
+    EventBuilder, RawInputSegs,
+};
 
-#[derive(Clone, Debug)]
-
-pub struct Times {
-    count: u32,
-}
-
-static TIMES_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\d+)t$");
-
-impl EventBuilder for Times {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        match Self::from_standard(&input) {
-            Ok(v) => vec![(v, PossibleScore::Likely(100))],
-            Err(_) => vec![],
-        }
-    }
-
-    fn is_valid(&self) -> bool {
-        true
-    }
-
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        if segs.len() != 1 {
-            anyhow::bail!("Times segs' count Should be 1: {:?}", segs);
-        }
-
-        match TIMES_REGEX.captures(segs[0]).map(|e| e.get(1)) {
-            Some(Some(v)) => Ok(Self {
-                count: u32::from_str_radix(v.as_str(), 10)?,
-            }),
-            _ => {
-                anyhow::bail!("unable to parse it: {:?}", segs)
-            }
-        }
-    }
-
-    fn standard_str(&self) -> String {
-        format!("{}t", self.count)
-    }
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum EndCondition {
     Times(Times),
     Interval(TimeInterval),
@@ -69,20 +30,20 @@ impl From<TimeEnum> for EndCondition {
 }
 
 impl EventBuilder for EndCondition {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
-        let mut value = vec![];
-        value.extend(
-            TimeEnum::guess(input)
-                .into_iter()
-                .map(|e| (e.0.into(), e.1)),
-        );
-        value.extend(
-            TimeInterval::guess(input)
-                .into_iter()
-                .map(|e| (e.0.into(), e.1)),
-        );
-        value.extend(Times::guess(input).into_iter().map(|e| (e.0.into(), e.1)));
-        value
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+        let input = gt.remove_first_prefix("=");
+
+        let mut result = vec![];
+        if let Some(v) = TimeEnum::guess(&input) {
+            result.extend(v.into_iter().map(|e| (e.0.into(), e.1)));
+        }
+        if let Some(v) = TimeInterval::guess(&input) {
+            result.extend(v.into_iter().map(|e| (e.0.into(), e.1)));
+        }
+        if let Some(v) = Times::guess(&input) {
+            result.extend(v.into_iter().map(|e| (e.0.into(), e.1)));
+        }
+        Some(result)
     }
 
     fn is_valid(&self) -> bool {
@@ -93,23 +54,30 @@ impl EventBuilder for EndCondition {
         }
     }
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        if segs.is_empty() {
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+        if gt.is_empty() {
             anyhow::bail!("end condition should not be empty");
         }
-        if let Ok(v) = TimeEnum::from_standard(segs) {
+        if gt.get(0).map_or(false, |e| !e.starts_with("=")) {
+            anyhow::bail!("the end condition should start with =")
+        }
+
+        let gt = gt.remove_first_prefix("=");
+
+        if let Ok(v) = TimeEnum::from_standard(&gt) {
             Ok(v.into())
-        } else if let Ok(v) = TimeInterval::from_standard(segs) {
+        } else if let Ok(v) = TimeInterval::from_standard(&gt) {
             Ok(v.into())
-        } else if let Ok(v) = Times::from_standard(segs) {
+        } else if let Ok(v) = Times::from_standard(&gt) {
             Ok(v.into())
         } else {
-            anyhow::bail!("unable to parse it into end condition: {:?}", segs)
+            anyhow::bail!("unable to parse it into end condition: {:?}", gt)
         }
     }
 
     fn standard_str(&self) -> String {
         let mut res = String::new();
+        res.push('=');
         let v = match self {
             EndCondition::Times(v) => v.standard_str(),
             EndCondition::Interval(v) => v.standard_str(),
@@ -119,5 +87,60 @@ impl EventBuilder for EndCondition {
         res.push_str(v.as_str());
 
         res
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::toent::{
+        timeevent::{
+            repeater::{endconditon::Times, interval::TimeInterval},
+            timeenum::{westen::WesTime, TimeEnum},
+        },
+        EventBuilder,
+    };
+
+    use super::EndCondition;
+
+    #[test]
+    fn test_standard_str() {
+        assert_eq!(
+            EndCondition::Interval(TimeInterval::from_standard(&"3d".into()).unwrap())
+                .standard_str(),
+            "=3d"
+        );
+        assert_eq!(
+            EndCondition::Time(TimeEnum::from_standard(&"2025-12-25".into()).unwrap())
+                .standard_str(),
+            "=2025-12-25"
+        );
+        assert_eq!(
+            EndCondition::Times(Times::from_standard(&"10t".into()).unwrap()).standard_str(),
+            "=10t"
+        );
+    }
+
+    #[test]
+    fn test_interval() {
+        assert!(
+            EndCondition::guess(&"=10d".into()).unwrap().get(0).unwrap().0
+                == EndCondition::Interval(TimeInterval::from_standard(&"10d".into()).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_time() {
+        assert_eq!(
+            EndCondition::guess(&"=2025-12-12".into()).unwrap().get(0).unwrap().0,
+            EndCondition::from_standard(&"=2025-12-12".into()).unwrap()
+        );
+
+        assert_eq!(
+            EndCondition::guess(&"=2025-12-12 12:00:00".into()).unwrap()
+                .get(0)
+                .unwrap()
+                .0,
+            EndCondition::from_standard(&"=2025-12-12 12:00:00".into()).unwrap()
+        );
     }
 }

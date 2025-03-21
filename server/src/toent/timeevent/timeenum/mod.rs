@@ -5,44 +5,53 @@ pub mod westen;
 use chrono::{DateTime, Utc};
 
 use self::{chinese::ChnTime, westen::WesTime};
-use super::PossibleScore;
-use crate::toent::{EventBuilder, GuessType};
+use super::{InputSegs, PossibleScore};
+use crate::toent::{EventBuilder, RawInputSegs};
 
-pub trait TimestampNow {
+pub trait Timestamp {
+    fn to_utc_timestamp(&self) -> DateTime<Utc>;
+
+    fn calender_type(&self) -> &'static str;
+
     fn now_time() -> Self;
     fn now_date() -> Self;
 }
 
-pub trait Timestamp {
-    fn to_wes_timestamp(&self) -> DateTime<Utc>;
-
-    fn calender_type(&self) -> &'static str;
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 
 pub enum TimeEnum {
     Wes(WesTime),
     Chn(ChnTime),
 }
 
+impl From<ChnTime> for TimeEnum {
+    fn from(value: ChnTime) -> Self {
+        Self::Chn(value)
+    }
+}
+
 impl EventBuilder for TimeEnum {
-    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
+    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
         let mut result: Vec<(TimeEnum, PossibleScore)> = vec![];
-        let wes: Vec<(Self, PossibleScore)> = WesTime::guess(input)
-            .into_iter()
-            .map(|(v, p)| (TimeEnum::Wes(v), p))
-            .collect();
+        if gt.len() <= 2 {
+            result.push((ChnTime::now_date().into(), PossibleScore::Maybe(0)));
+            result.push((ChnTime::now_time().into(), PossibleScore::Maybe(0)));
+        }
 
-        let chn: Vec<(Self, PossibleScore)> = ChnTime::guess(input)
-            .into_iter()
-            .map(|(v, p)| (TimeEnum::Chn(v), p))
-            .collect();
+        if let Some(vs) = WesTime::guess(gt) {
+            let wes: Vec<(Self, PossibleScore)> =
+                vs.into_iter().map(|(v, p)| (TimeEnum::Wes(v), p)).collect();
+            result.extend(wes);
+        }
 
-        result.extend(wes);
-        result.extend(chn);
+        if let Some(vs) = ChnTime::guess(gt) {
+            let chn: Vec<(Self, PossibleScore)> =
+                vs.into_iter().map(|(v, p)| (TimeEnum::Chn(v), p)).collect();
 
-        result
+            result.extend(chn);
+        }
+
+        Some(result)
     }
 
     fn is_valid(&self) -> bool {
@@ -52,15 +61,15 @@ impl EventBuilder for TimeEnum {
         }
     }
 
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        if let Ok(res) = WesTime::from_standard(segs) {
+    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+        if let Ok(res) = WesTime::from_standard(gt) {
             Ok(Self::Wes(res))
-        } else if let Ok(res) = ChnTime::from_standard(segs) {
+        } else if let Ok(res) = ChnTime::from_standard(gt) {
             Ok(Self::Chn(res))
         } else {
             anyhow::bail!(
                 "Unable to parse it from chinese and westen calendar {:?}",
-                segs
+                gt
             )
         }
     }
