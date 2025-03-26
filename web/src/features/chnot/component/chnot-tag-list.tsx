@@ -30,7 +30,7 @@ function ChnotTagList() {
           setHasNextPage(false);
         }
         setStartIndex(startIndex + tags.data.length);
-        setTagList(tags.data);
+        setTagList((prev) => [...prev.slice(0, startIndex), ...tags.data]);
         setIsFetchingNextPage(false);
       }
     })();

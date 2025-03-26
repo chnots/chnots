@@ -169,6 +169,15 @@ impl ChnotMapper for Postgres {
         self.chnot_tag_delete(vec![&chnot.meta_id]).await?;
 
         let tags = get_hashtags(&chnot.content);
+        if tags.is_empty() {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: req.namespace.clone(),
+                tag: "_Untagged".to_owned(),
+                chnot_meta_id: chnot.meta_id.clone(),
+                insert_time: Utc::now().fixed_offset(),
+            }).await?;
+        }
         for tag in tags {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
@@ -178,6 +187,7 @@ impl ChnotMapper for Postgres {
                 insert_time: Utc::now().fixed_offset(),
             }).await?;
         }
+
 
         Ok(ChnotOverwriteRsp {
             chnot: Chnot {

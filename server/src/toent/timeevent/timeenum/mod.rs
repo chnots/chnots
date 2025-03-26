@@ -5,7 +5,7 @@ pub mod westen;
 use chrono::{DateTime, Utc};
 
 use self::{chinese::ChnTime, westen::WesTime};
-use super::{InputSegs, PossibleScore};
+use super::PossibleScore;
 use crate::toent::{EventBuilder, RawInputSegs};
 
 pub trait Timestamp {

@@ -81,6 +81,7 @@ textdistance = "*"
 base64 = "0.22.1"
 deadpool-sqlite = "0.10.0"
 chinese-lunisolar-calendar = "*"
+itertools = "0.14.0"
 
 
 [features]
