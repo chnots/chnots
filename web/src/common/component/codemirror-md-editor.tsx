@@ -15,6 +15,9 @@ import { useAttachmentStore } from "@/store/attchment/store";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 
+import { indentationMarkers } from '@replit/codemirror-indentation-markers';
+import { wrappedLineIndent } from 'codemirror-wrapped-line-indent';
+
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
     // adopted from https://github.com/Zettlr/Zettlr/blob/develop/source/common/modules/markdown-editor/plugins/md-paste-drop-handlers.ts
@@ -105,6 +108,9 @@ const editorTheme = EditorView.theme({
   ".cm-content": {
     padding: "1em",
   },
+  ".cm-lineWrapping": {
+    wordBreak: "break-all"
+  }
 });
 
 export const markdownKeymap: readonly KeyBinding[] = [
@@ -145,7 +151,9 @@ const CodeMirrorEditor = ({
       override: [
         (context) => autoCompletion(context),
       ],
-    })
+    }),
+    indentationMarkers(),
+    wrappedLineIndent
   ];
 
   useEffect(() => {
