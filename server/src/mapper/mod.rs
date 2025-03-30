@@ -139,7 +139,7 @@ pub trait KVMapper {
 }
 
 pub trait DumpMapper {
-    type RowType;
+    type RowType<'a>;
 
     async fn dump_and_callback(&self, callback: &TableRowCallbackEnum) -> EResult;
 
@@ -150,7 +150,7 @@ pub trait DumpMapper {
         writer: &TableRowCallbackEnum,
     ) -> EResult
     where
-        F1: Fn(Self::RowType) -> AResult<O>;
+        F1: Fn(Self::RowType<'a>) -> AResult<O>;
 }
 
 pub trait DeserializeMapper {

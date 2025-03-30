@@ -38,7 +38,8 @@ const chnotCompletions = async (context: CompletionContext): Promise<CompletionR
   } else {
     return null;
   }
-  console.debug("options: ", options)
+
+  options.sort((e1,e2)=> e1.label.length - e2.label.length)
 
   return {
     from: word.from,

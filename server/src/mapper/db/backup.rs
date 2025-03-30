@@ -15,7 +15,7 @@ use super::sql::PlaceHolderType;
 use super::Postgres;
 
 impl DumpMapper for Postgres {
-    type RowType = Row;
+    type RowType<'a> = Row;
 
     async fn dump_and_callback(
         &self,
@@ -63,7 +63,7 @@ impl DumpMapper for Postgres {
         callback: &TableRowCallbackEnum,
     ) -> EResult
     where
-        F1: Fn(Self::RowType) -> AResult<O>,
+        F1: Fn(Self::RowType<'a>) -> AResult<O>,
     {
         let table_name = sql_builder.table_name.clone();
 

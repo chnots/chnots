@@ -40,7 +40,7 @@ const Navigation = ({
     title: t("LLM Chat"),
     icon: <Icon.Bot className="w-6 h-auto opacity-70 shrink-0" />,
   };
-  const toentNavLink: NavLinkItem = {
+/*   const toentNavLink: NavLinkItem = {
     id: "header-toent",
     path: RoutePaths.Toents,
     title: t("Toents"),
@@ -53,13 +53,19 @@ const Navigation = ({
     path: RoutePaths.Settings,
     title: t("Settings"),
     icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
+  }; */
+  const timerNavLink: NavLinkItem = {
+    id: "header-timer",
+    path: RoutePaths.Timer,
+    title: t("Timer"),
+    icon: <Icon.Timer className="w-6 h-auto opacity-70 shrink-0" />,
   };
+
 
   const navLinks: NavLinkItem[] = [
     chnotNavLink,
     llmChatNavLink,
-    toentNavLink,
-    settingsNavLink,
+    timerNavLink
   ];
 
   return (

@@ -402,7 +402,7 @@ impl ChnotMapper for Postgres {
                 Wheres::if_some(query, |query| Wheres::ilike("tag", query)),
                 Wheres::equal("namespace", ns),
             ]))
-            .raw("order by tag desc")
+            .raw("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index))
             .build(&mut PlaceHolderType::dollar_number())
             .context("Unable to build args")?;

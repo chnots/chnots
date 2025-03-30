@@ -17,6 +17,8 @@ import { autocompletion } from "@codemirror/autocomplete";
 
 import { indentationMarkers } from '@replit/codemirror-indentation-markers';
 import { wrappedLineIndent } from 'codemirror-wrapped-line-indent';
+import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view"
+
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -110,6 +112,12 @@ const editorTheme = EditorView.theme({
   },
   ".cm-lineWrapping": {
     wordBreak: "break-all"
+  },
+  ".hashtag": {
+    border: "1px solid #602533",
+    padding: "1px",
+    borderRadius: "0.2em",
+    color: "#682d4b"
   }
 });
 
@@ -137,14 +145,28 @@ const CodeMirrorEditor = ({
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
   const [content, setContent] = useState<string>();
 
+
+  const mentionDeco = Decoration.mark({ class: "mention" })
+  const tagDeco = Decoration.mark({ class: "hashtag" })
+  const highlightDeco = Decoration.mark({ class: "highlight" })
+  const decorator = new MatchDecorator({
+    regexp: /(@\w+)|(::.*?::)|(#[^ #[\]]+)/g,
+    decoration: m => m[1] ? mentionDeco : m[2] ? highlightDeco : tagDeco
+  })
+
+  const markPlugin = ViewPlugin.define(view => ({
+    decorations: decorator.createDeco(view),
+    update(u) { this.decorations = decorator.updateDeco(u, this.decorations) }
+  }), {
+    decorations: v => v.decorations
+  });
+
   const md = markdown({
     base: markdownLanguage,
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: true,
-
   });
-
 
   const _extensions = [md, EditorView.lineWrapping, editorTheme, eventHandlers,
     autocompletion({
@@ -153,7 +175,8 @@ const CodeMirrorEditor = ({
       ],
     }),
     indentationMarkers(),
-    wrappedLineIndent
+    wrappedLineIndent,
+    markPlugin.extension
   ];
 
   useEffect(() => {

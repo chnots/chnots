@@ -8,6 +8,7 @@ import App from "@/app";
 import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
 import LLMChatPage from "./features/llmchat/page/llmchat";
+import FullScreenTimer from "./features/timer/timer";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -15,6 +16,7 @@ export enum RoutePaths {
   Toents = "/toents",
   LLMChat = "/llmchat",
   Settings = "/settings",
+  Timer = "/timer"
 }
 
 const routes: RouteObject[] = [
@@ -48,6 +50,10 @@ const routes: RouteObject[] = [
         path: RoutePaths.Settings,
         element: <SettingsPage />,
       },
+      {
+        path: RoutePaths.Timer,
+        element: <FullScreenTimer />
+      }
     ],
   },
 ];
