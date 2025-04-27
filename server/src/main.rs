@@ -61,7 +61,7 @@ async fn main() -> EResult {
                 info!("Begin to backup.");
                 state
                     .mapper
-                    .dump_and_backup(&TableRowCallbackEnum::File(worker))
+                    .dump_and_callback(&TableRowCallbackEnum::File(worker))
                     .await
                     .unwrap();
                 info!("Finished to backup.");

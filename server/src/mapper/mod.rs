@@ -3,7 +3,7 @@ pub mod dump;
 pub mod mappertype;
 
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use db::{Postgres, PostgresConfig};
+use db::postgres::{Postgres, PostgresConfig};
 use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
 use serde::{Deserialize, Serialize};
 
