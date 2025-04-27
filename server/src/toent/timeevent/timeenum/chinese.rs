@@ -4,7 +4,6 @@ use num_traits::ToPrimitive;
 
 use super::PossibleScore;
 use super::{base::BaseTime, Timestamp};
-use crate::mapper::db::sqlite::sqltype::Timestamptz;
 use crate::toent::{timeevent::contains_any, EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq, Default)]

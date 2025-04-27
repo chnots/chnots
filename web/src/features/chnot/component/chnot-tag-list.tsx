@@ -9,7 +9,7 @@ import KButton from "@/common/component/kbutton";
 import Icon from "@/common/component/icon";
 
 function ChnotTagList() {
-  const { setTagKeyword, setCurrentChnot, tagKeyword, refreshChnots } = useChnotStore();
+  const { setTagKeyword, setCurrentChnotMetaId: setCurrentChnot, tagKeyword, refreshChnots } = useChnotStore();
 
   const [keyword, setKeyword] = useState<string>();
   const [isFetchingNextPage, setIsFetchingNextPage] = useState<boolean>(false);

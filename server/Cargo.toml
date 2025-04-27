@@ -62,8 +62,10 @@ uuid = "1.11.0"
 
 lazy-regex = "3.4.1"
 
-# chin-tools = { git = "https://github.com/aeghn/chin-tools", features = ["postgres"]}
-chin-tools = { path = "/home/chin/Projects/chin-tools", features = ["postgres"]}
+chin-tools = { path = "/home/chin/Projects/chin-tools/crates/chin-tools"}
+chin-sql = { path = "/home/chin/Projects/chin-tools/crates/chin-sql"}
+chin-tools-base = { path = "/home/chin/Projects/chin-tools/crates/chin-tools-base"}
+
 anyhow = { version = "1", features = ["backtrace"] }
 strum = "0.26.3"
 strum_macros = "0.26.4"

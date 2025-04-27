@@ -6,9 +6,10 @@ use chin_tools::{
 use crate::model::{db::namespace::NamespaceRelation, dto::InsertInlineResourceRsp};
 
 use super::{
-    db::postgres::Postgres, dump::TableRowCallbackEnum, ChnotDeletionRsp, ChnotMapper,
-    ChnotOverwriteReq, ChnotOverwriteRsp, DumpMapper, KVMapper, LLMChatMapper, MapperConfig,
-    MapperType, NamespaceMapper, ResourceMapper,
+    db::{postgres::Postgres, sqlite::Sqlite},
+    dump::RecordCallbackEnum,
+    ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp, DumpMapper, KVMapper,
+    LLMChatMapper, MapperConfig, MapperType, NamespaceMapper, ResourceMapper,
 };
 
 use crate::model::{
@@ -21,7 +22,11 @@ impl Into<AResult<MapperType>> for MapperConfig {
         match self {
             MapperConfig::Postgres(config) => {
                 let pg = Postgres::new(config)?;
-                Ok(MapperType::Postgres(pg))
+                Ok(MapperType::KDb(super::db::KDb::Postgres(pg)))
+            }
+            MapperConfig::Sqlite(config) => {
+                let sqlite = Sqlite::new(config)?;
+                Ok(MapperType::KDb(super::db::KDb::Sqlite(sqlite)))
             }
         }
     }
@@ -49,7 +54,7 @@ impl MapperType {
 macro_rules! expand_mt_branch {
     ($self:ident.$method:ident($($arg:expr),*)) => {
         match $self {
-            MapperType::Postgres(db) => db.$method($($arg),*).await,
+            MapperType::KDb(db) => db.$method($($arg),*).await,
         }
     };
 }
@@ -270,7 +275,7 @@ impl LLMChatMapper for MapperType {
 }
 
 impl MapperType {
-    pub async fn dump_and_callback(&self, writer: &TableRowCallbackEnum) -> EResult {
+    pub async fn dump_and_callback(&self, writer: &RecordCallbackEnum) -> EResult {
         expand_mt_branch!(self.dump_and_callback(writer))
     }
 }

@@ -1,51 +1,25 @@
-use anyhow::Context;
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 
-use super::DeserializeMapper;
+use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver};
 use crate::{
     mapper::ResourceMapper,
     model::{
         db::resource::{InlineResource, Resource},
         dto::{InsertInlineResourceRsp, KReq, QueryInlineResourceRsp},
     },
-    to_sql,
 };
 
-use super::sql::{PlaceHolderType, SqlSegBuilder, Wheres};
-use super::Postgres;
+use chin_sql::{SqlInserter, SqlSegBuilder, Wheres};
 
-impl ResourceMapper for Postgres {
+impl ResourceMapper for KDb {
     async fn ensure_table_resource(&self) -> EResult {
-        self.create_table(
-            "create table IF NOT EXISTS resources (
-    id VARCHAR(40) PRIMARY KEY,
-
-    namespace VARCHAR(100) NOT NULL,
-    ori_filename VARCHAR(300) NOT NULL,
-
-    content_type VARCHAR(100) NOT NULL,
-
-    delete_time TIMESTAMPTZ,
-    insert_time TIMESTAMPTZ NOT NULL
-)",
-        )
-        .await
+        self.create_table(Resource::table_creation_sql(self.db_type()))
+            .await
     }
 
     async fn ensure_table_inline_resource(&self) -> EResult {
-        self.create_table(
-            "create table IF NOT EXISTS inline_resource (
-    id VARCHAR(40) PRIMARY KEY,
-
-    name VARCHAR(300) NOT NULL,
-    content_type VARCHAR(100) NOT NULL,
-    content TEXT NOT NULL,
-    
-    delete_time TIMESTAMPTZ,
-    insert_time TIMESTAMPTZ NOT NULL
-)",
-        )
-        .await
+        self.create_table(InlineResource::table_creation_sql(self.db_type()))
+            .await
     }
 
     async fn insert_resource(&self, res: &Resource) -> AResult<Resource> {
@@ -58,49 +32,57 @@ impl ResourceMapper for Postgres {
             insert_time: _,
         } = res;
 
-        let stmt = self.pool.get().await?;
+        let conn = self.conn().await?;
 
-        let insert_time = chrono::Utc::now().to_owned();
+        let insert_time = chrono::Utc::now().to_owned().fixed_offset();
 
-        stmt.execute(
-            "insert into resources(id, namespace, ori_filename, content_type, insert_time) values ($1,$2,$3,$4, $5)",
-            &[&id, &namespace, &ori_filename, &content_type, &insert_time]
-        ).await
-            .map_err(|e| anyhow::Error::new(e))
-            .map(|_| Resource {
-                id: id.to_owned(),
-                namespace: namespace.to_owned(),
-                ori_filename: ori_filename.to_string(),
-                content_type: content_type.to_owned(),
-                insert_time,
-                delete_time: None,
-            })
+        conn.exec(
+            SqlInserter::new(Resource::table_name())
+                .fields(Resource::field_id(), id.to_owned())
+                .fields(Resource::field_ori_filename(), ori_filename.to_owned())
+                .fields(Resource::field_namespace(), namespace.to_owned())
+                .fields(Resource::field_content_type(), content_type.to_owned())
+                .fields(Resource::field_insert_time(), insert_time.to_owned()),
+        )
+        .await
+        .map(|_| Resource {
+            id: id.to_owned(),
+            namespace: namespace.to_owned(),
+            ori_filename: ori_filename.to_string(),
+            content_type: content_type.to_owned(),
+            insert_time: insert_time.fixed_offset(),
+            delete_time: None,
+        })
     }
 
     async fn query_resource_by_id(&self, id: &str) -> AResult<Resource> {
-        let stmt = self.pool.get().await?;
-        let row = stmt
-            .query_one("select * from resources where id = $1", &[&id])
+        let conn = self.conn().await?;
+        let res = conn
+            .qry_one(
+                SqlSegBuilder::new()
+                    .raw("select * from resources")
+                    .r#where(Wheres::equal(Resource::field_id(), id)),
+                |e| e.to_resource(),
+                false,
+            )
             .await?;
-
-        Self::to_resource(row)
+        Ok(res)
     }
 
     async fn insert_inline_resource(
         &self,
         req: &KReq<crate::model::dto::InsertInlineResourceReq>,
     ) -> anyhow::Result<InsertInlineResourceRsp> {
-        self.client().await?
-        .execute(
-            "insert into inline_resource(id, name, content, content_type, insert_time) values ($1,$2,$3,$4,$5)",
-            &[
-                &req.res.id,
-                &req.res.name,
-                &req.res.content,
-                &req.res.content_type,
-                &req.res.insert_time
-            ]
-        ).await?;
+        self.conn()
+            .await?
+            .exec(
+                SqlInserter::new(InlineResource::table_name())
+                    .fields(InlineResource::field_id(), &req.res.id)
+                    .fields(InlineResource::field_name(), &req.res.name)
+                    .fields(InlineResource::field_content(), &req.res.name)
+                    .fields(InlineResource::field_insert_time(), &req.res.insert_time),
+            )
+            .await?;
 
         Ok(InsertInlineResourceRsp {})
     }
@@ -117,31 +99,18 @@ impl ResourceMapper for Postgres {
                     Wheres::equal("content_type", e)
                 }),
                 Wheres::if_some(req.id.to_owned(), |e| Wheres::equal("id", e)),
-                Wheres::if_some(req.name_like.to_owned(), |e| Wheres::ilike("name", e)),
+                Wheres::if_some(req.name_like.to_owned(), |e| {
+                    Wheres::ilike("name", e, self.db_type())
+                }),
             ]))
-            .raw("order by insert_time desc")
-            .build(&mut PlaceHolderType::dollar_number())
-            .context("Unable to build args")?;
+            .raw("order by insert_time desc");
 
-        let res: AResult<Vec<InlineResource>> = self
-            .client()
+        let res = self
+            .conn()
             .await?
-            .query(query.seg.as_str(), to_sql!(query.values))
-            .await?
-            .iter()
-            .map(|t| {
-                let r = InlineResource {
-                    id: t.try_get("id")?,
-                    name: t.try_get("name")?,
-                    delete_time: t.try_get("delete_time")?,
-                    insert_time: t.try_get("insert_time")?,
-                    content: t.try_get("content")?,
-                    content_type: t.try_get("content_type")?,
-                };
-                Ok(r)
-            })
-            .collect();
+            .qry_list(query, |t| t.to_inline_resource())
+            .await?;
 
-        Ok(QueryInlineResourceRsp { res: res? })
+        Ok(QueryInlineResourceRsp { res })
     }
 }

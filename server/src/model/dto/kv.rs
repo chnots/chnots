@@ -1,11 +1,10 @@
-use chin_tools::shared_str::SharedStr;
 use serde::{Deserialize, Serialize};
 
 use crate::model::db::kv::KV;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct KVQueryReq {
-    pub key: SharedStr,
+    pub key: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -23,7 +22,7 @@ pub struct KVOverwriteRsp {}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct KVDeleteReq {
-    pub key: SharedStr,
+    pub key: String,
 }
 
 #[derive(Clone, Debug, Serialize)]

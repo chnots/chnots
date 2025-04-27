@@ -1,6 +1,5 @@
-use std::ops::Deref;
-
 use crate::{model::db::chnot::ChnotTag, toent::PossibleToent};
+use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 use crate::model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord};
@@ -28,16 +27,11 @@ pub struct ChnotUpdateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteReq {
-    pub chnot: ChnotRecord,
+    pub id: Option<String>,
+    pub meta_id: Option<String>,
+    pub content: String,
     pub kind: ChnotKind,
-}
-
-impl Deref for ChnotOverwriteReq {
-    type Target = ChnotRecord;
-
-    fn deref(&self) -> &Self::Target {
-        &self.chnot
-    }
+    pub insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

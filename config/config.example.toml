@@ -6,6 +6,10 @@ dbname = "chnotsdev"
 host = "localhost"
 port =  5555
 
+# [mapper]
+# type = "sqlite"
+# filepath = "/tmp/123.db"
+
 [server]
 port = 3012
 tls_key = "/home/chin/files/private/tls-keys/tls.key"

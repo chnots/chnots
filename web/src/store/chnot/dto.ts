@@ -24,8 +24,11 @@ export interface ChnotQueryRsp {
 }
 
 export interface ChnotOverwriteReq {
-  chnot: ChnotRecord;
-  kind: string;
+  id?: string,
+  meta_id?: string,
+  content: string,
+  kind: string,
+  insert_time: Date,
 }
 
 export interface ChnotOverwriteRsp {

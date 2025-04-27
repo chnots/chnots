@@ -3,9 +3,58 @@ import { ChnotMarkdownEditor } from "@/features/chnot/component/chnot-markdown-e
 import { useChnotStore } from "@/store/chnot/store";
 import { useCommonStore } from "@/store/common";
 import { useNamespaceStore } from "@/store/namespace";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ChnotTagList from "../component/chnot-tag-list";
+import { v4 as uuid } from 'uuid';
+import { Chnot } from "@/store/chnot/dto";
 
+/**
+ * This component is only to improve performance, that is to say, when 
+ * editor changes, the list should not be rerendered.
+ * 
+ * @returns Chnot Editor Container
+ */
+const ChnotEditorContainer = () => {
+  const { curMetaId, getCurrentChnot, setCurrentChnotMetaId } = useChnotStore();
+  // This state is used for decoupling global currentChnotMetaId and chnotEditorId.
+  // From user's opinion, I want to edit when I enter this page, there should not any other steps,
+  // like to click or something.
+  // Then if we create new records in the db, which could make many dirty data.
+  // Consider this: 
+  //   1. Insert into db and cache.
+  //   2. Highlight then editing chnot item in the list.
+  //   3. Do not disturb user's workflow  
+  // So to use a mid-state to decouple them.
+  const [chnotEditorId, setChnotEditorId] = useState<string>(uuid());
+
+  // Extract from ChnotMarkdownEditor. 
+  const [editorChnot, setEditorChnot] = useState<Chnot | undefined>(getCurrentChnot())
+
+  useEffect(() => {
+    if (curMetaId !== editorChnot?.meta.id) {
+      setChnotEditorId(curMetaId ?? uuid());
+      setEditorChnot(getCurrentChnot());
+    }
+  }, [curMetaId, setChnotEditorId, editorChnot, getCurrentChnot])
+
+  const updateEditorChnot = useCallback(async (chnot: Chnot) => {
+    setEditorChnot(chnot);
+    if (curMetaId !== chnot.meta.id) {
+      setCurrentChnotMetaId(chnot.meta.id);
+    }
+  }, [setCurrentChnotMetaId, setEditorChnot]);
+
+  return <div className="flex-1 justify-center items-center p-4">
+    <ChnotMarkdownEditor key={chnotEditorId} chnot={editorChnot} className="w-full max-w-3xl h-full" chnotChange={updateEditorChnot} />
+  </div>
+}
+
+/**
+ * Page for chnots, which is left and right layouted. 
+ * 
+ * Current there is only one chnot editor in the page, use multi webpages.
+ * @returns Chnot Page
+ */
 const ChnotPage = () => {
   const { refreshChnots } = useChnotStore();
   const { currentNamespace } = useNamespaceStore();
@@ -28,9 +77,7 @@ const ChnotPage = () => {
         </div>
       )}
 
-      <div className="flex-1 justify-center items-center p-4">
-        <ChnotMarkdownEditor className="w-full max-w-3xl h-full" />
-      </div>
+      <ChnotEditorContainer />
     </div>
   );
 };

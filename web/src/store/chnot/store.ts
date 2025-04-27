@@ -14,7 +14,7 @@ const getDefaultState = (): State => {
   return {
     fetchMoreChnots: () => {},
     refreshChnots: () => {},
-    chnotMap: new Map(),
+    chnotMapByMetaId: new Map(),
     pageSize: 20,
     query: undefined,
     isFetchingNextPage: false,
@@ -29,10 +29,20 @@ interface State {
 
   pageSize: number;
 
+  /**
+   * Current Query Input
+   */
   query?: string;
 
-  chnotMap: Map<string, Chnot>;
-  currentChnotIndex?: string;
+  /**
+   * Chnot Map by Chnot Meta Id
+   */
+  chnotMapByMetaId: Map<string, Chnot>;
+
+  /**
+   * Current Chnot Meta Id
+   */
+  curMetaId?: string;
 
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
@@ -59,16 +69,16 @@ export const useChnotStore = create(
       const read = get();
       const cs: ChnotQueryRsp = await chnotQuery({
         tag_keyword: read.tagKeyword,
-        start_index: read.chnotMap.size,
+        start_index: read.chnotMapByMetaId.size,
         page_size: read.pageSize,
         query: read.query,
       });
 
       set((state) => {
-        const arr = state.chnotMap;
+        const arr = state.chnotMapByMetaId;
 
         for (const c of cs.data) {
-          state.chnotMap.set(c.meta.id, c);
+          state.chnotMapByMetaId.set(c.meta.id, c);
         }
 
         return {
@@ -89,7 +99,7 @@ export const useChnotStore = create(
     },
     refreshChnots: async () => {
       set((state) => {
-        return { ...state, startIndex: 0, chnotMap: new Map() };
+        return { ...state, startIndex: 0, chnotMapByMetaId: new Map() };
       });
 
       await get().fetchMoreChnots();
@@ -102,21 +112,21 @@ export const useChnotStore = create(
         if (overwriteCache) {
           const chnot = value.chnot;
           set((state) => {
-            let cm = state.chnotMap;
+            let cm = state.chnotMapByMetaId;
             if (cm.has(chnot.meta.id)) {
               cm.set(chnot.meta.id, chnot);
             } else {
               cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
             }
-            return { ...state, chnotMap: cm };
+            return { ...state, chnotMapByMetaId: cm };
           });
         }
         return value;
       });
     },
-    setCurrentChnot: (chnot?: Chnot) => {
+    setCurrentChnotMetaId: (chnotMetaId?: string) => {
       set((state) => {
-        return { ...state, currentChnotIndex: chnot?.meta.id };
+        return { ...state, curMetaId: chnotMetaId };
       });
     },
     setTagKeyword: (tagKeyword?: string) => {
@@ -126,12 +136,12 @@ export const useChnotStore = create(
     },
     getCurrentChnot: () => {
       const read = get();
-      return read.currentChnotIndex
-        ? read.chnotMap.get(read.currentChnotIndex)
+      return read.curMetaId
+        ? read.chnotMapByMetaId.get(read.curMetaId)
         : undefined;
     },
     validateChnotCache: (toRemoves: string[]) => {
-      const map = get().chnotMap;
+      const map = get().chnotMapByMetaId;
 
       const toRemove2 = Array.from(
         map
@@ -158,10 +168,10 @@ export const useChnotStore = create(
       set((prev) => {
         return {
           ...prev,
-          chnotMap: map,
-          currentChnotIndex:
-            prev.currentChnotIndex && map.has(prev.currentChnotIndex)
-              ? prev.currentChnotIndex
+          chnotMapByMetaId: map,
+          curMetaId:
+            prev.curMetaId && map.has(prev.curMetaId)
+              ? prev.curMetaId
               : undefined,
         };
       });

@@ -3,9 +3,9 @@ pub mod dump;
 pub mod mappertype;
 
 use chin_tools::wrapper::anyhow::{AResult, EResult};
-use db::postgres::{Postgres, PostgresConfig};
-use dump::{tabledumpsql::TableDumpSql, TableRowCallbackEnum};
-use serde::{Deserialize, Serialize};
+use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
+use dump::RecordCallbackEnum;
+use serde::Deserialize;
 
 use crate::model::{
     db::{
@@ -13,7 +13,7 @@ use crate::model::{
         kv::KV,
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::{NamespaceRecord, NamespaceRelation},
-        resource::Resource,
+        resource::{InlineResource, Resource},
     },
     dto::{
         chnot::*, kv::*, llmchat::*, InsertInlineResourceReq, InsertInlineResourceRsp, KReq,
@@ -26,10 +26,12 @@ use crate::model::{
 pub enum MapperConfig {
     #[serde(rename = "postgres")]
     Postgres(PostgresConfig),
+    #[serde(rename = "sqlite")]
+    Sqlite(SqliteConfig),
 }
 
 pub enum MapperType {
-    Postgres(Postgres),
+    KDb(KDb),
 }
 
 pub trait ChnotMapper {
@@ -141,34 +143,24 @@ pub trait KVMapper {
 pub trait DumpMapper {
     type RowType<'a>;
 
-    async fn dump_and_callback(&self, callback: &TableRowCallbackEnum) -> EResult;
-
-    async fn read_iterator<'a, F1, O: Serialize>(
-        &self,
-        sql_builder: TableDumpSql<'a>,
-        convert_row_to_obj: F1,
-        writer: &TableRowCallbackEnum,
-    ) -> EResult
-    where
-        F1: Fn(Self::RowType<'a>) -> AResult<O>;
+    async fn dump_and_callback(&self, callback: &RecordCallbackEnum) -> EResult;
 }
 
 pub trait DeserializeMapper {
-    type RowType;
+    fn to_chnot_meta(self) -> AResult<ChnotMetadata>;
+    fn to_chnot_record(self) -> AResult<ChnotRecord>;
+    fn to_chnot_tag(self) -> AResult<ChnotTag>;
 
-    fn to_chnot_meta(row: Self::RowType) -> AResult<ChnotMetadata>;
-    fn to_chnot_record(row: Self::RowType) -> AResult<ChnotRecord>;
-    fn to_chnot_tag(row: Self::RowType) -> AResult<ChnotTag>;
+    fn to_llmchat_bot(self) -> AResult<LLMChatBot>;
+    fn to_llmchat_template(self) -> AResult<LLMChatTemplate>;
+    fn to_llmchat_session(self) -> AResult<LLMChatSession>;
+    fn to_llmchat_record(self) -> AResult<LLMChatRecord>;
 
-    fn to_llmchat_bot(row: Self::RowType) -> AResult<LLMChatBot>;
-    fn to_llmchat_template(row: Self::RowType) -> AResult<LLMChatTemplate>;
-    fn to_llmchat_session(row: Self::RowType) -> AResult<LLMChatSession>;
-    fn to_llmchat_record(row: Self::RowType) -> AResult<LLMChatRecord>;
+    fn to_namespace_record(self) -> AResult<NamespaceRecord>;
+    fn to_namespace_relation(self) -> AResult<NamespaceRelation>;
 
-    fn to_namespace_record(row: Self::RowType) -> AResult<NamespaceRecord>;
-    fn to_namespace_relation(row: Self::RowType) -> AResult<NamespaceRelation>;
+    fn to_resource(self) -> AResult<Resource>;
+    fn to_inline_resource(self) -> AResult<InlineResource>;
 
-    fn to_resource(row: Self::RowType) -> AResult<Resource>;
-
-    fn to_kv(row: Self::RowType) -> AResult<KV>;
+    fn to_kv(self) -> AResult<KV>;
 }

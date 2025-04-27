@@ -1,36 +1,32 @@
-use super::sql::{PlaceHolderType, SqlSegBuilder, Wheres};
-use anyhow::Context;
+use super::{
+    sql::{SqlSegBuilder, Wheres},
+    KDb, KDbBehaiver, KDbConnBehaiver, KDbRow,
+};
+use chin_sql::{SqlDeleter, SqlInserter};
 use chin_tools::AResult;
-use chrono::Local;
 
 use crate::{
-    mapper::{KVDeleteRsp, KVMapper},
-    model::dto::{
-        kv::{KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp},
-        KReq,
+    mapper::{DeserializeMapper, KVDeleteRsp, KVMapper},
+    model::{
+        db::kv::KV,
+        dto::{
+            kv::{KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp},
+            KReq,
+        },
     },
-    to_sql,
 };
 
-use super::DeserializeMapper;
-
-use super::Postgres;
-
-impl KVMapper for Postgres {
+impl KVMapper for KDb {
     async fn kv_overwrite(
         &self,
         req: KReq<KVOverwriteReq>,
     ) -> chin_tools::wrapper::anyhow::AResult<KVOverwriteRsp> {
-        self.client().await?
-        .execute(
-            "insert into kv(key, content, insert_time) values ($1,$2,$3) on conflict(key) do update set content = $2, update_time = $4",
-            &[
-                &req.kv.key,
-                &req.kv.value,
-                &req.kv.insert_time,
-                &Local::now().fixed_offset()
-            ]
-        ).await?;
+        let kv = &req.kv;
+        let inserter = SqlInserter::new(KV::table_name())
+            .fields(KV::field_key(), &kv.key)
+            .fields(KV::field_value(), &kv.value)
+            .fields(KV::field_insert_time(), &kv.insert_time);
+        self.conn().await?.exec(inserter).await?;
 
         Ok(KVOverwriteRsp {})
     }
@@ -38,20 +34,13 @@ impl KVMapper for Postgres {
     async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp> {
         let query = SqlSegBuilder::new()
             .raw("select * from kv")
-            .r#where(Wheres::and([Wheres::equal("key", req.key.as_str())]))
-            .build(&mut PlaceHolderType::dollar_number())
-            .context("Unable to build args")?;
+            .r#where(Wheres::and([Wheres::equal("key", req.key.as_str())]));
 
-        let row = self
-            .client()
+        let kv = self
+            .conn()
             .await?
-            .query_opt(&query.seg, to_sql!(query.values))
+            .qry_opt(query, |e| KDbRow::to_kv(e))
             .await?;
-
-        let kv = match row {
-            Some(row) => Some(Self::to_kv(row)?),
-            None => None,
-        };
 
         Ok(KVQueryRsp { kv })
     }
@@ -60,24 +49,17 @@ impl KVMapper for Postgres {
         &self,
         req: KReq<crate::mapper::KVDeleteReq>,
     ) -> AResult<crate::mapper::KVDeleteRsp> {
-        self.client()
-            .await?
-            .execute("delete form kv where key = $1", &[&req.key])
-            .await?;
+        let del =
+            SqlDeleter::new(KV::table_name()).r#where(Wheres::equal(KV::field_key(), &req.key));
+
+        self.conn().await?.exec(del).await?;
 
         Ok(KVDeleteRsp {})
     }
 
     async fn ensure_table_kv(&self) -> chin_tools::wrapper::anyhow::EResult {
-        self.create_table(
-            "CREATE TABLE IF NOT EXISTS kv (
-                key VARCHAR(300) PRIMARY KEY,
-                value TEXT NOT NULL,
-                update_time TIMESTAMPTZ,
-                insert_time TIMESTAMPTZ NOT NULL,
-            )",
-        )
-        .await?;
+        self.create_table(KV::table_creation_sql(self.db_type()))
+            .await?;
         Ok(())
     }
 }

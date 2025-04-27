@@ -8,7 +8,6 @@ use super::{
     base::{convert_time_to_secs, BaseTime},
     Timestamp,
 };
-use crate::toent::timeevent::InputSegs;
 use crate::toent::{timeevent::equals_any, EventBuilder, RawInputSegs};
 
 pub const CAL_TYPE: &str = "wes";

@@ -6,7 +6,7 @@ use config::Config;
 use mapper::{
     dump::{
         filedump::{BackupType, FileDumpWorker},
-        TableRowCallbackEnum,
+        RecordCallbackEnum,
     },
     MapperType,
 };
@@ -61,7 +61,7 @@ async fn main() -> EResult {
                 info!("Begin to backup.");
                 state
                     .mapper
-                    .dump_and_callback(&TableRowCallbackEnum::File(worker))
+                    .dump_and_callback(&RecordCallbackEnum::File(worker))
                     .await
                     .unwrap();
                 info!("Finished to backup.");

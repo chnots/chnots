@@ -10,7 +10,7 @@ function ChnotList({ keyword }: { keyword?: string }) {
     fetchMoreChnots,
     isFetchingNextPage,
     hasNextPage,
-    chnotMap,
+    chnotMapByMetaId,
     changeKeyword,
   } = useChnotStore();
 
@@ -27,7 +27,7 @@ function ChnotList({ keyword }: { keyword?: string }) {
         isFetchingNextPage={isFetchingNextPage}
         hasNextPage={hasNextPage}
       >
-        {[...chnotMap.values()].map((chnot) => (
+        {[...chnotMapByMetaId.values()].map((chnot) => (
           <ChnotListItem chnot={chnot} key={chnot.record.id} />
         ))}
       </KPageList>

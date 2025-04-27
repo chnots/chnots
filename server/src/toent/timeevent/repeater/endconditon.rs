@@ -1,10 +1,7 @@
 use super::interval::TimeInterval;
 pub use super::timers::Times;
 use super::PossibleScore;
-use crate::toent::{
-    timeevent::{timeenum::TimeEnum, InputSegs},
-    EventBuilder, RawInputSegs,
-};
+use crate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum EndCondition {
@@ -95,7 +92,7 @@ mod tests {
     use crate::toent::{
         timeevent::{
             repeater::{endconditon::Times, interval::TimeInterval},
-            timeenum::{westen::WesTime, TimeEnum},
+            timeenum::TimeEnum,
         },
         EventBuilder,
     };
@@ -123,7 +120,11 @@ mod tests {
     #[test]
     fn test_interval() {
         assert!(
-            EndCondition::guess(&"=10d".into()).unwrap().get(0).unwrap().0
+            EndCondition::guess(&"=10d".into())
+                .unwrap()
+                .get(0)
+                .unwrap()
+                .0
                 == EndCondition::Interval(TimeInterval::from_standard(&"10d".into()).unwrap())
         );
     }
@@ -131,12 +132,17 @@ mod tests {
     #[test]
     fn test_time() {
         assert_eq!(
-            EndCondition::guess(&"=2025-12-12".into()).unwrap().get(0).unwrap().0,
+            EndCondition::guess(&"=2025-12-12".into())
+                .unwrap()
+                .get(0)
+                .unwrap()
+                .0,
             EndCondition::from_standard(&"=2025-12-12".into()).unwrap()
         );
 
         assert_eq!(
-            EndCondition::guess(&"=2025-12-12 12:00:00".into()).unwrap()
+            EndCondition::guess(&"=2025-12-12 12:00:00".into())
+                .unwrap()
                 .get(0)
                 .unwrap()
                 .0,

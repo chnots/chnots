@@ -15,7 +15,7 @@ use tracing::info;
 
 use crate::app::ShareAppState;
 
-use super::TableRowCallback;
+use super::RowCallback;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct FileBackupConfig {
@@ -35,7 +35,7 @@ pub struct FileDumpWorker {
     config: FileBackupConfig,
 }
 
-impl TableRowCallback for FileDumpWorker {
+impl RowCallback for FileDumpWorker {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult {
         let obj = serde_json::to_string(&obj);
         if let Ok(obj) = obj {

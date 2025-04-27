@@ -8,11 +8,11 @@ import { chnotUpdate } from "@/store/chnot/service";
 
 const ChnotListItem = React.forwardRef(
   ({ chnot }: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
-    const { setCurrentChnot, getCurrentChnot, validateChnotCache } =
+    const { setCurrentChnotMetaId, getCurrentChnot, validateChnotCache } =
       useChnotStore();
 
     const handleClick = (_: React.MouseEvent) => {
-      setCurrentChnot(chnot);
+      setCurrentChnotMetaId(chnot.meta.id);
     };
 
     const currentChnot = getCurrentChnot();

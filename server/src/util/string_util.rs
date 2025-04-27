@@ -1,6 +1,6 @@
+use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use itertools::Itertools;
 
 static HASHTAG_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"#([^\s#]+)");
 

@@ -5,7 +5,7 @@ use self::eventenum::EventEnum;
 pub mod eventenum;
 pub mod timeevent;
 pub mod todoevent;
-use chin_tools::{wrapper::score::PossibleScore, AResult};
+use chin_tools::wrapper::score::PossibleScore;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug)]

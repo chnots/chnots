@@ -1,15 +1,16 @@
-use chin_tools::sql::{PlaceHolderType, SqlSeg, SqlSegBuilder, Wheres};
+use chin_sql::{DbType, IntoSqlSeg, PlaceHolderType, SqlSegBuilder, SqlSeg, Wheres};
+use chin_tools::AResult;
 
-pub struct TableDumpSql<'a> {
-    pub table_name: String,
+pub struct TableDumpSqlBuilder<'a> {
+    pub table_name: &'static str,
     start_seg: Option<Wheres<'a>>,
     end_seg: Option<Wheres<'a>>,
     ph_type: PlaceHolderType,
 }
 
-impl<'a> TableDumpSql<'a> {
+impl<'a> TableDumpSqlBuilder<'a> {
     pub fn new(
-        table_name: String,
+        table_name: &'static str,
         start_seg: Option<Wheres<'a>>,
         end_seg: Option<Wheres<'a>>,
         ph_type: PlaceHolderType,
@@ -22,17 +23,18 @@ impl<'a> TableDumpSql<'a> {
         }
     }
 
-    pub fn build(self) -> Option<SqlSeg<'a>> {
-        SqlSegBuilder::new()
+    pub fn build(self, db_type: DbType) -> AResult<SqlSeg<'a>> {
+        let sql = SqlSegBuilder::new()
             .raw("select * from")
-            .raw_owned(self.table_name)
+            .raw(self.table_name)
             .r#where(Wheres::and([
                 Wheres::if_some(self.start_seg, |e| e),
                 Wheres::if_some(self.end_seg, |e| e),
             ]))
-            .build(&mut match self.ph_type {
+            .into_sql_seg2(db_type, &mut match self.ph_type {
                 PlaceHolderType::QustionMark => PlaceHolderType::QustionMark,
                 PlaceHolderType::DollarNumber(_) => PlaceHolderType::DollarNumber(0),
-            })
+            })?;
+        Ok(sql)
     }
 }

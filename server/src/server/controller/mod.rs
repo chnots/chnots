@@ -49,9 +49,9 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
                 res
             }
             Err(err) => {
-                tracing::error!("Error Occured: {}", err.to_string());
+                tracing::error!("Error Occured: {}, {:#?}", err.to_string(), err.backtrace());
                 let mut res = Json(
-                    json!({"msg": err.to_string(), "backstrace": err.backtrace().to_string()}),
+                    json!({"msg": err.to_string()}),
                 )
                 .into_response();
                 *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;

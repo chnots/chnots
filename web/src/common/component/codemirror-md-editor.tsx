@@ -1,7 +1,7 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { EditorView, KeyBinding } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
-import CodeMirror, { Extension, type ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import {
   deleteMarkupBackward,
   insertNewlineContinueMarkup,
@@ -101,12 +101,12 @@ const editorTheme = EditorView.theme({
     background: "transparent !important",
   },
   // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
-  "&.cm-editor.cm-focused": {
+/*   "&.cm-editor.cm-focused": {
     outline: "none",
-  },
-  ".cm-line": {
+  }, */
+/*   ".cm-line": {
     background: "transparent !important",
-  },
+  }, */
   ".cm-content": {
     padding: "1em",
   },
@@ -128,23 +128,17 @@ export const markdownKeymap: readonly KeyBinding[] = [
 
 
 const CodeMirrorEditor = ({
-  id,
-  className,
-  height,
-  fetchDefaultValue,
-  onChangeRef,
+  content,
+  onContentChange,
   autoCompletion,
+  height,
 }: {
-    id: string;
-  className?: string;
-  height: number;
-    fetchDefaultValue: (id: string) => Promise<string | undefined>;
-    onChangeRef: RefObject<(metaId: string, content: string) => void>;
+    content?: string;
+    onContentChange: (content: string) => void;
     autoCompletion: (context: CompletionContext) => Promise<CompletionResult | null>,
+    height: number;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
-  const [content, setContent] = useState<string>();
-
 
   const mentionDeco = Decoration.mark({ class: "mention" })
   const tagDeco = Decoration.mark({ class: "hashtag" })
@@ -179,14 +173,6 @@ const CodeMirrorEditor = ({
     markPlugin.extension
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const content = await fetchDefaultValue(id);
-      setContent(content);
-    };
-    fetchData();
-  }, [setContent, id]);
-
   return (
     <CodeMirror
       height={`${height}px`}
@@ -202,7 +188,7 @@ const CodeMirrorEditor = ({
         foldGutter: true,
       }}
       placeholder={"Chnot"}
-      onChange={(e) => onChangeRef.current(id, e)}
+      onChange={(e) => onContentChange(e)}
     />
   );
 };

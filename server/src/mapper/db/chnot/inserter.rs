@@ -1,0 +1,224 @@
+use std::ops::Deref;
+
+use super::super::{sql::Wheres, KDb};
+use crate::{
+    mapper::{
+        db::{
+            chnot::{chnot_query_mapper, chnot_query_sql},
+            sqlite::wrapper::KDbConnBehaiverSync,
+            KDbBehaiver, KDbConnBehaiver, KDbRow,
+        },
+        ChnotMapper, DeserializeMapper,
+    },
+    model::{
+        db::chnot::*,
+        dto::{
+            chnot::{ChnotOverwriteReq, ChnotOverwriteRsp},
+            KReq,
+        },
+    },
+    util::string_util::get_hashtags,
+};
+use anyhow::anyhow;
+use chin_sql::{SqlInserter, SqlSegBuilder, SqlUpdater};
+use chin_tools::{
+    utils::id_util,
+    wrapper::anyhow::{AResult, EResult},
+    SharedStr,
+};
+
+use chrono::{DateTime, FixedOffset, TimeDelta, Utc};
+use tracing::info;
+
+#[derive(Clone)]
+enum MetaId {
+    Old(SharedStr),
+    New(SharedStr),
+}
+
+impl Deref for MetaId {
+    type Target = SharedStr;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            MetaId::Old(s) => s,
+            MetaId::New(s) => s,
+        }
+    }
+}
+
+impl MetaId {
+    fn to_str(&self) -> SharedStr {
+        SharedStr::new(self.deref().clone())
+    }
+}
+
+struct OldInfo {
+    id: String,
+    content: String,
+    insert_time: DateTime<FixedOffset>,
+}
+fn to_old_info(row: KDbRow<'_>) -> AResult<OldInfo> {
+    Ok(OldInfo {
+        id: row.try_get("id")?,
+        content: row.try_get("content")?,
+        insert_time: row.try_get_df("insert_time")?,
+    })
+}
+
+macro_rules! handle_insert {
+    ( $tx:expr, $meta_id:expr, $req:expr $(, $wait:tt)?) => {
+        let insert_rec = |id| SqlInserter::new(ChnotRecord::table_name())
+            .fields(ChnotRecord::field_id(), id)
+            .fields(ChnotRecord::field_insert_time(), &$req.insert_time)
+            .fields(ChnotRecord::field_meta_id(), (*$meta_id).clone())
+            .fields(ChnotRecord::field_content(), &$req.content);
+        // SQL operations
+        let insert_meta = SqlInserter::new(ChnotMetadata::table_name())
+            .fields(ChnotMetadata::field_id(), (*$meta_id).clone())
+            .fields(ChnotMetadata::field_insert_time(), &$req.insert_time)
+            .fields(ChnotMetadata::field_namespace(), &$req.namespace)
+            .fields(ChnotMetadata::field_kind(), $req.kind.as_ref());
+        let update_meta_utime = SqlUpdater::new(ChnotMetadata::table_name())
+            .set(ChnotMetadata::field_update_time(), &$req.insert_time)
+            .r#where(Wheres::equal(
+                ChnotMetadata::field_id(),
+                (*$meta_id).clone(),
+            ));
+        match $meta_id {
+            MetaId::Old(_) => {
+                // Query for existing record
+                let query_old_rec = SqlSegBuilder::new()
+                    .raw("select id, content, insert_time from chnot_record")
+                    .r#where(Wheres::and([
+                        Wheres::equal(ChnotRecord::field_meta_id(), (*$meta_id).clone()),
+                        Wheres::is_null(ChnotRecord::field_omit_time()),
+                    ]));
+
+                let update_rec = |id| {
+                    SqlUpdater::new(ChnotRecord::table_name())
+                        .set(ChnotRecord::field_content(), &$req.content)
+                        .set(ChnotRecord::field_insert_time(), &$req.insert_time)
+                        .r#where(Wheres::equal(ChnotRecord::field_id(), id))
+                };
+
+                let update_omit = SqlUpdater::new(ChnotRecord::table_name())
+                    .set(ChnotRecord::field_omit_time(), &$req.insert_time)
+                    .r#where(Wheres::equal(ChnotRecord::field_meta_id(), $meta_id.to_str()));
+
+                // Get old record info
+                let old_info = $tx.qry_opt(query_old_rec, |e| to_old_info(e))$(.$wait)??;
+                let Some(OldInfo {
+                    id: old_id,
+                    content: old_cont,
+                    insert_time: old_time,
+                }) = old_info else {
+                    return Err(anyhow::anyhow!("Old Chnot is absent"));
+                };
+
+                // Determine update strategy
+                let should_update =
+                    textdistance::str::sift4_simple(&old_cont, &$req.content) <= 50
+                    && $req.insert_time.signed_duration_since(old_time).abs() < TimeDelta::hours(1);
+
+                if should_update {
+                    $tx.exec_and_check(update_rec(old_id), |c| c == 1)$(.$wait)??;
+                } else {
+                    $tx.exec(update_omit)$(.$wait)??;
+                    $tx.exec(insert_rec(id_util::generate_uuid()))$(.$wait)??;
+                }
+            }
+            MetaId::New(_) => {
+                $tx.exec(insert_rec(id_util::generate_uuid()))$(.$wait)??;
+                $tx.exec(insert_meta)$(.$wait)??;
+            }
+        }
+
+        // Final update to metadata timestamp
+        $tx.exec_and_check(update_meta_utime, |c| c == 1)$(.$wait)??;
+
+        $tx.commit()$(.$wait)??;
+    };
+}
+
+impl KDb {
+    pub async fn chnot_overwrite(
+        &self,
+        req: KReq<ChnotOverwriteReq>,
+    ) -> AResult<ChnotOverwriteRsp> {
+        tracing::debug!("begin to overwrite chnot, {:?}", req.meta_id);
+
+        let meta_id = &req.meta_id;
+        let content = &req.content;
+        let namespace = req.namespace.clone();
+        let meta_id = match meta_id {
+            Some(id) => MetaId::Old(SharedStr::new(id)),
+            None => MetaId::New(SharedStr::new(id_util::generate_uuid())),
+        };
+
+        let content = SharedStr::new(content);
+        info!("meta id: {}", meta_id.as_str());
+
+        // 1. Query chnot by meta_id.
+        // 2. If chnot is existed.
+        // 3. Compare new and old, if we could just update it, update.
+        match self.conn().await? {
+            crate::mapper::db::KDbConn::Sqlite(db) => {
+                let meta_id = meta_id.to_owned();
+                let ins: Result<EResult, deadpool_sqlite::InteractError> = db
+                    .pool()
+                    .get()
+                    .await?
+                    .interact(move |conn| {
+                        let tx = conn.transaction().unwrap(); // TODO
+                        handle_insert!(tx, meta_id, req);
+                        Ok(())
+                    })
+                    .await;
+                ins.map_err(|e| anyhow!(e.to_string()))??;
+            }
+            crate::mapper::db::KDbConn::Postgres(mut db) => {
+                let tx = db.build_transaction().start().await?;
+                handle_insert!(tx, meta_id, req, await);
+            }
+        }
+
+        self.chnot_tag_delete(vec![&meta_id]).await?;
+
+        let tags = get_hashtags(&content);
+        if tags.is_empty() {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: namespace.clone(),
+                tag: "_Untagged".to_owned(),
+                chnot_meta_id: meta_id.to_string(),
+                insert_time: Utc::now().fixed_offset(),
+                category: ChnotTagType::Common,
+            })
+            .await?;
+        }
+        for tag in tags {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: namespace.clone(),
+                tag: tag.to_owned(),
+                chnot_meta_id: meta_id.to_string(),
+                insert_time: Utc::now().fixed_offset(),
+                category: ChnotTagType::Common,
+            })
+            .await?;
+        }
+
+        let query_sql = chnot_query_sql().r#where(Wheres::and([
+            Wheres::is_null("r.omit_time"),
+            Wheres::equal("m.id", meta_id.to_str()),
+        ]));
+        let chnot = self
+            .conn()
+            .await?
+            .qry_one(query_sql, chnot_query_mapper, true)
+            .await?;
+
+        Ok(ChnotOverwriteRsp { chnot: chnot })
+    }
+}

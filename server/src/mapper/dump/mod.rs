@@ -1,5 +1,4 @@
 pub mod filedump;
-pub mod tabledumpsql;
 
 use chin_tools::wrapper::anyhow::EResult;
 use filedump::FileDumpWorker;
@@ -22,20 +21,20 @@ impl<E: Serialize> DumpWrapper<E> {
     }
 }
 
-pub trait TableRowCallback {
+pub trait RowCallback {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult;
 }
 
-pub enum TableRowCallbackEnum {
+pub enum RecordCallbackEnum {
     File(FileDumpWorker),
     Network(),
 }
 
-impl TableRowCallback for TableRowCallbackEnum {
+impl RowCallback for RecordCallbackEnum {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult {
         match self {
-            TableRowCallbackEnum::File(file_dump_worker) => file_dump_worker.callback(obj).await,
-            TableRowCallbackEnum::Network() => todo!(),
+            RecordCallbackEnum::File(file_dump_worker) => file_dump_worker.callback(obj).await,
+            RecordCallbackEnum::Network() => todo!(),
         }
     }
 }

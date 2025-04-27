@@ -6,7 +6,7 @@ pub mod interval;
 pub mod timers;
 
 use self::{endconditon::EndCondition, interval::TimeInterval};
-use super::{InputSegs, PossibleScore};
+use super::PossibleScore;
 use crate::toent::{EventBuilder, RawInputSegs};
 
 use super::starts_any;

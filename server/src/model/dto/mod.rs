@@ -9,7 +9,6 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::{extract::Multipart, http::HeaderMap};
 
-use chin_tools::shared_str::SharedStr;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use super::db::resource::{InlineResource, Resource};
@@ -65,9 +64,9 @@ pub struct InsertInlineResourceRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryInlineResourceReq {
-    pub id: Option<SharedStr>,
-    pub content_type: Option<SharedStr>,
-    pub name_like: Option<SharedStr>,
+    pub id: Option<String>,
+    pub content_type: Option<String>,
+    pub name_like: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
