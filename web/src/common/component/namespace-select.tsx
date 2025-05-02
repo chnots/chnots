@@ -11,37 +11,38 @@ const NamespaceIcon = ({
   className?: string;
 }) => {
   if (name === "public") {
-    return <Icon.Globe2 className={clsx(className, "w-6 h-auto shrink-0")} />;
+    return <Icon.Globe2 className={clsx(className, "h-auto shrink-0")} />;
   } else if (name === "work") {
     return (
       <Icon.BriefcaseBusiness
-        className={clsx(className, "w-6 h-auto shrink-0")}
+        className={clsx(className, "h-auto shrink-0")}
       />
     );
   } else if (name === "private") {
-    return <Icon.Notebook className={clsx(className, "w-6 h-auto shrink-0")} />;
+    return <Icon.Notebook className={clsx(className, "h-auto shrink-0")} />;
   } else {
-    return <Icon.Dice1 className={clsx(className, "w-6 h-auto shrink-0")} />;
+    return <Icon.Dice1 className={clsx(className, "h-auto shrink-0")} />;
   }
 };
 
 export const NamespaceSelect = ({
   onSelect,
   currentNamespace,
+  className
 }: {
   onSelect: (namespace: string) => void;
   currentNamespace: string;
+    className?: string;
 }) => {
   const { namespaces } = useNamespaceStore();
   return (
     <Menu
       menuButton={
         <MenuButton>
-          <NamespaceIcon name={currentNamespace}></NamespaceIcon>
+          <NamespaceIcon name={currentNamespace} className={className}></NamespaceIcon>
         </MenuButton>
       }
       transition
-      className={"p-2"}
     >
       {namespaces().map((e) => (
         <MenuItem

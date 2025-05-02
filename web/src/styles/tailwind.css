@@ -28,6 +28,7 @@
   --secondary-foreground: hsl(24 9.8% 10%);
   --muted: hsl(60 4.8% 95.9%);
   --muted-foreground: hsl(25 5.3% 44.7%);
+  --editor: #fff;
   --accent: #ffffff;
   --accent-foreground: #000;
   --destructive: hsl(0 84.2% 60.2%);
@@ -91,6 +92,7 @@
   --color-ring: var(--ring);
 
   --color-radius: var(--radius);
+  --color-editor: var(--editor);
 }
 
 @layer utilities {

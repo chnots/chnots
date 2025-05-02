@@ -10,6 +10,7 @@ import { Chnot, ChnotOverwriteReq } from "@/store/chnot/dto";
 import { useChnotStore } from "@/store/chnot/store";
 import { chnotTagNames, chnotUpdate, toentGuess } from "@/store/chnot/service";
 import { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { Separator } from "@radix-ui/react-separator";
 
 enum RequestState {
   Saved,
@@ -121,47 +122,50 @@ export const ChnotMarkdownEditor = ({ chnot, className, chnotChange }: { classNa
   }, []);
 
   return (
-    <div className={clsx(className, "p-1 flex flex-col h-full")}>
-      <div className={"w-full flex-row flex space-x-2"}>
-        <div className="text-xs">
+    <div className={clsx(className, "flex flex-col h-full shadow-lg border kborder pt-2 rounded-t-xl bg-secondary")}>
+      <div className={"w-full flex items-center bg-secondary border-b kborder px-2 pb-1 justify-between"}>
+        <div className="text-xs flex space-x-2 p-1 kborder bg-accent border rounded-xl">
           {editState.requestState === RequestState.Requesting ? (
             <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
-              <Icon.Loader2 className="animate-spin h-5 w-5 mr-2" />
+              <Icon.Loader2 className="animate-spin h-5 w-5" />
             </div>
           ) : editState.requestState === RequestState.Error ? (
             <div className="flex items-center text-red-600 transition-opacity duration-300 ease-in-out opacity-100">
-              <Icon.LucideMessageCircleQuestion className="h-5 w-5 mr-2" />
+                <Icon.LucideMessageCircleQuestion className="h-5 w-5" />
             </div>
           ) : (
             <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
-              <Icon.CheckCircle className="h-5 w-5 mr-2" />
+                  <Icon.CheckCircle className="h-5 w-5" />
             </div>
           )}
-        </div>
-        {chnot && (
-          <NamespaceSelect
-            onSelect={(ns) => {
-              chnotUpdate({
-                meta_id: chnot.meta.id,
-                update_time: false,
-                namespace: ns,
-              }).then((_) => {
-                if (ns !== currentNamespace.name) {
-                  validateChnotCache([chnot.meta.id]);
-                }
-              });
 
-            }}
-            currentNamespace={chnot.meta.namespace}
-          />
-        )}
-        <div>{chnot?.meta.insert_time.toDateString()}</div>
-        <span>~</span>
-        <div>{chnot?.record.insert_time.toDateString()}</div>
+          {chnot && (
+            <NamespaceSelect
+              className="w-5 h-5"
+              onSelect={(ns) => {
+                chnotUpdate({
+                  meta_id: chnot.meta.id,
+                  update_time: false,
+                  namespace: ns,
+                }).then((_) => {
+                  if (ns !== currentNamespace.name) {
+                    validateChnotCache([chnot.meta.id]);
+                  }
+                });
+
+              }}
+              currentNamespace={chnot.meta.namespace}
+            />
+          )}
+        </div>
+
+
+
+        <div>{chnot?.record.insert_time.toLocaleDateString()}</div>
       </div>
 
       <div
-        className="h-full border kborder shadow-lg p-0 x-0 overflow-auto" // this part could resize when I add overflow-auto, magic?
+        className="h-full p-0 x-0 overflow-auto bg-editor" // this part could resize when I add overflow-auto, magic?
         ref={cmRef}
       >
         {height && (
