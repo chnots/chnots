@@ -7,6 +7,7 @@ import {
   ChnotQueryRsp,
   ChnotOverwriteReq,
   ChnotOverwriteRsp,
+  ListViewType,
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
 
@@ -19,7 +20,7 @@ const getDefaultState = (): State => {
     query: undefined,
     isFetchingNextPage: false,
     hasNextPage: true,
-    isShowingTags: false,
+    listViewType: { kind: "timeline" }
   };
 };
 
@@ -39,6 +40,9 @@ interface State {
    */
   chnotMapByMetaId: Map<string, Chnot>;
 
+
+  listViewType: ListViewType
+
   /**
    * Current Chnot Meta Id
    */
@@ -46,9 +50,7 @@ interface State {
 
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
-  isShowingTags: boolean;
 
-  tagKeyword?: string;
 }
 
 export const useChnotStore = create(
@@ -68,10 +70,10 @@ export const useChnotStore = create(
 
       const read = get();
       const cs: ChnotQueryRsp = await chnotQuery({
-        tag_keyword: read.tagKeyword,
         start_index: read.chnotMapByMetaId.size,
         page_size: read.pageSize,
         query: read.query,
+        view_type: read.listViewType 
       });
 
       set((state) => {
@@ -131,7 +133,7 @@ export const useChnotStore = create(
     },
     setTagKeyword: (tagKeyword?: string) => {
       set((state) => {
-        return { ...state, tagKeyword: tagKeyword };
+        return { ...state, tagPath: tagKeyword };
       });
     },
     getCurrentChnot: () => {
@@ -176,5 +178,12 @@ export const useChnotStore = create(
         };
       });
     },
+    setListViewType: (newType: ListViewType) => {
+      set((prev) => {
+        return {
+          ...prev, listViewType: newType
+        }
+      })
+    }
   }))
 );

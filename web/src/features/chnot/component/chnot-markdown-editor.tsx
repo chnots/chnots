@@ -30,7 +30,10 @@ const chnotCompletions = async (context: CompletionContext): Promise<CompletionR
   if (!word || word?.from == word?.to && !context.explicit) {
     return null
   } else if (word.text.startsWith("#")) {
-    options = (await chnotTagNames({ query: word.text, start_index: 0, page_size: 20 })).data.map((name) => { return { "label": name, "type": "hashtag" } })
+    options = (await chnotTagNames({
+      query: word.text, start_index: 0, page_size: 20,
+      query_type: "fuzzy"
+    })).data.map((name) => { return { "label": name, "type": "hashtag" } })
   } else if (word.text.startsWith("<")) {
     options = (await toentGuess({ input: word.text.replace("<", "") })).toents.map((toent) => { return { "label": `<${toent.event}>`, "type": "hashtag" } })
   } else {

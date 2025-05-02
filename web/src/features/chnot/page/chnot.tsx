@@ -4,7 +4,6 @@ import { useChnotStore } from "@/store/chnot/store";
 import { useCommonStore } from "@/store/common";
 import { useNamespaceStore } from "@/store/namespace";
 import { useCallback, useEffect, useState } from "react";
-import ChnotTagList from "../component/chnot-tag-list";
 import { v4 as uuid } from 'uuid';
 import { Chnot } from "@/store/chnot/dto";
 
@@ -65,15 +64,10 @@ const ChnotPage = () => {
 
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md">
-      <title>Chnots</title>
+      <title>{`Chnots`}</title>
       {showSidebar && (
-        <div className="grid grid-cols-2 flex-1">
-          <div className="max-h-full h-full overflow-auto">
-            <ChnotTagList key={currentNamespace.name} />
-          </div>
-          <div className="max-h-full h-full overflow-auto">
-            <ChnotList key={currentNamespace.name} />
-          </div>
+        <div className="shrink-0 border-r kborder flex flex-col w-4/12 p-2">
+          <ChnotList />
         </div>
       )}
 

@@ -74,7 +74,7 @@ const LLMChatTemplateList = ({
 
   const items = listTemplates();
   const className =
-    " p-2 flex space-x-2 text-black w-auto align-middle justify-center rounded-md";
+    " p-2 flex space-x-2 text-black w-auto align-mie justify-center rounded-md";
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 

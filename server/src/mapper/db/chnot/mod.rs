@@ -10,18 +10,19 @@ use crate::{
         ChnotMapper, DeserializeMapper,
     },
     model::{
-        db::chnot::{
-            ChnotMetadata, ChnotRecord, ChnotTag,
-        },
+        db::chnot::{ChnotMetadata, ChnotRecord, ChnotTag, ChnotTagType},
         dto::KReq,
     },
 };
 use chin_sql::{ILikeType, SqlDeleter, SqlInserter, SqlReader};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
+use itertools::Itertools;
 use serde::Serialize;
 
 use crate::model::dto::chnot::*;
+
+const UNTAGGED_TAG: &str = "#_untagged";
 
 #[inline]
 fn chnot_query_sql<'a>() -> SqlReader<'a> {
@@ -55,6 +56,18 @@ fn chnot_query_mapper(row: KDbRow<'_>) -> AResult<Chnot> {
 }
 
 impl KDb {
+    fn chnot_tag_filter<'a>(tst: TagSearchType, query: String) -> Wheres<'a> {
+        match tst {
+            TagSearchType::Exact => Wheres::ilike("tag", query, chin_sql::ILikeType::Original),
+            TagSearchType::Fuzzy => Wheres::ilike("tag", query, chin_sql::ILikeType::Fuzzy),
+            _ => Wheres::ilike(
+                "tag",
+                if query.len() > 0 { query + "/" } else { query },
+                chin_sql::ILikeType::RightFuzzy,
+            ),
+        }
+    }
+
     async fn chnot_tag_query_inner<F, T>(
         &self,
         req: KReq<ChnotTagQueryReq>,
@@ -81,27 +94,25 @@ impl KDb {
 
         let query = sr
             .r#where(Wheres::and([
-                Wheres::if_some(query, |query| {
-                    Wheres::ilike("tag", query, chin_sql::ILikeType::Fuzzy)
-                }),
+                Wheres::if_some(query, |query| Self::chnot_tag_filter(query_type, query)),
                 Wheres::equal("namespace", ns),
             ]))
             .raw("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index));
 
-        let res = self.conn().await?.qry_list(query, move |e| mapper(e)).await;
+        let data = self
+            .conn()
+            .await?
+            .qry_list(query, move |e| mapper(e))
+            .await?;
 
-        Ok(ChnotTagQueryRsp {
-            data: res?,
-            start_index,
-        })
+        Ok(ChnotTagQueryRsp { data, start_index })
     }
 }
 
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot_record(&self) -> EResult {
-        self.create_table(ChnotRecord::schema(self.db_type()))
-            .await
+        self.create_table(ChnotRecord::schema(self.db_type())).await
     }
 
     async fn ensure_table_chnot_metadata(&self) -> EResult {
@@ -127,19 +138,38 @@ impl ChnotMapper for KDb {
         let conn = self.conn().await?;
 
         let chnot_sql = chnot_query_sql()
-            .some_then(req.tag_path.as_ref(), |tag, ss| {
-                ss.raw("inner join")
-                    .sub(
-                        "ct",
-                        SqlReader::new()
-                            .raw("select * from chnot_tag")
-                            .r#where(Wheres::and([
-                                Wheres::equal("namespace", req.namespace.to_owned()),
-                                Wheres::ilike("tag", tag, ILikeType::Original),
+            .some_then(
+                match &req.view_type {
+                    ChnotViewType::Timeline => None,
+                    ChnotViewType::TagTree(chnot_view_tag_tree) => Some(chnot_view_tag_tree),
+                },
+                |tag, ss| {
+                    ss.raw("inner join")
+                        .sub(
+                            "ct",
+                            SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
+                                Wheres::equal(ChnotTag::NAMESPACE, req.namespace.to_owned()),
+                                match tag {
+                                    ChnotViewTagTree::OneLayer(path) => Wheres::and([
+                                        Wheres::equal(
+                                            ChnotTag::TAG,
+                                            if path.starts_with("#") {
+                                                path
+                                            } else {
+                                                UNTAGGED_TAG
+                                            },
+                                        ),
+                                        Wheres::equal(ChnotTag::CATEGORY, ChnotTagType::Dir),
+                                    ]),
+                                    ChnotViewTagTree::Full(path) => {
+                                        Wheres::ilike(ChnotTag::TAG, path, ILikeType::RightFuzzy)
+                                    }
+                                },
                             ])),
-                    )
-                    .raw("on r.meta_id = ct.chnot_meta_id")
-            })
+                        )
+                        .raw("on r.meta_id = ct.chnot_meta_id")
+                },
+            )
             .r#where(Wheres::and([
                 // default without deleted chnot
                 Wheres::transform(req.with_deleted, |e| {
@@ -218,8 +248,32 @@ impl ChnotMapper for KDb {
         &self,
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>> {
-        self.chnot_tag_query_inner(req, |e| e.try_get(ChnotTag::TAG), true)
-            .await
+        let count = |s: &str| {
+            if s.is_empty() {
+                return -1;
+            }
+            s.chars().filter(|c| *c == '/').count() as i32
+        };
+        let query_type = req.query_type.clone();
+        let tag = req.query.clone();
+        let origin_count = req.body.query.as_ref().map_or(-1, |e| count(e));
+        let mut result: ChnotTagQueryRsp<String> = self
+            .chnot_tag_query_inner(req, |e| e.try_get(ChnotTag::TAG), true)
+            .await?;
+
+        result.data = result.data.into_iter().unique().collect();
+
+        if let TagSearchType::OneLevel = query_type {
+            let data = result
+                .data
+                .into_iter()
+                .filter(|e| count(e) == origin_count + 1)
+                .collect();
+
+            result.data = data;
+        }
+
+        Ok(result)
     }
 
     async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult {

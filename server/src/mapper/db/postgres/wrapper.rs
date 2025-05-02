@@ -171,7 +171,7 @@ impl KDbConnBehaiver for Client {
         F: Fn(KDbRow<'a>) -> AResult<E>,
     {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
-        tracing::info!("query list {:?}", seg);
+        tracing::info!("query list {:?}, values {:?}", seg, values);
         let result = self.query(&seg, to_sql!(values)).await?;
         result
             .into_iter()

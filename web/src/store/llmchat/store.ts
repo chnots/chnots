@@ -1,23 +1,16 @@
 import { insertMapAtIndex } from "@/utils/map-utils";
-import request from "@/utils/request";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import {
   LLMChatSession,
   LLMChatBot,
   LLMChatTemplate,
-  LLMChatRecord,
 } from "./db";
 import {
   LLMChatListBotRsp,
-  LLMChatListTemplateRsp,
   LLMChatListSessionRsp,
-  LLMChatSessionDetailRsp,
-  LLMChatSessionUpdateReq,
-  LLMChatSessionTruncateReq,
 } from "./dto";
 import {
-  llmchatBotAdd,
   llmchatBotList,
   llmchatSessionList,
   llmchatSessionOverwrite,
@@ -37,9 +30,9 @@ interface State {
 
 const getDefaultState = (): State => {
   return {
-    refreshSessions: () => {},
-    refreshTemplates: () => {},
-    refreshBots: () => {},
+    refreshSessions: () => { },
+    refreshTemplates: () => { },
+    refreshBots: () => { },
     bots: new Map(),
     templates: new Map(),
     sessions: new Map(),

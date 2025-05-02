@@ -1,5 +1,6 @@
 import React, { ForwardedRef } from "react";
 import KListItem from "@/common/component/klistitem";
+import Icon from "@/common/component/icon";
 
 const ChnotTagListItem = React.forwardRef(
   (
@@ -15,9 +16,11 @@ const ChnotTagListItem = React.forwardRef(
         focused={focused}
         onClick={handleClick}
         ref={ref}
-        className="flex-col"
       >
-        <div className="text-xs line-clamp-2 break-all">{tag}</div>
+        <div className="relative flex flex-row align-middle">
+          <Icon.Hash className="h-4 w-4 min-w-4 text-gray-600" />
+          <div className="relative text-xs line-clamp-1 break-all">{tag.replace(RegExp("#"), "")}</div>
+        </div>
       </KListItem>
     );
   }

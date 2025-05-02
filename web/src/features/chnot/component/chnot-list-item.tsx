@@ -11,7 +11,7 @@ const ChnotListItem = React.forwardRef(
     const { setCurrentChnotMetaId, getCurrentChnot, validateChnotCache } =
       useChnotStore();
 
-    const handleClick = (_: React.MouseEvent) => {
+    const onClick = (_: React.MouseEvent) => {
       setCurrentChnotMetaId(chnot.meta.id);
     };
 
@@ -23,7 +23,7 @@ const ChnotListItem = React.forwardRef(
       ? chnot.record.content.split("\n")[0]
       : chnot.record.content.substring(0, 500);
 
-    const handleDelete = async () => {
+    const onDelete = async () => {
       await chnotUpdate({
         meta_id: chnot.meta.id,
         archive: true,
@@ -35,23 +35,22 @@ const ChnotListItem = React.forwardRef(
     return (
       <KListItem
         focused={isSelected}
-        onClick={handleClick}
+        onClick={onClick}
         ref={ref}
         key={chnot.record.id}
       >
-        <div className="relative flex flex-row justify-between">
-          <div className="text-xs">
-            {chnotShortDate(chnot.meta.insert_time)}
+        <div className="relative flex flex-row align-middle justify-between">
+          <div className="flex flex-row space-x-1">
+            <Icon.Ampersand className="h-4 w-4 min-w-4 text-gray-600" />
+            <div className="text-gray-600 mr-2">{chnotShortDate(chnot.meta.insert_time)}</div>
+            <div className="relative text-xs line-clamp-1 break-all">{title}</div>
           </div>
-
           <div className="opacity-0 hover:opacity-100">
-            <button onClick={handleDelete}>
+            <button onClick={onDelete}>
               <Icon.Archive className="h-4" />
             </button>
           </div>
         </div>
-
-        <div className="relative text-xs line-clamp-2 break-all">{title}</div>
       </KListItem>
     );
   }

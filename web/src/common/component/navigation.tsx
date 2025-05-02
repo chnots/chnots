@@ -80,7 +80,7 @@ const Navigation = ({
           toggleSidebar();
         }}
       >
-        <Icon.List />
+        <Icon.Sidebar />
       </KButton>
       <NamespaceSelect
         onSelect={(ns) => {

@@ -1,6 +1,6 @@
-use crate::{model::db::chnot::ChnotTag, toent::PossibleToent};
+use crate::toent::PossibleToent;
 use chrono::{DateTime, FixedOffset};
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 
 use crate::model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord};
 
@@ -46,14 +46,42 @@ pub struct ChnotDeletionReq {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotDeletionRsp {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
+pub enum ChnotViewTagTree {
+    OneLayer(String),
+    Full(String),
+}
+
+
+#[derive(Debug, Clone, Serialize)]
 pub enum ChnotViewType {
-    #[serde(rename = "timeline")]    
     Timeline,
-    #[serde(rename = "tag_exact")]
-    TagExact,
-    #[serde(rename = "tag_with_sub")]
-    TagWithSub,    
+    TagTree(ChnotViewTagTree),
+}
+
+impl<'a> Deserialize<'a> for ChnotViewType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'a>,
+    {
+        #[derive(Deserialize)]
+        struct LVT {
+            kind: String,
+            tagkind: Option<String>,
+            tagpath: Option<String>,
+        }
+        let deser = LVT::deserialize(deserializer)?;
+
+        match deser.kind.as_str() {
+            "tagtree" => match deser.tagkind.as_ref().map(|e| e.as_str()) {
+                Some("children") => Ok(Self::TagTree(ChnotViewTagTree::OneLayer(deser.tagpath.unwrap()))),
+                Some("descendants") => Ok(Self::TagTree(ChnotViewTagTree::Full(deser.tagpath.unwrap()))),
+                _ => Err(de::Error::custom("unknown tag type")),
+            },
+            "timeline" => Ok(Self::Timeline),
+            _ => Err(de::Error::custom("unknown type")),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,20 +119,20 @@ pub struct ToentGuessRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TagSearchType {
-    #[serde(rename = "exact")]    
+    #[serde(rename = "exact")]
     Exact,
-    #[serde(rename = "fuzzy")]    
+    #[serde(rename = "fuzzy")]
     Fuzzy,
-    #[serde(rename = "single")]    
+    #[serde(rename = "children")]
     OneLevel,
-    #[serde(rename = "full")]    
-    FullLevel,        
+    #[serde(rename = "full")]
+    FullLevel,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotTagQueryReq {
     pub query: Option<String>,
-    pub query_type: bool,
+    pub query_type: TagSearchType,
 
     // Paging
     pub start_index: u64,
@@ -112,7 +140,10 @@ pub struct ChnotTagQueryReq {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ChnotTagQueryRsp<T> where T: Serialize + Clone {
+pub struct ChnotTagQueryRsp<T>
+where
+    T: Serialize + Clone,
+{
     pub data: Vec<T>,
 
     pub start_index: u64,

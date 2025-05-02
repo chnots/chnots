@@ -4,7 +4,7 @@ use super::super::{sql::Wheres, KDb};
 use crate::{
     mapper::{
         db::{
-            chnot::{chnot_query_mapper, chnot_query_sql},
+            chnot::{chnot_query_mapper, chnot_query_sql, UNTAGGED_TAG},
             sqlite::wrapper::KDbConnBehaiverSync,
             KDbBehaiver, KDbConnBehaiver, KDbRow,
         },
@@ -28,6 +28,7 @@ use chin_tools::{
 };
 
 use chrono::{DateTime, FixedOffset, TimeDelta, Utc};
+use itertools::Itertools;
 use tracing::info;
 
 #[derive(Clone)]
@@ -88,7 +89,7 @@ macro_rules! handle_insert {
         match $meta_id {
             MetaId::Old(_) => {
                 // Query for existing record
-                let query_old_rec = SqlReader::read(ChnotRecord::TABLE, 
+                let query_old_rec = SqlReader::read(ChnotRecord::TABLE,
                     &[ChnotRecord::ID, ChnotRecord::CONTENT, ChnotRecord::INSERT_TIME]
                 )
                     .r#where(Wheres::and([
@@ -187,14 +188,40 @@ impl KDb {
         self.chnot_tag_delete(vec![&meta_id]).await?;
 
         let tags = get_hashtags(&content);
-        if tags.is_empty() {
+        let parent_tags: Vec<&str> = tags
+            .iter()
+            .map(|tag| {
+                let mut more = vec![];
+                for (id, c) in tag.chars().enumerate() {
+                    if c == '/' {
+                        more.push(&tag[..id]);
+                    }
+                }
+                more
+            })
+            .flatten()
+            .unique()
+            .collect();
+
+        if parent_tags.is_empty() {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
                 namespace: namespace.clone(),
-                tag: "_Untagged".to_owned(),
+                tag: UNTAGGED_TAG.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::Common,
+                category: ChnotTagType::Dir,
+            })
+            .await?;
+        }
+        for tag in parent_tags {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: namespace.clone(),
+                tag: tag.to_owned(),
+                chnot_meta_id: meta_id.to_string(),
+                insert_time: Utc::now().fixed_offset(),
+                category: ChnotTagType::ParentDir,
             })
             .await?;
         }
@@ -205,7 +232,7 @@ impl KDb {
                 tag: tag.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::Common,
+                category: ChnotTagType::Dir,
             })
             .await?;
         }
