@@ -2,7 +2,6 @@ use chin_tools::AResult;
 use deadpool_sqlite::{Config, Pool, Runtime};
 use serde::Deserialize;
 
-pub mod deserialize;
 pub mod sqltype;
 pub mod wrapper;
 

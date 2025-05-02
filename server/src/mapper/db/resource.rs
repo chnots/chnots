@@ -9,16 +9,16 @@ use crate::{
     },
 };
 
-use chin_sql::{SqlInserter, SqlSegBuilder, Wheres};
+use chin_sql::{SqlInserter, SqlReader, Wheres};
 
 impl ResourceMapper for KDb {
     async fn ensure_table_resource(&self) -> EResult {
-        self.create_table(Resource::table_creation_sql(self.db_type()))
+        self.create_table(Resource::schema(self.db_type()))
             .await
     }
 
     async fn ensure_table_inline_resource(&self) -> EResult {
-        self.create_table(InlineResource::table_creation_sql(self.db_type()))
+        self.create_table(InlineResource::schema(self.db_type()))
             .await
     }
 
@@ -37,12 +37,12 @@ impl ResourceMapper for KDb {
         let insert_time = chrono::Utc::now().to_owned().fixed_offset();
 
         conn.exec(
-            SqlInserter::new(Resource::table_name())
-                .fields(Resource::field_id(), id.to_owned())
-                .fields(Resource::field_ori_filename(), ori_filename.to_owned())
-                .fields(Resource::field_namespace(), namespace.to_owned())
-                .fields(Resource::field_content_type(), content_type.to_owned())
-                .fields(Resource::field_insert_time(), insert_time.to_owned()),
+            SqlInserter::new(Resource::TABLE)
+                .fields(Resource::ID, id.to_owned())
+                .fields(Resource::ORI_FILENAME, ori_filename.to_owned())
+                .fields(Resource::NAMESPACE, namespace.to_owned())
+                .fields(Resource::CONTENT_TYPE, content_type.to_owned())
+                .fields(Resource::INSERT_TIME, insert_time.to_owned()),
         )
         .await
         .map(|_| Resource {
@@ -59,9 +59,8 @@ impl ResourceMapper for KDb {
         let conn = self.conn().await?;
         let res = conn
             .qry_one(
-                SqlSegBuilder::new()
-                    .raw("select * from resources")
-                    .r#where(Wheres::equal(Resource::field_id(), id)),
+                SqlReader::read_all(Resource::TABLE)
+                    .r#where(Wheres::equal(Resource::ID, id)),
                 |e| e.to_resource(),
                 false,
             )
@@ -76,11 +75,11 @@ impl ResourceMapper for KDb {
         self.conn()
             .await?
             .exec(
-                SqlInserter::new(InlineResource::table_name())
-                    .fields(InlineResource::field_id(), &req.res.id)
-                    .fields(InlineResource::field_name(), &req.res.name)
-                    .fields(InlineResource::field_content(), &req.res.name)
-                    .fields(InlineResource::field_insert_time(), &req.res.insert_time),
+                SqlInserter::new(InlineResource::TABLE)
+                    .fields(InlineResource::ID, &req.res.id)
+                    .fields(InlineResource::NAME, &req.res.name)
+                    .fields(InlineResource::CONTENT, &req.res.name)
+                    .fields(InlineResource::INSERT_TIME, &req.res.insert_time),
             )
             .await?;
 
@@ -91,16 +90,15 @@ impl ResourceMapper for KDb {
         &self,
         req: KReq<crate::model::dto::QueryInlineResourceReq>,
     ) -> anyhow::Result<crate::model::dto::QueryInlineResourceRsp> {
-        let query = SqlSegBuilder::new()
-            .raw("select * from inline_resource")
+        let query = SqlReader::read_all(InlineResource::TABLE)
             .r#where(Wheres::and([
-                Wheres::is_null("delete_time"),
+                Wheres::is_null(InlineResource::DELETE_TIME),
                 Wheres::if_some(req.content_type.to_owned(), |e| {
-                    Wheres::equal("content_type", e)
+                    Wheres::equal(InlineResource::CONTENT_TYPE, e)
                 }),
-                Wheres::if_some(req.id.to_owned(), |e| Wheres::equal("id", e)),
+                Wheres::if_some(req.id.to_owned(), |e| Wheres::equal(InlineResource::ID, e)),
                 Wheres::if_some(req.name_like.to_owned(), |e| {
-                    Wheres::ilike("name", e, self.db_type())
+                    Wheres::ilike(InlineResource::NAME, e, chin_sql::ILikeType::Fuzzy)
                 }),
             ]))
             .raw("order by insert_time desc");

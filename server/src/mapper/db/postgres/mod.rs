@@ -1,4 +1,3 @@
-pub mod deserialize;
 pub(crate) mod imp;
 pub mod types;
 pub mod wrapper;

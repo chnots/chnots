@@ -1,12 +1,18 @@
-use chin_sql::{DateFixed, DbType, IntoSqlSeg, SqlSegBuilder};
+use chin_sql::{DateFixed, DbType, IntoSqlSeg, SqlReader};
 use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::Client;
 use deadpool_sqlite::rusqlite;
 
-use crate::mapper::DeserializeMapper;
-
 use super::{postgres, sqlite};
+use crate::mapper::DeserializeMapper;
+use crate::model::db::{
+    chnot::*,
+    kv::KV,
+    llmchat::*,
+    namespace::*,
+    resource::{InlineResource, Resource},
+};
 
 pub trait KDbConnBehaiver {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
@@ -85,10 +91,7 @@ impl KDb {
     }
 
     pub async fn create_table(&self, sql: &str) -> EResult {
-        self.conn()
-            .await?
-            .exec(SqlSegBuilder::new().raw(sql))
-            .await?;
+        self.conn().await?.exec(SqlReader::new().raw(sql)).await?;
         Ok(())
     }
 }
@@ -103,11 +106,10 @@ macro_rules! expand_kdb_conn_branch {
 }
 
 impl KDbConnBehaiver for KDbConn {
-        
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         expand_kdb_conn_branch!(self.exec(ssb))
     }
-    
+
     async fn exec_and_check<'a, T: IntoSqlSeg<'a>, C>(
         &self,
         ssb: T,
@@ -145,7 +147,6 @@ impl KDbConnBehaiver for KDbConn {
     {
         expand_kdb_conn_branch!(self.qry_list(ssb, mapper))
     }
-
 }
 
 macro_rules! expand_kdb_row_branch {
@@ -186,51 +187,151 @@ impl<'a, 'b> KDbRow<'a> {
 }
 
 impl<'a> DeserializeMapper for KDbRow<'a> {
-    fn to_chnot_meta(self) -> AResult<crate::model::db::chnot::ChnotMetadata> {
-        expand_kdb_row_branch!(self.to_chnot_meta())
+    fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
+        let chnot = ChnotMetadata {
+            id: self.try_get(ChnotMetadata::ID)?,
+            namespace: self.try_get(ChnotMetadata::NAMESPACE)?,
+            kind: self.try_get(ChnotMetadata::KIND)?,
+            pin_time: self.try_get_df_opt(ChnotMetadata::PIN_TIME)?,
+            delete_time: self.try_get_df_opt(ChnotMetadata::DELETE_TIME)?,
+            update_time: self.try_get_df_opt(ChnotMetadata::UPDATE_TIME)?,
+            insert_time: self.try_get_df(ChnotMetadata::INSERT_TIME)?,
+            archive_time: self.try_get_df_opt(ChnotMetadata::ARCHIVE_TIME)?,
+        };
+        Ok(chnot)
     }
 
-    fn to_chnot_record(self) -> AResult<crate::model::db::chnot::ChnotRecord> {
-        expand_kdb_row_branch!(self.to_chnot_record())
+    fn to_chnot_record(self) -> AResult<ChnotRecord> {
+        let chnot = ChnotRecord {
+            id: self.try_get(ChnotRecord::ID)?,
+            meta_id: self.try_get(ChnotRecord::META_ID)?,
+            content: self.try_get(ChnotRecord::CONTENT)?,
+            omit_time: self.try_get_df_opt(ChnotRecord::OMIT_TIME)?,
+            insert_time: self.try_get_df(ChnotRecord::INSERT_TIME)?,
+        };
+        Ok(chnot)
     }
 
-    fn to_chnot_tag(self) -> AResult<crate::model::db::chnot::ChnotTag> {
-        expand_kdb_row_branch!(self.to_chnot_tag())
+    fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
+        let obj = LLMChatBot {
+            id: self.try_get(LLMChatBot::ID)?,
+            insert_time: self.try_get_df(LLMChatBot::INSERT_TIME)?,
+            delete_time: self.try_get_df_opt(LLMChatBot::DELETE_TIME)?,
+            name: self.try_get(LLMChatBot::NAME)?,
+            body: self.try_get(LLMChatBot::BODY)?,
+            update_time: self.try_get_df_opt(LLMChatBot::UPDATE_TIME)?,
+            svg_logo: self.try_get(LLMChatBot::SVG_LOGO)?,
+        };
+        Ok(obj)
     }
 
-    fn to_llmchat_bot(self) -> AResult<crate::model::db::llmchat::LLMChatBot> {
-        expand_kdb_row_branch!(self.to_llmchat_bot())
+    fn to_llmchat_template(self) -> AResult<LLMChatTemplate> {
+        let obj = LLMChatTemplate {
+            id: self.try_get(LLMChatTemplate::ID)?,
+            insert_time: self.try_get_df(LLMChatTemplate::INSERT_TIME)?,
+            delete_time: self.try_get_df_opt(LLMChatTemplate::DELETE_TIME)?,
+            update_time: self.try_get_df_opt(LLMChatTemplate::UPDATE_TIME)?,
+            name: self.try_get(LLMChatTemplate::NAME)?,
+            prompt: self.try_get(LLMChatTemplate::PROMPT)?,
+            svg_logo: self.try_get(LLMChatTemplate::SVG_LOGO)?,
+        };
+        Ok(obj)
     }
 
-    fn to_llmchat_template(self) -> AResult<crate::model::db::llmchat::LLMChatTemplate> {
-        expand_kdb_row_branch!(self.to_llmchat_template())
+    fn to_llmchat_session(self) -> AResult<LLMChatSession> {
+        let obj = LLMChatSession {
+            id: self.try_get(LLMChatSession::ID)?,
+            insert_time: self.try_get_df(LLMChatSession::INSERT_TIME)?,
+            bot_id: self.try_get(LLMChatSession::BOT_ID)?,
+            template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
+            title: self.try_get(LLMChatSession::TITLE)?,
+            namespace: self.try_get(LLMChatSession::NAMESPACE)?,
+            delete_time: self.try_get_df_opt(LLMChatSession::DELETE_TIME)?,
+            update_time: self.try_get_df_opt(LLMChatSession::UPDATE_TIME)?,
+        };
+        Ok(obj)
     }
 
-    fn to_llmchat_session(self) -> AResult<crate::model::db::llmchat::LLMChatSession> {
-        expand_kdb_row_branch!(self.to_llmchat_session())
+    fn to_llmchat_record(self) -> AResult<LLMChatRecord> {
+        let obj = LLMChatRecord {
+            id: self.try_get(LLMChatRecord::ID)?,
+            insert_time: self.try_get_df(LLMChatRecord::INSERT_TIME)?,
+            session_id: self.try_get(LLMChatRecord::SESSION_ID)?,
+            pre_record_id: self.try_get(LLMChatRecord::PRE_RECORD_ID)?,
+            content: self.try_get(LLMChatRecord::CONTENT)?,
+            role: self.try_get(LLMChatRecord::ROLE)?,
+            role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
+            omit_time: self.try_get_df_opt(LLMChatRecord::OMIT_TIME)?,
+        };
+        Ok(obj)
     }
 
-    fn to_llmchat_record(self) -> AResult<crate::model::db::llmchat::LLMChatRecord> {
-        expand_kdb_row_branch!(self.to_llmchat_record())
+    fn to_namespace_record(self) -> AResult<NamespaceRecord> {
+        let obj = NamespaceRecord {
+            id: self.try_get(NamespaceRecord::ID)?,
+            insert_time: self.try_get_df(NamespaceRecord::INSERT_TIME)?,
+            name: self.try_get(NamespaceRecord::NAME)?,
+            delete_time: self.try_get_df_opt(NamespaceRecord::DELETE_TIME)?,
+            update_time: self.try_get_df_opt(NamespaceRecord::UPDATE_TIME)?,
+        };
+        Ok(obj)
     }
 
-    fn to_namespace_record(self) -> AResult<crate::model::db::namespace::NamespaceRecord> {
-        expand_kdb_row_branch!(self.to_namespace_record())
+    fn to_namespace_relation(self) -> AResult<NamespaceRelation> {
+        let obj = NamespaceRelation {
+            id: self.try_get(NamespaceRelation::ID)?,
+            insert_time: self.try_get_df(NamespaceRelation::INSERT_TIME)?,
+            delete_time: self.try_get_df_opt(NamespaceRelation::DELETE_TIME)?,
+            update_time: self.try_get_df_opt(NamespaceRelation::UPDATE_TIME)?,
+            sub_id: self.try_get(NamespaceRelation::SUB_ID)?,
+            parent_id: self.try_get(NamespaceRelation::PARENT_ID)?,
+        };
+        Ok(obj)
     }
 
-    fn to_namespace_relation(self) -> AResult<crate::model::db::namespace::NamespaceRelation> {
-        expand_kdb_row_branch!(self.to_namespace_relation())
+    fn to_resource(self) -> AResult<Resource> {
+        let obj = Resource {
+            id: self.try_get(Resource::ID)?,
+            insert_time: self.try_get_df(Resource::INSERT_TIME)?,
+            delete_time: self.try_get_df_opt(Resource::DELETE_TIME)?,
+            namespace: self.try_get(Resource::NAMESPACE)?,
+            ori_filename: self.try_get(Resource::ORI_FILENAME)?,
+            content_type: self.try_get(Resource::CONTENT_TYPE)?,
+        };
+        Ok(obj)
     }
 
-    fn to_resource(self) -> AResult<crate::model::db::resource::Resource> {
-        expand_kdb_row_branch!(self.to_resource())
+    fn to_kv(self) -> AResult<KV> {
+        let obj = KV {
+            insert_time: self.try_get_df(KV::INSERT_TIME)?,
+            key: self.try_get(KV::KEY)?,
+            value: self.try_get(KV::VALUE)?,
+            update_time: self.try_get_df_opt(KV::UPDATE_TIME)?,
+        };
+        Ok(obj)
     }
 
-    fn to_kv(self) -> AResult<crate::model::db::kv::KV> {
-        expand_kdb_row_branch!(self.to_kv())
+    fn to_chnot_tag(self) -> AResult<ChnotTag> {
+        let obj = ChnotTag {
+            id: self.try_get(ChnotTag::ID)?,
+            namespace: self.try_get(ChnotTag::NAMESPACE)?,
+            tag: self.try_get(ChnotTag::TAG)?,
+            chnot_meta_id: self.try_get(ChnotTag::CHNOT_META_ID)?,
+            insert_time: self.try_get_df(ChnotTag::INSERT_TIME)?,
+            category: ChnotTagType::Common,
+        };
+        Ok(obj)
     }
 
     fn to_inline_resource(self) -> AResult<crate::model::db::resource::InlineResource> {
-        expand_kdb_row_branch!(self.to_inline_resource())
+        let obj = InlineResource {
+            id: self.try_get(InlineResource::ID)?,
+            name: self.try_get(InlineResource::NAME)?,
+            content: self.try_get(InlineResource::CONTENT)?,
+            content_type: self.try_get(InlineResource::CONTENT_TYPE)?,
+            delete_time: self.try_get_df_opt(InlineResource::DELETE_TIME)?,
+            insert_time: self.try_get_df(InlineResource::INSERT_TIME)?,
+        };
+        Ok(obj)
     }
 }

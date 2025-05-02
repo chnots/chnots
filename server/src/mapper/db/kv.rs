@@ -1,5 +1,5 @@
 use super::{
-    sql::{SqlSegBuilder, Wheres},
+    sql::{SqlReader, Wheres},
     KDb, KDbBehaiver, KDbConnBehaiver, KDbRow,
 };
 use chin_sql::{SqlDeleter, SqlInserter};
@@ -22,19 +22,20 @@ impl KVMapper for KDb {
         req: KReq<KVOverwriteReq>,
     ) -> chin_tools::wrapper::anyhow::AResult<KVOverwriteRsp> {
         let kv = &req.kv;
-        let inserter = SqlInserter::new(KV::table_name())
-            .fields(KV::field_key(), &kv.key)
-            .fields(KV::field_value(), &kv.value)
-            .fields(KV::field_insert_time(), &kv.insert_time);
+        let inserter = SqlInserter::new(KV::TABLE)
+            .fields(KV::KEY, &kv.key)
+            .fields(KV::VALUE, &kv.value)
+            .fields(KV::INSERT_TIME, &kv.insert_time);
         self.conn().await?.exec(inserter).await?;
 
         Ok(KVOverwriteRsp {})
     }
 
     async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp> {
-        let query = SqlSegBuilder::new()
-            .raw("select * from kv")
-            .r#where(Wheres::and([Wheres::equal("key", req.key.as_str())]));
+        let query = SqlReader::read_all(KV::TABLE).r#where(Wheres::and([Wheres::equal(
+            KV::KEY,
+            req.key.as_str(),
+        )]));
 
         let kv = self
             .conn()
@@ -50,7 +51,7 @@ impl KVMapper for KDb {
         req: KReq<crate::mapper::KVDeleteReq>,
     ) -> AResult<crate::mapper::KVDeleteRsp> {
         let del =
-            SqlDeleter::new(KV::table_name()).r#where(Wheres::equal(KV::field_key(), &req.key));
+            SqlDeleter::new(KV::TABLE).r#where(Wheres::equal(KV::KEY, &req.key));
 
         self.conn().await?.exec(del).await?;
 
@@ -58,7 +59,7 @@ impl KVMapper for KDb {
     }
 
     async fn ensure_table_kv(&self) -> chin_tools::wrapper::anyhow::EResult {
-        self.create_table(KV::table_creation_sql(self.db_type()))
+        self.create_table(KV::schema(self.db_type()))
             .await?;
         Ok(())
     }

@@ -3,7 +3,7 @@ use chin_tools::{
     wrapper::anyhow::{AResult, EResult},
 };
 
-use crate::model::{db::namespace::NamespaceRelation, dto::InsertInlineResourceRsp};
+use crate::model::{db::{chnot::ChnotTag, namespace::NamespaceRelation}, dto::InsertInlineResourceRsp};
 
 use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
@@ -88,11 +88,11 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.ensure_table_chnot_tag())
     }
 
-    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp> {
+    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
         expand_mt_branch!(self.chnot_tag_query(req))
     }
 
-    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagNamesRsp> {
+    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<String>> {
         expand_mt_branch!(self.chnot_tag_names(req))
     }
 

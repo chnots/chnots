@@ -1,5 +1,6 @@
 use crate::app::ShareAppState;
-use crate::model::dto::chnot::{Chnot, ChnotTagNamesRsp, ChnotTagQueryReq, ChnotTagQueryRsp};
+use crate::model::db::chnot::ChnotTag;
+use crate::model::dto::chnot::{Chnot, ChnotTagQueryReq, ChnotTagQueryRsp};
 use crate::model::dto::kreq;
 use crate::{
     mapper::ChnotMapper,
@@ -66,7 +67,7 @@ async fn chnot_tag_query(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotTagQueryReq>,
-) -> KResponse<ChnotTagQueryRsp> {
+) -> KResponse<ChnotTagQueryRsp<ChnotTag>> {
     state
         .mapper
         .chnot_tag_query(kreq(headers, req))
@@ -78,7 +79,7 @@ async fn chnot_tag_names(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotTagQueryReq>,
-) -> KResponse<ChnotTagNamesRsp> {
+) -> KResponse<ChnotTagQueryRsp<String>> {
     state
         .mapper
         .chnot_tag_names(kreq(headers, req))

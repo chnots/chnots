@@ -53,55 +53,55 @@ impl DumpMapper for KDb {
         };
 
         self.read_iterator(
-            s(ChnotRecord::table_name()),
+            s(ChnotRecord::TABLE),
             Self::RowType::to_chnot_record,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(ChnotMetadata::table_name()),
+            s(ChnotMetadata::TABLE),
             Self::RowType::to_chnot_meta,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(NamespaceRecord::table_name()),
+            s(NamespaceRecord::TABLE),
             Self::RowType::to_namespace_record,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(NamespaceRelation::table_name()),
+            s(NamespaceRelation::TABLE),
             Self::RowType::to_namespace_relation,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(Resource::table_name()),
+            s(Resource::TABLE),
             Self::RowType::to_resource,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(LLMChatBot::table_name()),
+            s(LLMChatBot::TABLE),
             Self::RowType::to_llmchat_bot,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(LLMChatRecord::table_name()),
+            s(LLMChatRecord::TABLE),
             Self::RowType::to_llmchat_record,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(LLMChatSession::table_name()),
+            s(LLMChatSession::TABLE),
             Self::RowType::to_llmchat_session,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(LLMChatTemplate::table_name()),
+            s(LLMChatTemplate::TABLE),
             Self::RowType::to_llmchat_template,
             &callback,
         )

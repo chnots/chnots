@@ -63,4 +63,5 @@ pub struct LLMChatRecord {
     #[gts_length = 40]
     pub role_id: Option<String>, // maybe bot id
     pub insert_time: DateTime<FixedOffset>,
+    pub omit_time: Option<DateTime<FixedOffset>>,
 }

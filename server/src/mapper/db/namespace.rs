@@ -1,4 +1,4 @@
-use chin_sql::SqlInserter;
+use chin_sql::{SqlInserter, SqlReader, Wheres};
 use chin_tools::wrapper::anyhow::{AResult, EResult};
 use chrono::Local;
 
@@ -12,7 +12,8 @@ impl NamespaceMapper for KDb {
     async fn read_all_namespaces(&self) -> AResult<Vec<NamespaceRecord>> {
         let stmt = self.conn().await?;
         stmt.qry_list(
-            "select * from namespace_record where delete_time is not null",
+            SqlReader::read_all(NamespaceRecord::TABLE)
+                .r#where(Wheres::is_not_null(NamespaceRecord::DELETE_TIME)),
             |e| e.to_namespace_record(),
         )
         .await
@@ -22,14 +23,14 @@ impl NamespaceMapper for KDb {
         self.conn()
             .await?
             .qry_list(
-                "select * from namespace_relation where delete_time is not null",
-                |e| e.to_namespace_relation(),
+                SqlReader::read_all(NamespaceRelation::TABLE)
+                .r#where(Wheres::is_not_null(NamespaceRelation::DELETE_TIME)),                |e| e.to_namespace_relation(),
             )
             .await
     }
 
     async fn ensure_table_namespace_record(&self) -> EResult {
-        self.create_table(NamespaceRecord::table_creation_sql(self.db_type()))
+        self.create_table(NamespaceRecord::schema(self.db_type()))
             .await?;
 
         let fast_create = |name: &str| NamespaceRecord {
@@ -45,10 +46,10 @@ impl NamespaceMapper for KDb {
             fast_create("public"),
             fast_create("work"),
         ] {
-            let inserter = SqlInserter::new(NamespaceRecord::table_name())
-                .fields(NamespaceRecord::field_id(), &v.id)
-                .fields(NamespaceRecord::field_name(), &v.name)
-                .fields(NamespaceRecord::field_insert_time(), &v.insert_time)
+            let inserter = SqlInserter::new(NamespaceRecord::TABLE)
+                .fields(NamespaceRecord::ID, &v.id)
+                .fields(NamespaceRecord::NAME, &v.name)
+                .fields(NamespaceRecord::INSERT_TIME, &v.insert_time)
                 .on_conflict(chin_sql::OnConflict::Ignore);
 
             self.conn().await?.exec(inserter).await?;
@@ -58,7 +59,7 @@ impl NamespaceMapper for KDb {
     }
 
     async fn ensure_table_namespace_relation(&self) -> EResult {
-        self.create_table(NamespaceRelation::table_creation_sql(self.db_type()))
+        self.create_table(NamespaceRelation::schema(self.db_type()))
             .await
     }
 }

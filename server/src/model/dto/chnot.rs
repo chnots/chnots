@@ -13,11 +13,8 @@ pub struct Chnot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotUpdateReq {
     pub meta_id: String,
-
     pub namespace: Option<String>,
-
     pub update_time: bool,
-
     pub pinned: Option<bool>,
     pub archive: Option<bool>,
 }
@@ -50,11 +47,22 @@ pub struct ChnotDeletionReq {
 pub struct ChnotDeletionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ChnotViewType {
+    #[serde(rename = "timeline")]    
+    Timeline,
+    #[serde(rename = "tag_exact")]
+    TagExact,
+    #[serde(rename = "tag_with_sub")]
+    TagWithSub,    
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryReq {
     pub query: Option<String>,
     pub meta_id: Option<String>,
     pub record_id: Option<String>,
-    pub tag_keyword: Option<String>,
+    pub tag_path: Option<String>,
+    pub view_type: ChnotViewType,
 
     pub with_deleted: Option<bool>,
     pub with_omitted: Option<bool>,
@@ -82,24 +90,30 @@ pub struct ToentGuessRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TagSearchType {
+    #[serde(rename = "exact")]    
+    Exact,
+    #[serde(rename = "fuzzy")]    
+    Fuzzy,
+    #[serde(rename = "single")]    
+    OneLevel,
+    #[serde(rename = "full")]    
+    FullLevel,        
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotTagQueryReq {
     pub query: Option<String>,
+    pub query_type: bool,
 
     // Paging
     pub start_index: u64,
     pub page_size: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagQueryRsp {
-    pub data: Vec<ChnotTag>,
-
-    pub start_index: u64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagNamesRsp {
-    pub data: Vec<String>,
+#[derive(Debug, Clone, Serialize)]
+pub struct ChnotTagQueryRsp<T> where T: Serialize + Clone {
+    pub data: Vec<T>,
 
     pub start_index: u64,
 }

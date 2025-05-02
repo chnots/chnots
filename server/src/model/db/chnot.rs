@@ -67,5 +67,6 @@ pub enum ChnotKind {
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
 pub enum ChnotTagType {
     Dir = 99,
+    ParentDir = 98,
     Common = 1,
 }

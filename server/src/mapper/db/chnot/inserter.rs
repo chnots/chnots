@@ -8,7 +8,7 @@ use crate::{
             sqlite::wrapper::KDbConnBehaiverSync,
             KDbBehaiver, KDbConnBehaiver, KDbRow,
         },
-        ChnotMapper, DeserializeMapper,
+        ChnotMapper,
     },
     model::{
         db::chnot::*,
@@ -20,7 +20,7 @@ use crate::{
     util::string_util::get_hashtags,
 };
 use anyhow::anyhow;
-use chin_sql::{SqlInserter, SqlSegBuilder, SqlUpdater};
+use chin_sql::{SqlInserter, SqlReader, SqlUpdater};
 use chin_tools::{
     utils::id_util,
     wrapper::anyhow::{AResult, EResult},
@@ -68,43 +68,44 @@ fn to_old_info(row: KDbRow<'_>) -> AResult<OldInfo> {
 
 macro_rules! handle_insert {
     ( $tx:expr, $meta_id:expr, $req:expr $(, $wait:tt)?) => {
-        let insert_rec = |id| SqlInserter::new(ChnotRecord::table_name())
-            .fields(ChnotRecord::field_id(), id)
-            .fields(ChnotRecord::field_insert_time(), &$req.insert_time)
-            .fields(ChnotRecord::field_meta_id(), (*$meta_id).clone())
-            .fields(ChnotRecord::field_content(), &$req.content);
+        let insert_rec = |id| SqlInserter::new(ChnotRecord::TABLE)
+            .fields(ChnotRecord::ID, id)
+            .fields(ChnotRecord::INSERT_TIME, &$req.insert_time)
+            .fields(ChnotRecord::META_ID, (*$meta_id).clone())
+            .fields(ChnotRecord::CONTENT, &$req.content);
         // SQL operations
-        let insert_meta = SqlInserter::new(ChnotMetadata::table_name())
-            .fields(ChnotMetadata::field_id(), (*$meta_id).clone())
-            .fields(ChnotMetadata::field_insert_time(), &$req.insert_time)
-            .fields(ChnotMetadata::field_namespace(), &$req.namespace)
-            .fields(ChnotMetadata::field_kind(), $req.kind.as_ref());
-        let update_meta_utime = SqlUpdater::new(ChnotMetadata::table_name())
-            .set(ChnotMetadata::field_update_time(), &$req.insert_time)
+        let insert_meta = SqlInserter::new(ChnotMetadata::TABLE)
+            .fields(ChnotMetadata::ID, (*$meta_id).clone())
+            .fields(ChnotMetadata::INSERT_TIME, &$req.insert_time)
+            .fields(ChnotMetadata::NAMESPACE, &$req.namespace)
+            .fields(ChnotMetadata::KIND, $req.kind.as_ref());
+        let update_meta_utime = SqlUpdater::new(ChnotMetadata::TABLE)
+            .set(ChnotMetadata::UPDATE_TIME, &$req.insert_time)
             .r#where(Wheres::equal(
-                ChnotMetadata::field_id(),
+                ChnotMetadata::ID,
                 (*$meta_id).clone(),
             ));
         match $meta_id {
             MetaId::Old(_) => {
                 // Query for existing record
-                let query_old_rec = SqlSegBuilder::new()
-                    .raw("select id, content, insert_time from chnot_record")
+                let query_old_rec = SqlReader::read(ChnotRecord::TABLE, 
+                    &[ChnotRecord::ID, ChnotRecord::CONTENT, ChnotRecord::INSERT_TIME]
+                )
                     .r#where(Wheres::and([
-                        Wheres::equal(ChnotRecord::field_meta_id(), (*$meta_id).clone()),
-                        Wheres::is_null(ChnotRecord::field_omit_time()),
+                        Wheres::equal(ChnotRecord::META_ID, (*$meta_id).clone()),
+                        Wheres::is_null(ChnotRecord::OMIT_TIME),
                     ]));
 
                 let update_rec = |id| {
-                    SqlUpdater::new(ChnotRecord::table_name())
-                        .set(ChnotRecord::field_content(), &$req.content)
-                        .set(ChnotRecord::field_insert_time(), &$req.insert_time)
-                        .r#where(Wheres::equal(ChnotRecord::field_id(), id))
+                    SqlUpdater::new(ChnotRecord::TABLE)
+                        .set(ChnotRecord::CONTENT, &$req.content)
+                        .set(ChnotRecord::INSERT_TIME, &$req.insert_time)
+                        .r#where(Wheres::equal(ChnotRecord::ID, id))
                 };
 
-                let update_omit = SqlUpdater::new(ChnotRecord::table_name())
-                    .set(ChnotRecord::field_omit_time(), &$req.insert_time)
-                    .r#where(Wheres::equal(ChnotRecord::field_meta_id(), $meta_id.to_str()));
+                let update_omit = SqlUpdater::new(ChnotRecord::TABLE)
+                    .set(ChnotRecord::OMIT_TIME, &$req.insert_time)
+                    .r#where(Wheres::equal(ChnotRecord::META_ID, $meta_id.to_str()));
 
                 // Get old record info
                 let old_info = $tx.qry_opt(query_old_rec, |e| to_old_info(e))$(.$wait)??;
