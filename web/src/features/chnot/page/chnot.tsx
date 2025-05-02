@@ -43,7 +43,7 @@ const ChnotEditorContainer = () => {
     }
   }, [setCurrentChnotMetaId, setEditorChnot]);
 
-  return <div className="flex-1 justify-center items-center p-4">
+  return <div className="flex flex-grow justify-center items-center p-4">
     <ChnotMarkdownEditor key={chnotEditorId} chnot={editorChnot} className="w-full max-w-3xl h-full" chnotChange={updateEditorChnot} />
   </div>
 }
