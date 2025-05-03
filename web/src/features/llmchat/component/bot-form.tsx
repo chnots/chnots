@@ -1,3 +1,4 @@
+import KButton from "@/common/component/kbutton";
 import KSVG from "@/common/component/svg";
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/store/llmchat/db";
 import React, { RefObject, useEffect, useRef, useState } from "react";
@@ -102,6 +103,9 @@ const BotForm = ({
     name: bot?.name ?? "",
     svg_logo: bot?.svg_logo,
   });
+
+  const [botId, setBotId] = useState<string>(bot?.id ?? v4());
+
   const body = bot?.body
     ? (JSON.parse(bot?.body) as LLMChatBotBodyOpenAIV1)
     : null;
@@ -133,7 +137,7 @@ const BotForm = ({
       };
 
       const toInsert: LLMChatBot = {
-        id: bot ? bot.id : v4(),
+        id: botId,
         name: formData.name,
         svg_logo: formData.svg_logo,
         insert_time: new Date(),
@@ -191,20 +195,19 @@ const BotForm = ({
           </div>
           <LLMChatBotBodyOpenAIV1Body bodyRef={bodyRef} />
           <div className="flex flex-row justify-center space-x-4">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              aria-label="Submit Template"
-            >
+            <KButton type="submit" aria-label="Submit Template">
               Submit
-            </button>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              aria-label="Close"
-              onClick={onClose}
-            >
+            </KButton>
+            <KButton aria-label="Close" onClick={onClose}>
               Close
-            </button>
+            </KButton>
+            <KButton
+              aria-label="Duplicate"
+              onClick={() => setBotId(v4())}
+              type="button"
+            >
+              Duplicate
+            </KButton>
           </div>
         </form>
       </div>

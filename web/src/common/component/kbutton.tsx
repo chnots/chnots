@@ -1,28 +1,30 @@
 import clsx from "clsx";
-import { ReactNode } from "react";
+import { ButtonHTMLAttributes, ReactNode } from "react";
 
 const KButton = ({
   children,
   onClick,
   showBorder,
   className,
+  ...rest
 }: {
   children: ReactNode;
   className?: string;
   showBorder?: boolean;
   onClick?: () => void;
-}) => {
+} & ButtonHTMLAttributes<object>) => {
   return (
-    <div
+    <button
       className={clsx(
         "flex flex-row items-center hover:kbutton-focused rounded-xl space-x-2 p-2",
         showBorder ? "kbutton" : "border border-transparent",
         className
       )}
       onClick={onClick}
+      {...rest}
     >
       {children}
-    </div>
+    </button>
   );
 };
 

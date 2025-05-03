@@ -30,13 +30,15 @@ export const ResponseRecord = ({
     return;
   }
 
-  const [bot] = useState(chatbot);
+  const [bot, setBot] = useState(chatbot);
+
   const handleResponse = useCallback(
     async (responseState: ResponseState) => {
       const record: LLMChatRecord = {
         id: uuid(),
         session_id: responseState.sessionId,
-        content: responseState.answer ?? "",
+        content: responseState.content ?? "",
+        reasoning_content: responseState.reasoningContent ?? "",
         role: "assistant",
         role_id: bot.id,
         pre_record_id: responseState.prevRecordId,
@@ -63,7 +65,7 @@ export const ResponseRecord = ({
   const hanbleAbort =
     answerStep === AnswerStep.Answering
       ? () => setAnswerStep(AnswerStep.Abort)
-      : () => {};
+      : undefined;
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -76,9 +78,11 @@ export const ResponseRecord = ({
     <>
       <RecordContent
         className={className}
-        content={responseState?.answer ?? ""}
+        reasoningContent={responseState?.reasoningContent}
+        content={responseState?.content ?? ""}
         onAbort={hanbleAbort}
         onRegenerate={() => {
+          setBot(chatbot);
           setAnswerStep(AnswerStep.TriggerAnswer);
         }}
         role={"assistant-response"}

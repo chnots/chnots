@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import rehypeSanitize from "rehype-sanitize";
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import ReactMarkdown from "react-markdown";
@@ -26,6 +25,7 @@ const RecordContent = ({
   logo,
   timestamp,
   content,
+  reasoningContent,
   className,
   limitedHeight,
   setLimitedHeight,
@@ -37,6 +37,7 @@ const RecordContent = ({
   logo?: string;
   roleName?: string;
   content: string;
+  reasoningContent?: string;
   className?: string;
   timestamp?: Date;
   limitedHeight?: boolean;
@@ -75,14 +76,26 @@ const RecordContent = ({
               {content}
             </div>
           ) : (
-            <ReactMarkdown
-              className={
-                "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
-              }
-              remarkPlugins={[remarkGfm]}
-            >
-              {content}
-            </ReactMarkdown>
+            <>
+              {reasoningContent && (
+                <ReactMarkdown
+                  className={
+                    "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 bg-secondary p-2 kborder border rounded-tr-2xl my-2"
+                  }
+                  remarkPlugins={[remarkGfm]}
+                >
+                  {reasoningContent}
+                </ReactMarkdown>
+              )}
+              <ReactMarkdown
+                className={
+                  "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
+                }
+                remarkPlugins={[remarkGfm]}
+              >
+                {content}
+              </ReactMarkdown>
+            </>
           )}
         </div>
         <div className="space-x-2 mt-1">

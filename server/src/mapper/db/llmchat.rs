@@ -30,7 +30,8 @@ impl LLMChatMapper for KDb {
             .fields(LLMChatBot::NAME, &bot.name)
             .fields(LLMChatBot::BODY, &bot.body)
             .fields(LLMChatBot::SVG_LOGO, bot.svg_logo.as_ref())
-            .fields(LLMChatBot::INSERT_TIME, &bot.insert_time);
+            .fields(LLMChatBot::INSERT_TIME, &bot.insert_time)
+            .on_conflict(chin_sql::OnConflict::Replace("id".to_string()));
 
         self.conn().await?.exec(inserter).await?;
 
@@ -84,6 +85,7 @@ impl LLMChatMapper for KDb {
             .fields(LLMChatRecord::CONTENT, &rec.content)
             .fields(LLMChatRecord::ROLE, &rec.role)
             .fields(LLMChatRecord::ROLE_ID, rec.role_id.as_ref())
+            .fields(LLMChatRecord::REASONING_CONTENT, &rec.reasoning_content)
             .fields(LLMChatRecord::INSERT_TIME, &rec.insert_time);
 
         self.conn().await?.exec(inserter).await?;

@@ -15,7 +15,8 @@ export enum AnswerStep {
 }
 
 export interface ResponseState {
-  answer: string;
+  reasoningContent: string;
+  content: string;
   sessionId: string;
   prevRecordId?: string;
   abortSingal: AbortController;
@@ -44,7 +45,7 @@ export const useLLMResponse = ({
     }
     setAnswerStep(AnswerStep.HandlingResponse);
 
-    if (responseState.answer === "") {
+    if (responseState.content === "" || responseState.reasoningContent.length == 0) {
       console.warn("llm result is empty");
       return;
     }
@@ -76,9 +77,10 @@ export const useLLMResponse = ({
       }
       return {
         abortSingal: ctrl,
-        answer: "",
+        content: "",
         prevRecordId: detail.session.id,
         sessionId: detail.session.id,
+        reasoningContent: ""
       };
     });
 
@@ -104,12 +106,20 @@ export const useLLMResponse = ({
         const choices = json.choices as Array<{
           delta: {
             content: string | null;
+            reasoning_content: string | undefined | null;
           };
         }>;
-        const delta = choices.at(0)?.delta.content;
-        if (delta && delta.length > 0) {
+        const delta = choices.at(0)?.delta;
+        const content = delta?.content;
+        const reasoningContent = delta?.reasoning_content;
+        if (content && content.length > 0) {
           setResponseState((prev) => {
-            return { ...prev!, answer: prev?.answer + delta };
+            return { ...prev!, content: prev?.content + content };
+          });
+        }
+        if (reasoningContent && reasoningContent.length > 0) {
+          setResponseState((prev) => {
+            return { ...prev!, reasoningContent: prev?.reasoningContent + reasoningContent };
           });
         }
       },

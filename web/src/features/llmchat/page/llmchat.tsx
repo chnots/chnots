@@ -2,15 +2,13 @@ import SessionList from "@/features/llmchat/component/session-list";
 import SessionBody from "@/features/llmchat/component/session-body";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect, useState } from "react";
-import AddButton from "../component/session-add-button";
 import { useCommonStore } from "@/store/common";
 import { useLLMChatStore } from "@/store/llmchat/store";
 
 const LLMChatPage = () => {
-  const { refreshAll, setCurrentSession } = useLLMChatStore();
+  const { refreshAll } = useLLMChatStore();
   const { currentNamespace } = useNamespaceStore();
   const { showSidebar } = useCommonStore();
-  const [newSessionCount, setNewSessionCount] = useState(0);
 
   useEffect(() => {
     refreshAll();
@@ -26,20 +24,9 @@ const LLMChatPage = () => {
             <SessionList />
           </div>
         )}
-        <div className="w-full flex flex-row mb-2 justify-center">
-          <AddButton
-            className="px-2 py-1 max-w-40"
-            onAdd={() => {
-              setNewSessionCount((prev) => {
-                return prev + 1;
-              });
-              setCurrentSession(undefined);
-            }}
-          />
-        </div>
       </div>
       <div className="flex-1 h-full">
-        <SessionBody newSessionFlag={newSessionCount} />
+        <SessionBody />
       </div>
     </div>
   );

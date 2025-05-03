@@ -34,6 +34,7 @@ export const Record = ({
   return (
     <RecordContent
       className={className}
+      reasoningContent={record.reasoning_content}
       content={record.content}
       timestamp={record.insert_time}
       onRegenerate={

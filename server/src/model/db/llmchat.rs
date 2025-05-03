@@ -56,6 +56,7 @@ pub struct LLMChatRecord {
     #[gts_length = 40]
     pub pre_record_id: Option<String>,
     pub content: String,
+    pub reasoning_content: String,
     #[gts_length = 40]
     pub role: String,
     #[gts_length = 40]

@@ -3,6 +3,7 @@ import Icon from "@/common/component/icon";
 import { v4 as uuid } from "uuid";
 import { LLMChatRecord } from "@/store/llmchat/db";
 import { LLMChatSessionDetail } from "@/store/llmchat/dto";
+import { useLLMChatStore } from "@/store/llmchat/store";
 
 const LLMChatSessionInput = ({
   disabled,
@@ -17,6 +18,8 @@ const LLMChatSessionInput = ({
 }) => {
   const [message, setMessage] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [newSessionCount, setNewSessionCount] = useState(0);
+  const { setCurrentSession } = useLLMChatStore();
 
   const handleKeyDown = (e: {
     key: string;
@@ -44,6 +47,7 @@ const LLMChatSessionInput = ({
       session_id: sessionDetail.session.id,
       pre_record_id: sessionDetail.records.at(-1)?.id,
       content: msg,
+      reasoning_content: "",
       role: "user",
       insert_time: new Date(),
     };
@@ -61,7 +65,7 @@ const LLMChatSessionInput = ({
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
     }
-  }, [textareaRef, message])
+  }, [textareaRef, message]);
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
@@ -73,13 +77,25 @@ const LLMChatSessionInput = ({
           }}
           value={message}
           onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
+          placeholder="Type your question..."
           ref={textareaRef}
         />
-        <div className="flex flex-row justify-between">
-          {botSelect}
+        <div className="flex justify-between">
+          <div className="flex space-x-4 align-middle items-center">
+            <div
+              onClick={() => {
+                setCurrentSession(undefined);
+              }}
+              className="kborder bg-accent border rounded-lg p-1 h-7 mx-2 flex items-center space-x-1 hover:cursor-pointer hover:bg-green-50 text-xs"
+            >
+              <Icon.BadgePlus className="w-4 h-4" />
+              <span>New</span>
+            </div>
+
+            <div>{botSelect}</div>
+          </div>
           <button
-            className="p-2 hover:bg-blue-100 h-auto w-auto rounded-xl"
+            className="p-1 hover:bg-blue-100 h-auto w-auto rounded-xl"
             onClick={() => {
               if (message && sessionDetail) {
                 handleSendUserMsg(message, sessionDetail);

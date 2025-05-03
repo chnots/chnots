@@ -113,6 +113,7 @@ const LLMChatSessionBody = ({
       id: uuid(),
       session_id: session.id,
       content: template.prompt,
+      reasoning_content: "",
       role_id: template.id,
       role: "system",
       insert_time: new Date(),
