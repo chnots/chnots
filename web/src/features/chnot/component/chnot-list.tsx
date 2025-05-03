@@ -11,51 +11,83 @@ import ChnotTagListItem from "./chnot-tag-list-item";
 const TagPath = () => {
   const { setListViewType, listViewType } = useChnotStore();
   if (listViewType.kind !== "tagtree") {
-    return <></>
+    return <></>;
   }
 
   const tagKind = listViewType.tagkind;
   const tagPath = listViewType.tagpath;
-  const parts = tagPath.length > 0 ? tagPath.split('/') : [];
+  const parts = tagPath.length > 0 ? tagPath.split("/") : [];
 
   const segments: string[] = [];
   if (parts.length > 0) {
-    segments.push(parts[0])
+    segments.push(parts[0]);
     for (let i = 1; i < parts.length; i++) {
       segments.push(`${segments[i - 1]}/${parts[i]}`);
     }
     parts[0] = parts[0].replace(RegExp("#"), "");
   }
 
-  return <div className="w-full flex flex-row space-x-1">
-    <div className="pl-2" />
-    <KButton>{
-      tagKind === "children"
-        ? <Icon.WheatOff onClick={() => setListViewType({ ...listViewType, tagkind: "descendants" })} className="w-4" />
-        : <Icon.Wheat onClick={() => setListViewType({ ...listViewType, tagkind: "children" })} className="w-4" />
-    }
-    </KButton>
-    <div className="py-2 hover:cursor-pointer space-x-1" key={"#root"} ><span onClick={() => {
-      setListViewType({ ...listViewType, tagpath: "" })
-    }} className="underline">#</span></div>
-    {parts.map((layer, index) => {
-      return <div className="py-2 hover:cursor-pointer space-x-1" key={segments[index]} ><span onClick={() => {
-        setListViewType({ ...listViewType, tagpath: segments[index] })
-      }} className="underline">{layer}</span><span>/</span></div>
-    })}
-  </div>
-}
+  return (
+    <div className="w-full flex flex-row space-x-1">
+      <div className="pl-2" />
+      <KButton>
+        {tagKind === "children" ? (
+          <Icon.WheatOff
+            onClick={() =>
+              setListViewType({ ...listViewType, tagkind: "descendants" })
+            }
+            className="w-4"
+          />
+        ) : (
+          <Icon.Wheat
+            onClick={() =>
+              setListViewType({ ...listViewType, tagkind: "children" })
+            }
+            className="w-4"
+          />
+        )}
+      </KButton>
+      <div className="py-2 hover:cursor-pointer space-x-1" key={"#root"}>
+        <span
+          onClick={() => {
+            setListViewType({ ...listViewType, tagpath: "" });
+          }}
+          className="underline"
+        >
+          #
+        </span>
+      </div>
+      {parts.map((layer, index) => {
+        return (
+          <div
+            className="py-2 hover:cursor-pointer space-x-1"
+            key={segments[index]}
+          >
+            <span
+              onClick={() => {
+                setListViewType({ ...listViewType, tagpath: segments[index] });
+              }}
+              className="underline"
+            >
+              {layer}
+            </span>
+            <span>/</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const ChnotList = () => {
   const {
     fetchMoreChnots,
     refreshChnots,
     isFetchingNextPage,
-    hasNextPage,
     chnotMapByMetaId,
     changeKeyword,
     listViewType,
-    setListViewType
+    setListViewType,
   } = useChnotStore();
 
   const [keyword, setKeyword] = useState<string>();
@@ -63,32 +95,38 @@ const ChnotList = () => {
 
   useEffect(() => {
     changeKeyword(keyword);
-  }, [keyword])
+  }, [keyword]);
 
   useEffect(() => {
     if (listViewType.kind === "tagtree") {
       chnotTagNames({
         start_index: 0,
         page_size: 9999,
-        query_type: listViewType,
-        query: keyword
+        tag_tree: listViewType,
+        query: keyword,
       }).then((rsp) => {
-        setTagList(rsp.data)
+        setTagList(rsp.data);
       });
     }
-    refreshChnots()
-  }, [listViewType, setTagList, keyword]);
+    refreshChnots();
+  }, [listViewType, setTagList, keyword, refreshChnots]);
 
   return (
     <>
       <div className="flex flex-row">
-        <KButton onClick={() => {
-          if (listViewType.kind !== "timeline") {
-            setListViewType({ kind: "timeline" })
-          } else {
-            setListViewType({ kind: "tagtree", tagkind: "children", tagpath: "" })
-          }
-        }}>
+        <KButton
+          onClick={() => {
+            if (listViewType.kind !== "timeline") {
+              setListViewType({ kind: "timeline" });
+            } else {
+              setListViewType({
+                kind: "tagtree",
+                tagkind: "children",
+                tagpath: "",
+              });
+            }
+          }}
+        >
           {listViewType.kind === "timeline" ? <Icon.Inbox /> : <Icon.Folder />}
         </KButton>
         <div className="w-full p-2 bg-transparent rounded">
@@ -102,30 +140,33 @@ const ChnotList = () => {
       </div>
       <TagPath />
       <div className="overflow-auto h-full overflow-x-hidden overflow-y-auto">
-        {
-          tagList && listViewType.kind === "tagtree" &&
+        {tagList && listViewType.kind === "tagtree" && (
           <ul className="m-0 grid gap-2 pt-2 pr-1 pb-1 pl-2">
-            {tagList.map((tagpath) =>
-              <ChnotTagListItem key={tagpath} tag={tagpath} handleClick={() => {
-                if (listViewType.kind === "tagtree") {
-                  setListViewType({ ...listViewType, tagpath })
-                }
-              }} />
-            )}
+            {tagList.map((tagpath) => (
+              <ChnotTagListItem
+                key={tagpath}
+                tag={tagpath}
+                handleClick={() => {
+                  if (listViewType.kind === "tagtree") {
+                    setListViewType({ ...listViewType, tagpath });
+                  }
+                }}
+              />
+            ))}
           </ul>
-        }
+        )}
         <KPageList
           onFetchMore={fetchMoreChnots}
           isFetchingNextPage={isFetchingNextPage}
-          hasNextPage={hasNextPage}
+          hasNextPage={chnotMapByMetaId.hasNextPage}
         >
-          {[...chnotMapByMetaId.values()].map((chnot) => (
+          {[...chnotMapByMetaId.dbCache.values()].map((chnot) => (
             <ChnotListItem chnot={chnot} key={chnot.record.id} />
           ))}
         </KPageList>
       </div>
     </>
   );
-}
+};
 
 export default ChnotList;

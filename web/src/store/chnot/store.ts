@@ -10,16 +10,24 @@ import {
   ListViewType,
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
+import { DbCache } from '../common';
+
+const newChnotMap = () => {
+  return {
+    dbNextStartIndex: 0,
+    dbPageSize: 20,
+    hasNextPage: true,
+    dbCache: new Map()
+  }
+}
 
 const getDefaultState = (): State => {
   return {
-    fetchMoreChnots: () => {},
-    refreshChnots: () => {},
-    chnotMapByMetaId: new Map(),
-    pageSize: 20,
+    fetchMoreChnots: () => { },
+    refreshChnots: () => { },
+    chnotMapByMetaId: newChnotMap(),
     query: undefined,
     isFetchingNextPage: false,
-    hasNextPage: true,
     listViewType: { kind: "timeline" }
   };
 };
@@ -28,28 +36,22 @@ interface State {
   refreshChnots(): unknown;
   fetchMoreChnots(): unknown;
 
-  pageSize: number;
-
-  /**
-   * Current Query Input
-   */
-  query?: string;
-
   /**
    * Chnot Map by Chnot Meta Id
    */
-  chnotMapByMetaId: Map<string, Chnot>;
-
-
-  listViewType: ListViewType
+  chnotMapByMetaId: DbCache<Chnot>;
 
   /**
    * Current Chnot Meta Id
    */
   curMetaId?: string;
 
+  /**
+   * Current Query Input
+   */
+  query?: string;
+  listViewType: ListViewType
   isFetchingNextPage: boolean;
-  hasNextPage: boolean;
 
 }
 
@@ -68,26 +70,25 @@ export const useChnotStore = create(
         };
       });
 
-      const read = get();
+      const { chnotMapByMetaId, query, listViewType } = get();
       const cs: ChnotQueryRsp = await chnotQuery({
-        start_index: read.chnotMapByMetaId.size,
-        page_size: read.pageSize,
-        query: read.query,
-        view_type: read.listViewType 
+        start_index: chnotMapByMetaId.dbNextStartIndex,
+        page_size: chnotMapByMetaId.dbPageSize,
+        query: query,
+        view_type: listViewType
       });
 
       set((state) => {
-        const arr = state.chnotMapByMetaId;
+        const cmm = state.chnotMapByMetaId;
+        const cm = cmm.dbCache;
 
         for (const c of cs.data) {
-          state.chnotMapByMetaId.set(c.meta.id, c);
+          cm.set(c.meta.id, c);
         }
 
         return {
           ...state,
-          chnots: arr,
-          startIndex: cs.start_index + cs.data.length,
-          hasNextPage: cs.data.length >= read.pageSize,
+          chnotMapByMetaId: { ...cmm, dbNextStartIndex: cs.next_start, hasNextPage: cs.has_next },
           isFetchingNextPage: false,
         };
       });
@@ -101,7 +102,7 @@ export const useChnotStore = create(
     },
     refreshChnots: async () => {
       set((state) => {
-        return { ...state, startIndex: 0, chnotMapByMetaId: new Map() };
+        return { ...state, chnotMapByMetaId: newChnotMap() };
       });
 
       await get().fetchMoreChnots();
@@ -114,13 +115,15 @@ export const useChnotStore = create(
         if (overwriteCache) {
           const chnot = value.chnot;
           set((state) => {
-            let cm = state.chnotMapByMetaId;
+            const cmm = state.chnotMapByMetaId;
+            let cm = cmm.dbCache;
             if (cm.has(chnot.meta.id)) {
               cm.set(chnot.meta.id, chnot);
             } else {
               cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
             }
-            return { ...state, chnotMapByMetaId: cm };
+            cmm.dbCache = cm;
+            return { ...state, chnotMapByMetaId: cmm };
           });
         }
         return value;
@@ -139,11 +142,12 @@ export const useChnotStore = create(
     getCurrentChnot: () => {
       const read = get();
       return read.curMetaId
-        ? read.chnotMapByMetaId.get(read.curMetaId)
+        ? read.chnotMapByMetaId.dbCache.get(read.curMetaId)
         : undefined;
     },
     validateChnotCache: (toRemoves: string[]) => {
-      const map = get().chnotMapByMetaId;
+      const cmm = get().chnotMapByMetaId;
+      const map = cmm.dbCache;
 
       const toRemove2 = Array.from(
         map
@@ -170,7 +174,7 @@ export const useChnotStore = create(
       set((prev) => {
         return {
           ...prev,
-          chnotMapByMetaId: map,
+          chnotMapByMetaId: cmm,
           curMetaId:
             prev.curMetaId && map.has(prev.curMetaId)
               ? prev.curMetaId

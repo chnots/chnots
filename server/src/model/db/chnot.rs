@@ -57,6 +57,12 @@ pub struct ChnotTag {
     pub insert_time: DateTime<FixedOffset>,
 }
 
+impl AsRef<str> for ChnotTag {
+    fn as_ref(&self) -> &str {
+        &self.tag
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display, AsRefStr)]
 pub enum ChnotKind {
     #[strum(serialize = "mdwt")]

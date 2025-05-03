@@ -31,3 +31,14 @@ export const useCommonStore = create(
     },
   }))
 );
+
+
+export interface DbCache<T> {
+  /**
+ * for db result empty hole
+ */
+  dbNextStartIndex: number;
+  dbPageSize: number;
+  hasNextPage: boolean;
+  dbCache: Map<string, T>
+}

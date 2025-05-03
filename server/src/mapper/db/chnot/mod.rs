@@ -23,6 +23,7 @@ use chin_tools::{
 use chrono::{Local, Utc};
 use itertools::Itertools;
 use serde::Serialize;
+use tracing::info;
 
 use crate::model::dto::chnot::*;
 
@@ -68,48 +69,72 @@ impl KDb {
     ) -> AResult<ChnotTagQueryRsp<T>>
     where
         F: Fn(KDbRow<'_>) -> AResult<T> + Send + 'static,
-        T: Serialize + Clone + Send + 'static,
+        T: Serialize + Clone + Send + 'static + AsRef<str>,
     {
         let ChnotTagQueryReq {
             query,
             page_size,
             start_index,
-            query_type,
+            tag_tree,
         } = req.body;
         let ns = req.namespace;
 
+        let level = |s: &str| {
+            if s.is_empty() {
+                return -1;
+            }
+            s.char_indices().filter(|(_, c)| *c == '/').count() as i32
+        };
+        let query_type1 = tag_tree.clone();
+
+        let origin_count = level(query_type1.path());
+        info!("original count: {}", origin_count);
         let sr = if name_only {
-            SqlReader::read(ChnotTag::TABLE, &[ChnotTag::TAG])
+            SqlReader::read(ChnotTag::TABLE, &["distinct tag"])
         } else {
             SqlReader::read_all(ChnotTag::TABLE)
         };
 
         let query = sr
             .r#where(Wheres::and([
-                Wheres::if_some(query, |query| {
-                    Wheres::ilike(
-                        "tag",
-                        format!(
-                            "{}%{}%",
-                            match query_type {
-                                ChnotTagTreeType::OneLayer(prefix) => prefix,
-                                ChnotTagTreeType::Full(prefix) => prefix,
-                            },
-                            query
-                        ),
-                        chin_sql::ILikeType::Original,
-                    )
-                }),
+                Wheres::ilike(
+                    "tag",
+                    {
+                        let mut tag_str = String::new();
+                        let prefix = tag_tree.path();
+                        if prefix.len() > 0 {
+                            tag_str.push_str(&prefix);
+                            tag_str.push('/');
+                        }
+                        tag_str.push('%');
+                        if let Some(fuzzy) = query {
+                            tag_str.push_str(&fuzzy);
+                            tag_str.push_str("%");
+                        }
+
+                        tag_str
+                    },
+                    chin_sql::ILikeType::Original,
+                ),
                 Wheres::equal("namespace", ns),
             ]))
             .raw("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index));
 
-        let data = self
+        let mut data = self
             .conn()
             .await?
             .qry_list(query, move |e| mapper(e))
             .await?;
+
+        if let ChnotTagTreeType::Children(prefix) = query_type1 {
+            data = data
+                .into_iter()
+                .filter(|tag| {
+                    tag.as_ref().starts_with(&prefix) && level(tag.as_ref()) == origin_count + 1
+                })
+                .collect();
+        }
 
         Ok(ChnotTagQueryRsp { data, start_index })
     }
@@ -140,13 +165,21 @@ impl ChnotMapper for KDb {
     }
 
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
+        let page_size = req.page_size;
+        let page_start = req.start_index;
         let conn = self.conn().await?;
 
         let chnot_sql = chnot_query_sql()
             .some_then(
                 match &req.view_type {
                     ChnotViewType::Timeline => None,
-                    ChnotViewType::TagTree(chnot_view_tag_tree) => Some(chnot_view_tag_tree),
+                    ChnotViewType::TagTree(chnot_view_tag_tree) => {
+                        if chnot_view_tag_tree.is_empty() {
+                            None
+                        } else {
+                            Some(chnot_view_tag_tree)
+                        }
+                    }
                 },
                 |tag, ss| {
                     ss.raw("inner join")
@@ -155,7 +188,7 @@ impl ChnotMapper for KDb {
                             SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
                                 Wheres::equal(ChnotTag::NAMESPACE, req.namespace.to_owned()),
                                 match tag {
-                                    ChnotTagTreeType::OneLayer(path) => Wheres::and([
+                                    ChnotTagTreeType::Children(path) => Wheres::and([
                                         Wheres::equal(
                                             ChnotTag::TAG,
                                             if path.starts_with("#") {
@@ -166,7 +199,7 @@ impl ChnotMapper for KDb {
                                         ),
                                         Wheres::equal(ChnotTag::CATEGORY, ChnotTagType::Dir),
                                     ]),
-                                    ChnotTagTreeType::Full(path) => {
+                                    ChnotTagTreeType::Descendants(path) => {
                                         Wheres::ilike(ChnotTag::TAG, path, ILikeType::RightFuzzy)
                                     }
                                 },
@@ -204,6 +237,7 @@ impl ChnotMapper for KDb {
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("content", content, ILikeType::Fuzzy)
                 }),
+                Wheres::equal("m.kind", "mdwt"),
                 // TODO how to use as_ref?
                 Wheres::if_some(req.record_id.to_owned(), |id| Wheres::equal("r.id", id)),
                 // TODO how to use as_ref?
@@ -215,8 +249,9 @@ impl ChnotMapper for KDb {
         let cs = conn.qry_list(chnot_sql, chnot_query_mapper).await?;
 
         Ok(ChnotQueryRsp {
+            has_next: cs.len() >= page_size as usize,
             data: cs,
-            start_index: req.start_index,
+            next_start: page_start + page_size,
         })
     }
 
@@ -253,30 +288,11 @@ impl ChnotMapper for KDb {
         &self,
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>> {
-        let count = |s: &str| {
-            if s.is_empty() {
-                return -1;
-            }
-            s.chars().filter(|c| *c == '/').count() as i32
-        };
-        let query_type = req.query_type.clone();
-        let tag = req.query.clone();
-        let origin_count = req.body.query.as_ref().map_or(-1, |e| count(e));
         let mut result: ChnotTagQueryRsp<String> = self
             .chnot_tag_query_inner(req, |e| e.try_get(ChnotTag::TAG), true)
             .await?;
 
         result.data = result.data.into_iter().unique().collect();
-
-        if let ChnotTagTreeType::OneLayer(prefix) = query_type {
-            let data = result
-                .data
-                .into_iter()
-                .filter(|e| count(e) == origin_count + 1)
-                .collect();
-
-            result.data = data;
-        }
 
         Ok(result)
     }

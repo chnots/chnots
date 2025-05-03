@@ -159,18 +159,20 @@ const CodeMirrorEditor = ({
     base: markdownLanguage,
     codeLanguages: languages,
     addKeymap: true,
-    completeHTMLTags: true,
+    completeHTMLTags: false,
   });
 
-  const _extensions = [md, EditorView.lineWrapping, editorTheme, eventHandlers,
+  const _extensions = [
+    md,
+    EditorView.lineWrapping,
+    editorTheme,
+    eventHandlers,
     autocompletion({
-      override: [
-        (context) => autoCompletion(context),
-      ],
+      override: [(context) => autoCompletion(context)],
     }),
     indentationMarkers(),
     wrappedLineIndent,
-    markPlugin.extension
+    markPlugin.extension,
   ];
 
   return (
@@ -186,8 +188,9 @@ const CodeMirrorEditor = ({
         lineNumbers: false,
         highlightActiveLineGutter: false,
         foldGutter: true,
+        closeBrackets: false,
       }}
-      placeholder={"Chnot"}
+      placeholder={"Take a Chnot"}
       onChange={(e) => onContentChange(e)}
     />
   );

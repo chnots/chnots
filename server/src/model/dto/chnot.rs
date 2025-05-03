@@ -48,8 +48,24 @@ pub struct ChnotDeletionRsp {}
 
 #[derive(Debug, Clone, Serialize)]
 pub enum ChnotTagTreeType {
-    OneLayer(String),
-    Full(String),
+    Children(String),
+    Descendants(String),
+}
+
+impl ChnotTagTreeType {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            ChnotTagTreeType::Children(prefix) => prefix.is_empty(),
+            ChnotTagTreeType::Descendants(prefix) => prefix.is_empty(),
+        }
+    }
+
+    pub fn path(&self) -> &str {
+        match self {
+            ChnotTagTreeType::Children(prefix) => &prefix,
+            ChnotTagTreeType::Descendants(prefix) => &prefix,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -73,10 +89,10 @@ impl<'a> Deserialize<'a> for ChnotViewType {
 
         match deser.kind.as_str() {
             "tagtree" => match deser.tagkind.as_ref().map(|e| e.as_str()) {
-                Some("children") => Ok(Self::TagTree(ChnotTagTreeType::OneLayer(
+                Some("children") => Ok(Self::TagTree(ChnotTagTreeType::Children(
                     deser.tagpath.unwrap(),
                 ))),
-                Some("descendants") => Ok(Self::TagTree(ChnotTagTreeType::Full(
+                Some("descendants") => Ok(Self::TagTree(ChnotTagTreeType::Descendants(
                     deser.tagpath.unwrap(),
                 ))),
                 _ => Err(de::Error::custom("unknown tag type")),
@@ -100,14 +116,15 @@ pub struct ChnotQueryReq {
     pub with_archived: Option<bool>,
 
     // Paging
-    pub start_index: u64,
-    pub page_size: u64,
+    pub start_index: usize,
+    pub page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryRsp<T> {
     pub data: T,
-    pub start_index: u64,
+    pub has_next: bool,
+    pub next_start: usize
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -136,11 +153,11 @@ impl<'a> Deserialize<'a> for ChnotTagTreeType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotTagQueryReq {
     pub query: Option<String>,
-    pub query_type: ChnotTagTreeType,
+    pub tag_tree: ChnotTagTreeType,
 
     // Paging
-    pub start_index: u64,
-    pub page_size: u64,
+    pub start_index: usize,
+    pub page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -150,7 +167,7 @@ where
 {
     pub data: Vec<T>,
 
-    pub start_index: u64,
+    pub start_index: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -28,7 +28,7 @@ interface ChnotEditState {
 const chnotCompletions = async (
   context: CompletionContext
 ): Promise<CompletionResult | null> => {
-  const word = context.matchBefore(/#[^# ]*|<[^<>]*/);
+  const word = context.matchBefore(/#[^# ]*|<[^<>]*|\[/);
   let options;
   if (!word || (word?.from == word?.to && !context.explicit)) {
     return null;
@@ -38,7 +38,7 @@ const chnotCompletions = async (
         query: word.text,
         start_index: 0,
         page_size: 20,
-        query_type: { kind: "tagtree", tagkind: "descendants", tagpath: "" },
+        tag_tree: { kind: "tagtree", tagkind: "descendants", tagpath: "" },
       })
     ).data.map((name) => {
       return { label: name, type: "hashtag" };
@@ -47,8 +47,10 @@ const chnotCompletions = async (
     options = (
       await toentGuess({ input: word.text.replace("<", "") })
     ).toents.map((toent) => {
-      return { label: `<${toent.event}>`, type: "hashtag" };
+      return { label: `<${toent.event}>`, type: "toent" };
     });
+  } else if (word.text.startsWith("[")) {
+    options = [{ label: `[](chnot://ed:)`, type: "excalidraw" }];
   } else {
     return null;
   }

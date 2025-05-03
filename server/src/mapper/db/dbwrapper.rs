@@ -252,6 +252,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             role: self.try_get(LLMChatRecord::ROLE)?,
             role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
             omit_time: self.try_get_df_opt(LLMChatRecord::OMIT_TIME)?,
+            reasoning_content: self.try_get(LLMChatRecord::REASONING_CONTENT)?,
         };
         Ok(obj)
     }

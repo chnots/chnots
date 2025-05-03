@@ -79,6 +79,7 @@ impl ResourceMapper for KDb {
                     .fields(InlineResource::ID, &req.res.id)
                     .fields(InlineResource::NAME, &req.res.name)
                     .fields(InlineResource::CONTENT, &req.res.name)
+                    .fields(InlineResource::CONTENT_TYPE, &req.res.content_type)
                     .fields(InlineResource::INSERT_TIME, &req.res.insert_time),
             )
             .await?;

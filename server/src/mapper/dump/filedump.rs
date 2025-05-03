@@ -20,7 +20,7 @@ use super::RowCallback;
 #[derive(Debug, Deserialize, Clone)]
 pub struct FileBackupConfig {
     backup_dir: String,
-    period: u64,
+    period: usize,
 }
 
 pub enum BackupType {

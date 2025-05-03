@@ -20,9 +20,10 @@ export interface ChnotQueryReq {
 }
 
 export interface ChnotQueryRsp {
+  next_start: number;
   data: Chnot[];
 
-  start_index: number;
+  has_next: boolean;
 }
 
 export interface ChnotOverwriteReq {
@@ -64,7 +65,7 @@ export interface ChnotCommentAddReq {
 
 export interface ChnotTagQueryReq {
   query?: string;
-  query_type: ChnotTagTreeType;
+  tag_tree: ChnotTagTreeType;
 
   start_index: number;
   page_size: number;
