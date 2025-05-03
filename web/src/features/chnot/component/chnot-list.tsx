@@ -46,7 +46,7 @@ const TagPath = () => {
   </div>
 }
 
-const ChnotList = ({ keyword }: { keyword?: string }) => {
+const ChnotList = () => {
   const {
     fetchMoreChnots,
     refreshChnots,
@@ -58,25 +58,26 @@ const ChnotList = ({ keyword }: { keyword?: string }) => {
     setListViewType
   } = useChnotStore();
 
+  const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
 
   useEffect(() => {
     changeKeyword(keyword);
-  }, [changeKeyword, keyword]);
+  }, [keyword])
 
   useEffect(() => {
     if (listViewType.kind === "tagtree") {
       chnotTagNames({
         start_index: 0,
         page_size: 9999,
-        query_type: listViewType.tagkind === "children" ? "children" : "full",
-        query: listViewType.tagpath
+        query_type: listViewType,
+        query: keyword
       }).then((rsp) => {
         setTagList(rsp.data)
       });
     }
     refreshChnots()
-  }, [listViewType, setTagList]);
+  }, [listViewType, setTagList, keyword]);
 
   return (
     <>
@@ -95,7 +96,7 @@ const ChnotList = ({ keyword }: { keyword?: string }) => {
             type="text"
             className="bg-transparent w-full h-full outline-none border-b"
             placeholder="Search something"
-            onChange={(value) => changeKeyword(value.target.value)}
+            onChange={(value) => setKeyword(value.target.value)}
           />
         </div>
       </div>

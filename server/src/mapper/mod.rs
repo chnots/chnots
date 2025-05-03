@@ -40,6 +40,8 @@ pub trait ChnotMapper {
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 
+    async fn chnot_tag_update_single_chnot(&self, content: &str, meta_id: &str, namespace: &str) -> EResult;
+    async fn chnot_tag_update_all(&self, namespace: &str) -> EResult;
     async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<ChnotTag>>;
     async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<String>>;
     async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult;

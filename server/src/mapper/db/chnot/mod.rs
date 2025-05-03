@@ -13,10 +13,14 @@ use crate::{
         db::chnot::{ChnotMetadata, ChnotRecord, ChnotTag, ChnotTagType},
         dto::KReq,
     },
+    util::string_util::get_hashtags,
 };
-use chin_sql::{ILikeType, SqlDeleter, SqlInserter, SqlReader};
-use chin_tools::wrapper::anyhow::{AResult, EResult};
-use chrono::Local;
+use chin_sql::{ILikeType, SqlDeleter, SqlInserter, SqlReader, SqlValue};
+use chin_tools::{
+    utils::id_util,
+    wrapper::anyhow::{AResult, EResult},
+};
+use chrono::{Local, Utc};
 use itertools::Itertools;
 use serde::Serialize;
 
@@ -56,18 +60,6 @@ fn chnot_query_mapper(row: KDbRow<'_>) -> AResult<Chnot> {
 }
 
 impl KDb {
-    fn chnot_tag_filter<'a>(tst: TagSearchType, query: String) -> Wheres<'a> {
-        match tst {
-            TagSearchType::Exact => Wheres::ilike("tag", query, chin_sql::ILikeType::Original),
-            TagSearchType::Fuzzy => Wheres::ilike("tag", query, chin_sql::ILikeType::Fuzzy),
-            _ => Wheres::ilike(
-                "tag",
-                if query.len() > 0 { query + "/" } else { query },
-                chin_sql::ILikeType::RightFuzzy,
-            ),
-        }
-    }
-
     async fn chnot_tag_query_inner<F, T>(
         &self,
         req: KReq<ChnotTagQueryReq>,
@@ -94,7 +86,20 @@ impl KDb {
 
         let query = sr
             .r#where(Wheres::and([
-                Wheres::if_some(query, |query| Self::chnot_tag_filter(query_type, query)),
+                Wheres::if_some(query, |query| {
+                    Wheres::ilike(
+                        "tag",
+                        format!(
+                            "{}%{}%",
+                            match query_type {
+                                ChnotTagTreeType::OneLayer(prefix) => prefix,
+                                ChnotTagTreeType::Full(prefix) => prefix,
+                            },
+                            query
+                        ),
+                        chin_sql::ILikeType::Original,
+                    )
+                }),
                 Wheres::equal("namespace", ns),
             ]))
             .raw("order by tag asc")
@@ -150,7 +155,7 @@ impl ChnotMapper for KDb {
                             SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
                                 Wheres::equal(ChnotTag::NAMESPACE, req.namespace.to_owned()),
                                 match tag {
-                                    ChnotViewTagTree::OneLayer(path) => Wheres::and([
+                                    ChnotTagTreeType::OneLayer(path) => Wheres::and([
                                         Wheres::equal(
                                             ChnotTag::TAG,
                                             if path.starts_with("#") {
@@ -161,7 +166,7 @@ impl ChnotMapper for KDb {
                                         ),
                                         Wheres::equal(ChnotTag::CATEGORY, ChnotTagType::Dir),
                                     ]),
-                                    ChnotViewTagTree::Full(path) => {
+                                    ChnotTagTreeType::Full(path) => {
                                         Wheres::ilike(ChnotTag::TAG, path, ILikeType::RightFuzzy)
                                     }
                                 },
@@ -263,7 +268,7 @@ impl ChnotMapper for KDb {
 
         result.data = result.data.into_iter().unique().collect();
 
-        if let TagSearchType::OneLevel = query_type {
+        if let ChnotTagTreeType::OneLayer(prefix) = query_type {
             let data = result
                 .data
                 .into_iter()
@@ -309,5 +314,96 @@ impl ChnotMapper for KDb {
 
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
         self.chnot_overwrite(req).await
+    }
+
+    async fn chnot_tag_update_single_chnot(
+        &self,
+        content: &str,
+        meta_id: &str,
+        namespace: &str,
+    ) -> EResult {
+        self.chnot_tag_delete(vec![&meta_id]).await?;
+
+        let tags = get_hashtags(&content);
+        let parent_tags: Vec<&str> = tags
+            .iter()
+            .map(|tag| {
+                let mut more = vec![];
+                for (size, c) in tag.char_indices() {
+                    if c == '/' {
+                        more.push(&tag[..size]);
+                    }
+                }
+                more
+            })
+            .flatten()
+            .unique()
+            .collect();
+
+        if parent_tags.is_empty() {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: namespace.to_owned(),
+                tag: UNTAGGED_TAG.to_owned(),
+                chnot_meta_id: meta_id.to_string(),
+                insert_time: Utc::now().fixed_offset(),
+                category: ChnotTagType::Dir,
+            })
+            .await?;
+        }
+        for tag in parent_tags {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: namespace.to_owned(),
+                tag: tag.to_owned(),
+                chnot_meta_id: meta_id.to_string(),
+                insert_time: Utc::now().fixed_offset(),
+                category: ChnotTagType::ParentDir,
+            })
+            .await?;
+        }
+        for tag in tags {
+            self.chnot_tag_insert(ChnotTag {
+                id: id_util::generate_uuid(),
+                namespace: namespace.to_owned(),
+                tag: tag.to_owned(),
+                chnot_meta_id: meta_id.to_string(),
+                insert_time: Utc::now().fixed_offset(),
+                category: ChnotTagType::Dir,
+            })
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn chnot_tag_update_all(&self, namespace: &str) -> EResult {
+        let get_all = SqlReader::new()
+            .sov("select r.content, m.id as meta_id from ")
+            .sov(ChnotRecord::TABLE)
+            .sov(" as r left join")
+            .sov(ChnotMetadata::TABLE)
+            .sov(" as m on r.meta_id = m.id where r.omit_time is null and namespace = ")
+            .sov(SqlValue::Str(namespace.into()));
+
+        let namespace = namespace.to_owned();
+        let chnots = self
+            .conn()
+            .await?
+            .qry_list(get_all, move |e| {
+                Ok(ChnotTagUpdateReq {
+                    content: e.try_get(ChnotRecord::CONTENT)?,
+                    meta_id: e.try_get("meta_id")?,
+                    namespace: namespace.to_owned(),
+                })
+            })
+            .await?;
+
+        for one in &chnots {
+            self.chnot_tag_update_single_chnot(&one.content, &one.meta_id, &one.namespace)
+                .await?;
+        }
+
+        Ok(())
     }
 }

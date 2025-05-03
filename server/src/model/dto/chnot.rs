@@ -47,16 +47,15 @@ pub struct ChnotDeletionReq {
 pub struct ChnotDeletionRsp {}
 
 #[derive(Debug, Clone, Serialize)]
-pub enum ChnotViewTagTree {
+pub enum ChnotTagTreeType {
     OneLayer(String),
     Full(String),
 }
 
-
 #[derive(Debug, Clone, Serialize)]
 pub enum ChnotViewType {
     Timeline,
-    TagTree(ChnotViewTagTree),
+    TagTree(ChnotTagTreeType),
 }
 
 impl<'a> Deserialize<'a> for ChnotViewType {
@@ -74,8 +73,12 @@ impl<'a> Deserialize<'a> for ChnotViewType {
 
         match deser.kind.as_str() {
             "tagtree" => match deser.tagkind.as_ref().map(|e| e.as_str()) {
-                Some("children") => Ok(Self::TagTree(ChnotViewTagTree::OneLayer(deser.tagpath.unwrap()))),
-                Some("descendants") => Ok(Self::TagTree(ChnotViewTagTree::Full(deser.tagpath.unwrap()))),
+                Some("children") => Ok(Self::TagTree(ChnotTagTreeType::OneLayer(
+                    deser.tagpath.unwrap(),
+                ))),
+                Some("descendants") => Ok(Self::TagTree(ChnotTagTreeType::Full(
+                    deser.tagpath.unwrap(),
+                ))),
                 _ => Err(de::Error::custom("unknown tag type")),
             },
             "timeline" => Ok(Self::Timeline),
@@ -117,22 +120,23 @@ pub struct ToentGuessRsp {
     pub toents: Vec<PossibleToent>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum TagSearchType {
-    #[serde(rename = "exact")]
-    Exact,
-    #[serde(rename = "fuzzy")]
-    Fuzzy,
-    #[serde(rename = "children")]
-    OneLevel,
-    #[serde(rename = "full")]
-    FullLevel,
+impl<'a> Deserialize<'a> for ChnotTagTreeType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'a>,
+    {
+        let des = ChnotViewType::deserialize(deserializer)?;
+        match des {
+            ChnotViewType::Timeline => Err(de::Error::custom("unable map  to TagTree")),
+            ChnotViewType::TagTree(chnot_tag_tree_type) => Ok(chnot_tag_tree_type),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotTagQueryReq {
     pub query: Option<String>,
-    pub query_type: TagSearchType,
+    pub query_type: ChnotTagTreeType,
 
     // Paging
     pub start_index: u64,
@@ -147,4 +151,11 @@ where
     pub data: Vec<T>,
 
     pub start_index: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotTagUpdateReq {
+    pub content: String,
+    pub meta_id: String,
+    pub namespace: String,
 }

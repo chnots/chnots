@@ -103,6 +103,14 @@ impl ChnotMapper for MapperType {
     async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
         expand_mt_branch!(self.chnot_tag_delete(chnot_meta_ids))
     }
+    
+    async fn chnot_tag_update_single_chnot(&self, content: &str, meta_id: &str, namespace: &str) -> EResult {
+        expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, namespace))
+    }
+    
+    async fn chnot_tag_update_all(&self, namespace: &str) -> EResult {
+        expand_mt_branch!(self.chnot_tag_update_all(namespace))
+    }
 }
 
 impl ResourceMapper for MapperType {

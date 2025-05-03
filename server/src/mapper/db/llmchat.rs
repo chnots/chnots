@@ -138,7 +138,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatListSessionRsp> {
         let query = SqlReader::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
-                Wheres::is_null(LLMChatSession::TABLE),
+                Wheres::is_null(LLMChatSession::DELETE_TIME),
                 Wheres::equal(LLMChatSession::NAMESPACE, req.namespace),
             ]))
             .raw("order by insert_time desc");

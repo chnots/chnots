@@ -4,7 +4,7 @@ use super::super::{sql::Wheres, KDb};
 use crate::{
     mapper::{
         db::{
-            chnot::{chnot_query_mapper, chnot_query_sql, UNTAGGED_TAG},
+            chnot::{chnot_query_mapper, chnot_query_sql},
             sqlite::wrapper::KDbConnBehaiverSync,
             KDbBehaiver, KDbConnBehaiver, KDbRow,
         },
@@ -17,7 +17,6 @@ use crate::{
             KReq,
         },
     },
-    util::string_util::get_hashtags,
 };
 use anyhow::anyhow;
 use chin_sql::{SqlInserter, SqlReader, SqlUpdater};
@@ -27,8 +26,7 @@ use chin_tools::{
     SharedStr,
 };
 
-use chrono::{DateTime, FixedOffset, TimeDelta, Utc};
-use itertools::Itertools;
+use chrono::{DateTime, FixedOffset, TimeDelta};
 use tracing::info;
 
 #[derive(Clone)]
@@ -150,16 +148,10 @@ impl KDb {
     ) -> AResult<ChnotOverwriteRsp> {
         tracing::debug!("begin to overwrite chnot, {:?}", req.meta_id);
 
-        let meta_id = &req.meta_id;
-        let content = &req.content;
-        let namespace = req.namespace.clone();
-        let meta_id = match meta_id {
+        let meta_id = match &req.meta_id {
             Some(id) => MetaId::Old(SharedStr::new(id)),
             None => MetaId::New(SharedStr::new(id_util::generate_uuid())),
         };
-
-        let content = SharedStr::new(content);
-        info!("meta id: {}", meta_id.as_str());
 
         // 1. Query chnot by meta_id.
         // 2. If chnot is existed.
@@ -185,67 +177,22 @@ impl KDb {
             }
         }
 
-        self.chnot_tag_delete(vec![&meta_id]).await?;
-
-        let tags = get_hashtags(&content);
-        let parent_tags: Vec<&str> = tags
-            .iter()
-            .map(|tag| {
-                let mut more = vec![];
-                for (id, c) in tag.chars().enumerate() {
-                    if c == '/' {
-                        more.push(&tag[..id]);
-                    }
-                }
-                more
-            })
-            .flatten()
-            .unique()
-            .collect();
-
-        if parent_tags.is_empty() {
-            self.chnot_tag_insert(ChnotTag {
-                id: id_util::generate_uuid(),
-                namespace: namespace.clone(),
-                tag: UNTAGGED_TAG.to_owned(),
-                chnot_meta_id: meta_id.to_string(),
-                insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::Dir,
-            })
-            .await?;
-        }
-        for tag in parent_tags {
-            self.chnot_tag_insert(ChnotTag {
-                id: id_util::generate_uuid(),
-                namespace: namespace.clone(),
-                tag: tag.to_owned(),
-                chnot_meta_id: meta_id.to_string(),
-                insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::ParentDir,
-            })
-            .await?;
-        }
-        for tag in tags {
-            self.chnot_tag_insert(ChnotTag {
-                id: id_util::generate_uuid(),
-                namespace: namespace.clone(),
-                tag: tag.to_owned(),
-                chnot_meta_id: meta_id.to_string(),
-                insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::Dir,
-            })
-            .await?;
-        }
-
         let query_sql = chnot_query_sql().r#where(Wheres::and([
             Wheres::is_null("r.omit_time"),
-            Wheres::equal("m.id", meta_id.to_str()),
+            Wheres::equal("m.id", meta_id.as_str()),
         ]));
         let chnot = self
             .conn()
             .await?
             .qry_one(query_sql, chnot_query_mapper, true)
             .await?;
+
+        self.chnot_tag_update_single_chnot(
+            &chnot.record.content,
+            &chnot.meta.id,
+            &chnot.meta.namespace,
+        )
+        .await?;
 
         Ok(ChnotOverwriteRsp { chnot: chnot })
     }

@@ -149,15 +149,6 @@ impl KDbConnBehaiver for KDbConn {
     }
 }
 
-macro_rules! expand_kdb_row_branch {
-    ($self:ident.$method:ident($($arg:expr),*)) => {
-        match $self {
-            KDbRow::Postgres(db) => db.$method($($arg),*),
-            KDbRow::Sqlite(db) => db.$method($($arg),*),
-        }
-    };
-}
-
 impl<'a, 'b> KDbRow<'a> {
     pub fn try_get<T>(&'b self, key: &str) -> AResult<T>
     where

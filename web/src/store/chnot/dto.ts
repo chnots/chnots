@@ -1,12 +1,12 @@
 import { ChnotRecord, ChnotMetadata, ChnotTag } from "./db";
-import path from 'path';
 
 export interface Chnot {
   record: ChnotRecord;
   meta: ChnotMetadata;
 }
 
-export type ListViewType = { kind: "timeline" } | { kind: "tagtree", tagkind: "children" | "descendants", tagpath: string }
+export type ChnotTagTreeType = { kind: "tagtree", tagkind: "children" | "descendants", tagpath: string };
+export type ListViewType = { kind: "timeline" } | ChnotTagTreeType;
 
 export interface ChnotQueryReq {
   record_id?: string;
@@ -64,7 +64,7 @@ export interface ChnotCommentAddReq {
 
 export interface ChnotTagQueryReq {
   query?: string;
-  query_type: "exact" | "fuzzy" | "full" | "children";
+  query_type: ChnotTagTreeType;
 
   start_index: number;
   page_size: number;
