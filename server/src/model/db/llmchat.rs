@@ -36,8 +36,6 @@ pub struct LLMChatSession {
     #[gts_length = 40]
     pub id: String,
     #[gts_length = 40]
-    pub bot_id: String,
-    #[gts_length = 40]
     pub template_id: String,
     #[gts_length = 200]
     pub title: String,

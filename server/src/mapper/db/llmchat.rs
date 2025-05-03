@@ -12,9 +12,7 @@ use super::{
 use crate::{
     mapper::LLMChatMapper,
     model::{
-        db::llmchat::{
-            LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate,
-        },
+        db::llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         dto::{llmchat::*, KReq},
     },
 };
@@ -64,7 +62,6 @@ impl LLMChatMapper for KDb {
         let session = &req.session;
         let inserter = SqlInserter::new(LLMChatSession::TABLE)
             .fields(LLMChatSession::ID, &session.id)
-            .fields(LLMChatSession::BOT_ID, &session.bot_id)
             .fields(LLMChatSession::TEMPLATE_ID, &session.template_id)
             .fields(LLMChatSession::TITLE, &title)
             .fields(LLMChatSession::NAMESPACE, &session.namespace)
@@ -83,10 +80,7 @@ impl LLMChatMapper for KDb {
         let inserter = SqlInserter::new(LLMChatRecord::TABLE)
             .fields(LLMChatRecord::ID, &rec.id)
             .fields(LLMChatRecord::SESSION_ID, &rec.session_id)
-            .fields(
-                LLMChatRecord::PRE_RECORD_ID,
-                rec.pre_record_id.as_ref(),
-            )
+            .fields(LLMChatRecord::PRE_RECORD_ID, rec.pre_record_id.as_ref())
             .fields(LLMChatRecord::CONTENT, &rec.content)
             .fields(LLMChatRecord::ROLE, &rec.role)
             .fields(LLMChatRecord::ROLE_ID, rec.role_id.as_ref())
@@ -98,14 +92,11 @@ impl LLMChatMapper for KDb {
     }
 
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
-        let query = SqlReader::read_all(LLMChatBot::TABLE)
-            .r#where(Wheres::and([Wheres::is_null(LLMChatBot::DELETE_TIME)]))
-            .raw("order by insert_time desc");
-
+        let sql = "select b.*, count(r.role_id) as bot_count from llm_chat_bot b left join llm_chat_record r on b.id = r.role_id where b.delete_time is null group by b.id order by bot_count desc";
         let bots = self
             .conn()
             .await?
-            .qry_list(query, |e| KDbRow::to_llmchat_bot(e))
+            .qry_list(sql, |e| KDbRow::to_llmchat_bot(e))
             .await?
             .into_iter()
             .collect();
@@ -118,9 +109,7 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatListTemplateReq>,
     ) -> AResult<LLMChatListTemplateRsp> {
         let query = SqlReader::read_all(LLMChatTemplate::TABLE)
-            .r#where(Wheres::and([Wheres::is_null(
-                LLMChatTemplate::DELETE_TIME,
-            )]))
+            .r#where(Wheres::and([Wheres::is_null(LLMChatTemplate::DELETE_TIME)]))
             .raw("order by insert_time desc");
 
         let templates: Vec<LLMChatTemplate> = self
@@ -190,10 +179,7 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatDeleteTemplateReq>,
     ) -> AResult<LLMChatDeleteTemplateRsp> {
         let updater = SqlUpdater::new(LLMChatTemplate::TABLE)
-            .set(
-                LLMChatTemplate::DELETE_TIME,
-                Local::now().fixed_offset(),
-            )
+            .set(LLMChatTemplate::DELETE_TIME, Local::now().fixed_offset())
             .r#where(Wheres::equal("id", &req.template_id));
 
         self.conn().await?.exec(updater).await?;
@@ -206,10 +192,7 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatDeleteSessionReq>,
     ) -> AResult<LLMChatDeleteSessionRsp> {
         let updater = SqlUpdater::new(LLMChatSession::TABLE)
-            .set(
-                LLMChatSession::DELETE_TIME,
-                Local::now().fixed_offset(),
-            )
+            .set(LLMChatSession::DELETE_TIME, Local::now().fixed_offset())
             .r#where(Wheres::equal(LLMChatSession::ID, &req.session_id));
         self.conn().await?.exec(updater).await?;
 

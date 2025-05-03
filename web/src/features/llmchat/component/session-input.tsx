@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { v4 as uuid } from "uuid";
 import { LLMChatRecord } from "@/store/llmchat/db";
@@ -31,7 +31,6 @@ const LLMChatSessionInput = ({
       sessionDetail
     ) {
       e.preventDefault();
-
       handleSendUserMsg(message, sessionDetail);
     }
   };
@@ -54,12 +53,15 @@ const LLMChatSessionInput = ({
     }
   };
 
-  const handleTextareaChange = useCallback(() => {
+  useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      if (message?.length == 0) {
+        textareaRef.current.style.height = "auto";
+      } else {
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      }
     }
-  }, []);
+  }, [textareaRef, message])
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
@@ -67,7 +69,6 @@ const LLMChatSessionInput = ({
         <textarea
           className="w-full p-1 h-auto max-h-60 border-none focus:outline-none focus:none resize-none"
           onChange={(e) => {
-            handleTextareaChange();
             setMessage(e.target.value);
           }}
           value={message}

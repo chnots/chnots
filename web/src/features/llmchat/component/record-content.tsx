@@ -69,7 +69,7 @@ const RecordContent = ({
           <span>{roleName}</span>
           <span>{timestamp?.toISOString() ?? "Now"}</span>
         </div>
-        <div className={clsx(limitedHeight && "h-40 overflow-hidden")}>
+        <div className={clsx(limitedHeight && "max-h-40 overflow-hidden")}>
           {role === "user" ? (
             <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap bg-secondary">
               {content}

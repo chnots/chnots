@@ -6,26 +6,31 @@ import {
 } from "@/hooks/use-llm-response";
 import { LLMChatBot, LLMChatRecord } from "@/store/llmchat/db";
 import { LLMChatSessionDetail } from "@/store/llmchat/dto";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+
 export const ResponseRecord = ({
   detail,
   className,
   appendRecord,
   setAnswering,
   triggerAnswer,
-  bot,
+  chatbot,
+  atBottom,
 }: {
   detail: LLMChatSessionDetail;
-  bot: LLMChatBot;
+  chatbot: LLMChatBot;
   triggerAnswer: boolean;
   className?: string;
   appendRecord: (record: LLMChatRecord) => Promise<boolean>;
   setAnswering: (flag: boolean) => void;
+  atBottom: boolean;
 }) => {
   if (detail.records.length <= 0) {
     return;
   }
+
+  const [bot] = useState(chatbot);
   const handleResponse = useCallback(
     async (responseState: ResponseState) => {
       const record: LLMChatRecord = {
@@ -58,18 +63,28 @@ export const ResponseRecord = ({
   const hanbleAbort =
     answerStep === AnswerStep.Answering
       ? () => setAnswerStep(AnswerStep.Abort)
-      : undefined;
+      : () => {};
+
+  const bottomDivRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (atBottom) {
+      bottomDivRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [atBottom, responseState]);
 
   return (
-    <RecordContent
-      className={className}
-      content={responseState?.answer ?? ""}
-      onAbort={hanbleAbort}
-      onRegenerate={() => {
-        setAnswerStep(AnswerStep.TriggerAnswer);
-      }}
-      role={"assistant-response"}
-      logo={bot.svg_logo}
-    />
+    <>
+      <RecordContent
+        className={className}
+        content={responseState?.answer ?? ""}
+        onAbort={hanbleAbort}
+        onRegenerate={() => {
+          setAnswerStep(AnswerStep.TriggerAnswer);
+        }}
+        role={"assistant-response"}
+        logo={bot.svg_logo}
+      />
+      <div ref={bottomDivRef}></div>
+    </>
   );
 };

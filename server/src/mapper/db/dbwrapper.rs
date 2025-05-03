@@ -233,7 +233,6 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
         let obj = LLMChatSession {
             id: self.try_get(LLMChatSession::ID)?,
             insert_time: self.try_get_df(LLMChatSession::INSERT_TIME)?,
-            bot_id: self.try_get(LLMChatSession::BOT_ID)?,
             template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
             title: self.try_get(LLMChatSession::TITLE)?,
             namespace: self.try_get(LLMChatSession::NAMESPACE)?,

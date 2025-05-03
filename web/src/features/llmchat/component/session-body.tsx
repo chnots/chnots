@@ -1,5 +1,5 @@
 import LLMChatTemplateList from "./template-list";
-import { RefObject, useCallback, useEffect, useState } from "react";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { useNamespaceStore } from "@/store/namespace";
 import LLMChatSessionInput from "./session-input";
@@ -135,13 +135,29 @@ const LLMChatSessionBody = ({
     }
   };
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const [atBottom, setAtBottom] = useState(false);
+  const handleScroll = useCallback(() => {
+    if (contentRef.current) {
+      const rect = contentRef.current.getBoundingClientRect();
+      // 50 is a experience value.
+      const atBottom =
+        Math.abs(rect.y - rect.height - 50) > contentRef.current.scrollHeight;
+      setAtBottom(atBottom);
+    }
+  }, [setAtBottom]);
+
   return (
     <div className="bg-panel flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
-      <div className="flex flex-row h-full overflow-y-auto justify-center w-full">
+      <div
+        className="flex flex-row h-full overflow-y-auto justify-center w-full"
+        onScroll={handleScroll}
+      >
         {currentBot ? (
           fleetDetail ? (
-            <div className="w-full max-w-3xl">
-              {fleetDetail.records && fleetDetail.records.length > 0 ? (
+            <div className="w-full max-w-3xl" ref={contentRef}>
+              {fleetDetail.records.length > 0 ? (
                 <>
                   {fleetDetail.records
                     .toSorted((a, b) => {
@@ -165,7 +181,8 @@ const LLMChatSessionBody = ({
                       appendRecord={appendRecord}
                       setAnswering={setAnswering}
                       triggerAnswer={triggerAnswer}
-                      bot={currentBot}
+                      chatbot={currentBot}
+                      atBottom={atBottom}
                     />
                   )}
                 </>
@@ -187,7 +204,11 @@ const LLMChatSessionBody = ({
         )}
       </div>
       <LLMChatSessionInput
-        disabled={answering || !fleetDetail}
+        disabled={
+          answering ||
+          !fleetDetail ||
+          fleetDetail.records[fleetDetail.records.length - 1].role === "user"
+        }
         appendRecord={(record) => {
           return saveSessionAndRecord(record, fleetDetail);
         }}
