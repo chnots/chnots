@@ -81,8 +81,8 @@ impl ResourceMapper for KDb {
                 Wheres::and([
                     Wheres::equal(InlineResource::RID, &req.res.rid),
                     Wheres::equal(InlineResource::ARCHOR, true),
-                ]),
-            );
+                ])
+            ).limit(1);
 
         self.conn().await?.exec(delete_sql).await?;
         let last_archor: Option<DateTime<FixedOffset>> = self
