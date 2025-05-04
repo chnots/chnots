@@ -45,10 +45,12 @@ const MarkdownEditor = ({
   content,
   onContentChange,
   height,
+  foldGutter,
 }: {
   content?: string;
   onContentChange: (content: string) => void;
   height: number;
+  foldGutter: boolean;
 }) => {
   return (
     <CodeMirrorEditorMemo
@@ -56,6 +58,7 @@ const MarkdownEditor = ({
       onContentChange={onContentChange}
       autoCompletion={chnotCompletions}
       height={height}
+      foldGutter={foldGutter}
     />
   );
 };

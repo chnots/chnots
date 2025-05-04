@@ -5,7 +5,11 @@ import { useNamespaceStore } from "@/store/namespace";
 import { NamespaceSelect } from "@/common/component/namespace-select";
 import clsx, { ClassValue } from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
-import { Chnot, ChnotOverwriteReq } from "@/store/chnot/dto";
+import {
+  Chnot,
+  ChnotOverwriteReq,
+  list_view_type_get_tag_path,
+} from "@/store/chnot/dto";
 import { useChnotStore } from "@/store/chnot/store";
 import { chnotUpdate } from "@/store/chnot/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
@@ -14,6 +18,8 @@ import { ChnotType } from "@/store/chnot/db";
 import ExcalidrawContainer from "@/features/tool/excalidraw/component/excalidraw-container";
 import KButton from "@/common/component/kbutton";
 import { enumFromStringValue } from "@/utils/enum-util";
+
+import * as RadixPopover from "@radix-ui/react-popover";
 
 enum RequestState {
   Saved,
@@ -57,7 +63,7 @@ export const ChnotContainer = ({
   globalViewMode?: React.RefObject<boolean>;
 }) => {
   const { currentNamespace } = useNamespaceStore();
-  const { overwriteChnot, validateChnotCache } = useChnotStore();
+  const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
 
   const [editState, setEditState] = useState<ChnotEditState>({
     isUploadingResource: false,
@@ -122,14 +128,17 @@ export const ChnotContainer = ({
     const init = async () => {
       if (chnotType == ChnotType.ExcalidrawV1) {
         if (!chnot) {
-          saveContent(`# Excalidraw -- ${new Date().toLocaleTimeString()}`);
+          saveContent(
+            `# Excalidraw -- ${new Date().toLocaleTimeString()}
+
+${list_view_type_get_tag_path(listViewType) ?? ""}
+`
+          );
         }
       }
     };
     init();
   }, [chnot, chnotType]);
-
-  console.log("==================", chnotType);
 
   const onChange = useDebounce(
     (content: string) => {
@@ -190,7 +199,8 @@ export const ChnotContainer = ({
           {chnot && (
             <div className="kborder bg-secondary border rounded-xl p-1 flex space-x-2">
               <NamespaceSelect
-                className="w-5 h-5"
+                className="w-4 h-4"
+                menuClassName="px-2 py-1 bg-secondary rounded-xl flex items-center space-x-1 hover:cursor-pointer hover:bg-accent"
                 onSelect={(ns) => {
                   chnotUpdate({
                     meta_id: chnot.meta.id,
@@ -204,16 +214,37 @@ export const ChnotContainer = ({
                 }}
                 currentNamespace={chnot.meta.namespace}
               />
-              <div>
-                <Icon.Eye
-                  onClick={() => {
-                    if (globalViewMode) {
-                      globalViewMode.current = !viewMode;
-                    }
-                    setViewMode((prev) => !prev);
-                  }}
-                ></Icon.Eye>
-              </div>
+              <TopbarButton
+                onClick={() => {
+                  if (globalViewMode) {
+                    globalViewMode.current = !viewMode;
+                  }
+                  setViewMode((prev) => !prev);
+                }}
+              >
+                <Icon.Eye className="w-4 h-4" />
+              </TopbarButton>
+              {chnotType !== ChnotType.MarkdownWithToent && (
+                <RadixPopover.Root>
+                  <RadixPopover.Trigger className="hover:cursor-pointer hover:bg-accent px-2 py-1 rounded-xl">
+                    <Icon.NotebookText className="w-4 h-4" />
+                  </RadixPopover.Trigger>
+
+                  <RadixPopover.Portal>
+                    <RadixPopover.Content
+                      className="PopoverContent z-10 rounded-xl p-2 max-w-240 w-120"
+                      sideOffset={5}
+                    >
+                      <MarkdownEditor
+                        onContentChange={onChange}
+                        height={200}
+                        content={chnot?.record.content}
+                        foldGutter={false}
+                      />
+                    </RadixPopover.Content>
+                  </RadixPopover.Portal>
+                </RadixPopover.Root>
+              )}
             </div>
           )}
         </div>
@@ -235,10 +266,10 @@ export const ChnotContainer = ({
           )}
         </div>
       </div>
-      <div className="h-full">
+      <div className="h-full" ref={cmRef}>
         {chnotType === ChnotType.MarkdownWithToent &&
           (viewMode && chnot ? (
-            <div className="p-2 overflow-y-auto" ref={cmRef}>
+            <div className="p-2 overflow-y-auto">
               <MarkdownViewer
                 content={chnot.record.content.replace("\n", "  \n")}
               />
@@ -246,13 +277,13 @@ export const ChnotContainer = ({
           ) : (
             <div
               className="h-full p-0 x-0 overflow-auto bg-editor" // this part could resize when I add overflow-auto, magic?
-              ref={cmRef}
             >
               {height ? (
                 <MarkdownEditor
                   onContentChange={onChange}
                   height={height}
                   content={chnot?.record.content}
+                  foldGutter={true}
                 />
               ) : (
                 <div>Height is 0!</div>

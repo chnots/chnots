@@ -1,6 +1,5 @@
 import Icon from "./icon";
 import { useNamespaceStore } from "@/store/namespace";
-import clsx from "clsx";
 import { Menu, MenuButton, MenuItem } from "@szhsin/react-menu";
 
 const NamespaceIcon = ({
@@ -11,35 +10,36 @@ const NamespaceIcon = ({
   className?: string;
 }) => {
   if (name === "public") {
-    return <Icon.Globe2 className={clsx(className, "h-auto shrink-0")} />;
+    return <Icon.BookKey className={className} />;
   } else if (name === "work") {
-    return (
-      <Icon.BriefcaseBusiness
-        className={clsx(className, "h-auto shrink-0")}
-      />
-    );
+    return <Icon.BriefcaseBusiness className={className} />;
   } else if (name === "private") {
-    return <Icon.Notebook className={clsx(className, "h-auto shrink-0")} />;
+    return <Icon.BookLock className={className} />;
   } else {
-    return <Icon.Dice1 className={clsx(className, "h-auto shrink-0")} />;
+    return <Icon.Dice1 className={className} />;
   }
 };
 
 export const NamespaceSelect = ({
   onSelect,
   currentNamespace,
-  className
+  className,
+  menuClassName,
 }: {
   onSelect: (namespace: string) => void;
   currentNamespace: string;
-    className?: string;
+  className?: string;
+  menuClassName?: string;
 }) => {
   const { namespaces } = useNamespaceStore();
   return (
     <Menu
       menuButton={
-        <MenuButton>
-          <NamespaceIcon name={currentNamespace} className={className}></NamespaceIcon>
+        <MenuButton className={menuClassName}>
+          <NamespaceIcon
+            name={currentNamespace}
+            className={className}
+          ></NamespaceIcon>
         </MenuButton>
       }
       transition

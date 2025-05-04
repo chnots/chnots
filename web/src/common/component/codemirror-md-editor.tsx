@@ -131,29 +131,38 @@ const CodeMirrorEditor = ({
   content,
   onContentChange,
   autoCompletion,
+  foldGutter,
   height,
 }: {
-    content?: string;
-    onContentChange: (content: string) => void;
-    autoCompletion: (context: CompletionContext) => Promise<CompletionResult | null>,
-    height: number;
+  content?: string;
+  onContentChange: (content: string) => void;
+  autoCompletion: (
+    context: CompletionContext
+  ) => Promise<CompletionResult | null>;
+  foldGutter: boolean;
+  height: number;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
 
-  const mentionDeco = Decoration.mark({ class: "mention" })
-  const tagDeco = Decoration.mark({ class: "hashtag" })
-  const highlightDeco = Decoration.mark({ class: "highlight" })
+  const mentionDeco = Decoration.mark({ class: "mention" });
+  const tagDeco = Decoration.mark({ class: "hashtag" });
+  const highlightDeco = Decoration.mark({ class: "highlight" });
   const decorator = new MatchDecorator({
     regexp: /(@\w+)|(::.*?::)|(#[^ #[\]]+)/g,
-    decoration: m => m[1] ? mentionDeco : m[2] ? highlightDeco : tagDeco
-  })
-
-  const markPlugin = ViewPlugin.define(view => ({
-    decorations: decorator.createDeco(view),
-    update(u) { this.decorations = decorator.updateDeco(u, this.decorations) }
-  }), {
-    decorations: v => v.decorations
+    decoration: (m) => (m[1] ? mentionDeco : m[2] ? highlightDeco : tagDeco),
   });
+
+  const markPlugin = ViewPlugin.define(
+    (view) => ({
+      decorations: decorator.createDeco(view),
+      update(u) {
+        this.decorations = decorator.updateDeco(u, this.decorations);
+      },
+    }),
+    {
+      decorations: (v) => v.decorations,
+    }
+  );
 
   const md = markdown({
     base: markdownLanguage,
@@ -187,7 +196,7 @@ const CodeMirrorEditor = ({
       basicSetup={{
         lineNumbers: false,
         highlightActiveLineGutter: false,
-        foldGutter: true,
+        foldGutter: foldGutter,
         closeBrackets: false,
       }}
       placeholder={"Take a Chnot"}

@@ -7,6 +7,13 @@ export interface Chnot {
 
 export type ChnotTagTreeType = { kind: "tagtree", tagkind: "children" | "descendants", tagpath: string };
 export type ListViewType = { kind: "timeline" } | ChnotTagTreeType;
+export const list_view_type_get_tag_path = (lvt: ListViewType) => {
+  if (lvt.kind === "tagtree") {
+    return lvt.tagpath;
+  } else {
+    return undefined;
+  }
+}
 
 export interface ChnotQueryReq {
   record_id?: string;

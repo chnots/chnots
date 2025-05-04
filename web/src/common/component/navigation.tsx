@@ -87,6 +87,7 @@ const Navigation = ({
         onClick={() => {
           toggleSidebar();
         }}
+        className="p-2 hover:cursor-pointer rounded-xl"
       >
         <Icon.Sidebar />
       </KButton>
@@ -96,6 +97,7 @@ const Navigation = ({
           setNamespaceParam(ns);
         }}
         currentNamespace={currentNamespace.name}
+        menuClassName="p-2 border kborder hover:cursor-pointer rounded-xl"
       />
       {navLinks.map((navLink) => (
         <NavLink

@@ -14,9 +14,8 @@ const TagPath = () => {
     return <></>;
   }
 
-  const tagKind = listViewType.tagkind;
-  const tagPath = listViewType.tagpath;
-  const parts = tagPath.length > 0 ? tagPath.split("/") : [];
+  const { tagkind, tagpath } = listViewType;
+  const parts = tagpath.length > 0 ? tagpath.split("/") : [];
 
   const segments: string[] = [];
   if (parts.length > 0) {
@@ -31,7 +30,7 @@ const TagPath = () => {
     <div className="w-full flex flex-row space-x-1">
       <div className="pl-2" />
       <KButton>
-        {tagKind === "children" ? (
+        {tagkind === "children" ? (
           <Icon.WheatOff
             onClick={() =>
               setListViewType({ ...listViewType, tagkind: "descendants" })

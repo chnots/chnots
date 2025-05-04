@@ -237,7 +237,6 @@ impl ChnotMapper for KDb {
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("content", content, ILikeType::Fuzzy)
                 }),
-                Wheres::equal("m.kind", "mdwt"),
                 // TODO how to use as_ref?
                 Wheres::if_some(req.record_id.to_owned(), |id| Wheres::equal("r.id", id)),
                 // TODO how to use as_ref?
