@@ -46,7 +46,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
           name="url"
           value={formData.url ?? ""}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           required
           tabIndex={0}
           aria-label="Template Name"
@@ -61,7 +61,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
           name="token"
           value={formData.token ?? ""}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           required
           aria-label="Token"
         />
@@ -78,7 +78,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
           name="model_name"
           value={formData.model_name ?? ""}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           required
           aria-label="Model Name"
         />
@@ -168,7 +168,7 @@ const BotForm = ({
               name="name"
               value={formData.name ?? ""}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border-b  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
               tabIndex={0}
               aria-label="Bot Name"
@@ -188,20 +188,32 @@ const BotForm = ({
                 name="svg_logo"
                 value={formData.svg_logo ?? ""}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 aria-label="Bot Logo"
               />
             </div>
           </div>
           <LLMChatBotBodyOpenAIV1Body bodyRef={bodyRef} />
           <div className="flex flex-row justify-center space-x-4">
-            <KButton type="submit" aria-label="Submit Template">
+            <KButton
+              className="p-2"
+              type="submit"
+              aria-label="Submit Template"
+              showBorder={true}
+            >
               Submit
             </KButton>
-            <KButton aria-label="Close" onClick={onClose}>
+            <KButton
+              className="p-2"
+              aria-label="Close"
+              onClick={onClose}
+              showBorder={true}
+            >
               Close
             </KButton>
             <KButton
+              className="p-2"
+              showBorder={true}
               aria-label="Duplicate"
               onClick={() => setBotId(v4())}
               type="button"

@@ -12,14 +12,12 @@ const ChnotTagListItem = React.forwardRef(
     ref: ForwardedRef<HTMLLIElement>
   ) => {
     return (
-      <KListItem
-        focused={focused}
-        onClick={handleClick}
-        ref={ref}
-      >
+      <KListItem focused={focused} onClick={handleClick} ref={ref}>
         <div className="relative flex flex-row align-middle">
-          <Icon.Hash className="h-4 w-4 min-w-4 text-gray-600" />
-          <div className="relative text-xs line-clamp-1 break-all">{tag.replace(RegExp("#"), "")}</div>
+          <Icon.Hash className="h-4 w-4 min-w-4 text-blue-600" />
+          <div className="relative text-xs line-clamp-1 break-all">
+            {tag.replace(RegExp("#"), "")}
+          </div>
         </div>
       </KListItem>
     );

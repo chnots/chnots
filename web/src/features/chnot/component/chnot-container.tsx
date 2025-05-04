@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  ButtonHTMLAttributes,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Icon from "@/common/component/icon";
 import useDebounce from "@/hooks/use-debounce";
 import { useNamespaceStore } from "@/store/namespace";
@@ -36,14 +42,19 @@ interface ChnotEditState {
 const TopbarButton = ({
   className,
   children,
-  onClick,
+  showBorder,
+  ...rest
 }: {
-  className?: ClassValue[];
+  className?: string;
+  showBorder?: boolean;
   children: React.ReactNode;
-  onClick: () => void;
-}) => {
+} & ButtonHTMLAttributes<object>) => {
   return (
-    <KButton className={clsx("px-2 py-1", className)} onClick={onClick}>
+    <KButton
+      className={clsx("px-2 py-1", className)}
+      showBorder={showBorder}
+      {...rest}
+    >
       {children}
     </KButton>
   );
@@ -157,11 +168,11 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
   }) => {
     return (
       <TopbarButton
-        className={[
-          {
-            "border kborder rounded-xl bg-accent": chnotType === thisChnotType,
-          },
-        ]}
+        className={
+          chnotType === thisChnotType
+            ? "border kborder rounded-xl bg-accent"
+            : ""
+        }
         onClick={() => {
           setChnotType(thisChnotType);
         }}
@@ -173,17 +184,15 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
 
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
-      <div className="w-full flex items-center border-b kborder px-3 justify-between">
+      <div className="w-full flex items-center border-b kborder px-3 justify-between text-xs align-middle">
         <div className="text-xs flex space-x-2 p-1 items-center">
           {onClickNewButton &&
             (chnot ? (
               <TopbarButton
+                className="py-1.5"
                 onClick={() => onClickNewButton()}
-                className={[
-                  "kborder bg-secondary border rounded-xl p-1 flex items-center space-x-1 hover:cursor-pointer hover:bg-green-50",
-                ]}
               >
-                <Icon.BadgePlus />
+                <Icon.BadgePlus className="w-4 h-4" />
                 <span>New</span>
               </TopbarButton>
             ) : (
@@ -197,10 +206,10 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
               </div>
             ))}
           {chnot && (
-            <div className="kborder bg-secondary border rounded-xl p-1 flex space-x-2">
+            <div className="kborder bg-secondary border rounded-xl p-0.5 flex space-x-2">
               <NamespaceSelect
                 className="w-4 h-4"
-                menuClassName="px-2 py-1 bg-secondary rounded-xl flex items-center space-x-1 hover:cursor-pointer hover:bg-accent"
+                menuClassName="px-2 py-1 bg-secondary rounded-xl flex items-center "
                 onSelect={(ns) => {
                   chnotUpdate({
                     meta_id: chnot.meta.id,
@@ -226,8 +235,10 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
               </TopbarButton>
               {chnotType !== ChnotType.MarkdownWithToent && (
                 <RadixPopover.Root>
-                  <RadixPopover.Trigger className="hover:cursor-pointer hover:bg-accent px-2 py-1 rounded-xl">
-                    <Icon.NotebookText className="w-4 h-4" />
+                  <RadixPopover.Trigger>
+                    <TopbarButton>
+                      <Icon.NotebookText className="w-4 h-4" />
+                    </TopbarButton>
                   </RadixPopover.Trigger>
 
                   <RadixPopover.Portal>
@@ -249,7 +260,7 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
           )}
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 items-center">
           <div>{chnot?.record.insert_time.toLocaleDateString()}</div>
           {editState.requestState === RequestState.Requesting ? (
             <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">

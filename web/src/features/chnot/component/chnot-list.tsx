@@ -27,9 +27,9 @@ const TagPath = () => {
   }
 
   return (
-    <div className="w-full flex flex-row space-x-1">
+    <div className="w-full flex flex-row space-x-1 items-center">
       <div className="pl-2" />
-      <KButton>
+      <KButton className="py-1 px-2">
         {tagkind === "children" ? (
           <Icon.WheatOff
             onClick={() =>
@@ -46,32 +46,29 @@ const TagPath = () => {
           />
         )}
       </KButton>
-      <div className="py-2 hover:cursor-pointer space-x-1" key={"#root"}>
-        <span
-          onClick={() => {
-            setListViewType({ ...listViewType, tagpath: "" });
-          }}
-          className="underline"
-        >
-          #
-        </span>
-      </div>
+      <KButton
+        className="p-1 underline"
+        key={"#root"}
+        onClick={() => {
+          setListViewType({ ...listViewType, tagpath: "" });
+        }}
+      >
+        #
+      </KButton>
       {parts.map((layer, index) => {
         return (
-          <div
-            className="py-2 hover:cursor-pointer space-x-1"
-            key={segments[index]}
-          >
-            <span
+          <>
+            <KButton
+              className="p-1"
+              key={segments[index]}
               onClick={() => {
                 setListViewType({ ...listViewType, tagpath: segments[index] });
               }}
-              className="underline"
             >
-              {layer}
-            </span>
+              <span className="underline">{layer}</span>
+            </KButton>
             <span>/</span>
-          </div>
+          </>
         );
       })}
     </div>
@@ -125,6 +122,7 @@ const ChnotList = () => {
               });
             }
           }}
+          className="p-2"
         >
           {listViewType.kind === "timeline" ? <Icon.Inbox /> : <Icon.Folder />}
         </KButton>

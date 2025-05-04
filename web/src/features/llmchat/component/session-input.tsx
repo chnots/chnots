@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import { LLMChatRecord } from "@/store/llmchat/db";
 import { LLMChatSessionDetail } from "@/store/llmchat/dto";
 import { useLLMChatStore } from "@/store/llmchat/store";
+import KButton from "@/common/component/kbutton";
 
 const LLMChatSessionInput = ({
   disabled,
@@ -69,7 +70,7 @@ const LLMChatSessionInput = ({
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
-      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-2xl border kborder shadow-xl">
+      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-xl border kborder shadow-xl">
         <textarea
           className="w-full p-1 h-auto max-h-60 border-none focus:outline-none focus:none resize-none"
           onChange={(e) => {
@@ -82,15 +83,16 @@ const LLMChatSessionInput = ({
         />
         <div className="flex justify-between">
           <div className="flex space-x-4 align-middle items-center">
-            <div
+            <KButton
               onClick={() => {
                 setCurrentSession(undefined);
               }}
-              className="kborder bg-accent border rounded-lg p-1 h-7 mx-2 flex items-center space-x-1 hover:cursor-pointer hover:bg-green-50 text-xs"
+              className="p-1 h-7 mx-2 text-xs"
+              showBorder={true}
             >
               <Icon.BadgePlus className="w-4 h-4" />
               <span>New</span>
-            </div>
+            </KButton>
 
             <div>{botSelect}</div>
           </div>

@@ -11,7 +11,7 @@ const SearchButton = () => {
         toggleNaviSearch();
       }}
       className={clsx(
-        "rounded-2xl border p-2",
+        "rounded-xl border p-2",
         getNaviSearch() ? "bg-white border-gray-400" : "border-gray-100"
       )}
     >

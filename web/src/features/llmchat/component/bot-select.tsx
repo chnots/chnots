@@ -1,95 +1,100 @@
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import { useRef, useState } from "react";
-import BotForm from "./bot-form";
 import KButton from "@/common/component/kbutton";
 import { LLMChatBot } from "@/store/llmchat/db";
 import { useLLMChatStore } from "@/store/llmchat/store";
+import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import { llmchatBotAdd } from "@/store/llmchat/service";
-
-const BotComponent = ({
-  bot,
-  settings,
-}: {
-  bot: LLMChatBot;
-  settings?: () => void;
-}) => {
-  return (
-    <KButton className="py-1 px-2 text-xs justify-between">
-      <div className="flex flex-row space-x-2">
-        {bot.svg_logo ? (
-          <KSVG inner={bot.svg_logo} className="w-4 h-4" />
-        ) : (
-          <Icon.Bot />
-        )}
-        <span>{bot.name}</span>
-      </div>
-      {settings && (
-        <Icon.SettingsIcon
-          onClick={settings}
-          className="size-4 hover:animate-spin"
-        />
-      )}
-    </KButton>
-  );
-};
+import BotForm from "./bot-form";
 
 const LLMChatBotSelect = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [showBotForm, setShowBotForm] = useState(false);
   const selectedBotRef = useRef<LLMChatBot>(undefined);
-
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-  };
 
   const { bots, currentBot, setCurrentBot, refreshBots } = useLLMChatStore();
 
   const handleSelect = (id: string) => {
     setCurrentBot(bots.get(id));
-    setIsOpen(false);
+  };
+
+  const AddButton = () => {
+    return (
+      <KButton
+        className="py-1 px-2 text-xs w-full space-x-2"
+        onClick={() => {
+          selectedBotRef.current = undefined;
+          setShowBotForm(true);
+        }}
+      >
+        <Icon.PlusCircle className="w-4 h-4" />
+        <span className="ml-1">Add Bot</span>
+      </KButton>
+    );
+  };
+
+  const BotComponent = ({
+    bot,
+    settings,
+  }: {
+    bot: LLMChatBot;
+    settings?: () => void;
+  }) => {
+    return (
+      <KButton className="py-1 px-2 text-xs justify-between w-full">
+        <div
+          className="flex flex-row space-x-2"
+          onClick={() => {
+            handleSelect(bot.id);
+          }}
+        >
+          {bot.svg_logo ? (
+            <KSVG inner={bot.svg_logo} className="w-4 h-4" />
+          ) : (
+            <Icon.Bot />
+          )}
+          <span>{bot.name}</span>
+        </div>
+        {settings && (
+          <Icon.SettingsIcon
+            onClick={settings}
+            className="size-4 hover:animate-spin"
+          />
+        )}
+      </KButton>
+    );
   };
 
   return (
-    <div className="flex flex-col justify-center">
+    <>
       {currentBot ? (
-        <div onClick={handleToggle}>
-          <BotComponent bot={currentBot} />
-        </div>
+        <RadixDropmenu.Root>
+          <RadixDropmenu.Trigger>
+            <BotComponent bot={currentBot} />
+          </RadixDropmenu.Trigger>
+          <RadixDropmenu.Portal>
+            <RadixDropmenu.Content className="bg-secondary p-2 rounded-xl space-y-2 shadow-lg border kborder">
+              {[...bots.values()].map((bot) => {
+                return (
+                  <RadixDropmenu.Item key={bot.id}>
+                    <BotComponent
+                      bot={bot}
+                      settings={() => {
+                        selectedBotRef.current = bot;
+                        setShowBotForm(true);
+                      }}
+                    />
+                  </RadixDropmenu.Item>
+                );
+              })}
+              <RadixDropmenu.Item key="Add">
+                <AddButton />
+              </RadixDropmenu.Item>
+            </RadixDropmenu.Content>
+          </RadixDropmenu.Portal>
+        </RadixDropmenu.Root>
       ) : (
-        <div>None bots?</div>
-      )}
-      {isOpen && (
-        <ul className="absolute mt-1 py-1 bottom-16 rounded-md shadow-lg z-10 border border-gray-300 bg-white list-none">
-          {[...bots.values()].map((bot) => (
-            <li
-              key={bot.id}
-              className="px-1 py-1 hover:bg-gray-100 cursor-pointer bg-white"
-              onClick={() => handleSelect(bot.id)}
-            >
-              <BotComponent
-                bot={bot}
-                settings={() => {
-                  selectedBotRef.current = bot;
-                  setShowBotForm(true);
-                }}
-              />
-            </li>
-          ))}
-          <li
-            className="px-1 py-1 hover:bg-gray-100 cursor-pointer bg-white"
-            onClick={() => {
-              selectedBotRef.current = undefined;
-              setShowBotForm(true);
-              setIsOpen(false);
-            }}
-          >
-            <KButton className="py-1 px-2 text-xs">
-              <Icon.PlusCircle className="w-4 h-4" />
-              <span className="ml-1">Add Bot</span>
-            </KButton>
-          </li>
-        </ul>
+        <AddButton />
       )}
       {showBotForm && (
         <BotForm
@@ -104,7 +109,7 @@ const LLMChatBotSelect = () => {
           bot={selectedBotRef.current}
         />
       )}
-    </div>
+    </>
   );
 };
 

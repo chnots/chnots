@@ -3,7 +3,6 @@ import { ButtonHTMLAttributes, ReactNode } from "react";
 
 const KButton = ({
   children,
-  onClick,
   showBorder,
   className,
   ...rest
@@ -11,16 +10,14 @@ const KButton = ({
   children: ReactNode;
   className?: string;
   showBorder?: boolean;
-  onClick?: () => void;
 } & ButtonHTMLAttributes<object>) => {
   return (
     <button
       className={clsx(
-        "flex flex-row items-center hover:kbutton-focused rounded-xl",
-        showBorder ? "kbutton" : "border border-transparent",
+        "flex flex-row items-center hover:kbutton-focused rounded-xl space-x-1",
+        showBorder ? "kbutton bg-secondary" : "border border-transparent",
         className
       )}
-      onClick={onClick}
       {...rest}
     >
       {children}
