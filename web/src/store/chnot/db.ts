@@ -1,5 +1,6 @@
 export enum ChnotType {
   MarkdownWithToent = "mdwt",
+  ExcalidrawV1 = "exdrv1"
 }
 
 export interface ChnotRecord {

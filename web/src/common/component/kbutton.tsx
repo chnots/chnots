@@ -16,7 +16,7 @@ const KButton = ({
   return (
     <button
       className={clsx(
-        "flex flex-row items-center hover:kbutton-focused rounded-xl space-x-2 p-2",
+        "flex flex-row items-center hover:kbutton-focused rounded-xl",
         showBorder ? "kbutton" : "border border-transparent",
         className
       )}

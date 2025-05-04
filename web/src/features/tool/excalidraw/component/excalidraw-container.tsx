@@ -35,8 +35,6 @@ import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
 export interface ExcalidrawProps {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
-  children: React.ReactNode;
-  excalidrawLib?: typeof TExcalidraw;
   instanceId?: string;
 }
 
@@ -45,13 +43,11 @@ const CONTENT_TYPE = "excalidraw-v1";
 export default function ExcalidrawContainer({
   useCustom,
   customArgs,
-  children,
-  excalidrawLib,
   instanceId,
 }: ExcalidrawProps) {
   const { currentNamespace } = useNamespaceStore();
 
-  const { useHandleLibrary } = excalidrawLib ?? TExcalidraw;
+  const { useHandleLibrary, Excalidraw } = TExcalidraw;
   const appRef = useRef<any>(null);
   const [viewModeEnabled, setViewModeEnabled] = useState(false);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
@@ -193,7 +189,7 @@ export default function ExcalidrawContainer({
 
   return (
     <div ref={appRef} className="h-full w-full min-w-full">
-      {renderExcalidraw(children)}
+      {renderExcalidraw(<Excalidraw />)}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import { Chnot } from "@/store/chnot/dto";
  *
  * @returns Chnot Editor Container
  */
-const MonoChnotContainer = () => {
+const MonoChnot = () => {
   const { curMetaId, getCurrentChnot, setCurrentChnotMetaId } = useChnotStore();
   // This state is used for decoupling global currentChnotMetaId and chnotEditorId.
   // From user's opinion, I want to edit when I enter this page, there should not any other steps,
@@ -51,17 +51,17 @@ const MonoChnotContainer = () => {
   const viewModeRef = useRef(false);
 
   return (
-    <div className="flex flex-grow justify-center items-center p-4">
+    <div className="flex flex-grow justify-center items-center">
       <ChnotContainer
-        newButtonAction={() => {
+        onClickNewButton={() => {
           setChnotEditorId(uuid());
           setCurrentChnotMetaId(undefined);
         }}
         key={chnotEditorId}
         chnot={editorChnot}
         globalViewMode={viewModeRef}
-        className="w-full max-w-3xl h-full"
-        chnotChange={updateEditorChnot}
+        className="w-full h-full"
+        onChnotChange={updateEditorChnot}
       />
     </div>
   );
@@ -90,7 +90,7 @@ const ChnotPage = () => {
         </div>
       )}
 
-      <MonoChnotContainer />
+      <MonoChnot />
     </div>
   );
 };

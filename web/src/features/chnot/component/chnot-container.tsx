@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
-import { CodeMirrorEditorMemo } from "@/common/component/codemirror-md-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { useNamespaceStore } from "@/store/namespace";
 import { NamespaceSelect } from "@/common/component/namespace-select";
-import clsx from "clsx";
+import clsx, { ClassValue } from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import { Chnot, ChnotOverwriteReq } from "@/store/chnot/dto";
 import { useChnotStore } from "@/store/chnot/store";
-import { chnotTagNames, chnotUpdate, toentGuess } from "@/store/chnot/service";
-import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { chnotUpdate } from "@/store/chnot/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
-import ChnotTagListItem from "./chnot-tag-list-item";
+import MarkdownEditor from "./chnot-markdown-editor";
+import { ChnotType } from "@/store/chnot/db";
+import ExcalidrawContainer from "@/features/tool/excalidraw/component/excalidraw-container";
+import KButton from "@/common/component/kbutton";
+import { enumFromStringValue } from "@/utils/enum-util";
 
 enum RequestState {
   Saved,
@@ -25,56 +27,33 @@ interface ChnotEditState {
   isComposing: boolean;
 }
 
-const chnotCompletions = async (
-  context: CompletionContext
-): Promise<CompletionResult | null> => {
-  const word = context.matchBefore(/#[^# ]*|<[^<>]*|\[/);
-  let options;
-  if (!word || (word?.from == word?.to && !context.explicit)) {
-    return null;
-  } else if (word.text.startsWith("#")) {
-    options = (
-      await chnotTagNames({
-        query: word.text,
-        start_index: 0,
-        page_size: 20,
-        tag_tree: { kind: "tagtree", tagkind: "descendants", tagpath: "" },
-      })
-    ).data.map((name) => {
-      return { label: name, type: "hashtag" };
-    });
-  } else if (word.text.startsWith("<")) {
-    options = (
-      await toentGuess({ input: word.text.replace("<", "") })
-    ).toents.map((toent) => {
-      return { label: `<${toent.event}>`, type: "toent" };
-    });
-  } else if (word.text.startsWith("[")) {
-    options = [{ label: `[](chnot://ed:)`, type: "excalidraw" }];
-  } else {
-    return null;
-  }
-
-  options.sort((e1, e2) => e1.label.length - e2.label.length);
-
-  return {
-    from: word.from,
-    options: options,
-    filter: false,
-  };
+const TopbarButton = ({
+  className,
+  children,
+  onClick,
+}: {
+  className?: ClassValue[];
+  children: React.ReactNode;
+  onClick: () => void;
+}) => {
+  return (
+    <KButton className={clsx("px-2 py-1", className)} onClick={onClick}>
+      {children}
+    </KButton>
+  );
 };
 
 export const ChnotContainer = ({
   chnot,
   className,
-  chnotChange,
-  newButtonAction,
   globalViewMode,
+  onChnotChange,
+  onClickNewButton,
 }: {
   className?: string;
   chnot?: Chnot;
-  chnotChange?: (chnot: Chnot) => void;
-  newButtonAction?: () => void;
+  onChnotChange?: (chnot: Chnot) => void;
+  onClickNewButton?: () => void;
   globalViewMode?: React.RefObject<boolean>;
 }) => {
   const { currentNamespace } = useNamespaceStore();
@@ -92,6 +71,11 @@ export const ChnotContainer = ({
   const [height, setHeight] = useState<number | undefined>(undefined);
   useResizeObserver<HTMLDivElement>(cmRef, (entry) => {
     setHeight(entry.contentRect.height);
+  });
+
+  const [chnotType, setChnotType] = useState<ChnotType>(() => {
+    const ct = enumFromStringValue(ChnotType, chnot?.meta.kind);
+    return ct ? ct : ChnotType.MarkdownWithToent;
   });
 
   const saveContent = useCallback(
@@ -112,12 +96,12 @@ export const ChnotContainer = ({
           content: content ?? "",
           insert_time: new Date(),
           meta_id: chnot?.meta.id,
-          kind: "mdwt",
+          kind: chnotType,
         };
 
         const rsp = await overwriteChnot(req, true);
-        if (chnotChange) {
-          chnotChange(rsp.chnot);
+        if (onChnotChange) {
+          onChnotChange(rsp.chnot);
         }
         requestState = RequestState.Saved;
       } catch {
@@ -131,8 +115,21 @@ export const ChnotContainer = ({
         };
       });
     },
-    [setEditState, editState, chnotChange, chnot]
+    [setEditState, editState, onChnotChange, chnot, chnotType]
   );
+
+  useEffect(() => {
+    const init = async () => {
+      if (chnotType == ChnotType.ExcalidrawV1) {
+        if (!chnot) {
+          saveContent(`# Excalidraw -- ${new Date().toLocaleTimeString()}`);
+        }
+      }
+    };
+    init();
+  }, [chnot, chnotType]);
+
+  console.log("==================", chnotType);
 
   const onChange = useDebounce(
     (content: string) => {
@@ -142,25 +139,56 @@ export const ChnotContainer = ({
     true
   );
 
+  const ChnotTypeButton = ({
+    thisChnotType,
+    children,
+  }: {
+    thisChnotType: ChnotType;
+    children: React.ReactNode;
+  }) => {
+    return (
+      <TopbarButton
+        className={[
+          {
+            "border kborder rounded-xl bg-accent": chnotType === thisChnotType,
+          },
+        ]}
+        onClick={() => {
+          setChnotType(thisChnotType);
+        }}
+      >
+        {children}
+      </TopbarButton>
+    );
+  };
+
   return (
-    <div
-      className={clsx(
-        className,
-        "flex flex-col h-full shadow-lg border kborder pt-2 rounded-t-xl bg-secondary"
-      )}
-    >
-      <div className="w-full flex items-center bg-secondary border-b kborder px-2 pb-1 justify-between">
+    <div className={clsx(className, "flex flex-col h-full")}>
+      <div className="w-full flex items-center border-b kborder px-3 justify-between">
         <div className="text-xs flex space-x-2 p-1 items-center">
-          {newButtonAction && (
-            <div
-              onClick={() => newButtonAction()}
-              className="kborder bg-accent border rounded-xl p-1 flex items-center space-x-1 hover:cursor-pointer hover:bg-green-50"
-            >
-              <Icon.BadgePlus /><span>New</span>
-            </div>
-          )}
+          {onClickNewButton &&
+            (chnot ? (
+              <TopbarButton
+                onClick={() => onClickNewButton()}
+                className={[
+                  "kborder bg-secondary border rounded-xl p-1 flex items-center space-x-1 hover:cursor-pointer hover:bg-green-50",
+                ]}
+              >
+                <Icon.BadgePlus />
+                <span>New</span>
+              </TopbarButton>
+            ) : (
+              <div className="flex border kborder rounded-xl p-0.5 space-x-2">
+                <ChnotTypeButton thisChnotType={ChnotType.MarkdownWithToent}>
+                  <Icon.TextCursor className="w-4 h-4" />
+                </ChnotTypeButton>
+                <ChnotTypeButton thisChnotType={ChnotType.ExcalidrawV1}>
+                  <Icon.PencilRuler className="w-4 h-4" />
+                </ChnotTypeButton>
+              </div>
+            ))}
           {chnot && (
-            <div className="kborder bg-accent border rounded-xl p-1 flex space-x-2">
+            <div className="kborder bg-secondary border rounded-xl p-1 flex space-x-2">
               <NamespaceSelect
                 className="w-5 h-5"
                 onSelect={(ns) => {
@@ -207,26 +235,34 @@ export const ChnotContainer = ({
           )}
         </div>
       </div>
-
-      {viewMode && chnot ? (
-        <div className="p-2 overflow-y-auto" ref={cmRef}>
-          <MarkdownViewer content={chnot.record.content.replace("\n", "  \n")} />
-        </div>
-      ) : (
-        <div
-          className="h-full p-0 x-0 overflow-auto bg-editor" // this part could resize when I add overflow-auto, magic?
-          ref={cmRef}
-        >
-          {height ? (
-            <CodeMirrorEditorMemo
-              content={chnot?.record.content}
-              onContentChange={onChange}
-              autoCompletion={chnotCompletions}
-              height={height}
-            />
-          ) : <div>Height is 0!</div>}
-        </div>
-      )}
+      <div className="h-full">
+        {chnotType === ChnotType.MarkdownWithToent &&
+          (viewMode && chnot ? (
+            <div className="p-2 overflow-y-auto" ref={cmRef}>
+              <MarkdownViewer
+                content={chnot.record.content.replace("\n", "  \n")}
+              />
+            </div>
+          ) : (
+            <div
+              className="h-full p-0 x-0 overflow-auto bg-editor" // this part could resize when I add overflow-auto, magic?
+              ref={cmRef}
+            >
+              {height ? (
+                <MarkdownEditor
+                  onContentChange={onChange}
+                  height={height}
+                  content={chnot?.record.content}
+                />
+              ) : (
+                <div>Height is 0!</div>
+              )}
+            </div>
+          ))}
+        {chnotType === ChnotType.ExcalidrawV1 && chnot && (
+          <ExcalidrawContainer instanceId={chnot.meta.id} />
+        )}
+      </div>
     </div>
   );
 };

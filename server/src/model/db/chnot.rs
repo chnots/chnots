@@ -68,6 +68,10 @@ pub enum ChnotKind {
     #[strum(serialize = "mdwt")]
     #[serde(rename = "mdwt")]
     MarkdownWithToent,
+
+    #[strum(serialize = "exdrv1")]
+    #[serde(rename = "exdrv1")]
+    ExcalidrawV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
