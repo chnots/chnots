@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import React from "react";
-import { useAttachmentStore } from "@/store/attchment/store";
+import { useAttachmentStore } from "@/store/resource/store";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 

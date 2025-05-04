@@ -1,3 +1,0 @@
-interface ResourceUploadRsp {
-  resources: Resource[];
-}

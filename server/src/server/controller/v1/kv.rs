@@ -1,7 +1,7 @@
 use crate::app::ShareAppState;
 use crate::mapper::KVMapper;
 use crate::model::dto::kreq;
-use crate::model::dto::kv::{
+use crate::model::dto::resource::{
     KVDeleteReq, KVDeleteRsp, KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp,
 };
 use crate::server::controller::KResponse;

@@ -61,11 +61,19 @@ const Navigation = ({
     icon: <Icon.Timer className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
+  const excalidrawNavLink: NavLinkItem = {
+    id: "header-excali",
+    path: RoutePaths.ToolExcalidraw,
+    title: t("Excalidraw"),
+    icon: <Icon.DraftingCompass className="w-6 h-auto opacity-70 shrink-0" />,
+  };
+
 
   const navLinks: NavLinkItem[] = [
     chnotNavLink,
     llmChatNavLink,
-    timerNavLink
+    timerNavLink,
+    excalidrawNavLink,
   ];
 
   return (

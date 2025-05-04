@@ -10,14 +10,12 @@ use serde::Deserialize;
 use crate::model::{
     db::{
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
-        kv::KV,
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::{NamespaceRecord, NamespaceRelation},
-        resource::{InlineResource, Resource},
+        resource::{InlineResource, Resource, KV},
     },
     dto::{
-        chnot::*, kv::*, llmchat::*, InsertInlineResourceReq, InsertInlineResourceRsp, KReq,
-        QueryInlineResourceReq, QueryInlineResourceRsp,
+        chnot::*, llmchat::*, resource::{*}, resource::{*}, KReq
     },
 };
 
@@ -55,6 +53,14 @@ pub trait ChnotMapper {
 pub trait ResourceMapper {
     async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource>;
     async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
+    
+    ///
+    /// Try to insert inline resource.
+    /// 
+    /// Inline resource could keep history if record with archor flag.
+    /// If the new version record time is long enough from the old archor, 
+    /// insert it with archor flag.
+    ///
     async fn insert_inline_resource(
         &self,
         req: &KReq<InsertInlineResourceReq>,

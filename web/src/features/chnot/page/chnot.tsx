@@ -85,7 +85,7 @@ const ChnotPage = () => {
     <div className="bg-panel flex h-full max-h-full rounded-md">
       <title>{`Chnots`}</title>
       {showSidebar && (
-        <div className="shrink-0 border-r kborder flex flex-col w-4/12 p-2">
+        <div className="shrink-0 border-r kborder flex flex-col w-3/12 p-2">
           <ChnotList />
         </div>
       )}

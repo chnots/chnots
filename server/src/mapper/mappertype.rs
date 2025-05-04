@@ -3,7 +3,7 @@ use chin_tools::{
     wrapper::anyhow::{AResult, EResult},
 };
 
-use crate::model::{db::{chnot::ChnotTag, namespace::NamespaceRelation}, dto::InsertInlineResourceRsp};
+use crate::model::{db::{chnot::ChnotTag, namespace::NamespaceRelation, resource::Resource}, dto::{llmchat::{LLMChatTruncateSessionReq, LLMChatTruncateSessionRsp, LLMChatUpdateSessionReq, LLMChatUpdateSessionRsp}, resource::{InsertInlineResourceReq, InsertInlineResourceRsp, KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp, QueryInlineResourceReq, QueryInlineResourceRsp}}};
 
 use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
@@ -13,7 +13,7 @@ use super::{
 };
 
 use crate::model::{
-    db::{namespace::NamespaceRecord, resource::Resource},
+    db::namespace::NamespaceRecord,
     dto::{chnot::*, KReq},
 };
 
@@ -128,15 +128,15 @@ impl ResourceMapper for MapperType {
 
     async fn insert_inline_resource(
         &self,
-        req: &KReq<crate::model::dto::InsertInlineResourceReq>,
+        req: &KReq<InsertInlineResourceReq>,
     ) -> anyhow::Result<InsertInlineResourceRsp> {
         expand_mt_branch!(self.insert_inline_resource(req))
     }
 
     async fn query_inline_resource(
         &self,
-        req: KReq<crate::model::dto::QueryInlineResourceReq>,
-    ) -> anyhow::Result<crate::model::dto::QueryInlineResourceRsp> {
+        req: KReq<QueryInlineResourceReq>,
+    ) -> anyhow::Result<QueryInlineResourceRsp> {
         expand_mt_branch!(self.query_inline_resource(req))
     }
 
@@ -232,8 +232,8 @@ impl LLMChatMapper for MapperType {
 
     async fn llm_chat_update_session(
         &self,
-        req: KReq<crate::model::dto::llmchat::LLMChatUpdateSessionReq>,
-    ) -> AResult<crate::model::dto::llmchat::LLMChatUpdateSessionRsp> {
+        req: KReq<LLMChatUpdateSessionReq>,
+    ) -> AResult<LLMChatUpdateSessionRsp> {
         expand_mt_branch!(self.llm_chat_update_session(req))
     }
 
@@ -276,8 +276,8 @@ impl LLMChatMapper for MapperType {
 
     async fn llm_chat_truncate_session(
         &self,
-        req: KReq<crate::model::dto::llmchat::LLMChatTruncateSessionReq>,
-    ) -> AResult<crate::model::dto::llmchat::LLMChatTruncateSessionRsp> {
+        req: KReq<LLMChatTruncateSessionReq>,
+    ) -> AResult<LLMChatTruncateSessionRsp> {
         expand_mt_branch!(self.llm_chat_truncate_session(req))
     }
 }
@@ -291,15 +291,15 @@ impl MapperType {
 impl KVMapper for MapperType {
     async fn kv_overwrite(
         &self,
-        req: KReq<crate::model::dto::kv::KVOverwriteReq>,
-    ) -> AResult<crate::model::dto::kv::KVOverwriteRsp> {
+        req: KReq<KVOverwriteReq>,
+    ) -> AResult<KVOverwriteRsp> {
         expand_mt_branch!(self.kv_overwrite(req))
     }
 
     async fn kv_query(
         &self,
-        req: KReq<crate::model::dto::kv::KVQueryReq>,
-    ) -> AResult<crate::model::dto::kv::KVQueryRsp> {
+        req: KReq<KVQueryReq>,
+    ) -> AResult<KVQueryRsp> {
         expand_mt_branch!(self.kv_query(req))
     }
 

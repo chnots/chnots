@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
 import LLMChatPage from "./features/llmchat/page/llmchat";
 import FullScreenTimer from "./features/timer/timer";
+import ExcalidrawPage from "./features/tool/excalidraw/page/excalidraw";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -16,7 +17,8 @@ export enum RoutePaths {
   Toents = "/toents",
   LLMChat = "/llmchat",
   Settings = "/settings",
-  Timer = "/timer"
+  Timer = "/timer",
+  ToolExcalidraw = "/tool/excalidraw",
 }
 
 const routes: RouteObject[] = [
@@ -52,8 +54,12 @@ const routes: RouteObject[] = [
       },
       {
         path: RoutePaths.Timer,
-        element: <FullScreenTimer />
-      }
+        element: <FullScreenTimer />,
+      },
+      {
+        path: RoutePaths.ToolExcalidraw,
+        element: <ExcalidrawPage />,
+      },
     ],
   },
 ];

@@ -1,12 +1,7 @@
 use std::{ffi::OsStr, path::PathBuf};
 
 use axum::{
-    body::{self, Bytes},
-    extract::{Multipart, Path, Query, State},
-    http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode},
-    response::{IntoResponse, Response},
-    routing::{get, put},
-    Router,
+    body::{self, Bytes}, extract::{Multipart, Path, Query, State}, http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, Response}, routing::{get, put}, Json, Router
 };
 use chin_tools::{utils::path_util::split_uuid_to_file_name, wrapper::anyhow::AResult};
 use chrono::Local;
@@ -26,8 +21,7 @@ use crate::{
     model::{
         db::resource::Resource,
         dto::{
-            kreq, read_namespace_from_header, InsertInlineResourceReq, InsertInlineResourceRsp,
-            QueryInlineResourceReq, QueryInlineResourceRsp, ResourceUploadRsp,
+            kreq, read_namespace_from_header, resource::*
         },
     },
     server::controller::{
@@ -174,7 +168,7 @@ async fn query_inline_resource(
 async fn insert_inline_resource(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<InsertInlineResourceReq>,
+    Json(req): Json<InsertInlineResourceReq>,
 ) -> KResponse<InsertInlineResourceRsp> {
     state
         .mapper
@@ -197,6 +191,8 @@ async fn query_svg(
             id: Some(id.into()),
             content_type: Some("svg".into()),
             name_like: None,
+            rid: None,
+            with_del: Some(false),
         }),
     )
     .await

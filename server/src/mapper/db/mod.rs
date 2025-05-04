@@ -2,7 +2,6 @@ pub mod backup;
 pub mod chnot;
 pub mod dbwrapper;
 pub mod helper;
-pub mod kv;
 pub mod llmchat;
 pub mod namespace;
 pub mod postgres;

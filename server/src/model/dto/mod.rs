@@ -1,5 +1,5 @@
 pub mod chnot;
-pub mod kv;
+pub mod resource;
 pub mod llmchat;
 
 /// DTO: Data Transfer Object
@@ -47,29 +47,3 @@ pub struct NamespaceQueryReq {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NamespaceQueryRsp {}
 
-pub type ResourceUploadReq = Multipart;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResourceUploadRsp {
-    pub(crate) resources: Vec<Resource>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineResourceReq {
-    pub res: InlineResource,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineResourceRsp {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryInlineResourceReq {
-    pub id: Option<String>,
-    pub content_type: Option<String>,
-    pub name_like: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryInlineResourceRsp {
-    pub res: Vec<InlineResource>,
-}

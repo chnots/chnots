@@ -8,9 +8,9 @@ use super::{postgres, sqlite};
 use crate::mapper::DeserializeMapper;
 use crate::model::db::{
     chnot::*,
-    kv::KV,
     llmchat::*,
     namespace::*,
+    resource::KV,
     resource::{InlineResource, Resource},
 };
 
@@ -322,6 +322,9 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             content_type: self.try_get(InlineResource::CONTENT_TYPE)?,
             delete_time: self.try_get_df_opt(InlineResource::DELETE_TIME)?,
             insert_time: self.try_get_df(InlineResource::INSERT_TIME)?,
+            namespace: self.try_get(InlineResource::NAMESPACE)?,
+            rid: self.try_get(InlineResource::RID)?,
+            archor: self.try_get(InlineResource::ARCHOR)?,
         };
         Ok(obj)
     }
