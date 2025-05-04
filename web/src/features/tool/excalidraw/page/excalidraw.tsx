@@ -8,10 +8,7 @@ const ExcalidrawPage = () => {
   const { Excalidraw } = TExcalidraw;
 
   return (
-    <ExcalidrawContainer
-      useCustom={() => {}}
-      excalidrawLib={TExcalidraw}
-    >
+    <ExcalidrawContainer>
       <Excalidraw />
     </ExcalidrawContainer>
   );

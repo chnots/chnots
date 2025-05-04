@@ -3,6 +3,7 @@ use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::Client;
 use deadpool_sqlite::rusqlite;
+use tracing::info;
 
 use super::{postgres, sqlite};
 use crate::mapper::DeserializeMapper;

@@ -12,7 +12,6 @@ import * as TExcalidraw from "@excalidraw/excalidraw";
 import "./excalidraw.scss";
 import {
   AppState,
-  BinaryFileData,
   ExcalidrawImperativeAPI,
   ExcalidrawInitialDataState,
 } from "@excalidraw/excalidraw/types";
@@ -25,14 +24,20 @@ import {
   MIME_TYPES,
 } from "@excalidraw/excalidraw";
 import useDebounce from "@/hooks/use-debounce";
-import { insertInlineResource } from "@/store/resource/service";
+import {
+  insertInlineResource,
+  queryInlineResource,
+} from "@/store/resource/service";
 import { useNamespaceStore } from "@/store/namespace";
+import { useSearchParams } from "react-router-dom";
+import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
 
 export interface ExcalidrawProps {
-  useCustom: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
+  useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
   children: React.ReactNode;
-  excalidrawLib: typeof TExcalidraw;
+  excalidrawLib?: typeof TExcalidraw;
+  instanceId?: string;
 }
 
 const CONTENT_TYPE = "excalidraw-v1";
@@ -42,10 +47,11 @@ export default function ExcalidrawContainer({
   customArgs,
   children,
   excalidrawLib,
+  instanceId,
 }: ExcalidrawProps) {
   const { currentNamespace } = useNamespaceStore();
 
-  const { useHandleLibrary } = excalidrawLib;
+  const { useHandleLibrary } = excalidrawLib ?? TExcalidraw;
   const appRef = useRef<any>(null);
   const [viewModeEnabled, setViewModeEnabled] = useState(false);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
@@ -54,31 +60,49 @@ export default function ExcalidrawContainer({
   const [theme, setTheme] = useState<Theme>("light");
   const [disableImageTool, setDisableImageTool] = useState(false);
 
+  const [searchParams] = useSearchParams();
+  const [excalidrawId, setExcalidrawId] = useState<string>();
+  useEffect(() => {
+    let id = instanceId ? instanceId : searchParams.get("exdId");
+    id = id ?? uuid();
+    setExcalidrawId(id);
+  }, [setExcalidrawId, searchParams]);
+
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
 
-  useCustom(excalidrawAPI, customArgs);
+  if (useCustom) {
+    useCustom(excalidrawAPI, customArgs);
+  }
 
   useHandleLibrary({ excalidrawAPI });
 
-  /*   const initialStatePromiseRef = useRef<{
+  const initialStatePromiseRef = useRef<{
     promise: ResolvablePromise<ExcalidrawInitialDataState | null>;
   }>({ promise: null! });
   if (!initialStatePromiseRef.current.promise) {
     initialStatePromiseRef.current.promise =
       resolvablePromise<ExcalidrawInitialDataState | null>();
-  } */
+  }
   useEffect(() => {
     if (!excalidrawAPI) {
       return;
     }
     const fetchData = async () => {
-      /*       const initialData = await;
-       //@ts-ignore
-      initialStatePromiseRef.current.promise.resolve({
-        ...initialData,
-        elements: convertToExcalidrawElements(initialData.elements),
-      }); */
+      const rsp = await queryInlineResource({
+        rid: excalidrawId,
+      });
+      try {
+        const state = JSON.parse(rsp.res[0].content);
+        //@ts-ignore
+        initialStatePromiseRef.current.promise.resolve({
+          ...state,
+          elements: convertToExcalidrawElements(state.elements),
+        });
+      } catch (e) {
+        console.log("unable to fetch inline-resource", excalidrawId, e);
+        initialStatePromiseRef.current.promise.resolve({});
+      }
     };
     fetchData();
   }, [excalidrawAPI, convertToExcalidrawElements, MIME_TYPES]);
@@ -118,9 +142,9 @@ export default function ExcalidrawContainer({
 
     const newElement = cloneElement(Excalidraw, {
       excalidrawAPI: (api: ExcalidrawImperativeAPI) => setExcalidrawAPI(api),
-      // initialData: initialStatePromiseRef.current.promise,
+      initialData: initialStatePromiseRef.current.promise,
       onChange: (elements: NonDeletedExcalidrawElement[], state: AppState) => {
-        save({ elements, state }, uuid(), "excalidraw example");
+        save({ elements, state }, excalidrawId, "excalidraw example");
       },
       viewModeEnabled,
       zenModeEnabled,

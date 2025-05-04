@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use chin_sql::{SqlDeleter, SqlInserter, SqlReader, Wheres};
+use chin_sql::{LimitOffset, SqlDeleter, SqlInserter, SqlReader, Wheres};
 
 impl ResourceMapper for KDb {
     async fn ensure_table_resource(&self) -> EResult {
@@ -143,7 +143,8 @@ impl ResourceMapper for KDb {
                     Wheres::equal(InlineResource::RID, id)
                 }),
             ]))
-            .raw("order by insert_time desc");
+            .raw("order by insert_time desc")
+            .custom(LimitOffset::new(1));
 
         let res = self
             .conn()

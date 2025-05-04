@@ -8,3 +8,15 @@ export interface InsertInlineResourceReq {
   res: InlineResource,
   archor_intervals: number;
 }
+
+export interface QueryInlineResourceReq {
+  id?: string;
+  rid?: string;
+  with_del?: boolean;
+  content_type?: string;
+  name_like?: string;
+}
+
+export interface QueryInlineResourceRsp {
+  res: InlineResource[]
+}
