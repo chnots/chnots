@@ -1,6 +1,7 @@
 import Icon from "./icon";
 import { useNamespaceStore } from "@/store/namespace";
-import { Menu, MenuButton, MenuItem } from "@szhsin/react-menu";
+import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
+import KButton from "./kbutton";
 
 const NamespaceIcon = ({
   name,
@@ -33,27 +34,34 @@ export const NamespaceSelect = ({
 }) => {
   const { namespaces } = useNamespaceStore();
   return (
-    <Menu
-      menuButton={
-        <MenuButton className={menuClassName}>
+    <RadixDropmenu.Root>
+      <RadixDropmenu.Trigger asChild>
+        <KButton className={menuClassName}>
           <NamespaceIcon
             name={currentNamespace}
             className={className}
           ></NamespaceIcon>
-        </MenuButton>
-      }
-      transition
-    >
-      {namespaces().map((e) => (
-        <MenuItem
-          key={e.name}
-          onClick={() => {
-            onSelect(e.name);
-          }}
+        </KButton>
+      </RadixDropmenu.Trigger>
+
+      <RadixDropmenu.Portal>
+        <RadixDropmenu.Content
+          className="RadixDropmenuContent z-20"
+          sideOffset={5}
         >
-          {e.name}
-        </MenuItem>
-      ))}
-    </Menu>
+          {namespaces().map((e) => (
+            <RadixDropmenu.Item
+              className="p-2"
+              key={e.name}
+              onClick={() => {
+                onSelect(e.name);
+              }}
+            >
+              {e.name}
+            </RadixDropmenu.Item>
+          ))}
+        </RadixDropmenu.Content>
+      </RadixDropmenu.Portal>
+    </RadixDropmenu.Root>
   );
 };

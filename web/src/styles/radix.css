@@ -83,44 +83,40 @@
     box-shadow: 0 0 0 2px black;
 }
 
-.Fieldset {
-    display: flex;
-    gap: 20px;
-    align-items: center;
+.RadixDropmenuContent,
+.RadixDropmenuSubContent {
+    min-width: 220px;
+    background-color: white;
+    border-radius: 6px;
+    padding: 5px;
+    box-shadow:
+        0px 10px 38px -10px rgba(22, 23, 24, 0.35),
+        0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+    animation-duration: 400ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
 }
 
-.Label {
-    font-size: 13px;
-    color: var(--violet-11);
-    width: 75px;
+.RadixDropmenuContent[data-side="top"],
+.RadixDropmenuSubContent[data-side="top"] {
+    animation-name: slideDownAndFade;
 }
 
-.Input {
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    border-radius: 4px;
-    padding: 0 10px;
-    font-size: 13px;
-    line-height: 1;
-    color: var(--violet-11);
-    box-shadow: 0 0 0 1px var(--violet-7);
-    height: 25px;
+.RadixDropmenuContent[data-side="right"],
+.RadixDropmenuSubContent[data-side="right"] {
+    animation-name: slideLeftAndFade;
 }
 
-.Input:focus {
-    box-shadow: 0 0 0 2px var(--violet-8);
+.RadixDropmenuContent[data-side="bottom"],
+.RadixDropmenuSubContent[data-side="bottom"] {
+    animation-name: slideUpAndFade;
 }
 
-.Text {
-    margin: 0;
-    color: var(--mauve-12);
-    font-size: 15px;
-    line-height: 19px;
-    font-weight: 500;
+.RadixDropmenuContent[data-side="left"],
+.RadixDropmenuSubContent[data-side="left"] {
+    animation-name: slideRightAndFade;
 }
+
 
 @keyframes slideUpAndFade {
     from {
