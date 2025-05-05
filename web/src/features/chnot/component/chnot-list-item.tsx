@@ -41,21 +41,27 @@ const ChnotListItem = React.forwardRef(
         key={chnot.record.id}
       >
         <div className="relative flex flex-row align-middle justify-between">
-          <div className="flex flex-row space-x-1">
+          <div className="flex flex-row space-x-2">
             {chnot.meta.kind === ChnotType.MarkdownWithToent && (
-              <Icon.Ampersand className="h-4 w-4 min-w-4 text-green-600" />
+              <Icon.NotebookText className="h-4 w-4 min-w-4 text-blue-600" />
             )}
             {chnot.meta.kind === ChnotType.ExcalidrawV1 && (
               <Icon.PencilRuler className="h-4 w-4 min-w-4 text-red-600" />
             )}
-            <div className="text-gray-600 mr-2">
+            <div
+              className="text-gray-600 mr-2"
+              title={chnot.meta.insert_time.toISOString()}
+            >
               {chnotShortDate(chnot.meta.insert_time)}
             </div>
-            <div className="relative text-xs line-clamp-1 break-all">
+            <div
+              className="relative text-xs line-clamp-2 break-all"
+              title={title}
+            >
               {title}
             </div>
           </div>
-          <div className="opacity-0 hover:opacity-100">
+          <div className="opacity-0 group-hover:opacity-100">
             <button onClick={onDelete}>
               <Icon.Archive className="h-4" />
             </button>

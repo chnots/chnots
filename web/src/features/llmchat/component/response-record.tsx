@@ -50,7 +50,7 @@ export const ResponseRecord = ({
     [appendRecord]
   );
 
-  const handleAfterEnd = useCallback(() => {
+  const onFinish = useCallback(() => {
     setAnswering(false);
   }, [setAnswering]);
 
@@ -59,7 +59,7 @@ export const ResponseRecord = ({
     handleResponse,
     detail,
     triggerAnswer,
-    afterEnd: handleAfterEnd,
+    onFinish,
   });
 
   const hanbleAbort =
@@ -87,8 +87,9 @@ export const ResponseRecord = ({
         }}
         role={"assistant-response"}
         logo={bot.svg_logo}
+        roleName={bot.name}
       />
-      <div ref={bottomDivRef}></div>
+      <div id="bottom-ref" ref={bottomDivRef}></div>
     </>
   );
 };

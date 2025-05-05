@@ -61,8 +61,8 @@ const App = () => {
   return !initialized ? (
     <LoadingPage />
   ) : (
-    <div className="h-screen max-h-screen flex flex-row">
-      <div className="h-full justify-start items-start select-none kborder z-2 bg-secondary border-b w-16">
+    <div className="h-screen max-h-screen flex flex-row kc-basic">
+      <div className="h-full justify-start items-start select-none  z-2 border-b w-16">
         <Navigation />
       </div>
       <div className="bg-kbg w-full h-full">

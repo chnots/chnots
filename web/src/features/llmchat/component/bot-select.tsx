@@ -73,7 +73,7 @@ const LLMChatBotSelect = () => {
             <BotComponent bot={currentBot} />
           </RadixDropmenu.Trigger>
           <RadixDropmenu.Portal>
-            <RadixDropmenu.Content className="bg-secondary p-2 rounded-xl space-y-2 shadow-lg border kborder">
+            <RadixDropmenu.Content className="kc-inactive p-2 rounded-xl space-y-2 shadow-lg border ">
               {[...bots.values()].map((bot) => {
                 return (
                   <RadixDropmenu.Item key={bot.id}>

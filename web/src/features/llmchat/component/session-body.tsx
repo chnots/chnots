@@ -62,12 +62,6 @@ const LLMChatSessionBody = ({
     setFleetDetail(undefined);
   }, [currentSession, newSessionFlag]);
 
-  useEffect(() => {
-    if (answering) {
-      setTriggerAnswer(false);
-    }
-  }, [answering]);
-
   const trySaveSession = async (
     detail: LLMChatSessionDetail,
     title: string
@@ -137,8 +131,7 @@ const LLMChatSessionBody = ({
   };
 
   const contentRef = useRef<HTMLDivElement>(null);
-
-  const [atBottom, setAtBottom] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
   const handleScroll = useCallback(() => {
     if (contentRef.current) {
       const rect = contentRef.current.getBoundingClientRect();
@@ -148,9 +141,15 @@ const LLMChatSessionBody = ({
       setAtBottom(atBottom);
     }
   }, [setAtBottom]);
+  useEffect(() => {
+    if (contentRef.current) {
+      console.log("content, ", contentRef.current);
+      contentRef.current?.scrollTo(0, document.body.scrollHeight);
+    }
+  }, []);
 
   return (
-    <div className="bg-panel flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
+    <div className="bg-active flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
       <div
         className="flex flex-row h-full overflow-y-auto justify-center w-full"
         onScroll={handleScroll}
@@ -178,6 +177,7 @@ const LLMChatSessionBody = ({
                     })}
                   {fleetDetail.records.at(-1)?.role === "user" && (
                     <ResponseRecord
+                      key={"response-" + currentBot.id}
                       detail={fleetDetail}
                       appendRecord={appendRecord}
                       setAnswering={setAnswering}

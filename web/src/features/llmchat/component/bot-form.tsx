@@ -216,7 +216,6 @@ const BotForm = ({
               showBorder={true}
               aria-label="Duplicate"
               onClick={() => setBotId(v4())}
-              type="button"
             >
               Duplicate
             </KButton>

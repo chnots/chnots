@@ -68,11 +68,11 @@ const RecordContent = ({
       <div className="flex-col overflow-y-hidden">
         <div className="text-gray-500 text-xs space-x-2">
           <span>{roleName}</span>
-          <span>{timestamp?.toISOString() ?? "Now"}</span>
+          <span>{timestamp?.toLocaleString() ?? "Now"}</span>
         </div>
         <div className={clsx(limitedHeight && "max-h-40 overflow-hidden")}>
           {role === "user" ? (
-            <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap bg-secondary">
+            <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap kc-accent">
               {content}
             </div>
           ) : (
@@ -80,7 +80,7 @@ const RecordContent = ({
               {reasoningContent && (
                 <ReactMarkdown
                   className={
-                    "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 bg-secondary p-2 kborder border rounded-tr-2xl my-2"
+                    "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 kc-active p-2 border rounded-tr-2xl my-2"
                   }
                   remarkPlugins={[remarkGfm]}
                 >

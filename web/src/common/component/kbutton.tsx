@@ -12,16 +12,16 @@ const KButton = ({
   showBorder?: boolean;
 } & ButtonHTMLAttributes<object>) => {
   return (
-    <button
+    <div
       className={clsx(
-        "flex flex-row items-center hover:kbutton-focused rounded-xl space-x-1",
-        showBorder ? "kbutton bg-secondary" : "border border-transparent",
+        "flex flex-row items-center rounded-xl space-x-1 hover:cursor-pointer",
+        showBorder ? "border-kbdr" : "border border-transparent",
         className
       )}
       {...rest}
     >
       {children}
-    </button>
+    </div>
   );
 };
 

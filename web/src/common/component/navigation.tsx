@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./icon";
 import { NamespaceSelect } from "./namespace-select";
-import SearchButton from "./search-navigation";
 import { RoutePaths } from "@/router";
 import { useNamespaceStore } from "@/store/namespace";
 import KButton from "./kbutton";
@@ -40,7 +39,7 @@ const Navigation = ({
     title: t("LLM Chat"),
     icon: <Icon.Bot className="w-6 h-auto opacity-70 shrink-0" />,
   };
-/*   const toentNavLink: NavLinkItem = {
+  /*   const toentNavLink: NavLinkItem = {
     id: "header-toent",
     path: RoutePaths.Toents,
     title: t("Toents"),
@@ -61,13 +60,12 @@ const Navigation = ({
     icon: <Icon.Timer className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
-
   const navLinks: NavLinkItem[] = [chnotNavLink, llmChatNavLink, timerNavLink];
 
   return (
     <div
       className={clsx(
-        "h-full overflow-auto flex flex-col items-center z-30 hide-scrollbar bg-secondary border-b kborder space-y-2 py-1",
+        "h-full overflow-auto flex flex-col items-center z-30 hide-scrollbar kc-basic-with-bdr border-r space-y-2 py-1",
         className
       )}
     >
@@ -85,12 +83,15 @@ const Navigation = ({
           setNamespaceParam(ns);
         }}
         currentNamespace={currentNamespace.name}
-        menuClassName="p-2 border kborder hover:cursor-pointer rounded-xl"
+        menuClassName="p-2 border  hover:cursor-pointer rounded-xl"
       />
       {navLinks.map((navLink) => (
         <NavLink
           className={({ isActive }) =>
-            clsx("p-2", isActive ? "kbutton-focused" : "kbutton-muted")
+            clsx(
+              "p-2 rounded-xl border",
+              isActive ? "kc-active" : "border-transparent kc-basic"
+            )
           }
           key={navLink.id}
           to={navLink.path}

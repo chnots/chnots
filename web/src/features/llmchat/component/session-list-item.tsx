@@ -6,6 +6,8 @@ import KListItem from "@/common/component/klistitem";
 import { LLMChatSession } from "@/store/llmchat/db";
 import { useLLMChatStore } from "@/store/llmchat/store";
 import { llmchatSessionUpdate } from "@/store/llmchat/service";
+import * as Separator from "@radix-ui/react-separator";
+import KButton from "@/common/component/kbutton";
 
 const LLMChatSessionListItem = React.forwardRef(
   (
@@ -14,7 +16,9 @@ const LLMChatSessionListItem = React.forwardRef(
   ) => {
     const { currentSession, setCurrentSession, templates, deleteCacheSession } =
       useLLMChatStore();
-    const logo = templates.get(session.template_id)?.svg_logo;
+    const template = templates.get(session.template_id);
+    const logo = template?.svg_logo;
+    const tmplName = template?.name;
 
     const handleDelete = async () => {
       await llmchatSessionUpdate({
@@ -32,20 +36,30 @@ const LLMChatSessionListItem = React.forwardRef(
         focused={currentSession?.id === session.id}
         key={session.id}
         ref={ref}
-        className="relative flex-col space-y-1"
+        className="relative flex space-x-2 justify-center"
       >
-        <div className="flex flex-row justify-between">
-          <div className="flex flex-row">
-            {logo ? <KSVG className="!w-4 !h-4 mr-2" inner={logo} /> : <Icon.MessageCircle className="h-4" />}
-            <RelativeTime date={session.insert_time} />
+        <div className="p-1">
+          {logo ? (
+            <KSVG className="!w-6 !h-6" inner={logo} />
+          ) : (
+            <Icon.MessageCircle className="h-4" />
+          )}
+        </div>
+        <div className="w-full">
+          <div className="flex justify-between">
+            <span>{tmplName}</span>
+
+            <div className="flex align-middle">
+              <RelativeTime date={session.insert_time} />
+              <KButton onClick={handleDelete}>
+                <Icon.X className="h-4 opacity-0 group-hover:opacity-100" />
+              </KButton>
+            </div>
           </div>
-          <div className="opacity-0 hover:opacity-100">
-            <button onClick={handleDelete}>
-              <Icon.X className="h-4" />
-            </button>
+          <div className="text-xs line-clamp-2 break-all" title={session.title}>
+            {session.title}
           </div>
         </div>
-        <div className="text-xs line-clamp-2 break-all">{session.title}</div>
       </KListItem>
     );
   }

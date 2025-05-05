@@ -168,11 +168,7 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
   }) => {
     return (
       <TopbarButton
-        className={
-          chnotType === thisChnotType
-            ? "border kborder rounded-xl bg-accent"
-            : ""
-        }
+        className={chnotType === thisChnotType ? "kc-accent" : ""}
         onClick={() => {
           setChnotType(thisChnotType);
         }}
@@ -184,7 +180,7 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
 
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
-      <div className="w-full flex items-center border-b kborder px-3 justify-between text-xs align-middle">
+      <div className="w-full flex items-center border-b kc-basic-with-bdr px-3 justify-between text-xs align-middle">
         <div className="text-xs flex space-x-2 p-1 items-center">
           {onClickNewButton &&
             (chnot ? (
@@ -196,7 +192,7 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
                 <span>New</span>
               </TopbarButton>
             ) : (
-              <div className="flex border kborder rounded-xl p-0.5 space-x-2">
+              <div className="flex border kc-active rounded-xl p-0.5 space-x-2">
                 <ChnotTypeButton thisChnotType={ChnotType.MarkdownWithToent}>
                   <Icon.TextCursor className="w-4 h-4" />
                 </ChnotTypeButton>
@@ -206,10 +202,10 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
               </div>
             ))}
           {chnot && (
-            <div className="kborder bg-secondary border rounded-xl p-0.5 flex space-x-2">
+            <div className="bg-inactive border kc-active rounded-xl p-0.5 flex space-x-1">
               <NamespaceSelect
                 className="w-4 h-4"
-                menuClassName="px-2 py-1 bg-secondary rounded-xl flex items-center "
+                menuClassName="px-1 py-1 bg-inactive rounded-xl flex items-center "
                 onSelect={(ns) => {
                   chnotUpdate({
                     meta_id: chnot.meta.id,

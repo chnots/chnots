@@ -27,13 +27,13 @@ export const useLLMResponse = ({
   bot,
   triggerAnswer,
   handleResponse,
-  afterEnd,
+  onFinish,
 }: {
   detail: LLMChatSessionDetail;
   bot: LLMChatBot;
   handleResponse: (record: ResponseState) => Promise<boolean>;
   triggerAnswer: boolean;
-  afterEnd: () => void;
+  onFinish: () => void;
 }) => {
   const [answerStep, setAnswerStep] = useState(AnswerStep.Initial);
   const [responseState, setResponseState] = useState<ResponseState>();
@@ -45,8 +45,11 @@ export const useLLMResponse = ({
     }
     setAnswerStep(AnswerStep.HandlingResponse);
 
-    if (responseState.content === "" || responseState.reasoningContent.length == 0) {
-      console.warn("llm result is empty");
+    if (
+      responseState.content.length === 0 &&
+      responseState.reasoningContent.length === 0
+    ) {
+      console.debug("llm result is empty");
       return;
     }
 
@@ -80,7 +83,7 @@ export const useLLMResponse = ({
         content: "",
         prevRecordId: detail.session.id,
         sessionId: detail.session.id,
-        reasoningContent: ""
+        reasoningContent: "",
       };
     });
 
@@ -98,7 +101,7 @@ export const useLLMResponse = ({
           setAnswerStep(AnswerStep.TriggerHandleResponse);
           return;
         }
-        if (text.trim() === "") {
+        if (text.trim().length == 0) {
           return;
         }
 
@@ -119,41 +122,46 @@ export const useLLMResponse = ({
         }
         if (reasoningContent && reasoningContent.length > 0) {
           setResponseState((prev) => {
-            return { ...prev!, reasoningContent: prev?.reasoningContent + reasoningContent };
+            return {
+              ...prev!,
+              reasoningContent: prev?.reasoningContent + reasoningContent,
+            };
           });
         }
       },
       onclose() {
         console.log("onclose");
         setAnswerStep((prev) => {
-          if ([AnswerStep.Answering, AnswerStep.TriggerAnswer].includes(prev)) {
-            return AnswerStep.TriggerHandleResponse;
-          } else {
-            return prev;
-          }
+          return AnswerStep.TriggerHandleResponse;
         });
       },
       onerror(err) {
-        console.error("onerror, ", err);
-        toast.error(`Error when ask for llm result. \n ${err}`);
-        setAnswerStep((prev) => {
-          if ([AnswerStep.Answering, AnswerStep.TriggerAnswer].includes(prev)) {
-            return AnswerStep.TriggerHandleResponse;
-          } else {
-            return prev;
-          }
-        });
         throw err;
       },
+    }).catch((err) => {
+      console.warn("unable to fetch resources", err);
+      setResponseState((prev) => {
+        return {
+          ...prev!,
+          reasoningContent: prev?.reasoningContent + "\n\n" + err,
+        };
+      });
+
+      toast.error(`Error when ask for llm result. \n ${err}`);
+      setAnswerStep((prev) => {
+        return AnswerStep.TriggerHandleResponse;
+      });
     });
   }, [detail, bot, setAnswerStep, setResponseState]);
 
   const doAbort = useCallback(() => {
+    console.log("try to cancel answer");
+
     if (
       detail.session.id !== responseState?.sessionId &&
       responseState?.abortSingal
     ) {
-      console.log("cancel result");
+      console.log("cancel answer");
       responseState?.abortSingal.abort();
       setAnswerStep(AnswerStep.TriggerHandleResponse);
     }
@@ -167,7 +175,7 @@ export const useLLMResponse = ({
     } else if (answerStep === AnswerStep.Abort) {
       doAbort();
     } else if (answerStep === AnswerStep.Done) {
-      afterEnd();
+      onFinish();
     }
   }, [answerStep, responseState]);
 

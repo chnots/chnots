@@ -14,7 +14,7 @@ const ChnotTagListItem = React.forwardRef(
     return (
       <KListItem focused={focused} onClick={handleClick} ref={ref}>
         <div className="relative flex flex-row align-middle">
-          <Icon.Hash className="h-4 w-4 min-w-4 text-blue-600" />
+          <Icon.Hash className="h-4 w-4 min-w-4 text-green-600" />
           <div className="relative text-xs line-clamp-1 break-all">
             {tag.replace(RegExp("#"), "")}
           </div>

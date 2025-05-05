@@ -70,7 +70,7 @@ const LLMChatSessionInput = ({
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">
-      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-xl border kborder shadow-xl">
+      <div className="flex flex-col max-w-3xl w-3xl p-2 rounded-xl border kc-active shadow-xl">
         <textarea
           className="w-full p-1 h-auto max-h-60 border-none focus:outline-none focus:none resize-none"
           onChange={(e) => {
@@ -96,8 +96,8 @@ const LLMChatSessionInput = ({
 
             <div>{botSelect}</div>
           </div>
-          <button
-            className="p-1 hover:bg-blue-100 h-auto w-auto rounded-xl"
+          <KButton
+            className="py-1 px-2 hover:bg-blue-100 h-auto w-auto rounded-xl"
             onClick={() => {
               if (message && sessionDetail) {
                 handleSendUserMsg(message, sessionDetail);
@@ -105,8 +105,8 @@ const LLMChatSessionInput = ({
             }}
             disabled={disabled}
           >
-            <Icon.Send />
-          </button>
+            <Icon.Send className="w-4 h-4" />
+          </KButton>
         </div>
       </div>
     </div>

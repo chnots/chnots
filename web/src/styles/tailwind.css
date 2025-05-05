@@ -15,95 +15,68 @@
   }
 }
 
+/* active */
+/* kbg */
+/* inactive*/
+/* muted */
 :root {
-  --kbg: #ffffff;
-  --kfg: #282828;
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(20 14.3% 4.1%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(20 14.3% 4.1%);
-  --primary: hsl(24 9.8% 10%);
-  --primary-foreground: hsl(60 9.1% 97.8%);
-  --secondary: #fafafa;
-  --secondary-foreground: hsl(24 9.8% 10%);
-  --muted: hsl(60 4.8% 95.9%);
-  --muted-foreground: hsl(25 5.3% 44.7%);
-  --editor: #fff;
-  --accent: #e0e0f8;
-    --accent-foreground: #000;
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(60 9.1% 97.8%);
+  --c-kbg: #fafafa;
+  --c-kfg: #282828;
+  --c-kbdr: #d4d4d4;
+
+  --c-active: #ffffff;
+  --c-active-fg: #101010;
+  --c-active-bdr: #a0a0a0;
+
+  --c-inactive: #f0f0f0;
+  --c-inactive-fg: #303030;
+  --c-inactive-bdr: #a0a0a0;
+
+  --c-muted: #e0e0e0;
+  --c-muted-fg: #404040;
+  --c-muted-bdr: #a0a0a0;
+
+  --c-accent: #e0e0f8;
+  --c-accent-fg: #000;
+  --c-accent-bdr: #d0d0d0;
+
+  --c-editor: #fff;
   --cborder: #d4d4d4;
   --input: hsl(20 5.9% 90%);
   --ring: hsl(20 14.3% 4.1%);
   --radius: 0.5rem;
 }
 
-.dark {
-  --kbg: #181818;
-  --kfg: #f0f0f0;
-  --card: #282828;
-  --card-foreground: #ddd;
-  --popover: #282828;
-  --popover-foreground: #ddd;
-  --primary: #333;
-  --primary-foreground: #eee;
-  --secondary: #444;
-  --secondary-foreground: #eee;
-  --muted: #444;
-  --muted-foreground: #ccc;
-  --accent: #444;
-  --accent-foreground: #eee;
-  --destructive: #800;
-  --destructive-foreground: #eee;
-  --cborder: #333;
-  --input: #333;
-  --ring: #444;
-}
-
 @theme {
-  --color-kbg: var(--kbg);
-  --color-kfg: var(--kfg);
+  --color-kbg: var(--c-kbg);
+  --color-kfg: var(--c-kfg);
+  --color-kbdr: var(--c-kbdr);
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-active: var(--c-active);
+  --color-active-fg: var(--c-active-fg);
+  --color-active-bdr: var(--c-active-bdr);
 
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-inactive: var(--c-active);
+  --color-inactive-fg: var(--c-active-fg);
+  --color-inactive-bdr: var(--c-inactive-bdr);
 
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--c-accent);
+  --color-accent-fg: var(--c-accent-fg);
+  --color-accent-bdr: var(--c-accent-bdr);
 
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--c-muted);
+  --color-muted-fg: var(--c-muted-fg);
+  --color-muted-bdr: var(--c-muted-bdr);
 
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-editor: var(--c-editor);
 
   --color-cborder: var(--cborder);
   --color-cbutton: var(--cbutton);
   --color-input: var(--input);
   --color-ring: var(--ring);
-
-  --color-radius: var(--radius);
-  --color-editor: var(--editor);
 }
 
 @layer utilities {
-  .kborder-transparent {
-    @apply border-transparent;
-  }
-
-  .kborder {
-    @apply border-cborder;
-  }
-
   .wmde-markdown {
     background-color: transparent !important;
   }
@@ -118,5 +91,33 @@
 }
 
 @utility kbutton-focused {
-  @apply border border-cborder rounded-xl bg-accent text-accent-foreground cursor-pointer;
+  @apply border border-cborder rounded-xl bg-accent text-accent-fg cursor-pointer;
+}
+
+@utility kc-basic {
+  @apply bg-kbg text-kfg;
+}
+
+@utility kc-basic-with-bdr {
+  @apply bg-kbg text-kfg border-kbdr;
+}
+
+@utility kc-active {
+  @apply bg-active text-active-fg border-active-bdr;
+}
+
+@utility kc-inactive {
+  @apply bg-inactive text-inactive-fg border-inactive-bdr;
+}
+
+@utility kc-muted {
+  @apply bg-muted text-muted-fg border-muted-bdr;
+}
+
+@utility kc-accent {
+  @apply bg-accent text-accent-fg border-accent-bdr;
+}
+
+@utility kbut {
+  @apply border border-transparent rounded-xl cursor-pointer;
 }

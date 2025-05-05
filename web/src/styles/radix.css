@@ -117,7 +117,6 @@
     animation-name: slideRightAndFade;
 }
 
-
 @keyframes slideUpAndFade {
     from {
         opacity: 0;
