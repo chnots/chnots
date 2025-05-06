@@ -1,50 +1,68 @@
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/store/llmchat/db";
-import { LLMChatSessionDetail } from "@/store/llmchat/dto";
+import { LLMChatContainerSession } from "@/store/llmchat/dto";
+import { genId } from "@/utils/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-export enum AnswerStep {
-  Initial,
-  TriggerAnswer,
-  Answering,
-  TriggerHandleResponse,
-  HandlingResponse,
-  Done,
-  Abort,
+export enum ResponseStep {
+  Initial = "init",
+  Answering = "ans",
+  Answered = "fia",
+  Aborted = "abt",
+  Error = "err",
+  End = "end",
+}
+
+export enum ResponseCtl {
+  Trigger = "tri",
+  Abort = "abt",
 }
 
 export interface ResponseState {
-  reasoningContent: string;
-  content: string;
+  id: string;
+  step: ResponseStep;
   sessionId: string;
   prevRecordId?: string;
-  abortSingal: AbortController;
+  roleId: string;
+  reasoningContent: string;
+  content: string;
 }
+
+const emptyResponse = (detail: LLMChatContainerSession, bot: LLMChatBot) => {
+  return {
+    id: genId(),
+    step: ResponseStep.Initial,
+    prevRecordId: detail.session.id,
+    sessionId: detail.session.id,
+    roleId: bot.id,
+    content: "",
+    reasoningContent: "",
+  };
+};
 
 export const useLLMResponse = ({
   detail,
   bot,
-  triggerAnswer,
-  handleResponse,
-  onFinish,
 }: {
-  detail: LLMChatSessionDetail;
+  detail: LLMChatContainerSession;
   bot: LLMChatBot;
-  handleResponse: (record: ResponseState) => Promise<boolean>;
-  triggerAnswer: boolean;
-  onFinish: () => void;
 }) => {
-  const [answerStep, setAnswerStep] = useState(AnswerStep.Initial);
-  const [responseState, setResponseState] = useState<ResponseState>();
+  const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(
+    undefined
+  );
+  const [responseState, setResponseState] = useState<ResponseState>(
+    emptyResponse(detail, bot)
+  );
+  const abortSignal = useRef<AbortController>(null);
 
-  const doHandleResponse = useCallback(async () => {
-    console.log("inner answer step:", answerStep);
-    if (!responseState) {
-      return;
-    }
-    setAnswerStep(AnswerStep.HandlingResponse);
+  useEffect(() => {
+    return () => {
+      doAbort();
+    };
+  }, []);
 
+  const doPostResponse = useCallback(async () => {
     if (
       responseState.content.length === 0 &&
       responseState.reasoningContent.length === 0
@@ -53,18 +71,60 @@ export const useLLMResponse = ({
       return;
     }
 
-    try {
-      await handleResponse(responseState);
-    } finally {
-      setAnswerStep(AnswerStep.Done);
-      setResponseState(undefined);
+    // Work for some local llm service, like Ollama, VLLM
+    let ended = false;
+    if (responseState.reasoningContent.length === 0) {
+      const content = responseState.content;
+      const thinkStart = content.indexOf("<think>");
+      const thinkEnd = content.indexOf("</think>");
+      if (thinkStart >= 0) {
+        if (thinkEnd > 0) {
+          setResponseState((prev) => {
+            return {
+              ...prev,
+              step: ResponseStep.End,
+              content: content.substring(thinkEnd + 8),
+              reasoningContent: content.substring(thinkStart + 7, thinkEnd),
+            };
+          });
+          ended = true;
+        } else {
+          setResponseState((prev) => {
+            return {
+              ...prev,
+              step: ResponseStep.End,
+              content: "",
+              reasoningContent: content.substring(thinkStart + 7),
+            };
+          });
+          ended = true;
+        }
+      }
     }
-  }, [responseState, setAnswerStep, setResponseState, handleResponse]);
+
+    if (!ended) {
+      setResponseState((prev) => {
+        return { ...prev, step: ResponseStep.End };
+      });
+    }
+  }, [responseState, setResponseState]);
+
+  const doAbort = useCallback(() => {
+    abortSignal.current?.abort();
+    setResponseState((prev) => {
+      return { ...prev, step: ResponseStep.Aborted };
+    });
+  }, [abortSignal, setResponseState]);
 
   const doResponse = useCallback(() => {
-    setAnswerStep(AnswerStep.Answering);
-    const config = JSON.parse(bot.body) as LLMChatBotBodyOpenAIV1;
+    setResponseState((prev) => {
+      return { ...prev, step: ResponseStep.Answering };
+    });
+    const ctrl = new AbortController();
+    abortSignal.current?.abort();
+    abortSignal.current = ctrl;
 
+    const config = JSON.parse(bot.body) as LLMChatBotBodyOpenAIV1;
     const body = {
       model: config.model_name,
       messages: detail.records.map((r) => {
@@ -72,20 +132,6 @@ export const useLLMResponse = ({
       }),
       stream: true,
     };
-
-    const ctrl = new AbortController();
-    setResponseState((prev) => {
-      if (prev && prev.abortSingal) {
-        prev.abortSingal.abort();
-      }
-      return {
-        abortSingal: ctrl,
-        content: "",
-        prevRecordId: detail.session.id,
-        sessionId: detail.session.id,
-        reasoningContent: "",
-      };
-    });
 
     fetchEventSource(config.url, {
       method: "POST",
@@ -95,10 +141,10 @@ export const useLLMResponse = ({
       },
       body: JSON.stringify(body),
       signal: ctrl.signal,
+      openWhenHidden: true,
       onmessage: (msg) => {
         const text = msg.data;
         if (text === "[DONE]") {
-          setAnswerStep(AnswerStep.TriggerHandleResponse);
           return;
         }
         if (text.trim().length == 0) {
@@ -115,24 +161,24 @@ export const useLLMResponse = ({
         const delta = choices.at(0)?.delta;
         const content = delta?.content;
         const reasoningContent = delta?.reasoning_content;
-        if (content && content.length > 0) {
-          setResponseState((prev) => {
-            return { ...prev!, content: prev?.content + content };
-          });
-        }
-        if (reasoningContent && reasoningContent.length > 0) {
-          setResponseState((prev) => {
-            return {
-              ...prev!,
-              reasoningContent: prev?.reasoningContent + reasoningContent,
-            };
-          });
-        }
+
+        setResponseState((prev) => {
+          return {
+            ...prev,
+            content: content ? prev.content + content : prev.content,
+            reasoningContent: reasoningContent
+              ? prev.reasoningContent + reasoningContent
+              : prev.reasoningContent,
+          };
+        });
       },
       onclose() {
         console.log("onclose");
-        setAnswerStep((prev) => {
-          return AnswerStep.TriggerHandleResponse;
+        setResponseState((prev) => {
+          return {
+            ...prev,
+            step: ResponseStep.Answered,
+          };
         });
       },
       onerror(err) {
@@ -142,54 +188,53 @@ export const useLLMResponse = ({
       console.warn("unable to fetch resources", err);
       setResponseState((prev) => {
         return {
-          ...prev!,
-          reasoningContent: prev?.reasoningContent + "\n\n" + err,
+          ...prev,
+          step: ResponseStep.Error,
+          reasoningContent: prev.reasoningContent + err,
         };
       });
-
       toast.error(`Error when ask for llm result. \n ${err}`);
-      setAnswerStep((prev) => {
-        return AnswerStep.TriggerHandleResponse;
-      });
     });
-  }, [detail, bot, setAnswerStep, setResponseState]);
-
-  const doAbort = useCallback(() => {
-    console.log("try to cancel answer");
-
-    if (
-      detail.session.id !== responseState?.sessionId &&
-      responseState?.abortSingal
-    ) {
-      console.log("cancel answer");
-      responseState?.abortSingal.abort();
-      setAnswerStep(AnswerStep.TriggerHandleResponse);
-    }
-  }, [detail, responseState, setAnswerStep]);
+  }, [setResponseState, abortSignal]);
 
   useEffect(() => {
-    if (answerStep === AnswerStep.TriggerHandleResponse) {
-      doHandleResponse();
-    } else if (answerStep === AnswerStep.TriggerAnswer) {
-      doResponse();
-    } else if (answerStep === AnswerStep.Abort) {
+    if (
+      answerCtl === ResponseCtl.Abort &&
+      responseState.step !== ResponseStep.End
+    ) {
       doAbort();
-    } else if (answerStep === AnswerStep.Done) {
-      onFinish();
+    } else if (
+      answerCtl === ResponseCtl.Trigger &&
+      responseState.step !== ResponseStep.Answering
+    ) {
+      setResponseState(emptyResponse(detail, bot));
+      doResponse();
     }
-  }, [answerStep, responseState]);
+    setAnswerCtl(undefined);
+  }, [
+    detail,
+    bot,
+    answerCtl,
+    responseState,
+    doAbort,
+    doResponse,
+    setAnswerCtl,
+  ]);
 
-  if (
-    detail.records.at(-1)?.role === "user" &&
-    (answerStep === AnswerStep.Done || answerStep === AnswerStep.Initial) &&
-    triggerAnswer
-  ) {
-    setAnswerStep(AnswerStep.TriggerAnswer);
-  }
+  useEffect(() => {
+    if (
+      [
+        ResponseStep.Aborted,
+        ResponseStep.Answered,
+        ResponseStep.Error,
+      ].includes(responseState.step)
+    ) {
+      doPostResponse();
+    }
+  }, [responseState, doPostResponse]);
 
   return {
-    answerStep,
-    responseState,
-    setAnswerStep,
+    response: responseState,
+    setAnswerCtl,
   };
 };

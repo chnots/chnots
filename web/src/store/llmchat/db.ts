@@ -49,7 +49,7 @@ export interface LLMChatRecord {
   pre_record_id?: string; // Optional field
   content: string;
   reasoning_content: string;
-  role: string;
+  role: "user" | "system" | "assistant" | "response-assistant";
   role_id?: string;
   insert_time: DateTime;
 }

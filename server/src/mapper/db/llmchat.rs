@@ -1,4 +1,6 @@
-use chin_sql::SqlInserter;
+use std::collections::HashMap;
+
+use chin_sql::{ChinSqlError, SqlInserter};
 use chin_tools::{
     utils::sort_util::sort_by_prev,
     wrapper::anyhow::{AResult, EResult},
@@ -130,7 +132,10 @@ impl LLMChatMapper for KDb {
         let query = SqlReader::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
                 Wheres::is_null(LLMChatSession::DELETE_TIME),
-                Wheres::equal(LLMChatSession::NAMESPACE, req.namespace),
+                Wheres::equal(LLMChatSession::NAMESPACE, &req.namespace),
+                Wheres::if_some(req.session_id.as_ref(), |id| {
+                    Wheres::equal(LLMChatSession::ID, id)
+                }),
             ]))
             .raw("order by insert_time desc");
 
@@ -147,10 +152,33 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatSessionDetialReq>,
     ) -> AResult<LLMChatSessionDetailRsp> {
+        let session = self
+            .llm_chat_list_sessions(KReq {
+                body: LLMChatListSessionReq {
+                    session_id: Some(req.session_id.clone()),
+                },
+                namespace: req.namespace.clone(),
+            })
+            .await?
+            .sessions
+            .into_iter()
+            .nth(0);
+
         let query = SqlReader::read_all(LLMChatRecord::TABLE)
             .r#where(Wheres::and([
                 Wheres::equal(LLMChatRecord::SESSION_ID, req.session_id.clone()),
-                Wheres::is_null(LLMChatRecord::OMIT_TIME),
+                Wheres::if_some(
+                    {
+                        match req.with_omit.as_ref() {
+                            Some(flag) => match flag {
+                                true => None,
+                                false => Some(()),
+                            },
+                            None => Some(()),
+                        }
+                    },
+                    |_| Wheres::is_null(LLMChatRecord::OMIT_TIME),
+                ),
             ]))
             .raw("order by insert_time desc");
 
@@ -160,7 +188,7 @@ impl LLMChatMapper for KDb {
             .qry_list(query, |e| e.to_llmchat_record())
             .await?;
 
-        Ok(LLMChatSessionDetailRsp { records })
+        Ok(LLMChatSessionDetailRsp { session, records })
     }
 
     async fn llm_chat_delete_bot(
@@ -249,42 +277,55 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatTruncateSessionReq>,
     ) -> AResult<LLMChatTruncateSessionRsp> {
-        let mut records = self
+        let records = self
             .llm_chat_session_detail(KReq {
                 body: LLMChatSessionDetialReq {
                     session_id: req.session_id.clone(),
+                    with_omit: Some(true),
                 },
                 namespace: req.namespace.clone(),
             })
             .await?
             .records;
 
-        sort_by_prev(
-            &mut records,
-            false,
-            |r| &r.id,
-            |r| &r.pre_record_id,
-            |r| &r.insert_time,
-        );
-
-        let mut to_omit_ids = vec![];
-        let mut remove_flag = false;
-
-        for r in records {
-            if r.id == req.remove_rid_included {
-                remove_flag = true;
+        let mut map: HashMap<&str, Vec<&str>> = HashMap::new();
+        for record in &records {
+            if let Some(prev) = record.pre_record_id.as_ref() {
+                map.entry(prev).or_insert(vec![]).push(&record.id);
             }
-            if remove_flag {
-                to_omit_ids.push(r.id);
+        }
+
+        let mut to_omit_ids: Vec<&str> = vec![req.remove_rid_included.as_ref()];
+        let vec = vec![];
+        let mut queue: Vec<&str> = map
+            .get(req.remove_rid_included.as_str())
+            .unwrap_or(&vec)
+            .to_vec();
+
+        loop {
+            if queue.is_empty() {
+                break;
             }
+            let mut tmp = vec![];
+
+            for r in queue {
+                to_omit_ids.push(r);
+                if let Some(v) = map.get(r) {
+                    tmp.extend(v);
+                }
+            }
+            queue = tmp;
         }
 
         let updater = SqlUpdater::new(LLMChatRecord::TABLE)
             .set(LLMChatRecord::OMIT_TIME, Local::now().fixed_offset())
-            .r#where(Wheres::r#in("id", to_omit_ids));
+            .r#where(Wheres::and([
+                Wheres::r#in(LLMChatRecord::ID, to_omit_ids),
+                Wheres::is_null(LLMChatRecord::OMIT_TIME),
+            ]));
 
-        self.conn().await?.exec(updater).await?;
+        let count = self.conn().await?.exec(updater).await?;
 
-        Ok(LLMChatTruncateSessionRsp {})
+        Ok(LLMChatTruncateSessionRsp { count })
     }
 }

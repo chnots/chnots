@@ -15,7 +15,7 @@ use crate::model::{
         resource::{InlineResource, Resource, KV},
     },
     dto::{
-        chnot::*, llmchat::*, resource::{*}, resource::{*}, KReq
+        chnot::*, llmchat::*, resource::{*}, KReq
     },
 };
 

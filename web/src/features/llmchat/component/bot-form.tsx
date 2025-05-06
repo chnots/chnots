@@ -62,7 +62,6 @@ const LLMChatBotBodyOpenAIV1Body = ({
           value={formData.token ?? ""}
           onChange={handleInputChange}
           className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          required
           aria-label="Token"
         />
       </div>
@@ -215,7 +214,13 @@ const BotForm = ({
               className="p-2"
               showBorder={true}
               aria-label="Duplicate"
-              onClick={() => setBotId(v4())}
+              onClick={() => {
+                setFormData((prev) => {
+                  return { ...prev, name: prev.name + " -- Clone" };
+                });
+                setBotId(v4());
+              }}
+              type="button"
             >
               Duplicate
             </KButton>

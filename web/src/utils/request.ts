@@ -68,22 +68,15 @@ class Request {
     }
   }
 
-  async get<T, E>(
-    url: string,
-    params?: E,    
-  ): Promise<T> {
-    console.log("get")
+  async get<T, E>(url: string, params?: E): Promise<T> {
     return (
       await this.instance.get<T>(url, {
-        params
+        params,
       })
     ).data;
   }
 
-  async post<T, E>(
-    url: string,
-    data?: E,
-  ): Promise<T> {
+  async post<T, E>(url: string, data?: E): Promise<T> {
     return (await this.instance.post<T>(url, data)).data;
   }
 

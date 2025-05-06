@@ -9,9 +9,7 @@ use chin_sql::GenerateTableSql;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
-use strum::AsStaticStr;
 use strum::Display;
-use strum::IntoStaticStr;
 use strum_macros::EnumString;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]

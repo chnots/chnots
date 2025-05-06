@@ -14,8 +14,12 @@ const LLMChatSessionListItem = React.forwardRef(
     { session }: { session: LLMChatSession },
     ref: ForwardedRef<HTMLLIElement>
   ) => {
-    const { currentSession, setCurrentSession, templates, deleteCacheSession } =
-      useLLMChatStore();
+    const {
+      currentSessionId,
+      setCurrentSessionId,
+      templates,
+      deleteCacheSession,
+    } = useLLMChatStore();
     const template = templates.get(session.template_id);
     const logo = template?.svg_logo;
     const tmplName = template?.name;
@@ -31,9 +35,9 @@ const LLMChatSessionListItem = React.forwardRef(
     return (
       <KListItem
         onClick={() => {
-          return setCurrentSession(session);
+          return setCurrentSessionId(session.id);
         }}
-        focused={currentSession?.id === session.id}
+        focused={currentSessionId === session.id}
         key={session.id}
         ref={ref}
         className="relative flex space-x-2 justify-center"

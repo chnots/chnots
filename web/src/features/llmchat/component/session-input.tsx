@@ -1,59 +1,33 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
-import { v4 as uuid } from "uuid";
-import { LLMChatRecord } from "@/store/llmchat/db";
-import { LLMChatSessionDetail } from "@/store/llmchat/dto";
-import { useLLMChatStore } from "@/store/llmchat/store";
 import KButton from "@/common/component/kbutton";
+import LLMChatBotSelect from "./bot-select";
 
 const LLMChatSessionInput = ({
   disabled,
-  sessionDetail,
-  appendRecord,
-  botSelect,
+  onAppendRecord,
+  onNewButton,
 }: {
   disabled: boolean;
-  sessionDetail?: LLMChatSessionDetail;
-  appendRecord: (record: LLMChatRecord) => Promise<boolean>;
-  botSelect?: ReactNode;
+  onAppendRecord: (content: string) => boolean;
+  onNewButton: () => void;
 }) => {
   const [message, setMessage] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [newSessionCount, setNewSessionCount] = useState(0);
-  const { setCurrentSession } = useLLMChatStore();
 
   const handleKeyDown = (e: {
     key: string;
     ctrlKey: any;
     preventDefault: () => void;
   }) => {
-    if (
-      e.key === "Enter" &&
-      e.ctrlKey &&
-      !disabled &&
-      message &&
-      sessionDetail
-    ) {
+    if (e.key === "Enter" && e.ctrlKey && !disabled && message) {
       e.preventDefault();
-      handleSendUserMsg(message, sessionDetail);
+      handleSendUserMsg(message);
     }
   };
 
-  const handleSendUserMsg = async (
-    msg: string,
-    sessionDetail: LLMChatSessionDetail
-  ) => {
-    const record: LLMChatRecord = {
-      id: uuid(),
-      session_id: sessionDetail.session.id,
-      pre_record_id: sessionDetail.records.at(-1)?.id,
-      content: msg,
-      reasoning_content: "",
-      role: "user",
-      insert_time: new Date(),
-    };
-    const flag = await appendRecord(record);
-    if (flag) {
+  const handleSendUserMsg = (msg: string) => {
+    if (onAppendRecord(msg)) {
       setMessage("");
     }
   };
@@ -85,7 +59,7 @@ const LLMChatSessionInput = ({
           <div className="flex space-x-4 align-middle items-center">
             <KButton
               onClick={() => {
-                setCurrentSession(undefined);
+                onNewButton();
               }}
               className="p-1 h-7 mx-2 text-xs"
               showBorder={true}
@@ -94,13 +68,15 @@ const LLMChatSessionInput = ({
               <span>New</span>
             </KButton>
 
-            <div>{botSelect}</div>
+            <div>
+              <LLMChatBotSelect />
+            </div>
           </div>
           <KButton
             className="py-1 px-2 hover:bg-blue-100 h-auto w-auto rounded-xl"
             onClick={() => {
-              if (message && sessionDetail) {
-                handleSendUserMsg(message, sessionDetail);
+              if (message) {
+                handleSendUserMsg(message);
               }
             }}
             disabled={disabled}

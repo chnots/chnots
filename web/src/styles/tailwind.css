@@ -28,7 +28,7 @@
   --c-active-fg: #101010;
   --c-active-bdr: #a0a0a0;
 
-  --c-inactive: #f0f0f0;
+  --c-inactive: #faf9f7;
   --c-inactive-fg: #303030;
   --c-inactive-bdr: #a0a0a0;
 
@@ -56,8 +56,8 @@
   --color-active-fg: var(--c-active-fg);
   --color-active-bdr: var(--c-active-bdr);
 
-  --color-inactive: var(--c-active);
-  --color-inactive-fg: var(--c-active-fg);
+  --color-inactive: var(--c-inactive);
+  --color-inactive-fg: var(--c-inactive-fg);
   --color-inactive-bdr: var(--c-inactive-bdr);
 
   --color-accent: var(--c-accent);

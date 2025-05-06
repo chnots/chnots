@@ -3,6 +3,7 @@ import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import React, { useCallback, useRef, useState } from "react";
 
 const getAvatar = (role: string) => {
   switch (role) {
@@ -19,85 +20,59 @@ const getAvatar = (role: string) => {
   }
 };
 
-const RecordContent = ({
-  role,
-  roleName,
-  logo,
+const RecordFrame = ({
+  name,
   timestamp,
-  content,
-  reasoningContent,
-  className,
-  limitedHeight,
-  setLimitedHeight,
+  limitHeight: initLimitHeight,
   onAbort,
   onRegenerate,
   onCopy,
+  logo,
+  children,
+  justifyEnd,
 }: {
-  role: string;
-  logo?: string;
-  roleName?: string;
-  content: string;
-  reasoningContent?: string;
-  className?: string;
+  name?: string;
   timestamp?: Date;
-  limitedHeight?: boolean;
-  setLimitedHeight?: () => void;
+  limitHeight?: boolean;
+  justifyEnd?: boolean;
+  onCopy?: () => void;
   onAbort?: () => void;
   onRegenerate?: () => void;
-  onCopy?: () => void;
+  logo?: React.ReactElement;
+  children: React.ReactElement;
 }) => {
-  const handleCopy = () => {
+  const contentRef = useRef<string>("");
+  const handleCopy = useCallback(() => {
     if (onCopy) {
       onCopy();
     } else {
-      navigator.clipboard.writeText(content);
+      navigator.clipboard.writeText(contentRef.current);
     }
-  };
+  }, []);
+
+  const [limitHeight, setLimitHeight] = useState<boolean | undefined>(
+    initLimitHeight
+  );
 
   return (
     <div
       className={clsx(
         "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-20",
-        className,
-        role === "user" && "justify-end"
+        justifyEnd && "justify-end"
       )}
     >
-      <div className="w-8">
-        {role !== "user" && (logo ? <KSVG inner={logo} /> : getAvatar(role))}
-      </div>
-      <div className="flex-col overflow-y-hidden">
+      {logo && <>{logo}</>}
+      <div className={clsx("flex-col")}>
         <div className="text-gray-500 text-xs space-x-2">
-          <span>{roleName}</span>
+          <span>{name}</span>
           <span>{timestamp?.toLocaleString() ?? "Now"}</span>
         </div>
-        <div className={clsx(limitedHeight && "max-h-40 overflow-hidden")}>
-          {role === "user" ? (
-            <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap kc-accent">
-              {content}
-            </div>
-          ) : (
-            <>
-              {reasoningContent && (
-                <ReactMarkdown
-                  className={
-                    "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 kc-active p-2 border rounded-tr-2xl my-2"
-                  }
-                  remarkPlugins={[remarkGfm]}
-                >
-                  {reasoningContent}
-                </ReactMarkdown>
-              )}
-              <ReactMarkdown
-                className={
-                  "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
-                }
-                remarkPlugins={[remarkGfm]}
-              >
-                {content}
-              </ReactMarkdown>
-            </>
-          )}
-        </div>
+        {limitHeight != undefined ? (
+          <div className={"max-h-160 overflow-hidden"}>{children}</div>
+        ) : (
+          <>{children}</>
+        )}
+
         <div className="space-x-2 mt-1">
           {onAbort && (
             <button
@@ -115,13 +90,18 @@ const RecordContent = ({
               className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
               aria-label="Regenerate"
               tabIndex={0}
+              title="Regenerate"
             >
               <Icon.RotateCcw className="h-4 w-4 text-gray-700" />
             </button>
           )}
-          {limitedHeight !== undefined && (
+          {limitHeight !== undefined && (
             <button
-              onClick={setLimitedHeight}
+              onClick={() => {
+                setLimitHeight((prev) => {
+                  return !prev;
+                });
+              }}
               className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
               aria-label="Regenerate"
               tabIndex={0}
@@ -134,6 +114,7 @@ const RecordContent = ({
             className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
             aria-label="Copy"
             tabIndex={0}
+            title="Copy"
           >
             <Icon.Copy className="h-4 w-4 text-gray-700" />
           </button>
@@ -143,4 +124,4 @@ const RecordContent = ({
   );
 };
 
-export default RecordContent;
+export default RecordFrame;

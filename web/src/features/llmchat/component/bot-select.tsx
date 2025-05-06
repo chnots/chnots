@@ -41,7 +41,7 @@ const LLMChatBotSelect = () => {
     settings?: () => void;
   }) => {
     return (
-      <KButton className="py-1 px-2 text-xs justify-between w-full">
+      <KButton className="py-1 px-2 text-xs justify-between w-full" falseButton>
         <div
           className="flex flex-row space-x-2"
           onClick={() => {

@@ -20,7 +20,7 @@ impl KDbBehaiver for Postgres {
 impl<'b> KDbConnBehaiver for Transaction<'b> {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
-        tracing::info!("exec {:?}", seg);
+        tracing::info!("exec_and_check {:?} {:?}", seg, values);
         let count = self.execute(&seg, to_sql!(values)).await?;
 
         Ok(count as usize)
@@ -101,6 +101,7 @@ impl<'b> KDbConnBehaiver for Transaction<'b> {
 impl KDbConnBehaiver for Client {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
+        tracing::info!("exec_and_check {:?} {:?}", seg, values);
         let count = self.execute(&seg, to_sql!(values)).await?;
 
         Ok(count as usize)
@@ -114,6 +115,7 @@ impl KDbConnBehaiver for Client {
     where
         C: (FnOnce(usize) -> bool) + Send + 'static,
     {
+        
         match self.exec(ssb).await {
             Ok(count) => {
                 if check_count(count) {

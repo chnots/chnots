@@ -24,15 +24,15 @@ interface State {
   bots: Map<string, LLMChatBot>;
   templates: Map<string, LLMChatTemplate>;
   sessions: Map<string, LLMChatSession>;
-  currentSession?: LLMChatSession;
+  currentSessionId?: string;
   currentBot?: LLMChatBot;
 }
 
 const getDefaultState = (): State => {
   return {
-    refreshSessions: () => { },
-    refreshTemplates: () => { },
-    refreshBots: () => { },
+    refreshSessions: () => {},
+    refreshTemplates: () => {},
+    refreshBots: () => {},
     bots: new Map(),
     templates: new Map(),
     sessions: new Map(),
@@ -97,21 +97,21 @@ export const useLLMChatStore = create(
       set((state) => {
         const sessions = state.sessions;
         sessions.delete(sessionId);
-        const currentSession =
-          state.currentSession?.id === sessionId
+        const currentSessionId =
+          state.currentSessionId === sessionId
             ? undefined
-            : state.currentSession;
+            : state.currentSessionId;
         return {
           ...state,
           sessions,
-          currentSession,
+          currentSessionId,
         };
       });
     },
 
-    setCurrentSession: (session?: LLMChatSession) => {
+    setCurrentSessionId: (sessionId?: string) => {
       set((state) => {
-        return { ...state, currentSession: session };
+        return { ...state, currentSessionId: sessionId };
       });
     },
     setCurrentBot: (bot?: LLMChatBot) => {

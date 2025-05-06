@@ -7,11 +7,10 @@ pub mod llmchat;
 /// All dtos should be put into this file.
 use std::{fmt::Debug, ops::Deref};
 
-use axum::{extract::Multipart, http::HeaderMap};
+use axum::http::HeaderMap;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use super::db::resource::{InlineResource, Resource};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct KReq<E: Debug + Clone + DeserializeOwned> {

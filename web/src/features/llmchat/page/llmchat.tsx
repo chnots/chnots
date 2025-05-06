@@ -1,22 +1,38 @@
 import SessionList from "@/features/llmchat/component/session-list";
-import SessionBody from "@/features/llmchat/component/session-body";
+import SessionContainer from "@/features/llmchat/component/session-container";
 import { useNamespaceStore } from "@/store/namespace";
 import { useEffect, useState } from "react";
 import { useCommonStore } from "@/store/common";
 import { useLLMChatStore } from "@/store/llmchat/store";
+import { v4 as uuid } from "uuid";
+import { genId } from "@/utils/id_util";
 
 const LLMChatPage = () => {
-  const { refreshAll } = useLLMChatStore();
+  const { refreshAll, currentSessionId, setCurrentSessionId } =
+    useLLMChatStore();
   const { currentNamespace } = useNamespaceStore();
   const { showSidebar } = useCommonStore();
+
+  const [sessionIdOrUUID, setSessionIdOrUUID] = useState<string>(uuid());
+  const [containerId, setContainerId] = useState<string | undefined>(uuid());
 
   useEffect(() => {
     refreshAll();
   }, [currentNamespace]);
 
+  useEffect(() => {
+    setSessionIdOrUUID(currentSessionId ?? uuid());
+  }, [currentSessionId]);
+
+  useEffect(() => {
+    if (sessionIdOrUUID != currentSessionId) {
+      setContainerId(uuid());
+    }
+  }, [currentSessionId, sessionIdOrUUID, setContainerId]);
+
   return (
     <div className="flex flex-row w-full h-full max-h-full overflow-hidden">
-      <title>{`LLM Chat`}</title>
+      <title>LLM Chat</title>
 
       {showSidebar && (
         <div className="flex flex-col items-between border-r kc-basic-with-bdr w-3/12 h-full">
@@ -26,7 +42,18 @@ const LLMChatPage = () => {
         </div>
       )}
       <div className="flex-1 h-full">
-        <SessionBody />
+        <SessionContainer
+          key={containerId}
+          sessionIdOrUUID={sessionIdOrUUID}
+          onNewButton={() => {
+            setCurrentSessionId(undefined);
+            setSessionIdOrUUID(genId());
+          }}
+          afterInit={(id) => {
+            setCurrentSessionId(id);
+            setSessionIdOrUUID(id);
+          }}
+        />
       </div>
     </div>
   );

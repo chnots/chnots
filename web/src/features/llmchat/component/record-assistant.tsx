@@ -1,0 +1,85 @@
+import { LLMChatBot, LLMChatRecord, LLMChatTemplate } from "@/store/llmchat/db";
+import RecordFrame from "./record-frame";
+import KSVG from "@/common/component/svg";
+import { useState } from "react";
+import Icon from "@/common/component/icon";
+import { useLLMChatStore } from "@/store/llmchat/store";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+const RecordAssistant = ({
+  onRegenerate,
+  onAbort,
+  role,
+  role_id,
+  reasoning_content,
+  content,
+  insert_time,
+  logo,
+}: {
+  onAbort?: () => void;
+  onRegenerate?: () => void;
+  logo?: string;
+} & LLMChatRecord) => {
+  const { bots, templates } = useLLMChatStore();
+
+  const [bt] = useState<LLMChatBot | LLMChatTemplate | undefined>(() => {
+    if (!role_id) {
+      return undefined;
+    }
+    if (role === "assistant" || role === "response-assistant") {
+      const bot = bots.get(role_id);
+      return bot;
+    } else if (role === "system") {
+      const template = templates.get(role_id);
+      return template;
+    }
+  });
+
+  const svgLogo = logo ? (
+    <KSVG inner={logo} />
+  ) : bt?.svg_logo ? (
+    <KSVG inner={bt.svg_logo} />
+  ) : (
+    <Icon.Bot />
+  );
+
+  const onCopy = () => {
+    navigator.clipboard.writeText(content);
+  };
+
+  return (
+    <RecordFrame
+      name={bt?.name ?? "A Bot"}
+      timestamp={insert_time}
+      logo={svgLogo}
+      limitHeight={role === "system" ? true : undefined}
+      onRegenerate={onRegenerate}
+      onAbort={onAbort}
+      onCopy={onCopy}
+    >
+      <div className="flex flex-col">
+        {reasoning_content && (
+          <ReactMarkdown
+            className={
+              "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"
+            }
+            remarkPlugins={[remarkGfm]}
+          >
+            {reasoning_content}
+          </ReactMarkdown>
+        )}
+        <ReactMarkdown
+          className={
+            "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
+          }
+          remarkPlugins={[remarkGfm]}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    </RecordFrame>
+  );
+};
+
+export default RecordAssistant;

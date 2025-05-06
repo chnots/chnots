@@ -5,13 +5,15 @@ const KButton = ({
   children,
   showBorder,
   className,
+  falseButton,
   ...rest
 }: {
   children: ReactNode;
   className?: string;
   showBorder?: boolean;
+  falseButton?: boolean;
 } & ButtonHTMLAttributes<object>) => {
-  return (
+  return falseButton ? (
     <div
       className={clsx(
         "flex flex-row items-center rounded-xl space-x-1 hover:cursor-pointer",
@@ -22,6 +24,17 @@ const KButton = ({
     >
       {children}
     </div>
+  ) : (
+    <button
+      className={clsx(
+        "flex flex-row items-center rounded-xl space-x-1 hover:cursor-pointer",
+        showBorder ? "border-kbdr" : "border border-transparent",
+        className
+      )}
+      {...rest}
+    >
+      {children}
+    </button>
   );
 };
 

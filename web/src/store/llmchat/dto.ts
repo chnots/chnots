@@ -18,6 +18,7 @@ export interface LLMChatListSessionRsp {
 }
 
 export interface LLMChatSessionDetailRsp {
+  session?: LLMChatSession;
   records: LLMChatRecord[];
 }
 
@@ -32,8 +33,9 @@ export interface LLMChatSessionTruncateReq {
   remove_rid_included: string;
 }
 
-export interface LLMChatSessionDetail {
+export interface LLMChatContainerSession {
   session: LLMChatSession;
   records: LLMChatRecord[];
-  persisted: boolean;
+
+  persistedIds: Set<string>;
 }
