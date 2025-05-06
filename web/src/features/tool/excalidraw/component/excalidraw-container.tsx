@@ -1,14 +1,6 @@
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  Children,
-  cloneElement,
-  useEffect,
-} from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 
-import * as TExcalidraw from "@excalidraw/excalidraw";
 import "./excalidraw.scss";
 import {
   AppState,
@@ -25,8 +17,10 @@ import {
   Theme,
 } from "@excalidraw/excalidraw/element/types";
 import {
-  convertToExcalidrawElements,
+  Excalidraw,
   MIME_TYPES,
+  serializeAsJSON,
+  useHandleLibrary,
 } from "@excalidraw/excalidraw";
 import useDebounce from "@/hooks/use-debounce";
 import {
@@ -37,8 +31,7 @@ import { useNamespaceStore } from "@/store/namespace";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
 import md5 from "crypto-js/md5";
-import { ImportedDataState } from "@excalidraw/excalidraw/data/types";
-import { IMAGE_MIME_TYPES } from "@excalidraw/excalidraw/constants";
+import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 
 export interface ExcalidrawProps {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
@@ -55,14 +48,10 @@ export default function ExcalidrawContainer({
 }: ExcalidrawProps) {
   const { currentNamespace } = useNamespaceStore();
 
-  const { useHandleLibrary, Excalidraw } = TExcalidraw;
-  const appRef = useRef<any>(null);
   const [viewModeEnabled, setViewModeEnabled] = useState(false);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
   const [gridModeEnabled, setGridModeEnabled] = useState(false);
-  const [renderScrollbars, setRenderScrollbars] = useState(false);
   const [theme, setTheme] = useState<Theme>("light");
-  const [disableImageTool, setDisableImageTool] = useState(false);
 
   const [searchParams] = useSearchParams();
   const [excalidrawId, setExcalidrawId] = useState<string>();
@@ -72,8 +61,8 @@ export default function ExcalidrawContainer({
     setExcalidrawId(id);
   }, [setExcalidrawId, searchParams]);
 
-  const [excalidrawAPI, setExcalidrawAPI] =
-    useState<ExcalidrawImperativeAPI | null>(null);
+  const [excalidrawAPI, excalidrawRefCallback] =
+    useCallbackRefState<ExcalidrawImperativeAPI>();
 
   if (useCustom) {
     useCustom(excalidrawAPI, customArgs);
@@ -133,7 +122,7 @@ export default function ExcalidrawContainer({
         initialStatePromiseRef.current.promise.resolve({
           ...dataState,
           files: Object.fromEntries(fileMap.entries()),
-          elements: convertToExcalidrawElements(dataState.elements),
+          elements: dataState.elements,
         });
       } catch (e) {
         console.log("unable to fetch inline-resource", excalidrawId, e);
@@ -141,30 +130,24 @@ export default function ExcalidrawContainer({
       }
     };
     fetchData();
-  }, [excalidrawAPI, convertToExcalidrawElements, MIME_TYPES]);
+  }, [excalidrawAPI, MIME_TYPES]);
 
   const savedFilesRef = useRef(new Map<string, string>());
-  const onSave = useDebounce(
+  const onChange = useDebounce(
     (
       elements: NonDeletedExcalidrawElement[],
       state: AppState,
-      files: BinaryFiles,
-      rid: string,
-      name: string
+      files: BinaryFiles
     ) => {
-      const content = TExcalidraw.serializeAsJSON(
-        elements,
-        state,
-        files,
-        "database"
-      );
+      const content = serializeAsJSON(elements, state, files, "database");
       (async () => {
         for (const [fileId, file] of Object.entries(files)) {
           const ver = savedFilesRef.current.get(fileId);
-          if (!ver || ver != file.created + "-" + file.version) {
+          const newVar = file.created + "-" + file.version;
+          if (!ver || ver != newVar) {
             await insertInlineResource({
               res: {
-                id: md5(fileId + "-" + file.version).toString(),
+                id: md5(newVar).toString(),
                 rid: fileId,
                 namespace: currentNamespace.name,
                 archor: true,
@@ -176,20 +159,17 @@ export default function ExcalidrawContainer({
               archor_intervals: 3600,
               ignore_conflict: true,
             });
-            savedFilesRef.current.set(
-              fileId,
-              file.created + "-" + file.version
-            );
+            savedFilesRef.current.set(fileId, newVar);
           }
         }
 
         await insertInlineResource({
           res: {
             id: uuid(),
-            rid: rid,
+            rid: instanceId ?? uuid(),
             namespace: currentNamespace.name,
             archor: false,
-            name: name,
+            name: instanceId ?? uuid(),
             content,
             content_type: CONTENT_TYPE,
             insert_time: new Date(),
@@ -198,53 +178,9 @@ export default function ExcalidrawContainer({
         });
       })();
     },
-    3000,
+    1200,
     true
   );
-
-  const renderExcalidraw = (children: React.ReactNode) => {
-    const Excalidraw: any = Children.toArray(children).find(
-      (child) =>
-        React.isValidElement(child) &&
-        typeof child.type !== "string" &&
-        //@ts-ignore
-        child.type.displayName === "Excalidraw"
-    );
-    if (!Excalidraw) {
-      return;
-    }
-
-    const newElement = cloneElement(Excalidraw, {
-      excalidrawAPI: (api: ExcalidrawImperativeAPI) => setExcalidrawAPI(api),
-      initialData: initialStatePromiseRef.current.promise,
-      onChange: (
-        elements: NonDeletedExcalidrawElement[],
-        state: AppState,
-        files: BinaryFiles
-      ) => {
-        onSave(elements, state, files, excalidrawId, "excalidraw example");
-      },
-      viewModeEnabled,
-      zenModeEnabled,
-      renderScrollbars,
-      gridModeEnabled,
-      theme,
-      name: "Custom name of drawing",
-      UIOptions: {
-        canvasActions: {
-          loadScene: false,
-        },
-        tools: { image: !disableImageTool },
-      },
-      renderTopRightUI,
-      onLinkOpen,
-      validateEmbeddable: true,
-    });
-    return newElement;
-  };
-  const renderTopRightUI = () => {
-    return <></>;
-  };
 
   const onLinkOpen = useCallback(
     (
@@ -270,8 +206,16 @@ export default function ExcalidrawContainer({
   );
 
   return (
-    <div ref={appRef} className="h-full w-full min-w-full">
-      {renderExcalidraw(<Excalidraw />)}
-    </div>
+    <Excalidraw
+      excalidrawAPI={excalidrawRefCallback}
+      initialData={initialStatePromiseRef.current.promise}
+      onChange={onChange}
+      viewModeEnabled={viewModeEnabled}
+      zenModeEnabled={zenModeEnabled}
+      gridModeEnabled={gridModeEnabled}
+      theme={theme}
+      validateEmbeddable={true}
+      onLinkOpen={onLinkOpen}
+    />
   );
 }
