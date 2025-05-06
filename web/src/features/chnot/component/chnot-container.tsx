@@ -41,7 +41,7 @@ interface ChnotEditState {
 
 const TopbarButton = (props: KButtonProps) => {
   return (
-    <KButton className={clsx("px-2 py-1", props.className)} {...props}>
+    <KButton {...props} className={clsx("px-2 py-1", props.className)}>
       {props.children}
     </KButton>
   );
