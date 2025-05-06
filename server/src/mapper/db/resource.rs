@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-use chin_sql::{LimitOffset, SqlDeleter, SqlInserter, SqlReader, Wheres};
+use chin_sql::{LimitOffset, OnConflict, SqlDeleter, SqlInserter, SqlReader, Wheres};
 
 impl ResourceMapper for KDb {
     async fn ensure_table_resource(&self) -> EResult {
@@ -77,12 +77,12 @@ impl ResourceMapper for KDb {
         ]));
 
         let last_archor_sql =
-            SqlReader::read(InlineResource::TABLE, &[InlineResource::INSERT_TIME]).r#where(
-                Wheres::and([
+            SqlReader::read(InlineResource::TABLE, &[InlineResource::INSERT_TIME])
+                .r#where(Wheres::and([
                     Wheres::equal(InlineResource::RID, &req.res.rid),
                     Wheres::equal(InlineResource::ARCHOR, true),
-                ])
-            ).limit(1);
+                ]))
+                .limit(1);
 
         self.conn().await?.exec(delete_sql).await?;
         let last_archor: Option<DateTime<FixedOffset>> = self
@@ -112,7 +112,19 @@ impl ResourceMapper for KDb {
                     .fields(InlineResource::CONTENT_TYPE, &req.res.content_type)
                     .fields(InlineResource::INSERT_TIME, &req.res.insert_time)
                     .fields(InlineResource::NAMESPACE, &req.res.namespace)
-                    .fields(InlineResource::ARCHOR, archorp),
+                    .fields(InlineResource::ARCHOR, archorp)
+                    .on_conflict({
+                        match req.ignore_conflict.as_ref() {
+                            Some(ic) => {
+                                if *ic {
+                                    OnConflict::Ignore
+                                } else {
+                                    OnConflict::Default
+                                }
+                            }
+                            None => OnConflict::Default,
+                        }
+                    }),
             )
             .await?;
 
@@ -156,7 +168,6 @@ impl ResourceMapper for KDb {
     }
 }
 
-
 impl KVMapper for KDb {
     async fn kv_overwrite(
         &self,
@@ -173,10 +184,8 @@ impl KVMapper for KDb {
     }
 
     async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp> {
-        let query = SqlReader::read_all(KV::TABLE).r#where(Wheres::and([Wheres::equal(
-            KV::KEY,
-            req.key.as_str(),
-        )]));
+        let query = SqlReader::read_all(KV::TABLE)
+            .r#where(Wheres::and([Wheres::equal(KV::KEY, req.key.as_str())]));
 
         let kv = self
             .conn()
@@ -191,8 +200,7 @@ impl KVMapper for KDb {
         &self,
         req: KReq<crate::mapper::KVDeleteReq>,
     ) -> AResult<crate::mapper::KVDeleteRsp> {
-        let del =
-            SqlDeleter::new(KV::TABLE).r#where(Wheres::equal(KV::KEY, &req.key));
+        let del = SqlDeleter::new(KV::TABLE).r#where(Wheres::equal(KV::KEY, &req.key));
 
         self.conn().await?.exec(del).await?;
 
@@ -200,8 +208,7 @@ impl KVMapper for KDb {
     }
 
     async fn ensure_table_kv(&self) -> chin_tools::wrapper::anyhow::EResult {
-        self.create_table(KV::schema(self.db_type()))
-            .await?;
+        self.create_table(KV::schema(self.db_type())).await?;
         Ok(())
     }
 }

@@ -1,18 +1,20 @@
 import clsx from "clsx";
 import { ButtonHTMLAttributes, ReactNode } from "react";
 
+export type KButtonProps = {
+  children: ReactNode;
+  className?: string;
+  showBorder?: boolean;
+  falseButton?: boolean;
+} & ButtonHTMLAttributes<object>;
+
 const KButton = ({
   children,
   showBorder,
   className,
   falseButton,
   ...rest
-}: {
-  children: ReactNode;
-  className?: string;
-  showBorder?: boolean;
-  falseButton?: boolean;
-} & ButtonHTMLAttributes<object>) => {
+}: KButtonProps) => {
   return falseButton ? (
     <div
       className={clsx(

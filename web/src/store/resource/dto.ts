@@ -5,8 +5,9 @@ export interface ResourceUploadRsp {
 }
 
 export interface InsertInlineResourceReq {
-  res: InlineResource,
+  res: InlineResource;
   archor_intervals: number;
+  ignore_conflict?: boolean;
 }
 
 export interface QueryInlineResourceReq {

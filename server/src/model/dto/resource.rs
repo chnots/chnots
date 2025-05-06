@@ -15,6 +15,7 @@ pub struct InsertInlineResourceReq {
     pub res: InlineResource,
     /// archor interval second.
     pub archor_intervals: i64,
+    pub ignore_conflict: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -12,10 +12,15 @@ import * as TExcalidraw from "@excalidraw/excalidraw";
 import "./excalidraw.scss";
 import {
   AppState,
+  BinaryFileData,
+  BinaryFiles,
+  DataURL,
   ExcalidrawImperativeAPI,
   ExcalidrawInitialDataState,
 } from "@excalidraw/excalidraw/types";
 import {
+  ExcalidrawElement,
+  FileId,
   NonDeletedExcalidrawElement,
   Theme,
 } from "@excalidraw/excalidraw/element/types";
@@ -31,6 +36,9 @@ import {
 import { useNamespaceStore } from "@/store/namespace";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
+import md5 from "crypto-js/md5";
+import { ImportedDataState } from "@excalidraw/excalidraw/data/types";
+import { IMAGE_MIME_TYPES } from "@excalidraw/excalidraw/constants";
 
 export interface ExcalidrawProps {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
@@ -89,11 +97,43 @@ export default function ExcalidrawContainer({
         rid: excalidrawId,
       });
       try {
-        const state = JSON.parse(rsp.res[0].content);
-        //@ts-ignore
+        const dataState = JSON.parse(rsp.res[0].content);
+        const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
+        const eles = dataState.elements as readonly ExcalidrawElement[] | null;
+
+        if (eles) {
+          for (const element of eles) {
+            if (element.type === "image" && element.fileId) {
+              try {
+                const fileInlineRsp = await queryInlineResource({
+                  rid: element.fileId,
+                });
+
+                const fileInline = fileInlineRsp.res.at(0);
+                if (fileInline) {
+                  fileMap.set(element.fileId, {
+                    // @ts-ignore
+                    mimeType: fileInline.content_type,
+                    id: fileInline.rid as FileId,
+                    dataURL: fileInline.content as DataURL,
+                    created: fileInline.insert_time?.getTime(),
+                    lastRetrieved: fileInline.insert_time?.getTime(),
+                  });
+                }
+              } catch (error) {
+                console.error(
+                  `Failed to query inline resource for fileId ${element.fileId}`,
+                  error
+                );
+              }
+            }
+          }
+        }
+
         initialStatePromiseRef.current.promise.resolve({
-          ...state,
-          elements: convertToExcalidrawElements(state.elements),
+          ...dataState,
+          files: Object.fromEntries(fileMap.entries()),
+          elements: convertToExcalidrawElements(dataState.elements),
         });
       } catch (e) {
         console.log("unable to fetch inline-resource", excalidrawId, e);
@@ -103,22 +143,60 @@ export default function ExcalidrawContainer({
     fetchData();
   }, [excalidrawAPI, convertToExcalidrawElements, MIME_TYPES]);
 
-  const save = useDebounce(
-    (content: object, rid: string, name: string) => {
-      const json = JSON.stringify(content);
-      insertInlineResource({
-        res: {
-          id: uuid(),
-          rid: rid,
-          namespace: currentNamespace.name,
-          archor: false,
-          name: name,
-          content: json,
-          content_type: CONTENT_TYPE,
-          insert_time: new Date(),
-        },
-        archor_intervals: 3600,
-      });
+  const savedFilesRef = useRef(new Map<string, string>());
+  const onSave = useDebounce(
+    (
+      elements: NonDeletedExcalidrawElement[],
+      state: AppState,
+      files: BinaryFiles,
+      rid: string,
+      name: string
+    ) => {
+      const content = TExcalidraw.serializeAsJSON(
+        elements,
+        state,
+        files,
+        "database"
+      );
+      (async () => {
+        for (const [fileId, file] of Object.entries(files)) {
+          const ver = savedFilesRef.current.get(fileId);
+          if (!ver || ver != file.created + "-" + file.version) {
+            await insertInlineResource({
+              res: {
+                id: md5(fileId + "-" + file.version).toString(),
+                rid: fileId,
+                namespace: currentNamespace.name,
+                archor: true,
+                name: fileId,
+                content: file.dataURL,
+                content_type: file.mimeType,
+                insert_time: new Date(file.created),
+              },
+              archor_intervals: 3600,
+              ignore_conflict: true,
+            });
+            savedFilesRef.current.set(
+              fileId,
+              file.created + "-" + file.version
+            );
+          }
+        }
+
+        await insertInlineResource({
+          res: {
+            id: uuid(),
+            rid: rid,
+            namespace: currentNamespace.name,
+            archor: false,
+            name: name,
+            content,
+            content_type: CONTENT_TYPE,
+            insert_time: new Date(),
+          },
+          archor_intervals: 3600,
+        });
+      })();
     },
     3000,
     true
@@ -139,8 +217,12 @@ export default function ExcalidrawContainer({
     const newElement = cloneElement(Excalidraw, {
       excalidrawAPI: (api: ExcalidrawImperativeAPI) => setExcalidrawAPI(api),
       initialData: initialStatePromiseRef.current.promise,
-      onChange: (elements: NonDeletedExcalidrawElement[], state: AppState) => {
-        save({ elements, state }, excalidrawId, "excalidraw example");
+      onChange: (
+        elements: NonDeletedExcalidrawElement[],
+        state: AppState,
+        files: BinaryFiles
+      ) => {
+        onSave(elements, state, files, excalidrawId, "excalidraw example");
       },
       viewModeEnabled,
       zenModeEnabled,

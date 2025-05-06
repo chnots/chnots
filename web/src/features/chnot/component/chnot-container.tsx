@@ -22,7 +22,7 @@ import MarkdownViewer from "./chnot-markdown-viewer";
 import MarkdownEditor from "./chnot-markdown-editor";
 import { ChnotType } from "@/store/chnot/db";
 import ExcalidrawContainer from "@/features/tool/excalidraw/component/excalidraw-container";
-import KButton from "@/common/component/kbutton";
+import KButton, { KButtonProps } from "@/common/component/kbutton";
 import { enumFromStringValue } from "@/utils/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
@@ -39,23 +39,10 @@ interface ChnotEditState {
   isComposing: boolean;
 }
 
-const TopbarButton = ({
-  className,
-  children,
-  showBorder,
-  ...rest
-}: {
-  className?: string;
-  showBorder?: boolean;
-  children: React.ReactNode;
-} & ButtonHTMLAttributes<object>) => {
+const TopbarButton = (props: KButtonProps) => {
   return (
-    <KButton
-      className={clsx("px-2 py-1", className)}
-      showBorder={showBorder}
-      {...rest}
-    >
-      {children}
+    <KButton className={clsx("px-2 py-1", props.className)} {...props}>
+      {props.children}
     </KButton>
   );
 };
@@ -232,7 +219,7 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
               {chnotType !== ChnotType.MarkdownWithToent && (
                 <RadixPopover.Root>
                   <RadixPopover.Trigger>
-                    <TopbarButton>
+                    <TopbarButton falseButton={true}>
                       <Icon.NotebookText className="w-4 h-4" />
                     </TopbarButton>
                   </RadixPopover.Trigger>
