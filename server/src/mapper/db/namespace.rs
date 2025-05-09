@@ -1,5 +1,5 @@
 use chin_sql::{SqlInserter, SqlReader, Wheres};
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use chrono::Local;
 
 use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver};

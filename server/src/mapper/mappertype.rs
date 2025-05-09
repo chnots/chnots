@@ -1,9 +1,18 @@
-use chin_tools::{
-    utils::sort_util,
-    wrapper::anyhow::{AResult, EResult},
-};
+use chin_tools::{utils::sort_util, AResult, EResult};
 
-use crate::model::{db::{chnot::ChnotTag, namespace::NamespaceRelation, resource::Resource}, dto::{llmchat::{LLMChatTruncateSessionReq, LLMChatTruncateSessionRsp, LLMChatUpdateSessionReq, LLMChatUpdateSessionRsp}, resource::{InsertInlineResourceReq, InsertInlineResourceRsp, KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp, QueryInlineResourceReq, QueryInlineResourceRsp}}};
+use crate::model::{
+    db::{chnot::ChnotTag, namespace::NamespaceRelation, resource::Resource},
+    dto::{
+        llmchat::{
+            LLMChatTruncateSessionReq, LLMChatTruncateSessionRsp, LLMChatUpdateSessionReq,
+            LLMChatUpdateSessionRsp,
+        },
+        resource::{
+            InsertInlineResourceReq, InsertInlineResourceRsp, KVOverwriteReq, KVOverwriteRsp,
+            KVQueryReq, KVQueryRsp, QueryInlineResourceReq, QueryInlineResourceRsp,
+        },
+    },
+};
 
 use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
@@ -88,11 +97,17 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.ensure_table_chnot_tag())
     }
 
-    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
+    async fn chnot_tag_query(
+        &self,
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
         expand_mt_branch!(self.chnot_tag_query(req))
     }
 
-    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<String>> {
+    async fn chnot_tag_names(
+        &self,
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<String>> {
         expand_mt_branch!(self.chnot_tag_names(req))
     }
 
@@ -103,11 +118,16 @@ impl ChnotMapper for MapperType {
     async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
         expand_mt_branch!(self.chnot_tag_delete(chnot_meta_ids))
     }
-    
-    async fn chnot_tag_update_single_chnot(&self, content: &str, meta_id: &str, namespace: &str) -> EResult {
+
+    async fn chnot_tag_update_single_chnot(
+        &self,
+        content: &str,
+        meta_id: &str,
+        namespace: &str,
+    ) -> EResult {
         expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, namespace))
     }
-    
+
     async fn chnot_tag_update_all(&self, namespace: &str) -> EResult {
         expand_mt_branch!(self.chnot_tag_update_all(namespace))
     }
@@ -289,17 +309,11 @@ impl MapperType {
 }
 
 impl KVMapper for MapperType {
-    async fn kv_overwrite(
-        &self,
-        req: KReq<KVOverwriteReq>,
-    ) -> AResult<KVOverwriteRsp> {
+    async fn kv_overwrite(&self, req: KReq<KVOverwriteReq>) -> AResult<KVOverwriteRsp> {
         expand_mt_branch!(self.kv_overwrite(req))
     }
 
-    async fn kv_query(
-        &self,
-        req: KReq<KVQueryReq>,
-    ) -> AResult<KVQueryRsp> {
+    async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp> {
         expand_mt_branch!(self.kv_query(req))
     }
 

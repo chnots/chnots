@@ -2,7 +2,7 @@ pub(crate) mod imp;
 pub mod types;
 pub mod wrapper;
 
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, Pool, PoolError};
 use serde::Deserialize;
 

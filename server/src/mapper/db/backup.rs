@@ -1,4 +1,4 @@
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use serde::Serialize;
 
 use crate::{
@@ -42,7 +42,7 @@ impl DumpMapper for KDb {
     async fn dump_and_callback(
         &self,
         callback: &RecordCallbackEnum,
-    ) -> chin_tools::wrapper::anyhow::EResult {
+    ) -> chin_tools::EResult {
         let s = |name: &'static str| {
             TableDumpSqlBuilder::new(
                 name,

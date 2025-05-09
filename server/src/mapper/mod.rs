@@ -2,7 +2,7 @@ pub mod db;
 pub mod dump;
 pub mod mappertype;
 
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
 use dump::RecordCallbackEnum;
 use serde::Deserialize;

@@ -1,6 +1,6 @@
 pub mod filedump;
 
-use chin_tools::wrapper::anyhow::EResult;
+use chin_tools::EResult;
 use filedump::FileDumpWorker;
 use serde::{Deserialize, Serialize};
 

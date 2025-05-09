@@ -1,4 +1,4 @@
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, TimeDelta};
 
 use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow};
@@ -172,7 +172,7 @@ impl KVMapper for KDb {
     async fn kv_overwrite(
         &self,
         req: KReq<KVOverwriteReq>,
-    ) -> chin_tools::wrapper::anyhow::AResult<KVOverwriteRsp> {
+    ) -> chin_tools::AResult<KVOverwriteRsp> {
         let kv = &req.kv;
         let inserter = SqlInserter::new(KV::TABLE)
             .fields(KV::KEY, &kv.key)
@@ -207,7 +207,7 @@ impl KVMapper for KDb {
         Ok(KVDeleteRsp {})
     }
 
-    async fn ensure_table_kv(&self) -> chin_tools::wrapper::anyhow::EResult {
+    async fn ensure_table_kv(&self) -> chin_tools::EResult {
         self.create_table(KV::schema(self.db_type())).await?;
         Ok(())
     }

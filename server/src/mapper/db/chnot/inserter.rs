@@ -20,11 +20,7 @@ use crate::{
 };
 use anyhow::anyhow;
 use chin_sql::{SqlInserter, SqlReader, SqlUpdater};
-use chin_tools::{
-    utils::id_util,
-    wrapper::anyhow::{AResult, EResult},
-    SharedStr,
-};
+use chin_tools::{utils::id_util, AResult, EResult, SharedStr};
 
 use chrono::{DateTime, FixedOffset, TimeDelta};
 

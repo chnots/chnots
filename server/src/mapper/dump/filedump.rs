@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::Context;
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::info;

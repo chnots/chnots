@@ -1,6 +1,6 @@
 use app::{AppState, ShareAppState};
 use arguments::Arguments;
-use chin_tools::wrapper::anyhow::{AResult, EResult};
+use chin_tools::{AResult, EResult};
 use clap::Parser;
 use config::Config;
 use mapper::{
@@ -12,7 +12,6 @@ use mapper::{
 };
 use server::controller;
 use tracing::{info, Level};
-use tracing_log::LogTracer;
 
 pub(crate) mod app;
 pub(crate) mod arguments;
@@ -38,7 +37,6 @@ async fn main() -> EResult {
     let subscriber = subscriber.finish();
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
-    LogTracer::init()?;
 
     let args = Arguments::parse();
 
