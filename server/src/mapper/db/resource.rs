@@ -1,7 +1,7 @@
 use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, TimeDelta};
 
-use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow};
+use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
 use crate::{
     mapper::{KVMapper, ResourceMapper},
     model::{
@@ -89,7 +89,7 @@ impl ResourceMapper for KDb {
             .conn()
             .await?
             .qry_opt(last_archor_sql, |e| {
-                e.try_get_df(InlineResource::INSERT_TIME)
+                e.try_get(InlineResource::INSERT_TIME)
             })
             .await?;
 

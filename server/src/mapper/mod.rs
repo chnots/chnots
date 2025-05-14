@@ -9,14 +9,13 @@ use serde::Deserialize;
 
 use crate::model::{
     db::{
+        ctable::*,
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::{NamespaceRecord, NamespaceRelation},
         resource::{InlineResource, Resource, KV},
     },
-    dto::{
-        chnot::*, llmchat::*, resource::{*}, KReq
-    },
+    dto::{ctable::*, chnot::*, llmchat::*, resource::*, KReq},
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -38,10 +37,21 @@ pub trait ChnotMapper {
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 
-    async fn chnot_tag_update_single_chnot(&self, content: &str, meta_id: &str, namespace: &str) -> EResult;
+    async fn chnot_tag_update_single_chnot(
+        &self,
+        content: &str,
+        meta_id: &str,
+        namespace: &str,
+    ) -> EResult;
     async fn chnot_tag_update_all(&self, namespace: &str) -> EResult;
-    async fn chnot_tag_query(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<ChnotTag>>;
-    async fn chnot_tag_names(&self, req: KReq<ChnotTagQueryReq>) -> AResult<ChnotTagQueryRsp<String>>;
+    async fn chnot_tag_query(
+        &self,
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<ChnotTag>>;
+    async fn chnot_tag_names(
+        &self,
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<String>>;
     async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult;
     async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult;
 
@@ -53,12 +63,12 @@ pub trait ChnotMapper {
 pub trait ResourceMapper {
     async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource>;
     async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
-    
+
     ///
     /// Try to insert inline resource.
-    /// 
+    ///
     /// Inline resource could keep history if record with archor flag.
-    /// If the new version record time is long enough from the old archor, 
+    /// If the new version record time is long enough from the old archor,
     /// insert it with archor flag.
     ///
     async fn insert_inline_resource(
@@ -152,6 +162,32 @@ pub trait DumpMapper {
     type RowType<'a>;
 
     async fn dump_and_callback(&self, callback: &RecordCallbackEnum) -> EResult;
+}
+
+pub trait ChinTableMapper {
+    async fn ctable_overwrite_meta(
+        &self,
+        req: KReq<CTableOverwriteMetaReq>,
+    ) -> AResult<CTableOverwriteMetaRsp>;
+    async fn ctable_overwrite_row(
+        &self,
+        req: KReq<CTableOverwriteRowReq>,
+    ) -> AResult<CTableOverwriteRowRsp>;
+    async fn ctable_overwrite_cell(
+        &self,
+        req: KReq<CTableOverwriteCellReq>,
+    ) -> AResult<CTableOverwriteCellRsp>;
+    async fn ctable_query_row(&self, req: KReq<CTableQueryRowReq>) -> AResult<CTableQueryRowRsp>;
+    async fn ctable_query_table_meta(
+        &self,
+        req: KReq<CTableQueryTableMetaReq>,
+    ) -> AResult<CTableQueryTableMetaRsp>;
+    async fn ctable_query_table_data(
+        &self,
+        req: KReq<CTableQueryTableDataReq>,
+    ) -> AResult<CTableQueryTableDataRsp>;
+
+    async fn ensure_ctable_tables(&self) -> EResult;
 }
 
 pub trait DeserializeMapper {

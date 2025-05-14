@@ -3,6 +3,7 @@ use chin_tools::{utils::sort_util, AResult, EResult};
 use crate::model::{
     db::{chnot::ChnotTag, namespace::NamespaceRelation, resource::Resource},
     dto::{
+        ctable::*,
         llmchat::{
             LLMChatTruncateSessionReq, LLMChatTruncateSessionRsp, LLMChatUpdateSessionReq,
             LLMChatUpdateSessionRsp,
@@ -17,8 +18,8 @@ use crate::model::{
 use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
     dump::RecordCallbackEnum,
-    ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp, DumpMapper, KVMapper,
-    LLMChatMapper, MapperConfig, MapperType, NamespaceMapper, ResourceMapper,
+    ChinTableMapper, ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp,
+    DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType, NamespaceMapper, ResourceMapper,
 };
 
 use crate::model::{
@@ -55,6 +56,8 @@ impl MapperType {
         self.ensure_table_llm_chat_template().await?;
         self.ensure_table_llm_chat_session().await?;
         self.ensure_table_llm_chat_record().await?;
+
+        self.ensure_ctable_tables().await?;
 
         Ok(())
     }
@@ -323,5 +326,50 @@ impl KVMapper for MapperType {
 
     async fn kv_delete(&self, req: KReq<super::KVDeleteReq>) -> AResult<super::KVDeleteRsp> {
         expand_mt_branch!(self.kv_delete(req))
+    }
+}
+
+impl ChinTableMapper for MapperType {
+    async fn ctable_overwrite_meta(
+        &self,
+        req: KReq<CTableOverwriteMetaReq>,
+    ) -> AResult<CTableOverwriteMetaRsp> {
+        expand_mt_branch!(self.ctable_overwrite_meta(req))
+    }
+
+    async fn ctable_overwrite_row(
+        &self,
+        req: KReq<CTableOverwriteRowReq>,
+    ) -> AResult<CTableOverwriteRowRsp> {
+        expand_mt_branch!(self.ctable_overwrite_row(req))
+    }
+
+    async fn ctable_overwrite_cell(
+        &self,
+        req: KReq<CTableOverwriteCellReq>,
+    ) -> AResult<CTableOverwriteCellRsp> {
+        expand_mt_branch!(self.ctable_overwrite_cell(req))
+    }
+
+    async fn ctable_query_row(&self, req: KReq<CTableQueryRowReq>) -> AResult<CTableQueryRowRsp> {
+        expand_mt_branch!(self.ctable_query_row(req))
+    }
+
+    async fn ctable_query_table_meta(
+        &self,
+        req: KReq<CTableQueryTableMetaReq>,
+    ) -> AResult<CTableQueryTableMetaRsp> {
+        expand_mt_branch!(self.ctable_query_table_meta(req))
+    }
+
+    async fn ctable_query_table_data(
+        &self,
+        req: KReq<CTableQueryTableDataReq>,
+    ) -> AResult<CTableQueryTableDataRsp> {
+        expand_mt_branch!(self.ctable_query_table_data(req))
+    }
+
+    async fn ensure_ctable_tables(&self) -> EResult {
+        expand_mt_branch!(self.ensure_ctable_tables())
     }
 }

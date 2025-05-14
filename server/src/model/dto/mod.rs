@@ -1,6 +1,7 @@
+pub mod ctable;
 pub mod chnot;
-pub mod resource;
 pub mod llmchat;
+pub mod resource;
 
 /// DTO: Data Transfer Object
 ///
@@ -10,7 +11,6 @@ use std::{fmt::Debug, ops::Deref};
 use axum::http::HeaderMap;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
 
 #[derive(Debug, Clone, Serialize)]
 pub struct KReq<E: Debug + Clone + DeserializeOwned> {
@@ -40,9 +40,23 @@ impl<E: Debug + Clone + DeserializeOwned> Deref for KReq<E> {
     }
 }
 
+impl<T> KReq<T>
+where
+    T: Debug + Clone + DeserializeOwned,
+{
+    pub fn frame<E>(&self, t: E) -> KReq<E>
+    where
+        E: Debug + Clone + DeserializeOwned,
+    {
+        KReq {
+            body: t,
+            namespace: self.namespace.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NamespaceQueryReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NamespaceQueryRsp {}
-

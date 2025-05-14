@@ -1,12 +1,10 @@
 use std::ops::Deref;
 
-use super::super::{sql::Wheres, KDb};
+use chin_sql::{Wheres};
 use crate::{
     mapper::{
         db::{
-            chnot::{chnot_query_mapper, chnot_query_sql},
-            sqlite::wrapper::KDbConnBehaiverSync,
-            KDbBehaiver, KDbConnBehaiver, KDbRow,
+            chnot::{chnot_query_mapper, chnot_query_sql}, sqlite::wrapper::KDbConnBehaiverSync, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier
         },
         ChnotMapper,
     },
@@ -56,7 +54,7 @@ fn to_old_info(row: KDbRow<'_>) -> AResult<OldInfo> {
     Ok(OldInfo {
         id: row.try_get("id")?,
         content: row.try_get("content")?,
-        insert_time: row.try_get_df("insert_time")?,
+        insert_time: row.try_get("insert_time")?,
     })
 }
 

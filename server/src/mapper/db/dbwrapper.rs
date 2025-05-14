@@ -1,5 +1,5 @@
-use chin_sql::{DateFixed, DbType, IntoSqlSeg, SqlReader};
-use chin_tools::{AResult, EResult};
+use chin_sql::{DateFixedOffset, DbType, IntoSqlSeg, SqlReader};
+use chin_tools::{aanyhow, AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::Client;
 use deadpool_sqlite::rusqlite;
@@ -58,8 +58,8 @@ pub enum KDb {
     Postgres(postgres::Postgres),
 }
 
-pub trait KDbRowBehavier {
-    fn try_get<T>(&self, key: &str) -> AResult<T>;
+pub trait KDbRowBehavier<'b, T> {
+    fn try_get(&'b self, key: &str) -> AResult<T>;
 }
 
 pub enum KDbRow<'a> {
@@ -149,29 +149,51 @@ impl KDbConnBehaiver for KDbConn {
     }
 }
 
-impl<'a, 'b> KDbRow<'a> {
-    pub fn try_get<T>(&'b self, key: &str) -> AResult<T>
-    where
-        T: postgres_types::FromSql<'b> + rusqlite::types::FromSql,
-    {
+macro_rules! common_try_get {
+    ($tp:tt) => {
+        impl<'a, 'b> KDbRowBehavier<'b, $tp> for KDbRow<'a> {
+            fn try_get(&'b self, key: &str) -> AResult<$tp> {
+                match self {
+                    KDbRow::Postgres(row) => Ok(row.try_get(key)?),
+                    KDbRow::Sqlite(row) => Ok(row.get(key)?),
+                }
+            }
+        }
+
+        impl<'a, 'b> KDbRowBehavier<'b, Option<$tp>> for KDbRow<'a> {
+            fn try_get(&'b self, key: &str) -> AResult<Option<$tp>> {
+                match self {
+                    KDbRow::Postgres(row) => Ok(row.try_get(key)?),
+                    KDbRow::Sqlite(row) => Ok(row.get(key)?),
+                }
+            }
+        }
+    };
+}
+
+common_try_get! {i64}
+common_try_get! {i32}
+common_try_get! {f64}
+common_try_get! {String}
+common_try_get! {bool}
+
+
+
+impl<'a, 'b> KDbRowBehavier<'b, DateTime<FixedOffset>> for KDbRow<'a> {
+    fn try_get(&'b self, key: &str) -> AResult<DateTime<FixedOffset>> {
         match self {
             KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::Sqlite(row) => Ok(row.get(key)?),
+            KDbRow::Sqlite(row) => Ok(row.get::<&str, DateFixedOffset>(key)?.fixed_offset()),
         }
     }
+}
 
-    pub fn try_get_df(&'b self, key: &str) -> AResult<DateTime<FixedOffset>> {
-        match self {
-            KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::Sqlite(row) => Ok(row.get::<&str, DateFixed>(key)?.fixed_offset()),
-        }
-    }
-
-    pub fn try_get_df_opt(&'b self, key: &str) -> AResult<Option<DateTime<FixedOffset>>> {
+impl<'a, 'b> KDbRowBehavier<'b, Option<DateTime<FixedOffset>>> for KDbRow<'a> {
+    fn try_get(&'b self, key: &str) -> AResult<Option<DateTime<FixedOffset>>> {
         match self {
             KDbRow::Postgres(row) => Ok(row.try_get(key)?),
             KDbRow::Sqlite(row) => Ok(row
-                .get::<&str, Option<DateFixed>>(key)
+                .get::<&str, Option<DateFixedOffset>>(key)
                 .map(|e| e.map(|df| df.fixed_offset()))?),
         }
     }
@@ -183,11 +205,11 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             id: self.try_get(ChnotMetadata::ID)?,
             namespace: self.try_get(ChnotMetadata::NAMESPACE)?,
             kind: self.try_get(ChnotMetadata::KIND)?,
-            pin_time: self.try_get_df_opt(ChnotMetadata::PIN_TIME)?,
-            delete_time: self.try_get_df_opt(ChnotMetadata::DELETE_TIME)?,
-            update_time: self.try_get_df_opt(ChnotMetadata::UPDATE_TIME)?,
-            insert_time: self.try_get_df(ChnotMetadata::INSERT_TIME)?,
-            archive_time: self.try_get_df_opt(ChnotMetadata::ARCHIVE_TIME)?,
+            pin_time: self.try_get(ChnotMetadata::PIN_TIME)?,
+            delete_time: self.try_get(ChnotMetadata::DELETE_TIME)?,
+            update_time: self.try_get(ChnotMetadata::UPDATE_TIME)?,
+            insert_time: self.try_get(ChnotMetadata::INSERT_TIME)?,
+            archive_time: self.try_get(ChnotMetadata::ARCHIVE_TIME)?,
         };
         Ok(chnot)
     }
@@ -197,8 +219,8 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             id: self.try_get(ChnotRecord::ID)?,
             meta_id: self.try_get(ChnotRecord::META_ID)?,
             content: self.try_get(ChnotRecord::CONTENT)?,
-            omit_time: self.try_get_df_opt(ChnotRecord::OMIT_TIME)?,
-            insert_time: self.try_get_df(ChnotRecord::INSERT_TIME)?,
+            omit_time: self.try_get(ChnotRecord::OMIT_TIME)?,
+            insert_time: self.try_get(ChnotRecord::INSERT_TIME)?,
         };
         Ok(chnot)
     }
@@ -206,11 +228,11 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
         let obj = LLMChatBot {
             id: self.try_get(LLMChatBot::ID)?,
-            insert_time: self.try_get_df(LLMChatBot::INSERT_TIME)?,
-            delete_time: self.try_get_df_opt(LLMChatBot::DELETE_TIME)?,
+            insert_time: self.try_get(LLMChatBot::INSERT_TIME)?,
+            delete_time: self.try_get(LLMChatBot::DELETE_TIME)?,
             name: self.try_get(LLMChatBot::NAME)?,
             body: self.try_get(LLMChatBot::BODY)?,
-            update_time: self.try_get_df_opt(LLMChatBot::UPDATE_TIME)?,
+            update_time: self.try_get(LLMChatBot::UPDATE_TIME)?,
             svg_logo: self.try_get(LLMChatBot::SVG_LOGO)?,
         };
         Ok(obj)
@@ -219,9 +241,9 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_llmchat_template(self) -> AResult<LLMChatTemplate> {
         let obj = LLMChatTemplate {
             id: self.try_get(LLMChatTemplate::ID)?,
-            insert_time: self.try_get_df(LLMChatTemplate::INSERT_TIME)?,
-            delete_time: self.try_get_df_opt(LLMChatTemplate::DELETE_TIME)?,
-            update_time: self.try_get_df_opt(LLMChatTemplate::UPDATE_TIME)?,
+            insert_time: self.try_get(LLMChatTemplate::INSERT_TIME)?,
+            delete_time: self.try_get(LLMChatTemplate::DELETE_TIME)?,
+            update_time: self.try_get(LLMChatTemplate::UPDATE_TIME)?,
             name: self.try_get(LLMChatTemplate::NAME)?,
             prompt: self.try_get(LLMChatTemplate::PROMPT)?,
             svg_logo: self.try_get(LLMChatTemplate::SVG_LOGO)?,
@@ -232,12 +254,12 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_llmchat_session(self) -> AResult<LLMChatSession> {
         let obj = LLMChatSession {
             id: self.try_get(LLMChatSession::ID)?,
-            insert_time: self.try_get_df(LLMChatSession::INSERT_TIME)?,
+            insert_time: self.try_get(LLMChatSession::INSERT_TIME)?,
             template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
             title: self.try_get(LLMChatSession::TITLE)?,
             namespace: self.try_get(LLMChatSession::NAMESPACE)?,
-            delete_time: self.try_get_df_opt(LLMChatSession::DELETE_TIME)?,
-            update_time: self.try_get_df_opt(LLMChatSession::UPDATE_TIME)?,
+            delete_time: self.try_get(LLMChatSession::DELETE_TIME)?,
+            update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
         };
         Ok(obj)
     }
@@ -245,13 +267,13 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_llmchat_record(self) -> AResult<LLMChatRecord> {
         let obj = LLMChatRecord {
             id: self.try_get(LLMChatRecord::ID)?,
-            insert_time: self.try_get_df(LLMChatRecord::INSERT_TIME)?,
+            insert_time: self.try_get(LLMChatRecord::INSERT_TIME)?,
             session_id: self.try_get(LLMChatRecord::SESSION_ID)?,
             pre_record_id: self.try_get(LLMChatRecord::PRE_RECORD_ID)?,
             content: self.try_get(LLMChatRecord::CONTENT)?,
             role: self.try_get(LLMChatRecord::ROLE)?,
             role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
-            omit_time: self.try_get_df_opt(LLMChatRecord::OMIT_TIME)?,
+            omit_time: self.try_get(LLMChatRecord::OMIT_TIME)?,
             reasoning_content: self.try_get(LLMChatRecord::REASONING_CONTENT)?,
         };
         Ok(obj)
@@ -260,10 +282,10 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_namespace_record(self) -> AResult<NamespaceRecord> {
         let obj = NamespaceRecord {
             id: self.try_get(NamespaceRecord::ID)?,
-            insert_time: self.try_get_df(NamespaceRecord::INSERT_TIME)?,
+            insert_time: self.try_get(NamespaceRecord::INSERT_TIME)?,
             name: self.try_get(NamespaceRecord::NAME)?,
-            delete_time: self.try_get_df_opt(NamespaceRecord::DELETE_TIME)?,
-            update_time: self.try_get_df_opt(NamespaceRecord::UPDATE_TIME)?,
+            delete_time: self.try_get(NamespaceRecord::DELETE_TIME)?,
+            update_time: self.try_get(NamespaceRecord::UPDATE_TIME)?,
         };
         Ok(obj)
     }
@@ -271,9 +293,9 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_namespace_relation(self) -> AResult<NamespaceRelation> {
         let obj = NamespaceRelation {
             id: self.try_get(NamespaceRelation::ID)?,
-            insert_time: self.try_get_df(NamespaceRelation::INSERT_TIME)?,
-            delete_time: self.try_get_df_opt(NamespaceRelation::DELETE_TIME)?,
-            update_time: self.try_get_df_opt(NamespaceRelation::UPDATE_TIME)?,
+            insert_time: self.try_get(NamespaceRelation::INSERT_TIME)?,
+            delete_time: self.try_get(NamespaceRelation::DELETE_TIME)?,
+            update_time: self.try_get(NamespaceRelation::UPDATE_TIME)?,
             sub_id: self.try_get(NamespaceRelation::SUB_ID)?,
             parent_id: self.try_get(NamespaceRelation::PARENT_ID)?,
         };
@@ -283,8 +305,8 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_resource(self) -> AResult<Resource> {
         let obj = Resource {
             id: self.try_get(Resource::ID)?,
-            insert_time: self.try_get_df(Resource::INSERT_TIME)?,
-            delete_time: self.try_get_df_opt(Resource::DELETE_TIME)?,
+            insert_time: self.try_get(Resource::INSERT_TIME)?,
+            delete_time: self.try_get(Resource::DELETE_TIME)?,
             namespace: self.try_get(Resource::NAMESPACE)?,
             ori_filename: self.try_get(Resource::ORI_FILENAME)?,
             content_type: self.try_get(Resource::CONTENT_TYPE)?,
@@ -294,10 +316,10 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
 
     fn to_kv(self) -> AResult<KV> {
         let obj = KV {
-            insert_time: self.try_get_df(KV::INSERT_TIME)?,
+            insert_time: self.try_get(KV::INSERT_TIME)?,
             key: self.try_get(KV::KEY)?,
             value: self.try_get(KV::VALUE)?,
-            update_time: self.try_get_df_opt(KV::UPDATE_TIME)?,
+            update_time: self.try_get(KV::UPDATE_TIME)?,
         };
         Ok(obj)
     }
@@ -308,7 +330,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             namespace: self.try_get(ChnotTag::NAMESPACE)?,
             tag: self.try_get(ChnotTag::TAG)?,
             chnot_meta_id: self.try_get(ChnotTag::CHNOT_META_ID)?,
-            insert_time: self.try_get_df(ChnotTag::INSERT_TIME)?,
+            insert_time: self.try_get(ChnotTag::INSERT_TIME)?,
             category: ChnotTagType::Common,
         };
         Ok(obj)
@@ -320,8 +342,8 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             name: self.try_get(InlineResource::NAME)?,
             content: self.try_get(InlineResource::CONTENT)?,
             content_type: self.try_get(InlineResource::CONTENT_TYPE)?,
-            delete_time: self.try_get_df_opt(InlineResource::DELETE_TIME)?,
-            insert_time: self.try_get_df(InlineResource::INSERT_TIME)?,
+            delete_time: self.try_get(InlineResource::DELETE_TIME)?,
+            insert_time: self.try_get(InlineResource::INSERT_TIME)?,
             namespace: self.try_get(InlineResource::NAMESPACE)?,
             rid: self.try_get(InlineResource::RID)?,
             archor: self.try_get(InlineResource::ARCHOR)?,

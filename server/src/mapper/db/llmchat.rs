@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 
-use chin_sql::{ChinSqlError, SqlInserter};
+use chin_sql::{ChinSqlError, SqlInserter, SqlReader, SqlUpdater, Wheres};
 use chin_tools::{utils::sort_util::sort_by_prev, AResult, EResult};
 use chrono::Local;
 
-use super::{
-    sql::{SqlReader, SqlUpdater, Wheres},
-    KDb, KDbBehaiver, KDbConnBehaiver, KDbRow,
-};
+use super::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow};
 use crate::{
     mapper::LLMChatMapper,
     model::{

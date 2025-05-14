@@ -8,8 +8,7 @@ pub mod postgres;
 pub mod resource;
 pub mod sqlite;
 pub mod tabledumpsql;
-
-pub use chin_sql as sql;
+pub mod ctable;
 
 use super::DeserializeMapper;
 

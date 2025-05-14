@@ -1,12 +1,9 @@
 pub(crate) mod inserter;
 
-use super::{
-    sql::{LimitOffset, SqlUpdater, Wheres},
-    KDb,
-};
+use super::KDb;
 use crate::{
     mapper::{
-        db::{KDbBehaiver, KDbConnBehaiver, KDbRow},
+        db::{KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier},
         ChnotMapper, DeserializeMapper,
     },
     model::{
@@ -16,6 +13,7 @@ use crate::{
     util::string_util::get_hashtags,
 };
 use chin_sql::{ILikeType, SqlDeleter, SqlInserter, SqlReader, SqlValue};
+use chin_sql::{LimitOffset, SqlUpdater, Wheres};
 use chin_tools::{utils::id_util, AResult, EResult};
 use chrono::{Local, Utc};
 use itertools::Itertools;
@@ -41,18 +39,18 @@ fn chnot_query_mapper(row: KDbRow<'_>) -> AResult<Chnot> {
         id: row.try_get("rid")?,
         meta_id: row.try_get("mid")?,
         content: row.try_get("content")?,
-        omit_time: row.try_get_df_opt("omit_time").map(|e| e.into())?,
-        insert_time: row.try_get_df("version_time")?,
+        omit_time: row.try_get("omit_time")?,
+        insert_time: row.try_get("version_time")?,
     };
     let meta = ChnotMetadata {
         id: row.try_get("mid")?,
         namespace: row.try_get("namespace")?,
         kind: row.try_get("kind")?,
-        pin_time: row.try_get_df_opt("pin_time")?,
-        delete_time: row.try_get_df_opt("delete_time")?,
-        update_time: row.try_get_df_opt("update_time")?,
-        insert_time: row.try_get_df("init_time")?,
-        archive_time: row.try_get_df_opt("archive_time")?,
+        pin_time: row.try_get("pin_time")?,
+        delete_time: row.try_get("delete_time")?,
+        update_time: row.try_get("update_time")?,
+        insert_time: row.try_get("init_time")?,
+        archive_time: row.try_get("archive_time")?,
     };
     Ok(Chnot { record, meta })
 }
