@@ -1,10 +1,11 @@
 use std::ops::Deref;
 
-use chin_sql::{Wheres};
 use crate::{
     mapper::{
         db::{
-            chnot::{chnot_query_mapper, chnot_query_sql}, sqlite::wrapper::KDbConnBehaiverSync, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier
+            chnot::{chnot_query_mapper, chnot_query_sql},
+            kdb::KDbConnBehaiverSync,
+            KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier,
         },
         ChnotMapper,
     },
@@ -17,6 +18,7 @@ use crate::{
     },
 };
 use anyhow::anyhow;
+use chin_sql::Wheres;
 use chin_sql::{SqlInserter, SqlReader, SqlUpdater};
 use chin_tools::{utils::id_util, AResult, EResult, SharedStr};
 

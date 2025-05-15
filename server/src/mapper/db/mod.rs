@@ -1,6 +1,6 @@
 pub mod backup;
 pub mod chnot;
-pub mod dbwrapper;
+pub mod kdb;
 pub mod helper;
 pub mod llmchat;
 pub mod namespace;
@@ -12,4 +12,4 @@ pub mod ctable;
 
 use super::DeserializeMapper;
 
-pub use dbwrapper::*;
+pub use kdb::*;

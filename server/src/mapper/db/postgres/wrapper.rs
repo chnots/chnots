@@ -4,7 +4,7 @@ use deadpool_postgres::Client;
 use tokio_postgres::Transaction;
 
 use crate::{
-    mapper::db::dbwrapper::{KDbBehaiver, KDbConnBehaiver, KDbRow},
+    mapper::db::kdb::{KDbBehaiver, KDbConnBehaiver, KDbRow},
     util::result_util::ROSwap,
 };
 
@@ -12,7 +12,7 @@ use super::Postgres;
 use crate::to_sql;
 
 impl KDbBehaiver for Postgres {
-    async fn conn(&self) -> chin_tools::AResult<crate::mapper::db::dbwrapper::KDbConn> {
+    async fn conn(&self) -> chin_tools::AResult<crate::mapper::db::kdb::KDbConn> {
         Ok(crate::mapper::db::KDbConn::Postgres(self.client().await?))
     }
 }

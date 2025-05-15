@@ -74,6 +74,7 @@ pub struct CTableColumnMeta {
 
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
 pub struct CTableMeta {
+    pub id: String,
     #[gts_type = "String"]
     pub columns: HashMap<String, CTableColumnMeta>,
     pub table_name: String,
@@ -81,34 +82,26 @@ pub struct CTableMeta {
     pub create_time: DateTime<FixedOffset>,
     pub update_time: Option<DateTime<FixedOffset>>,
     pub delete_time: Option<DateTime<FixedOffset>>,
+    pub namespace: String,
     pub real_table: bool,
 }
 
 macro_rules! type_table {
-    ($suffix:tt, $data_type:tt, $(#[$attr:meta])*) => {
+    ($suffix:tt, $data_type:ty $(, #[$attr:meta])*) => {
         #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
-        pub struct  $suffix {
-            pub table_name: String,
+        pub struct $suffix {
+            pub table_id: String,
             pub col_idx: i32,
             pub row_idx: i32,
-            $(#[$attr])*
-            pub cell_data: $data_type,
             pub insert_time: DateTime<FixedOffset>,
             pub delete_time: Option<DateTime<FixedOffset>>,
-            pub namespace: String
+            $(#[$attr])*
+            pub cell_data: $data_type
         }
-
-        
-    };
-
-    ($suffix:tt, $data_type:ty, $(#[$attr:meta])*) => {
-        type_table!($suffix, $data_type, $(#[$attr])*);
-    };
+    }
 }
 
 type_table!(CTableCellStr1024, String, #[gts_length = 1024]);
-type_table!(CTableCellText, String,);
-type_table!(CTableCellInteger, i64,);
-
-type DateFixed = DateTime<FixedOffset>;
-type_table!(CTableCellDate, DateFixed, #[gts_type = "DateTime<FixedOffset>"]);
+type_table!(CTableCellText, String);
+type_table!(CTableCellInteger, i64);
+type_table!(CTableCellDate, DateTime<FixedOffset>);

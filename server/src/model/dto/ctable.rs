@@ -56,7 +56,7 @@ pub struct CTableOverwriteCellRsp {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 
 pub struct CTableQueryRowReq {
-    pub table_name: String,
+    pub table_id: String,
     pub row_index: i64,
 }
 
@@ -81,7 +81,7 @@ pub struct CTableQueryTableMetaRsp {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 
 pub struct CTableQueryTableDataReq {
-    pub table_name: String,
+    pub table_id: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

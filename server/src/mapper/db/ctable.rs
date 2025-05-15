@@ -9,8 +9,7 @@ use crate::{
     },
     model::{
         db::ctable::{
-            CTableCellDate, CTableCellInteger, CTableCellStr1024, CTableCellText, CTableColumnMeta,
-            CTableMeta,
+            CTableCellDate, CTableCellInteger, CTableCellStr1024, CTableCellText, CTableMeta,
         },
         dto::{ctable::*, KReq},
     },
@@ -24,6 +23,7 @@ impl ChinTableMapper for KDb {
         req: KReq<CTableOverwriteMetaReq>,
     ) -> chin_tools::AResult<CTableOverwriteMetaRsp> {
         let CTableMeta {
+            id,
             columns,
             table_name,
             table_comment,
@@ -31,6 +31,7 @@ impl ChinTableMapper for KDb {
             update_time,
             delete_time,
             real_table,
+            namespace,
         } = &req.meta;
 
         let omit_sql = SqlUpdater::new(CTableMeta::TABLE)
@@ -41,6 +42,7 @@ impl ChinTableMapper for KDb {
             )]));
 
         let insert_sql = SqlInserter::new(CTableMeta::TABLE)
+            .fields(CTableMeta::ID, id)
             .fields(CTableMeta::COLUMNS, serde_json::to_string(&columns)?)
             .fields(CTableMeta::TABLE_NAME, table_name)
             .fields(CTableMeta::CREATE_TIME, create_time)
@@ -76,15 +78,14 @@ impl ChinTableMapper for KDb {
         macro_rules! overwrite {
             ($table:tt, $c:expr) => {
                 let csql = SqlInserter::new($table::TABLE)
-                    .fields($table::TABLE_NAME, &$c.table_name)
+                    .fields($table::TABLE_ID, &$c.table_id)
                     .fields($table::COL_IDX, $c.col_idx)
                     .fields($table::ROW_IDX, $c.row_idx)
-                    .fields($table::INSERT_TIME, &$c.insert_time)
-                    .fields($table::NAMESPACE, &$c.namespace);
+                    .fields($table::INSERT_TIME, &$c.insert_time);
                 let omit_sql = SqlUpdater::new($table::TABLE)
                     .set($table::DELETE_TIME, Local::now().fixed_offset())
                     .r#where(Wheres::and([
-                        Wheres::equal($table::TABLE_NAME, &$c.table_name),
+                        Wheres::equal($table::TABLE_ID, &$c.table_id),
                         Wheres::equal($table::ROW_IDX, $c.row_idx),
                         Wheres::equal($table::COL_IDX, $c.col_idx),
                     ]));
@@ -120,9 +121,8 @@ impl ChinTableMapper for KDb {
             ($sub_table:tt) => {
                 let reader = SqlReader::read_all($sub_table::TABLE).r#where(Wheres::and([
                     Wheres::equal($sub_table::ROW_IDX, req.row_index),
-                    Wheres::equal($sub_table::TABLE_NAME, req.table_name.as_str()),
+                    Wheres::equal($sub_table::TABLE_ID, req.table_id.as_str()),
                     Wheres::is_null($sub_table::DELETE_TIME),
-                    Wheres::equal($sub_table::NAMESPACE, req.namespace.as_str()),
                 ]));
 
                 let data: Vec<CTableCell> = self
@@ -130,13 +130,12 @@ impl ChinTableMapper for KDb {
                     .await?
                     .qry_list(reader, |row| {
                         Ok($sub_table {
-                            table_name: row.try_get($sub_table::TABLE_NAME)?,
+                            table_id: row.try_get($sub_table::TABLE_ID)?,
                             col_idx: row.try_get($sub_table::COL_IDX)?,
                             row_idx: row.try_get($sub_table::ROW_IDX)?,
                             cell_data: row.try_get($sub_table::CELL_DATA)?,
                             insert_time: row.try_get($sub_table::INSERT_TIME)?,
                             delete_time: row.try_get($sub_table::DELETE_TIME)?,
-                            namespace: row.try_get($sub_table::NAMESPACE)?,
                         })
                     })
                     .await?
@@ -180,6 +179,8 @@ impl ChinTableMapper for KDb {
                         update_time: row.try_get(CTableMeta::UPDATE_TIME)?,
                         delete_time: row.try_get(CTableMeta::DELETE_TIME)?,
                         real_table: row.try_get(CTableMeta::REAL_TABLE)?,
+                        id: row.try_get(CTableMeta::ID)?,
+                        namespace: row.try_get(CTableMeta::NAMESPACE)?,
                     })
                 },
                 true,
@@ -197,9 +198,8 @@ impl ChinTableMapper for KDb {
         macro_rules! extend_cells {
             ($sub_table:tt) => {
                 let reader = SqlReader::read_all($sub_table::TABLE).r#where(Wheres::and([
-                    Wheres::equal($sub_table::TABLE_NAME, req.table_name.as_str()),
+                    Wheres::equal($sub_table::TABLE_ID, req.table_id.as_str()),
                     Wheres::is_null($sub_table::DELETE_TIME),
-                    Wheres::equal($sub_table::NAMESPACE, req.namespace.as_str()),
                 ]));
 
                 let data: Vec<CTableCell> = self
@@ -207,13 +207,12 @@ impl ChinTableMapper for KDb {
                     .await?
                     .qry_list(reader, |row| {
                         Ok($sub_table {
-                            table_name: row.try_get($sub_table::TABLE_NAME)?,
+                            table_id: row.try_get($sub_table::TABLE_ID)?,
                             col_idx: row.try_get($sub_table::COL_IDX)?,
                             row_idx: row.try_get($sub_table::ROW_IDX)?,
                             cell_data: row.try_get($sub_table::CELL_DATA)?,
                             insert_time: row.try_get($sub_table::INSERT_TIME)?,
                             delete_time: row.try_get($sub_table::DELETE_TIME)?,
-                            namespace: row.try_get($sub_table::NAMESPACE)?,
                         })
                     })
                     .await?
@@ -248,6 +247,10 @@ impl ChinTableMapper for KDb {
         self.conn()
             .await?
             .exec(CTableCellText::schema(self.db_type()))
+            .await?;
+        self.conn()
+            .await?
+            .exec(CTableMeta::schema(self.db_type()))
             .await?;
 
         Ok(())

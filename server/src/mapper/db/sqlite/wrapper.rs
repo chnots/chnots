@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use chin_sql::{IntoSqlSeg, SqlSeg, SqlValueOwned};
 use chin_tools::AResult;
 use deadpool_sqlite::rusqlite::{self, Connection, Rows};
@@ -6,43 +5,16 @@ use deadpool_sqlite::rusqlite::{self, Connection, Rows};
 use crate::{
     flatten_result2, flatten_result3,
     mapper::db::{
-        dbwrapper::{KDbBehaiver, KDbConn, KDbConnBehaiver},
-        KDbRow,
-    },
+        kdb::{KDbBehaiver, KDbConn, KDbConnBehaiver}, KDbConnBehaiverSync, KDbRow
+    }, util::result_util::ROSwap,
 };
 
 use super::Sqlite;
 
 impl KDbBehaiver for Sqlite {
-    async fn conn(&self) -> chin_tools::AResult<crate::mapper::db::dbwrapper::KDbConn> {
+    async fn conn(&self) -> chin_tools::AResult<crate::mapper::db::kdb::KDbConn> {
         Ok(KDbConn::Sqlite(self.clone()))
     }
-}
-
-pub trait KDbConnBehaiverSync {
-    fn exec_and_check<'a, T, C>(&self, ssb: T, check_count: C) -> AResult<usize>
-    where
-        T: IntoSqlSeg<'a>,
-        C: FnOnce(usize) -> bool + Send + 'static;
-    fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
-
-    fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
-    where
-        T: IntoSqlSeg<'a>,
-        F: FnOnce(KDbRow<'_>) -> AResult<E>,
-        E: Send + 'static;
-
-    fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<E>
-    where
-        T: IntoSqlSeg<'a>,
-        F: FnOnce(KDbRow<'_>) -> AResult<E>,
-        E: Send + 'static;
-
-    fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
-    where
-        T: IntoSqlSeg<'a>,
-        F: Fn(KDbRow<'_>) -> AResult<E>,
-        E: Send + 'static;
 }
 
 macro_rules! to_sqlite_params {
@@ -110,7 +82,7 @@ impl KDbConnBehaiverSync for Connection {
             match rows.next() {
                 Ok(Some(ok)) => match mapper(KDbRow::Sqlite(ok)) {
                     Ok(t) => Ok(Some(t)),
-                    Err(err) => Err(anyhow!(err)),
+                    Err(err) => Err(chin_tools::aanyhow!(err)),
                 },
                 Ok(None) => Ok(None),
                 Err(err) => Err(anyhow::anyhow!(err.to_string())),
@@ -257,9 +229,13 @@ impl KDbConnBehaiver for Sqlite {
             .await
             .map_err(|e| e.to_string());
 
-        match result {
-            Ok(_) => todo!(),
-            Err(_) => todo!(),
+        match flatten_result2!(result) {
+            Ok(v) => {
+                v.swap()
+            },
+            Err(err) => {
+                Err(err)
+            },
         }
     }
 

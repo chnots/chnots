@@ -1,5 +1,5 @@
 use chin_sql::{DateFixedOffset, DbType, IntoSqlSeg, SqlReader};
-use chin_tools::{aanyhow, AResult, EResult};
+use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::Client;
 use deadpool_sqlite::rusqlite;
@@ -41,6 +41,33 @@ pub trait KDbConnBehaiver {
     where
         T: IntoSqlSeg<'a>,
         F: (Fn(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        E: Send + 'static;
+}
+
+pub trait KDbConnBehaiverSync {
+    fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
+
+    fn exec_and_check<'a, T, C>(&self, ssb: T, check_count: C) -> AResult<usize>
+    where
+        T: IntoSqlSeg<'a>,
+        C: FnOnce(usize) -> bool + Send + 'static;
+
+    fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
+    where
+        T: IntoSqlSeg<'a>,
+        F: FnOnce(KDbRow<'_>) -> AResult<E>,
+        E: Send + 'static;
+
+    fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<E>
+    where
+        T: IntoSqlSeg<'a>,
+        F: FnOnce(KDbRow<'_>) -> AResult<E>,
+        E: Send + 'static;
+
+    fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
+    where
+        T: IntoSqlSeg<'a>,
+        F: Fn(KDbRow<'_>) -> AResult<E>,
         E: Send + 'static;
 }
 
@@ -176,8 +203,6 @@ common_try_get! {i32}
 common_try_get! {f64}
 common_try_get! {String}
 common_try_get! {bool}
-
-
 
 impl<'a, 'b> KDbRowBehavier<'b, DateTime<FixedOffset>> for KDbRow<'a> {
     fn try_get(&'b self, key: &str) -> AResult<DateTime<FixedOffset>> {
