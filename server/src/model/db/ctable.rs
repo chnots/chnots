@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum SqlValueType {
+pub enum CTableColumnType {
     Bool,
     I8,
     I16,
@@ -17,23 +17,23 @@ pub enum SqlValueType {
     FixedOffset,
     Utc,
     Blob,
-    Opt(Option<Box<SqlValueType>>),
+    Opt(Option<Box<CTableColumnType>>),
 }
 
-impl ToString for SqlValueType {
+impl ToString for CTableColumnType {
     fn to_string(&self) -> String {
         match &self {
-            SqlValueType::Bool => "bool".into(),
-            SqlValueType::I8 => "i8".into(),
-            SqlValueType::I16 => "i16".into(),
-            SqlValueType::I32 => "i32".into(),
-            SqlValueType::I64 => "i64".into(),
-            SqlValueType::F64 => "f64".into(),
-            SqlValueType::Str => "str".into(),
-            SqlValueType::FixedOffset => "fixedoffset".into(),
-            SqlValueType::Utc => "utc".into(),
-            SqlValueType::Blob => "blob".into(),
-            SqlValueType::Opt(sql_value_type) => match sql_value_type {
+            CTableColumnType::Bool => "bool".into(),
+            CTableColumnType::I8 => "i8".into(),
+            CTableColumnType::I16 => "i16".into(),
+            CTableColumnType::I32 => "i32".into(),
+            CTableColumnType::I64 => "i64".into(),
+            CTableColumnType::F64 => "f64".into(),
+            CTableColumnType::Str => "str".into(),
+            CTableColumnType::FixedOffset => "fixedoffset".into(),
+            CTableColumnType::Utc => "utc".into(),
+            CTableColumnType::Blob => "blob".into(),
+            CTableColumnType::Opt(sql_value_type) => match sql_value_type {
                 Some(v) => format!("opt.{}", v.to_string()),
                 None => unreachable!(),
             },
@@ -41,16 +41,16 @@ impl ToString for SqlValueType {
     }
 }
 
-impl TryFrom<&str> for SqlValueType {
+impl TryFrom<&str> for CTableColumnType {
     type Error = ChinSqlError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let res = match value {
-            "bool" => SqlValueType::Bool,
+            "bool" => CTableColumnType::Bool,
             s => {
                 if s.starts_with("opt.") {
                     let s = &s[4..];
-                    return SqlValueType::try_from(s);
+                    return CTableColumnType::try_from(s);
                 } else {
                     Err(ChinSqlError::TransformError(format!(
                         "error getting sql value type, {}",
@@ -69,7 +69,7 @@ pub struct CTableColumnMeta {
     pub index: u32,
     pub name: String,
     pub comment: String,
-    pub stype: SqlValueType,
+    pub stype: CTableColumnType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]

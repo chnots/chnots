@@ -44,48 +44,42 @@ pub struct CTableOverwriteRowReq {
 pub struct CTableOverwriteRowRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableOverwriteCellReq {
     pub cell: CTableCell,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableOverwriteCellRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableQueryRowReq {
     pub table_id: String,
     pub row_index: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableQueryRowRsp {
     pub row: Vec<CTableCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableQueryTableMetaReq {
     pub table_name: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableQueryTableMetaRsp {
     pub meta: CTableMeta,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableQueryTableDataReq {
     pub table_id: String,
+    pub start_index: usize,
+    pub page_size: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-
 pub struct CTableQueryTableDataRsp {
     pub cells: Vec<CTableCell>,
 }

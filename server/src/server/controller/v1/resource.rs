@@ -78,6 +78,8 @@ async fn upload(
             tokio::fs::create_dir_all(&save_dir).await?;
         }
 
+        info!("filepath: {:?}", save_filepath.to_str());
+
         stream_to_file(field, &save_filepath).await?;
 
         let res = mapper
