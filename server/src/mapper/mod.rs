@@ -9,7 +9,6 @@ use serde::Deserialize;
 
 use crate::model::{
     db::{
-        ctable::*,
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::{NamespaceRecord, NamespaceRelation},

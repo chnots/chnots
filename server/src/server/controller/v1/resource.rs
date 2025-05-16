@@ -8,7 +8,10 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chin_tools::{utils::path_util::split_uuid_to_file_name, AResult};
+use chin_tools::{
+    utils::{id_util, path_util::split_uuid_to_file_name},
+    AResult,
+};
 use chrono::Local;
 use futures::{Stream, TryStreamExt};
 
@@ -73,6 +76,12 @@ async fn upload(
 
         let save_filepath = asset_path_by_uuid(&state.config.attachment, &id);
         let save_dir = save_filepath.parent().unwrap();
+        let temp_save_filepath = save_dir.join(
+            save_filepath
+                .file_name()
+                .map(|f| f.to_string_lossy().to_string())
+                .unwrap_or(id_util::generate_uuid()) + ".tmp",
+        );
 
         if !tokio::fs::metadata(&save_dir).await.is_ok() {
             tokio::fs::create_dir_all(&save_dir).await?;
@@ -93,6 +102,7 @@ async fn upload(
             })
             .await?;
         resources.push(res);
+        tokio::fs::rename(temp_save_filepath, save_filepath).await?;
     }
 
     Ok(ResourceUploadRsp { resources })
