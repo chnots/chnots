@@ -1,13 +1,24 @@
-use axum::extract::Multipart;
+use axum::body::Bytes;
+use axum_typed_multipart::{FieldData, TryFromMultipart};
 use serde::{Deserialize, Serialize};
 
 use crate::model::db::resource::*;
 
-pub type ResourceUploadReq = Multipart;
+#[derive(TryFromMultipart)]
+pub struct ResourceUploadReq {
+    pub res_id: String,
+    pub filename: String,
+    pub chunk_no: usize,
+    pub total_chunks: usize,
+    pub chunk: FieldData<Bytes>,
+    pub last_modified: i64,
+    pub filesize: i64
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUploadRsp {
-    pub(crate) resources: Vec<Resource>,
+    pub(crate) resource: Option<Resource>,
+    pub(crate) finished: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

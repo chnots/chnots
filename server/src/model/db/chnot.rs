@@ -70,6 +70,10 @@ pub enum ChnotKind {
     #[strum(serialize = "exdrv1")]
     #[serde(rename = "exdrv1")]
     ExcalidrawV1,
+
+    #[strum(serialize = "resov1")]
+    #[serde(rename = "resov1")]
+    ResourceV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]

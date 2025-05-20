@@ -13,10 +13,5 @@ const getDefaultState = (): State => {
 export const useAttachmentStore = create(
   combine(getDefaultState(), (_set, get) => ({
     getState: () => get(),
-    upload: async (file: File) => {
-      const resources: ResourceUploadRsp = await resourceUpload(file);
-
-      return resources.resources[0];
-    },
   }))
 );

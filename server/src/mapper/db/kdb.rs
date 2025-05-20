@@ -335,6 +335,8 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             namespace: self.try_get(Resource::NAMESPACE)?,
             ori_filename: self.try_get(Resource::ORI_FILENAME)?,
             content_type: self.try_get(Resource::CONTENT_TYPE)?,
+            ori_last_modified: self.try_get(Resource::ORI_LAST_MODIFIED)?,
+            filesize: self.try_get(Resource::FILESIZE)?,
         };
         Ok(obj)
     }

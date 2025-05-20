@@ -15,10 +15,10 @@ import { useAttachmentStore } from "@/store/resource/store";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 
-import { indentationMarkers } from '@replit/codemirror-indentation-markers';
-import { wrappedLineIndent } from 'codemirror-wrapped-line-indent';
-import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view"
-
+import { indentationMarkers } from "@replit/codemirror-indentation-markers";
+import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
+import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
+import { resourceUpload } from "@/store/resource/service";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -63,9 +63,8 @@ const eventHandlers = EditorView.domEventHandlers({
       for (const file of data.files) {
         allPromises.push(
           new Promise((resolve, reject) => {
-            useAttachmentStore
-              .getState()
-              .upload(file)
+            // TODO!
+/*             resourceUpload(file)
               .then((resource?) => {
                 if (resource !== undefined) {
                   insertions.push(
@@ -77,7 +76,7 @@ const eventHandlers = EditorView.domEventHandlers({
               .catch((err) => {
                 toast.info(`unable to handle ${file}, ${err}`);
                 reject(err);
-              });
+              }); */
           })
         );
       }
@@ -101,31 +100,30 @@ const editorTheme = EditorView.theme({
     background: "transparent !important",
   },
   // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
-/*   "&.cm-editor.cm-focused": {
+  /*   "&.cm-editor.cm-focused": {
     outline: "none",
   }, */
-/*   ".cm-line": {
+  /*   ".cm-line": {
     background: "transparent !important",
   }, */
   ".cm-content": {
     padding: "1em",
   },
   ".cm-lineWrapping": {
-    wordBreak: "break-all"
+    wordBreak: "break-all",
   },
   ".hashtag": {
     border: "1px solid #602533",
     padding: "1px",
     borderRadius: "0.2em",
-    color: "#682d4b"
-  }
+    color: "#682d4b",
+  },
 });
 
 export const markdownKeymap: readonly KeyBinding[] = [
   { key: "Enter", run: insertNewlineContinueMarkup },
   { key: "Backspace", run: deleteMarkupBackward },
 ];
-
 
 const CodeMirrorEditor = ({
   content,

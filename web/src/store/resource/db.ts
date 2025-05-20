@@ -4,12 +4,14 @@ export interface Resource {
   id: string;
 
   namespace?: string;
-  oriFilename: string;
+  ori_filename: string;
+  ori_last_modified: number;
+  filesize: number;
 
-  contentType: string;
+  content_type: string;
 
-  deleteTime?: string; // Using ISO 8601 format for DateTime
-  insertTime: string; // Using ISO 8601 format for DateTime
+  delete_time?: string; // Using ISO 8601 format for DateTime
+  insert_time: string; // Using ISO 8601 format for DateTime
 }
 
 export interface InlineResource {

@@ -10,6 +10,7 @@ import ErrorPage from "@/common/pages/error-page";
 import LLMChatPage from "./features/llmchat/page/llmchat";
 import FullScreenTimer from "./features/timer/timer";
 import ExcalidrawPage from "./features/tool/excalidraw/page/excalidraw";
+import ResourcePage from "./features/resource/page";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -19,6 +20,7 @@ export enum RoutePaths {
   Settings = "/settings",
   Timer = "/timer",
   ToolExcalidraw = "/tool/excalidraw",
+  Resources = "/resources",
 }
 
 const routes: RouteObject[] = [
@@ -59,6 +61,10 @@ const routes: RouteObject[] = [
       {
         path: RoutePaths.ToolExcalidraw,
         element: <ExcalidrawPage />,
+      },
+      {
+        path: RoutePaths.Resources,
+        element: <ResourcePage />,
       },
     ],
   },

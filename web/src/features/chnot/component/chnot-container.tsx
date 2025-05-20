@@ -26,6 +26,7 @@ import KButton, { KButtonProps } from "@/common/component/kbutton";
 import { enumFromStringValue } from "@/utils/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
+import { ResourceUploader } from "@/features/resource/components/resource-uploader";
 
 enum RequestState {
   Saved,
@@ -186,6 +187,9 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
                 <ChnotTypeButton thisChnotType={ChnotType.ExcalidrawV1}>
                   <Icon.PencilRuler className="w-4 h-4" />
                 </ChnotTypeButton>
+                <ChnotTypeButton thisChnotType={ChnotType.ResourceV1}>
+                  <Icon.Squirrel className="w-4 h-4" />
+                </ChnotTypeButton>
               </div>
             ))}
           {chnot && (
@@ -260,17 +264,20 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
           )}
         </div>
       </div>
-      <div className="h-full" ref={cmRef}>
+      <div
+        className="h-full w-full flex items-center justify-center align-middle overflow-auto content-center bg-active"
+        ref={cmRef}
+      >
         {chnotType === ChnotType.MarkdownWithToent &&
           (viewMode && chnot ? (
-            <div className="p-2 overflow-y-auto">
+            <div className="p-2 overflow-y-auto w-full">
               <MarkdownViewer
                 content={chnot.record.content.replace("\n", "  \n")}
               />
             </div>
           ) : (
             <div
-              className="h-full p-0 x-0 overflow-auto bg-editor" // this part could resize when I add overflow-auto, magic?
+              className="h-full p-0 x-0 overflow-auto bg-editor w-full" // this part could resize when I add overflow-auto, magic?
             >
               {height ? (
                 <MarkdownEditor
@@ -287,6 +294,7 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
         {chnotType === ChnotType.ExcalidrawV1 && chnot && (
           <ExcalidrawContainer instanceId={chnot.meta.id} />
         )}
+        {chnotType === ChnotType.ResourceV1 && <ResourceUploader />}
       </div>
     </div>
   );

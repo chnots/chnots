@@ -30,6 +30,8 @@ impl ResourceMapper for KDb {
             namespace,
             delete_time: _,
             insert_time: _,
+            filesize,
+            ori_last_modified,
         } = res;
 
         let conn = self.conn().await?;
@@ -42,7 +44,9 @@ impl ResourceMapper for KDb {
                 .fields(Resource::ORI_FILENAME, ori_filename.to_owned())
                 .fields(Resource::NAMESPACE, namespace.to_owned())
                 .fields(Resource::CONTENT_TYPE, content_type.to_owned())
-                .fields(Resource::INSERT_TIME, insert_time.to_owned()),
+                .fields(Resource::INSERT_TIME, insert_time.to_owned())
+                .fields(Resource::FILESIZE, *filesize)
+                .fields(Resource::ORI_LAST_MODIFIED, *ori_last_modified),
         )
         .await
         .map(|_| Resource {
@@ -52,6 +56,8 @@ impl ResourceMapper for KDb {
             content_type: content_type.to_owned(),
             insert_time: insert_time.fixed_offset(),
             delete_time: None,
+            filesize: *filesize,
+            ori_last_modified: *ori_last_modified,
         })
     }
 

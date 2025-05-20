@@ -1,7 +1,19 @@
 import { InlineResource, Resource } from "./db";
 
+export interface ResourceUploadReq {
+  res_id: string;
+  filename: string;
+  chunk_no: number;
+  total_chunks: number;
+  chunk: Blob;
+  filetype: string;
+  last_modified: number;
+  filesize: number;
+}
+
 export interface ResourceUploadRsp {
-  resources: Resource[];
+  resource?: Resource;
+  finished: boolean;
 }
 
 export interface InsertInlineResourceReq {

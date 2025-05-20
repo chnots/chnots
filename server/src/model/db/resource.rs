@@ -9,10 +9,14 @@ pub struct Resource {
     pub id: String,
     #[gts_length = 40]
     pub namespace: String,
-    #[gts_length = 512]
-    pub ori_filename: String,
     #[gts_length = 200]
     pub content_type: String,
+
+    #[gts_length = 512]
+    pub ori_filename: String,
+    pub filesize: i64,
+    pub ori_last_modified: i64,
+
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub insert_time: DateTime<FixedOffset>,
 }
