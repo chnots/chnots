@@ -43,10 +43,13 @@ const ChnotListItem = React.forwardRef(
         <div className="relative flex flex-row align-middle justify-between">
           <div className="flex flex-row space-x-2">
             {chnot.meta.kind === ChnotType.MarkdownWithToent && (
-              <Icon.NotebookText className="h-4 w-4 min-w-4 text-blue-600" />
+              <Icon.TextCursor className="h-4 w-4 min-w-4 text-blue-600" />
             )}
             {chnot.meta.kind === ChnotType.ExcalidrawV1 && (
-              <Icon.PencilRuler className="h-4 w-4 min-w-4 text-red-600" />
+              <Icon.Pen className="h-4 w-4 min-w-4 text-red-600" />
+            )}
+            {chnot.meta.kind === ChnotType.ResourceV1 && (
+              <Icon.File className="h-4 w-4 min-w-4 text-red-600" />
             )}
             <div
               className="text-gray-600 mr-2"

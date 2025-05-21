@@ -51,6 +51,7 @@ impl MapperType {
         self.ensure_table_chnot_tag().await?;
         self.ensure_table_resource().await?;
         self.ensure_table_inline_resource().await?;
+        self.ensure_table_kv().await?;
 
         self.ensure_table_llm_chat_bot().await?;
         self.ensure_table_llm_chat_template().await?;
@@ -166,6 +167,7 @@ impl ResourceMapper for MapperType {
     async fn ensure_table_inline_resource(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_inline_resource())
     }
+    
 }
 
 impl NamespaceMapper for MapperType {

@@ -14,7 +14,7 @@ import useResizeObserver from "@react-hook/resize-observer";
 import {
   Chnot,
   ChnotOverwriteReq,
-  list_view_type_get_tag_path,
+  listViewTypeGetTagPath,
 } from "@/store/chnot/dto";
 import { useChnotStore } from "@/store/chnot/store";
 import { chnotUpdate } from "@/store/chnot/service";
@@ -26,7 +26,8 @@ import KButton, { KButtonProps } from "@/common/component/kbutton";
 import { enumFromStringValue } from "@/utils/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
-import { ResourceUploader } from "@/features/resource/components/resource-uploader";
+import { CommonResource } from "@/features/resource/components/common-resource";
+import { insertKTV } from "@/store/resource/service";
 
 enum RequestState {
   Saved,
@@ -63,6 +64,7 @@ export const ChnotContainer = ({
 }) => {
   const { currentNamespace } = useNamespaceStore();
   const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
+  const [subTypeId, setSubTypeId] = useState<string>();
 
   const [editState, setEditState] = useState<ChnotEditState>({
     isUploadingResource: false,
@@ -78,13 +80,16 @@ export const ChnotContainer = ({
     setHeight(entry.contentRect.height);
   });
 
-  const [chnotType, setChnotType] = useState<ChnotType>(() => {
-    const ct = enumFromStringValue(ChnotType, chnot?.meta.kind);
-    return ct ? ct : ChnotType.MarkdownWithToent;
-  });
+  const [chnotType, setChnotType] = useState<ChnotType>(
+    enumFromStringValue(
+      ChnotType,
+      chnot?.meta.kind,
+      ChnotType.MarkdownWithToent
+    )!
+  );
 
   const saveContent = useCallback(
-    async (content?: string) => {
+    async (content?: string, subTypeId?: string) => {
       if (content === null || content === undefined) {
         return;
       }
@@ -109,6 +114,14 @@ export const ChnotContainer = ({
           onChnotChange(rsp.chnot);
         }
         requestState = RequestState.Saved;
+
+        if (subTypeId) {
+          await insertKTV({
+            key: rsp.chnot.meta.id,
+            value: subTypeId,
+            ttype: "chnot_sub_type",
+          });
+        }
       } catch {
         requestState = RequestState.Error;
       }
@@ -123,21 +136,13 @@ export const ChnotContainer = ({
     [setEditState, editState, onChnotChange, chnot, chnotType]
   );
 
-  useEffect(() => {
-    const init = async () => {
-      if (chnotType == ChnotType.ExcalidrawV1) {
-        if (!chnot) {
-          saveContent(
-            `# Excalidraw -- ${new Date().toLocaleTimeString()}
-
-${list_view_type_get_tag_path(listViewType) ?? ""}
-`
-          );
-        }
-      }
-    };
-    init();
-  }, [chnot, chnotType]);
+  const onOtherTypeInit = useCallback(async (content: string, subTypeId: string) => {
+    if (!chnot) {
+      saveContent(
+        content, subTypeId
+      );
+    }
+  }, [chnot, chnotType, saveContent]);
 
   const onChange = useDebounce(
     (content: string) => {
@@ -185,10 +190,10 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
                   <Icon.TextCursor className="w-4 h-4" />
                 </ChnotTypeButton>
                 <ChnotTypeButton thisChnotType={ChnotType.ExcalidrawV1}>
-                  <Icon.PencilRuler className="w-4 h-4" />
+                  <Icon.Pen className="w-4 h-4" />
                 </ChnotTypeButton>
                 <ChnotTypeButton thisChnotType={ChnotType.ResourceV1}>
-                  <Icon.Squirrel className="w-4 h-4" />
+                  <Icon.File className="w-4 h-4" />
                 </ChnotTypeButton>
               </div>
             ))}
@@ -294,7 +299,11 @@ ${list_view_type_get_tag_path(listViewType) ?? ""}
         {chnotType === ChnotType.ExcalidrawV1 && chnot && (
           <ExcalidrawContainer instanceId={chnot.meta.id} />
         )}
-        {chnotType === ChnotType.ResourceV1 && <ResourceUploader />}
+        {chnotType === ChnotType.ResourceV1 && (
+          <CommonResource chnotMetaId={chnot?.meta.id} onSave={(r) => {
+            onOtherTypeInit(`# ${r.ori_filename}\n\n${listViewTypeGetTagPath(listViewType) ?? ""}`, r.id)
+          }} />
+        )}
       </div>
     </div>
   );

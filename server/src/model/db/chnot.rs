@@ -82,3 +82,12 @@ pub enum ChnotTagType {
     ParentDir = 98,
     Common = 1,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+pub struct ChnotSubTypeRelation {
+    #[gts_primary]
+    pub chnot_meta_id: String,
+    pub sub_type_id: String,
+    pub delete_time: Option<DateTime<FixedOffset>>,
+    pub insert_time: DateTime<FixedOffset>,
+}

@@ -5,11 +5,15 @@
  * @param value 
  * @returns 
  */
-export const enumFromStringValue = <T>(enm: { [s: string]: T }, value?: string): T | undefined => {
-    if (!value) {
-        return undefined;
-    }
-    return (Object.values(enm) as unknown as string[]).includes(value)
-        ? value as unknown as T
-        : undefined;
-}
+export const enumFromStringValue = <T>(
+  enm: { [s: string]: T },
+  value?: string,
+  def?: T
+): T | undefined => {
+  if (!value) {
+    return def;
+  }
+  return (Object.values(enm) as unknown as string[]).includes(value)
+    ? (value as unknown as T)
+    : def;
+};

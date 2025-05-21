@@ -31,5 +31,23 @@ export interface QueryInlineResourceReq {
 }
 
 export interface QueryInlineResourceRsp {
-  res: InlineResource[]
+  res: InlineResource[];
+}
+
+export interface KTVInserterReq {
+  key: string;
+  ttype: string;
+  value: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface KTVInserterRsp {}
+
+export interface KTVQueryReq {
+  key: string;
+  ttype: string;
+}
+
+export interface KTVQueryRsp {
+  value?: string;
 }

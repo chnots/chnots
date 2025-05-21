@@ -159,6 +159,18 @@ async fn upload(
     })
 }
 
+pub async fn resource_info(
+    state: State<ShareAppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> KResponse<QueryResourceRsp> {
+    state
+        .mapper
+        .query_resource_by_id(&id)
+        .await
+        .map(|res| QueryResourceRsp { res: Some(res) })
+        .into()
+}
+
 // https://github.com/tokio-rs/axum/discussions/608
 pub async fn download(
     state: State<ShareAppState>,
@@ -202,6 +214,17 @@ pub async fn download(
     }
 }
 
+async fn query_resource(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<QueryInlineResourceReq>,
+) -> KResponse<QueryInlineResourceRsp> {
+    state
+        .mapper
+        .query_inline_resource(kreq(headers, req))
+        .await
+        .into()
+}
 async fn query_inline_resource(
     headers: HeaderMap,
     state: State<ShareAppState>,
@@ -266,6 +289,7 @@ pub fn routes() -> Router<ShareAppState> {
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
         .route("/api/v1/resource/{id}", get(download))
+        .route("/api/v1/resource-info/{id}", get(resource_info))
         .route("/api/v1/inline-resource", put(insert_inline_resource))
         .route("/api/v1/inline-resource", get(query_inline_resource))
         .route("/api/v1/inline-svg/{id}", get(query_svg))

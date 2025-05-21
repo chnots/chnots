@@ -46,19 +46,34 @@ pub struct QueryInlineResourceRsp {
     pub res: Vec<InlineResource>,
 }
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryResourceReq {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryResourceRsp {
+    pub res: Option<Resource>,
+}
+
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct KVQueryReq {
     pub key: String,
+    pub ttype: KVType,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct KVQueryRsp {
-    pub kv: Option<KV>,
+    pub value: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct KVOverwriteReq {
-    pub kv: KV,
+    pub key: String,
+    pub ttype: String,
+    pub value: String
 }
 
 #[derive(Clone, Debug, Serialize)]

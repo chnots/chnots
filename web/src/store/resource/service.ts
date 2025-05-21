@@ -1,11 +1,16 @@
 import request from "@/utils/request";
+import { BASE_URL } from "@/utils/request";
 import {
   InsertInlineResourceReq,
+  KTVInserterReq,
+  KTVQueryReq,
+  KTVQueryRsp,
   QueryInlineResourceReq,
   QueryInlineResourceRsp,
   ResourceUploadReq,
   ResourceUploadRsp,
 } from "./dto";
+import { Resource } from "./db";
 
 export const resourceUpload = async ({
   chunk,
@@ -30,11 +35,28 @@ export const resourceUpload = async ({
   return await request.post("api/v1/resource", data);
 };
 
+export const resourceQueryInfo = async (resId: string): Promise<{ res?: Resource }> => {
+  return await request.get("api/v1/resource-info/" + resId);
+};
 
 export const insertInlineResource = async (req: InsertInlineResourceReq) => {
   return await request.put("api/v1/inline-resource", req);
-}
+};
 
-export const queryInlineResource = async (req: QueryInlineResourceReq): Promise<QueryInlineResourceRsp> => {
+export const queryInlineResource = async (
+  req: QueryInlineResourceReq
+): Promise<QueryInlineResourceRsp> => {
   return await request.get("api/v1/inline-resource", req);
-}
+};
+
+export const getResouceDownloadUrl = (resource: Resource): string => {
+  return BASE_URL + "/api/v1/resource/" + resource.id;
+};
+
+export const insertKTV = async (req: KTVInserterReq) => {
+  return await request.put("api/v1/kv", req);
+};
+
+export const queryKTV = async (req: KTVQueryReq): Promise<KTVQueryRsp> => {
+  return await request.get("api/v1/kv", req);
+};

@@ -18,8 +18,9 @@ const KButton = ({
   return falseButton ? (
     <div
       className={clsx(
-        "flex flex-row items-center rounded-xl space-x-1 hover:cursor-pointer",
+        "flex flex-row items-center rounded-xl space-x-1",
         showBorder ? "border-kbdr" : "border border-transparent",
+        rest.disabled ? "hover:cursor-not-allowed" : "hover:cursor-pointer",
         className
       )}
       {...rest}
@@ -29,8 +30,9 @@ const KButton = ({
   ) : (
     <button
       className={clsx(
-        "flex flex-row items-center rounded-xl space-x-1 hover:cursor-pointer",
+        "flex flex-row items-center rounded-xl space-x-1 ",
         showBorder ? "border-kbdr" : "border border-transparent",
+        rest.disabled ? "hover:cursor-not-allowed" : "hover:cursor-pointer",
         className
       )}
       {...rest}

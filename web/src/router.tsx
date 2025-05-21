@@ -10,7 +10,6 @@ import ErrorPage from "@/common/pages/error-page";
 import LLMChatPage from "./features/llmchat/page/llmchat";
 import FullScreenTimer from "./features/timer/timer";
 import ExcalidrawPage from "./features/tool/excalidraw/page/excalidraw";
-import ResourcePage from "./features/resource/page";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -61,10 +60,6 @@ const routes: RouteObject[] = [
       {
         path: RoutePaths.ToolExcalidraw,
         element: <ExcalidrawPage />,
-      },
-      {
-        path: RoutePaths.Resources,
-        element: <ResourcePage />,
       },
     ],
   },

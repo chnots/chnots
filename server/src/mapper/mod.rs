@@ -12,9 +12,9 @@ use crate::model::{
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         namespace::{NamespaceRecord, NamespaceRelation},
-        resource::{InlineResource, Resource, KV},
+        resource::{InlineResource, Resource, KTV},
     },
-    dto::{ctable::*, chnot::*, llmchat::*, resource::*, KReq},
+    dto::{chnot::*, ctable::*, llmchat::*, resource::*, KReq},
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -62,7 +62,6 @@ pub trait ChnotMapper {
 pub trait ResourceMapper {
     async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource>;
     async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
-
     ///
     /// Try to insert inline resource.
     ///
@@ -205,5 +204,5 @@ pub trait DeserializeMapper {
     fn to_resource(self) -> AResult<Resource>;
     fn to_inline_resource(self) -> AResult<InlineResource>;
 
-    fn to_kv(self) -> AResult<KV>;
+    fn to_kv(self) -> AResult<KTV>;
 }

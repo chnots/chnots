@@ -1,11 +1,11 @@
 use chin_tools::{AResult, EResult};
-use chrono::{DateTime, FixedOffset, TimeDelta};
+use chrono::{DateTime, FixedOffset, Local, TimeDelta};
 
 use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
 use crate::{
     mapper::{KVMapper, ResourceMapper},
     model::{
-        db::resource::*,
+        db::{chnot::ChnotSubTypeRelation, resource::*},
         dto::{resource::*, KReq},
     },
 };
@@ -48,17 +48,17 @@ impl ResourceMapper for KDb {
                 .fields(Resource::FILESIZE, *filesize)
                 .fields(Resource::ORI_LAST_MODIFIED, *ori_last_modified),
         )
-        .await
-        .map(|_| Resource {
-            id: id.to_owned(),
-            namespace: namespace.to_owned(),
-            ori_filename: ori_filename.to_string(),
-            content_type: content_type.to_owned(),
-            insert_time: insert_time.fixed_offset(),
-            delete_time: None,
-            filesize: *filesize,
-            ori_last_modified: *ori_last_modified,
-        })
+            .await
+            .map(|_| Resource {
+                id: id.to_owned(),
+                namespace: namespace.to_owned(),
+                ori_filename: ori_filename.to_string(),
+                content_type: content_type.to_owned(),
+                insert_time: insert_time.fixed_offset(),
+                delete_time: None,
+                filesize: *filesize,
+                ori_last_modified: *ori_last_modified,
+            })
     }
 
     async fn query_resource_by_id(&self, id: &str) -> AResult<Resource> {
@@ -94,9 +94,7 @@ impl ResourceMapper for KDb {
         let last_archor: Option<DateTime<FixedOffset>> = self
             .conn()
             .await?
-            .qry_opt(last_archor_sql, |e| {
-                e.try_get(InlineResource::INSERT_TIME)
-            })
+            .qry_opt(last_archor_sql, |e| e.try_get(InlineResource::INSERT_TIME))
             .await?;
 
         let archorp = match last_archor {
@@ -175,23 +173,22 @@ impl ResourceMapper for KDb {
 }
 
 impl KVMapper for KDb {
-    async fn kv_overwrite(
-        &self,
-        req: KReq<KVOverwriteReq>,
-    ) -> chin_tools::AResult<KVOverwriteRsp> {
-        let kv = &req.kv;
-        let inserter = SqlInserter::new(KV::TABLE)
-            .fields(KV::KEY, &kv.key)
-            .fields(KV::VALUE, &kv.value)
-            .fields(KV::INSERT_TIME, &kv.insert_time);
+    async fn kv_overwrite(&self, req: KReq<KVOverwriteReq>) -> chin_tools::AResult<KVOverwriteRsp> {
+        let inserter = SqlInserter::new(KTV::TABLE)
+            .fields(KTV::KEY, &req.key)
+            .fields(KTV::TTYPE, &req.ttype)
+            .fields(KTV::VALUE, &req.value)
+            .fields(KTV::INSERT_TIME, Local::now().fixed_offset());
         self.conn().await?.exec(inserter).await?;
 
         Ok(KVOverwriteRsp {})
     }
 
     async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp> {
-        let query = SqlReader::read_all(KV::TABLE)
-            .r#where(Wheres::and([Wheres::equal(KV::KEY, req.key.as_str())]));
+        let query = SqlReader::read_all(KTV::TABLE).r#where(Wheres::and([
+            Wheres::equal(KTV::KEY, req.key.as_str()),
+            Wheres::equal(KTV::TTYPE, req.ttype),
+        ]));
 
         let kv = self
             .conn()
@@ -199,14 +196,14 @@ impl KVMapper for KDb {
             .qry_opt(query, |e| KDbRow::to_kv(e))
             .await?;
 
-        Ok(KVQueryRsp { kv })
+        Ok(KVQueryRsp { value: kv.map(|kv| kv.value) })
     }
 
     async fn kv_delete(
         &self,
         req: KReq<crate::mapper::KVDeleteReq>,
     ) -> AResult<crate::mapper::KVDeleteRsp> {
-        let del = SqlDeleter::new(KV::TABLE).r#where(Wheres::equal(KV::KEY, &req.key));
+        let del = SqlDeleter::new(KTV::TABLE).r#where(Wheres::equal(KTV::KEY, &req.key));
 
         self.conn().await?.exec(del).await?;
 
@@ -214,7 +211,7 @@ impl KVMapper for KDb {
     }
 
     async fn ensure_table_kv(&self) -> chin_tools::EResult {
-        self.create_table(KV::schema(self.db_type())).await?;
+        self.create_table(KTV::schema(self.db_type())).await?;
         Ok(())
     }
 }

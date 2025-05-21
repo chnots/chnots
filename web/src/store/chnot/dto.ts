@@ -5,20 +5,24 @@ export interface Chnot {
   meta: ChnotMetadata;
 }
 
-export type ChnotTagTreeType = { kind: "tagtree", tagkind: "children" | "descendants", tagpath: string };
+export type ChnotTagTreeType = {
+  kind: "tagtree";
+  tagkind: "children" | "descendants";
+  tagpath: string;
+};
 export type ListViewType = { kind: "timeline" } | ChnotTagTreeType;
-export const list_view_type_get_tag_path = (lvt: ListViewType) => {
+export const listViewTypeGetTagPath = (lvt: ListViewType) => {
   if (lvt.kind === "tagtree") {
     return lvt.tagpath;
   } else {
     return undefined;
   }
-}
+};
 
 export interface ChnotQueryReq {
   record_id?: string;
   meta_id?: string;
-  view_type: ListViewType,
+  view_type: ListViewType;
 
   with_omited?: boolean;
   query?: string;
@@ -34,11 +38,11 @@ export interface ChnotQueryRsp {
 }
 
 export interface ChnotOverwriteReq {
-  id?: string,
-  meta_id?: string,
-  content: string,
-  kind: string,
-  insert_time: Date,
+  id?: string;
+  meta_id?: string;
+  content: string;
+  kind: string;
+  insert_time: Date;
 }
 
 export interface ChnotOverwriteRsp {
@@ -78,6 +82,12 @@ export interface ChnotTagQueryReq {
   page_size: number;
 }
 
+export type ChnotResourceRelationInsert = {
+  insert_time: Date;
+  chnot_meta_id: string;
+  
+};
+
 export interface ChnotTagQueryRsp {
   data: ChnotTag[];
 
@@ -101,5 +111,5 @@ export interface ToentGuessReq {
 }
 
 export interface ToentGuessRsp {
-  toents: Toent[]
+  toents: Toent[];
 }

@@ -7,7 +7,7 @@ use crate::{
         ChnotMapper, DeserializeMapper,
     },
     model::{
-        db::chnot::{ChnotMetadata, ChnotRecord, ChnotTag, ChnotTagType},
+        db::chnot::{ChnotMetadata, ChnotRecord, ChnotSubTypeRelation, ChnotTag, ChnotTagType},
         dto::KReq,
     },
     util::string_util::get_hashtags,
@@ -142,6 +142,8 @@ impl ChnotMapper for KDb {
 
     async fn ensure_table_chnot_metadata(&self) -> EResult {
         self.create_table(ChnotMetadata::schema(self.db_type()))
+            .await?;
+        self.create_table(ChnotSubTypeRelation::schema(self.db_type()))
             .await
     }
 
