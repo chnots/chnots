@@ -28,7 +28,7 @@ const UNTAGGED_TAG: &str = "#_untagged";
 fn chnot_query_sql<'a>() -> SqlReader<'a> {
     SqlReader::new()
     .raw("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
-    .raw("m.id as mid, m.namespace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
+    .raw("m.id as mid, m.workspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
     .raw("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
 }
 
@@ -44,7 +44,7 @@ fn chnot_query_mapper(row: KDbRow<'_>) -> AResult<Chnot> {
     };
     let meta = ChnotMetadata {
         id: row.try_get("mid")?,
-        namespace: row.try_get("namespace")?,
+        workspace: row.try_get("workspace")?,
         kind: row.try_get("kind")?,
         pin_time: row.try_get("pin_time")?,
         delete_time: row.try_get("delete_time")?,
@@ -72,7 +72,7 @@ impl KDb {
             start_index,
             tag_tree,
         } = req.body;
-        let ns = req.namespace;
+        let ns = req.workspace;
 
         let level = |s: &str| {
             if s.is_empty() {
@@ -111,7 +111,7 @@ impl KDb {
                     },
                     chin_sql::ILikeType::Original,
                 ),
-                Wheres::equal("namespace", ns),
+                Wheres::equal("workspace", ns),
             ]))
             .raw("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index));
@@ -183,7 +183,7 @@ impl ChnotMapper for KDb {
                         .sub(
                             "ct",
                             SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
-                                Wheres::equal(ChnotTag::NAMESPACE, req.namespace.to_owned()),
+                                Wheres::equal(ChnotTag::WORKSPACE, req.workspace.to_owned()),
                                 match tag {
                                     ChnotTagTreeType::Children(path) => Wheres::and([
                                         Wheres::equal(
@@ -230,7 +230,7 @@ impl ChnotMapper for KDb {
                         Wheres::none()
                     }
                 }),
-                Wheres::equal("m.namespace", req.namespace.clone()),
+                Wheres::equal("m.workspace", req.workspace.clone()),
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("content", content, ILikeType::Fuzzy)
                 }),
@@ -260,7 +260,7 @@ impl ChnotMapper for KDb {
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
-            .set_if_some("namespace", req.body.namespace.as_ref())
+            .set_if_some("workspace", req.body.workspace.as_ref())
             .r#where(Wheres::equal("id", &req.meta_id).into());
 
         client.exec(su).await?;
@@ -300,7 +300,7 @@ impl ChnotMapper for KDb {
                 SqlInserter::new(ChnotTag::TABLE)
                     .fields(ChnotTag::ID, &req.id)
                     .fields(ChnotTag::CHNOT_META_ID, &req.chnot_meta_id)
-                    .fields(ChnotTag::NAMESPACE, &req.namespace)
+                    .fields(ChnotTag::WORKSPACE, &req.workspace)
                     .fields(ChnotTag::TAG, &req.tag)
                     .fields(ChnotTag::CATEGORY, req.category)
                     .fields(ChnotTag::INSERT_TIME, req.insert_time),
@@ -332,7 +332,7 @@ impl ChnotMapper for KDb {
         &self,
         content: &str,
         meta_id: &str,
-        namespace: &str,
+        workspace: &str,
     ) -> EResult {
         self.chnot_tag_delete(vec![&meta_id]).await?;
 
@@ -355,7 +355,7 @@ impl ChnotMapper for KDb {
         if parent_tags.is_empty() {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
-                namespace: namespace.to_owned(),
+                workspace: workspace.to_owned(),
                 tag: UNTAGGED_TAG.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
@@ -366,7 +366,7 @@ impl ChnotMapper for KDb {
         for tag in parent_tags {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
-                namespace: namespace.to_owned(),
+                workspace: workspace.to_owned(),
                 tag: tag.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
@@ -377,7 +377,7 @@ impl ChnotMapper for KDb {
         for tag in tags {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
-                namespace: namespace.to_owned(),
+                workspace: workspace.to_owned(),
                 tag: tag.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
@@ -389,16 +389,16 @@ impl ChnotMapper for KDb {
         Ok(())
     }
 
-    async fn chnot_tag_update_all(&self, namespace: &str) -> EResult {
+    async fn chnot_tag_update_all(&self, workspace: &str) -> EResult {
         let get_all = SqlReader::new()
             .sov("select r.content, m.id as meta_id from ")
             .sov(ChnotRecord::TABLE)
             .sov(" as r left join")
             .sov(ChnotMetadata::TABLE)
-            .sov(" as m on r.meta_id = m.id where r.omit_time is null and namespace = ")
-            .sov(SqlValue::Str(namespace.into()));
+            .sov(" as m on r.meta_id = m.id where r.omit_time is null and workspace = ")
+            .sov(SqlValue::Str(workspace.into()));
 
-        let namespace = namespace.to_owned();
+        let workspace = workspace.to_owned();
         let chnots = self
             .conn()
             .await?
@@ -406,13 +406,13 @@ impl ChnotMapper for KDb {
                 Ok(ChnotTagUpdateReq {
                     content: e.try_get(ChnotRecord::CONTENT)?,
                     meta_id: e.try_get("meta_id")?,
-                    namespace: namespace.to_owned(),
+                    workspace: workspace.to_owned(),
                 })
             })
             .await?;
 
         for one in &chnots {
-            self.chnot_tag_update_single_chnot(&one.content, &one.meta_id, &one.namespace)
+            self.chnot_tag_update_single_chnot(&one.content, &one.meta_id, &one.workspace)
                 .await?;
         }
 

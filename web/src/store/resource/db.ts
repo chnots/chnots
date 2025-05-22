@@ -1,9 +1,9 @@
-import { Namespace } from '../../model';
+import { Workspace } from "../../model";
 
 export interface Resource {
   id: string;
 
-  namespace?: string;
+  workspace?: string;
   ori_filename: string;
   ori_last_modified: number;
   filesize: number;
@@ -17,7 +17,7 @@ export interface Resource {
 export interface InlineResource {
   id: string;
   rid: string;
-  namespace: string;
+  workspace: string;
   archor: boolean;
   name: string;
   content: string;

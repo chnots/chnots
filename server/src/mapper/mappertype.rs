@@ -1,7 +1,7 @@
 use chin_tools::{utils::sort_util, AResult, EResult};
 
 use crate::model::{
-    db::{chnot::ChnotTag, namespace::NamespaceRelation, resource::Resource},
+    db::{chnot::ChnotTag, workspace::WorkspaceRelation, resource::Resource},
     dto::{
         ctable::*,
         llmchat::{
@@ -19,11 +19,11 @@ use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
     dump::RecordCallbackEnum,
     ChinTableMapper, ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp,
-    DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType, NamespaceMapper, ResourceMapper,
+    DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType, WorkspaceMapper, ResourceMapper,
 };
 
 use crate::model::{
-    db::namespace::NamespaceRecord,
+    db::workspace::WorkspaceRecord,
     dto::{chnot::*, KReq},
 };
 
@@ -45,8 +45,8 @@ impl Into<AResult<MapperType>> for MapperConfig {
 impl MapperType {
     pub async fn ensure_tables(&self) -> EResult {
         self.ensure_table_chnot_record().await?;
-        self.ensure_table_namespace_record().await?;
-        self.ensure_table_namespace_relation().await?;
+        self.ensure_table_workspace_record().await?;
+        self.ensure_table_workspace_relation().await?;
         self.ensure_table_chnot_metadata().await?;
         self.ensure_table_chnot_tag().await?;
         self.ensure_table_resource().await?;
@@ -127,13 +127,13 @@ impl ChnotMapper for MapperType {
         &self,
         content: &str,
         meta_id: &str,
-        namespace: &str,
+        workspace: &str,
     ) -> EResult {
-        expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, namespace))
+        expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, workspace))
     }
 
-    async fn chnot_tag_update_all(&self, namespace: &str) -> EResult {
-        expand_mt_branch!(self.chnot_tag_update_all(namespace))
+    async fn chnot_tag_update_all(&self, workspace: &str) -> EResult {
+        expand_mt_branch!(self.chnot_tag_update_all(workspace))
     }
 }
 
@@ -170,21 +170,21 @@ impl ResourceMapper for MapperType {
     
 }
 
-impl NamespaceMapper for MapperType {
-    async fn read_all_namespaces(&self) -> AResult<Vec<NamespaceRecord>> {
-        expand_mt_branch!(self.read_all_namespaces())
+impl WorkspaceMapper for MapperType {
+    async fn read_all_workspaces(&self) -> AResult<Vec<WorkspaceRecord>> {
+        expand_mt_branch!(self.read_all_workspaces())
     }
 
-    async fn read_all_namespace_relations(&self) -> AResult<Vec<NamespaceRelation>> {
-        expand_mt_branch!(self.read_all_namespace_relations())
+    async fn read_all_workspace_relations(&self) -> AResult<Vec<WorkspaceRelation>> {
+        expand_mt_branch!(self.read_all_workspace_relations())
     }
 
-    async fn ensure_table_namespace_record(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_namespace_record())
+    async fn ensure_table_workspace_record(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_workspace_record())
     }
 
-    async fn ensure_table_namespace_relation(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_namespace_relation())
+    async fn ensure_table_workspace_relation(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_workspace_relation())
     }
 }
 

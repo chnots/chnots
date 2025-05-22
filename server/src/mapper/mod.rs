@@ -11,7 +11,7 @@ use crate::model::{
     db::{
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        namespace::{NamespaceRecord, NamespaceRelation},
+        workspace::{WorkspaceRecord, WorkspaceRelation},
         resource::{InlineResource, Resource, KTV},
     },
     dto::{chnot::*, ctable::*, llmchat::*, resource::*, KReq},
@@ -40,9 +40,9 @@ pub trait ChnotMapper {
         &self,
         content: &str,
         meta_id: &str,
-        namespace: &str,
+        workspace: &str,
     ) -> EResult;
-    async fn chnot_tag_update_all(&self, namespace: &str) -> EResult;
+    async fn chnot_tag_update_all(&self, workspace: &str) -> EResult;
     async fn chnot_tag_query(
         &self,
         req: KReq<ChnotTagQueryReq>,
@@ -82,12 +82,12 @@ pub trait ResourceMapper {
     async fn ensure_table_inline_resource(&self) -> EResult;
 }
 
-pub trait NamespaceMapper {
-    async fn read_all_namespaces(&self) -> AResult<Vec<NamespaceRecord>>;
-    async fn read_all_namespace_relations(&self) -> AResult<Vec<NamespaceRelation>>;
+pub trait WorkspaceMapper {
+    async fn read_all_workspaces(&self) -> AResult<Vec<WorkspaceRecord>>;
+    async fn read_all_workspace_relations(&self) -> AResult<Vec<WorkspaceRelation>>;
 
-    async fn ensure_table_namespace_record(&self) -> EResult;
-    async fn ensure_table_namespace_relation(&self) -> EResult;
+    async fn ensure_table_workspace_record(&self) -> EResult;
+    async fn ensure_table_workspace_relation(&self) -> EResult;
 }
 
 pub trait LLMChatMapper {
@@ -198,8 +198,8 @@ pub trait DeserializeMapper {
     fn to_llmchat_session(self) -> AResult<LLMChatSession>;
     fn to_llmchat_record(self) -> AResult<LLMChatRecord>;
 
-    fn to_namespace_record(self) -> AResult<NamespaceRecord>;
-    fn to_namespace_relation(self) -> AResult<NamespaceRelation>;
+    fn to_workspace_record(self) -> AResult<WorkspaceRecord>;
+    fn to_workspace_relation(self) -> AResult<WorkspaceRelation>;
 
     fn to_resource(self) -> AResult<Resource>;
     fn to_inline_resource(self) -> AResult<InlineResource>;

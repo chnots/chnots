@@ -1,4 +1,4 @@
-export interface Namespace {
+export interface Workspace {
   name: string;
   managers: string[];
 }

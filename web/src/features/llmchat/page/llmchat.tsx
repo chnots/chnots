@@ -1,6 +1,6 @@
 import SessionList from "@/features/llmchat/component/session-list";
 import SessionContainer from "@/features/llmchat/component/session-container";
-import { useNamespaceStore } from "@/store/namespace";
+import { useWorkspaceStore } from "@/store/workspace";
 import { useEffect, useState } from "react";
 import { useCommonStore } from "@/store/common";
 import { useLLMChatStore } from "@/store/llmchat/store";
@@ -10,7 +10,7 @@ import { genId } from "@/utils/id_util";
 const LLMChatPage = () => {
   const { refreshAll, currentSessionId, setCurrentSessionId } =
     useLLMChatStore();
-  const { currentNamespace } = useNamespaceStore();
+  const { currentWorkspace } = useWorkspaceStore();
   const { showSidebar } = useCommonStore();
 
   const [sessionIdOrUUID, setSessionIdOrUUID] = useState<string>(uuid());
@@ -18,7 +18,7 @@ const LLMChatPage = () => {
 
   useEffect(() => {
     refreshAll();
-  }, [currentNamespace]);
+  }, [currentWorkspace]);
 
   useEffect(() => {
     setSessionIdOrUUID(currentSessionId ?? uuid());

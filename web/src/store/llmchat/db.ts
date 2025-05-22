@@ -36,7 +36,7 @@ export interface LLMChatSession {
   bot_id: string;
   template_id: string;
   title: string;
-  namespace: string;
+  workspace: string;
   delete_time?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
   insert_time: DateTime;

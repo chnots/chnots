@@ -1,7 +1,7 @@
 use crate::app::ShareAppState;
 use crate::model::db::chnot::ChnotTag;
 use crate::model::dto::chnot::{Chnot, ChnotTagQueryReq, ChnotTagQueryRsp};
-use crate::model::dto::{kreq, read_namespace_from_header};
+use crate::model::dto::{kreq, read_workspace_from_header};
 use crate::{
     mapper::ChnotMapper,
     model::dto::chnot::{
@@ -91,7 +91,7 @@ async fn chnot_tag_names(
 async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state
         .mapper
-        .chnot_tag_update_all(read_namespace_from_header(&headers).as_str())
+        .chnot_tag_update_all(read_workspace_from_header(&headers).as_str())
         .await
         .into()
 }

@@ -14,7 +14,7 @@ export interface ChnotRecord {
 
 export interface ChnotMetadata {
   id: string;
-  namespace: string;
+  workspace: string;
   kind: string;
   pin_time?: Date;
   delete_time?: Date;
@@ -24,7 +24,7 @@ export interface ChnotMetadata {
 
 export interface ChnotTag {
   id: string;
-  namespace: string;
+  workspace: string;
   tag: string;
   chnot_meta_id: string;
   insert_time: Date;

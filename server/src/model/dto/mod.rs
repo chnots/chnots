@@ -15,12 +15,12 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize)]
 pub struct KReq<E: Debug + Clone + DeserializeOwned> {
     pub body: E,
-    pub namespace: String,
+    pub workspace: String,
 }
 
-pub fn read_namespace_from_header(headers: &HeaderMap) -> String {
+pub fn read_workspace_from_header(headers: &HeaderMap) -> String {
     headers
-        .get("K-namespace")
+        .get("K-workspace")
         .and_then(|v| v.to_str().ok().map(|e| e.to_string()))
         .unwrap()
 }
@@ -28,7 +28,7 @@ pub fn read_namespace_from_header(headers: &HeaderMap) -> String {
 pub fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
     KReq {
         body,
-        namespace: read_namespace_from_header(&headers),
+        workspace: read_workspace_from_header(&headers),
     }
 }
 
@@ -50,13 +50,13 @@ where
     {
         KReq {
             body: t,
-            namespace: self.namespace.clone(),
+            workspace: self.workspace.clone(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NamespaceQueryReq {}
+pub struct WorkspaceQueryReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NamespaceQueryRsp {}
+pub struct WorkspaceQueryRsp {}

@@ -5,8 +5,10 @@ use deadpool_sqlite::rusqlite::{self, Connection, Rows};
 use crate::{
     flatten_result2, flatten_result3,
     mapper::db::{
-        kdb::{KDbBehaiver, KDbConn, KDbConnBehaiver}, KDbConnBehaiverSync, KDbRow
-    }, util::result_util::ROSwap,
+        kdb::{KDbBehaiver, KDbConn, KDbConnBehaiver},
+        KDbConnBehaiverSync, KDbRow,
+    },
+    util::result_util::ROSwap,
 };
 
 use super::Sqlite;
@@ -190,7 +192,16 @@ impl KDbConnBehaiver for Sqlite {
             .interact(move |conn| {
                 execute_sqlite_query!(conn, seg, values, |mut rows: Rows<'_>| {
                     if let Ok(Some(row)) = rows.next() {
-                        return Ok(mapper(KDbRow::Sqlite(row)));
+                        let first_res = mapper(KDbRow::Sqlite(row));
+                        if !only_one {
+                            return Ok(first_res);
+                        } else {
+                            if let Ok(Some(_)) = rows.next() {
+                                anyhow::bail!("Db result more thane one");
+                            } else {
+                                return Ok(first_res);
+                            }
+                        }
                     } else {
                         anyhow::bail!("Db result is empty");
                     }
@@ -230,12 +241,8 @@ impl KDbConnBehaiver for Sqlite {
             .map_err(|e| e.to_string());
 
         match flatten_result2!(result) {
-            Ok(v) => {
-                v.swap()
-            },
-            Err(err) => {
-                Err(err)
-            },
+            Ok(v) => v.swap(),
+            Err(err) => Err(err),
         }
     }
 

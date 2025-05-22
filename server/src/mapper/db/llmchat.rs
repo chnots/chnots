@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use chin_sql::{ChinSqlError, SqlInserter, SqlReader, SqlUpdater, Wheres};
-use chin_tools::{utils::sort_util::sort_by_prev, AResult, EResult};
+use chin_sql::{SqlInserter, SqlReader, SqlUpdater, Wheres};
+use chin_tools::{AResult, EResult};
 use chrono::Local;
 
 use super::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow};
@@ -61,7 +61,7 @@ impl LLMChatMapper for KDb {
             .fields(LLMChatSession::ID, &session.id)
             .fields(LLMChatSession::TEMPLATE_ID, &session.template_id)
             .fields(LLMChatSession::TITLE, &title)
-            .fields(LLMChatSession::NAMESPACE, &session.namespace)
+            .fields(LLMChatSession::WORKSPACE, &session.workspace)
             .fields(LLMChatSession::INSERT_TIME, &session.insert_time);
 
         self.conn().await?.exec(inserter).await?;
@@ -126,7 +126,7 @@ impl LLMChatMapper for KDb {
         let query = SqlReader::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
                 Wheres::is_null(LLMChatSession::DELETE_TIME),
-                Wheres::equal(LLMChatSession::NAMESPACE, &req.namespace),
+                Wheres::equal(LLMChatSession::WORKSPACE, &req.workspace),
                 Wheres::if_some(req.session_id.as_ref(), |id| {
                     Wheres::equal(LLMChatSession::ID, id)
                 }),
@@ -151,7 +151,7 @@ impl LLMChatMapper for KDb {
                 body: LLMChatListSessionReq {
                     session_id: Some(req.session_id.clone()),
                 },
-                namespace: req.namespace.clone(),
+                workspace: req.workspace.clone(),
             })
             .await?
             .sessions
@@ -277,7 +277,7 @@ impl LLMChatMapper for KDb {
                     session_id: req.session_id.clone(),
                     with_omit: Some(true),
                 },
-                namespace: req.namespace.clone(),
+                workspace: req.workspace.clone(),
             })
             .await?
             .records;

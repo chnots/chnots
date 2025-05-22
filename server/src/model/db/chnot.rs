@@ -30,7 +30,7 @@ pub struct ChnotMetadata {
     #[gts_length = 40]
     pub id: String,
     #[gts_length = 40]
-    pub namespace: String,
+    pub workspace: String,
     #[gts_length = 40]
     pub kind: String,
     pub pin_time: Option<DateTime<FixedOffset>>,
@@ -46,7 +46,7 @@ pub struct ChnotTag {
     #[gts_length = 40]
     pub id: String,
     #[gts_length = 40]
-    pub namespace: String,
+    pub workspace: String,
     #[gts_length = 800]
     pub tag: String,
     #[gts_type = "i32"]

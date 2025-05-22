@@ -3,7 +3,7 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, GenerateTableSql)]
-pub struct NamespaceRecord {
+pub struct WorkspaceRecord {
     #[gts_primary]
     #[gts_length = 40]
     pub id: String,
@@ -15,7 +15,7 @@ pub struct NamespaceRecord {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, GenerateTableSql)]
-pub struct NamespaceRelation {
+pub struct WorkspaceRelation {
     #[gts_primary]
     #[gts_length = 40]
     pub id: String,

@@ -5,11 +5,11 @@ import useResponsiveWidth from "@/hooks/use-responsive-width";
 import LoadingPage from "@/common/pages/loading-page";
 import Navigation from "@/common/component/navigation";
 import { RoutePaths } from "@/router";
-import { useNamespaceStore } from "./store/namespace";
+import { useWorkspaceStore } from "./store/workspace";
 
 const App = () => {
   const location = useLocation();
-  const { currentNamespace } = useNamespaceStore();
+  const { currentWorkspace } = useWorkspaceStore();
   const [lastVisited] = useLocalStorage<string>("lastVisited", "/home");
   const [initialized, setInitialized] = useState(false);
 
@@ -20,17 +20,17 @@ const App = () => {
       link.rel = "icon";
       document.getElementsByTagName("head")[0].appendChild(link);
     }
-    if (currentNamespace.name === "private") {
+    if (currentWorkspace.name === "private") {
       link.href = "/chnots-private.svg";
-    } else if (currentNamespace.name === "public") {
+    } else if (currentWorkspace.name === "public") {
       link.href = "/chnots.svg";
     } else {
       link.href = "/chnots-protect.svg";
     }
-  }, [currentNamespace]);
+  }, [currentWorkspace]);
 
   useEffect(() => {
-    if (!currentNamespace) {
+    if (!currentWorkspace) {
       if (
         (
           [RoutePaths.ROOT, RoutePaths.Chnots, RoutePaths.Toents] as string[]

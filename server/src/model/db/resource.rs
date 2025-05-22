@@ -13,7 +13,7 @@ pub struct Resource {
     #[gts_length = 40]
     pub id: String,
     #[gts_length = 40]
-    pub namespace: String,
+    pub workspace: String,
     #[gts_length = 200]
     pub content_type: String,
 
@@ -39,7 +39,7 @@ pub struct InlineResource {
     #[gts_length = 200]
     pub name: String,
     pub content: String,
-    pub namespace: String,
+    pub workspace: String,
 
     #[gts_length = 100]
     pub content_type: String,

@@ -13,7 +13,7 @@ pub struct Chnot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotUpdateReq {
     pub meta_id: String,
-    pub namespace: Option<String>,
+    pub workspace: Option<String>,
     pub update_time: bool,
     pub pinned: Option<bool>,
     pub archive: Option<bool>,
@@ -174,5 +174,5 @@ where
 pub struct ChnotTagUpdateReq {
     pub content: String,
     pub meta_id: String,
-    pub namespace: String,
+    pub workspace: String,
 }

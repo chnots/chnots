@@ -40,7 +40,7 @@ pub struct LLMChatSession {
     #[gts_length = 200]
     pub title: String,
     #[gts_length = 200]
-    pub namespace: String,
+    pub workspace: String,
     pub delete_time: Option<DateTime<FixedOffset>>,
     pub update_time: Option<DateTime<FixedOffset>>,
     pub insert_time: DateTime<FixedOffset>,

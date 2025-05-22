@@ -82,7 +82,7 @@ pub struct CTableMeta {
     pub create_time: DateTime<FixedOffset>,
     pub update_time: Option<DateTime<FixedOffset>>,
     pub delete_time: Option<DateTime<FixedOffset>>,
-    pub namespace: String,
+    pub workspace: String,
     pub real_table: bool,
 }
 

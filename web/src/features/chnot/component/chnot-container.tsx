@@ -7,8 +7,8 @@ import React, {
 } from "react";
 import Icon from "@/common/component/icon";
 import useDebounce from "@/hooks/use-debounce";
-import { useNamespaceStore } from "@/store/namespace";
-import { NamespaceSelect } from "@/common/component/namespace-select";
+import { useWorkspaceStore } from "@/store/workspace";
+import { WorkspaceSelect } from "@/common/component/workspace-select";
 import clsx, { ClassValue } from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import {
@@ -62,7 +62,7 @@ export const ChnotContainer = ({
   onClickNewButton?: () => void;
   globalViewMode?: React.RefObject<boolean>;
 }) => {
-  const { currentNamespace } = useNamespaceStore();
+  const { currentWorkspace } = useWorkspaceStore();
   const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
 
   const [editState, setEditState] = useState<ChnotEditState>({
@@ -199,21 +199,21 @@ export const ChnotContainer = ({
             ))}
           {chnot && (
             <div className="bg-inactive border kc-active rounded-xl p-0.5 flex space-x-1">
-              <NamespaceSelect
+              <WorkspaceSelect
                 className="w-4 h-4"
                 menuClassName="px-1 py-1 bg-inactive rounded-xl flex items-center "
                 onSelect={(ns) => {
                   chnotUpdate({
                     meta_id: chnot.meta.id,
                     update_time: false,
-                    namespace: ns,
+                    workspace: ns,
                   }).then((_) => {
-                    if (ns !== currentNamespace.name) {
+                    if (ns !== currentWorkspace.name) {
                       validateChnotCache([chnot.meta.id]);
                     }
                   });
                 }}
-                currentNamespace={chnot.meta.namespace}
+                currentWorkspace={chnot.meta.workspace}
               />
               <TopbarButton
                 onClick={() => {

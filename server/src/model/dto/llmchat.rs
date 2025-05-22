@@ -9,26 +9,34 @@ pub struct LLMChatOverwriteBotReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatOverwriteBotRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatOverwriteTemplateReq {
     pub template: LLMChatTemplate,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatOverwriteTemplateRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatInsertSessionReq {
     pub session: LLMChatSession,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatInsertSessionRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatInsertRecordReq {
     pub record: LLMChatRecord,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatInsertRecordRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatListBotReq {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatListBotRsp {
     pub bots: Vec<LLMChatBot>,
@@ -54,6 +62,7 @@ pub struct LLMChatUpdateSessionReq {
     pub delete: Option<bool>,
     pub session_id: String,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatUpdateSessionRsp {}
 
@@ -62,6 +71,7 @@ pub struct LLMChatTruncateSessionReq {
     pub remove_rid_included: String,
     pub session_id: String,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTruncateSessionRsp {
     pub count: usize
@@ -72,26 +82,33 @@ pub struct LLMChatSessionDetialReq {
     pub(crate) session_id: String,
     pub with_omit: Option<bool>,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionDetailRsp {
     pub session: Option<LLMChatSession>,
     pub(crate) records: Vec<LLMChatRecord>,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteBotReq {
     pub(crate) bot_id: String,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteBotRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteTemplateReq {
     pub(crate) template_id: String,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteTemplateRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteSessionReq {
     pub(crate) session_id: String,
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteSessionRsp {}

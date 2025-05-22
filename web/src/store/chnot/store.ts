@@ -1,7 +1,7 @@
 import { insertMapAtIndex } from "@/utils/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { useNamespaceStore } from "../namespace";
+import { useWorkspaceStore } from "../workspace";
 import {
   Chnot,
   ChnotQueryRsp,
@@ -10,25 +10,25 @@ import {
   ListViewType,
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
-import { DbCache } from '../common';
+import { DbCache } from "../common";
 
 const newChnotMap = () => {
   return {
     dbNextStartIndex: 0,
     dbPageSize: 20,
     hasNextPage: true,
-    dbCache: new Map()
-  }
-}
+    dbCache: new Map(),
+  };
+};
 
 const getDefaultState = (): State => {
   return {
-    fetchMoreChnots: () => { },
-    refreshChnots: () => { },
+    fetchMoreChnots: () => {},
+    refreshChnots: () => {},
     chnotMapByMetaId: newChnotMap(),
     query: undefined,
     isFetchingNextPage: false,
-    listViewType: { kind: "timeline" }
+    listViewType: { kind: "timeline" },
   };
 };
 
@@ -50,9 +50,8 @@ interface State {
    * Current Query Input
    */
   query?: string;
-  listViewType: ListViewType
+  listViewType: ListViewType;
   isFetchingNextPage: boolean;
-
 }
 
 export const useChnotStore = create(
@@ -75,7 +74,7 @@ export const useChnotStore = create(
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
-        view_type: listViewType
+        view_type: listViewType,
       });
 
       set((state) => {
@@ -88,7 +87,11 @@ export const useChnotStore = create(
 
         return {
           ...state,
-          chnotMapByMetaId: { ...cmm, dbNextStartIndex: cs.next_start, hasNextPage: cs.has_next },
+          chnotMapByMetaId: {
+            ...cmm,
+            dbNextStartIndex: cs.next_start,
+            hasNextPage: cs.has_next,
+          },
           isFetchingNextPage: false,
         };
       });
@@ -154,8 +157,8 @@ export const useChnotStore = create(
           .values()
           .filter((e) => {
             const result =
-              e.meta.namespace ==
-              useNamespaceStore.getState().currentNamespace.name;
+              e.meta.workspace ==
+              useWorkspaceStore.getState().currentWorkspace.name;
             return !result;
           })
           .map((e) => {
@@ -185,9 +188,10 @@ export const useChnotStore = create(
     setListViewType: (newType: ListViewType) => {
       set((prev) => {
         return {
-          ...prev, listViewType: newType
-        }
-      })
-    }
+          ...prev,
+          listViewType: newType,
+        };
+      });
+    },
   }))
 );

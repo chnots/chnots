@@ -7,7 +7,7 @@ use crate::{
     model::db::{
         chnot::{ChnotMetadata, ChnotRecord},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        namespace::{NamespaceRecord, NamespaceRelation},
+        workspace::{WorkspaceRecord, WorkspaceRelation},
         resource::Resource,
     },
 };
@@ -58,14 +58,14 @@ impl DumpMapper for KDb {
         )
         .await?;
         self.read_iterator(
-            s(NamespaceRecord::TABLE),
-            Self::RowType::to_namespace_record,
+            s(WorkspaceRecord::TABLE),
+            Self::RowType::to_workspace_record,
             &callback,
         )
         .await?;
         self.read_iterator(
-            s(NamespaceRelation::TABLE),
-            Self::RowType::to_namespace_relation,
+            s(WorkspaceRelation::TABLE),
+            Self::RowType::to_workspace_relation,
             &callback,
         )
         .await?;

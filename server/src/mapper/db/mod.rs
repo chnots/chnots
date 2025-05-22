@@ -3,7 +3,7 @@ pub mod chnot;
 pub mod kdb;
 pub mod helper;
 pub mod llmchat;
-pub mod namespace;
+pub mod workspace;
 pub mod postgres;
 pub mod resource;
 pub mod sqlite;

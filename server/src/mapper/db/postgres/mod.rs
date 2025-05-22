@@ -2,7 +2,7 @@ pub(crate) mod imp;
 pub mod types;
 pub mod wrapper;
 
-use chin_tools::{AResult, EResult};
+use chin_tools::AResult;
 use deadpool_postgres::{Client, Pool, PoolError};
 use serde::Deserialize;
 
@@ -41,16 +41,5 @@ impl Postgres {
 
     pub(crate) async fn client(&self) -> Result<Client, PoolError> {
         self.pool.get().await
-    }
-
-    pub(crate) async fn create_table(&self, create_sql: &str) -> EResult {
-        self.client()
-            .await?
-            .execute(create_sql, &[])
-            .await
-            .map(|_| ())
-            .map_err(anyhow::Error::new)?;
-
-        Ok(())
     }
 }

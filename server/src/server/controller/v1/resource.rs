@@ -30,7 +30,7 @@ use crate::{
     mapper::ResourceMapper,
     model::{
         db::resource::Resource,
-        dto::{kreq, read_namespace_from_header, resource::*},
+        dto::{kreq, read_workspace_from_header, resource::*},
     },
     server::controller::{
         asset::{asset_to_response, ContentEnum},
@@ -139,7 +139,7 @@ async fn upload(
         let res = mapper
             .insert_resource(&Resource {
                 id,
-                namespace: read_namespace_from_header(&headers),
+                workspace: read_workspace_from_header(&headers),
                 ori_filename: filename,
                 content_type: "".to_owned(),
                 delete_time: None,
@@ -255,7 +255,7 @@ async fn query_svg(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Response {
     let mut headers = headers.clone();
-    headers.append("K-namespace", HeaderValue::from_str("default").unwrap());
+    headers.append("K-workspace", HeaderValue::from_str("default").unwrap());
     let rsp = query_inline_resource(
         headers,
         state,

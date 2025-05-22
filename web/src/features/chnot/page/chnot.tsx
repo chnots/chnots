@@ -2,7 +2,7 @@ import ChnotList from "@/features/chnot/component/chnot-list";
 import { ChnotContainer } from "@/features/chnot/component/chnot-container";
 import { useChnotStore } from "@/store/chnot/store";
 import { useCommonStore } from "@/store/common";
-import { useNamespaceStore } from "@/store/namespace";
+import { useWorkspaceStore } from "@/store/workspace";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { Chnot } from "@/store/chnot/dto";
@@ -73,11 +73,11 @@ const MonoChnot = () => {
  */
 const ChnotPage = () => {
   const { refreshChnots } = useChnotStore();
-  const { currentNamespace } = useNamespaceStore();
+  const { currentWorkspace } = useWorkspaceStore();
   const { showSidebar } = useCommonStore();
   useEffect(() => {
     refreshChnots();
-  }, [currentNamespace]);
+  }, [currentWorkspace]);
 
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">

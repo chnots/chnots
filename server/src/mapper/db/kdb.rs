@@ -9,7 +9,7 @@ use crate::mapper::DeserializeMapper;
 use crate::model::db::{
     chnot::*,
     llmchat::*,
-    namespace::*,
+    workspace::*,
     resource::KTV,
     resource::{InlineResource, Resource},
 };
@@ -228,7 +228,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
         let chnot = ChnotMetadata {
             id: self.try_get(ChnotMetadata::ID)?,
-            namespace: self.try_get(ChnotMetadata::NAMESPACE)?,
+            workspace: self.try_get(ChnotMetadata::WORKSPACE)?,
             kind: self.try_get(ChnotMetadata::KIND)?,
             pin_time: self.try_get(ChnotMetadata::PIN_TIME)?,
             delete_time: self.try_get(ChnotMetadata::DELETE_TIME)?,
@@ -282,7 +282,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             insert_time: self.try_get(LLMChatSession::INSERT_TIME)?,
             template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
             title: self.try_get(LLMChatSession::TITLE)?,
-            namespace: self.try_get(LLMChatSession::NAMESPACE)?,
+            workspace: self.try_get(LLMChatSession::WORKSPACE)?,
             delete_time: self.try_get(LLMChatSession::DELETE_TIME)?,
             update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
         };
@@ -304,25 +304,25 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
         Ok(obj)
     }
 
-    fn to_namespace_record(self) -> AResult<NamespaceRecord> {
-        let obj = NamespaceRecord {
-            id: self.try_get(NamespaceRecord::ID)?,
-            insert_time: self.try_get(NamespaceRecord::INSERT_TIME)?,
-            name: self.try_get(NamespaceRecord::NAME)?,
-            delete_time: self.try_get(NamespaceRecord::DELETE_TIME)?,
-            update_time: self.try_get(NamespaceRecord::UPDATE_TIME)?,
+    fn to_workspace_record(self) -> AResult<WorkspaceRecord> {
+        let obj = WorkspaceRecord {
+            id: self.try_get(WorkspaceRecord::ID)?,
+            insert_time: self.try_get(WorkspaceRecord::INSERT_TIME)?,
+            name: self.try_get(WorkspaceRecord::NAME)?,
+            delete_time: self.try_get(WorkspaceRecord::DELETE_TIME)?,
+            update_time: self.try_get(WorkspaceRecord::UPDATE_TIME)?,
         };
         Ok(obj)
     }
 
-    fn to_namespace_relation(self) -> AResult<NamespaceRelation> {
-        let obj = NamespaceRelation {
-            id: self.try_get(NamespaceRelation::ID)?,
-            insert_time: self.try_get(NamespaceRelation::INSERT_TIME)?,
-            delete_time: self.try_get(NamespaceRelation::DELETE_TIME)?,
-            update_time: self.try_get(NamespaceRelation::UPDATE_TIME)?,
-            sub_id: self.try_get(NamespaceRelation::SUB_ID)?,
-            parent_id: self.try_get(NamespaceRelation::PARENT_ID)?,
+    fn to_workspace_relation(self) -> AResult<WorkspaceRelation> {
+        let obj = WorkspaceRelation {
+            id: self.try_get(WorkspaceRelation::ID)?,
+            insert_time: self.try_get(WorkspaceRelation::INSERT_TIME)?,
+            delete_time: self.try_get(WorkspaceRelation::DELETE_TIME)?,
+            update_time: self.try_get(WorkspaceRelation::UPDATE_TIME)?,
+            sub_id: self.try_get(WorkspaceRelation::SUB_ID)?,
+            parent_id: self.try_get(WorkspaceRelation::PARENT_ID)?,
         };
         Ok(obj)
     }
@@ -332,7 +332,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             id: self.try_get(Resource::ID)?,
             insert_time: self.try_get(Resource::INSERT_TIME)?,
             delete_time: self.try_get(Resource::DELETE_TIME)?,
-            namespace: self.try_get(Resource::NAMESPACE)?,
+            workspace: self.try_get(Resource::WORKSPACE)?,
             ori_filename: self.try_get(Resource::ORI_FILENAME)?,
             content_type: self.try_get(Resource::CONTENT_TYPE)?,
             ori_last_modified: self.try_get(Resource::ORI_LAST_MODIFIED)?,
@@ -355,7 +355,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
     fn to_chnot_tag(self) -> AResult<ChnotTag> {
         let obj = ChnotTag {
             id: self.try_get(ChnotTag::ID)?,
-            namespace: self.try_get(ChnotTag::NAMESPACE)?,
+            workspace: self.try_get(ChnotTag::WORKSPACE)?,
             tag: self.try_get(ChnotTag::TAG)?,
             chnot_meta_id: self.try_get(ChnotTag::CHNOT_META_ID)?,
             insert_time: self.try_get(ChnotTag::INSERT_TIME)?,
@@ -372,7 +372,7 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             content_type: self.try_get(InlineResource::CONTENT_TYPE)?,
             delete_time: self.try_get(InlineResource::DELETE_TIME)?,
             insert_time: self.try_get(InlineResource::INSERT_TIME)?,
-            namespace: self.try_get(InlineResource::NAMESPACE)?,
+            workspace: self.try_get(InlineResource::WORKSPACE)?,
             rid: self.try_get(InlineResource::RID)?,
             archor: self.try_get(InlineResource::ARCHOR)?,
         };

@@ -71,7 +71,7 @@ macro_rules! handle_insert {
         let insert_meta = SqlInserter::new(ChnotMetadata::TABLE)
             .fields(ChnotMetadata::ID, (*$meta_id).clone())
             .fields(ChnotMetadata::INSERT_TIME, &$req.insert_time)
-            .fields(ChnotMetadata::NAMESPACE, &$req.namespace)
+            .fields(ChnotMetadata::WORKSPACE, &$req.workspace)
             .fields(ChnotMetadata::KIND, $req.kind.as_ref());
         let update_meta_utime = SqlUpdater::new(ChnotMetadata::TABLE)
             .set(ChnotMetadata::UPDATE_TIME, &$req.insert_time)
@@ -185,7 +185,7 @@ impl KDb {
         self.chnot_tag_update_single_chnot(
             &chnot.record.content,
             &chnot.meta.id,
-            &chnot.meta.namespace,
+            &chnot.meta.workspace,
         )
         .await?;
 

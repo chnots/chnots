@@ -27,7 +27,7 @@ import {
   queryInlineResource,
   queryKTV,
 } from "@/store/resource/service";
-import { useNamespaceStore } from "@/store/namespace";
+import { useWorkspaceStore } from "@/store/workspace";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
 import md5 from "crypto-js/md5";
@@ -53,7 +53,7 @@ export default function ExcalidrawContainer({
   useEffect(() => {
     console.log("redraw excalidraw", chnotMetaId);
   }, []);
-  const { currentNamespace } = useNamespaceStore();
+  const { currentWorkspace } = useWorkspaceStore();
 
   const [viewModeEnabled, setViewModeEnabled] = useState(viewMode);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
@@ -176,7 +176,7 @@ export default function ExcalidrawContainer({
                 res: {
                   id: md5(newVar).toString(),
                   rid: fileId,
-                  namespace: currentNamespace.name,
+                  workspace: currentWorkspace.name,
                   archor: true,
                   name: fileId,
                   content: file.dataURL,
@@ -194,7 +194,7 @@ export default function ExcalidrawContainer({
             res: {
               id: uuid(),
               rid: excalidrawId,
-              namespace: currentNamespace.name,
+              workspace: currentWorkspace.name,
               archor: false,
               name: chnotMetaId ?? uuid(),
               content,

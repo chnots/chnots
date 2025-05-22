@@ -5,7 +5,7 @@ use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRow
 use crate::{
     mapper::{KVMapper, ResourceMapper},
     model::{
-        db::{chnot::ChnotSubTypeRelation, resource::*},
+        db::resource::*,
         dto::{resource::*, KReq},
     },
 };
@@ -27,7 +27,7 @@ impl ResourceMapper for KDb {
             ori_filename,
             id,
             content_type,
-            namespace,
+            workspace,
             delete_time: _,
             insert_time: _,
             filesize,
@@ -42,23 +42,23 @@ impl ResourceMapper for KDb {
             SqlInserter::new(Resource::TABLE)
                 .fields(Resource::ID, id.to_owned())
                 .fields(Resource::ORI_FILENAME, ori_filename.to_owned())
-                .fields(Resource::NAMESPACE, namespace.to_owned())
+                .fields(Resource::WORKSPACE, workspace.to_owned())
                 .fields(Resource::CONTENT_TYPE, content_type.to_owned())
                 .fields(Resource::INSERT_TIME, insert_time.to_owned())
                 .fields(Resource::FILESIZE, *filesize)
                 .fields(Resource::ORI_LAST_MODIFIED, *ori_last_modified),
         )
-            .await
-            .map(|_| Resource {
-                id: id.to_owned(),
-                namespace: namespace.to_owned(),
-                ori_filename: ori_filename.to_string(),
-                content_type: content_type.to_owned(),
-                insert_time: insert_time.fixed_offset(),
-                delete_time: None,
-                filesize: *filesize,
-                ori_last_modified: *ori_last_modified,
-            })
+        .await
+        .map(|_| Resource {
+            id: id.to_owned(),
+            workspace: workspace.to_owned(),
+            ori_filename: ori_filename.to_string(),
+            content_type: content_type.to_owned(),
+            insert_time: insert_time.fixed_offset(),
+            delete_time: None,
+            filesize: *filesize,
+            ori_last_modified: *ori_last_modified,
+        })
     }
 
     async fn query_resource_by_id(&self, id: &str) -> AResult<Resource> {
@@ -115,7 +115,7 @@ impl ResourceMapper for KDb {
                     .fields(InlineResource::CONTENT, &req.res.content)
                     .fields(InlineResource::CONTENT_TYPE, &req.res.content_type)
                     .fields(InlineResource::INSERT_TIME, &req.res.insert_time)
-                    .fields(InlineResource::NAMESPACE, &req.res.namespace)
+                    .fields(InlineResource::WORKSPACE, &req.res.workspace)
                     .fields(InlineResource::ARCHOR, archorp)
                     .on_conflict({
                         match req.ignore_conflict.as_ref() {
@@ -196,7 +196,9 @@ impl KVMapper for KDb {
             .qry_opt(query, |e| KDbRow::to_kv(e))
             .await?;
 
-        Ok(KVQueryRsp { value: kv.map(|kv| kv.value) })
+        Ok(KVQueryRsp {
+            value: kv.map(|kv| kv.value),
+        })
     }
 
     async fn kv_delete(

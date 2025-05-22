@@ -28,10 +28,10 @@ impl ChinTableMapper for KDb {
             table_name,
             table_comment,
             create_time,
-            update_time,
-            delete_time,
+            update_time: _,
+            delete_time: _,
             real_table,
-            namespace,
+            workspace: _,
         } = &req.meta;
 
         let omit_sql = SqlUpdater::new(CTableMeta::TABLE)
@@ -60,7 +60,7 @@ impl ChinTableMapper for KDb {
         req: KReq<CTableOverwriteRowReq>,
     ) -> chin_tools::AResult<CTableOverwriteRowRsp> {
         let emtpy_req = req.frame(());
-        let KReq { body, namespace: _ } = req;
+        let KReq { body, workspace: _ } = req;
 
         let CTableOverwriteRowReq { row } = body;
         for ele in row {
@@ -180,7 +180,7 @@ impl ChinTableMapper for KDb {
                         delete_time: row.try_get(CTableMeta::DELETE_TIME)?,
                         real_table: row.try_get(CTableMeta::REAL_TABLE)?,
                         id: row.try_get(CTableMeta::ID)?,
-                        namespace: row.try_get(CTableMeta::NAMESPACE)?,
+                        workspace: row.try_get(CTableMeta::WORKSPACE)?,
                     })
                 },
                 true,
