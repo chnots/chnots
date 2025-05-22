@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum CTableColumnType {
+pub(crate) enum CTableColumnType {
     Bool,
     I8,
     I16,
@@ -65,38 +65,38 @@ impl TryFrom<&str> for CTableColumnType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CTableColumnMeta {
-    pub index: u32,
-    pub name: String,
-    pub comment: String,
-    pub stype: CTableColumnType,
+pub(crate) struct CTableColumnMeta {
+    pub(crate) index: u32,
+    pub(crate) name: String,
+    pub(crate) comment: String,
+    pub(crate) stype: CTableColumnType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
-pub struct CTableMeta {
-    pub id: String,
+pub(crate) struct CTableMeta {
+    pub(crate) id: String,
     #[gts_type = "String"]
-    pub columns: HashMap<String, CTableColumnMeta>,
-    pub table_name: String,
-    pub table_comment: String,
-    pub create_time: DateTime<FixedOffset>,
-    pub update_time: Option<DateTime<FixedOffset>>,
-    pub delete_time: Option<DateTime<FixedOffset>>,
-    pub workspace: String,
-    pub real_table: bool,
+    pub(crate) columns: HashMap<String, CTableColumnMeta>,
+    pub(crate) table_name: String,
+    pub(crate) table_comment: String,
+    pub(crate) create_time: DateTime<FixedOffset>,
+    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
+    pub(crate) workspace: String,
+    pub(crate) real_table: bool,
 }
 
 macro_rules! type_table {
     ($suffix:tt, $data_type:ty $(, #[$attr:meta])*) => {
         #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
-        pub struct $suffix {
-            pub table_id: String,
-            pub col_idx: i32,
-            pub row_idx: i32,
-            pub insert_time: DateTime<FixedOffset>,
-            pub delete_time: Option<DateTime<FixedOffset>>,
+        pub(crate) struct $suffix {
+            pub(crate) table_id: String,
+            pub(crate) col_idx: i32,
+            pub(crate) row_idx: i32,
+            pub(crate) insert_time: DateTime<FixedOffset>,
+            pub(crate) delete_time: Option<DateTime<FixedOffset>>,
             $(#[$attr])*
-            pub cell_data: $data_type
+            pub(crate) cell_data: $data_type
         }
     }
 }

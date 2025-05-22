@@ -6,7 +6,7 @@ use crate::toent::{EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq)]
 
-pub struct Times {
+pub(crate) struct Times {
     count: u32,
 }
 

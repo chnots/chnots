@@ -8,13 +8,12 @@ use super::{postgres, sqlite};
 use crate::mapper::DeserializeMapper;
 use crate::model::db::{
     chnot::*,
-    llmchat::*,
     workspace::*,
     kfile::KTV,
     kfile::{InlineKFile, KFile},
 };
 
-pub trait KDbConnBehaiver {
+pub(crate) trait KDbConnBehaiver {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
 
     async fn exec_and_check<'a, T: IntoSqlSeg<'a>, C>(
@@ -44,7 +43,7 @@ pub trait KDbConnBehaiver {
         E: Send + 'static;
 }
 
-pub trait KDbConnBehaiverSync {
+pub(crate) trait KDbConnBehaiverSync {
     fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
 
     fn exec_and_check<'a, T, C>(&self, ssb: T, check_count: C) -> AResult<usize>
@@ -71,25 +70,25 @@ pub trait KDbConnBehaiverSync {
         E: Send + 'static;
 }
 
-pub enum KDbConn {
+pub(crate) enum KDbConn {
     Sqlite(sqlite::Sqlite),
     Postgres(Client),
 }
 
-pub trait KDbBehaiver {
+pub(crate) trait KDbBehaiver {
     async fn conn(&self) -> AResult<KDbConn>;
 }
 
-pub enum KDb {
+pub(crate) enum KDb {
     Sqlite(sqlite::Sqlite),
     Postgres(postgres::Postgres),
 }
 
-pub trait KDbRowBehavier<'b, T> {
+pub(crate) trait KDbRowBehavier<'b, T> {
     fn try_get(&'b self, key: &str) -> AResult<T>;
 }
 
-pub enum KDbRow<'a> {
+pub(crate) enum KDbRow<'a> {
     Postgres(tokio_postgres::Row),
     Sqlite(&'a rusqlite::Row<'a>),
 }
@@ -110,14 +109,14 @@ impl KDbBehaiver for KDb {
 }
 
 impl KDb {
-    pub fn db_type(&self) -> DbType {
+    pub(crate) fn db_type(&self) -> DbType {
         match self {
             KDb::Sqlite(_) => DbType::Sqlite,
             KDb::Postgres(_) => DbType::Postgres,
         }
     }
 
-    pub async fn create_table(&self, sql: &str) -> EResult {
+    pub(crate) async fn create_table(&self, sql: &str) -> EResult {
         self.conn().await?.exec(SqlReader::new().raw(sql)).await?;
         Ok(())
     }
@@ -248,60 +247,6 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
             insert_time: self.try_get(ChnotRecord::INSERT_TIME)?,
         };
         Ok(chnot)
-    }
-
-    fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
-        let obj = LLMChatBot {
-            id: self.try_get(LLMChatBot::ID)?,
-            insert_time: self.try_get(LLMChatBot::INSERT_TIME)?,
-            delete_time: self.try_get(LLMChatBot::DELETE_TIME)?,
-            name: self.try_get(LLMChatBot::NAME)?,
-            body: self.try_get(LLMChatBot::BODY)?,
-            update_time: self.try_get(LLMChatBot::UPDATE_TIME)?,
-            svg_logo: self.try_get(LLMChatBot::SVG_LOGO)?,
-        };
-        Ok(obj)
-    }
-
-    fn to_llmchat_template(self) -> AResult<LLMChatTemplate> {
-        let obj = LLMChatTemplate {
-            id: self.try_get(LLMChatTemplate::ID)?,
-            insert_time: self.try_get(LLMChatTemplate::INSERT_TIME)?,
-            delete_time: self.try_get(LLMChatTemplate::DELETE_TIME)?,
-            update_time: self.try_get(LLMChatTemplate::UPDATE_TIME)?,
-            name: self.try_get(LLMChatTemplate::NAME)?,
-            prompt: self.try_get(LLMChatTemplate::PROMPT)?,
-            svg_logo: self.try_get(LLMChatTemplate::SVG_LOGO)?,
-        };
-        Ok(obj)
-    }
-
-    fn to_llmchat_session(self) -> AResult<LLMChatSession> {
-        let obj = LLMChatSession {
-            id: self.try_get(LLMChatSession::ID)?,
-            insert_time: self.try_get(LLMChatSession::INSERT_TIME)?,
-            template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
-            title: self.try_get(LLMChatSession::TITLE)?,
-            workspace: self.try_get(LLMChatSession::WORKSPACE)?,
-            delete_time: self.try_get(LLMChatSession::DELETE_TIME)?,
-            update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
-        };
-        Ok(obj)
-    }
-
-    fn to_llmchat_record(self) -> AResult<LLMChatRecord> {
-        let obj = LLMChatRecord {
-            id: self.try_get(LLMChatRecord::ID)?,
-            insert_time: self.try_get(LLMChatRecord::INSERT_TIME)?,
-            session_id: self.try_get(LLMChatRecord::SESSION_ID)?,
-            pre_record_id: self.try_get(LLMChatRecord::PRE_RECORD_ID)?,
-            content: self.try_get(LLMChatRecord::CONTENT)?,
-            role: self.try_get(LLMChatRecord::ROLE)?,
-            role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
-            omit_time: self.try_get(LLMChatRecord::OMIT_TIME)?,
-            reasoning_content: self.try_get(LLMChatRecord::REASONING_CONTENT)?,
-        };
-        Ok(obj)
     }
 
     fn to_workspace_record(self) -> AResult<WorkspaceRecord> {

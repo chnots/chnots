@@ -2,7 +2,7 @@ use strum::{AsRefStr, EnumIter, EnumString};
 
 #[derive(Clone, Debug, EnumString, AsRefStr, EnumIter, PartialEq)]
 #[strum(serialize_all = "UPPERCASE")]
-pub enum TodoEvent {
+pub(crate) enum TodoEvent {
     Todo,
     Doing,
     Wait,

@@ -1,15 +1,14 @@
-pub mod backup;
-pub mod chnot;
-pub mod kdb;
-pub mod helper;
-pub mod llmchat;
-pub mod workspace;
-pub mod postgres;
-pub mod kfile;
-pub mod sqlite;
-pub mod tabledumpsql;
-pub mod ctable;
+pub(crate) mod backup;
+pub(crate) mod chnot;
+pub(crate) mod kdb;
+pub(crate) mod helper;
+pub(crate) mod workspace;
+pub(crate) mod postgres;
+pub(crate) mod kfile;
+pub(crate) mod sqlite;
+pub(crate) mod tabledumpsql;
+pub(crate) mod ctable;
 
 use super::DeserializeMapper;
 
-pub use kdb::*;
+pub(crate) use kdb::*;

@@ -7,7 +7,7 @@ use super::PossibleScore;
 use crate::toent::{EventBuilder, RawInputSegs};
 
 #[derive(Clone, Deserialize, Serialize, Default, Debug, PartialEq)]
-pub struct NoneOrI32(Option<i32>);
+pub(crate) struct NoneOrI32(Option<i32>);
 
 impl Display for NoneOrI32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -69,16 +69,16 @@ impl Deref for NoneOrI32 {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct BaseTime {
-    pub year: NoneOrI32,
-    pub month: NoneOrI32,
-    pub day: NoneOrI32,
-    pub hour: NoneOrI32,
-    pub minute: NoneOrI32,
-    pub second: NoneOrI32,
+pub(crate) struct BaseTime {
+    pub(crate) year: NoneOrI32,
+    pub(crate) month: NoneOrI32,
+    pub(crate) day: NoneOrI32,
+    pub(crate) hour: NoneOrI32,
+    pub(crate) minute: NoneOrI32,
+    pub(crate) second: NoneOrI32,
 }
 
-pub enum TimeUnit {
+pub(crate) enum TimeUnit {
     Year,
     Month,
     Day,
@@ -89,30 +89,30 @@ pub enum TimeUnit {
 }
 
 impl BaseTime {
-    pub fn with_year(mut self, year: i32) -> Self {
+    pub(crate) fn with_year(mut self, year: i32) -> Self {
         self.year = year.into();
         self
     }
 
-    pub fn with_month(mut self, month: i32) -> Self {
+    pub(crate) fn with_month(mut self, month: i32) -> Self {
         self.month = month.into();
         self
     }
 
-    pub fn with_day(mut self, day: i32) -> Self {
+    pub(crate) fn with_day(mut self, day: i32) -> Self {
         self.day = day.into();
         self
     }
-    pub fn with_hour(mut self, hour: i32) -> Self {
+    pub(crate) fn with_hour(mut self, hour: i32) -> Self {
         self.hour = hour.into();
         self
     }
-    pub fn with_minute(mut self, minute: i32) -> Self {
+    pub(crate) fn with_minute(mut self, minute: i32) -> Self {
         self.minute = minute.into();
         self
     }
 
-    pub fn with_second(mut self, second: i32) -> Self {
+    pub(crate) fn with_second(mut self, second: i32) -> Self {
         self.second = second.into();
         self
     }
@@ -286,7 +286,7 @@ impl From<NaiveTime> for BaseTime {
     }
 }
 
-pub fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Result<i32> {
+pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Result<i32> {
     match unit {
         TimeUnit::Minute => {
             let time: Vec<&str> = input

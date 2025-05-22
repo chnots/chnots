@@ -8,47 +8,47 @@ use strum::{AsRefStr, EnumString};
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql)]
-pub struct KFile {
+pub(crate) struct KFile {
     #[gts_primary]
     #[gts_length = 40]
-    pub id: String,
+    pub(crate) id: String,
     #[gts_length = 40]
-    pub workspace: String,
+    pub(crate) workspace: String,
     #[gts_length = 200]
-    pub content_type: String,
+    pub(crate) content_type: String,
 
     #[gts_length = 512]
-    pub ori_filename: String,
-    pub filesize: i64,
-    pub ori_last_modified: i64,
+    pub(crate) ori_filename: String,
+    pub(crate) filesize: i64,
+    pub(crate) ori_last_modified: i64,
 
-    pub delete_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,
+    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql)]
-pub struct InlineKFile {
+pub(crate) struct InlineKFile {
     #[gts_primary]
     #[gts_length = 40]
-    pub id: String,
+    pub(crate) id: String,
 
     #[gts_length = 40]
-    pub rid: String,
-    pub archor: bool,
+    pub(crate) rid: String,
+    pub(crate) archor: bool,
 
     #[gts_length = 200]
-    pub name: String,
-    pub content: String,
-    pub workspace: String,
+    pub(crate) name: String,
+    pub(crate) content: String,
+    pub(crate) workspace: String,
 
     #[gts_length = 100]
-    pub content_type: String,
-    pub delete_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,
+    pub(crate) content_type: String,
+    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, AsRefStr)]
-pub enum KVType {
+pub(crate) enum KVType {
     #[strum(serialize = "chnot_sub_type")]
     #[serde(rename = "chnot_sub_type")]
     ChnotSubType,
@@ -71,15 +71,15 @@ impl<'a> KDbRowBehavier<'a, KVType> for KDbRow<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct KTV {
+pub(crate) struct KTV {
     #[gts_primary]
     #[gts_length = 500]
-    pub key: String,
+    pub(crate) key: String,
     #[gts_primary]
     #[gts_length = 100]
     #[gts_type = "String"]
-    pub ttype: KVType,
-    pub value: String,
-    pub update_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,
+    pub(crate) ttype: KVType,
+    pub(crate) value: String,
+    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }

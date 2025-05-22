@@ -1,25 +1,21 @@
 use chin_tools::{utils::sort_util, AResult, EResult};
 
-use crate::model::{
-    db::{chnot::ChnotTag, workspace::WorkspaceRelation, kfile::KFile},
+use crate::{llmchat::mapper::LLMChatMapper, model::{
+    db::{chnot::ChnotTag, kfile::KFile, workspace::WorkspaceRelation},
     dto::{
         ctable::*,
-        llmchat::{
-            LLMChatTruncateSessionReq, LLMChatTruncateSessionRsp, LLMChatUpdateSessionReq,
-            LLMChatUpdateSessionRsp,
-        },
         kfile::{
             InsertInlineKFileReq, InsertInlineKFileRsp, KVOverwriteReq, KVOverwriteRsp,
             KVQueryReq, KVQueryRsp, QueryInlineKFileReq, QueryInlineKFileRsp,
         },
     },
-};
+}};
 
 use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
-    dump::RecordCallbackEnum,
+    dump::RecordCallbackType,
     ChinTableMapper, ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp,
-    DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType, WorkspaceMapper, KFileMapper,
+    DumpMapper, KVMapper, MapperConfig, MapperType, WorkspaceMapper, KFileMapper,
 };
 
 use crate::model::{
@@ -43,7 +39,7 @@ impl Into<AResult<MapperType>> for MapperConfig {
 }
 
 impl MapperType {
-    pub async fn ensure_tables(&self) -> EResult {
+    pub(crate) async fn ensure_tables(&self) -> EResult {
         self.ensure_table_chnot_record().await?;
         self.ensure_table_workspace_record().await?;
         self.ensure_table_workspace_relation().await?;
@@ -53,10 +49,7 @@ impl MapperType {
         self.ensure_table_inline_kfile().await?;
         self.ensure_table_kv().await?;
 
-        self.ensure_table_llm_chat_bot().await?;
-        self.ensure_table_llm_chat_template().await?;
-        self.ensure_table_llm_chat_session().await?;
-        self.ensure_table_llm_chat_record().await?;
+        self.ensure_table_llm_chat().await?;
 
         self.ensure_ctable_tables().await?;
 
@@ -64,6 +57,7 @@ impl MapperType {
     }
 }
 
+#[macro_export]
 macro_rules! expand_mt_branch {
     ($self:ident.$method:ident($($arg:expr),*)) => {
         match $self {
@@ -188,127 +182,8 @@ impl WorkspaceMapper for MapperType {
     }
 }
 
-impl LLMChatMapper for MapperType {
-    async fn llm_chat_overwrite_bot(
-        &self,
-        req: KReq<super::LLMChatOverwriteBotReq>,
-    ) -> AResult<super::LLMChatOverwriteBotRsp> {
-        expand_mt_branch!(self.llm_chat_overwrite_bot(req))
-    }
-
-    async fn llm_chat_overwrite_template(
-        &self,
-        req: KReq<super::LLMChatOverwriteTemplateReq>,
-    ) -> AResult<super::LLMChatOverwriteTemplateRsp> {
-        expand_mt_branch!(self.llm_chat_overwrite_template(req))
-    }
-
-    async fn llm_chat_insert_session(
-        &self,
-        req: KReq<super::LLMChatInsertSessionReq>,
-    ) -> AResult<super::LLMChatInsertSessionRsp> {
-        expand_mt_branch!(self.llm_chat_insert_session(req))
-    }
-
-    async fn llm_chat_insert_record(
-        &self,
-        req: KReq<super::LLMChatInsertRecordReq>,
-    ) -> AResult<super::LLMChatInsertRecordRsp> {
-        expand_mt_branch!(self.llm_chat_insert_record(req))
-    }
-
-    async fn llm_chat_list_bots(
-        &self,
-        req: KReq<super::LLMChatListBotReq>,
-    ) -> AResult<super::LLMChatListBotRsp> {
-        expand_mt_branch!(self.llm_chat_list_bots(req))
-    }
-
-    async fn llm_chat_list_templates(
-        &self,
-        req: KReq<super::LLMChatListTemplateReq>,
-    ) -> AResult<super::LLMChatListTemplateRsp> {
-        expand_mt_branch!(self.llm_chat_list_templates(req))
-    }
-
-    async fn llm_chat_list_sessions(
-        &self,
-        req: KReq<super::LLMChatListSessionReq>,
-    ) -> AResult<super::LLMChatListSessionRsp> {
-        expand_mt_branch!(self.llm_chat_list_sessions(req))
-    }
-
-    async fn llm_chat_session_detail(
-        &self,
-        req: KReq<super::LLMChatSessionDetialReq>,
-    ) -> AResult<super::LLMChatSessionDetailRsp> {
-        let mut raw_result = expand_mt_branch!(self.llm_chat_session_detail(req))?;
-
-        sort_util::sort_by_prev(
-            &mut raw_result.records,
-            false,
-            |r| &r.id,
-            |r| &r.pre_record_id,
-            |e| &e.insert_time,
-        );
-
-        Ok(raw_result)
-    }
-
-    async fn llm_chat_update_session(
-        &self,
-        req: KReq<LLMChatUpdateSessionReq>,
-    ) -> AResult<LLMChatUpdateSessionRsp> {
-        expand_mt_branch!(self.llm_chat_update_session(req))
-    }
-
-    async fn llm_chat_delete_bot(
-        &self,
-        req: KReq<super::LLMChatDeleteBotReq>,
-    ) -> AResult<super::LLMChatDeleteBotRsp> {
-        expand_mt_branch!(self.llm_chat_delete_bot(req))
-    }
-
-    async fn llm_chat_delete_template(
-        &self,
-        req: KReq<super::LLMChatDeleteTemplateReq>,
-    ) -> AResult<super::LLMChatDeleteTemplateRsp> {
-        expand_mt_branch!(self.llm_chat_delete_template(req))
-    }
-
-    async fn llm_chat_delete_session(
-        &self,
-        req: KReq<super::LLMChatDeleteSessionReq>,
-    ) -> AResult<super::LLMChatDeleteSessionRsp> {
-        expand_mt_branch!(self.llm_chat_delete_session(req))
-    }
-
-    async fn ensure_table_llm_chat_record(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_record())
-    }
-
-    async fn ensure_table_llm_chat_template(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_template())
-    }
-
-    async fn ensure_table_llm_chat_session(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_session())
-    }
-
-    async fn ensure_table_llm_chat_bot(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_bot())
-    }
-
-    async fn llm_chat_truncate_session(
-        &self,
-        req: KReq<LLMChatTruncateSessionReq>,
-    ) -> AResult<LLMChatTruncateSessionRsp> {
-        expand_mt_branch!(self.llm_chat_truncate_session(req))
-    }
-}
-
 impl MapperType {
-    pub async fn dump_and_callback(&self, writer: &RecordCallbackEnum) -> EResult {
+    pub(crate) async fn dump_and_callback(&self, writer: &RecordCallbackType) -> EResult {
         expand_mt_branch!(self.dump_and_callback(writer))
     }
 }

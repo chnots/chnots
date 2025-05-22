@@ -1,4 +1,4 @@
-pub fn web_svg_src(s: Option<String>) -> Option<String> {
+pub(crate) fn web_svg_src(s: Option<String>) -> Option<String> {
     /*     if let Some(s) = s {
         if !s.starts_with("data:image") {
             Some(format!(

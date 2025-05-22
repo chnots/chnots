@@ -6,19 +6,19 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct AttachmentConfig {
-    pub base_dir: String,
+pub(crate) struct AttachmentConfig {
+    pub(crate) base_dir: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct Config {
-    pub server: Option<ServerConfig>,
-    pub mapper: MapperConfig,
-    pub file_backup: Option<FileBackupConfig>,
-    pub attachment: AttachmentConfig,
+pub(crate) struct Config {
+    pub(crate) server: Option<ServerConfig>,
+    pub(crate) mapper: MapperConfig,
+    pub(crate) file_backup: Option<FileBackupConfig>,
+    pub(crate) attachment: AttachmentConfig,
 }
 
-pub mod tests {
+pub(crate) mod tests {
     #[test]
     fn test_db_deserialize() {
         let toml_str = r#"

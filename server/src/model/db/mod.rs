@@ -1,6 +1,5 @@
-pub mod chnot;
-pub mod llmchat;
-pub mod workspace;
-pub mod kfile;
-pub mod toent;
-pub mod ctable;
+pub(crate) mod chnot;
+pub(crate) mod workspace;
+pub(crate) mod kfile;
+pub(crate) mod toent;
+pub(crate) mod ctable;

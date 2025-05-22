@@ -25,14 +25,14 @@ use tower_http::{
     trace::{self, TraceLayer},
 };
 use tracing::{info, Level};
-use v1::{chnot, kv, llmchat, kfile, toent};
+use v1::{chnot, kv, kfile, toent};
 
-use crate::app::ShareAppState;
+use crate::{app::ShareAppState, llmchat};
 
 mod asset;
-pub mod v1;
+pub(crate) mod v1;
 
-pub struct KResponse<E: Serialize>(AResult<E>);
+pub(crate) struct KResponse<E: Serialize>(AResult<E>);
 
 impl<E: Serialize> From<AResult<E>> for KResponse<E> {
     fn from(value: AResult<E>) -> Self {
@@ -61,7 +61,7 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
     }
 }
 
-pub async fn serve(app_state: ShareAppState) -> EResult {
+pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
     let port = app_state.config.server.as_ref().map_or(3301, |e| e.port);
     let cors_layer = CorsLayer::new()
         .allow_headers(Any)
@@ -79,7 +79,7 @@ pub async fn serve(app_state: ShareAppState) -> EResult {
         .merge(asset::routes())
         .merge(toent::routes())
         .merge(kv::routes())
-        .merge(llmchat::routes())
+        .merge(llmchat::controller::routes())
         .with_state(app_state.clone())
         .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(

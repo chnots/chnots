@@ -7,7 +7,7 @@ use super::{base::BaseTime, Timestamp};
 use crate::toent::{timeevent::contains_any, EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct ChnTime {
+pub(crate) struct ChnTime {
     leap_month: bool,
     timestamp: BaseTime,
 }

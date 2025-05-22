@@ -5,62 +5,62 @@ use serde::{de, Deserialize, Serialize};
 use crate::model::db::chnot::{ChnotKind, ChnotMetadata, ChnotRecord};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Chnot {
-    pub record: ChnotRecord,
-    pub meta: ChnotMetadata,
+pub(crate) struct Chnot {
+    pub(crate) record: ChnotRecord,
+    pub(crate) meta: ChnotMetadata,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotUpdateReq {
-    pub meta_id: String,
-    pub workspace: Option<String>,
-    pub update_time: bool,
-    pub pinned: Option<bool>,
-    pub archive: Option<bool>,
+pub(crate) struct ChnotUpdateReq {
+    pub(crate) meta_id: String,
+    pub(crate) workspace: Option<String>,
+    pub(crate) update_time: bool,
+    pub(crate) pinned: Option<bool>,
+    pub(crate) archive: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotUpdateRsp {}
+pub(crate) struct ChnotUpdateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteReq {
-    pub id: Option<String>,
-    pub meta_id: Option<String>,
-    pub content: String,
-    pub kind: ChnotKind,
-    pub insert_time: DateTime<FixedOffset>,
+pub(crate) struct ChnotOverwriteReq {
+    pub(crate) id: Option<String>,
+    pub(crate) meta_id: Option<String>,
+    pub(crate) content: String,
+    pub(crate) kind: ChnotKind,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteRsp {
-    pub chnot: Chnot,
+pub(crate) struct ChnotOverwriteRsp {
+    pub(crate) chnot: Chnot,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotDeletionReq {
-    pub chnot_id: String,
+pub(crate) struct ChnotDeletionReq {
+    pub(crate) chnot_id: String,
     /// logic or physical deletion
-    pub logic: bool,
+    pub(crate) logic: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotDeletionRsp {}
+pub(crate) struct ChnotDeletionRsp {}
 
 #[derive(Debug, Clone, Serialize)]
-pub enum ChnotTagTreeType {
+pub(crate) enum ChnotTagTreeType {
     Children(String),
     Descendants(String),
 }
 
 impl ChnotTagTreeType {
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         match self {
             ChnotTagTreeType::Children(prefix) => prefix.is_empty(),
             ChnotTagTreeType::Descendants(prefix) => prefix.is_empty(),
         }
     }
 
-    pub fn path(&self) -> &str {
+    pub(crate) fn path(&self) -> &str {
         match self {
             ChnotTagTreeType::Children(prefix) => &prefix,
             ChnotTagTreeType::Descendants(prefix) => &prefix,
@@ -69,7 +69,7 @@ impl ChnotTagTreeType {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum ChnotViewType {
+pub(crate) enum ChnotViewType {
     Timeline,
     TagTree(ChnotTagTreeType),
 }
@@ -104,37 +104,37 @@ impl<'a> Deserialize<'a> for ChnotViewType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotQueryReq {
-    pub query: Option<String>,
-    pub meta_id: Option<String>,
-    pub record_id: Option<String>,
-    pub tag_path: Option<String>,
-    pub view_type: ChnotViewType,
+pub(crate) struct ChnotQueryReq {
+    pub(crate) query: Option<String>,
+    pub(crate) meta_id: Option<String>,
+    pub(crate) record_id: Option<String>,
+    pub(crate) tag_path: Option<String>,
+    pub(crate) view_type: ChnotViewType,
 
-    pub with_deleted: Option<bool>,
-    pub with_omitted: Option<bool>,
-    pub with_archived: Option<bool>,
+    pub(crate) with_deleted: Option<bool>,
+    pub(crate) with_omitted: Option<bool>,
+    pub(crate) with_archived: Option<bool>,
 
     // Paging
-    pub start_index: usize,
-    pub page_size: usize,
+    pub(crate) start_index: usize,
+    pub(crate) page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotQueryRsp<T> {
-    pub data: T,
-    pub has_next: bool,
-    pub next_start: usize
+pub(crate) struct ChnotQueryRsp<T> {
+    pub(crate) data: T,
+    pub(crate) has_next: bool,
+    pub(crate) next_start: usize
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct ToentGuessReq {
-    pub input: String,
+pub(crate) struct ToentGuessReq {
+    pub(crate) input: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct ToentGuessRsp {
-    pub toents: Vec<PossibleToent>,
+pub(crate) struct ToentGuessRsp {
+    pub(crate) toents: Vec<PossibleToent>,
 }
 
 impl<'a> Deserialize<'a> for ChnotTagTreeType {
@@ -151,28 +151,28 @@ impl<'a> Deserialize<'a> for ChnotTagTreeType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagQueryReq {
-    pub query: Option<String>,
-    pub tag_tree: ChnotTagTreeType,
+pub(crate) struct ChnotTagQueryReq {
+    pub(crate) query: Option<String>,
+    pub(crate) tag_tree: ChnotTagTreeType,
 
     // Paging
-    pub start_index: usize,
-    pub page_size: usize,
+    pub(crate) start_index: usize,
+    pub(crate) page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ChnotTagQueryRsp<T>
+pub(crate) struct ChnotTagQueryRsp<T>
 where
     T: Serialize + Clone,
 {
-    pub data: Vec<T>,
+    pub(crate) data: Vec<T>,
 
-    pub start_index: usize,
+    pub(crate) start_index: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagUpdateReq {
-    pub content: String,
-    pub meta_id: String,
-    pub workspace: String,
+pub(crate) struct ChnotTagUpdateReq {
+    pub(crate) content: String,
+    pub(crate) meta_id: String,
+    pub(crate) workspace: String,
 }

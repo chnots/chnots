@@ -8,7 +8,7 @@ use super::PossibleScore;
 use super::{timeevent::TimeEvent, EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum EventEnum {
+pub(crate) enum EventEnum {
     Time(TimeEvent),
     Todo(TodoEvent),
 }

@@ -10,13 +10,13 @@ use crate::{
     },
 };
 
-pub struct AppState {
-    pub mapper: MapperType,
-    pub config: Config,
+pub(crate) struct AppState {
+    pub(crate) mapper: MapperType,
+    pub(crate) config: Config,
 }
 
 #[derive(Clone)]
-pub struct ShareAppState(Arc<AppState>);
+pub(crate) struct ShareAppState(Arc<AppState>);
 
 impl Deref for ShareAppState {
     type Target = AppState;
@@ -33,7 +33,7 @@ impl Into<ShareAppState> for AppState {
 }
 
 impl AppState {
-    pub async fn chnot_query(
+    pub(crate) async fn chnot_query(
         &self,
         req: KReq<ChnotQueryReq>,
     ) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {

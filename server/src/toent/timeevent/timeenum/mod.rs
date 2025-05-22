@@ -1,6 +1,6 @@
-pub mod base;
-pub mod chinese;
-pub mod westen;
+pub(crate) mod base;
+pub(crate) mod chinese;
+pub(crate) mod westen;
 
 use chrono::{DateTime, Utc};
 
@@ -8,7 +8,7 @@ use self::{chinese::ChnTime, westen::WesTime};
 use super::PossibleScore;
 use crate::toent::{EventBuilder, RawInputSegs};
 
-pub trait Timestamp {
+pub(crate) trait Timestamp {
     fn to_utc_timestamp(&self) -> DateTime<Utc>;
 
     fn calender_type(&self) -> &'static str;
@@ -19,7 +19,7 @@ pub trait Timestamp {
 
 #[derive(Clone, Debug, PartialEq)]
 
-pub enum TimeEnum {
+pub(crate) enum TimeEnum {
     Wes(WesTime),
     Chn(ChnTime),
 }

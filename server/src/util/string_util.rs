@@ -4,7 +4,7 @@ use regex::Regex;
 
 static HASHTAG_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"#([^\s#]+)");
 
-pub fn get_hashtags(input: &str) -> Vec<&str> {
+pub(crate) fn get_hashtags(input: &str) -> Vec<&str> {
     let mut result = vec![];
     for cap in HASHTAG_REGEX.captures_iter(input) {
         if let Some(hashtag) = cap.get(0) {

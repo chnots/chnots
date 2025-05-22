@@ -1,6 +1,6 @@
 use chin_tools::AResult;
 
-pub trait ROSwap<T> {
+pub(crate) trait ROSwap<T> {
     fn swap(self) -> T;
 }
 

@@ -6,7 +6,7 @@ use config::Config;
 use mapper::{
     dump::{
         filedump::{BackupType, FileDumpWorker},
-        RecordCallbackEnum,
+        RecordCallbackType,
     },
     MapperType,
 };
@@ -22,6 +22,7 @@ pub(crate) mod model;
 pub(crate) mod server;
 pub(crate) mod toent;
 pub(crate) mod util;
+pub(crate) mod llmchat;
 
 #[tokio::main]
 async fn main() -> EResult {
@@ -59,7 +60,7 @@ async fn main() -> EResult {
                 info!("Begin to backup.");
                 state
                     .mapper
-                    .dump_and_callback(&RecordCallbackEnum::File(worker))
+                    .dump_and_callback(&RecordCallbackType::File(worker))
                     .await
                     .unwrap();
                 info!("Finished to backup.");

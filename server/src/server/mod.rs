@@ -1,10 +1,10 @@
-pub mod controller;
+pub(crate) mod controller;
 
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct ServerConfig {
-    pub port: u16,
-    pub tls_key: String,
-    pub tls_cert: String,
+pub(crate) struct ServerConfig {
+    pub(crate) port: u16,
+    pub(crate) tls_key: String,
+    pub(crate) tls_cert: String,
 }

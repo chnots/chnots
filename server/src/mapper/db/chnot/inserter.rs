@@ -137,7 +137,7 @@ macro_rules! handle_insert {
 }
 
 impl KDb {
-    pub async fn chnot_overwrite(
+    pub(crate) async fn chnot_overwrite(
         &self,
         req: KReq<ChnotOverwriteReq>,
     ) -> AResult<ChnotOverwriteRsp> {

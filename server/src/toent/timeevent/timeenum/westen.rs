@@ -10,10 +10,10 @@ use super::{
 };
 use crate::toent::{timeevent::equals_any, EventBuilder, RawInputSegs};
 
-pub const CAL_TYPE: &str = "wes";
+pub(crate) const CAL_TYPE: &str = "wes";
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct WesTime {
+pub(crate) struct WesTime {
     offset: Option<FixedOffset>,
     timestamp: BaseTime,
 }

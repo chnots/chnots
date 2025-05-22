@@ -13,46 +13,46 @@ use strum::Display;
 use strum_macros::EnumString;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct ChnotRecord {
+pub(crate) struct ChnotRecord {
     #[gts_primary]
     #[gts_length = 40]
-    pub id: String,
+    pub(crate) id: String,
     #[gts_length = 40]
-    pub meta_id: String,
-    pub content: String,
-    pub omit_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,
+    pub(crate) meta_id: String,
+    pub(crate) content: String,
+    pub(crate) omit_time: Option<DateTime<FixedOffset>>,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct ChnotMetadata {
+pub(crate) struct ChnotMetadata {
     #[gts_primary]
     #[gts_length = 40]
-    pub id: String,
+    pub(crate) id: String,
     #[gts_length = 40]
-    pub workspace: String,
+    pub(crate) workspace: String,
     #[gts_length = 40]
-    pub kind: String,
-    pub pin_time: Option<DateTime<FixedOffset>>,
-    pub delete_time: Option<DateTime<FixedOffset>>,
-    pub update_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,
-    pub archive_time: Option<DateTime<FixedOffset>>,
+    pub(crate) kind: String,
+    pub(crate) pin_time: Option<DateTime<FixedOffset>>,
+    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
+    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub(crate) insert_time: DateTime<FixedOffset>,
+    pub(crate) archive_time: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct ChnotTag {
+pub(crate) struct ChnotTag {
     #[gts_primary]
     #[gts_length = 40]
-    pub id: String,
+    pub(crate) id: String,
     #[gts_length = 40]
-    pub workspace: String,
+    pub(crate) workspace: String,
     #[gts_length = 800]
-    pub tag: String,
+    pub(crate) tag: String,
     #[gts_type = "i32"]
-    pub category: ChnotTagType,
-    pub chnot_meta_id: String,
-    pub insert_time: DateTime<FixedOffset>,
+    pub(crate) category: ChnotTagType,
+    pub(crate) chnot_meta_id: String,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
 impl AsRef<str> for ChnotTag {
@@ -62,7 +62,7 @@ impl AsRef<str> for ChnotTag {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display, AsRefStr)]
-pub enum ChnotKind {
+pub(crate) enum ChnotKind {
     #[strum(serialize = "mdwt")]
     #[serde(rename = "mdwt")]
     MarkdownWithToent,
@@ -77,17 +77,17 @@ pub enum ChnotKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
-pub enum ChnotTagType {
+pub(crate) enum ChnotTagType {
     Dir = 99,
     ParentDir = 98,
     Common = 1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct ChnotSubTypeRelation {
+pub(crate) struct ChnotSubTypeRelation {
     #[gts_primary]
-    pub chnot_meta_id: String,
-    pub sub_type_id: String,
-    pub delete_time: Option<DateTime<FixedOffset>>,
-    pub insert_time: DateTime<FixedOffset>,
+    pub(crate) chnot_meta_id: String,
+    pub(crate) sub_type_id: String,
+    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
+    pub(crate) insert_time: DateTime<FixedOffset>,
 }

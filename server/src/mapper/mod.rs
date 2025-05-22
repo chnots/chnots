@@ -1,36 +1,35 @@
-pub mod db;
-pub mod dump;
-pub mod mappertype;
+pub(crate) mod db;
+pub(crate) mod dump;
+pub(crate) mod mappertype;
 
 use chin_tools::{AResult, EResult};
 use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
-use dump::RecordCallbackEnum;
+use dump::RecordCallbackType;
 use serde::Deserialize;
 
 use crate::model::{
     db::{
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
-        llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         workspace::{WorkspaceRecord, WorkspaceRelation},
         kfile::{InlineKFile, KFile, KTV},
     },
-    dto::{chnot::*, ctable::*, llmchat::*, kfile::*, KReq},
+    dto::{chnot::*, ctable::*,  kfile::*, KReq},
 };
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
-pub enum MapperConfig {
+pub(crate) enum MapperConfig {
     #[serde(rename = "postgres")]
     Postgres(PostgresConfig),
     #[serde(rename = "sqlite")]
     Sqlite(SqliteConfig),
 }
 
-pub enum MapperType {
+pub(crate) enum MapperType {
     KDb(KDb),
 }
 
-pub trait ChnotMapper {
+pub(crate) trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
     async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
@@ -59,7 +58,7 @@ pub trait ChnotMapper {
     async fn ensure_table_chnot_tag(&self) -> EResult;
 }
 
-pub trait KFileMapper {
+pub(crate) trait KFileMapper {
     async fn insert_kfile(&self, kfile: &KFile) -> anyhow::Result<KFile>;
     async fn query_kfile_by_id(&self, id: &str) -> anyhow::Result<KFile>;
     ///
@@ -82,7 +81,7 @@ pub trait KFileMapper {
     async fn ensure_table_inline_kfile(&self) -> EResult;
 }
 
-pub trait WorkspaceMapper {
+pub(crate) trait WorkspaceMapper {
     async fn read_all_workspaces(&self) -> AResult<Vec<WorkspaceRecord>>;
     async fn read_all_workspace_relations(&self) -> AResult<Vec<WorkspaceRelation>>;
 
@@ -90,79 +89,22 @@ pub trait WorkspaceMapper {
     async fn ensure_table_workspace_relation(&self) -> EResult;
 }
 
-pub trait LLMChatMapper {
-    async fn llm_chat_overwrite_bot(
-        &self,
-        req: KReq<LLMChatOverwriteBotReq>,
-    ) -> AResult<LLMChatOverwriteBotRsp>;
-    async fn llm_chat_overwrite_template(
-        &self,
-        req: KReq<LLMChatOverwriteTemplateReq>,
-    ) -> AResult<LLMChatOverwriteTemplateRsp>;
-    async fn llm_chat_insert_session(
-        &self,
-        req: KReq<LLMChatInsertSessionReq>,
-    ) -> AResult<LLMChatInsertSessionRsp>;
-    async fn llm_chat_insert_record(
-        &self,
-        req: KReq<LLMChatInsertRecordReq>,
-    ) -> AResult<LLMChatInsertRecordRsp>;
 
-    async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp>;
-    async fn llm_chat_list_templates(
-        &self,
-        req: KReq<LLMChatListTemplateReq>,
-    ) -> AResult<LLMChatListTemplateRsp>;
-    async fn llm_chat_list_sessions(
-        &self,
-        req: KReq<LLMChatListSessionReq>,
-    ) -> AResult<LLMChatListSessionRsp>;
-    async fn llm_chat_update_session(
-        &self,
-        req: KReq<LLMChatUpdateSessionReq>,
-    ) -> AResult<LLMChatUpdateSessionRsp>;
-    async fn llm_chat_session_detail(
-        &self,
-        req: KReq<LLMChatSessionDetialReq>,
-    ) -> AResult<LLMChatSessionDetailRsp>;
-    async fn llm_chat_truncate_session(
-        &self,
-        req: KReq<LLMChatTruncateSessionReq>,
-    ) -> AResult<LLMChatTruncateSessionRsp>;
 
-    async fn llm_chat_delete_bot(
-        &self,
-        req: KReq<LLMChatDeleteBotReq>,
-    ) -> AResult<LLMChatDeleteBotRsp>;
-    async fn llm_chat_delete_template(
-        &self,
-        req: KReq<LLMChatDeleteTemplateReq>,
-    ) -> AResult<LLMChatDeleteTemplateRsp>;
-    async fn llm_chat_delete_session(
-        &self,
-        req: KReq<LLMChatDeleteSessionReq>,
-    ) -> AResult<LLMChatDeleteSessionRsp>;
-
-    async fn ensure_table_llm_chat_bot(&self) -> EResult;
-    async fn ensure_table_llm_chat_template(&self) -> EResult;
-    async fn ensure_table_llm_chat_session(&self) -> EResult;
-    async fn ensure_table_llm_chat_record(&self) -> EResult;
-}
-
-pub trait KVMapper {
+pub(crate) trait KVMapper {
     async fn kv_overwrite(&self, req: KReq<KVOverwriteReq>) -> AResult<KVOverwriteRsp>;
     async fn kv_query(&self, req: KReq<KVQueryReq>) -> AResult<KVQueryRsp>;
     async fn kv_delete(&self, req: KReq<KVDeleteReq>) -> AResult<KVDeleteRsp>;
     async fn ensure_table_kv(&self) -> EResult;
 }
 
-pub trait DumpMapper {
+pub(crate) trait DumpMapper {
     type RowType<'a>;
 
-    async fn dump_and_callback(&self, callback: &RecordCallbackEnum) -> EResult;
+    async fn dump_and_callback(&self, callback: &RecordCallbackType) -> EResult;
 }
 
-pub trait ChinTableMapper {
+pub(crate) trait ChinTableMapper {
     async fn ctable_overwrite_meta(
         &self,
         req: KReq<CTableOverwriteMetaReq>,
@@ -188,15 +130,10 @@ pub trait ChinTableMapper {
     async fn ensure_ctable_tables(&self) -> EResult;
 }
 
-pub trait DeserializeMapper {
+pub(crate) trait DeserializeMapper {
     fn to_chnot_meta(self) -> AResult<ChnotMetadata>;
     fn to_chnot_record(self) -> AResult<ChnotRecord>;
     fn to_chnot_tag(self) -> AResult<ChnotTag>;
-
-    fn to_llmchat_bot(self) -> AResult<LLMChatBot>;
-    fn to_llmchat_template(self) -> AResult<LLMChatTemplate>;
-    fn to_llmchat_session(self) -> AResult<LLMChatSession>;
-    fn to_llmchat_record(self) -> AResult<LLMChatRecord>;
 
     fn to_workspace_record(self) -> AResult<WorkspaceRecord>;
     fn to_workspace_relation(self) -> AResult<WorkspaceRelation>;

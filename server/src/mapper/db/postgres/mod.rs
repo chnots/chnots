@@ -1,13 +1,13 @@
 pub(crate) mod imp;
-pub mod types;
-pub mod wrapper;
+pub(crate) mod types;
+pub(crate) mod wrapper;
 
 use chin_tools::AResult;
 use deadpool_postgres::{Client, Pool, PoolError};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct PostgresConfig {
+pub(crate) struct PostgresConfig {
     user: String,
     pass: String,
     dbname: String,
@@ -27,12 +27,12 @@ impl Into<deadpool_postgres::Config> for PostgresConfig {
     }
 }
 
-pub struct Postgres {
-    pub pool: Pool,
+pub(crate) struct Postgres {
+    pub(crate) pool: Pool,
 }
 
 impl Postgres {
-    pub fn new(config: PostgresConfig) -> AResult<Postgres> {
+    pub(crate) fn new(config: PostgresConfig) -> AResult<Postgres> {
         let pool = Into::<deadpool_postgres::Config>::into(config)
             .create_pool(None, tokio_postgres::NoTls)?;
 

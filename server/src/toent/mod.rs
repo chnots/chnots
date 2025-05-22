@@ -2,9 +2,9 @@ use std::ops::Deref;
 
 use self::eventenum::EventEnum;
 
-pub mod eventenum;
-pub mod timeevent;
-pub mod todoevent;
+pub(crate) mod eventenum;
+pub(crate) mod timeevent;
+pub(crate) mod todoevent;
 use chin_tools::wrapper::score::PossibleScore;
 use serde::{Deserialize, Serialize};
 
@@ -30,14 +30,14 @@ pub(crate) struct RawInputSegs<'a> {
 }
 
 impl<'a> RawInputSegs<'a> {
-    pub fn sub_start(&self, start: usize) -> RawInputSegs<'a> {
+    pub(crate) fn sub_start(&self, start: usize) -> RawInputSegs<'a> {
         RawInputSegs {
             original: self.original,
             spans: self.spans.as_slice()[start..].into(),
         }
     }
 
-    pub fn remove_first_prefix(&self, key: &str) -> RawInputSegs<'a> {
+    pub(crate) fn remove_first_prefix(&self, key: &str) -> RawInputSegs<'a> {
         let mut other = self.clone();
         let first = other.spans.get_mut(0);
         if let Some(f) = first {
@@ -48,7 +48,7 @@ impl<'a> RawInputSegs<'a> {
         other
     }
 
-    pub fn sub_range(&self, start: usize, end: usize) -> Self {
+    pub(crate) fn sub_range(&self, start: usize, end: usize) -> Self {
         RawInputSegs {
             original: &self.original,
             spans: self
@@ -129,7 +129,7 @@ impl<'a> RawInputSegs<'a> {
     }
 }
 
-pub trait EventBuilder
+pub(crate) trait EventBuilder
 where
     Self: Sized,
 {
@@ -142,20 +142,20 @@ where
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct PossibleToent {
+pub(crate) struct PossibleToent {
     input: String,
     event: EventEnum,
 }
 
 impl PossibleToent {
-    pub fn from_standard(input: &str) -> anyhow::Result<PossibleToent> {
+    pub(crate) fn from_standard(input: &str) -> anyhow::Result<PossibleToent> {
         Ok(PossibleToent {
             input: input.to_owned(),
             event: EventEnum::from_standard(&RawInputSegs::from(input))?,
         })
     }
 
-    pub fn guess(input: &str) -> Vec<PossibleToent> {
+    pub(crate) fn guess(input: &str) -> Vec<PossibleToent> {
         if let Some(mut guesses) = EventEnum::guess(&input.into()) {
             guesses.sort_by(|e1, e2| e2.1.cmp(&e1.1));
 

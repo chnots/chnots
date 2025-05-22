@@ -3,23 +3,19 @@ use chin_tools::{AResult, EResult};
 use serde::Serialize;
 
 use crate::{
-    mapper::{dump::RecordCallbackEnum, DeserializeMapper, DumpMapper},
-    model::db::{
-        chnot::{ChnotMetadata, ChnotRecord},
-        llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        workspace::{WorkspaceRecord, WorkspaceRelation},
-        kfile::KFile,
-    },
+    llmchat::mapper::LLMChatDumpMapper, mapper::{dump::RecordCallbackType, DeserializeMapper, DumpMapper}, model::db::{
+        chnot::{ChnotMetadata, ChnotRecord}, kfile::KFile, workspace::{WorkspaceRecord, WorkspaceRelation}
+    }
 };
 
 use super::{tabledumpsql::TableDumpSqlBuilder, KDb, KDbRow};
 
 impl KDb {
-    async fn read_iterator<'a, F1, O>(
+    pub(crate) async fn read_iterator<'a, F1, O>(
         &self,
         sql_builder: TableDumpSqlBuilder<'a>,
         convert_row_to_obj: F1,
-        callback: &RecordCallbackEnum,
+        callback: &RecordCallbackType,
     ) -> EResult
     where
         O: Serialize,
@@ -40,9 +36,11 @@ impl KDb {
 
 impl DumpMapper for KDb {
     type RowType<'a> = KDbRow<'a>;
-    async fn dump_and_callback(&self, callback: &RecordCallbackEnum) -> chin_tools::EResult {
+
+    async fn dump_and_callback(&self, callback: &RecordCallbackType) -> chin_tools::EResult {
+        self.dump_llmchat(callback).await?;
         let s = |name: &'static str| {
-            TableDumpSqlBuilder::new(name, None, None, PlaceHolderType::DollarNumber(0))
+            TableDumpSqlBuilder::table(name)
         };
 
         self.read_iterator(
@@ -71,30 +69,6 @@ impl DumpMapper for KDb {
         .await?;
         self.read_iterator(s(KFile::TABLE), Self::RowType::to_kfile, &callback)
             .await?;
-        self.read_iterator(
-            s(LLMChatBot::TABLE),
-            Self::RowType::to_llmchat_bot,
-            &callback,
-        )
-        .await?;
-        self.read_iterator(
-            s(LLMChatRecord::TABLE),
-            Self::RowType::to_llmchat_record,
-            &callback,
-        )
-        .await?;
-        self.read_iterator(
-            s(LLMChatSession::TABLE),
-            Self::RowType::to_llmchat_session,
-            &callback,
-        )
-        .await?;
-        self.read_iterator(
-            s(LLMChatTemplate::TABLE),
-            Self::RowType::to_llmchat_template,
-            &callback,
-        )
-        .await?;
 
         Ok(())
     }

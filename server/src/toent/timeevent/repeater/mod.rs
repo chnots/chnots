@@ -1,9 +1,9 @@
 use chin_tools::AResult;
 use strum::AsRefStr;
 
-pub mod endconditon;
-pub mod interval;
-pub mod timers;
+pub(crate) mod endconditon;
+pub(crate) mod interval;
+pub(crate) mod timers;
 
 use self::{endconditon::EndCondition, interval::TimeInterval};
 use super::PossibleScore;
@@ -12,7 +12,7 @@ use crate::toent::{EventBuilder, RawInputSegs};
 use super::starts_any;
 
 #[derive(Clone, Debug, Default, AsRefStr, PartialEq)]
-pub enum RepeatType {
+pub(crate) enum RepeatType {
     #[default]
     #[strum(serialize = ".")]
     Once,
@@ -45,30 +45,30 @@ impl TryFrom<Option<&str>> for RepeatType {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Repeater {
+pub(crate) struct Repeater {
     interval: Option<(TimeInterval, RepeatType)>,
     alert: Option<TimeInterval>,
     end_cond: Option<EndCondition>,
 }
 
 impl Repeater {
-    pub fn interval_start(seg: &str) -> bool {
+    pub(crate) fn interval_start(seg: &str) -> bool {
         starts_any(seg, &[".", ".*", "*"])
     }
 
-    pub fn alter_start(seg: &str) -> bool {
+    pub(crate) fn alter_start(seg: &str) -> bool {
         starts_any(seg, &[","])
     }
 
-    pub fn end_start(seg: &str) -> bool {
+    pub(crate) fn end_start(seg: &str) -> bool {
         starts_any(seg, &["="])
     }
 
-    pub fn repeater_start(seg: &str) -> bool {
+    pub(crate) fn repeater_start(seg: &str) -> bool {
         Self::interval_start(seg) || Self::alter_start(seg) || Self::end_start(seg)
     }
 
-    pub fn guess_from_segs(
+    pub(crate) fn guess_from_segs(
         interval: Option<&RawInputSegs>,
         end: Option<&RawInputSegs>,
         alert: Option<&RawInputSegs>,
@@ -80,7 +80,7 @@ impl Repeater {
         }
     }
 
-    pub fn standard_from_segs(
+    pub(crate) fn standard_from_segs(
         interval: Option<&RawInputSegs>,
         end: Option<&RawInputSegs>,
         alert: Option<&RawInputSegs>,
@@ -111,11 +111,11 @@ impl Repeater {
         })
     }
 
-    pub fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         true
     }
 
-    pub fn standard_str(&self) -> String {
+    pub(crate) fn standard_str(&self) -> String {
         let mut res = String::new();
 
         if let Some((interval, rt)) = &self.interval {

@@ -1,7 +1,6 @@
-pub mod ctable;
-pub mod chnot;
-pub mod llmchat;
-pub mod kfile;
+pub(crate) mod ctable;
+pub(crate) mod chnot;
+pub(crate) mod kfile;
 
 /// DTO: Data Transfer Object
 ///
@@ -13,19 +12,19 @@ use axum::http::HeaderMap;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct KReq<E: Debug + Clone + DeserializeOwned> {
-    pub body: E,
-    pub workspace: String,
+pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {
+    pub(crate) body: E,
+    pub(crate) workspace: String,
 }
 
-pub fn read_workspace_from_header(headers: &HeaderMap) -> String {
+pub(crate) fn read_workspace_from_header(headers: &HeaderMap) -> String {
     headers
         .get("K-workspace")
         .and_then(|v| v.to_str().ok().map(|e| e.to_string()))
         .unwrap()
 }
 
-pub fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
+pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
     KReq {
         body,
         workspace: read_workspace_from_header(&headers),
@@ -44,7 +43,7 @@ impl<T> KReq<T>
 where
     T: Debug + Clone + DeserializeOwned,
 {
-    pub fn frame<E>(&self, t: E) -> KReq<E>
+    pub(crate) fn frame<E>(&self, t: E) -> KReq<E>
     where
         E: Debug + Clone + DeserializeOwned,
     {
@@ -56,7 +55,7 @@ where
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkspaceQueryReq {}
+pub(crate) struct WorkspaceQueryReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkspaceQueryRsp {}
+pub(crate) struct WorkspaceQueryRsp {}

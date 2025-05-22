@@ -10,7 +10,7 @@ use tracing::debug;
 
 use crate::app::ShareAppState;
 
-pub fn routes() -> Router<ShareAppState> {
+pub(crate) fn routes() -> Router<ShareAppState> {
     // Define our app routes, including a fallback option for anything not matched.
     Router::new()
         .route("/", get(index_handler))
@@ -48,14 +48,14 @@ async fn not_found() -> Html<&'static str> {
 #[folder = "../web-dist"]
 struct Asset;
 
-pub struct StaticFile<T>(pub T);
+pub(crate) struct StaticFile<T>(pub(crate) T);
 
-pub enum ContentEnum {
+pub(crate) enum ContentEnum {
     Cow(Cow<'static, [u8]>),
     String(String),
 }
 
-pub fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -> Response {
+pub(crate) fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -> Response {
     match data {
         Some((mime, data)) => match data {
             ContentEnum::Cow(data) => {

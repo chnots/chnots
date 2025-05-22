@@ -31,7 +31,7 @@ impl<'de> Deserialize<'de> for TodoEvent {
 }
 
 #[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
-pub enum TodoCreateType {
+pub(crate) enum TodoCreateType {
     Auto = 0,
     Manual = 1,
 }

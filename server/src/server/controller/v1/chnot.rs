@@ -17,7 +17,7 @@ use axum::{
     Json, Router,
 };
 
-pub fn routes() -> Router<ShareAppState> {
+pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/chnot", put(chnot_overwrite))
         .route("/api/v1/chnot", delete(chnot_deletetion))

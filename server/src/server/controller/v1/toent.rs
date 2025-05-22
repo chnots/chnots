@@ -14,6 +14,6 @@ async fn toent_guess(Json(req): Json<ToentGuessReq>) -> KResponse<ToentGuessRsp>
     Ok(rsp).into()
 }
 
-pub fn routes() -> Router<ShareAppState> {
+pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new().route("/api/v1/toent-guess", post(toent_guess))
 }

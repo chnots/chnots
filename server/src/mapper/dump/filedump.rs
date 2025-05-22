@@ -18,17 +18,17 @@ use crate::app::ShareAppState;
 use super::RowCallback;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct FileBackupConfig {
+pub(crate) struct FileBackupConfig {
     backup_dir: String,
     period: usize,
 }
 
-pub enum BackupType {
+pub(crate) enum BackupType {
     Period,
     All,
 }
 
-pub struct FileDumpWorker {
+pub(crate) struct FileDumpWorker {
     file_prefix: String,
     start_timestamp: DateTime<Utc>,
     writer: Rc<RefCell<BufWriter<File>>>,
@@ -52,7 +52,7 @@ impl RowCallback for FileDumpWorker {
 }
 
 impl FileDumpWorker {
-    pub async fn new(
+    pub(crate) async fn new(
         app_state: &ShareAppState,
         file_prefix: &str,
         backup_type: BackupType,

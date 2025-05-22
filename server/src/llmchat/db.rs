@@ -1,19 +1,72 @@
 use std::collections::HashMap;
 
+use anyhow::Ok;
 use chin_sql::{SqlInserter, SqlReader, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 
-use super::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow};
-use crate::{
-    mapper::LLMChatMapper,
-    model::{
-        db::llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        dto::{llmchat::*, KReq},
-    },
-};
+use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
+use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
+use crate::model::dto::KReq;
 
-use super::DeserializeMapper;
+use super::mapper::{LLMChatDeserializeMapper, LLMChatDumpMapper, LLMChatMapper};
+use super::*;
+
+impl LLMChatDeserializeMapper for KDbRow<'_> {
+    fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
+        let obj = LLMChatBot {
+            id: self.try_get(LLMChatBot::ID)?,
+            insert_time: self.try_get(LLMChatBot::INSERT_TIME)?,
+            delete_time: self.try_get(LLMChatBot::DELETE_TIME)?,
+            name: self.try_get(LLMChatBot::NAME)?,
+            body: self.try_get(LLMChatBot::BODY)?,
+            update_time: self.try_get(LLMChatBot::UPDATE_TIME)?,
+            svg_logo: self.try_get(LLMChatBot::SVG_LOGO)?,
+        };
+        Ok(obj)
+    }
+
+    fn to_llmchat_template(self) -> AResult<LLMChatTemplate> {
+        let obj = LLMChatTemplate {
+            id: self.try_get(LLMChatTemplate::ID)?,
+            insert_time: self.try_get(LLMChatTemplate::INSERT_TIME)?,
+            delete_time: self.try_get(LLMChatTemplate::DELETE_TIME)?,
+            update_time: self.try_get(LLMChatTemplate::UPDATE_TIME)?,
+            name: self.try_get(LLMChatTemplate::NAME)?,
+            prompt: self.try_get(LLMChatTemplate::PROMPT)?,
+            svg_logo: self.try_get(LLMChatTemplate::SVG_LOGO)?,
+        };
+        Ok(obj)
+    }
+
+    fn to_llmchat_session(self) -> AResult<LLMChatSession> {
+        let obj = LLMChatSession {
+            id: self.try_get(LLMChatSession::ID)?,
+            insert_time: self.try_get(LLMChatSession::INSERT_TIME)?,
+            template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
+            title: self.try_get(LLMChatSession::TITLE)?,
+            workspace: self.try_get(LLMChatSession::WORKSPACE)?,
+            delete_time: self.try_get(LLMChatSession::DELETE_TIME)?,
+            update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
+        };
+        Ok(obj)
+    }
+
+    fn to_llmchat_record(self) -> AResult<LLMChatRecord> {
+        let obj = LLMChatRecord {
+            id: self.try_get(LLMChatRecord::ID)?,
+            insert_time: self.try_get(LLMChatRecord::INSERT_TIME)?,
+            session_id: self.try_get(LLMChatRecord::SESSION_ID)?,
+            pre_record_id: self.try_get(LLMChatRecord::PRE_RECORD_ID)?,
+            content: self.try_get(LLMChatRecord::CONTENT)?,
+            role: self.try_get(LLMChatRecord::ROLE)?,
+            role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
+            omit_time: self.try_get(LLMChatRecord::OMIT_TIME)?,
+            reasoning_content: self.try_get(LLMChatRecord::REASONING_CONTENT)?,
+        };
+        Ok(obj)
+    }
+}
 
 impl LLMChatMapper for KDb {
     async fn llm_chat_overwrite_bot(
@@ -321,5 +374,63 @@ impl LLMChatMapper for KDb {
         let count = self.conn().await?.exec(updater).await?;
 
         Ok(LLMChatTruncateSessionRsp { count })
+    }
+}
+
+impl LLMChatDumpMapper for KDb {
+    async fn dump_llmchat_bot(
+        &self,
+        callback: &crate::mapper::dump::RecordCallbackType,
+    ) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(LLMChatBot::TABLE),
+            KDbRow::to_llmchat_bot,
+            &callback,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    async fn dump_llmchat_template(
+        &self,
+        callback: &crate::mapper::dump::RecordCallbackType,
+    ) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(LLMChatRecord::TABLE),
+            KDbRow::to_llmchat_record,
+            &callback,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    async fn dump_llmchat_session(
+        &self,
+        callback: &crate::mapper::dump::RecordCallbackType,
+    ) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(LLMChatSession::TABLE),
+            KDbRow::to_llmchat_session,
+            &callback,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    async fn dump_llmchat_record(
+        &self,
+        callback: &crate::mapper::dump::RecordCallbackType,
+    ) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(LLMChatTemplate::TABLE),
+            KDbRow::to_llmchat_template,
+            &callback,
+        )
+        .await?;
+
+        Ok(())
     }
 }

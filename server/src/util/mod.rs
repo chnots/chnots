@@ -1,3 +1,3 @@
-pub mod result_util;
-pub mod string_util;
-pub mod web_util;
+pub(crate) mod result_util;
+pub(crate) mod string_util;
+pub(crate) mod web_util;

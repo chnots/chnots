@@ -10,19 +10,19 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ToentDateType {
+pub(crate) enum ToentDateType {
     Chinese,
     Westen,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ToentType {
+pub(crate) enum ToentType {
     Todo,
     Event,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct Toent {
+pub(crate) struct Toent {
     #[gts_primary]
     #[gts_length = 40]
     id: String,
@@ -45,7 +45,7 @@ pub struct Toent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub struct ToentInst {
+pub(crate) struct ToentInst {
     #[gts_primary]
     #[gts_length = 40]
     id: String,

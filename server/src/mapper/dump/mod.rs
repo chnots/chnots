@@ -1,18 +1,18 @@
-pub mod filedump;
+pub(crate) mod filedump;
 
 use chin_tools::EResult;
 use filedump::FileDumpWorker;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct DumpWrapper<E: Serialize> {
+pub(crate) struct DumpWrapper<E: Serialize> {
     body: E,
     version: usize,
     table: String,
 }
 
 impl<E: Serialize> DumpWrapper<E> {
-    pub fn of(body: E, version: usize, table: &str) -> DumpWrapper<E> {
+    pub(crate) fn of(body: E, version: usize, table: &str) -> DumpWrapper<E> {
         Self {
             body,
             version,
@@ -21,20 +21,20 @@ impl<E: Serialize> DumpWrapper<E> {
     }
 }
 
-pub trait RowCallback {
+pub(crate) trait RowCallback {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult;
 }
 
-pub enum RecordCallbackEnum {
+pub(crate) enum RecordCallbackType {
     File(FileDumpWorker),
     Network(),
 }
 
-impl RowCallback for RecordCallbackEnum {
+impl RowCallback for RecordCallbackType {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult {
         match self {
-            RecordCallbackEnum::File(file_dump_worker) => file_dump_worker.callback(obj).await,
-            RecordCallbackEnum::Network() => todo!(),
+            RecordCallbackType::File(file_dump_worker) => file_dump_worker.callback(obj).await,
+            RecordCallbackType::Network() => todo!(),
         }
     }
 }

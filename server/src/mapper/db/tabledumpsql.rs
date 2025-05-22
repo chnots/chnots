@@ -1,38 +1,42 @@
 use chin_sql::{DbType, IntoSqlSeg, PlaceHolderType, SqlReader, SqlSeg, Wheres};
 use chin_tools::AResult;
 
-pub struct TableDumpSqlBuilder<'a> {
-    pub table_name: &'static str,
+pub(crate) struct TableDumpSqlBuilder<'a> {
+    pub(crate) table_name: &'static str,
     start_seg: Option<Wheres<'a>>,
     end_seg: Option<Wheres<'a>>,
-    ph_type: PlaceHolderType,
 }
 
 impl<'a> TableDumpSqlBuilder<'a> {
-    pub fn new(
-        table_name: &'static str,
-        start_seg: Option<Wheres<'a>>,
-        end_seg: Option<Wheres<'a>>,
-        ph_type: PlaceHolderType,
-    ) -> Self {
+    pub(crate) fn table(table_name: &'static str) -> Self {
         Self {
             table_name,
-            ph_type,
-            start_seg,
-            end_seg,
+            start_seg: None,
+            end_seg: None,
         }
     }
 
-    pub fn build(self, db_type: DbType) -> AResult<SqlSeg<'a>> {
+    pub(crate) fn start(self, seg: Wheres<'a>) -> Self {
+        Self {
+            start_seg: Some(seg),
+            ..self
+        }
+    }
+
+    pub(crate) fn end(self, seg: Wheres<'a>) -> Self {
+        Self {
+            end_seg: Some(seg),
+            ..self
+        }
+    }
+
+    pub(crate) fn build(self, db_type: DbType) -> AResult<SqlSeg<'a>> {
         let sql = SqlReader::read_all(self.table_name)
             .r#where(Wheres::and([
                 Wheres::if_some(self.start_seg, |e| e),
                 Wheres::if_some(self.end_seg, |e| e),
             ]))
-            .into_sql_seg2(db_type, &mut match self.ph_type {
-                PlaceHolderType::QustionMark => PlaceHolderType::QustionMark,
-                PlaceHolderType::DollarNumber(_) => PlaceHolderType::DollarNumber(0),
-            })?;
+            .into_sql_seg(db_type)?;
         Ok(sql)
     }
 }

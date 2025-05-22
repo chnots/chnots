@@ -38,7 +38,7 @@ use crate::{
     },
 };
 
-pub fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
+pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
     let filename_parts = split_uuid_to_file_name(&id);
 
     let save_filepath = std::path::Path::new(&config.base_dir)
@@ -48,7 +48,7 @@ pub fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
     save_filepath
 }
 
-pub fn asset_tmp_path(config: &AttachmentConfig, id: &str) -> PathBuf {
+pub(crate) fn asset_tmp_path(config: &AttachmentConfig, id: &str) -> PathBuf {
     std::path::Path::new(&config.base_dir)
         .join("tmp-chunks")
         .join(id)
@@ -159,7 +159,7 @@ async fn upload(
     })
 }
 
-pub async fn kfile_info(
+pub(crate) async fn kfile_info(
     state: State<ShareAppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> KResponse<QueryKFileRsp> {
@@ -172,7 +172,7 @@ pub async fn kfile_info(
 }
 
 // https://github.com/tokio-rs/axum/discussions/608
-pub async fn download(
+pub(crate) async fn download(
     state: State<ShareAppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> impl IntoResponse {
@@ -278,7 +278,7 @@ async fn query_svg(
     asset_to_response(res)
 }
 
-pub fn routes() -> Router<ShareAppState> {
+pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
             "/api/v1/kfile",

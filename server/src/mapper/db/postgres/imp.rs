@@ -5,7 +5,7 @@ use serde::Serialize;
 use crate::{
     mapper::{
         db::{tabledumpsql::TableDumpSqlBuilder, KDbRow},
-        dump::{DumpWrapper, RecordCallbackEnum, RowCallback},
+        dump::{DumpWrapper, RecordCallbackType, RowCallback},
     },
     to_sql,
 };
@@ -13,11 +13,11 @@ use crate::{
 use super::Postgres;
 
 impl Postgres {
-    pub async fn read_iterator<'a, F1, O>(
+    pub(crate) async fn read_iterator<'a, F1, O>(
         &self,
         sql_builder: TableDumpSqlBuilder<'a>,
         convert_row_to_obj: F1,
-        callback: &RecordCallbackEnum,
+        callback: &RecordCallbackType,
     ) -> EResult
     where
         O: Serialize,

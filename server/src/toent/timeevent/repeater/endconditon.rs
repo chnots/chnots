@@ -1,10 +1,10 @@
 use super::interval::TimeInterval;
-pub use super::timers::Times;
+pub(crate) use super::timers::Times;
 use super::PossibleScore;
 use crate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum EndCondition {
+pub(crate) enum EndCondition {
     Times(Times),
     Interval(TimeInterval),
     Time(TimeEnum),

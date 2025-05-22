@@ -6,8 +6,8 @@ use self::{repeater::Repeater, timeenum::TimeEnum};
 
 use super::{EventBuilder, RawInputSegs};
 
-pub mod repeater;
-pub mod timeenum;
+pub(crate) mod repeater;
+pub(crate) mod timeenum;
 
 fn starts_any(input: &str, anys: &[&str]) -> bool {
     anys.iter()
@@ -25,7 +25,7 @@ fn contains_any(input: &str, anys: &[&str]) -> bool {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TimeEvent {
+pub(crate) struct TimeEvent {
     base: Option<TimeEnum>,
     reminder: Option<Repeater>,
 }
@@ -40,7 +40,7 @@ impl From<TimeEnum> for TimeEvent {
 }
 
 impl TimeEvent {
-    pub fn now() -> Self {
+    pub(crate) fn now() -> Self {
         TimeEvent {
             base: Some(TimeEnum::Wes(WesTime::now_time())),
             reminder: None,

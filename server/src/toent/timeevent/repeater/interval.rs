@@ -9,7 +9,7 @@ use crate::toent::{
     EventBuilder, RawInputSegs,
 };
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct TimeInterval {
+pub(crate) struct TimeInterval {
     base: BaseTime,
     week: NoneOrI32,
 }

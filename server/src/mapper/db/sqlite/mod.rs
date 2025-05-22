@@ -2,11 +2,11 @@ use chin_tools::AResult;
 use deadpool_sqlite::{Config, Pool, Runtime};
 use serde::Deserialize;
 
-pub mod sqltype;
-pub mod wrapper;
+pub(crate) mod sqltype;
+pub(crate) mod wrapper;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct SqliteConfig {
+pub(crate) struct SqliteConfig {
     filepath: String,
 }
 
@@ -17,19 +17,19 @@ impl Into<deadpool_sqlite::Config> for SqliteConfig {
 }
 
 #[derive(Clone)]
-pub struct Sqlite {
+pub(crate) struct Sqlite {
     pool: deadpool_sqlite::Pool,
 }
 
 impl Sqlite {
-    pub fn new(config: SqliteConfig) -> AResult<Sqlite> {
+    pub(crate) fn new(config: SqliteConfig) -> AResult<Sqlite> {
         let config: Config = config.into();
         Ok(Self {
             pool: config.create_pool(Runtime::Tokio1)?,
         })
     }
 
-    pub fn pool(&self) -> &Pool {
+    pub(crate) fn pool(&self) -> &Pool {
         &self.pool
     }
 }

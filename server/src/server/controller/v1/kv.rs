@@ -14,7 +14,7 @@ use axum::{
     Json, Router,
 };
 
-pub fn routes() -> Router<ShareAppState> {
+pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/kv", get(kv_query))
         .route("/api/v1/kv", delete(kv_delete))

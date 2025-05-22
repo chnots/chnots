@@ -5,14 +5,11 @@ use axum::{
     Json, Router,
 };
 
-use crate::{
-    app::ShareAppState,
-    mapper::LLMChatMapper,
-    model::dto::{kreq, llmchat::*},
-    server::controller::KResponse,
-};
+use super::{mapper::LLMChatMapper, *};
 
-pub fn routes() -> Router<ShareAppState> {
+use crate::{app::ShareAppState, model::dto::kreq, server::controller::KResponse};
+
+pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/llmchat/bot", put(bot_overwrite))
         .route("/api/v1/llmchat/bot", delete(bot_deletetion))
