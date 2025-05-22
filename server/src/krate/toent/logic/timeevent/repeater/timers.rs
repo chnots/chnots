@@ -14,7 +14,7 @@ static TIMES_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\d+)t$");
 
 impl EventBuilder for Times {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        match Self::from_standard(&gt) {
+        match Self::from_standard(gt) {
             Ok(v) => Some(vec![(v, PossibleScore::Likely(100))]),
             Err(_) => None,
         }

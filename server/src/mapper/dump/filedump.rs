@@ -101,7 +101,7 @@ impl FileDumpWorker {
     }
 
     fn grab_filename_dt(filename: &str) -> AResult<(DateTime<Utc>, DateTime<Utc>)> {
-        let parts: Vec<&str> = filename.split(|c| c == '.' || c == '-').collect();
+        let parts: Vec<&str> = filename.split(['.', '-']).collect();
         let format = "%Y%m%d%H%M%S";
         let start = parts.get(1).context("unable to get start time")?;
         let end = parts.get(2).context("unable to get end time")?;

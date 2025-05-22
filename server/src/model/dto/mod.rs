@@ -5,7 +5,7 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::http::HeaderMap;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {

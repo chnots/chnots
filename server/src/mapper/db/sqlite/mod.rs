@@ -10,9 +10,9 @@ pub(crate) struct SqliteConfig {
     filepath: String,
 }
 
-impl Into<deadpool_sqlite::Config> for SqliteConfig {
-    fn into(self) -> deadpool_sqlite::Config {
-        deadpool_sqlite::Config::new(self.filepath)
+impl From<SqliteConfig> for deadpool_sqlite::Config {
+    fn from(val: SqliteConfig) -> Self {
+        deadpool_sqlite::Config::new(val.filepath)
     }
 }
 

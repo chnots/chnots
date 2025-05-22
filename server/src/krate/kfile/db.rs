@@ -140,7 +140,7 @@ impl KFileMapper for KDb {
                     .fields(InlineKFile::NAME, &req.res.name)
                     .fields(InlineKFile::CONTENT, &req.res.content)
                     .fields(InlineKFile::CONTENT_TYPE, &req.res.content_type)
-                    .fields(InlineKFile::INSERT_TIME, &req.res.insert_time)
+                    .fields(InlineKFile::INSERT_TIME, req.res.insert_time)
                     .fields(InlineKFile::WORKSPACE, &req.res.workspace)
                     .fields(InlineKFile::ARCHOR, archorp)
                     .on_conflict({

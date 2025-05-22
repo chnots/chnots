@@ -4,11 +4,26 @@ use super::PossibleScore;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use serde::{de, Deserialize, Serialize};
-use strum::IntoEnumIterator;
-
-use crate::model::todo::TodoEvent;
 
 use super::{EventBuilder, RawInputSegs};
+
+use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
+
+#[derive(Clone, Debug, EnumString, AsRefStr, EnumIter, PartialEq)]
+#[strum(serialize_all = "UPPERCASE")]
+pub(crate) enum TodoEvent {
+    Todo,
+    Doing,
+    Wait,
+    Done,
+    Cancel,
+}
+
+impl From<TodoEvent> for String {
+    fn from(val: TodoEvent) -> Self {
+        val.as_ref().to_string()
+    }
+}
 
 impl Serialize for TodoEvent {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -26,7 +41,7 @@ impl<'de> Deserialize<'de> for TodoEvent {
     {
         let o: String = String::deserialize(deserializer)?;
         TodoEvent::from_str(o.to_ascii_uppercase().as_str())
-            .map_err(|err| serde::de::Error::custom(err))
+            .map_err(serde::de::Error::custom)
     }
 }
 
@@ -87,7 +102,7 @@ impl EventBuilder for TodoEvent {
     }
 
     fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        match gt.spans.get(0) {
+        match gt.spans.first() {
             Some(s) => Ok(Self::from_str(s.text)?),
             None => {
                 anyhow::bail!("There should at least one seg to deserialize TodoEnum")

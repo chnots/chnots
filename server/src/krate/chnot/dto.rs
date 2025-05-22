@@ -1,4 +1,3 @@
-use crate::krate::toent::PossibleToent;
 use chrono::{DateTime, FixedOffset};
 use serde::{de, Deserialize, Serialize};
 
@@ -62,8 +61,8 @@ impl ChnotTagTreeType {
 
     pub(crate) fn path(&self) -> &str {
         match self {
-            ChnotTagTreeType::Children(prefix) => &prefix,
-            ChnotTagTreeType::Descendants(prefix) => &prefix,
+            ChnotTagTreeType::Children(prefix) => prefix,
+            ChnotTagTreeType::Descendants(prefix) => prefix,
         }
     }
 }
@@ -88,7 +87,7 @@ impl<'a> Deserialize<'a> for ChnotViewType {
         let deser = LVT::deserialize(deserializer)?;
 
         match deser.kind.as_str() {
-            "tagtree" => match deser.tagkind.as_ref().map(|e| e.as_str()) {
+            "tagtree" => match deser.tagkind.as_deref() {
                 Some("children") => Ok(Self::TagTree(ChnotTagTreeType::Children(
                     deser.tagpath.unwrap(),
                 ))),

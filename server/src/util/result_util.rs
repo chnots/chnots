@@ -30,7 +30,7 @@ impl<E> ROSwap<AResult<Option<E>>> for Option<AResult<E>> {
 
 impl<E> ROSwap<AResult<Vec<E>>> for Vec<AResult<E>> {
     fn swap(self) -> AResult<Vec<E>> {
-        self.into_iter().map(|e| e).collect()
+        self.into_iter().collect()
     }
 }
 

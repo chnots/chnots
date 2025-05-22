@@ -55,7 +55,7 @@ impl EventBuilder for EndCondition {
         if gt.is_empty() {
             anyhow::bail!("end condition should not be empty");
         }
-        if gt.get(0).map_or(false, |e| !e.starts_with("=")) {
+        if gt.first().is_some_and(|e| !e.starts_with("=")) {
             anyhow::bail!("the end condition should start with =")
         }
 
@@ -121,8 +121,7 @@ mod tests {
     fn test_interval() {
         assert!(
             EndCondition::guess(&"=10d".into())
-                .unwrap()
-                .get(0)
+                .unwrap().first()
                 .unwrap()
                 .0
                 == EndCondition::Interval(TimeInterval::from_standard(&"10d".into()).unwrap())
@@ -133,8 +132,7 @@ mod tests {
     fn test_time() {
         assert_eq!(
             EndCondition::guess(&"=2025-12-12".into())
-                .unwrap()
-                .get(0)
+                .unwrap().first()
                 .unwrap()
                 .0,
             EndCondition::from_standard(&"=2025-12-12".into()).unwrap()
@@ -142,8 +140,7 @@ mod tests {
 
         assert_eq!(
             EndCondition::guess(&"=2025-12-12 12:00:00".into())
-                .unwrap()
-                .get(0)
+                .unwrap().first()
                 .unwrap()
                 .0,
             EndCondition::from_standard(&"=2025-12-12 12:00:00".into()).unwrap()

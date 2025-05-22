@@ -88,14 +88,14 @@ impl KDb {
                     {
                         let mut tag_str = String::new();
                         let prefix = tag_tree.path();
-                        if prefix.len() > 0 {
-                            tag_str.push_str(&prefix);
+                        if !prefix.is_empty() {
+                            tag_str.push_str(prefix);
                             tag_str.push('/');
                         }
                         tag_str.push('%');
                         if let Some(fuzzy) = query {
                             tag_str.push_str(&fuzzy);
-                            tag_str.push_str("%");
+                            tag_str.push('%');
                         }
 
                         tag_str
@@ -110,16 +110,13 @@ impl KDb {
         let mut data = self
             .conn()
             .await?
-            .qry_list(query, move |e| mapper(e))
+            .qry_list(query, mapper)
             .await?;
 
         if let ChnotTagTreeType::Children(prefix) = query_type1 {
-            data = data
-                .into_iter()
-                .filter(|tag| {
+            data.retain(|tag| {
                     tag.as_ref().starts_with(&prefix) && level(tag.as_ref()) == origin_count + 1
-                })
-                .collect();
+                });
         }
 
         Ok(ChnotTagQueryRsp { data, start_index })
@@ -236,7 +233,7 @@ impl ChnotMapper for KDb {
         let cs = conn.qry_list(chnot_sql, chnot_query_mapper).await?;
 
         Ok(ChnotQueryRsp {
-            has_next: cs.len() >= page_size as usize,
+            has_next: cs.len() >= page_size,
             data: cs,
             next_start: page_start + page_size,
         })
@@ -252,7 +249,7 @@ impl ChnotMapper for KDb {
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
             .set_if_some("workspace", req.body.workspace.as_ref())
-            .r#where(Wheres::equal("id", &req.meta_id).into());
+            .r#where(Wheres::equal("id", &req.meta_id));
 
         client.exec(su).await?;
 
@@ -327,10 +324,10 @@ impl ChnotMapper for KDb {
     ) -> EResult {
         self.chnot_tag_delete(vec![&meta_id]).await?;
 
-        let tags = get_hashtags(&content);
+        let tags = get_hashtags(content);
         let parent_tags: Vec<&str> = tags
             .iter()
-            .map(|tag| {
+            .flat_map(|tag| {
                 let mut more = vec![];
                 for (size, c) in tag.char_indices() {
                     if c == '/' {
@@ -339,7 +336,6 @@ impl ChnotMapper for KDb {
                 }
                 more
             })
-            .flatten()
             .unique()
             .collect();
 

@@ -86,20 +86,20 @@ impl Repeater {
         alert: Option<&RawInputSegs>,
     ) -> AResult<Self> {
         let interval = if let Some(e) = interval {
-            let repeat_type = RepeatType::try_from(e.get(0).map(|e| e.text))?;
-            Some((TimeInterval::from_standard(&e)?, repeat_type))
+            let repeat_type = RepeatType::try_from(e.first().map(|e| e.text))?;
+            Some((TimeInterval::from_standard(e)?, repeat_type))
         } else {
             None
         };
 
         let alert = if let Some(e) = alert {
-            Some(TimeInterval::from_standard(&e)?)
+            Some(TimeInterval::from_standard(e)?)
         } else {
             None
         };
 
         let end = if let Some(e) = end {
-            Some(EndCondition::from_standard(&e)?)
+            Some(EndCondition::from_standard(e)?)
         } else {
             None
         };

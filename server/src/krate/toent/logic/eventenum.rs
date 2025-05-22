@@ -2,8 +2,8 @@ use std::fmt;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::model::todo::TodoEvent;
 
+use super::todoevent::TodoEvent;
 use super::PossibleScore;
 use super::{timeevent::TimeEvent, EventBuilder, RawInputSegs};
 

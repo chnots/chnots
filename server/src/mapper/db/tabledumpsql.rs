@@ -1,4 +1,4 @@
-use chin_sql::{DbType, IntoSqlSeg, PlaceHolderType, SqlReader, SqlSeg, Wheres};
+use chin_sql::{DbType, IntoSqlSeg, SqlReader, SqlSeg, Wheres};
 use chin_tools::AResult;
 
 pub(crate) struct TableDumpSqlBuilder<'a> {

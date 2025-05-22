@@ -17,7 +17,7 @@ impl Display for NoneOrI32 {
                 write!(f, "{:02}", v)
             }
             None => {
-                write!(f, "{}", "?")
+                write!(f, "?")
             }
         }
     }
@@ -70,6 +70,7 @@ impl Deref for NoneOrI32 {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Default)]
 pub(crate) struct BaseTime {
     pub(crate) year: NoneOrI32,
     pub(crate) month: NoneOrI32,
@@ -232,25 +233,13 @@ impl EventBuilder for BaseTime {
     }
 
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        match Self::from_standard(&gt) {
+        match Self::from_standard(gt) {
             Ok(base) => Some(vec![(base, PossibleScore::Likely(100))]),
             Err(_) => None,
         }
     }
 }
 
-impl Default for BaseTime {
-    fn default() -> Self {
-        Self {
-            year: NoneOrI32::default(),
-            month: NoneOrI32::default(),
-            day: NoneOrI32::default(),
-            hour: NoneOrI32::default(),
-            minute: NoneOrI32::default(),
-            second: NoneOrI32::default(),
-        }
-    }
-}
 
 impl From<NaiveDateTime> for BaseTime {
     fn from(value: NaiveDateTime) -> Self {
@@ -291,7 +280,7 @@ pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Resul
     match unit {
         TimeUnit::Minute => {
             let time: Vec<&str> = input
-                .trim_start_matches(|e| e == '+' || e == '-')
+                .trim_start_matches(['+', '-'])
                 .split(":")
                 .collect();
 

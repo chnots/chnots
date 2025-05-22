@@ -15,14 +15,14 @@ pub(crate) struct PostgresConfig {
     port: u16,
 }
 
-impl Into<deadpool_postgres::Config> for PostgresConfig {
-    fn into(self) -> deadpool_postgres::Config {
+impl From<PostgresConfig> for deadpool_postgres::Config {
+    fn from(val: PostgresConfig) -> Self {
         let mut cfg = deadpool_postgres::Config::new();
-        cfg.user = Some(self.user);
-        cfg.password = Some(self.pass);
-        cfg.dbname = Some(self.dbname);
-        cfg.host = Some(self.host);
-        cfg.port = Some(self.port);
+        cfg.user = Some(val.user);
+        cfg.password = Some(val.pass);
+        cfg.dbname = Some(val.dbname);
+        cfg.host = Some(val.host);
+        cfg.port = Some(val.port);
         cfg
     }
 }

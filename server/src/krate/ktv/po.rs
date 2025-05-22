@@ -16,9 +16,9 @@ pub(crate) enum KTVType {
     Default,
 }
 
-impl<'a> Into<SqlValue<'a>> for KTVType {
-    fn into(self) -> SqlValue<'a> {
-        SqlValue::Str(Cow::Owned(self.as_ref().to_owned()))
+impl<'a> From<KTVType> for SqlValue<'a> {
+    fn from(val: KTVType) -> Self {
+        SqlValue::Str(Cow::Owned(val.as_ref().to_owned()))
     }
 }
 

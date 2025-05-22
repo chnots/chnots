@@ -176,6 +176,6 @@ impl KDb {
         )
         .await?;
 
-        Ok(ChnotOverwriteRsp { chnot: chnot })
+        Ok(ChnotOverwriteRsp { chnot })
     }
 }

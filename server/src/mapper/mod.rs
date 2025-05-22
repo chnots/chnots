@@ -2,7 +2,7 @@ pub(crate) mod db;
 pub(crate) mod dump;
 pub(crate) mod mappertype;
 
-use chin_tools::{AResult, EResult};
+use chin_tools::EResult;
 use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
 use dump::RecordCallbackType;
 use serde::Deserialize;

@@ -55,7 +55,7 @@ impl<'b> KDbConnBehaiver for Transaction<'b> {
         let ss = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
         tracing::info!("query opt {:?}", ss.seg);
         let result = self.query_opt(&ss.seg, to_sql!(ss.values)).await?;
-        Ok(result.map(|e| mapper(KDbRow::Postgres(e))).swap()?)
+        result.map(|e| mapper(KDbRow::Postgres(e))).swap()
     }
 
     async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
@@ -136,7 +136,7 @@ impl KDbConnBehaiver for Client {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
         tracing::info!("query opt {:?}", seg);
         let result = self.query_opt(&seg, to_sql!(values)).await?;
-        Ok(result.map(|e| mapper(KDbRow::Postgres(e))).swap()?)
+        result.map(|e| mapper(KDbRow::Postgres(e))).swap()
     }
 
     async fn qry_one<'a, E, T, F>(

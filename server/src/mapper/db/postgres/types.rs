@@ -1,7 +1,4 @@
-use std::str::FromStr;
 
-use chin_sql::SqlValue;
-use postgres_types::{to_sql_checked, FromSql, ToSql};
 
 #[macro_export]
 macro_rules! to_sql {

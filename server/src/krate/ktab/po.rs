@@ -48,8 +48,7 @@ impl TryFrom<&str> for CTableColumnType {
         let res = match value {
             "bool" => CTableColumnType::Bool,
             s => {
-                if s.starts_with("opt.") {
-                    let s = &s[4..];
+                if let Some(s) = s.strip_prefix("opt.") {
                     return CTableColumnType::try_from(s);
                 } else {
                     Err(ChinSqlError::TransformError(format!(

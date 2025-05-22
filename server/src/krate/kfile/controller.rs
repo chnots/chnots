@@ -1,4 +1,4 @@
-use crate::controller::asset::{self, asset_to_response, ContentEnum};
+use crate::controller::asset::{asset_to_response, ContentEnum};
 use axum::{
     body::{self},
     extract::{DefaultBodyLimit, Query, State},
@@ -34,7 +34,7 @@ use crate::{
 use super::{mapper::KFileMapper, *};
 
 pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
-    let filename_parts = split_uuid_to_file_name(&id);
+    let filename_parts = split_uuid_to_file_name(id);
 
     let save_filepath = std::path::Path::new(&config.base_dir)
         .join(filename_parts.0)
@@ -107,7 +107,7 @@ async fn upload(
 
     let tmp_dir = asset_tmp_path(&state.config.attachment, &res_id);
 
-    if !tokio::fs::metadata(&tmp_dir).await.is_ok() {
+    if tokio::fs::metadata(&tmp_dir).await.is_err() {
         tokio::fs::create_dir_all(&tmp_dir).await?;
     }
 
@@ -117,7 +117,6 @@ async fn upload(
 
     let mut all_existed = true;
     for p in (0..total_chunks)
-        .into_iter()
         .map(|i| tmp_dir.join(i.to_string()))
     {
         if !tokio::fs::try_exists(p).await.is_ok_and(|b| b) {
@@ -140,7 +139,7 @@ async fn upload(
                 delete_time: None,
                 insert_time: Local::now().into(),
                 ori_last_modified: last_modified,
-                filesize: filesize,
+                filesize,
             })
             .await?;
         Some(res)
@@ -179,7 +178,7 @@ pub(crate) async fn download(
     ) -> AResult<([(HeaderName, String); 2], body::Body)> {
         let kfile = state.mapper.query_kfile_by_id(id).await?;
 
-        let save_filepath = asset_path_by_uuid(&state.config.attachment, &id);
+        let save_filepath = asset_path_by_uuid(&state.config.attachment, id);
 
         let file = tokio::fs::File::open(&save_filepath).await?;
 
@@ -199,9 +198,9 @@ pub(crate) async fn download(
     let res = inner(state, &id).await;
 
     match res {
-        Ok(res) => return Ok(res),
+        Ok(res) => Ok(res),
         Err(err) => {
-            return Err((
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Unable to download: {:?}, {}", &err.to_string(), err),
             ))
@@ -255,7 +254,7 @@ async fn query_svg(
         headers,
         state,
         Query(QueryInlineKFileReq {
-            id: Some(id.into()),
+            id: Some(id),
             content_type: Some("svg".into()),
             name_like: None,
             rid: None,
@@ -267,7 +266,7 @@ async fn query_svg(
     .ok();
 
     let res = rsp
-        .and_then(|e| e.res.get(0).cloned())
+        .and_then(|e| e.res.first().cloned())
         .map(|e| ("image/svg+xml", ContentEnum::String(e.content.to_string())));
 
     asset_to_response(res)

@@ -30,7 +30,7 @@ impl DerefMut for TimeInterval {
 
 impl EventBuilder for TimeInterval {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        match Self::from_standard(&gt) {
+        match Self::from_standard(gt) {
             Ok(v) => Some(vec![(v, PossibleScore::Yes(10))]),
             Err(_) => None,
         }
@@ -75,7 +75,7 @@ impl EventBuilder for TimeInterval {
                     num = String::new();
                 }
                 '-' => {
-                    if num.len() == 0 {
+                    if num.is_empty() {
                         num.push('-');
                     } else {
                         anyhow::bail!("unable to parse TimeInterval: {}", c);
@@ -89,12 +89,9 @@ impl EventBuilder for TimeInterval {
 
     fn standard_str(&self) -> String {
         let mut result = String::new();
-        let mut push_func = |v: &NoneOrI32, u: char| match v.as_ref() {
-            Some(i) => {
-                result.push_str(&i.to_string());
-                result.push(u);
-            }
-            None => {}
+        let mut push_func = |v: &NoneOrI32, u: char| if let Some(i) = v.as_ref() {
+            result.push_str(&i.to_string());
+            result.push(u);
         };
 
         push_func(&self.year, 'y');

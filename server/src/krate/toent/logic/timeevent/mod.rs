@@ -78,7 +78,7 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
                 let start = temp.first().unwrap().start_in;
                 let end = temp.last().unwrap().end_ex;
                 let gt = RawInputSegs {
-                    original: &gt.original,
+                    original: gt.original,
                     spans: temp,
                 };
                 Some(gt)
@@ -145,7 +145,7 @@ impl EventBuilder for TimeEvent {
                     (
                         Self {
                             base: Some(base.clone()),
-                            reminder: repeaters.get(0).map(|(e, _)| e.clone()),
+                            reminder: repeaters.first().map(|(e, _)| e.clone()),
                         },
                         *score,
                     )
@@ -158,8 +158,8 @@ impl EventBuilder for TimeEvent {
     }
 
     fn is_valid(&self) -> bool {
-        self.base.as_ref().map_or(true, |e| e.is_valid())
-            && self.reminder.as_ref().map_or(true, |e| e.is_valid())
+        self.base.as_ref().is_none_or(|e| e.is_valid())
+            && self.reminder.as_ref().is_none_or(|e| e.is_valid())
     }
 
     fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {

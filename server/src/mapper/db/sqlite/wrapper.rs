@@ -102,7 +102,7 @@ impl KDbConnBehaiverSync for Connection {
         tracing::info!("qry one {:?}", seg);
         execute_sqlite_query!(self, seg, values, |mut rows: Rows<'_>| {
             if let Ok(Some(row)) = rows.next() {
-                return Ok(mapper(KDbRow::Sqlite(row))?);
+                mapper(KDbRow::Sqlite(row))
             } else {
                 anyhow::bail!("Db result is empty");
             }
@@ -122,7 +122,7 @@ impl KDbConnBehaiverSync for Connection {
             while let Ok(Some(row)) = rows.next() {
                 vec.push(mapper(KDbRow::Sqlite(row))?);
             }
-            return Ok(vec);
+            Ok(vec)
         })
     }
 }
@@ -132,7 +132,7 @@ impl KDbConnBehaiver for Sqlite {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("exec {:?}", seg);
         let values: Vec<SqlValueOwned> =
-            values.into_iter().map(|e| SqlValueOwned::from(e)).collect();
+            values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -183,7 +183,7 @@ impl KDbConnBehaiver for Sqlite {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("qry one {:?}", seg);
         let values: Vec<SqlValueOwned> =
-            values.into_iter().map(|e| SqlValueOwned::from(e)).collect();
+            values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -194,13 +194,11 @@ impl KDbConnBehaiver for Sqlite {
                     if let Ok(Some(row)) = rows.next() {
                         let first_res = mapper(KDbRow::Sqlite(row));
                         if !only_one {
-                            return Ok(first_res);
+                            Ok(first_res)
+                        } else if let Ok(Some(_)) = rows.next() {
+                            anyhow::bail!("Db result more thane one");
                         } else {
-                            if let Ok(Some(_)) = rows.next() {
-                                anyhow::bail!("Db result more thane one");
-                            } else {
-                                return Ok(first_res);
-                            }
+                            Ok(first_res)
                         }
                     } else {
                         anyhow::bail!("Db result is empty");
@@ -222,7 +220,7 @@ impl KDbConnBehaiver for Sqlite {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("qry opt {:?}", seg);
         let values: Vec<SqlValueOwned> =
-            values.into_iter().map(|e| SqlValueOwned::from(e)).collect();
+            values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -255,7 +253,7 @@ impl KDbConnBehaiver for Sqlite {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("qry list {:?}", seg);
         let values: Vec<SqlValueOwned> =
-            values.into_iter().map(|e| SqlValueOwned::from(e)).collect();
+            values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -267,7 +265,7 @@ impl KDbConnBehaiver for Sqlite {
                     while let Ok(Some(row)) = rows.next() {
                         vec.push(mapper(KDbRow::Sqlite(row))?);
                     }
-                    return Ok(vec);
+                    Ok(vec)
                 })
             })
             .await

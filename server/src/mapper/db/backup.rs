@@ -1,4 +1,3 @@
-use chin_sql::PlaceHolderType;
 use chin_tools::{AResult, EResult};
 use serde::Serialize;
 

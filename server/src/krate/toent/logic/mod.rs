@@ -50,12 +50,11 @@ impl<'a> RawInputSegs<'a> {
 
     pub(crate) fn sub_range(&self, start: usize, end: usize) -> Self {
         RawInputSegs {
-            original: &self.original,
+            original: self.original,
             spans: self
                 .spans
                 .iter()
-                .filter(|s| s.start_in >= start && s.end_ex <= end)
-                .map(|s| *s)
+                .filter(|s| s.start_in >= start && s.end_ex <= end).copied()
                 .collect(),
         }
     }
@@ -87,7 +86,7 @@ impl<'a> From<&'a str> for RawInputSegs<'a> {
         }
 
         RawInputSegs {
-            original: &input,
+            original: input,
             spans,
         }
     }
@@ -103,7 +102,7 @@ impl<'a> Deref for RawInputSegs<'a> {
 
 impl<'a> AsRef<str> for RawInputSegs<'a> {
     fn as_ref(&self) -> &str {
-        &self.original
+        self.original
     }
 }
 
@@ -122,8 +121,7 @@ impl<'a> RawInputSegs<'a> {
             spans: self
                 .spans
                 .iter()
-                .filter(|e| filter(e.text))
-                .map(|e| *e)
+                .filter(|e| filter(e.text)).copied()
                 .collect(),
         }
     }
@@ -159,15 +157,15 @@ impl PossibleToent {
         if let Some(mut guesses) = EventEnum::guess(&input.into()) {
             guesses.sort_by(|e1, e2| e2.1.cmp(&e1.1));
 
-            let res = guesses
+            
+
+            guesses
                 .into_iter()
                 .map(|e| PossibleToent {
                     input: input.to_owned(),
                     event: e.0,
                 })
-                .collect();
-
-            res
+                .collect()
         } else {
             vec![]
         }
@@ -188,7 +186,7 @@ mod test {
     }
     fn t_same(guess: &str, standard: &str) {
         print_and_compare(
-            PossibleToent::guess(guess).get(0).map(|e| &e.event),
+            PossibleToent::guess(guess).first().map(|e| &e.event),
             PossibleToent::from_standard(standard)
                 .ok()
                 .as_ref()

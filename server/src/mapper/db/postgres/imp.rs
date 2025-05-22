@@ -28,12 +28,12 @@ impl Postgres {
         let seg = sql_builder.build(chin_sql::DbType::Postgres).context("unable to build dump sql")?;
         let mut client = self.client().await?;
         let stmt = client.transaction().await?;
-        let portal = stmt.bind(&seg.seg, &to_sql!(seg.values)).await?;
+        let portal = stmt.bind(&seg.seg, to_sql!(seg.values)).await?;
         loop {
             // poll batch_size rows from portal and send it to embedding thread via channel
-            let rows = stmt.query_portal(&portal, 10 as i32).await?;
+            let rows = stmt.query_portal(&portal, 10_i32).await?;
 
-            if rows.len() == 0 {
+            if rows.is_empty() {
                 break;
             }
 
@@ -41,7 +41,7 @@ impl Postgres {
                 match convert_row_to_obj(KDbRow::Postgres(row)) {
                     Ok(obj) => {
                         callback
-                            .callback(DumpWrapper::of(obj, 1, &table_name))
+                            .callback(DumpWrapper::of(obj, 1, table_name))
                             .await?;
                     }
                     Err(err) => {

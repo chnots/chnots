@@ -48,7 +48,7 @@ impl WorkspaceMapper for KDb {
             let inserter = SqlInserter::new(WorkspaceRecord::TABLE)
                 .fields(WorkspaceRecord::ID, &v.id)
                 .fields(WorkspaceRecord::NAME, &v.name)
-                .fields(WorkspaceRecord::INSERT_TIME, &v.insert_time)
+                .fields(WorkspaceRecord::INSERT_TIME, v.insert_time)
                 .on_conflict(chin_sql::OnConflict::Ignore);
 
             self.conn().await?.exec(inserter).await?;

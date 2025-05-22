@@ -41,13 +41,13 @@ impl EventBuilder for WesTime {
         let trimmed = gt.original;
 
         if equals_any(
-            &trimmed.to_ascii_lowercase().as_str(),
+            trimmed.to_ascii_lowercase().as_str(),
             &["t", "n", "no", "now", "time", "uijm", "shijian", "时间"],
         ) {
             guessed.push((WesTime::now_time(), PossibleScore::Likely(100)));
         }
 
-        if let Ok(standard) = Self::from_standard(&gt) {
+        if let Ok(standard) = Self::from_standard(gt) {
             guessed.push((standard, PossibleScore::Yes(100)));
         }
 
@@ -63,7 +63,7 @@ impl EventBuilder for WesTime {
 
             let mut ts_segs = vec![];
             let mut offset_seg = None;
-            standard.into_iter().for_each(|e| {
+            standard.iter().for_each(|e| {
                 if num_start.is_match(e.text) {
                     ts_segs.push(*e);
                 } else {
@@ -96,7 +96,7 @@ impl EventBuilder for WesTime {
         let mut base = self.timestamp.standard_str();
 
         if let Some(offset) = self.offset {
-            base.push_str(" ");
+            base.push(' ');
             base.push_str(&offset.to_string());
         }
 
@@ -114,7 +114,7 @@ impl Timestamp for WesTime {
     }
 
     fn calender_type(&self) -> &'static str {
-        &CAL_TYPE
+        CAL_TYPE
     }
 
     fn now_time() -> Self {

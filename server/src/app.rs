@@ -1,7 +1,6 @@
-use chin_tools::AResult;
 use std::{ops::Deref, sync::Arc};
 
-use crate::{config::Config, mapper::MapperType, model::dto::KReq};
+use crate::{config::Config, mapper::MapperType};
 
 pub(crate) struct AppState {
     pub(crate) mapper: MapperType,
@@ -19,8 +18,8 @@ impl Deref for ShareAppState {
     }
 }
 
-impl Into<ShareAppState> for AppState {
-    fn into(self) -> ShareAppState {
-        ShareAppState(Arc::new(self))
+impl From<AppState> for ShareAppState {
+    fn from(val: AppState) -> Self {
+        ShareAppState(Arc::new(val))
     }
 }

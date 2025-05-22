@@ -77,9 +77,9 @@ where
         let path = self.0.into();
         debug!("asset {:?}", path.as_str());
 
-        let data = Asset::get(path.as_str()).and_then(|ef| {
+        let data = Asset::get(path.as_str()).map(|ef| {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
-            Some((mime, ContentEnum::Cow(ef.data)))
+            (mime, ContentEnum::Cow(ef.data))
         });
 
         asset_to_response(data)
