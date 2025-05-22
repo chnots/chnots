@@ -25,14 +25,12 @@ use tower_http::{
     trace::{self, TraceLayer},
 };
 use tracing::{info, Level};
-use v1::{chnot, kv, kfile, toent};
 
-use crate::{app::ShareAppState, llmchat};
+use crate::{app::ShareAppState, krate::{chnot, kfile, ktv, llmchat, toent}};
 
-mod asset;
-pub(crate) mod v1;
+pub(crate) mod asset;
 
-pub(crate) struct KResponse<E: Serialize>(AResult<E>);
+pub(crate) struct KResponse<E: Serialize>(pub AResult<E>);
 
 impl<E: Serialize> From<AResult<E>> for KResponse<E> {
     fn from(value: AResult<E>) -> Self {
@@ -50,10 +48,7 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
             }
             Err(err) => {
                 tracing::error!("Error Occured: {}, {:#?}", err.to_string(), err.backtrace());
-                let mut res = Json(
-                    json!({"msg": err.to_string()}),
-                )
-                .into_response();
+                let mut res = Json(json!({"msg": err.to_string()})).into_response();
                 *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
                 res
             }
@@ -74,11 +69,11 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .on_request(|_req: &_, _: &_| {});
 
     let app = Router::new()
-        .merge(kfile::routes())
-        .merge(chnot::routes())
+        .merge(kfile::controller::routes())
+        .merge(chnot::controller::routes())
         .merge(asset::routes())
-        .merge(toent::routes())
-        .merge(kv::routes())
+        .merge(toent::controller::routes())
+        .merge(ktv::controller::routes())
         .merge(llmchat::controller::routes())
         .with_state(app_state.clone())
         .layer(CompressionLayer::new())

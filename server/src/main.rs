@@ -20,9 +20,9 @@ pub(crate) mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod server;
-pub(crate) mod toent;
+pub(crate) mod krate;
 pub(crate) mod util;
-pub(crate) mod llmchat;
+
 
 #[tokio::main]
 async fn main() -> EResult {

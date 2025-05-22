@@ -1,14 +1,7 @@
 use chin_tools::AResult;
 use std::{ops::Deref, sync::Arc};
 
-use crate::{
-    config::Config,
-    mapper::{ChnotMapper, MapperType},
-    model::dto::{
-        chnot::{Chnot, ChnotQueryReq, ChnotQueryRsp},
-        KReq,
-    },
-};
+use crate::{config::Config, mapper::MapperType, model::dto::KReq};
 
 pub(crate) struct AppState {
     pub(crate) mapper: MapperType,
@@ -29,14 +22,5 @@ impl Deref for ShareAppState {
 impl Into<ShareAppState> for AppState {
     fn into(self) -> ShareAppState {
         ShareAppState(Arc::new(self))
-    }
-}
-
-impl AppState {
-    pub(crate) async fn chnot_query(
-        &self,
-        req: KReq<ChnotQueryReq>,
-    ) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
-        self.mapper.chnot_query(req).await
     }
 }

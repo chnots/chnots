@@ -1,0 +1,91 @@
+use crate::app::ShareAppState;
+use crate::model::dto::{kreq, read_workspace_from_header};
+use crate::server::controller::KResponse;
+use axum::{
+    extract::State,
+    http::HeaderMap,
+    routing::{delete, post, put},
+    Json, Router,
+};
+
+use super::mapper::ChnotMapper;
+use super::*;
+
+pub(crate) fn routes() -> Router<ShareAppState> {
+    Router::new()
+        .route("/api/v1/chnot", put(chnot_overwrite))
+        .route("/api/v1/chnot", delete(chnot_deletetion))
+        .route("/api/v1/chnot-query", post(chnot_query))
+        .route("/api/v1/chnot-update", post(chnot_update))
+        .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
+        .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
+        .route("/api/v1/chnot-tag-refresh-all", post(chnot_tag_refresh_all))
+}
+
+async fn chnot_overwrite(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotOverwriteReq>,
+) -> KResponse<ChnotOverwriteRsp> {
+    state
+        .mapper
+        .chnot_overwrite(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn chnot_deletetion(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotDeletionReq>,
+) -> KResponse<ChnotDeletionRsp> {
+    state.mapper.chnot_delete(kreq(headers, req)).await.into()
+}
+
+async fn chnot_update(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotUpdateReq>,
+) -> KResponse<ChnotUpdateRsp> {
+    state.mapper.chnot_update(kreq(headers, req)).await.into()
+}
+
+async fn chnot_query(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotQueryReq>,
+) -> KResponse<ChnotQueryRsp<Vec<Chnot>>> {
+    state.mapper.chnot_query(kreq(headers, req)).await.into()
+}
+
+async fn chnot_tag_query(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotTagQueryReq>,
+) -> KResponse<ChnotTagQueryRsp<ChnotTag>> {
+    state
+        .mapper
+        .chnot_tag_query(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn chnot_tag_names(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotTagQueryReq>,
+) -> KResponse<ChnotTagQueryRsp<String>> {
+    state
+        .mapper
+        .chnot_tag_names(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
+    state
+        .mapper
+        .chnot_tag_update_all(read_workspace_from_header(&headers).as_str())
+        .await
+        .into()
+}

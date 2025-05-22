@@ -1,7 +1,3 @@
-pub(crate) mod ctable;
-pub(crate) mod chnot;
-pub(crate) mod kfile;
-
 /// DTO: Data Transfer Object
 ///
 /// All dtos should be put into this file.
@@ -53,9 +49,3 @@ where
         }
     }
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct WorkspaceQueryReq {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct WorkspaceQueryRsp {}
