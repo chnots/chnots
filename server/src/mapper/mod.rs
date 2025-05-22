@@ -7,7 +7,6 @@ use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
 use dump::RecordCallbackType;
 use serde::Deserialize;
 
-
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub(crate) enum MapperConfig {
@@ -20,10 +19,6 @@ pub(crate) enum MapperConfig {
 pub(crate) enum MapperType {
     KDb(KDb),
 }
-
-
-
-
 
 pub(crate) trait DumpMapper {
     type RowType<'a>;

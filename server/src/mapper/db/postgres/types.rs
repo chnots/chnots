@@ -1,5 +1,3 @@
-
-
 #[macro_export]
 macro_rules! to_sql {
     ($values:expr) => {
@@ -13,4 +11,3 @@ macro_rules! to_sql {
             .as_slice()
     };
 }
-

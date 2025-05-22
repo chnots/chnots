@@ -16,13 +16,12 @@ use tracing::{info, Level};
 pub(crate) mod app;
 pub(crate) mod arguments;
 pub(crate) mod config;
+pub(crate) mod krate;
 pub(crate) mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod server;
-pub(crate) mod krate;
 pub(crate) mod util;
-
 
 #[tokio::main]
 async fn main() -> EResult {

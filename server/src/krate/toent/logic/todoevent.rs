@@ -40,8 +40,7 @@ impl<'de> Deserialize<'de> for TodoEvent {
         D: serde::Deserializer<'de>,
     {
         let o: String = String::deserialize(deserializer)?;
-        TodoEvent::from_str(o.to_ascii_uppercase().as_str())
-            .map_err(serde::de::Error::custom)
+        TodoEvent::from_str(o.to_ascii_uppercase().as_str()).map_err(serde::de::Error::custom)
     }
 }
 

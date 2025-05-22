@@ -89,9 +89,11 @@ impl EventBuilder for TimeInterval {
 
     fn standard_str(&self) -> String {
         let mut result = String::new();
-        let mut push_func = |v: &NoneOrI32, u: char| if let Some(i) = v.as_ref() {
-            result.push_str(&i.to_string());
-            result.push(u);
+        let mut push_func = |v: &NoneOrI32, u: char| {
+            if let Some(i) = v.as_ref() {
+                result.push_str(&i.to_string());
+                result.push(u);
+            }
         };
 
         push_func(&self.year, 'y');

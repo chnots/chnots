@@ -2,7 +2,6 @@ use std::fmt;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-
 use super::todoevent::TodoEvent;
 use super::PossibleScore;
 use super::{timeevent::TimeEvent, EventBuilder, RawInputSegs};

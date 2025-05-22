@@ -54,7 +54,8 @@ impl<'a> RawInputSegs<'a> {
             spans: self
                 .spans
                 .iter()
-                .filter(|s| s.start_in >= start && s.end_ex <= end).copied()
+                .filter(|s| s.start_in >= start && s.end_ex <= end)
+                .copied()
                 .collect(),
         }
     }
@@ -121,7 +122,8 @@ impl<'a> RawInputSegs<'a> {
             spans: self
                 .spans
                 .iter()
-                .filter(|e| filter(e.text)).copied()
+                .filter(|e| filter(e.text))
+                .copied()
                 .collect(),
         }
     }
@@ -156,8 +158,6 @@ impl PossibleToent {
     pub(crate) fn guess(input: &str) -> Vec<PossibleToent> {
         if let Some(mut guesses) = EventEnum::guess(&input.into()) {
             guesses.sort_by(|e1, e2| e2.1.cmp(&e1.1));
-
-            
 
             guesses
                 .into_iter()

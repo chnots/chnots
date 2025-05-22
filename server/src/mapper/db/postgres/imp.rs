@@ -25,7 +25,9 @@ impl Postgres {
     {
         let table_name = sql_builder.table_name;
 
-        let seg = sql_builder.build(chin_sql::DbType::Postgres).context("unable to build dump sql")?;
+        let seg = sql_builder
+            .build(chin_sql::DbType::Postgres)
+            .context("unable to build dump sql")?;
         let mut client = self.client().await?;
         let stmt = client.transaction().await?;
         let portal = stmt.bind(&seg.seg, to_sql!(seg.values)).await?;

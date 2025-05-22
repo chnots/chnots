@@ -131,8 +131,7 @@ impl KDbConnBehaiver for Sqlite {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("exec {:?}", seg);
-        let values: Vec<SqlValueOwned> =
-            values.into_iter().map(SqlValueOwned::from).collect();
+        let values: Vec<SqlValueOwned> = values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -182,8 +181,7 @@ impl KDbConnBehaiver for Sqlite {
     {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("qry one {:?}", seg);
-        let values: Vec<SqlValueOwned> =
-            values.into_iter().map(SqlValueOwned::from).collect();
+        let values: Vec<SqlValueOwned> = values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -219,8 +217,7 @@ impl KDbConnBehaiver for Sqlite {
     {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("qry opt {:?}", seg);
-        let values: Vec<SqlValueOwned> =
-            values.into_iter().map(SqlValueOwned::from).collect();
+        let values: Vec<SqlValueOwned> = values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool
@@ -252,8 +249,7 @@ impl KDbConnBehaiver for Sqlite {
     {
         let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
         tracing::info!("qry list {:?}", seg);
-        let values: Vec<SqlValueOwned> =
-            values.into_iter().map(SqlValueOwned::from).collect();
+        let values: Vec<SqlValueOwned> = values.into_iter().map(SqlValueOwned::from).collect();
 
         let result = self
             .pool

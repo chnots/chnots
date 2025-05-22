@@ -26,7 +26,10 @@ use tower_http::{
 };
 use tracing::{info, Level};
 
-use crate::{app::ShareAppState, krate::{chnot, kfile, ktv, llmchat, toent}};
+use crate::{
+    app::ShareAppState,
+    krate::{chnot, kfile, ktv, llmchat, toent},
+};
 
 pub(crate) mod asset;
 

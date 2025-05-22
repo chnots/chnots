@@ -3,9 +3,9 @@ pub(crate) mod inserter;
 use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
+use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
 use crate::model::dto::KReq;
 use crate::util::string_util::get_hashtags;
-use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
 use chin_sql::{ILikeType, SqlDeleter, SqlInserter, SqlReader, SqlValue};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
 use chin_tools::{utils::id_util, AResult, EResult};
@@ -108,16 +108,12 @@ impl KDb {
             .raw("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index));
 
-        let mut data = self
-            .conn()
-            .await?
-            .qry_list(query, mapper)
-            .await?;
+        let mut data = self.conn().await?.qry_list(query, mapper).await?;
 
         if let ChnotTagTreeType::Children(prefix) = query_type1 {
             data.retain(|tag| {
-                    tag.as_ref().starts_with(&prefix) && level(tag.as_ref()) == origin_count + 1
-                });
+                tag.as_ref().starts_with(&prefix) && level(tag.as_ref()) == origin_count + 1
+            });
         }
 
         Ok(ChnotTagQueryRsp { data, start_index })
@@ -446,7 +442,6 @@ impl ChnotDeserializeMapper for KDbRow<'_> {
         Ok(obj)
     }
 }
-
 
 impl ChnotDumpMapper for KDb {
     async fn dump_chnot_meta(&self, callback: &crate::RecordCallbackType) -> EResult {

@@ -115,7 +115,6 @@ impl KDbConnBehaiver for Client {
     where
         C: (FnOnce(usize) -> bool) + Send + 'static,
     {
-        
         match self.exec(ssb).await {
             Ok(count) => {
                 if check_count(count) {

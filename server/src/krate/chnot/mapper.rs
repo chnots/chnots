@@ -1,10 +1,6 @@
 use chin_tools::{AResult, EResult};
 
-use crate::{
-    expand_mt_branch,
-    model::dto::KReq,
-    MapperType, RecordCallbackType,
-};
+use crate::{expand_mt_branch, model::dto::KReq, MapperType, RecordCallbackType};
 
 use super::*;
 

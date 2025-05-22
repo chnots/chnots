@@ -22,7 +22,6 @@ pub(crate) trait KTVDeserializeMapper {
     fn to_ktv(self) -> AResult<KTV>;
 }
 
-
 impl KTVMapper for MapperType {
     async fn ktv_overwrite(&self, req: KReq<KTVOverwriteReq>) -> AResult<KTVOverwriteRsp> {
         expand_mt_branch!(self.ktv_overwrite(req))

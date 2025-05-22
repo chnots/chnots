@@ -69,8 +69,7 @@ impl Deref for NoneOrI32 {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[derive(Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub(crate) struct BaseTime {
     pub(crate) year: NoneOrI32,
     pub(crate) month: NoneOrI32,
@@ -240,7 +239,6 @@ impl EventBuilder for BaseTime {
     }
 }
 
-
 impl From<NaiveDateTime> for BaseTime {
     fn from(value: NaiveDateTime) -> Self {
         BaseTime {
@@ -279,10 +277,7 @@ impl From<NaiveTime> for BaseTime {
 pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Result<i32> {
     match unit {
         TimeUnit::Minute => {
-            let time: Vec<&str> = input
-                .trim_start_matches(['+', '-'])
-                .split(":")
-                .collect();
+            let time: Vec<&str> = input.trim_start_matches(['+', '-']).split(":").collect();
 
             Ok(time[0].parse::<i32>()? * 3600 + time[1].parse::<i32>()? * 60)
         }

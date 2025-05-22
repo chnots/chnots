@@ -1,4 +1,3 @@
-
 use chin_sql::{DbType, GenerateTableSql};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};

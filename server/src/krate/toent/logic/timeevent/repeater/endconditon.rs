@@ -121,7 +121,8 @@ mod tests {
     fn test_interval() {
         assert!(
             EndCondition::guess(&"=10d".into())
-                .unwrap().first()
+                .unwrap()
+                .first()
                 .unwrap()
                 .0
                 == EndCondition::Interval(TimeInterval::from_standard(&"10d".into()).unwrap())
@@ -132,7 +133,8 @@ mod tests {
     fn test_time() {
         assert_eq!(
             EndCondition::guess(&"=2025-12-12".into())
-                .unwrap().first()
+                .unwrap()
+                .first()
                 .unwrap()
                 .0,
             EndCondition::from_standard(&"=2025-12-12".into()).unwrap()
@@ -140,7 +142,8 @@ mod tests {
 
         assert_eq!(
             EndCondition::guess(&"=2025-12-12 12:00:00".into())
-                .unwrap().first()
+                .unwrap()
+                .first()
                 .unwrap()
                 .0,
             EndCondition::from_standard(&"=2025-12-12 12:00:00".into()).unwrap()

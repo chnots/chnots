@@ -127,8 +127,6 @@ pub(crate) struct ChnotQueryRsp<T> {
     pub(crate) next_start: usize,
 }
 
-
-
 impl<'a> Deserialize<'a> for ChnotTagTreeType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

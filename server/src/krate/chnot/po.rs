@@ -86,7 +86,7 @@ pub(crate) enum ChnotTagType {
 
 impl From<ChnotTagType> for SqlValue<'_> {
     fn from(value: ChnotTagType) -> Self {
-        SqlValue::I16(value as i16)
+        SqlValue::I32(value as i32)
     }
 }
 

@@ -216,4 +216,3 @@ impl<'a, 'b> KDbRowBehavier<'b, Option<DateTime<FixedOffset>>> for KDbRow<'a> {
         }
     }
 }
-
