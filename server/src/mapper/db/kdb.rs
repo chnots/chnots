@@ -10,8 +10,8 @@ use crate::model::db::{
     chnot::*,
     llmchat::*,
     workspace::*,
-    resource::KTV,
-    resource::{InlineResource, Resource},
+    kfile::KTV,
+    kfile::{InlineKFile, KFile},
 };
 
 pub trait KDbConnBehaiver {
@@ -327,16 +327,16 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
         Ok(obj)
     }
 
-    fn to_resource(self) -> AResult<Resource> {
-        let obj = Resource {
-            id: self.try_get(Resource::ID)?,
-            insert_time: self.try_get(Resource::INSERT_TIME)?,
-            delete_time: self.try_get(Resource::DELETE_TIME)?,
-            workspace: self.try_get(Resource::WORKSPACE)?,
-            ori_filename: self.try_get(Resource::ORI_FILENAME)?,
-            content_type: self.try_get(Resource::CONTENT_TYPE)?,
-            ori_last_modified: self.try_get(Resource::ORI_LAST_MODIFIED)?,
-            filesize: self.try_get(Resource::FILESIZE)?,
+    fn to_kfile(self) -> AResult<KFile> {
+        let obj = KFile {
+            id: self.try_get(KFile::ID)?,
+            insert_time: self.try_get(KFile::INSERT_TIME)?,
+            delete_time: self.try_get(KFile::DELETE_TIME)?,
+            workspace: self.try_get(KFile::WORKSPACE)?,
+            ori_filename: self.try_get(KFile::ORI_FILENAME)?,
+            content_type: self.try_get(KFile::CONTENT_TYPE)?,
+            ori_last_modified: self.try_get(KFile::ORI_LAST_MODIFIED)?,
+            filesize: self.try_get(KFile::FILESIZE)?,
         };
         Ok(obj)
     }
@@ -364,17 +364,17 @@ impl<'a> DeserializeMapper for KDbRow<'a> {
         Ok(obj)
     }
 
-    fn to_inline_resource(self) -> AResult<crate::model::db::resource::InlineResource> {
-        let obj = InlineResource {
-            id: self.try_get(InlineResource::ID)?,
-            name: self.try_get(InlineResource::NAME)?,
-            content: self.try_get(InlineResource::CONTENT)?,
-            content_type: self.try_get(InlineResource::CONTENT_TYPE)?,
-            delete_time: self.try_get(InlineResource::DELETE_TIME)?,
-            insert_time: self.try_get(InlineResource::INSERT_TIME)?,
-            workspace: self.try_get(InlineResource::WORKSPACE)?,
-            rid: self.try_get(InlineResource::RID)?,
-            archor: self.try_get(InlineResource::ARCHOR)?,
+    fn to_inline_kfile(self) -> AResult<crate::model::db::kfile::InlineKFile> {
+        let obj = InlineKFile {
+            id: self.try_get(InlineKFile::ID)?,
+            name: self.try_get(InlineKFile::NAME)?,
+            content: self.try_get(InlineKFile::CONTENT)?,
+            content_type: self.try_get(InlineKFile::CONTENT_TYPE)?,
+            delete_time: self.try_get(InlineKFile::DELETE_TIME)?,
+            insert_time: self.try_get(InlineKFile::INSERT_TIME)?,
+            workspace: self.try_get(InlineKFile::WORKSPACE)?,
+            rid: self.try_get(InlineKFile::RID)?,
+            archor: self.try_get(InlineKFile::ARCHOR)?,
         };
         Ok(obj)
     }

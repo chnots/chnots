@@ -1,18 +1,18 @@
 import request from "@/utils/request";
 import { BASE_URL } from "@/utils/request";
 import {
-  InsertInlineResourceReq,
+  InsertInlineKFileReq,
   KTVInserterReq,
   KTVQueryReq,
   KTVQueryRsp,
-  QueryInlineResourceReq,
-  QueryInlineResourceRsp,
-  ResourceUploadReq,
-  ResourceUploadRsp,
+  QueryInlineKFileReq,
+  QueryInlineKFileRsp,
+  KFileUploadReq,
+  KFileUploadRsp,
 } from "./dto";
-import { Resource } from "./db";
+import { KFile } from "./db";
 
-export const resourceUpload = async ({
+export const kfileUpload = async ({
   chunk,
   res_id,
   filename,
@@ -21,7 +21,7 @@ export const resourceUpload = async ({
   filetype,
   last_modified,
   filesize,
-}: ResourceUploadReq): Promise<ResourceUploadRsp> => {
+}: KFileUploadReq): Promise<KFileUploadRsp> => {
   const data = new FormData();
   data.append("chunk", chunk);
   data.append("res_id", res_id);
@@ -32,25 +32,27 @@ export const resourceUpload = async ({
   data.append("last_modified", last_modified.toString());
   data.append("filesize", filesize.toString());
 
-  return await request.post("api/v1/resource", data);
+  return await request.post("api/v1/kfile", data);
 };
 
-export const resourceQueryInfo = async (resId: string): Promise<{ res?: Resource }> => {
-  return await request.get("api/v1/resource-info/" + resId);
+export const kfileQueryInfo = async (
+  resId: string
+): Promise<{ res?: KFile }> => {
+  return await request.get("api/v1/kfile-info/" + resId);
 };
 
-export const insertInlineResource = async (req: InsertInlineResourceReq) => {
-  return await request.put("api/v1/inline-resource", req);
+export const insertInlineKFile = async (req: InsertInlineKFileReq) => {
+  return await request.put("api/v1/inline-kfile", req);
 };
 
-export const queryInlineResource = async (
-  req: QueryInlineResourceReq
-): Promise<QueryInlineResourceRsp> => {
-  return await request.get("api/v1/inline-resource", req);
+export const queryInlineKFile = async (
+  req: QueryInlineKFileReq
+): Promise<QueryInlineKFileRsp> => {
+  return await request.get("api/v1/inline-kfile", req);
 };
 
-export const getResouceDownloadUrl = (resource: Resource): string => {
-  return BASE_URL + "/api/v1/resource/" + resource.id;
+export const getResouceDownloadUrl = (kfile: KFile): string => {
+  return BASE_URL + "/api/v1/kfile/" + kfile.id;
 };
 
 export const insertKTV = async (req: KTVInserterReq) => {

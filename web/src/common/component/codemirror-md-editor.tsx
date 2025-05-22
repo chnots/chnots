@@ -11,14 +11,14 @@ import {
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import React from "react";
-import { useAttachmentStore } from "@/store/resource/store";
+import { useAttachmentStore } from "@/store/kfile/store";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 
 import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
-import { resourceUpload } from "@/store/resource/service";
+import { kfileUpload } from "@/store/kfile/service";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -64,11 +64,11 @@ const eventHandlers = EditorView.domEventHandlers({
         allPromises.push(
           new Promise((resolve, reject) => {
             // TODO!
-/*             resourceUpload(file)
-              .then((resource?) => {
-                if (resource !== undefined) {
+            /*             kfileUpload(file)
+              .then((kfile?) => {
+                if (kfile !== undefined) {
                   insertions.push(
-                    `![${new Date().toISOString()}](${resource.id})`
+                    `![${new Date().toISOString()}](${kfile.id})`
                   );
                 }
                 resolve();

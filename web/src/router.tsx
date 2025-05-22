@@ -19,7 +19,7 @@ export enum RoutePaths {
   Settings = "/settings",
   Timer = "/timer",
   ToolExcalidraw = "/tool/excalidraw",
-  Resources = "/resources",
+  KFiles = "/kfiles",
 }
 
 const routes: RouteObject[] = [

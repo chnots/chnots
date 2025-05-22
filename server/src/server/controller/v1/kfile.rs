@@ -27,10 +27,10 @@ use tracing::info;
 use crate::{
     app::ShareAppState,
     config::AttachmentConfig,
-    mapper::ResourceMapper,
+    mapper::KFileMapper,
     model::{
-        db::resource::Resource,
-        dto::{kreq, read_workspace_from_header, resource::*},
+        db::kfile::KFile,
+        dto::{kreq, read_workspace_from_header, kfile::*},
     },
     server::controller::{
         asset::{asset_to_response, ContentEnum},
@@ -54,7 +54,7 @@ pub fn asset_tmp_path(config: &AttachmentConfig, id: &str) -> PathBuf {
         .join(id)
 }
 
-fn generate_resource_id(filename: &str) -> String {
+fn generate_kfile_id(filename: &str) -> String {
     let base = uuid::Uuid::new_v4().to_string().replace("-", "");
 
     match PathBuf::from(filename).extension().and_then(OsStr::to_str) {
@@ -98,7 +98,7 @@ async fn assemble_file<P: AsRef<Path>>(
 async fn upload(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    TypedMultipart(ResourceUploadReq {
+    TypedMultipart(KFileUploadReq {
         filename,
         chunk_no,
         total_chunks,
@@ -106,8 +106,8 @@ async fn upload(
         res_id,
         last_modified,
         filesize,
-    }): TypedMultipart<ResourceUploadReq>,
-) -> AResult<ResourceUploadRsp> {
+    }): TypedMultipart<KFileUploadReq>,
+) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
 
     let tmp_dir = asset_tmp_path(&state.config.attachment, &res_id);
@@ -131,13 +131,13 @@ async fn upload(
         }
     }
 
-    let resource = if all_existed {
+    let kfile = if all_existed {
         let id = id_util::generate_uuid();
         let final_filepath = asset_path_by_uuid(&state.config.attachment, &id);
         assemble_file(&tmp_dir, final_filepath, total_chunks).await?;
 
         let res = mapper
-            .insert_resource(&Resource {
+            .insert_kfile(&KFile {
                 id,
                 workspace: read_workspace_from_header(&headers),
                 ori_filename: filename,
@@ -153,21 +153,21 @@ async fn upload(
         None
     };
 
-    Ok(ResourceUploadRsp {
-        finished: resource.is_some(),
-        resource,
+    Ok(KFileUploadRsp {
+        finished: kfile.is_some(),
+        kfile,
     })
 }
 
-pub async fn resource_info(
+pub async fn kfile_info(
     state: State<ShareAppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> KResponse<QueryResourceRsp> {
+) -> KResponse<QueryKFileRsp> {
     state
         .mapper
-        .query_resource_by_id(&id)
+        .query_kfile_by_id(&id)
         .await
-        .map(|res| QueryResourceRsp { res: Some(res) })
+        .map(|res| QueryKFileRsp { res: Some(res) })
         .into()
 }
 
@@ -182,7 +182,7 @@ pub async fn download(
         state: State<ShareAppState>,
         id: &str,
     ) -> AResult<([(HeaderName, String); 2], body::Body)> {
-        let resource = state.mapper.query_resource_by_id(id).await?;
+        let kfile = state.mapper.query_kfile_by_id(id).await?;
 
         let save_filepath = asset_path_by_uuid(&state.config.attachment, &id);
 
@@ -192,10 +192,10 @@ pub async fn download(
         let body: body::Body = body::Body::from_stream(stream);
 
         let headers = [
-            (header::CONTENT_TYPE, resource.content_type),
+            (header::CONTENT_TYPE, kfile.content_type),
             (
                 header::CONTENT_DISPOSITION,
-                format!("attachment; filename=\"{:?}\"", &resource.ori_filename),
+                format!("attachment; filename=\"{:?}\"", &kfile.ori_filename),
             ),
         ];
         Ok((headers, body))
@@ -214,37 +214,37 @@ pub async fn download(
     }
 }
 
-async fn query_resource(
+async fn query_kfile(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<QueryInlineResourceReq>,
-) -> KResponse<QueryInlineResourceRsp> {
+    Query(req): Query<QueryInlineKFileReq>,
+) -> KResponse<QueryInlineKFileRsp> {
     state
         .mapper
-        .query_inline_resource(kreq(headers, req))
+        .query_inline_kfile(kreq(headers, req))
         .await
         .into()
 }
-async fn query_inline_resource(
+async fn query_inline_kfile(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<QueryInlineResourceReq>,
-) -> KResponse<QueryInlineResourceRsp> {
+    Query(req): Query<QueryInlineKFileReq>,
+) -> KResponse<QueryInlineKFileRsp> {
     state
         .mapper
-        .query_inline_resource(kreq(headers, req))
+        .query_inline_kfile(kreq(headers, req))
         .await
         .into()
 }
 
-async fn insert_inline_resource(
+async fn insert_inline_kfile(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<InsertInlineResourceReq>,
-) -> KResponse<InsertInlineResourceRsp> {
+    Json(req): Json<InsertInlineKFileReq>,
+) -> KResponse<InsertInlineKFileRsp> {
     state
         .mapper
-        .insert_inline_resource(&kreq(headers, req))
+        .insert_inline_kfile(&kreq(headers, req))
         .await
         .into()
 }
@@ -256,10 +256,10 @@ async fn query_svg(
 ) -> Response {
     let mut headers = headers.clone();
     headers.append("K-workspace", HeaderValue::from_str("default").unwrap());
-    let rsp = query_inline_resource(
+    let rsp = query_inline_kfile(
         headers,
         state,
-        Query(QueryInlineResourceReq {
+        Query(QueryInlineKFileReq {
             id: Some(id.into()),
             content_type: Some("svg".into()),
             name_like: None,
@@ -281,16 +281,16 @@ async fn query_svg(
 pub fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
-            "/api/v1/resource",
+            "/api/v1/kfile",
             post(|headers, state, mp| async {
-                let rsp: KResponse<ResourceUploadRsp> = upload(headers, state, mp).await.into();
+                let rsp: KResponse<KFileUploadRsp> = upload(headers, state, mp).await.into();
                 rsp
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
-        .route("/api/v1/resource/{id}", get(download))
-        .route("/api/v1/resource-info/{id}", get(resource_info))
-        .route("/api/v1/inline-resource", put(insert_inline_resource))
-        .route("/api/v1/inline-resource", get(query_inline_resource))
+        .route("/api/v1/kfile/{id}", get(download))
+        .route("/api/v1/kfile-info/{id}", get(kfile_info))
+        .route("/api/v1/inline-kfile", put(insert_inline_kfile))
+        .route("/api/v1/inline-kfile", get(query_inline_kfile))
         .route("/api/v1/inline-svg/{id}", get(query_svg))
 }

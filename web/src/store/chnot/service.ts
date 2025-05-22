@@ -38,7 +38,7 @@ export const chnotTagNames = async (
   return await request.post(`api/v1/chnot-tag-names`, req);
 };
 
-export const chnotResourceRelationInsert = async (
+export const chnotKFileRelationInsert = async (
   req: ChnotTagQueryReq
 ): Promise<void> => {
   return await request.post(`api/v1/chnot-tag-names`, req);

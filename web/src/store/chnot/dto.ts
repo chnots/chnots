@@ -82,10 +82,9 @@ export interface ChnotTagQueryReq {
   page_size: number;
 }
 
-export type ChnotResourceRelationInsert = {
+export type ChnotKFileRelationInsert = {
   insert_time: Date;
   chnot_meta_id: string;
-  
 };
 
 export interface ChnotTagQueryRsp {

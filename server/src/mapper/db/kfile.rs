@@ -3,27 +3,27 @@ use chrono::{DateTime, FixedOffset, Local, TimeDelta};
 
 use super::{DeserializeMapper, KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
 use crate::{
-    mapper::{KVMapper, ResourceMapper},
+    mapper::{KVMapper, KFileMapper},
     model::{
-        db::resource::*,
-        dto::{resource::*, KReq},
+        db::kfile::*,
+        dto::{kfile::*, KReq},
     },
 };
 
 use chin_sql::{LimitOffset, OnConflict, SqlDeleter, SqlInserter, SqlReader, Wheres};
 
-impl ResourceMapper for KDb {
-    async fn ensure_table_resource(&self) -> EResult {
-        self.create_table(Resource::schema(self.db_type())).await
+impl KFileMapper for KDb {
+    async fn ensure_table_kfile(&self) -> EResult {
+        self.create_table(KFile::schema(self.db_type())).await
     }
 
-    async fn ensure_table_inline_resource(&self) -> EResult {
-        self.create_table(InlineResource::schema(self.db_type()))
+    async fn ensure_table_inline_kfile(&self) -> EResult {
+        self.create_table(InlineKFile::schema(self.db_type()))
             .await
     }
 
-    async fn insert_resource(&self, res: &Resource) -> AResult<Resource> {
-        let Resource {
+    async fn insert_kfile(&self, res: &KFile) -> AResult<KFile> {
+        let KFile {
             ori_filename,
             id,
             content_type,
@@ -39,17 +39,17 @@ impl ResourceMapper for KDb {
         let insert_time = chrono::Utc::now().to_owned().fixed_offset();
 
         conn.exec(
-            SqlInserter::new(Resource::TABLE)
-                .fields(Resource::ID, id.to_owned())
-                .fields(Resource::ORI_FILENAME, ori_filename.to_owned())
-                .fields(Resource::WORKSPACE, workspace.to_owned())
-                .fields(Resource::CONTENT_TYPE, content_type.to_owned())
-                .fields(Resource::INSERT_TIME, insert_time.to_owned())
-                .fields(Resource::FILESIZE, *filesize)
-                .fields(Resource::ORI_LAST_MODIFIED, *ori_last_modified),
+            SqlInserter::new(KFile::TABLE)
+                .fields(KFile::ID, id.to_owned())
+                .fields(KFile::ORI_FILENAME, ori_filename.to_owned())
+                .fields(KFile::WORKSPACE, workspace.to_owned())
+                .fields(KFile::CONTENT_TYPE, content_type.to_owned())
+                .fields(KFile::INSERT_TIME, insert_time.to_owned())
+                .fields(KFile::FILESIZE, *filesize)
+                .fields(KFile::ORI_LAST_MODIFIED, *ori_last_modified),
         )
         .await
-        .map(|_| Resource {
+        .map(|_| KFile {
             id: id.to_owned(),
             workspace: workspace.to_owned(),
             ori_filename: ori_filename.to_string(),
@@ -61,32 +61,32 @@ impl ResourceMapper for KDb {
         })
     }
 
-    async fn query_resource_by_id(&self, id: &str) -> AResult<Resource> {
+    async fn query_kfile_by_id(&self, id: &str) -> AResult<KFile> {
         let conn = self.conn().await?;
         let res = conn
             .qry_one(
-                SqlReader::read_all(Resource::TABLE).r#where(Wheres::equal(Resource::ID, id)),
-                |e| e.to_resource(),
+                SqlReader::read_all(KFile::TABLE).r#where(Wheres::equal(KFile::ID, id)),
+                |e| e.to_kfile(),
                 false,
             )
             .await?;
         Ok(res)
     }
 
-    async fn insert_inline_resource(
+    async fn insert_inline_kfile(
         &self,
-        req: &KReq<InsertInlineResourceReq>,
-    ) -> anyhow::Result<InsertInlineResourceRsp> {
-        let delete_sql = SqlDeleter::new(InlineResource::TABLE).r#where(Wheres::and([
-            Wheres::equal(InlineResource::RID, &req.res.rid),
-            Wheres::equal(InlineResource::ARCHOR, false),
+        req: &KReq<InsertInlineKFileReq>,
+    ) -> anyhow::Result<InsertInlineKFileRsp> {
+        let delete_sql = SqlDeleter::new(InlineKFile::TABLE).r#where(Wheres::and([
+            Wheres::equal(InlineKFile::RID, &req.res.rid),
+            Wheres::equal(InlineKFile::ARCHOR, false),
         ]));
 
         let last_archor_sql =
-            SqlReader::read(InlineResource::TABLE, &[InlineResource::INSERT_TIME])
+            SqlReader::read(InlineKFile::TABLE, &[InlineKFile::INSERT_TIME])
                 .r#where(Wheres::and([
-                    Wheres::equal(InlineResource::RID, &req.res.rid),
-                    Wheres::equal(InlineResource::ARCHOR, true),
+                    Wheres::equal(InlineKFile::RID, &req.res.rid),
+                    Wheres::equal(InlineKFile::ARCHOR, true),
                 ]))
                 .limit(1);
 
@@ -94,7 +94,7 @@ impl ResourceMapper for KDb {
         let last_archor: Option<DateTime<FixedOffset>> = self
             .conn()
             .await?
-            .qry_opt(last_archor_sql, |e| e.try_get(InlineResource::INSERT_TIME))
+            .qry_opt(last_archor_sql, |e| e.try_get(InlineKFile::INSERT_TIME))
             .await?;
 
         let archorp = match last_archor {
@@ -108,15 +108,15 @@ impl ResourceMapper for KDb {
         self.conn()
             .await?
             .exec(
-                SqlInserter::new(InlineResource::TABLE)
-                    .fields(InlineResource::ID, &req.res.id)
-                    .fields(InlineResource::RID, &req.res.rid)
-                    .fields(InlineResource::NAME, &req.res.name)
-                    .fields(InlineResource::CONTENT, &req.res.content)
-                    .fields(InlineResource::CONTENT_TYPE, &req.res.content_type)
-                    .fields(InlineResource::INSERT_TIME, &req.res.insert_time)
-                    .fields(InlineResource::WORKSPACE, &req.res.workspace)
-                    .fields(InlineResource::ARCHOR, archorp)
+                SqlInserter::new(InlineKFile::TABLE)
+                    .fields(InlineKFile::ID, &req.res.id)
+                    .fields(InlineKFile::RID, &req.res.rid)
+                    .fields(InlineKFile::NAME, &req.res.name)
+                    .fields(InlineKFile::CONTENT, &req.res.content)
+                    .fields(InlineKFile::CONTENT_TYPE, &req.res.content_type)
+                    .fields(InlineKFile::INSERT_TIME, &req.res.insert_time)
+                    .fields(InlineKFile::WORKSPACE, &req.res.workspace)
+                    .fields(InlineKFile::ARCHOR, archorp)
                     .on_conflict({
                         match req.ignore_conflict.as_ref() {
                             Some(ic) => {
@@ -132,31 +132,31 @@ impl ResourceMapper for KDb {
             )
             .await?;
 
-        Ok(InsertInlineResourceRsp {})
+        Ok(InsertInlineKFileRsp {})
     }
 
-    async fn query_inline_resource(
+    async fn query_inline_kfile(
         &self,
-        req: KReq<QueryInlineResourceReq>,
-    ) -> anyhow::Result<QueryInlineResourceRsp> {
-        let query = SqlReader::read_all(InlineResource::TABLE)
+        req: KReq<QueryInlineKFileReq>,
+    ) -> anyhow::Result<QueryInlineKFileRsp> {
+        let query = SqlReader::read_all(InlineKFile::TABLE)
             .r#where(Wheres::and([
                 Wheres::if_some(req.content_type.to_owned(), |e| {
-                    Wheres::equal(InlineResource::CONTENT_TYPE, e)
+                    Wheres::equal(InlineKFile::CONTENT_TYPE, e)
                 }),
-                Wheres::if_some(req.id.to_owned(), |e| Wheres::equal(InlineResource::ID, e)),
+                Wheres::if_some(req.id.to_owned(), |e| Wheres::equal(InlineKFile::ID, e)),
                 Wheres::if_some(req.name_like.to_owned(), |e| {
-                    Wheres::ilike(InlineResource::NAME, e, chin_sql::ILikeType::Fuzzy)
+                    Wheres::ilike(InlineKFile::NAME, e, chin_sql::ILikeType::Fuzzy)
                 }),
                 Wheres::if_some(
                     match req.with_del {
                         Some(true) => None,
                         _ => Some(()),
                     },
-                    |_| Wheres::is_null(InlineResource::DELETE_TIME),
+                    |_| Wheres::is_null(InlineKFile::DELETE_TIME),
                 ),
                 Wheres::if_some(req.rid.to_owned(), |id| {
-                    Wheres::equal(InlineResource::RID, id)
+                    Wheres::equal(InlineKFile::RID, id)
                 }),
             ]))
             .raw("order by insert_time desc")
@@ -165,10 +165,10 @@ impl ResourceMapper for KDb {
         let res = self
             .conn()
             .await?
-            .qry_list(query, |t| t.to_inline_resource())
+            .qry_list(query, |t| t.to_inline_kfile())
             .await?;
 
-        Ok(QueryInlineResourceRsp { res })
+        Ok(QueryInlineKFileRsp { res })
     }
 }
 

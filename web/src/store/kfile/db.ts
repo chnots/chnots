@@ -1,6 +1,6 @@
 import { Workspace } from "../../model";
 
-export interface Resource {
+export interface KFile {
   id: string;
 
   workspace?: string;
@@ -14,7 +14,7 @@ export interface Resource {
   insert_time: string; // Using ISO 8601 format for DateTime
 }
 
-export interface InlineResource {
+export interface InlineKFile {
   id: string;
   rid: string;
   workspace: string;

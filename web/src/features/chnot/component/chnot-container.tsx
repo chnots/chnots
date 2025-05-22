@@ -26,8 +26,8 @@ import KButton, { KButtonProps } from "@/common/component/kbutton";
 import { enumFromStringValue } from "@/utils/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
-import { CommonResource } from "@/features/resource/components/common-resource";
-import { insertKTV } from "@/store/resource/service";
+import { CommonKFile } from "@/features/kfile/components/common-kfile";
+import { insertKTV } from "@/store/kfile/service";
 
 enum RequestState {
   Saved,
@@ -36,7 +36,7 @@ enum RequestState {
 }
 
 interface ChnotEditState {
-  isUploadingResource: boolean;
+  isUploadingKFile: boolean;
   requestState: RequestState;
   isComposing: boolean;
 }
@@ -66,7 +66,7 @@ export const ChnotContainer = ({
   const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
 
   const [editState, setEditState] = useState<ChnotEditState>({
-    isUploadingResource: false,
+    isUploadingKFile: false,
     requestState: RequestState.Saved,
     isComposing: false,
   });
@@ -192,7 +192,7 @@ export const ChnotContainer = ({
                 <ChnotTypeButton thisChnotType={ChnotType.ExcalidrawV1}>
                   <Icon.Pen className="w-4 h-4" />
                 </ChnotTypeButton>
-                <ChnotTypeButton thisChnotType={ChnotType.ResourceV1}>
+                <ChnotTypeButton thisChnotType={ChnotType.KFileV1}>
                   <Icon.File className="w-4 h-4" />
                 </ChnotTypeButton>
               </div>
@@ -309,8 +309,8 @@ export const ChnotContainer = ({
             }}
           />
         )}
-        {chnotType === ChnotType.ResourceV1 && (
-          <CommonResource
+        {chnotType === ChnotType.KFileV1 && (
+          <CommonKFile
             chnotMetaId={chnot?.meta.id}
             onSave={(r) => {
               onOtherTypeInit(

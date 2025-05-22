@@ -8,7 +8,7 @@ use crate::{
         chnot::{ChnotMetadata, ChnotRecord},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         workspace::{WorkspaceRecord, WorkspaceRelation},
-        resource::Resource,
+        kfile::KFile,
     },
 };
 
@@ -69,7 +69,7 @@ impl DumpMapper for KDb {
             &callback,
         )
         .await?;
-        self.read_iterator(s(Resource::TABLE), Self::RowType::to_resource, &callback)
+        self.read_iterator(s(KFile::TABLE), Self::RowType::to_kfile, &callback)
             .await?;
         self.read_iterator(
             s(LLMChatBot::TABLE),

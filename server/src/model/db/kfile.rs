@@ -8,7 +8,7 @@ use strum::{AsRefStr, EnumString};
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql)]
-pub struct Resource {
+pub struct KFile {
     #[gts_primary]
     #[gts_length = 40]
     pub id: String,
@@ -27,7 +27,7 @@ pub struct Resource {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql)]
-pub struct InlineResource {
+pub struct InlineKFile {
     #[gts_primary]
     #[gts_length = 40]
     pub id: String,

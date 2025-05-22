@@ -48,7 +48,7 @@ const ChnotListItem = React.forwardRef(
             {chnot.meta.kind === ChnotType.ExcalidrawV1 && (
               <Icon.Pen className="h-4 w-4 min-w-4 text-red-600" />
             )}
-            {chnot.meta.kind === ChnotType.ResourceV1 && (
+            {chnot.meta.kind === ChnotType.KFileV1 && (
               <Icon.File className="h-4 w-4 min-w-4 text-red-600" />
             )}
             <div

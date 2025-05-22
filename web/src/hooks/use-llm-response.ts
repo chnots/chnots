@@ -185,7 +185,7 @@ export const useLLMResponse = ({
         throw err;
       },
     }).catch((err) => {
-      console.warn("unable to fetch resources", err);
+      console.warn("unable to fetch kfiles", err);
       setResponseState((prev) => {
         return {
           ...prev,

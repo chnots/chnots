@@ -1,6 +1,6 @@
-import { InlineResource, Resource } from "./db";
+import { InlineKFile, KFile } from "./db";
 
-export interface ResourceUploadReq {
+export interface KFileUploadReq {
   res_id: string;
   filename: string;
   chunk_no: number;
@@ -11,18 +11,18 @@ export interface ResourceUploadReq {
   filesize: number;
 }
 
-export interface ResourceUploadRsp {
-  resource?: Resource;
+export interface KFileUploadRsp {
+  kfile?: KFile;
   finished: boolean;
 }
 
-export interface InsertInlineResourceReq {
-  res: InlineResource;
+export interface InsertInlineKFileReq {
+  res: InlineKFile;
   archor_intervals: number;
   ignore_conflict?: boolean;
 }
 
-export interface QueryInlineResourceReq {
+export interface QueryInlineKFileReq {
   id?: string;
   rid?: string;
   with_del?: boolean;
@@ -30,8 +30,8 @@ export interface QueryInlineResourceReq {
   name_like?: string;
 }
 
-export interface QueryInlineResourceRsp {
-  res: InlineResource[];
+export interface QueryInlineKFileRsp {
+  res: InlineKFile[];
 }
 
 export interface KTVInserterReq {

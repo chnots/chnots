@@ -2,10 +2,10 @@ use axum::body::Bytes;
 use axum_typed_multipart::{FieldData, TryFromMultipart};
 use serde::{Deserialize, Serialize};
 
-use crate::model::db::resource::*;
+use crate::model::db::kfile::*;
 
 #[derive(TryFromMultipart)]
-pub struct ResourceUploadReq {
+pub struct KFileUploadReq {
     pub res_id: String,
     pub filename: String,
     pub chunk_no: usize,
@@ -16,24 +16,24 @@ pub struct ResourceUploadReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResourceUploadRsp {
-    pub(crate) resource: Option<Resource>,
+pub struct KFileUploadRsp {
+    pub(crate) kfile: Option<KFile>,
     pub(crate) finished: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineResourceReq {
-    pub res: InlineResource,
+pub struct InsertInlineKFileReq {
+    pub res: InlineKFile,
     /// archor interval second.
     pub archor_intervals: i64,
     pub ignore_conflict: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineResourceRsp {}
+pub struct InsertInlineKFileRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryInlineResourceReq {
+pub struct QueryInlineKFileReq {
     pub id: Option<String>,
     pub rid: Option<String>,
     pub with_del: Option<bool>,
@@ -42,19 +42,19 @@ pub struct QueryInlineResourceReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryInlineResourceRsp {
-    pub res: Vec<InlineResource>,
+pub struct QueryInlineKFileRsp {
+    pub res: Vec<InlineKFile>,
 }
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryResourceReq {
+pub struct QueryKFileReq {
     pub id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryResourceRsp {
-    pub res: Option<Resource>,
+pub struct QueryKFileRsp {
+    pub res: Option<KFile>,
 }
 
 

@@ -5,7 +5,7 @@ pub mod helper;
 pub mod llmchat;
 pub mod workspace;
 pub mod postgres;
-pub mod resource;
+pub mod kfile;
 pub mod sqlite;
 pub mod tabledumpsql;
 pub mod ctable;

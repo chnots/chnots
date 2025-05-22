@@ -12,9 +12,9 @@ use crate::model::{
         chnot::{ChnotMetadata, ChnotRecord, ChnotTag},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         workspace::{WorkspaceRecord, WorkspaceRelation},
-        resource::{InlineResource, Resource, KTV},
+        kfile::{InlineKFile, KFile, KTV},
     },
-    dto::{chnot::*, ctable::*, llmchat::*, resource::*, KReq},
+    dto::{chnot::*, ctable::*, llmchat::*, kfile::*, KReq},
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -59,27 +59,27 @@ pub trait ChnotMapper {
     async fn ensure_table_chnot_tag(&self) -> EResult;
 }
 
-pub trait ResourceMapper {
-    async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource>;
-    async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource>;
+pub trait KFileMapper {
+    async fn insert_kfile(&self, kfile: &KFile) -> anyhow::Result<KFile>;
+    async fn query_kfile_by_id(&self, id: &str) -> anyhow::Result<KFile>;
     ///
-    /// Try to insert inline resource.
+    /// Try to insert inline kfile.
     ///
-    /// Inline resource could keep history if record with archor flag.
+    /// Inline kfile could keep history if record with archor flag.
     /// If the new version record time is long enough from the old archor,
     /// insert it with archor flag.
     ///
-    async fn insert_inline_resource(
+    async fn insert_inline_kfile(
         &self,
-        req: &KReq<InsertInlineResourceReq>,
-    ) -> anyhow::Result<InsertInlineResourceRsp>;
-    async fn query_inline_resource(
+        req: &KReq<InsertInlineKFileReq>,
+    ) -> anyhow::Result<InsertInlineKFileRsp>;
+    async fn query_inline_kfile(
         &self,
-        req: KReq<QueryInlineResourceReq>,
-    ) -> anyhow::Result<QueryInlineResourceRsp>;
+        req: KReq<QueryInlineKFileReq>,
+    ) -> anyhow::Result<QueryInlineKFileRsp>;
 
-    async fn ensure_table_resource(&self) -> EResult;
-    async fn ensure_table_inline_resource(&self) -> EResult;
+    async fn ensure_table_kfile(&self) -> EResult;
+    async fn ensure_table_inline_kfile(&self) -> EResult;
 }
 
 pub trait WorkspaceMapper {
@@ -201,8 +201,8 @@ pub trait DeserializeMapper {
     fn to_workspace_record(self) -> AResult<WorkspaceRecord>;
     fn to_workspace_relation(self) -> AResult<WorkspaceRelation>;
 
-    fn to_resource(self) -> AResult<Resource>;
-    fn to_inline_resource(self) -> AResult<InlineResource>;
+    fn to_kfile(self) -> AResult<KFile>;
+    fn to_inline_kfile(self) -> AResult<InlineKFile>;
 
     fn to_kv(self) -> AResult<KTV>;
 }

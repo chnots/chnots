@@ -73,7 +73,7 @@ pub enum ChnotKind {
 
     #[strum(serialize = "resov1")]
     #[serde(rename = "resov1")]
-    ResourceV1,
+    KFileV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]

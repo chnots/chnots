@@ -1,7 +1,7 @@
 pub mod ctable;
 pub mod chnot;
 pub mod llmchat;
-pub mod resource;
+pub mod kfile;
 
 /// DTO: Data Transfer Object
 ///

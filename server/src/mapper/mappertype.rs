@@ -1,16 +1,16 @@
 use chin_tools::{utils::sort_util, AResult, EResult};
 
 use crate::model::{
-    db::{chnot::ChnotTag, workspace::WorkspaceRelation, resource::Resource},
+    db::{chnot::ChnotTag, workspace::WorkspaceRelation, kfile::KFile},
     dto::{
         ctable::*,
         llmchat::{
             LLMChatTruncateSessionReq, LLMChatTruncateSessionRsp, LLMChatUpdateSessionReq,
             LLMChatUpdateSessionRsp,
         },
-        resource::{
-            InsertInlineResourceReq, InsertInlineResourceRsp, KVOverwriteReq, KVOverwriteRsp,
-            KVQueryReq, KVQueryRsp, QueryInlineResourceReq, QueryInlineResourceRsp,
+        kfile::{
+            InsertInlineKFileReq, InsertInlineKFileRsp, KVOverwriteReq, KVOverwriteRsp,
+            KVQueryReq, KVQueryRsp, QueryInlineKFileReq, QueryInlineKFileRsp,
         },
     },
 };
@@ -19,7 +19,7 @@ use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
     dump::RecordCallbackEnum,
     ChinTableMapper, ChnotDeletionRsp, ChnotMapper, ChnotOverwriteReq, ChnotOverwriteRsp,
-    DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType, WorkspaceMapper, ResourceMapper,
+    DumpMapper, KVMapper, LLMChatMapper, MapperConfig, MapperType, WorkspaceMapper, KFileMapper,
 };
 
 use crate::model::{
@@ -49,8 +49,8 @@ impl MapperType {
         self.ensure_table_workspace_relation().await?;
         self.ensure_table_chnot_metadata().await?;
         self.ensure_table_chnot_tag().await?;
-        self.ensure_table_resource().await?;
-        self.ensure_table_inline_resource().await?;
+        self.ensure_table_kfile().await?;
+        self.ensure_table_inline_kfile().await?;
         self.ensure_table_kv().await?;
 
         self.ensure_table_llm_chat_bot().await?;
@@ -137,35 +137,35 @@ impl ChnotMapper for MapperType {
     }
 }
 
-impl ResourceMapper for MapperType {
-    async fn insert_resource(&self, resource: &Resource) -> anyhow::Result<Resource> {
-        expand_mt_branch!(self.insert_resource(resource))
+impl KFileMapper for MapperType {
+    async fn insert_kfile(&self, kfile: &KFile) -> anyhow::Result<KFile> {
+        expand_mt_branch!(self.insert_kfile(kfile))
     }
 
-    async fn query_resource_by_id(&self, id: &str) -> anyhow::Result<Resource> {
-        expand_mt_branch!(self.query_resource_by_id(id))
+    async fn query_kfile_by_id(&self, id: &str) -> anyhow::Result<KFile> {
+        expand_mt_branch!(self.query_kfile_by_id(id))
     }
 
-    async fn ensure_table_resource(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_resource())
+    async fn ensure_table_kfile(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_kfile())
     }
 
-    async fn insert_inline_resource(
+    async fn insert_inline_kfile(
         &self,
-        req: &KReq<InsertInlineResourceReq>,
-    ) -> anyhow::Result<InsertInlineResourceRsp> {
-        expand_mt_branch!(self.insert_inline_resource(req))
+        req: &KReq<InsertInlineKFileReq>,
+    ) -> anyhow::Result<InsertInlineKFileRsp> {
+        expand_mt_branch!(self.insert_inline_kfile(req))
     }
 
-    async fn query_inline_resource(
+    async fn query_inline_kfile(
         &self,
-        req: KReq<QueryInlineResourceReq>,
-    ) -> anyhow::Result<QueryInlineResourceRsp> {
-        expand_mt_branch!(self.query_inline_resource(req))
+        req: KReq<QueryInlineKFileReq>,
+    ) -> anyhow::Result<QueryInlineKFileRsp> {
+        expand_mt_branch!(self.query_inline_kfile(req))
     }
 
-    async fn ensure_table_inline_resource(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_inline_resource())
+    async fn ensure_table_inline_kfile(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_inline_kfile())
     }
     
 }

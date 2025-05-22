@@ -1,16 +1,16 @@
 import {
   getResouceDownloadUrl,
   queryKTV,
-  resourceQueryInfo,
-  resourceUpload,
-} from "@/store/resource/service";
+  kfileQueryInfo,
+  kfileUpload,
+} from "@/store/kfile/service";
 import { genId } from "@/utils/id_util";
 import { useCallback, useEffect, useState } from "react";
 
 import KButton from "@/common/component/kbutton";
 import RelativeTime from "@/common/component/relative-time";
 import { humanFileSize } from "@/utils/unit-utils";
-import { Resource } from "@/store/resource/db";
+import { KFile } from "@/store/kfile/db";
 import FileNameToIcon from "./filename-to-icon";
 
 type FileLike = {
@@ -19,15 +19,16 @@ type FileLike = {
   modified: Date;
 };
 
-const ResourceIcon = ({ file }: { file?: FileLike }) => {
+const KFileIcon = ({ file }: { file?: FileLike }) => {
   return (
     <div className="flex flex-col items-center justify-center space-y-4">
       <div
         className={`
         p-3 rounded-2xl transition-transform duration-300
-              ${file
-                ? "bg-green-100 dark:bg-green-900/30"
-                : "bg-blue-100 dark:bg-blue-900/30"
+              ${
+                file
+                  ? "bg-green-100 dark:bg-green-900/30"
+                  : "bg-blue-100 dark:bg-blue-900/30"
               }
             `}
       >
@@ -58,7 +59,7 @@ const ResourceIcon = ({ file }: { file?: FileLike }) => {
           </div>
         ) : (
           <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">
-                                                                                Drag and drop or browse files
+            Drag and drop or browse files
           </p>
         )}
       </div>
@@ -67,29 +68,31 @@ const ResourceIcon = ({ file }: { file?: FileLike }) => {
 };
 
 // inspired by https://github.com/AarambhDevHub/frontend-file-Chunks/blob/main/app/page.tsx
-export const CommonResource = ({
+export const CommonKFile = ({
   chnotMetaId,
   onSave,
 }: {
   chnotMetaId?: string;
-  onSave?: (r: Resource) => void;
+  onSave?: (r: KFile) => void;
 }) => {
   const [progress, setProgress] = useState(0);
   const [uploadFile, setUploadFile] = useState<File | undefined>(undefined);
-  const [resource, setResource] = useState<Resource | undefined>(undefined);
+  const [kfile, setKFile] = useState<KFile | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (chnotMetaId) {
-      queryKTV({ key: chnotMetaId, ttype: "chnot_sub_type" }).then(({ value }) => {
-        if (value) {
-          resourceQueryInfo(value).then(({ res }) => {
-            setResource(res)
-          })
+      queryKTV({ key: chnotMetaId, ttype: "chnot_sub_type" }).then(
+        ({ value }) => {
+          if (value) {
+            kfileQueryInfo(value).then(({ res }) => {
+              setKFile(res);
+            });
+          }
         }
-      })
+      );
     }
-  }, [chnotMetaId, setResource])
+  }, [chnotMetaId, setKFile]);
 
   const uploadFileInChunks = async () => {
     if (!uploadFile) {
@@ -110,7 +113,7 @@ export const CommonResource = ({
       const chunk = uploadFile.slice(start, end);
 
       try {
-        const { resource } = await resourceUpload({
+        const { kfile } = await kfileUpload({
           chunk,
           filename: uploadFile.name,
           chunk_no: currentChunk,
@@ -121,11 +124,11 @@ export const CommonResource = ({
           last_modified: uploadFile.lastModified,
         });
 
-        if (resource) {
+        if (kfile) {
           if (onSave) {
-            onSave(resource);
+            onSave(kfile);
           }
-          setResource(resource);
+          setKFile(kfile);
           setUploadFile(undefined);
         }
 
@@ -181,7 +184,7 @@ export const CommonResource = ({
 
   return (
     <div className="flex flex-row space-x-2 m-4">
-      {resource && (
+      {kfile && (
         <div className="flex flex-col">
           <div className="max-w-xl w-full align-center justify-center flex">
             <div
@@ -189,33 +192,34 @@ export const CommonResource = ({
               relative group border-2 border-dashed rounded-xl p-8 text-center
               transition-all duration-300 ease-out cursor-pointer border-blue-500 hover:bg-accent/50`}
             >
-              <ResourceIcon
+              <KFileIcon
                 file={{
-                  name: resource.ori_filename,
-                  size: resource.filesize,
-                  modified: new Date(resource.ori_last_modified),
+                  name: kfile.ori_filename,
+                  size: kfile.filesize,
+                  modified: new Date(kfile.ori_last_modified),
                 }}
               />
             </div>
           </div>
           <a
             className="flex w-full p-5 justify-center align-middle items-center"
-            href={getResouceDownloadUrl(resource)}
+            href={getResouceDownloadUrl(kfile)}
           >
             Download
           </a>
         </div>
       )}
-      {(uploadFile || !resource) && (
+      {(uploadFile || !kfile) && (
         <div className="max-w-xl w-full align-center justify-center flex">
           <div className="space-y-8">
             <div
               className={`
               relative group border-2 border-dashed rounded-xl p-8 text-center
               transition-all duration-300 ease-out cursor-pointer
-            ${isDragging
-              ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
-              : "border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500"
+            ${
+              isDragging
+                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
+                : "border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500"
             }
           `}
               onDragOver={handleDragOver}
@@ -227,7 +231,7 @@ export const CommonResource = ({
               onClick={() => document.getElementById("file-input")?.click()}
               onKeyDown={(e) =>
                 e.key === "Enter" &&
-                  document.getElementById("file-input")?.click()
+                document.getElementById("file-input")?.click()
               }
             >
               <input
@@ -237,14 +241,14 @@ export const CommonResource = ({
                 className="hidden"
                 aria-describedby="file-input-help"
               />
-              <ResourceIcon
+              <KFileIcon
                 file={
                   uploadFile
                     ? {
-                      name: uploadFile.name,
-                      size: uploadFile.size,
-                      modified: new Date(uploadFile.lastModified),
-                    }
+                        name: uploadFile.name,
+                        size: uploadFile.size,
+                        modified: new Date(uploadFile.lastModified),
+                      }
                     : undefined
                 }
               />
@@ -255,7 +259,7 @@ export const CommonResource = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Upload Progress
+                      Upload Progress
                     </span>
                     <span className="text-sm font-mono text-blue-600 dark:text-blue-400">
                       {progress}%

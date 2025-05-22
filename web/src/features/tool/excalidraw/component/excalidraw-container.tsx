@@ -23,10 +23,10 @@ import {
 } from "@excalidraw/excalidraw";
 import useDebounce from "@/hooks/use-debounce";
 import {
-  insertInlineResource,
-  queryInlineResource,
+  insertInlineKFile,
+  queryInlineKFile,
   queryKTV,
-} from "@/store/resource/service";
+} from "@/store/kfile/service";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
@@ -106,7 +106,7 @@ export default function ExcalidrawContainer({
       return;
     }
     (async () => {
-      const rsp = await queryInlineResource({
+      const rsp = await queryInlineKFile({
         rid: excalidrawId,
       });
       try {
@@ -119,7 +119,7 @@ export default function ExcalidrawContainer({
           for (const element of eles) {
             if (element.type === "image" && element.fileId) {
               try {
-                const fileInlineRsp = await queryInlineResource({
+                const fileInlineRsp = await queryInlineKFile({
                   rid: element.fileId,
                 });
 
@@ -136,7 +136,7 @@ export default function ExcalidrawContainer({
                 }
               } catch (error) {
                 console.error(
-                  `Failed to query inline resource for fileId ${element.fileId}`,
+                  `Failed to query inline kfile for fileId ${element.fileId}`,
                   error
                 );
               }
@@ -150,7 +150,7 @@ export default function ExcalidrawContainer({
           elements: dataState.elements,
         });
       } catch (e) {
-        console.log("unable to fetch inline-resource", excalidrawId, e);
+        console.log("unable to fetch inline-kfile", excalidrawId, e);
         initialStatePromiseRef.current.promise.resolve({});
       }
     })();
@@ -172,7 +172,7 @@ export default function ExcalidrawContainer({
             const ver = savedFilesRef.current.get(fileId);
             const newVar = file.created + "-" + file.version;
             if (!ver || ver != newVar) {
-              await insertInlineResource({
+              await insertInlineKFile({
                 res: {
                   id: md5(newVar).toString(),
                   rid: fileId,
@@ -190,7 +190,7 @@ export default function ExcalidrawContainer({
             }
           }
 
-          await insertInlineResource({
+          await insertInlineKFile({
             res: {
               id: uuid(),
               rid: excalidrawId,

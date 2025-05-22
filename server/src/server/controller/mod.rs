@@ -25,7 +25,7 @@ use tower_http::{
     trace::{self, TraceLayer},
 };
 use tracing::{info, Level};
-use v1::{chnot, kv, llmchat, resource, toent};
+use v1::{chnot, kv, llmchat, kfile, toent};
 
 use crate::app::ShareAppState;
 
@@ -74,7 +74,7 @@ pub async fn serve(app_state: ShareAppState) -> EResult {
         .on_request(|_req: &_, _: &_| {});
 
     let app = Router::new()
-        .merge(resource::routes())
+        .merge(kfile::routes())
         .merge(chnot::routes())
         .merge(asset::routes())
         .merge(toent::routes())
