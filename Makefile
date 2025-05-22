@@ -13,7 +13,7 @@ run-web:
 	cd $(WEB_DIR) && pnpm run dev
 
 run-server:
-	cd $(SERVER_DIR) && cargo run -- --config ../config/config.sqlite.toml
+	cd $(SERVER_DIR) && cargo run -- --config ../config/config.example.toml
 
 build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)

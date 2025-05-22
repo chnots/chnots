@@ -135,6 +135,11 @@ impl KDb {
             None => MetaId::New(SharedStr::new(id_util::generate_uuid())),
         };
 
+        // Dirty, it is diffcult to make tag update into one transaction, so we insert tags at first.
+        // Because, update single chnot would regenerate the tags.
+        self.chnot_tag_update_single_chnot(&req.content, &meta_id, &req.kspace)
+            .await?;
+
         // 1. Query chnot by meta_id.
         // 2. If chnot is existed.
         // 3. Compare new and old, if we could just update it, update.
@@ -168,13 +173,6 @@ impl KDb {
             .await?
             .qry_one(query_sql, chnot_query_mapper, true)
             .await?;
-
-        self.chnot_tag_update_single_chnot(
-            &chnot.record.content,
-            &chnot.meta.id,
-            &chnot.meta.kspace,
-        )
-        .await?;
 
         Ok(ChnotOverwriteRsp { chnot })
     }
