@@ -9,63 +9,63 @@ use crate::{
 use super::*;
 
 pub(crate) trait KSpaceDeserializeMapper {
-    fn to_workspace_record(self) -> AResult<WorkspaceRecord>;
-    fn to_workspace_relation(self) -> AResult<WorkspaceRelation>;
+    fn to_kspace_record(self) -> AResult<KSpaceRecord>;
+    fn to_kspace_relation(self) -> AResult<KSpaceRelation>;
 }
 
-pub(crate) trait WorkspaceMapper {
-    async fn read_all_workspaces(&self) -> AResult<Vec<WorkspaceRecord>>;
-    async fn read_all_workspace_relations(&self) -> AResult<Vec<WorkspaceRelation>>;
+pub(crate) trait KSpaceMapper {
+    async fn read_all_kspaces(&self) -> AResult<Vec<KSpaceRecord>>;
+    async fn read_all_kspace_relations(&self) -> AResult<Vec<KSpaceRelation>>;
 
-    async fn ensure_table_workspace_record(&self) -> EResult;
-    async fn ensure_table_workspace_relation(&self) -> EResult;
-    async fn ensure_table_workspace(&self) -> EResult {
-        self.ensure_table_workspace_record().await?;
-        self.ensure_table_workspace_relation().await?;
+    async fn ensure_table_kspace_record(&self) -> EResult;
+    async fn ensure_table_kspace_relation(&self) -> EResult;
+    async fn ensure_table_kspace(&self) -> EResult {
+        self.ensure_table_kspace_record().await?;
+        self.ensure_table_kspace_relation().await?;
 
         Ok(())
     }
 }
 
 impl KSpaceDeserializeMapper for KDbRow<'_> {
-    fn to_workspace_record(self) -> AResult<WorkspaceRecord> {
-        let obj = WorkspaceRecord {
-            id: self.try_get(WorkspaceRecord::ID)?,
-            insert_time: self.try_get(WorkspaceRecord::INSERT_TIME)?,
-            name: self.try_get(WorkspaceRecord::NAME)?,
-            delete_time: self.try_get(WorkspaceRecord::DELETE_TIME)?,
-            update_time: self.try_get(WorkspaceRecord::UPDATE_TIME)?,
+    fn to_kspace_record(self) -> AResult<KSpaceRecord> {
+        let obj = KSpaceRecord {
+            id: self.try_get(KSpaceRecord::ID)?,
+            insert_time: self.try_get(KSpaceRecord::INSERT_TIME)?,
+            name: self.try_get(KSpaceRecord::NAME)?,
+            delete_time: self.try_get(KSpaceRecord::DELETE_TIME)?,
+            update_time: self.try_get(KSpaceRecord::UPDATE_TIME)?,
         };
         Ok(obj)
     }
 
-    fn to_workspace_relation(self) -> AResult<WorkspaceRelation> {
-        let obj = WorkspaceRelation {
-            id: self.try_get(WorkspaceRelation::ID)?,
-            insert_time: self.try_get(WorkspaceRelation::INSERT_TIME)?,
-            delete_time: self.try_get(WorkspaceRelation::DELETE_TIME)?,
-            update_time: self.try_get(WorkspaceRelation::UPDATE_TIME)?,
-            sub_id: self.try_get(WorkspaceRelation::SUB_ID)?,
-            parent_id: self.try_get(WorkspaceRelation::PARENT_ID)?,
+    fn to_kspace_relation(self) -> AResult<KSpaceRelation> {
+        let obj = KSpaceRelation {
+            id: self.try_get(KSpaceRelation::ID)?,
+            insert_time: self.try_get(KSpaceRelation::INSERT_TIME)?,
+            delete_time: self.try_get(KSpaceRelation::DELETE_TIME)?,
+            update_time: self.try_get(KSpaceRelation::UPDATE_TIME)?,
+            sub_id: self.try_get(KSpaceRelation::SUB_ID)?,
+            parent_id: self.try_get(KSpaceRelation::PARENT_ID)?,
         };
         Ok(obj)
     }
 }
 
-impl WorkspaceMapper for MapperType {
-    async fn read_all_workspaces(&self) -> AResult<Vec<WorkspaceRecord>> {
-        expand_mt_branch!(self.read_all_workspaces())
+impl KSpaceMapper for MapperType {
+    async fn read_all_kspaces(&self) -> AResult<Vec<KSpaceRecord>> {
+        expand_mt_branch!(self.read_all_kspaces())
     }
 
-    async fn read_all_workspace_relations(&self) -> AResult<Vec<WorkspaceRelation>> {
-        expand_mt_branch!(self.read_all_workspace_relations())
+    async fn read_all_kspace_relations(&self) -> AResult<Vec<KSpaceRelation>> {
+        expand_mt_branch!(self.read_all_kspace_relations())
     }
 
-    async fn ensure_table_workspace_record(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_workspace_record())
+    async fn ensure_table_kspace_record(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_kspace_record())
     }
 
-    async fn ensure_table_workspace_relation(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_workspace_relation())
+    async fn ensure_table_kspace_relation(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_kspace_relation())
     }
 }

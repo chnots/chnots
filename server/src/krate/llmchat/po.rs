@@ -40,7 +40,7 @@ pub(crate) struct LLMChatSession {
     #[gts_length = 200]
     pub(crate) title: String,
     #[gts_length = 200]
-    pub(crate) workspace: String,
+    pub(crate) kspace: String,
     pub(crate) delete_time: Option<DateTime<FixedOffset>>,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
     pub(crate) insert_time: DateTime<FixedOffset>,

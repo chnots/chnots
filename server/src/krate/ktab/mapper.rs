@@ -4,73 +4,73 @@ use crate::{expand_mt_branch, model::dto::KReq, MapperType};
 
 use super::*;
 
-pub(crate) trait ChinTableMapper {
-    async fn ctable_overwrite_meta(
+pub(crate) trait KTabMapper {
+    async fn ktab_overwrite_meta(
         &self,
-        req: KReq<CTableOverwriteMetaReq>,
-    ) -> AResult<CTableOverwriteMetaRsp>;
-    async fn ctable_overwrite_row(
+        req: KReq<KTabOverwriteMetaReq>,
+    ) -> AResult<KTabOverwriteMetaRsp>;
+    async fn ktab_overwrite_row(
         &self,
-        req: KReq<CTableOverwriteRowReq>,
-    ) -> AResult<CTableOverwriteRowRsp>;
-    async fn ctable_overwrite_cell(
+        req: KReq<KTabOverwriteRowReq>,
+    ) -> AResult<KTabOverwriteRowRsp>;
+    async fn ktab_overwrite_cell(
         &self,
-        req: KReq<CTableOverwriteCellReq>,
-    ) -> AResult<CTableOverwriteCellRsp>;
-    async fn ctable_query_row(&self, req: KReq<CTableQueryRowReq>) -> AResult<CTableQueryRowRsp>;
-    async fn ctable_query_table_meta(
+        req: KReq<KTabOverwriteCellReq>,
+    ) -> AResult<KTabOverwriteCellRsp>;
+    async fn ktab_query_row(&self, req: KReq<KTabQueryRowReq>) -> AResult<KTabQueryRowRsp>;
+    async fn ktab_query_table_meta(
         &self,
-        req: KReq<CTableQueryTableMetaReq>,
-    ) -> AResult<CTableQueryTableMetaRsp>;
-    async fn ctable_query_table_data(
+        req: KReq<KTabQueryTableMetaReq>,
+    ) -> AResult<KTabQueryTableMetaRsp>;
+    async fn ktab_query_table_data(
         &self,
-        req: KReq<CTableQueryTableDataReq>,
-    ) -> AResult<CTableQueryTableDataRsp>;
+        req: KReq<KTabQueryTableDataReq>,
+    ) -> AResult<KTabQueryTableDataRsp>;
 
-    async fn ensure_ctable_tables(&self) -> EResult;
+    async fn ensure_ktab_tables(&self) -> EResult;
 }
 
-impl ChinTableMapper for MapperType {
-    async fn ctable_overwrite_meta(
+impl KTabMapper for MapperType {
+    async fn ktab_overwrite_meta(
         &self,
-        req: KReq<CTableOverwriteMetaReq>,
-    ) -> AResult<CTableOverwriteMetaRsp> {
-        expand_mt_branch!(self.ctable_overwrite_meta(req))
+        req: KReq<KTabOverwriteMetaReq>,
+    ) -> AResult<KTabOverwriteMetaRsp> {
+        expand_mt_branch!(self.ktab_overwrite_meta(req))
     }
 
-    async fn ctable_overwrite_row(
+    async fn ktab_overwrite_row(
         &self,
-        req: KReq<CTableOverwriteRowReq>,
-    ) -> AResult<CTableOverwriteRowRsp> {
-        expand_mt_branch!(self.ctable_overwrite_row(req))
+        req: KReq<KTabOverwriteRowReq>,
+    ) -> AResult<KTabOverwriteRowRsp> {
+        expand_mt_branch!(self.ktab_overwrite_row(req))
     }
 
-    async fn ctable_overwrite_cell(
+    async fn ktab_overwrite_cell(
         &self,
-        req: KReq<CTableOverwriteCellReq>,
-    ) -> AResult<CTableOverwriteCellRsp> {
-        expand_mt_branch!(self.ctable_overwrite_cell(req))
+        req: KReq<KTabOverwriteCellReq>,
+    ) -> AResult<KTabOverwriteCellRsp> {
+        expand_mt_branch!(self.ktab_overwrite_cell(req))
     }
 
-    async fn ctable_query_row(&self, req: KReq<CTableQueryRowReq>) -> AResult<CTableQueryRowRsp> {
-        expand_mt_branch!(self.ctable_query_row(req))
+    async fn ktab_query_row(&self, req: KReq<KTabQueryRowReq>) -> AResult<KTabQueryRowRsp> {
+        expand_mt_branch!(self.ktab_query_row(req))
     }
 
-    async fn ctable_query_table_meta(
+    async fn ktab_query_table_meta(
         &self,
-        req: KReq<CTableQueryTableMetaReq>,
-    ) -> AResult<CTableQueryTableMetaRsp> {
-        expand_mt_branch!(self.ctable_query_table_meta(req))
+        req: KReq<KTabQueryTableMetaReq>,
+    ) -> AResult<KTabQueryTableMetaRsp> {
+        expand_mt_branch!(self.ktab_query_table_meta(req))
     }
 
-    async fn ctable_query_table_data(
+    async fn ktab_query_table_data(
         &self,
-        req: KReq<CTableQueryTableDataReq>,
-    ) -> AResult<CTableQueryTableDataRsp> {
-        expand_mt_branch!(self.ctable_query_table_data(req))
+        req: KReq<KTabQueryTableDataReq>,
+    ) -> AResult<KTabQueryTableDataRsp> {
+        expand_mt_branch!(self.ktab_query_table_data(req))
     }
 
-    async fn ensure_ctable_tables(&self) -> EResult {
-        expand_mt_branch!(self.ensure_ctable_tables())
+    async fn ensure_ktab_tables(&self) -> EResult {
+        expand_mt_branch!(self.ensure_ktab_tables())
     }
 }

@@ -32,7 +32,7 @@ impl EventBuilder for Times {
 
         match TIMES_REGEX.captures(segs[0].text).map(|e| e.get(1)) {
             Some(Some(v)) => Ok(Self {
-                count: u32::from_str_radix(v.as_str(), 10)?,
+                count: v.as_str().parse::<u32>()?,
             }),
             _ => {
                 anyhow::bail!("unable to parse it: {:?}", segs)

@@ -1,9 +1,9 @@
 import Icon from "./icon";
-import { useWorkspaceStore } from "@/store/workspace";
+import { useKSpaceStore } from "@/store/kspace";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import KButton from "./kbutton";
 
-const WorkspaceIcon = ({
+const KSpaceIcon = ({
   name,
   className,
 }: {
@@ -21,26 +21,23 @@ const WorkspaceIcon = ({
   }
 };
 
-export const WorkspaceSelect = ({
+export const KSpaceSelect = ({
   onSelect,
-  currentWorkspace,
+  currentKSpace,
   className,
   menuClassName,
 }: {
-  onSelect: (workspace: string) => void;
-  currentWorkspace: string;
+  onSelect: (kspace: string) => void;
+  currentKSpace: string;
   className?: string;
   menuClassName?: string;
 }) => {
-  const { workspaces } = useWorkspaceStore();
+  const { kspaces } = useKSpaceStore();
   return (
     <RadixDropmenu.Root>
       <RadixDropmenu.Trigger asChild>
         <KButton className={menuClassName}>
-          <WorkspaceIcon
-            name={currentWorkspace}
-            className={className}
-          ></WorkspaceIcon>
+          <KSpaceIcon name={currentKSpace} className={className}></KSpaceIcon>
         </KButton>
       </RadixDropmenu.Trigger>
 
@@ -49,7 +46,7 @@ export const WorkspaceSelect = ({
           className="RadixDropmenuContent z-20"
           sideOffset={5}
         >
-          {workspaces().map((e) => (
+          {kspaces().map((e) => (
             <RadixDropmenu.Item
               className="p-2"
               key={e.name}

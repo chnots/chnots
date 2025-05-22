@@ -1,7 +1,7 @@
-use chin_tools::{AResult, EResult};
+use chin_tools::EResult;
 
 use crate::krate::{
-    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kspace::mapper::WorkspaceMapper,
+    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kspace::mapper::KSpaceMapper,
     ktv::mapper::KTVMapper, llmchat::mapper::LLMChatMapper,
 };
 
@@ -11,9 +11,11 @@ use super::{
     DumpMapper, MapperConfig, MapperType,
 };
 
-impl Into<AResult<MapperType>> for MapperConfig {
-    fn into(self) -> AResult<MapperType> {
-        match self {
+impl TryFrom<MapperConfig> for MapperType {
+    type Error = anyhow::Error;
+
+    fn try_from(value: MapperConfig) -> Result<Self, Self::Error> {
+        match value {
             MapperConfig::Postgres(config) => {
                 let pg = Postgres::new(config)?;
                 Ok(MapperType::KDb(super::db::KDb::Postgres(pg)))
@@ -31,7 +33,7 @@ impl MapperType {
         self.ensure_table_chnot().await?;
         self.ensure_table_kfile().await?;
         self.ensure_table_ktv().await?;
-        self.ensure_table_workspace().await?;
+        self.ensure_table_kspace().await?;
         self.ensure_table_llm_chat().await?;
         Ok(())
     }

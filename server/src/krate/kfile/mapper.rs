@@ -7,6 +7,11 @@ pub(crate) trait KFileDeserializeMapper {
     fn to_inline_kfile(self) -> AResult<InlineKFile>;
 }
 
+pub(crate) trait KFileDumpMapper {
+    async fn dump_kfile() -> EResult;
+    async fn dump_inline_kfile() -> EResult;
+}
+
 pub(crate) trait KFileMapper {
     async fn insert_kfile(&self, kfile: &KFile) -> anyhow::Result<KFile>;
     async fn query_kfile_by_id(&self, id: &str) -> anyhow::Result<KFile>;

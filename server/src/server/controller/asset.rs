@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use axum::{
     http::{header, StatusCode, Uri},
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
     routing::{get, Router},
 };
 use rust_embed::RustEmbed;
@@ -37,11 +37,6 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
     }
 
     StaticFile(path)
-}
-
-// Finally, we use a fallback route for anything that didn't match.
-async fn not_found() -> Html<&'static str> {
-    Html("<h1>404</h1><p>Not Found</p>")
 }
 
 #[derive(RustEmbed)]

@@ -75,8 +75,6 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
 
         let convert_temp = |temp: Vec<toent::Span<'a>>| {
             if !temp.is_empty() {
-                let start = temp.first().unwrap().start_in;
-                let end = temp.last().unwrap().end_ex;
                 let gt = RawInputSegs {
                     original: gt.original,
                     spans: temp,

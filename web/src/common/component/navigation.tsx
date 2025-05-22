@@ -2,9 +2,9 @@ import clsx from "clsx";
 import { NavLink } from "react-router-dom";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./icon";
-import { WorkspaceSelect } from "./workspace-select";
+import { KSpaceSelect } from "./kspace-select";
 import { RoutePaths } from "@/router";
-import { useWorkspaceStore } from "@/store/workspace";
+import { useKSpaceStore } from "@/store/kspace";
 import KButton from "./kbutton";
 import { useCommonStore } from "@/store/common";
 import useParamState from "@/hooks/use-param-state";
@@ -23,9 +23,9 @@ const Navigation = ({
   orientation?: "vertical" | "horizontal";
 }) => {
   const t = useTranslate();
-  const { currentWorkspace, changeWorkspace } = useWorkspaceStore();
+  const { currentKSpace, changeKSpace } = useKSpaceStore();
   const { toggleSidebar } = useCommonStore();
-  const [, setWorkspaceParam] = useParamState<string>("ns", "public");
+  const [, setKSpaceParam] = useParamState<string>("ns", "public");
 
   const chnotNavLink: NavLinkItem = {
     id: "header-chnots",
@@ -77,12 +77,12 @@ const Navigation = ({
       >
         <Icon.Sidebar />
       </KButton>
-      <WorkspaceSelect
+      <KSpaceSelect
         onSelect={(ns) => {
-          changeWorkspace(ns);
-          setWorkspaceParam(ns);
+          changeKSpace(ns);
+          setKSpaceParam(ns);
         }}
-        currentWorkspace={currentWorkspace.name}
+        currentKSpace={currentKSpace.name}
         menuClassName="p-2 border  hover:cursor-pointer rounded-xl"
       />
       {navLinks.map((navLink) => (

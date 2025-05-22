@@ -63,6 +63,7 @@ pub(crate) trait KDbConnBehaiverSync {
         E: Send + 'static;
 }
 
+#[allow(clippy::large_enum_variant)]
 pub(crate) enum KDbConn {
     Sqlite(sqlite::Sqlite),
     Postgres(Client),

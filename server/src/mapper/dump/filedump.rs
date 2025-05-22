@@ -70,7 +70,7 @@ impl FileDumpWorker {
                 while let Some(Ok(next)) = read_dir.next() {
                     let filename = next.file_name().to_string_lossy().to_string();
                     if filename.starts_with(file_prefix) {
-                        if let Ok((start, end)) = Self::grab_filename_dt(filename.as_str()) {
+                        if let Ok((_, end)) = Self::grab_filename_dt(filename.as_str()) {
                             if end > end_time {
                                 end_time = end;
                             };

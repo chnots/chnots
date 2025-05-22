@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { v4 as uuid } from "uuid";
-import { useWorkspaceStore } from "@/store/workspace";
+import { useKSpaceStore } from "@/store/kspace";
 import { RecordAnswering } from "./record-response";
 import { LLMChatRecord, LLMChatTemplate } from "@/store/llmchat/db";
 import {
@@ -34,7 +34,7 @@ const SessionContainer = ({
   afterInit?: (id: string) => void;
 }) => {
   const { currentBot, unshiftSession } = useLLMChatStore();
-  const { currentWorkspace } = useWorkspaceStore();
+  const { currentKSpace } = useKSpaceStore();
 
   const [containerSession, setContainerSession] =
     useState<LLMChatContainerSession>();
@@ -71,7 +71,7 @@ const SessionContainer = ({
         bot_id: currentBot ? currentBot.id : "1",
         template_id: template.id,
         title: "Untitled",
-        workspace: currentWorkspace.name,
+        kspace: currentKSpace.name,
         insert_time: new Date(),
       };
 

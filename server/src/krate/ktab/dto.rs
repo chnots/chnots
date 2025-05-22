@@ -3,16 +3,16 @@ use serde::{Deserialize, Serialize};
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) enum CTableCell {
-    String(CTableCellStr1024),
-    Text(CTableCellText),
-    Integer(CTableCellInteger),
-    Date(CTableCellDate),
+pub(crate) enum KTabCell {
+    String(KTabCellStr1024),
+    Text(KTabCellText),
+    Integer(KTabCellInteger),
+    Date(KTabCellDate),
 }
 
 macro_rules! into_cell {
     ($sub_type:tt, $etype:tt) => {
-        impl From<$sub_type> for CTableCell {
+        impl From<$sub_type> for KTabCell {
             fn from(value: $sub_type) -> Self {
                 Self::$etype(value)
             }
@@ -20,64 +20,64 @@ macro_rules! into_cell {
     };
 }
 
-into_cell! {CTableCellStr1024, String}
-into_cell! {CTableCellText, Text}
-into_cell! {CTableCellInteger, Integer}
-into_cell! {CTableCellDate, Date}
+into_cell! {KTabCellStr1024, String}
+into_cell! {KTabCellText, Text}
+into_cell! {KTabCellInteger, Integer}
+into_cell! {KTabCellDate, Date}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableOverwriteMetaReq {
-    pub(crate) meta: CTableMeta,
+pub(crate) struct KTabOverwriteMetaReq {
+    pub(crate) meta: KTabMeta,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableOverwriteMetaRsp {}
+pub(crate) struct KTabOverwriteMetaRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableOverwriteRowReq {
-    pub(crate) row: Vec<CTableCell>,
+pub(crate) struct KTabOverwriteRowReq {
+    pub(crate) row: Vec<KTabCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableOverwriteRowRsp {}
+pub(crate) struct KTabOverwriteRowRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableOverwriteCellReq {
-    pub(crate) cell: CTableCell,
+pub(crate) struct KTabOverwriteCellReq {
+    pub(crate) cell: KTabCell,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableOverwriteCellRsp {}
+pub(crate) struct KTabOverwriteCellRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableQueryRowReq {
+pub(crate) struct KTabQueryRowReq {
     pub(crate) table_id: String,
     pub(crate) row_index: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableQueryRowRsp {
-    pub(crate) row: Vec<CTableCell>,
+pub(crate) struct KTabQueryRowRsp {
+    pub(crate) row: Vec<KTabCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableQueryTableMetaReq {
+pub(crate) struct KTabQueryTableMetaReq {
     pub(crate) table_name: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableQueryTableMetaRsp {
-    pub(crate) meta: CTableMeta,
+pub(crate) struct KTabQueryTableMetaRsp {
+    pub(crate) meta: KTabMeta,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableQueryTableDataReq {
+pub(crate) struct KTabQueryTableDataReq {
     pub(crate) table_id: String,
     pub(crate) start_index: usize,
     pub(crate) page_size: usize,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableQueryTableDataRsp {
-    pub(crate) cells: Vec<CTableCell>,
+pub(crate) struct KTabQueryTableDataRsp {
+    pub(crate) cells: Vec<KTabCell>,
 }

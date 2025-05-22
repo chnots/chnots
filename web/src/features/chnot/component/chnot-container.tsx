@@ -1,15 +1,9 @@
-import React, {
-  ButtonHTMLAttributes,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import useDebounce from "@/hooks/use-debounce";
-import { useWorkspaceStore } from "@/store/workspace";
-import { WorkspaceSelect } from "@/common/component/workspace-select";
-import clsx, { ClassValue } from "clsx";
+import { useKSpaceStore } from "@/store/kspace";
+import { KSpaceSelect } from "@/common/component/kspace-select";
+import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import {
   Chnot,
@@ -62,7 +56,7 @@ export const ChnotContainer = ({
   onClickNewButton?: () => void;
   globalViewMode?: React.RefObject<boolean>;
 }) => {
-  const { currentWorkspace } = useWorkspaceStore();
+  const { currentKSpace } = useKSpaceStore();
   const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
 
   const [editState, setEditState] = useState<ChnotEditState>({
@@ -199,21 +193,21 @@ export const ChnotContainer = ({
             ))}
           {chnot && (
             <div className="bg-inactive border kc-active rounded-xl p-0.5 flex space-x-1">
-              <WorkspaceSelect
+              <KSpaceSelect
                 className="w-4 h-4"
                 menuClassName="px-1 py-1 bg-inactive rounded-xl flex items-center "
                 onSelect={(ns) => {
                   chnotUpdate({
                     meta_id: chnot.meta.id,
                     update_time: false,
-                    workspace: ns,
+                    kspace: ns,
                   }).then((_) => {
-                    if (ns !== currentWorkspace.name) {
+                    if (ns !== currentKSpace.name) {
                       validateChnotCache([chnot.meta.id]);
                     }
                   });
                 }}
-                currentWorkspace={chnot.meta.workspace}
+                currentKSpace={chnot.meta.kspace}
               />
               <TopbarButton
                 onClick={() => {

@@ -45,7 +45,7 @@ impl LLMChatDeserializeMapper for KDbRow<'_> {
             insert_time: self.try_get(LLMChatSession::INSERT_TIME)?,
             template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
             title: self.try_get(LLMChatSession::TITLE)?,
-            workspace: self.try_get(LLMChatSession::WORKSPACE)?,
+            kspace: self.try_get(LLMChatSession::KSPACE)?,
             delete_time: self.try_get(LLMChatSession::DELETE_TIME)?,
             update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
         };
@@ -114,7 +114,7 @@ impl LLMChatMapper for KDb {
             .fields(LLMChatSession::ID, &session.id)
             .fields(LLMChatSession::TEMPLATE_ID, &session.template_id)
             .fields(LLMChatSession::TITLE, &title)
-            .fields(LLMChatSession::WORKSPACE, &session.workspace)
+            .fields(LLMChatSession::KSPACE, &session.kspace)
             .fields(LLMChatSession::INSERT_TIME, session.insert_time);
 
         self.conn().await?.exec(inserter).await?;
@@ -143,6 +143,7 @@ impl LLMChatMapper for KDb {
     }
 
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
+        let _ = req;
         let sql = "select b.*, count(r.role_id) as bot_count from llm_chat_bot b left join llm_chat_record r on b.id = r.role_id where b.delete_time is null group by b.id order by bot_count desc";
         let bots = self
             .conn()
@@ -157,7 +158,7 @@ impl LLMChatMapper for KDb {
 
     async fn llm_chat_list_templates(
         &self,
-        req: KReq<LLMChatListTemplateReq>,
+        _req: KReq<LLMChatListTemplateReq>,
     ) -> AResult<LLMChatListTemplateRsp> {
         let query = SqlReader::read_all(LLMChatTemplate::TABLE)
             .r#where(Wheres::and([Wheres::is_null(LLMChatTemplate::DELETE_TIME)]))
@@ -179,7 +180,7 @@ impl LLMChatMapper for KDb {
         let query = SqlReader::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
                 Wheres::is_null(LLMChatSession::DELETE_TIME),
-                Wheres::equal(LLMChatSession::WORKSPACE, &req.workspace),
+                Wheres::equal(LLMChatSession::KSPACE, &req.kspace),
                 Wheres::if_some(req.session_id.as_ref(), |id| {
                     Wheres::equal(LLMChatSession::ID, id)
                 }),
@@ -204,7 +205,7 @@ impl LLMChatMapper for KDb {
                 body: LLMChatListSessionReq {
                     session_id: Some(req.session_id.clone()),
                 },
-                workspace: req.workspace.clone(),
+                kspace: req.kspace.clone(),
             })
             .await?
             .sessions
@@ -330,7 +331,7 @@ impl LLMChatMapper for KDb {
                     session_id: req.session_id.clone(),
                     with_omit: Some(true),
                 },
-                workspace: req.workspace.clone(),
+                kspace: req.kspace.clone(),
             })
             .await?
             .records;

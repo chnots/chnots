@@ -1,5 +1,5 @@
 use crate::app::ShareAppState;
-use crate::model::dto::{kreq, read_workspace_from_header};
+use crate::model::dto::{kreq, read_kspace_from_header};
 use crate::server::controller::KResponse;
 use axum::{
     extract::State,
@@ -85,7 +85,7 @@ async fn chnot_tag_names(
 async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state
         .mapper
-        .chnot_tag_update_all(read_workspace_from_header(&headers).as_str())
+        .chnot_tag_update_all(read_kspace_from_header(&headers).as_str())
         .await
         .into()
 }

@@ -1,9 +1,9 @@
-import { Workspace } from "../../model";
+import { KSpace } from "../../model";
 
 export interface KFile {
   id: string;
 
-  workspace?: string;
+  kspace?: string;
   ori_filename: string;
   ori_last_modified: number;
   filesize: number;
@@ -17,7 +17,7 @@ export interface KFile {
 export interface InlineKFile {
   id: string;
   rid: string;
-  workspace: string;
+  kspace: string;
   archor: boolean;
   name: string;
   content: string;

@@ -12,7 +12,7 @@ pub(crate) struct Chnot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotUpdateReq {
     pub(crate) meta_id: String,
-    pub(crate) workspace: Option<String>,
+    pub(crate) kspace: Option<String>,
     pub(crate) update_time: bool,
     pub(crate) pinned: Option<bool>,
     pub(crate) archive: Option<bool>,
@@ -79,6 +79,7 @@ impl<'a> Deserialize<'a> for ChnotViewType {
         D: serde::Deserializer<'a>,
     {
         #[derive(Deserialize)]
+        #[allow(clippy::upper_case_acronyms)]
         struct LVT {
             kind: String,
             tagkind: Option<String>,
@@ -165,5 +166,5 @@ where
 pub(crate) struct ChnotTagUpdateReq {
     pub(crate) content: String,
     pub(crate) meta_id: String,
-    pub(crate) workspace: String,
+    pub(crate) kspace: String,
 }

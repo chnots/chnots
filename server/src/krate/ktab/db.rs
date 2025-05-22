@@ -7,14 +7,14 @@ use crate::{
     model::dto::KReq,
 };
 
-use super::{mapper::ChinTableMapper, *};
+use super::{mapper::KTabMapper, *};
 
-impl ChinTableMapper for KDb {
-    async fn ctable_overwrite_meta(
+impl KTabMapper for KDb {
+    async fn ktab_overwrite_meta(
         &self,
-        req: KReq<CTableOverwriteMetaReq>,
-    ) -> chin_tools::AResult<CTableOverwriteMetaRsp> {
-        let CTableMeta {
+        req: KReq<KTabOverwriteMetaReq>,
+    ) -> chin_tools::AResult<KTabOverwriteMetaRsp> {
+        let KTabMeta {
             id,
             columns,
             table_name,
@@ -23,50 +23,50 @@ impl ChinTableMapper for KDb {
             update_time: _,
             delete_time: _,
             real_table,
-            workspace: _,
+            kspace: _,
         } = &req.meta;
 
-        let omit_sql = SqlUpdater::new(CTableMeta::TABLE)
-            .set(CTableMeta::DELETE_TIME, Local::now().fixed_offset())
+        let omit_sql = SqlUpdater::new(KTabMeta::TABLE)
+            .set(KTabMeta::DELETE_TIME, Local::now().fixed_offset())
             .r#where(Wheres::and([Wheres::equal(
-                CTableMeta::TABLE_NAME,
+                KTabMeta::TABLE_NAME,
                 table_name,
             )]));
 
-        let insert_sql = SqlInserter::new(CTableMeta::TABLE)
-            .fields(CTableMeta::ID, id)
-            .fields(CTableMeta::COLUMNS, serde_json::to_string(&columns)?)
-            .fields(CTableMeta::TABLE_NAME, table_name)
-            .fields(CTableMeta::CREATE_TIME, create_time)
-            .fields(CTableMeta::TABLE_COMMENT, table_comment)
-            .fields(CTableMeta::REAL_TABLE, *real_table);
+        let insert_sql = SqlInserter::new(KTabMeta::TABLE)
+            .fields(KTabMeta::ID, id)
+            .fields(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
+            .fields(KTabMeta::TABLE_NAME, table_name)
+            .fields(KTabMeta::CREATE_TIME, create_time)
+            .fields(KTabMeta::TABLE_COMMENT, table_comment)
+            .fields(KTabMeta::REAL_TABLE, *real_table);
 
         self.conn().await?.exec(omit_sql).await?;
         self.conn().await?.exec(insert_sql).await?;
 
-        Ok(CTableOverwriteMetaRsp {})
+        Ok(KTabOverwriteMetaRsp {})
     }
 
-    async fn ctable_overwrite_row(
+    async fn ktab_overwrite_row(
         &self,
-        req: KReq<CTableOverwriteRowReq>,
-    ) -> chin_tools::AResult<CTableOverwriteRowRsp> {
+        req: KReq<KTabOverwriteRowReq>,
+    ) -> chin_tools::AResult<KTabOverwriteRowRsp> {
         let emtpy_req = req.frame(());
-        let KReq { body, workspace: _ } = req;
+        let KReq { body, kspace: _ } = req;
 
-        let CTableOverwriteRowReq { row } = body;
+        let KTabOverwriteRowReq { row } = body;
         for ele in row {
-            self.ctable_overwrite_cell(emtpy_req.frame(CTableOverwriteCellReq { cell: ele }))
+            self.ktab_overwrite_cell(emtpy_req.frame(KTabOverwriteCellReq { cell: ele }))
                 .await?;
         }
 
-        Ok(CTableOverwriteRowRsp {})
+        Ok(KTabOverwriteRowRsp {})
     }
 
-    async fn ctable_overwrite_cell(
+    async fn ktab_overwrite_cell(
         &self,
-        req: KReq<CTableOverwriteCellReq>,
-    ) -> chin_tools::AResult<CTableOverwriteCellRsp> {
+        req: KReq<KTabOverwriteCellReq>,
+    ) -> chin_tools::AResult<KTabOverwriteCellRsp> {
         macro_rules! overwrite {
             ($table:tt, $c:expr) => {
                 let csql = SqlInserter::new($table::TABLE)
@@ -87,27 +87,27 @@ impl ChinTableMapper for KDb {
         }
 
         match &req.cell {
-            CTableCell::String(c) => {
-                overwrite!(CTableCellStr1024, c);
+            KTabCell::String(c) => {
+                overwrite!(KTabCellStr1024, c);
             }
-            CTableCell::Text(c) => {
-                overwrite!(CTableCellText, c);
+            KTabCell::Text(c) => {
+                overwrite!(KTabCellText, c);
             }
-            CTableCell::Integer(c) => {
-                overwrite!(CTableCellInteger, c);
+            KTabCell::Integer(c) => {
+                overwrite!(KTabCellInteger, c);
             }
-            CTableCell::Date(c) => {
-                overwrite!(CTableCellDate, c);
+            KTabCell::Date(c) => {
+                overwrite!(KTabCellDate, c);
             }
         }
 
-        Ok(CTableOverwriteCellRsp {})
+        Ok(KTabOverwriteCellRsp {})
     }
 
-    async fn ctable_query_row(
+    async fn ktab_query_row(
         &self,
-        req: KReq<CTableQueryRowReq>,
-    ) -> chin_tools::AResult<CTableQueryRowRsp> {
+        req: KReq<KTabQueryRowReq>,
+    ) -> chin_tools::AResult<KTabQueryRowRsp> {
         let mut cells = vec![];
         macro_rules! extend_cells {
             ($sub_table:tt) => {
@@ -117,7 +117,7 @@ impl ChinTableMapper for KDb {
                     Wheres::is_null($sub_table::DELETE_TIME),
                 ]));
 
-                let data: Vec<CTableCell> = self
+                let data: Vec<KTabCell> = self
                     .conn()
                     .await?
                     .qry_list(reader, |row| {
@@ -138,21 +138,21 @@ impl ChinTableMapper for KDb {
             };
         }
 
-        extend_cells!(CTableCellStr1024);
-        extend_cells!(CTableCellDate);
-        extend_cells!(CTableCellInteger);
-        extend_cells!(CTableCellText);
+        extend_cells!(KTabCellStr1024);
+        extend_cells!(KTabCellDate);
+        extend_cells!(KTabCellInteger);
+        extend_cells!(KTabCellText);
 
-        Ok(CTableQueryRowRsp { row: cells })
+        Ok(KTabQueryRowRsp { row: cells })
     }
 
-    async fn ctable_query_table_meta(
+    async fn ktab_query_table_meta(
         &self,
-        req: KReq<CTableQueryTableMetaReq>,
-    ) -> chin_tools::AResult<CTableQueryTableMetaRsp> {
-        let ssb = SqlReader::read_all(CTableMeta::TABLE).r#where(Wheres::and([
-            Wheres::equal(CTableMeta::TABLE, &req.table_name),
-            Wheres::is_null(CTableMeta::DELETE_TIME),
+        req: KReq<KTabQueryTableMetaReq>,
+    ) -> chin_tools::AResult<KTabQueryTableMetaRsp> {
+        let ssb = SqlReader::read_all(KTabMeta::TABLE).r#where(Wheres::and([
+            Wheres::equal(KTabMeta::TABLE, &req.table_name),
+            Wheres::is_null(KTabMeta::DELETE_TIME),
         ]));
         let meta = self
             .conn()
@@ -160,32 +160,32 @@ impl ChinTableMapper for KDb {
             .qry_one(
                 ssb,
                 |row| {
-                    Ok(CTableMeta {
+                    Ok(KTabMeta {
                         columns: {
-                            let columns: String = row.try_get(CTableMeta::COLUMNS)?;
+                            let columns: String = row.try_get(KTabMeta::COLUMNS)?;
                             serde_json::from_str(&columns)?
                         },
-                        table_name: row.try_get(CTableMeta::TABLE_NAME)?,
-                        table_comment: row.try_get(CTableMeta::TABLE_COMMENT)?,
-                        create_time: row.try_get(CTableMeta::CREATE_TIME)?,
-                        update_time: row.try_get(CTableMeta::UPDATE_TIME)?,
-                        delete_time: row.try_get(CTableMeta::DELETE_TIME)?,
-                        real_table: row.try_get(CTableMeta::REAL_TABLE)?,
-                        id: row.try_get(CTableMeta::ID)?,
-                        workspace: row.try_get(CTableMeta::WORKSPACE)?,
+                        table_name: row.try_get(KTabMeta::TABLE_NAME)?,
+                        table_comment: row.try_get(KTabMeta::TABLE_COMMENT)?,
+                        create_time: row.try_get(KTabMeta::CREATE_TIME)?,
+                        update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
+                        delete_time: row.try_get(KTabMeta::DELETE_TIME)?,
+                        real_table: row.try_get(KTabMeta::REAL_TABLE)?,
+                        id: row.try_get(KTabMeta::ID)?,
+                        kspace: row.try_get(KTabMeta::KSPACE)?,
                     })
                 },
                 true,
             )
             .await?;
 
-        Ok(CTableQueryTableMetaRsp { meta })
+        Ok(KTabQueryTableMetaRsp { meta })
     }
 
-    async fn ctable_query_table_data(
+    async fn ktab_query_table_data(
         &self,
-        req: KReq<CTableQueryTableDataReq>,
-    ) -> chin_tools::AResult<CTableQueryTableDataRsp> {
+        req: KReq<KTabQueryTableDataReq>,
+    ) -> chin_tools::AResult<KTabQueryTableDataRsp> {
         let mut cells = vec![];
         macro_rules! extend_cells {
             ($sub_table:tt) => {
@@ -194,7 +194,7 @@ impl ChinTableMapper for KDb {
                     Wheres::is_null($sub_table::DELETE_TIME),
                 ]));
 
-                let data: Vec<CTableCell> = self
+                let data: Vec<KTabCell> = self
                     .conn()
                     .await?
                     .qry_list(reader, |row| {
@@ -215,34 +215,34 @@ impl ChinTableMapper for KDb {
             };
         }
 
-        extend_cells!(CTableCellStr1024);
-        extend_cells!(CTableCellDate);
-        extend_cells!(CTableCellInteger);
-        extend_cells!(CTableCellText);
+        extend_cells!(KTabCellStr1024);
+        extend_cells!(KTabCellDate);
+        extend_cells!(KTabCellInteger);
+        extend_cells!(KTabCellText);
 
-        Ok(CTableQueryTableDataRsp { cells })
+        Ok(KTabQueryTableDataRsp { cells })
     }
 
-    async fn ensure_ctable_tables(&self) -> chin_tools::EResult {
+    async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
         self.conn()
             .await?
-            .exec(CTableCellDate::schema(self.db_type()))
+            .exec(KTabCellDate::schema(self.db_type()))
             .await?;
         self.conn()
             .await?
-            .exec(CTableCellInteger::schema(self.db_type()))
+            .exec(KTabCellInteger::schema(self.db_type()))
             .await?;
         self.conn()
             .await?
-            .exec(CTableCellStr1024::schema(self.db_type()))
+            .exec(KTabCellStr1024::schema(self.db_type()))
             .await?;
         self.conn()
             .await?
-            .exec(CTableCellText::schema(self.db_type()))
+            .exec(KTabCellText::schema(self.db_type()))
             .await?;
         self.conn()
             .await?
-            .exec(CTableMeta::schema(self.db_type()))
+            .exec(KTabMeta::schema(self.db_type()))
             .await?;
 
         Ok(())

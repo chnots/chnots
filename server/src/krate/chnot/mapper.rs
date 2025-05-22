@@ -2,7 +2,6 @@ use chin_tools::{AResult, EResult};
 
 use crate::{
     expand_mt_branch,
-    mapper::db::{KDbRow, KDbRowBehavier},
     model::dto::KReq,
     MapperType, RecordCallbackType,
 };
@@ -15,7 +14,7 @@ pub(crate) trait ChnotDeserializeMapper {
     fn to_chnot_tag(self) -> AResult<ChnotTag>;
 }
 
-pub(crate) trait LLMChatDumpMapper {
+pub(crate) trait ChnotDumpMapper {
     async fn dump_chnot_meta(&self, callback: &RecordCallbackType) -> EResult;
     async fn dump_chnot_record(&self, callback: &RecordCallbackType) -> EResult;
     async fn dump_chnot_tag(&self, callback: &RecordCallbackType) -> EResult;
@@ -29,45 +28,6 @@ pub(crate) trait LLMChatDumpMapper {
     }
 }
 
-impl ChnotDeserializeMapper for KDbRow<'_> {
-    fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
-        let chnot = ChnotMetadata {
-            id: self.try_get(ChnotMetadata::ID)?,
-            workspace: self.try_get(ChnotMetadata::WORKSPACE)?,
-            kind: self.try_get(ChnotMetadata::KIND)?,
-            pin_time: self.try_get(ChnotMetadata::PIN_TIME)?,
-            delete_time: self.try_get(ChnotMetadata::DELETE_TIME)?,
-            update_time: self.try_get(ChnotMetadata::UPDATE_TIME)?,
-            insert_time: self.try_get(ChnotMetadata::INSERT_TIME)?,
-            archive_time: self.try_get(ChnotMetadata::ARCHIVE_TIME)?,
-        };
-        Ok(chnot)
-    }
-
-    fn to_chnot_record(self) -> AResult<ChnotRecord> {
-        let chnot = ChnotRecord {
-            id: self.try_get(ChnotRecord::ID)?,
-            meta_id: self.try_get(ChnotRecord::META_ID)?,
-            content: self.try_get(ChnotRecord::CONTENT)?,
-            omit_time: self.try_get(ChnotRecord::OMIT_TIME)?,
-            insert_time: self.try_get(ChnotRecord::INSERT_TIME)?,
-        };
-        Ok(chnot)
-    }
-
-    fn to_chnot_tag(self) -> AResult<ChnotTag> {
-        let obj = ChnotTag {
-            id: self.try_get(ChnotTag::ID)?,
-            workspace: self.try_get(ChnotTag::WORKSPACE)?,
-            tag: self.try_get(ChnotTag::TAG)?,
-            chnot_meta_id: self.try_get(ChnotTag::CHNOT_META_ID)?,
-            insert_time: self.try_get(ChnotTag::INSERT_TIME)?,
-            category: ChnotTagType::Common,
-        };
-        Ok(obj)
-    }
-}
-
 pub(crate) trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
     async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
@@ -78,9 +38,9 @@ pub(crate) trait ChnotMapper {
         &self,
         content: &str,
         meta_id: &str,
-        workspace: &str,
+        kspace: &str,
     ) -> EResult;
-    async fn chnot_tag_update_all(&self, workspace: &str) -> EResult;
+    async fn chnot_tag_update_all(&self, kspace: &str) -> EResult;
     async fn chnot_tag_query(
         &self,
         req: KReq<ChnotTagQueryReq>,
@@ -160,12 +120,12 @@ impl ChnotMapper for MapperType {
         &self,
         content: &str,
         meta_id: &str,
-        workspace: &str,
+        kspace: &str,
     ) -> EResult {
-        expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, workspace))
+        expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, kspace))
     }
 
-    async fn chnot_tag_update_all(&self, workspace: &str) -> EResult {
-        expand_mt_branch!(self.chnot_tag_update_all(workspace))
+    async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
+        expand_mt_branch!(self.chnot_tag_update_all(kspace))
     }
 }

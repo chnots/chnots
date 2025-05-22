@@ -17,7 +17,7 @@ impl KFileDeserializeMapper for KDbRow<'_> {
             content_type: self.try_get(InlineKFile::CONTENT_TYPE)?,
             delete_time: self.try_get(InlineKFile::DELETE_TIME)?,
             insert_time: self.try_get(InlineKFile::INSERT_TIME)?,
-            workspace: self.try_get(InlineKFile::WORKSPACE)?,
+            kspace: self.try_get(InlineKFile::KSPACE)?,
             rid: self.try_get(InlineKFile::RID)?,
             archor: self.try_get(InlineKFile::ARCHOR)?,
         };
@@ -29,7 +29,7 @@ impl KFileDeserializeMapper for KDbRow<'_> {
             id: self.try_get(KFile::ID)?,
             insert_time: self.try_get(KFile::INSERT_TIME)?,
             delete_time: self.try_get(KFile::DELETE_TIME)?,
-            workspace: self.try_get(KFile::WORKSPACE)?,
+            kspace: self.try_get(KFile::KSPACE)?,
             ori_filename: self.try_get(KFile::ORI_FILENAME)?,
             content_type: self.try_get(KFile::CONTENT_TYPE)?,
             ori_last_modified: self.try_get(KFile::ORI_LAST_MODIFIED)?,
@@ -54,7 +54,7 @@ impl KFileMapper for KDb {
             ori_filename,
             id,
             content_type,
-            workspace,
+            kspace,
             delete_time: _,
             insert_time: _,
             filesize,
@@ -69,7 +69,7 @@ impl KFileMapper for KDb {
             SqlInserter::new(KFile::TABLE)
                 .fields(KFile::ID, id.to_owned())
                 .fields(KFile::ORI_FILENAME, ori_filename.to_owned())
-                .fields(KFile::WORKSPACE, workspace.to_owned())
+                .fields(KFile::KSPACE, kspace.to_owned())
                 .fields(KFile::CONTENT_TYPE, content_type.to_owned())
                 .fields(KFile::INSERT_TIME, insert_time.to_owned())
                 .fields(KFile::FILESIZE, *filesize)
@@ -78,7 +78,7 @@ impl KFileMapper for KDb {
         .await
         .map(|_| KFile {
             id: id.to_owned(),
-            workspace: workspace.to_owned(),
+            kspace: kspace.to_owned(),
             ori_filename: ori_filename.to_string(),
             content_type: content_type.to_owned(),
             insert_time: insert_time.fixed_offset(),
@@ -141,7 +141,7 @@ impl KFileMapper for KDb {
                     .fields(InlineKFile::CONTENT, &req.res.content)
                     .fields(InlineKFile::CONTENT_TYPE, &req.res.content_type)
                     .fields(InlineKFile::INSERT_TIME, req.res.insert_time)
-                    .fields(InlineKFile::WORKSPACE, &req.res.workspace)
+                    .fields(InlineKFile::KSPACE, &req.res.kspace)
                     .fields(InlineKFile::ARCHOR, archorp)
                     .on_conflict({
                         match req.ignore_conflict.as_ref() {

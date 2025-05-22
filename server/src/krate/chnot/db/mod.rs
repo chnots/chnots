@@ -1,7 +1,8 @@
 pub(crate) mod inserter;
 
-use super::mapper::{ChnotDeserializeMapper, ChnotMapper};
+use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
+use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::model::dto::KReq;
 use crate::util::string_util::get_hashtags;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
@@ -19,7 +20,7 @@ const UNTAGGED_TAG: &str = "#_untagged";
 fn chnot_query_sql<'a>() -> SqlReader<'a> {
     SqlReader::new()
     .raw("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
-    .raw("m.id as mid, m.workspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
+    .raw("m.id as mid, m.kspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
     .raw("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
 }
 
@@ -35,7 +36,7 @@ fn chnot_query_mapper(row: KDbRow<'_>) -> AResult<Chnot> {
     };
     let meta = ChnotMetadata {
         id: row.try_get("mid")?,
-        workspace: row.try_get("workspace")?,
+        kspace: row.try_get("kspace")?,
         kind: row.try_get("kind")?,
         pin_time: row.try_get("pin_time")?,
         delete_time: row.try_get("delete_time")?,
@@ -63,7 +64,7 @@ impl KDb {
             start_index,
             tag_tree,
         } = req.body;
-        let ns = req.workspace;
+        let ns = req.kspace;
 
         let level = |s: &str| {
             if s.is_empty() {
@@ -102,7 +103,7 @@ impl KDb {
                     },
                     chin_sql::ILikeType::Original,
                 ),
-                Wheres::equal("workspace", ns),
+                Wheres::equal("kspace", ns),
             ]))
             .raw("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index));
@@ -171,7 +172,7 @@ impl ChnotMapper for KDb {
                         .sub(
                             "ct",
                             SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
-                                Wheres::equal(ChnotTag::WORKSPACE, req.workspace.to_owned()),
+                                Wheres::equal(ChnotTag::KSPACE, req.kspace.to_owned()),
                                 match tag {
                                     ChnotTagTreeType::Children(path) => Wheres::and([
                                         Wheres::equal(
@@ -218,7 +219,7 @@ impl ChnotMapper for KDb {
                         Wheres::none()
                     }
                 }),
-                Wheres::equal("m.workspace", req.workspace.clone()),
+                Wheres::equal("m.kspace", req.kspace.clone()),
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("content", content, ILikeType::Fuzzy)
                 }),
@@ -248,7 +249,7 @@ impl ChnotMapper for KDb {
                 "archive_time",
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
-            .set_if_some("workspace", req.body.workspace.as_ref())
+            .set_if_some("kspace", req.body.kspace.as_ref())
             .r#where(Wheres::equal("id", &req.meta_id));
 
         client.exec(su).await?;
@@ -288,7 +289,7 @@ impl ChnotMapper for KDb {
                 SqlInserter::new(ChnotTag::TABLE)
                     .fields(ChnotTag::ID, &req.id)
                     .fields(ChnotTag::CHNOT_META_ID, &req.chnot_meta_id)
-                    .fields(ChnotTag::WORKSPACE, &req.workspace)
+                    .fields(ChnotTag::KSPACE, &req.kspace)
                     .fields(ChnotTag::TAG, &req.tag)
                     .fields(ChnotTag::CATEGORY, req.category)
                     .fields(ChnotTag::INSERT_TIME, req.insert_time),
@@ -320,7 +321,7 @@ impl ChnotMapper for KDb {
         &self,
         content: &str,
         meta_id: &str,
-        workspace: &str,
+        kspace: &str,
     ) -> EResult {
         self.chnot_tag_delete(vec![&meta_id]).await?;
 
@@ -342,7 +343,7 @@ impl ChnotMapper for KDb {
         if parent_tags.is_empty() {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
-                workspace: workspace.to_owned(),
+                kspace: kspace.to_owned(),
                 tag: UNTAGGED_TAG.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
@@ -353,7 +354,7 @@ impl ChnotMapper for KDb {
         for tag in parent_tags {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
-                workspace: workspace.to_owned(),
+                kspace: kspace.to_owned(),
                 tag: tag.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
@@ -364,7 +365,7 @@ impl ChnotMapper for KDb {
         for tag in tags {
             self.chnot_tag_insert(ChnotTag {
                 id: id_util::generate_uuid(),
-                workspace: workspace.to_owned(),
+                kspace: kspace.to_owned(),
                 tag: tag.to_owned(),
                 chnot_meta_id: meta_id.to_string(),
                 insert_time: Utc::now().fixed_offset(),
@@ -376,16 +377,16 @@ impl ChnotMapper for KDb {
         Ok(())
     }
 
-    async fn chnot_tag_update_all(&self, workspace: &str) -> EResult {
+    async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
         let get_all = SqlReader::new()
             .sov("select r.content, m.id as meta_id from ")
             .sov(ChnotRecord::TABLE)
             .sov(" as r left join")
             .sov(ChnotMetadata::TABLE)
-            .sov(" as m on r.meta_id = m.id where r.omit_time is null and workspace = ")
-            .sov(SqlValue::Str(workspace.into()));
+            .sov(" as m on r.meta_id = m.id where r.omit_time is null and kspace = ")
+            .sov(SqlValue::Str(kspace.into()));
 
-        let workspace = workspace.to_owned();
+        let kspace = kspace.to_owned();
         let chnots = self
             .conn()
             .await?
@@ -393,15 +394,90 @@ impl ChnotMapper for KDb {
                 Ok(ChnotTagUpdateReq {
                     content: e.try_get(ChnotRecord::CONTENT)?,
                     meta_id: e.try_get("meta_id")?,
-                    workspace: workspace.to_owned(),
+                    kspace: kspace.to_owned(),
                 })
             })
             .await?;
 
         for one in &chnots {
-            self.chnot_tag_update_single_chnot(&one.content, &one.meta_id, &one.workspace)
+            self.chnot_tag_update_single_chnot(&one.content, &one.meta_id, &one.kspace)
                 .await?;
         }
+
+        Ok(())
+    }
+}
+
+impl ChnotDeserializeMapper for KDbRow<'_> {
+    fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
+        let chnot = ChnotMetadata {
+            id: self.try_get(ChnotMetadata::ID)?,
+            kspace: self.try_get(ChnotMetadata::KSPACE)?,
+            kind: self.try_get(ChnotMetadata::KIND)?,
+            pin_time: self.try_get(ChnotMetadata::PIN_TIME)?,
+            delete_time: self.try_get(ChnotMetadata::DELETE_TIME)?,
+            update_time: self.try_get(ChnotMetadata::UPDATE_TIME)?,
+            insert_time: self.try_get(ChnotMetadata::INSERT_TIME)?,
+            archive_time: self.try_get(ChnotMetadata::ARCHIVE_TIME)?,
+        };
+        Ok(chnot)
+    }
+
+    fn to_chnot_record(self) -> AResult<ChnotRecord> {
+        let chnot = ChnotRecord {
+            id: self.try_get(ChnotRecord::ID)?,
+            meta_id: self.try_get(ChnotRecord::META_ID)?,
+            content: self.try_get(ChnotRecord::CONTENT)?,
+            omit_time: self.try_get(ChnotRecord::OMIT_TIME)?,
+            insert_time: self.try_get(ChnotRecord::INSERT_TIME)?,
+        };
+        Ok(chnot)
+    }
+
+    fn to_chnot_tag(self) -> AResult<ChnotTag> {
+        let obj = ChnotTag {
+            id: self.try_get(ChnotTag::ID)?,
+            kspace: self.try_get(ChnotTag::KSPACE)?,
+            tag: self.try_get(ChnotTag::TAG)?,
+            chnot_meta_id: self.try_get(ChnotTag::CHNOT_META_ID)?,
+            insert_time: self.try_get(ChnotTag::INSERT_TIME)?,
+            category: ChnotTagType::Common,
+        };
+        Ok(obj)
+    }
+}
+
+
+impl ChnotDumpMapper for KDb {
+    async fn dump_chnot_meta(&self, callback: &crate::RecordCallbackType) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(ChnotMetadata::TABLE),
+            KDbRow::to_chnot_meta,
+            callback,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    async fn dump_chnot_record(&self, callback: &crate::RecordCallbackType) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(ChnotRecord::TABLE),
+            KDbRow::to_chnot_record,
+            callback,
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    async fn dump_chnot_tag(&self, callback: &crate::RecordCallbackType) -> EResult {
+        self.read_iterator(
+            TableDumpSqlBuilder::table(ChnotTag::TABLE),
+            KDbRow::to_chnot_tag,
+            callback,
+        )
+        .await?;
 
         Ok(())
     }

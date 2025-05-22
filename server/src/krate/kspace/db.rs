@@ -6,33 +6,33 @@ use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver};
 
 use super::{mapper::*, *};
 
-impl WorkspaceMapper for KDb {
-    async fn read_all_workspaces(&self) -> AResult<Vec<WorkspaceRecord>> {
+impl KSpaceMapper for KDb {
+    async fn read_all_kspaces(&self) -> AResult<Vec<KSpaceRecord>> {
         let stmt = self.conn().await?;
         stmt.qry_list(
-            SqlReader::read_all(WorkspaceRecord::TABLE)
-                .r#where(Wheres::is_not_null(WorkspaceRecord::DELETE_TIME)),
-            |e| e.to_workspace_record(),
+            SqlReader::read_all(KSpaceRecord::TABLE)
+                .r#where(Wheres::is_not_null(KSpaceRecord::DELETE_TIME)),
+            |e| e.to_kspace_record(),
         )
         .await
     }
 
-    async fn read_all_workspace_relations(&self) -> AResult<Vec<WorkspaceRelation>> {
+    async fn read_all_kspace_relations(&self) -> AResult<Vec<KSpaceRelation>> {
         self.conn()
             .await?
             .qry_list(
-                SqlReader::read_all(WorkspaceRelation::TABLE)
-                    .r#where(Wheres::is_not_null(WorkspaceRelation::DELETE_TIME)),
-                |e| e.to_workspace_relation(),
+                SqlReader::read_all(KSpaceRelation::TABLE)
+                    .r#where(Wheres::is_not_null(KSpaceRelation::DELETE_TIME)),
+                |e| e.to_kspace_relation(),
             )
             .await
     }
 
-    async fn ensure_table_workspace_record(&self) -> EResult {
-        self.create_table(WorkspaceRecord::schema(self.db_type()))
+    async fn ensure_table_kspace_record(&self) -> EResult {
+        self.create_table(KSpaceRecord::schema(self.db_type()))
             .await?;
 
-        let fast_create = |name: &str| WorkspaceRecord {
+        let fast_create = |name: &str| KSpaceRecord {
             id: name.to_owned(),
             name: name.to_owned(),
             delete_time: None,
@@ -45,10 +45,10 @@ impl WorkspaceMapper for KDb {
             fast_create("public"),
             fast_create("work"),
         ] {
-            let inserter = SqlInserter::new(WorkspaceRecord::TABLE)
-                .fields(WorkspaceRecord::ID, &v.id)
-                .fields(WorkspaceRecord::NAME, &v.name)
-                .fields(WorkspaceRecord::INSERT_TIME, v.insert_time)
+            let inserter = SqlInserter::new(KSpaceRecord::TABLE)
+                .fields(KSpaceRecord::ID, &v.id)
+                .fields(KSpaceRecord::NAME, &v.name)
+                .fields(KSpaceRecord::INSERT_TIME, v.insert_time)
                 .on_conflict(chin_sql::OnConflict::Ignore);
 
             self.conn().await?.exec(inserter).await?;
@@ -57,8 +57,8 @@ impl WorkspaceMapper for KDb {
         Ok(())
     }
 
-    async fn ensure_table_workspace_relation(&self) -> EResult {
-        self.create_table(WorkspaceRelation::schema(self.db_type()))
+    async fn ensure_table_kspace_relation(&self) -> EResult {
+        self.create_table(KSpaceRelation::schema(self.db_type()))
             .await
     }
 }

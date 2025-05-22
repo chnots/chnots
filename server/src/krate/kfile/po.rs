@@ -10,7 +10,7 @@ pub(crate) struct KFile {
     #[gts_length = 40]
     pub(crate) id: String,
     #[gts_length = 40]
-    pub(crate) workspace: String,
+    pub(crate) kspace: String,
     #[gts_length = 200]
     pub(crate) content_type: String,
 
@@ -36,7 +36,7 @@ pub(crate) struct InlineKFile {
     #[gts_length = 200]
     pub(crate) name: String,
     pub(crate) content: String,
-    pub(crate) workspace: String,
+    pub(crate) kspace: String,
 
     #[gts_length = 100]
     pub(crate) content_type: String,

@@ -43,7 +43,7 @@ async fn main() -> EResult {
 
     let config_file = tokio::fs::read_to_string(args.config.as_str()).await?;
     let config: Config = toml::from_str(config_file.as_str())?;
-    let mapper = AResult::<MapperType>::from(config.mapper.clone().into())?;
+    let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
     let state = AppState {
         config: config.clone(),

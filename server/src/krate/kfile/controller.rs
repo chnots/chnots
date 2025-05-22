@@ -15,7 +15,6 @@ use chin_tools::{
 };
 use chrono::Local;
 use std::{
-    ffi::OsStr,
     io::Write,
     path::{Path, PathBuf},
 };
@@ -27,7 +26,7 @@ use tracing::info;
 use crate::{
     app::ShareAppState,
     config::AttachmentConfig,
-    model::dto::{kreq, read_workspace_from_header},
+    model::dto::{kreq, read_kspace_from_header},
     server::controller::KResponse,
 };
 
@@ -49,15 +48,6 @@ pub(crate) fn asset_tmp_path(config: &AttachmentConfig, id: &str) -> PathBuf {
         .join(id)
 }
 
-fn generate_kfile_id(filename: &str) -> String {
-    let base = uuid::Uuid::new_v4().to_string().replace("-", "");
-
-    match PathBuf::from(filename).extension().and_then(OsStr::to_str) {
-        Some(ext) => base + "." + ext,
-        None => base,
-    }
-}
-
 async fn assemble_file<P: AsRef<Path>>(
     temp_dir: &P,
     filepath: P,
@@ -72,6 +62,7 @@ async fn assemble_file<P: AsRef<Path>>(
     .await?;
     let mut output_file = OpenOptions::new()
         .create(true)
+        .truncate(true)
         .write(true)
         .open(filepath.as_ref())
         .await?;
@@ -80,7 +71,7 @@ async fn assemble_file<P: AsRef<Path>>(
     for chunk_number in 0..total_chunks {
         let chunk_path = temp_dir.as_ref().join(chunk_number.to_string());
         let chunk_data = tokio::fs::read(&chunk_path).await?;
-        bh.write(&chunk_data)?;
+        bh.write_all(&chunk_data)?;
         output_file.write_all(&chunk_data).await?;
     }
 
@@ -116,9 +107,7 @@ async fn upload(
     file.write_all(&chunk.contents).await?;
 
     let mut all_existed = true;
-    for p in (0..total_chunks)
-        .map(|i| tmp_dir.join(i.to_string()))
-    {
+    for p in (0..total_chunks).map(|i| tmp_dir.join(i.to_string())) {
         if !tokio::fs::try_exists(p).await.is_ok_and(|b| b) {
             all_existed = false;
             break;
@@ -133,7 +122,7 @@ async fn upload(
         let res = mapper
             .insert_kfile(&KFile {
                 id,
-                workspace: read_workspace_from_header(&headers),
+                kspace: read_kspace_from_header(&headers),
                 ori_filename: filename,
                 content_type: "".to_owned(),
                 delete_time: None,
@@ -199,26 +188,13 @@ pub(crate) async fn download(
 
     match res {
         Ok(res) => Ok(res),
-        Err(err) => {
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Unable to download: {:?}, {}", &err.to_string(), err),
-            ))
-        }
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Unable to download: {:?}, {}", &err.to_string(), err),
+        )),
     }
 }
 
-async fn query_kfile(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Query(req): Query<QueryInlineKFileReq>,
-) -> KResponse<QueryInlineKFileRsp> {
-    state
-        .mapper
-        .query_inline_kfile(kreq(headers, req))
-        .await
-        .into()
-}
 async fn query_inline_kfile(
     headers: HeaderMap,
     state: State<ShareAppState>,
@@ -249,7 +225,7 @@ async fn query_svg(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Response {
     let mut headers = headers.clone();
-    headers.append("K-workspace", HeaderValue::from_str("default").unwrap());
+    headers.append("K-kspace", HeaderValue::from_str("default").unwrap());
     let rsp = query_inline_kfile(
         headers,
         state,

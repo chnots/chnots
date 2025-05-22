@@ -57,7 +57,7 @@ export interface ChnotDeletionReq {
 export interface ChnotUpdateReq {
   meta_id: string;
 
-  workspace?: string;
+  kspace?: string;
 
   pinned?: boolean;
   archive?: boolean;

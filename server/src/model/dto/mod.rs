@@ -10,12 +10,12 @@ use serde::{de::DeserializeOwned, Serialize};
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {
     pub(crate) body: E,
-    pub(crate) workspace: String,
+    pub(crate) kspace: String,
 }
 
-pub(crate) fn read_workspace_from_header(headers: &HeaderMap) -> String {
+pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> String {
     headers
-        .get("K-workspace")
+        .get("K-kspace")
         .and_then(|v| v.to_str().ok().map(|e| e.to_string()))
         .unwrap()
 }
@@ -23,7 +23,7 @@ pub(crate) fn read_workspace_from_header(headers: &HeaderMap) -> String {
 pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
     KReq {
         body,
-        workspace: read_workspace_from_header(&headers),
+        kspace: read_kspace_from_header(&headers),
     }
 }
 
@@ -45,7 +45,7 @@ where
     {
         KReq {
             body: t,
-            workspace: self.workspace.clone(),
+            kspace: self.kspace.clone(),
         }
     }
 }

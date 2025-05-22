@@ -1,6 +1,6 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
-import { useWorkspaceStore } from "@/store/workspace";
+import { useKSpaceStore } from "@/store/kspace";
 import axios from "axios";
 import type {
   AxiosInstance,
@@ -23,8 +23,8 @@ class Request {
 
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const workspace = useWorkspaceStore.getState().currentWorkspace.name;
-        config.headers!["K-workspace"] = workspace;
+        const kspace = useKSpaceStore.getState().currentKSpace.name;
+        config.headers!["K-kspace"] = kspace;
 
         const controller = new AbortController();
         const url = config.url || "";

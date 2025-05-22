@@ -30,6 +30,7 @@ impl<'a> KDbRowBehavier<'a, KTVType> for KDbRow<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) struct KTV {
     #[gts_primary]
     #[gts_length = 500]

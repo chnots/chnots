@@ -47,31 +47,31 @@ impl EventBuilder for TimeInterval {
             match c {
                 '0'..='9' => num.push(c),
                 'y' => {
-                    interval.year = i32::from_str_radix(&num, 10)?.into();
+                    interval.year = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'm' => {
-                    interval.month = i32::from_str_radix(&num, 10)?.into();
+                    interval.month = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'd' => {
-                    interval.day = i32::from_str_radix(&num, 10)?.into();
+                    interval.day = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'H' => {
-                    interval.hour = i32::from_str_radix(&num, 10)?.into();
+                    interval.hour = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'M' => {
-                    interval.minute = i32::from_str_radix(&num, 10)?.into();
+                    interval.minute = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'S' => {
-                    interval.second = i32::from_str_radix(&num, 10)?.into();
+                    interval.second = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'w' => {
-                    interval.week = i32::from_str_radix(&num, 10)?.into();
+                    interval.week = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 '-' => {

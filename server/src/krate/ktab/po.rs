@@ -1,12 +1,12 @@
 use core::str;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use chin_sql::{ChinSqlError, DbType, GenerateTableSql};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) enum CTableColumnType {
+pub(crate) enum KTabColumnType {
     Bool,
     I8,
     I16,
@@ -17,39 +17,40 @@ pub(crate) enum CTableColumnType {
     FixedOffset,
     Utc,
     Blob,
-    Opt(Option<Box<CTableColumnType>>),
+    Opt(Option<Box<KTabColumnType>>),
 }
 
-impl ToString for CTableColumnType {
-    fn to_string(&self) -> String {
-        match &self {
-            CTableColumnType::Bool => "bool".into(),
-            CTableColumnType::I8 => "i8".into(),
-            CTableColumnType::I16 => "i16".into(),
-            CTableColumnType::I32 => "i32".into(),
-            CTableColumnType::I64 => "i64".into(),
-            CTableColumnType::F64 => "f64".into(),
-            CTableColumnType::Str => "str".into(),
-            CTableColumnType::FixedOffset => "fixedoffset".into(),
-            CTableColumnType::Utc => "utc".into(),
-            CTableColumnType::Blob => "blob".into(),
-            CTableColumnType::Opt(sql_value_type) => match sql_value_type {
-                Some(v) => format!("opt.{}", v.to_string()),
+impl Display for KTabColumnType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match &self {
+            KTabColumnType::Bool => "bool".into(),
+            KTabColumnType::I8 => "i8".into(),
+            KTabColumnType::I16 => "i16".into(),
+            KTabColumnType::I32 => "i32".into(),
+            KTabColumnType::I64 => "i64".into(),
+            KTabColumnType::F64 => "f64".into(),
+            KTabColumnType::Str => "str".into(),
+            KTabColumnType::FixedOffset => "fixedoffset".into(),
+            KTabColumnType::Utc => "utc".into(),
+            KTabColumnType::Blob => "blob".into(),
+            KTabColumnType::Opt(sql_value_type) => match sql_value_type {
+                Some(v) => format!("opt.{}", v),
                 None => unreachable!(),
             },
-        }
+        };
+        f.write_str(s.as_str())
     }
 }
 
-impl TryFrom<&str> for CTableColumnType {
+impl TryFrom<&str> for KTabColumnType {
     type Error = ChinSqlError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let res = match value {
-            "bool" => CTableColumnType::Bool,
+            "bool" => KTabColumnType::Bool,
             s => {
                 if let Some(s) = s.strip_prefix("opt.") {
-                    return CTableColumnType::try_from(s);
+                    return KTabColumnType::try_from(s);
                 } else {
                     Err(ChinSqlError::TransformError(format!(
                         "error getting sql value type, {}",
@@ -64,24 +65,24 @@ impl TryFrom<&str> for CTableColumnType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct CTableColumnMeta {
+pub(crate) struct KTabColumnMeta {
     pub(crate) index: u32,
     pub(crate) name: String,
     pub(crate) comment: String,
-    pub(crate) stype: CTableColumnType,
+    pub(crate) stype: KTabColumnType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
-pub(crate) struct CTableMeta {
+pub(crate) struct KTabMeta {
     pub(crate) id: String,
     #[gts_type = "String"]
-    pub(crate) columns: HashMap<String, CTableColumnMeta>,
+    pub(crate) columns: HashMap<String, KTabColumnMeta>,
     pub(crate) table_name: String,
     pub(crate) table_comment: String,
     pub(crate) create_time: DateTime<FixedOffset>,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
     pub(crate) delete_time: Option<DateTime<FixedOffset>>,
-    pub(crate) workspace: String,
+    pub(crate) kspace: String,
     pub(crate) real_table: bool,
 }
 
@@ -100,7 +101,7 @@ macro_rules! type_table {
     }
 }
 
-type_table!(CTableCellStr1024, String, #[gts_length = 1024]);
-type_table!(CTableCellText, String);
-type_table!(CTableCellInteger, i64);
-type_table!(CTableCellDate, DateTime<FixedOffset>);
+type_table!(KTabCellStr1024, String, #[gts_length = 1024]);
+type_table!(KTabCellText, String);
+type_table!(KTabCellInteger, i64);
+type_table!(KTabCellDate, DateTime<FixedOffset>);

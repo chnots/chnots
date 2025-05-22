@@ -37,7 +37,7 @@ impl From<u32> for NoneOrI32 {
 
 impl From<&str> for NoneOrI32 {
     fn from(value: &str) -> Self {
-        match i32::from_str_radix(value, 10) {
+        match value.parse::<i32>() {
             Ok(i) => NoneOrI32(Some(i)),
             Err(_) => NoneOrI32(None),
         }
@@ -46,7 +46,7 @@ impl From<&str> for NoneOrI32 {
 
 impl From<String> for NoneOrI32 {
     fn from(value: String) -> Self {
-        match i32::from_str_radix(value.as_str(), 10) {
+        match value.as_str().parse::<i32>() {
             Ok(i) => NoneOrI32(Some(i)),
             Err(_) => NoneOrI32(None),
         }
@@ -284,7 +284,7 @@ pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Resul
                 .split(":")
                 .collect();
 
-            Ok(i32::from_str_radix(time[0], 10)? * 3600 + i32::from_str_radix(time[1], 10)? * 60)
+            Ok(time[0].parse::<i32>()? * 3600 + time[1].parse::<i32>()? * 60)
         }
         _ => todo!(),
     }

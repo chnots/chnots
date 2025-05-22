@@ -4,7 +4,7 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, GenerateTableSql)]
-pub(crate) struct WorkspaceRecord {
+pub(crate) struct KSpaceRecord {
     #[gts_primary]
     #[gts_length = 40]
     pub(crate) id: String,
@@ -16,7 +16,7 @@ pub(crate) struct WorkspaceRecord {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, GenerateTableSql)]
-pub(crate) struct WorkspaceRelation {
+pub(crate) struct KSpaceRelation {
     #[gts_primary]
     #[gts_length = 40]
     pub(crate) id: String,

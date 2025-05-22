@@ -1,7 +1,7 @@
 import { insertMapAtIndex } from "@/utils/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { useWorkspaceStore } from "../workspace";
+import { useKSpaceStore } from "../kspace";
 import {
   Chnot,
   ChnotQueryRsp,
@@ -157,8 +157,7 @@ export const useChnotStore = create(
           .values()
           .filter((e) => {
             const result =
-              e.meta.workspace ==
-              useWorkspaceStore.getState().currentWorkspace.name;
+              e.meta.kspace == useKSpaceStore.getState().currentKSpace.name;
             return !result;
           })
           .map((e) => {

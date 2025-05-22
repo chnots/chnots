@@ -9,7 +9,7 @@ use super::{timeevent::TimeEvent, EventBuilder, RawInputSegs};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum EventEnum {
-    Time(TimeEvent),
+    Time(Box<TimeEvent>),
     Todo(TodoEvent),
 }
 
@@ -51,7 +51,7 @@ impl<'de> Deserialize<'de> for EventEnum {
 
 impl From<TimeEvent> for EventEnum {
     fn from(value: TimeEvent) -> Self {
-        Self::Time(value)
+        Self::Time(value.into())
     }
 }
 
