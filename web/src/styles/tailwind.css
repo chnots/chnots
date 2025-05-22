@@ -121,3 +121,7 @@
 @utility kbut {
   @apply border border-transparent rounded-xl cursor-pointer;
 }
+
+@utility no-scrollbar {
+  @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}

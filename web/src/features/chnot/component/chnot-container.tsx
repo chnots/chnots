@@ -64,7 +64,6 @@ export const ChnotContainer = ({
 }) => {
   const { currentNamespace } = useNamespaceStore();
   const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
-  const [subTypeId, setSubTypeId] = useState<string>();
 
   const [editState, setEditState] = useState<ChnotEditState>({
     isUploadingResource: false,
@@ -136,13 +135,14 @@ export const ChnotContainer = ({
     [setEditState, editState, onChnotChange, chnot, chnotType]
   );
 
-  const onOtherTypeInit = useCallback(async (content: string, subTypeId: string) => {
-    if (!chnot) {
-      saveContent(
-        content, subTypeId
-      );
-    }
-  }, [chnot, chnotType, saveContent]);
+  const onOtherTypeInit = useCallback(
+    async (content: string, subTypeId: string) => {
+      if (!chnot) {
+        saveContent(content, subTypeId);
+      }
+    },
+    [chnot, chnotType, saveContent]
+  );
 
   const onChange = useDebounce(
     (content: string) => {
@@ -292,17 +292,35 @@ export const ChnotContainer = ({
                   foldGutter={true}
                 />
               ) : (
-                <div>Height is 0!</div>
+                <div />
               )}
             </div>
           ))}
-        {chnotType === ChnotType.ExcalidrawV1 && chnot && (
-          <ExcalidrawContainer instanceId={chnot.meta.id} />
+        {chnotType === ChnotType.ExcalidrawV1 && (
+          <ExcalidrawContainer
+            chnotMetaId={chnot?.meta.id}
+            afterSaveCallback={(id) => {
+              onOtherTypeInit(
+                `# Excalidraw ${new Date().toLocaleTimeString()}\n\n${
+                  listViewTypeGetTagPath(listViewType) ?? ""
+                }`,
+                id
+              );
+            }}
+          />
         )}
         {chnotType === ChnotType.ResourceV1 && (
-          <CommonResource chnotMetaId={chnot?.meta.id} onSave={(r) => {
-            onOtherTypeInit(`# ${r.ori_filename}\n\n${listViewTypeGetTagPath(listViewType) ?? ""}`, r.id)
-          }} />
+          <CommonResource
+            chnotMetaId={chnot?.meta.id}
+            onSave={(r) => {
+              onOtherTypeInit(
+                `# ${r.ori_filename}\n\n${
+                  listViewTypeGetTagPath(listViewType) ?? ""
+                }`,
+                r.id
+              );
+            }}
+          />
         )}
       </div>
     </div>

@@ -5,8 +5,8 @@ use crate::model::dto::resource::{
     KVDeleteReq, KVDeleteRsp, KVOverwriteReq, KVOverwriteRsp, KVQueryReq, KVQueryRsp,
 };
 use crate::server::controller::KResponse;
-use axum::extract::{Path, Query};
-use axum::routing::{get, post};
+use axum::extract::Query;
+use axum::routing::get;
 use axum::{
     extract::State,
     http::HeaderMap,

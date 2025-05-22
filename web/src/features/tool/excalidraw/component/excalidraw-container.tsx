@@ -18,7 +18,6 @@ import {
 } from "@excalidraw/excalidraw/element/types";
 import {
   Excalidraw,
-  MIME_TYPES,
   serializeAsJSON,
   useHandleLibrary,
 } from "@excalidraw/excalidraw";
@@ -26,6 +25,7 @@ import useDebounce from "@/hooks/use-debounce";
 import {
   insertInlineResource,
   queryInlineResource,
+  queryKTV,
 } from "@/store/resource/service";
 import { useNamespaceStore } from "@/store/namespace";
 import { useSearchParams } from "react-router-dom";
@@ -36,29 +36,53 @@ import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 export interface ExcalidrawProps {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
-  instanceId?: string;
+  chnotMetaId?: string;
+  viewMode?: boolean;
+  afterSaveCallback?: (id: string) => void;
 }
 
 const CONTENT_TYPE = "excalidraw-v1";
 
 export default function ExcalidrawContainer({
+  chnotMetaId,
+  afterSaveCallback,
   useCustom,
   customArgs,
-  instanceId,
+  viewMode,
 }: ExcalidrawProps) {
+  useEffect(() => {
+    console.log("redraw excalidraw", chnotMetaId);
+  }, []);
   const { currentNamespace } = useNamespaceStore();
 
-  const [viewModeEnabled, setViewModeEnabled] = useState(false);
+  const [viewModeEnabled, setViewModeEnabled] = useState(viewMode);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
-  const [gridModeEnabled, setGridModeEnabled] = useState(false);
+  const [gridModeEnabled, setGridModeEnabled] = useState(true);
   const [theme, setTheme] = useState<Theme>("light");
 
   const [searchParams] = useSearchParams();
   const [excalidrawId, setExcalidrawId] = useState<string>();
+
   useEffect(() => {
-    let id = instanceId ? instanceId : searchParams.get("exdId");
-    id = id ?? uuid();
-    setExcalidrawId(id);
+    setViewModeEnabled(viewMode ?? false);
+  }, [viewMode]);
+
+  useEffect(() => {
+    (async () => {
+      let id = searchParams.get("exdId");
+      if (!id && chnotMetaId) {
+        const { value } = await queryKTV({
+          key: chnotMetaId,
+          ttype: "chnot_sub_type",
+        });
+        if (value) {
+          id = value;
+        }
+      }
+      id = id ?? uuid();
+      console.log("chnot_sub_id", id);
+      setExcalidrawId(id);
+    })();
   }, [setExcalidrawId, searchParams]);
 
   const [excalidrawAPI, excalidrawRefCallback] =
@@ -78,10 +102,10 @@ export default function ExcalidrawContainer({
       resolvablePromise<ExcalidrawInitialDataState | null>();
   }
   useEffect(() => {
-    if (!excalidrawAPI) {
+    if (!excalidrawAPI || !excalidrawId) {
       return;
     }
-    const fetchData = async () => {
+    (async () => {
       const rsp = await queryInlineResource({
         rid: excalidrawId,
       });
@@ -91,6 +115,7 @@ export default function ExcalidrawContainer({
         const eles = dataState.elements as readonly ExcalidrawElement[] | null;
 
         if (eles) {
+          console.log("eles", eles);
           for (const element of eles) {
             if (element.type === "image" && element.fileId) {
               try {
@@ -128,55 +153,59 @@ export default function ExcalidrawContainer({
         console.log("unable to fetch inline-resource", excalidrawId, e);
         initialStatePromiseRef.current.promise.resolve({});
       }
-    };
-    fetchData();
-  }, [excalidrawAPI, MIME_TYPES]);
+    })();
+  }, [excalidrawAPI, excalidrawId]);
 
   const savedFilesRef = useRef(new Map<string, string>());
   const onChange = useDebounce(
     (
+      excalidrawId: string,
       elements: NonDeletedExcalidrawElement[],
       state: AppState,
-      files: BinaryFiles
+      files: BinaryFiles,
+      afterSave: (id: string) => void
     ) => {
-      const content = serializeAsJSON(elements, state, files, "database");
-      (async () => {
-        for (const [fileId, file] of Object.entries(files)) {
-          const ver = savedFilesRef.current.get(fileId);
-          const newVar = file.created + "-" + file.version;
-          if (!ver || ver != newVar) {
-            await insertInlineResource({
-              res: {
-                id: md5(newVar).toString(),
-                rid: fileId,
-                namespace: currentNamespace.name,
-                archor: true,
-                name: fileId,
-                content: file.dataURL,
-                content_type: file.mimeType,
-                insert_time: new Date(file.created),
-              },
-              archor_intervals: 3600,
-              ignore_conflict: true,
-            });
-            savedFilesRef.current.set(fileId, newVar);
+      if (elements.length > 0) {
+        const content = serializeAsJSON(elements, state, files, "database");
+        (async () => {
+          for (const [fileId, file] of Object.entries(files)) {
+            const ver = savedFilesRef.current.get(fileId);
+            const newVar = file.created + "-" + file.version;
+            if (!ver || ver != newVar) {
+              await insertInlineResource({
+                res: {
+                  id: md5(newVar).toString(),
+                  rid: fileId,
+                  namespace: currentNamespace.name,
+                  archor: true,
+                  name: fileId,
+                  content: file.dataURL,
+                  content_type: file.mimeType,
+                  insert_time: new Date(file.created),
+                },
+                archor_intervals: 3600,
+                ignore_conflict: true,
+              });
+              savedFilesRef.current.set(fileId, newVar);
+            }
           }
-        }
 
-        await insertInlineResource({
-          res: {
-            id: uuid(),
-            rid: instanceId ?? uuid(),
-            namespace: currentNamespace.name,
-            archor: false,
-            name: instanceId ?? uuid(),
-            content,
-            content_type: CONTENT_TYPE,
-            insert_time: new Date(),
-          },
-          archor_intervals: 3600,
-        });
-      })();
+          await insertInlineResource({
+            res: {
+              id: uuid(),
+              rid: excalidrawId,
+              namespace: currentNamespace.name,
+              archor: false,
+              name: chnotMetaId ?? uuid(),
+              content,
+              content_type: CONTENT_TYPE,
+              insert_time: new Date(),
+            },
+            archor_intervals: 3600,
+          });
+          afterSave(excalidrawId);
+        })();
+      }
     },
     1200,
     true
@@ -209,7 +238,9 @@ export default function ExcalidrawContainer({
     <Excalidraw
       excalidrawAPI={excalidrawRefCallback}
       initialData={initialStatePromiseRef.current.promise}
-      onChange={onChange}
+      onChange={(e1, e2, e3) => {
+        onChange(excalidrawId, e1, e2, e3, afterSaveCallback);
+      }}
       viewModeEnabled={viewModeEnabled}
       zenModeEnabled={zenModeEnabled}
       gridModeEnabled={gridModeEnabled}

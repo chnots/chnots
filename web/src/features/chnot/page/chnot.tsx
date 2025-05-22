@@ -51,19 +51,17 @@ const MonoChnot = () => {
   const viewModeRef = useRef(false);
 
   return (
-    <div className="flex flex-grow justify-center items-center">
-      <ChnotContainer
-        onClickNewButton={() => {
-          setChnotEditorId(uuid());
-          setCurrentChnotMetaId(undefined);
-        }}
-        key={chnotEditorId}
-        chnot={editorChnot}
-        globalViewMode={viewModeRef}
-        className="w-full h-full"
-        onChnotChange={updateEditorChnot}
-      />
-    </div>
+    <ChnotContainer
+      onClickNewButton={() => {
+        setChnotEditorId(uuid());
+        setCurrentChnotMetaId(undefined);
+      }}
+      key={chnotEditorId}
+      chnot={editorChnot}
+      globalViewMode={viewModeRef}
+      className="w-full h-full"
+      onChnotChange={updateEditorChnot}
+    />
   );
 };
 
@@ -82,7 +80,7 @@ const ChnotPage = () => {
   }, [currentNamespace]);
 
   return (
-    <div className="bg-panel flex h-full max-h-full rounded-md">
+    <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <title>{`Chnots`}</title>
       {showSidebar && (
         <div className="shrink-0 border-r kc-basic-with-bdr flex flex-col w-3/12 p-2">

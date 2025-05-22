@@ -202,7 +202,7 @@ export const CommonResource = ({
             className="flex w-full p-5 justify-center align-middle items-center"
             href={getResouceDownloadUrl(resource)}
           >
-             Download
+            Download
           </a>
         </div>
       )}
@@ -255,7 +255,7 @@ export const CommonResource = ({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                                                             Upload Progress
+                    Upload Progress
                     </span>
                     <span className="text-sm font-mono text-blue-600 dark:text-blue-400">
                       {progress}%
