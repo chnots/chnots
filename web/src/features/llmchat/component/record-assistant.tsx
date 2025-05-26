@@ -9,7 +9,6 @@ import remarkGfm from "remark-gfm";
 
 const RecordAssistant = ({
   onRegenerate,
-  onAbort,
   role,
   role_id,
   reasoning_content,
@@ -17,7 +16,6 @@ const RecordAssistant = ({
   insert_time,
   logo,
 }: {
-  onAbort?: () => void;
   onRegenerate?: () => void;
   logo?: string;
 } & LLMChatRecord) => {
@@ -55,7 +53,6 @@ const RecordAssistant = ({
       logo={svgLogo}
       limitHeight={role === "system" ? true : undefined}
       onRegenerate={onRegenerate}
-      onAbort={onAbort}
       onCopy={onCopy}
     >
       <div className="flex flex-col">

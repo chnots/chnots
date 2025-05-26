@@ -1,8 +1,5 @@
 import clsx from "clsx";
 import Icon from "@/common/component/icon";
-import KSVG from "@/common/component/svg";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import React, { useCallback, useRef, useState } from "react";
 import KButton from "@/common/component/kbutton";
 
@@ -25,7 +22,6 @@ const RecordFrame = ({
   name,
   timestamp,
   limitHeight: initLimitHeight,
-  onAbort,
   onRegenerate,
   onCopy,
   logo,
@@ -37,7 +33,6 @@ const RecordFrame = ({
   limitHeight?: boolean;
   justifyEnd?: boolean;
   onCopy?: () => void;
-  onAbort?: () => void;
   onRegenerate?: () => void;
   logo?: React.ReactElement;
   children: React.ReactElement;
@@ -58,7 +53,7 @@ const RecordFrame = ({
   return (
     <div
       className={clsx(
-        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-20",
+        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-8",
         justifyEnd && "justify-end"
       )}
     >
@@ -74,17 +69,7 @@ const RecordFrame = ({
           <>{children}</>
         )}
 
-        <div className="space-x-2 mt-1">
-          {onAbort && (
-            <button
-              onClick={onAbort}
-              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-              aria-label="Abort"
-              tabIndex={0}
-            >
-              <Icon.Square className="h-4 w-4 text-gray-700" />
-            </button>
-          )}
+        <div className="space-x-2 mt-1 flex">
           {onRegenerate && (
             <button
               onClick={onRegenerate}
@@ -100,7 +85,6 @@ const RecordFrame = ({
             <KButton
               onClick={() => {
                 setLimitHeight((prev) => {
-                  console.log("on limit, ", prev);
                   return !prev;
                 });
               }}

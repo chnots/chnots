@@ -1,5 +1,5 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{DateFixedOffset, DbType, IntoSqlSeg, SqlReader, SqlValueOwned, SqlValueRow};
+use chin_sql::{DbType, IntoSqlSeg, SqlReader, SqlValueOwned, SqlValueRow};
 use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::{Client, GenericClient, Transaction};

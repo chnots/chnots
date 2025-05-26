@@ -6,9 +6,11 @@ import {
 } from "@/hooks/use-llm-response";
 import { LLMChatBot, LLMChatRecord } from "@/store/llmchat/db";
 import { LLMChatContainerSession } from "@/store/llmchat/dto";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/store/llmchat/service";
+import Icon from "@/common/component/icon";
+import KButton from "@/common/component/kbutton";
 
 export const RecordAnswering = ({
   containerSession,
@@ -62,7 +64,6 @@ export const RecordAnswering = ({
   }, [setAnswerCtl, triggerAnswer]);
 
   useEffect(() => {
-    console.log("创建新的 RecordAnswering ");
     return () => {
       if (savedStateRef.current) {
         const response = savedStateRef.current;
@@ -103,16 +104,16 @@ export const RecordAnswering = ({
     } else {
       savedStateRef.current = response;
     }
-  }, [response, savedStateRef]);
-
-
+    if (onScrollToEnd) {
+      onScrollToEnd();
+    }
+  }, [response, savedStateRef, onScrollToEnd]);
 
   return (
     <>
       <RecordAssistant
         logo={bot.svg_logo}
         role_id={bot.id}
-        onAbort={onAbort}
         onRegenerate={onRegenerate}
         id={response.sessionId + "-response"}
         session_id={response.sessionId}
@@ -121,6 +122,17 @@ export const RecordAnswering = ({
         role={"response-assistant"}
         insert_time={new Date()}
       />
+      <div className="flex justify-center">
+        <KButton
+          onClick={onAbort}
+          className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors flex mb-6"
+          aria-label="Abort"
+          tabIndex={0}
+        >
+          <Icon.Square className="h-4 w-4 text-gray-700" />
+          <span>Stop Generate</span>
+        </KButton>
+      </div>
     </>
   );
 };

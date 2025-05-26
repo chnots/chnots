@@ -23,6 +23,7 @@ import {
 import RecordUser from "./record-user";
 import RecordAssistant from "./record-assistant";
 import LLMChatSessionInput from "./session-input";
+import Icon from "@/common/component/icon";
 
 const SessionContainer = ({
   sessionIdOrUUID,
@@ -205,14 +206,19 @@ const SessionContainer = ({
   }, [atBottomRef]);
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
-  const scrollToEnd = useCallback(() => {
+  const scrollToEnd = useCallback((behavior: "auto" | "instant" | "smooth") => {
     console.log("scroll to end", bottomDivRef.current);
 
-    bottomDivRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomDivRef.current?.scrollIntoView({ behavior });
   }, []);
+  const autoScrollToEnd = useCallback(() => {
+    if (atBottomRef.current) {
+      scrollToEnd("instant");
+    }
+  }, [atBottomRef, scrollToEnd]);
 
   useLayoutEffect(() => {
-    scrollToEnd();
+    scrollToEnd("smooth");
   });
 
   return (
@@ -221,33 +227,33 @@ const SessionContainer = ({
         className="flex flex-row h-full overflow-y-auto justify-center w-full"
         onScroll={onScroll}
       >
-        {currentBot ? (
-          containerSession ? (
-            <div className="w-full max-w-3xl" ref={contentRef}>
-              {containerSession.records.length > 0 ? (
-                <>
-                  {containerSession.records
-                    .toSorted((a, b) => {
-                      return a.insert_time > b.insert_time ? 1 : -1;
-                    })
-                    .map((record) => {
-                      return record.role === "user" ? (
-                        <RecordUser record={record} key={record.id} />
-                      ) : (
-                        <RecordAssistant
-                          {...record}
-                          key={record.id}
-                          onRegenerate={
-                            record.role === "assistant"
-                              ? async () => {
-                                  truncateSession(record.id);
-                                }
-                              : undefined
-                          }
-                        />
-                      );
-                    })}
-                  {containerSession.records.at(-1)?.role === "user" && (
+        {containerSession ? (
+          <div className="w-full max-w-3xl" ref={contentRef}>
+            {containerSession.records.length > 0 ? (
+              <>
+                {containerSession.records
+                  .toSorted((a, b) => {
+                    return a.insert_time > b.insert_time ? 1 : -1;
+                  })
+                  .map((record) => {
+                    return record.role === "user" ? (
+                      <RecordUser record={record} key={record.id} />
+                    ) : (
+                      <RecordAssistant
+                        {...record}
+                        key={record.id}
+                        onRegenerate={
+                          record.role === "assistant"
+                            ? async () => {
+                                truncateSession(record.id);
+                              }
+                            : undefined
+                        }
+                      />
+                    );
+                  })}
+                {containerSession.records.at(-1)?.role === "user" &&
+                  currentBot && (
                     <RecordAnswering
                       key={responseId}
                       containerSession={containerSession}
@@ -263,27 +269,24 @@ const SessionContainer = ({
                         appendRecord(r);
                       }}
                       onScrollToEnd={() => {
-                        scrollToEnd();
+                        autoScrollToEnd();
                       }}
                     />
                   )}
-                  <div ref={bottomDivRef}></div>
-                </>
-              ) : (
-                <div>None Records</div>
-              )}
-            </div>
-          ) : (
-            <div className={"flex flex-col h-full justify-center"}>
-              <LLMChatTemplateList
-                onClickTemplate={(template) => {
-                  newTemplateSession(template);
-                }}
-              />
-            </div>
-          )
+                <div ref={bottomDivRef}></div>
+              </>
+            ) : (
+              <div>None Records</div>
+            )}
+          </div>
         ) : (
-          <div>Please add a bot</div>
+          <div className={"flex flex-col h-full justify-center"}>
+            <LLMChatTemplateList
+              onClickTemplate={(template) => {
+                newTemplateSession(template);
+              }}
+            />
+          </div>
         )}
       </div>
       <LLMChatSessionInput
