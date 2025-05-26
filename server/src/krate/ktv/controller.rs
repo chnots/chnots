@@ -2,7 +2,7 @@ use super::mapper::*;
 use super::*;
 use crate::app::ShareAppState;
 use crate::model::dto::kreq;
-use crate::server::controller::KResponse;
+use crate::controller::KResponse;
 use axum::extract::Query;
 use axum::routing::get;
 use axum::{

@@ -7,7 +7,7 @@ use crate::{
         db::{tabledumpsql::TableDumpSqlBuilder, KDbRow},
         dump::{DumpWrapper, RecordCallbackType, RowCallback},
     },
-    to_sql,
+    to_pgsql_params,
 };
 
 use super::Postgres;
@@ -30,7 +30,7 @@ impl Postgres {
             .context("unable to build dump sql")?;
         let mut client = self.client().await?;
         let stmt = client.transaction().await?;
-        let portal = stmt.bind(&seg.seg, to_sql!(seg.values)).await?;
+        let portal = stmt.bind(&seg.seg, to_pgsql_params!(seg.values)).await?;
         loop {
             // poll batch_size rows from portal and send it to embedding thread via channel
             let rows = stmt.query_portal(&portal, 10_i32).await?;

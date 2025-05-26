@@ -2,8 +2,14 @@ use serde::Deserialize;
 
 use crate::{
     mapper::{dump::filedump::FileBackupConfig, MapperConfig},
-    server::ServerConfig,
 };
+
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct ServerConfig {
+    pub(crate) port: u16,
+    pub(crate) tls_key: String,
+    pub(crate) tls_cert: String,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct AttachmentConfig {

@@ -10,7 +10,6 @@ use mapper::{
     },
     MapperType,
 };
-use server::controller;
 use tracing::{info, Level};
 
 pub(crate) mod app;
@@ -20,7 +19,7 @@ pub(crate) mod krate;
 pub(crate) mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
-pub(crate) mod server;
+pub(crate) mod controller;
 pub(crate) mod util;
 
 #[tokio::main]

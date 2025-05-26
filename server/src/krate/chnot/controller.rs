@@ -1,6 +1,6 @@
 use crate::app::ShareAppState;
 use crate::model::dto::{kreq, read_kspace_from_header};
-use crate::server::controller::KResponse;
+use crate::controller::KResponse;
 use axum::{
     extract::State,
     http::HeaderMap,

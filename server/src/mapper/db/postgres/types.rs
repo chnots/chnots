@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! to_sql {
+macro_rules! to_pgsql_params {
     ($values:expr) => {
         $values
             .iter()

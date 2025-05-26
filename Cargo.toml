@@ -1,0 +1,9 @@
+[workspace]
+resolver = "3"
+members = ["server"]
+
+
+[workspace.dependencies]
+log = "0.4.27"
+rusqlite = { version = "0.35.0" }
+thiserror = "2.0.12"

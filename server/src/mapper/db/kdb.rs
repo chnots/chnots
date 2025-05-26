@@ -1,8 +1,8 @@
-use chin_sql::{DateFixedOffset, DbType, IntoSqlSeg, SqlReader};
+use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
+use chin_sql::{DateFixedOffset, DbType, IntoSqlSeg, SqlReader, SqlValueOwned, SqlValueRow};
 use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset};
-use deadpool_postgres::Client;
-use deadpool_sqlite::rusqlite;
+use deadpool_postgres::{Client, GenericClient, Transaction};
 
 use super::{postgres, sqlite};
 
@@ -36,37 +36,22 @@ pub(crate) trait KDbConnBehaiver {
         E: Send + 'static;
 }
 
-pub(crate) trait KDbConnBehaiverSync {
-    fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
+pub(crate) trait KDbTransactionBehaiver: KDbConnBehaiver {
+    async fn cmt(self) -> EResult;
 
-    fn exec_and_check<'a, T, C>(&self, ssb: T, check_count: C) -> AResult<usize>
-    where
-        T: IntoSqlSeg<'a>,
-        C: FnOnce(usize) -> bool + Send + 'static;
-
-    fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
-    where
-        T: IntoSqlSeg<'a>,
-        F: FnOnce(KDbRow<'_>) -> AResult<E>,
-        E: Send + 'static;
-
-    fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<E>
-    where
-        T: IntoSqlSeg<'a>,
-        F: FnOnce(KDbRow<'_>) -> AResult<E>,
-        E: Send + 'static;
-
-    fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
-    where
-        T: IntoSqlSeg<'a>,
-        F: Fn(KDbRow<'_>) -> AResult<E>,
-        E: Send + 'static;
+    async fn rbk(self) -> EResult;
 }
 
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum KDbConn {
-    Sqlite(sqlite::Sqlite),
+    Sqlite(ActorSqliteConnClient),
     Postgres(Client),
+}
+
+#[allow(clippy::large_enum_variant)]
+pub(crate) enum KDbTx<'a> {
+    Sqlite(ActorSqliteTxClient),
+    Postgres(Transaction<'a>),
 }
 
 pub(crate) trait KDbBehaiver {
@@ -85,6 +70,7 @@ pub(crate) trait KDbRowBehavier<'b, T> {
 pub(crate) enum KDbRow<'a> {
     Postgres(tokio_postgres::Row),
     Sqlite(&'a rusqlite::Row<'a>),
+    SqlValueRow(SqlValueRow<SqlValueOwned>),
 }
 
 macro_rules! expand_kdb_branch {
@@ -123,6 +109,15 @@ macro_rules! expand_kdb_conn_branch {
             KDbConn::Sqlite(db) => db.$method($($arg),*).await,
         }
     };
+}
+
+impl KDbConn {
+    pub async fn transaction<'a>(&'a mut self) -> AResult<KDbTx<'a>> {
+        match self {
+            KDbConn::Sqlite(c) => Ok(KDbTx::Sqlite(c.transaction().await?)),
+            KDbConn::Postgres(c) => Ok(KDbTx::Postgres(c.transaction().await?)),
+        }
+    }
 }
 
 impl KDbConnBehaiver for KDbConn {
@@ -169,6 +164,59 @@ impl KDbConnBehaiver for KDbConn {
     }
 }
 
+macro_rules! expand_kdbtx_branch {
+    ($self:ident.$method:ident($($arg:expr),*)) => {
+        match $self {
+            KDbTx::Postgres(db) => db.$method($($arg),*).await,
+            KDbTx::Sqlite(db) => db.$method($($arg),*).await,
+        }
+    };
+}
+
+impl KDbConnBehaiver for KDbTx<'_> {
+    async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
+        expand_kdbtx_branch!(self.exec(ssb))
+    }
+
+    async fn exec_and_check<'a, T: IntoSqlSeg<'a>, C>(
+        &self,
+        ssb: T,
+        check_count: C,
+    ) -> AResult<usize>
+    where
+        C: (FnOnce(usize) -> bool) + Send + 'static,
+    {
+        expand_kdbtx_branch!(self.exec_and_check(ssb, check_count))
+    }
+
+    async fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
+    where
+        T: IntoSqlSeg<'a>,
+        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        expand_kdbtx_branch!(self.qry_opt(ssb, mapper))
+    }
+
+    async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
+    where
+        T: IntoSqlSeg<'a>,
+        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        expand_kdbtx_branch!(self.qry_one(ssb, mapper, only_one))
+    }
+
+    async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
+    where
+        T: IntoSqlSeg<'a>,
+        F: (Fn(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        expand_kdbtx_branch!(self.qry_list(ssb, mapper))
+    }
+}
+
 macro_rules! common_try_get {
     ($tp:tt) => {
         impl<'a, 'b> KDbRowBehavier<'b, $tp> for KDbRow<'a> {
@@ -176,6 +224,7 @@ macro_rules! common_try_get {
                 match self {
                     KDbRow::Postgres(row) => Ok(row.try_get(key)?),
                     KDbRow::Sqlite(row) => Ok(row.get(key)?),
+                    KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
                 }
             }
         }
@@ -185,6 +234,7 @@ macro_rules! common_try_get {
                 match self {
                     KDbRow::Postgres(row) => Ok(row.try_get(key)?),
                     KDbRow::Sqlite(row) => Ok(row.get(key)?),
+                    KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
                 }
             }
         }
@@ -202,6 +252,7 @@ impl<'a, 'b> KDbRowBehavier<'b, DateTime<FixedOffset>> for KDbRow<'a> {
         match self {
             KDbRow::Postgres(row) => Ok(row.try_get(key)?),
             KDbRow::Sqlite(row) => Ok(row.get::<&str, DateFixedOffset>(key)?.fixed_offset()),
+            KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
         }
     }
 }
@@ -213,6 +264,7 @@ impl<'a, 'b> KDbRowBehavier<'b, Option<DateTime<FixedOffset>>> for KDbRow<'a> {
             KDbRow::Sqlite(row) => Ok(row
                 .get::<&str, Option<DateFixedOffset>>(key)
                 .map(|e| e.map(|df| df.fixed_offset()))?),
+            KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
         }
     }
 }
