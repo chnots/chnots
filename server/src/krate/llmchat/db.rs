@@ -12,7 +12,7 @@ use crate::model::dto::KReq;
 use super::mapper::{LLMChatDeserializeMapper, LLMChatDumpMapper, LLMChatMapper};
 use super::*;
 
-impl LLMChatDeserializeMapper for KDbRow<'_> {
+impl LLMChatDeserializeMapper for KDbRow {
     fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
         let obj = LLMChatBot {
             id: self.try_get(LLMChatBot::ID)?,

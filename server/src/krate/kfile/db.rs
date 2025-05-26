@@ -8,7 +8,7 @@ use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRowBehavier};
 
 use chin_sql::{LimitOffset, OnConflict, SqlDeleter, SqlInserter, SqlReader, Wheres};
 
-impl KFileDeserializeMapper for KDbRow<'_> {
+impl KFileDeserializeMapper for KDbRow {
     fn to_inline_kfile(self) -> AResult<InlineKFile> {
         let obj = InlineKFile {
             id: self.try_get(InlineKFile::ID)?,

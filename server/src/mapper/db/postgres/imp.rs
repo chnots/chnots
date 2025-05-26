@@ -21,7 +21,7 @@ impl Postgres {
     ) -> EResult
     where
         O: Serialize,
-        F1: Fn(KDbRow<'a>) -> AResult<O>,
+        F1: Fn(KDbRow) -> AResult<O>,
     {
         let table_name = sql_builder.table_name;
 

@@ -37,7 +37,7 @@ struct OldInfo {
     content: String,
     insert_time: DateTime<FixedOffset>,
 }
-fn to_old_info(row: KDbRow<'_>) -> AResult<OldInfo> {
+fn to_old_info(row: KDbRow) -> AResult<OldInfo> {
     Ok(OldInfo {
         id: row.try_get("id")?,
         content: row.try_get("content")?,

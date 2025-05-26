@@ -47,7 +47,7 @@ macro_rules! impl_KDbConnBehaiver {
             async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
             where
                 T: chin_sql::IntoSqlSeg<'a>,
-                F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+                F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
                 E: Send + 'static,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
@@ -75,7 +75,7 @@ macro_rules! impl_KDbConnBehaiver {
             async fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
             where
                 T: chin_sql::IntoSqlSeg<'a>,
-                F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+                F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
                 E: Send + 'static,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
@@ -96,7 +96,7 @@ macro_rules! impl_KDbConnBehaiver {
             async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
             where
                 T: chin_sql::IntoSqlSeg<'a>,
-                F: (Fn(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+                F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
                 E: Send + 'static,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;

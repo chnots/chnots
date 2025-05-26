@@ -27,7 +27,7 @@ pub(crate) trait KSpaceMapper {
     }
 }
 
-impl KSpaceDeserializeMapper for KDbRow<'_> {
+impl KSpaceDeserializeMapper for KDbRow {
     fn to_kspace_record(self) -> AResult<KSpaceRecord> {
         let obj = KSpaceRecord {
             id: self.try_get(KSpaceRecord::ID)?,

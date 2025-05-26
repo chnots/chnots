@@ -20,19 +20,19 @@ pub(crate) trait KDbConnBehaiver {
     async fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
     where
         T: IntoSqlSeg<'a>,
-        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static;
 
     async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
     where
         T: IntoSqlSeg<'a>,
-        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static;
 
     async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
     where
         T: IntoSqlSeg<'a>,
-        F: (Fn(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static;
 }
 
@@ -63,13 +63,12 @@ pub(crate) enum KDb {
     Postgres(postgres::Postgres),
 }
 
-pub(crate) trait KDbRowBehavier<'b, T> {
-    fn try_get(&'b self, key: &str) -> AResult<T>;
+pub(crate) trait KDbRowBehavier<T> {
+    fn try_get(&self, key: &str) -> AResult<T>;
 }
 
-pub(crate) enum KDbRow<'a> {
+pub(crate) enum KDbRow {
     Postgres(tokio_postgres::Row),
-    Sqlite(&'a rusqlite::Row<'a>),
     SqlValueRow(SqlValueRow<SqlValueOwned>),
 }
 
@@ -139,7 +138,7 @@ impl KDbConnBehaiver for KDbConn {
     async fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
     where
         T: IntoSqlSeg<'a>,
-        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static,
     {
         expand_kdb_conn_branch!(self.qry_opt(ssb, mapper))
@@ -148,7 +147,7 @@ impl KDbConnBehaiver for KDbConn {
     async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
     where
         T: IntoSqlSeg<'a>,
-        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static,
     {
         expand_kdb_conn_branch!(self.qry_one(ssb, mapper, only_one))
@@ -157,7 +156,7 @@ impl KDbConnBehaiver for KDbConn {
     async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
     where
         T: IntoSqlSeg<'a>,
-        F: (Fn(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static,
     {
         expand_kdb_conn_branch!(self.qry_list(ssb, mapper))
@@ -192,7 +191,7 @@ impl KDbConnBehaiver for KDbTx<'_> {
     async fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
     where
         T: IntoSqlSeg<'a>,
-        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static,
     {
         expand_kdbtx_branch!(self.qry_opt(ssb, mapper))
@@ -201,7 +200,7 @@ impl KDbConnBehaiver for KDbTx<'_> {
     async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
     where
         T: IntoSqlSeg<'a>,
-        F: (FnOnce(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static,
     {
         expand_kdbtx_branch!(self.qry_one(ssb, mapper, only_one))
@@ -210,7 +209,7 @@ impl KDbConnBehaiver for KDbTx<'_> {
     async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
     where
         T: IntoSqlSeg<'a>,
-        F: (Fn(KDbRow<'_>) -> AResult<E>) + Send + 'static,
+        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static,
     {
         expand_kdbtx_branch!(self.qry_list(ssb, mapper))
@@ -219,21 +218,19 @@ impl KDbConnBehaiver for KDbTx<'_> {
 
 macro_rules! common_try_get {
     ($tp:tt) => {
-        impl<'a, 'b> KDbRowBehavier<'b, $tp> for KDbRow<'a> {
-            fn try_get(&'b self, key: &str) -> AResult<$tp> {
+        impl KDbRowBehavier<$tp> for KDbRow {
+            fn try_get(&self, key: &str) -> AResult<$tp> {
                 match self {
                     KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-                    KDbRow::Sqlite(row) => Ok(row.get(key)?),
                     KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
                 }
             }
         }
 
-        impl<'a, 'b> KDbRowBehavier<'b, Option<$tp>> for KDbRow<'a> {
-            fn try_get(&'b self, key: &str) -> AResult<Option<$tp>> {
+        impl KDbRowBehavier<Option<$tp>> for KDbRow {
+            fn try_get(&self, key: &str) -> AResult<Option<$tp>> {
                 match self {
                     KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-                    KDbRow::Sqlite(row) => Ok(row.get(key)?),
                     KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
                 }
             }
@@ -247,23 +244,19 @@ common_try_get! {f64}
 common_try_get! {String}
 common_try_get! {bool}
 
-impl<'a, 'b> KDbRowBehavier<'b, DateTime<FixedOffset>> for KDbRow<'a> {
-    fn try_get(&'b self, key: &str) -> AResult<DateTime<FixedOffset>> {
+impl KDbRowBehavier<DateTime<FixedOffset>> for KDbRow {
+    fn try_get(&self, key: &str) -> AResult<DateTime<FixedOffset>> {
         match self {
             KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::Sqlite(row) => Ok(row.get::<&str, DateFixedOffset>(key)?.fixed_offset()),
             KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
         }
     }
 }
 
-impl<'a, 'b> KDbRowBehavier<'b, Option<DateTime<FixedOffset>>> for KDbRow<'a> {
-    fn try_get(&'b self, key: &str) -> AResult<Option<DateTime<FixedOffset>>> {
+impl KDbRowBehavier<Option<DateTime<FixedOffset>>> for KDbRow {
+    fn try_get(&self, key: &str) -> AResult<Option<DateTime<FixedOffset>>> {
         match self {
             KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::Sqlite(row) => Ok(row
-                .get::<&str, Option<DateFixedOffset>>(key)
-                .map(|e| e.map(|df| df.fixed_offset()))?),
             KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
         }
     }

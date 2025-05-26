@@ -10,8 +10,8 @@ use super::KDbRowBehavier;
 
 macro_rules! row_behavier {
     ($tp:ty) => {
-        impl<'a, 'b> KDbRowBehavier<'b, $tp> for SqlValueRow<SqlValueOwned> {
-            fn try_get(&'b self, key: &str) -> AResult<$tp> {
+        impl KDbRowBehavier<$tp> for SqlValueRow<SqlValueOwned> {
+            fn try_get(&self, key: &str) -> AResult<$tp> {
                 match self.row.get(key) {
                     Some(value) => {
                         let s: &SqlValue<'static> = value.borrow();
@@ -22,8 +22,8 @@ macro_rules! row_behavier {
             }
         }
 
-        impl<'a, 'b> KDbRowBehavier<'b, Option<$tp>> for SqlValueRow<SqlValueOwned> {
-            fn try_get(&'b self, key: &str) -> AResult<Option<$tp>> {
+        impl KDbRowBehavier<Option<$tp>> for SqlValueRow<SqlValueOwned> {
+            fn try_get(&self, key: &str) -> AResult<Option<$tp>> {
                 match self.row.get(key) {
                     Some(value) => {
                         match value.deref() {

@@ -52,7 +52,7 @@ macro_rules! impl_KDbConnBehaiver {
             ) -> chin_tools::AResult<Option<E>>
             where
                 T: IntoSqlSeg<'a>,
-                F: FnOnce(KDbRow<'a>) -> AResult<E>,
+                F: FnOnce(KDbRow) -> AResult<E>,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
                 tracing::info!("query opt {:?}", seg);
@@ -68,7 +68,7 @@ macro_rules! impl_KDbConnBehaiver {
             ) -> chin_tools::AResult<E>
             where
                 T: IntoSqlSeg<'a>,
-                F: FnOnce(KDbRow<'a>) -> AResult<E>,
+                F: FnOnce(KDbRow) -> AResult<E>,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
                 tracing::info!("query one {:?}", seg);
@@ -91,7 +91,7 @@ macro_rules! impl_KDbConnBehaiver {
             async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> chin_tools::AResult<Vec<E>>
             where
                 T: IntoSqlSeg<'a>,
-                F: Fn(KDbRow<'a>) -> AResult<E>,
+                F: Fn(KDbRow) -> AResult<E>,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
                 tracing::info!("query list {:?}, values {:?}", seg, values);

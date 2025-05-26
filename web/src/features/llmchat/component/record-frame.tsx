@@ -4,6 +4,7 @@ import KSVG from "@/common/component/svg";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import React, { useCallback, useRef, useState } from "react";
+import KButton from "@/common/component/kbutton";
 
 const getAvatar = (role: string) => {
   switch (role) {
@@ -67,7 +68,7 @@ const RecordFrame = ({
           <span>{name}</span>
           <span>{timestamp?.toLocaleString() ?? "Now"}</span>
         </div>
-        {limitHeight != undefined ? (
+        {limitHeight != undefined && limitHeight ? (
           <div className={"max-h-160 overflow-hidden"}>{children}</div>
         ) : (
           <>{children}</>
@@ -96,18 +97,19 @@ const RecordFrame = ({
             </button>
           )}
           {limitHeight !== undefined && (
-            <button
+            <KButton
               onClick={() => {
                 setLimitHeight((prev) => {
+                  console.log("on limit, ", prev);
                   return !prev;
                 });
               }}
               className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-              aria-label="Regenerate"
+              aria-label="show-full"
               tabIndex={0}
             >
               <Icon.Ellipsis className="h-4 w-4 text-gray-700" />
-            </button>
+            </KButton>
           )}
           <button
             onClick={handleCopy}

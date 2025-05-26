@@ -18,7 +18,7 @@ impl KDb {
     ) -> EResult
     where
         O: Serialize,
-        F1: Fn(KDbRow<'a>) -> AResult<O>,
+        F1: Fn(KDbRow) -> AResult<O>,
     {
         match self {
             KDb::Sqlite(_) => todo!(),
@@ -34,7 +34,7 @@ impl KDb {
 }
 
 impl DumpMapper for KDb {
-    type RowType<'a> = KDbRow<'a>;
+    type RowType<'a> = KDbRow;
 
     async fn dump_and_callback(&self, callback: &RecordCallbackType) -> EResult {
         self.dump_llmchat(callback).await?;

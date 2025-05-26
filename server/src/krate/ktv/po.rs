@@ -22,8 +22,8 @@ impl<'a> From<KTVType> for SqlValue<'a> {
     }
 }
 
-impl<'a> KDbRowBehavier<'a, KTVType> for KDbRow<'a> {
-    fn try_get(&'a self, key: &str) -> chin_tools::AResult<KTVType> {
+impl KDbRowBehavier<KTVType> for KDbRow {
+    fn try_get(&self, key: &str) -> chin_tools::AResult<KTVType> {
         let s: String = self.try_get(key)?;
         Ok(KTVType::from_str(&s)?)
     }

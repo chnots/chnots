@@ -25,7 +25,7 @@ fn chnot_query_sql<'a>() -> SqlReader<'a> {
 }
 
 #[inline]
-fn chnot_query_mapper(row: KDbRow<'_>) -> AResult<Chnot> {
+fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
     tracing::debug!("begin to build chnot");
     let record = ChnotRecord {
         id: row.try_get("rid")?,
@@ -55,7 +55,7 @@ impl KDb {
         name_only: bool,
     ) -> AResult<ChnotTagQueryRsp<T>>
     where
-        F: Fn(KDbRow<'_>) -> AResult<T> + Send + 'static,
+        F: Fn(KDbRow) -> AResult<T> + Send + 'static,
         T: Serialize + Clone + Send + 'static + AsRef<str>,
     {
         let ChnotTagQueryReq {
@@ -404,7 +404,7 @@ impl ChnotMapper for KDb {
     }
 }
 
-impl ChnotDeserializeMapper for KDbRow<'_> {
+impl ChnotDeserializeMapper for KDbRow {
     fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
         let chnot = ChnotMetadata {
             id: self.try_get(ChnotMetadata::ID)?,
