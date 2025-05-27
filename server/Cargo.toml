@@ -84,9 +84,6 @@ chinese-lunisolar-calendar = "*"
 itertools = "0.14.0"
 axum_typed_multipart = "0.16.2"
 blake3 = "1.8.2"
-rusqlite = "0.35.0"
-flume = "0.11.1"
-oneshot = { version = "0.1.11", features = ["async"] }
 
 
 [features]

@@ -13,6 +13,7 @@ const kspaces = new Map<string, KSpace>([
     {
       name: "public",
       managers: ["work", "private"],
+      color: "#282828",
     },
   ],
   [
@@ -20,6 +21,7 @@ const kspaces = new Map<string, KSpace>([
     {
       name: "work",
       managers: ["private"],
+      color: "#0000aa",
     },
   ],
   [
@@ -27,6 +29,7 @@ const kspaces = new Map<string, KSpace>([
     {
       name: "private",
       managers: [],
+      color: "#aa0000",
     },
   ],
 ]);

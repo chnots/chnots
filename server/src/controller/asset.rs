@@ -16,7 +16,6 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         .route("/", get(index_handler))
         .route("/index.html", get(index_handler))
         .route("/static/{*file}", get(static_handler))
-        .route("/chnots.svg", get(static_handler))
         .fallback_service(get(index_handler))
 }
 

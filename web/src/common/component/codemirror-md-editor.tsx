@@ -11,14 +11,12 @@ import {
 import { toast } from "sonner";
 import { html2mdAsync } from "@/utils/markdown-utils";
 import React from "react";
-import { useAttachmentStore } from "@/store/kfile/store";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 
 import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
-import { kfileUpload } from "@/store/kfile/service";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {

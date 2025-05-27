@@ -5,6 +5,7 @@ import LoadingPage from "@/common/pages/loading-page";
 import Navigation from "@/common/component/navigation";
 import { RoutePaths } from "@/router";
 import { useKSpaceStore } from "./store/kspace";
+import faviconSvg from "../public/static/favicon/chnots.svg?raw";
 
 const App = () => {
   const location = useLocation();
@@ -20,15 +21,9 @@ const App = () => {
       document.getElementsByTagName("head")[0].appendChild(link);
     }
 
-    if (currentKSpace.name === "private") {
-      link.href = "/static/favicon/chnots-private.svg";
-    } else if (currentKSpace.name === "public") {
-      link.href = "/static/favicon/chnots.svg";
-    } else {
-      link.href = "/static/favicon/chnots-protect.svg";
-    }
+    const s = faviconSvg.replace("#282828", currentKSpace.color);
 
-    console.log("set favicon", link.href);
+    link.href = `data:image/svg+xml,${encodeURIComponent(s)}`;
   }, [currentKSpace]);
 
   useEffect(() => {
