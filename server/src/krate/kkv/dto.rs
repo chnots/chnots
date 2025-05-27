@@ -2,30 +2,30 @@ use super::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize)]
-pub(crate) struct KTVQueryReq {
+pub(crate) struct KKVQueryReq {
     pub(crate) key: String,
-    pub(crate) ttype: KTVType,
+    pub(crate) kind: KKVType,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct KTVQueryRsp {
+pub(crate) struct KKVQueryRsp {
     pub(crate) value: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(crate) struct KTVOverwriteReq {
+pub(crate) struct KKVOverwriteReq {
     pub(crate) key: String,
-    pub(crate) ttype: String,
+    pub(crate) kind: String,
     pub(crate) value: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct KTVOverwriteRsp {}
+pub(crate) struct KKVOverwriteRsp {}
 
 #[derive(Clone, Debug, Deserialize)]
-pub(crate) struct KTVDeleteReq {
+pub(crate) struct KKVDeleteReq {
     pub(crate) key: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct KTVDeleteRsp {}
+pub(crate) struct KKVDeleteRsp {}

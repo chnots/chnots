@@ -25,7 +25,7 @@ import useDebounce from "@/hooks/use-debounce";
 import {
   insertInlineKFile,
   queryInlineKFile,
-  queryKTV,
+  queryKKV,
 } from "@/store/kfile/service";
 import { useKSpaceStore } from "@/store/kspace";
 import { useSearchParams } from "react-router-dom";
@@ -71,9 +71,9 @@ export default function ExcalidrawContainer({
     (async () => {
       let id = searchParams.get("exdId");
       if (!id && chnotMetaId) {
-        const { value } = await queryKTV({
+        const { value } = await queryKKV({
           key: chnotMetaId,
-          ttype: "chnot_sub_type",
+          kind: "chnot_sub_type",
         });
         if (value) {
           id = value;

@@ -21,7 +21,7 @@ import { enumFromStringValue } from "@/utils/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
 import { CommonKFile } from "@/features/kfile/components/common-kfile";
-import { insertKTV } from "@/store/kfile/service";
+import { insertKKV } from "@/store/kfile/service";
 
 enum RequestState {
   Saved,
@@ -109,10 +109,10 @@ export const ChnotContainer = ({
         requestState = RequestState.Saved;
 
         if (subTypeId) {
-          await insertKTV({
+          await insertKKV({
             key: rsp.chnot.meta.id,
             value: subTypeId,
-            ttype: "chnot_sub_type",
+            kind: "chnot_sub_type",
           });
         }
       } catch {

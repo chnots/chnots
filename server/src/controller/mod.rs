@@ -28,7 +28,7 @@ use tracing::{info, Level};
 
 use crate::{
     app::ShareAppState,
-    krate::{chnot, kfile, ktv, llmchat, toent},
+    krate::{chnot, kfile, kkv, llmchat, toent},
 };
 
 pub(crate) mod asset;
@@ -76,7 +76,7 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .merge(chnot::controller::routes())
         .merge(asset::routes())
         .merge(toent::controller::routes())
-        .merge(ktv::controller::routes())
+        .merge(kkv::controller::routes())
         .merge(llmchat::controller::routes())
         .with_state(app_state.clone())
         .layer(CompressionLayer::new())

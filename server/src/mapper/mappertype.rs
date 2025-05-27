@@ -2,7 +2,7 @@ use chin_tools::EResult;
 
 use crate::krate::{
     chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kspace::mapper::KSpaceMapper,
-    ktv::mapper::KTVMapper, llmchat::mapper::LLMChatMapper,
+    kkv::mapper::KKVMapper, llmchat::mapper::LLMChatMapper,
 };
 
 use super::{
@@ -32,7 +32,7 @@ impl MapperType {
     pub(crate) async fn ensure_tables(&self) -> EResult {
         self.ensure_table_chnot().await?;
         self.ensure_table_kfile().await?;
-        self.ensure_table_ktv().await?;
+        self.ensure_table_kkv().await?;
         self.ensure_table_kspace().await?;
         self.ensure_table_llm_chat().await?;
         Ok(())

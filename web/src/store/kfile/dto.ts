@@ -34,20 +34,20 @@ export interface QueryInlineKFileRsp {
   res: InlineKFile[];
 }
 
-export interface KTVInserterReq {
+export interface KKVInserterReq {
   key: string;
-  ttype: string;
+  kind: string;
   value: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface KTVInserterRsp {}
+export interface KKVInserterRsp {}
 
-export interface KTVQueryReq {
+export interface KKVQueryReq {
   key: string;
-  ttype: string;
+  kind: string;
 }
 
-export interface KTVQueryRsp {
+export interface KKVQueryRsp {
   value?: string;
 }

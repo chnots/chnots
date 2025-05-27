@@ -2,9 +2,9 @@ import request from "@/utils/request";
 import { BASE_URL } from "@/utils/request";
 import {
   InsertInlineKFileReq,
-  KTVInserterReq,
-  KTVQueryReq,
-  KTVQueryRsp,
+  KKVInserterReq,
+  KKVQueryReq,
+  KKVQueryRsp,
   QueryInlineKFileReq,
   QueryInlineKFileRsp,
   KFileUploadReq,
@@ -55,10 +55,10 @@ export const getResouceDownloadUrl = (kfile: KFile): string => {
   return BASE_URL + "/api/v1/kfile/" + kfile.id;
 };
 
-export const insertKTV = async (req: KTVInserterReq) => {
+export const insertKKV = async (req: KKVInserterReq) => {
   return await request.put("api/v1/kv", req);
 };
 
-export const queryKTV = async (req: KTVQueryReq): Promise<KTVQueryRsp> => {
+export const queryKKV = async (req: KKVQueryReq): Promise<KKVQueryRsp> => {
   return await request.get("api/v1/kv", req);
 };

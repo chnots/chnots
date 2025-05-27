@@ -22,23 +22,23 @@ pub(crate) fn routes() -> Router<ShareAppState> {
 async fn kv_overwrite(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KTVOverwriteReq>,
-) -> KResponse<KTVOverwriteRsp> {
-    state.mapper.ktv_overwrite(kreq(headers, req)).await.into()
+    Json(req): Json<KKVOverwriteReq>,
+) -> KResponse<KKVOverwriteRsp> {
+    state.mapper.kkv_overwrite(kreq(headers, req)).await.into()
 }
 
 async fn kv_query(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<KTVQueryReq>,
-) -> KResponse<KTVQueryRsp> {
-    state.mapper.ktv_query(kreq(headers, req)).await.into()
+    Query(req): Query<KKVQueryReq>,
+) -> KResponse<KKVQueryRsp> {
+    state.mapper.kkv_query(kreq(headers, req)).await.into()
 }
 
 async fn kv_delete(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KTVDeleteReq>,
-) -> KResponse<KTVDeleteRsp> {
-    state.mapper.ktv_delete(kreq(headers, req)).await.into()
+    Json(req): Json<KKVDeleteReq>,
+) -> KResponse<KKVDeleteRsp> {
+    state.mapper.kkv_delete(kreq(headers, req)).await.into()
 }

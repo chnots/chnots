@@ -7,7 +7,7 @@ use strum::{AsRefStr, EnumString};
 use chin_sql::{DbType, GenerateTableSql, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, AsRefStr)]
-pub(crate) enum KTVType {
+pub(crate) enum KKVType {
     #[strum(serialize = "chnot_sub_type")]
     #[serde(rename = "chnot_sub_type")]
     ChnotSubType,
@@ -16,29 +16,29 @@ pub(crate) enum KTVType {
     Default,
 }
 
-impl<'a> From<KTVType> for SqlValue<'a> {
-    fn from(val: KTVType) -> Self {
+impl<'a> From<KKVType> for SqlValue<'a> {
+    fn from(val: KKVType) -> Self {
         SqlValue::Str(Cow::Owned(val.as_ref().to_owned()))
     }
 }
 
-impl KDbRowBehavier<KTVType> for KDbRow {
-    fn try_get(&self, key: &str) -> chin_tools::AResult<KTVType> {
+impl KDbRowBehavier<KKVType> for KDbRow {
+    fn try_get(&self, key: &str) -> chin_tools::AResult<KKVType> {
         let s: String = self.try_get(key)?;
-        Ok(KTVType::from_str(&s)?)
+        Ok(KKVType::from_str(&s)?)
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
 #[allow(clippy::upper_case_acronyms)]
-pub(crate) struct KTV {
+pub(crate) struct KKV {
     #[gts_primary]
     #[gts_length = 500]
     pub(crate) key: String,
     #[gts_primary]
     #[gts_length = 100]
     #[gts_type = "String"]
-    pub(crate) ttype: KTVType,
+    pub(crate) kind: KKVType,
     pub(crate) value: String,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
     pub(crate) insert_time: DateTime<FixedOffset>,

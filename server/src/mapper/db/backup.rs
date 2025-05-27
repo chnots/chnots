@@ -41,7 +41,7 @@ impl DumpMapper for KDb {
         self.dump_chnot(callback).await?;
         /*         self.dump_kfile(callback).await?;
         self.dump_ktab(callback).await?;
-        self.dump_ktv(callback).await?;
+        self.dump_kkv(callback).await?;
         self.dump_toent(callback).await?; */
 
         Ok(())

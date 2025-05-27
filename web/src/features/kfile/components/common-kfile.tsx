@@ -1,6 +1,6 @@
 import {
   getResouceDownloadUrl,
-  queryKTV,
+  queryKKV,
   kfileQueryInfo,
   kfileUpload,
 } from "@/store/kfile/service";
@@ -82,7 +82,7 @@ export const CommonKFile = ({
 
   useEffect(() => {
     if (chnotMetaId) {
-      queryKTV({ key: chnotMetaId, ttype: "chnot_sub_type" }).then(
+      queryKKV({ key: chnotMetaId, kind: "chnot_sub_type" }).then(
         ({ value }) => {
           if (value) {
             kfileQueryInfo(value).then(({ res }) => {
