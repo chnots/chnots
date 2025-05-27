@@ -1,7 +1,6 @@
-import React, { ReactElement, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
-import useResponsiveWidth from "@/hooks/use-responsive-width";
 import LoadingPage from "@/common/pages/loading-page";
 import Navigation from "@/common/component/navigation";
 import { RoutePaths } from "@/router";
@@ -20,13 +19,16 @@ const App = () => {
       link.rel = "icon";
       document.getElementsByTagName("head")[0].appendChild(link);
     }
+
     if (currentKSpace.name === "private") {
-      link.href = "/chnots-private.svg";
+      link.href = "/static/favicon/chnots-private.svg";
     } else if (currentKSpace.name === "public") {
-      link.href = "/chnots.svg";
+      link.href = "/static/favicon/chnots.svg";
     } else {
-      link.href = "/chnots-protect.svg";
+      link.href = "/static/favicon/chnots-protect.svg";
     }
+
+    console.log("set favicon", link.href);
   }, [currentKSpace]);
 
   useEffect(() => {
