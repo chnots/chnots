@@ -12,8 +12,8 @@ SERVER_DIR = server
 run-web:
 	cd $(WEB_DIR) && pnpm run dev
 
-run-server:
-	cd $(SERVER_DIR) && cargo run -- --config ../config/config.example.toml
+run-server-sqlite:
+	cd $(SERVER_DIR) && cargo run -- --config ../config/config.sqlite.toml
 
 build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)
