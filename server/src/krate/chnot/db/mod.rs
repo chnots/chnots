@@ -1,14 +1,18 @@
-pub(crate) mod inserter;
+pub(crate) mod inner;
 
 use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
+use crate::magics::KImplWrapper;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
-use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
+use crate::mapper::db::{
+    KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver,
+};
 use crate::model::dto::KReq;
 use crate::util::string_util::get_hashtags;
-use chin_sql::{ILikeType, SqlDeleter, SqlInserter, SqlReader, SqlValue};
+use anyhow::Ok;
+use chin_sql::{ILikeType, SqlReader, SqlValue};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
-use chin_tools::{utils::id_util, AResult, EResult};
+use chin_tools::{AResult, EResult};
 use chrono::{Local, Utc};
 use itertools::Itertools;
 use serde::Serialize;
@@ -122,20 +126,22 @@ impl KDb {
 
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot_record(&self) -> EResult {
-        self.create_table(ChnotRecord::schema(self.db_type())).await
+        self.conn()
+            .await?
+            .create_table(ChnotRecord::schema(self.db_type()))
+            .await
     }
 
     async fn ensure_table_chnot_metadata(&self) -> EResult {
-        self.create_table(ChnotMetadata::schema(self.db_type()))
-            .await?;
-        self.create_table(ChnotSubTypeRelation::schema(self.db_type()))
+        self.conn()
+            .await?
+            .create_table(ChnotMetadata::schema(self.db_type()))
             .await
     }
 
     async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp> {
-        let client = self.conn().await?;
-
-        client
+        self.conn()
+            .await?
             .exec(
                 SqlUpdater::new(ChnotMetadata::TABLE)
                     .set(ChnotMetadata::DELETE_TIME, Local::now().fixed_offset())
@@ -149,7 +155,6 @@ impl ChnotMapper for KDb {
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
         let page_size = req.page_size;
         let page_start = req.start_index;
-        let conn = self.conn().await?;
 
         let chnot_sql = chnot_query_sql()
             .some_then(
@@ -227,7 +232,11 @@ impl ChnotMapper for KDb {
             .raw("ORDER BY m.pin_time DESC, m.insert_time desc")
             .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
 
-        let cs = conn.qry_list(chnot_sql, chnot_query_mapper).await?;
+        let cs = self
+            .conn()
+            .await?
+            .qry_list(chnot_sql, chnot_query_mapper)
+            .await?;
 
         Ok(ChnotQueryRsp {
             has_next: cs.len() >= page_size,
@@ -237,8 +246,6 @@ impl ChnotMapper for KDb {
     }
 
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
-        let client = self.conn().await?;
-
         let su = SqlUpdater::new("chnot_metadata")
             .set_if_some("pinned", req.pinned)
             .set_if_some(
@@ -248,13 +255,30 @@ impl ChnotMapper for KDb {
             .set_if_some("kspace", req.body.kspace.as_ref())
             .r#where(Wheres::equal("id", &req.meta_id));
 
-        client.exec(su).await?;
+        self.conn().await?.exec(su).await?;
 
         Ok(ChnotUpdateRsp {})
     }
 
     async fn ensure_table_chnot_tag(&self) -> EResult {
-        self.create_table(ChnotTag::schema(self.db_type())).await
+        self.conn()
+            .await?
+            .create_table(ChnotTag::schema(self.db_type()))
+            .await
+    }
+
+    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.transaction().await?;
+        let ans = tx.chnot_overwrite(req).await;
+
+        if ans.is_ok() {
+            tx.cmt().await?;
+        } else {
+            tx.rbk().await?;
+        }
+
+        ans
     }
 
     async fn chnot_tag_query(
@@ -278,101 +302,6 @@ impl ChnotMapper for KDb {
         Ok(result)
     }
 
-    async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult {
-        self.conn()
-            .await?
-            .exec(
-                SqlInserter::new(ChnotTag::TABLE)
-                    .fields(ChnotTag::ID, &req.id)
-                    .fields(ChnotTag::CHNOT_META_ID, &req.chnot_meta_id)
-                    .fields(ChnotTag::KSPACE, &req.kspace)
-                    .fields(ChnotTag::TAG, &req.tag)
-                    .fields(ChnotTag::CATEGORY, req.category)
-                    .fields(ChnotTag::INSERT_TIME, req.insert_time),
-            )
-            .await?;
-
-        Ok(())
-    }
-
-    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
-        let client = self.conn().await?;
-        for e in chnot_meta_ids {
-            client
-                .exec(
-                    SqlDeleter::new(ChnotTag::TABLE)
-                        .r#where(Wheres::equal(ChnotTag::CHNOT_META_ID, e)),
-                )
-                .await?;
-        }
-
-        Ok(())
-    }
-
-    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
-        self.chnot_overwrite(req).await
-    }
-
-    async fn chnot_tag_update_single_chnot(
-        &self,
-        content: &str,
-        meta_id: &str,
-        kspace: &str,
-    ) -> EResult {
-        self.chnot_tag_delete(vec![&meta_id]).await?;
-
-        let tags = get_hashtags(content);
-        let parent_tags: Vec<&str> = tags
-            .iter()
-            .flat_map(|tag| {
-                let mut more = vec![];
-                for (size, c) in tag.char_indices() {
-                    if c == '/' {
-                        more.push(&tag[..size]);
-                    }
-                }
-                more
-            })
-            .unique()
-            .collect();
-
-        if parent_tags.is_empty() {
-            self.chnot_tag_insert(ChnotTag {
-                id: id_util::generate_uuid(),
-                kspace: kspace.to_owned(),
-                tag: UNTAGGED_TAG.to_owned(),
-                chnot_meta_id: meta_id.to_string(),
-                insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::Dir,
-            })
-            .await?;
-        }
-        for tag in parent_tags {
-            self.chnot_tag_insert(ChnotTag {
-                id: id_util::generate_uuid(),
-                kspace: kspace.to_owned(),
-                tag: tag.to_owned(),
-                chnot_meta_id: meta_id.to_string(),
-                insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::ParentDir,
-            })
-            .await?;
-        }
-        for tag in tags {
-            self.chnot_tag_insert(ChnotTag {
-                id: id_util::generate_uuid(),
-                kspace: kspace.to_owned(),
-                tag: tag.to_owned(),
-                chnot_meta_id: meta_id.to_string(),
-                insert_time: Utc::now().fixed_offset(),
-                category: ChnotTagType::Dir,
-            })
-            .await?;
-        }
-
-        Ok(())
-    }
-
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
         let get_all = SqlReader::new()
             .sov("select r.content, m.id as meta_id from ")
@@ -383,9 +312,8 @@ impl ChnotMapper for KDb {
             .sov(SqlValue::Str(kspace.into()));
 
         let kspace = kspace.to_owned();
-        let chnots = self
-            .conn()
-            .await?
+        let mut conn = self.conn().await?;
+        let chnots = conn
             .qry_list(get_all, move |e| {
                 Ok(ChnotTagUpdateReq {
                     content: e.try_get(ChnotRecord::CONTENT)?,
@@ -395,12 +323,18 @@ impl ChnotMapper for KDb {
             })
             .await?;
 
-        for one in &chnots {
-            self.chnot_tag_update_single_chnot(&one.content, &one.meta_id, &one.kspace)
-                .await?;
+        let tx = conn.transaction().await?;
+        for one in chnots {
+            tx.chnot_tag_update_single_chnot(one).await?;
         }
 
         Ok(())
+    }
+
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
+        let mut conn = self.conn().await?;
+        let wrapper = KImplWrapper(conn.transaction().await?);
+        wrapper.chnot_tag_delete(chnot_meta_ids).await
     }
 }
 

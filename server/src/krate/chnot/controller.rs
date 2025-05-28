@@ -1,12 +1,13 @@
 use crate::app::ShareAppState;
-use crate::model::dto::{kreq, read_kspace_from_header};
 use crate::controller::KResponse;
+use crate::model::dto::{kreq, read_kspace_from_header};
 use axum::{
     extract::State,
     http::HeaderMap,
     routing::{delete, post, put},
     Json, Router,
 };
+use axum_macros::debug_handler;
 
 use super::mapper::ChnotMapper;
 use super::*;
@@ -82,6 +83,7 @@ async fn chnot_tag_names(
         .into()
 }
 
+#[debug_handler]
 async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state
         .mapper

@@ -24,7 +24,7 @@ async fn kv_overwrite(
     state: State<ShareAppState>,
     Json(req): Json<KKVOverwriteReq>,
 ) -> KResponse<KKVOverwriteRsp> {
-    state.mapper.kkv_overwrite(kreq(headers, req)).await.into()
+    state.mapper.kkv_overwrite_rest(kreq(headers, req)).await.into()
 }
 
 async fn kv_query(
@@ -32,7 +32,7 @@ async fn kv_query(
     state: State<ShareAppState>,
     Query(req): Query<KKVQueryReq>,
 ) -> KResponse<KKVQueryRsp> {
-    state.mapper.kkv_query(kreq(headers, req)).await.into()
+    state.mapper.kkv_query_rest(kreq(headers, req)).await.into()
 }
 
 async fn kv_delete(
@@ -40,5 +40,5 @@ async fn kv_delete(
     state: State<ShareAppState>,
     Json(req): Json<KKVDeleteReq>,
 ) -> KResponse<KKVDeleteRsp> {
-    state.mapper.kkv_delete(kreq(headers, req)).await.into()
+    state.mapper.kkv_delete_rest(kreq(headers, req)).await.into()
 }

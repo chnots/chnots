@@ -1,12 +1,21 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{DbType, IntoSqlSeg, SqlReader, SqlValueOwned, SqlValueRow};
+use anyhow::Ok;
+use chin_sql::{
+    DbType, IntoSqlSeg, OnConflict, SqlInserter, SqlReader, SqlValueOwned, SqlValueRow,
+};
 use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 
+use crate::mapper::mappertype::InserterBehavier;
+
 use super::{postgres, sqlite};
 
-pub(crate) trait KDbConnBehaiver {
+pub(crate) trait KDbBehaiver {
+    async fn conn(&self) -> AResult<KDbConn>;
+}
+
+pub(crate) trait KDbExecutorBehaiver: Send + Sync {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
 
     async fn exec_and_check<'a, T: IntoSqlSeg<'a>, C>(
@@ -34,42 +43,52 @@ pub(crate) trait KDbConnBehaiver {
         T: IntoSqlSeg<'a>,
         F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static;
+
+    fn db_type(&self) -> DbType;
+
+    async fn create_table(&self, sql: &str) -> EResult {
+        self.exec(SqlReader::new().raw(sql)).await?;
+        Ok(())
+    }
 }
 
-pub(crate) trait KDbTransactionBehaiver: KDbConnBehaiver {
+pub(crate) trait KDbConnBehaiver<'a, Tx>: KDbExecutorBehaiver {
+    async fn tx(&'a mut self) -> AResult<Tx>;
+}
+
+pub(crate) trait KDbTransactionBehaiver: KDbExecutorBehaiver {
     async fn cmt(self) -> EResult;
 
     async fn rbk(self) -> EResult;
 }
 
-#[allow(clippy::large_enum_variant)]
-pub(crate) enum KDbConn {
-    Sqlite(ActorSqliteConnClient),
-    Postgres(Client),
-}
+impl KDbTransactionBehaiver for KDbTx<'_> {
+    async fn cmt(self) -> EResult {
+        match self {
+            KDbTx::Sqlite(actor_sqlite_tx_client) => actor_sqlite_tx_client.commit().await?,
+            KDbTx::Postgres(transaction) => transaction.commit().await?,
+        }
 
-#[allow(clippy::large_enum_variant)]
-pub(crate) enum KDbTx<'a> {
-    Sqlite(ActorSqliteTxClient),
-    Postgres(Transaction<'a>),
-}
+        Ok(())
+    }
 
-pub(crate) trait KDbBehaiver {
-    async fn conn(&self) -> AResult<KDbConn>;
-}
+    async fn rbk(self) -> EResult {
+        match self {
+            KDbTx::Sqlite(actor_sqlite_tx_client) => actor_sqlite_tx_client.rollback().await?,
+            KDbTx::Postgres(transaction) => transaction.rollback().await?,
+        }
 
-pub(crate) enum KDb {
-    Sqlite(sqlite::Sqlite),
-    Postgres(postgres::Postgres),
+        Ok(())
+    }
 }
 
 pub(crate) trait KDbRowBehavier<T> {
     fn try_get(&self, key: &str) -> AResult<T>;
 }
 
-pub(crate) enum KDbRow {
-    Postgres(tokio_postgres::Row),
-    SqlValueRow(SqlValueRow<SqlValueOwned>),
+pub(crate) enum KDb {
+    Sqlite(sqlite::Sqlite),
+    Postgres(postgres::Postgres),
 }
 
 macro_rules! expand_kdb_branch {
@@ -88,16 +107,26 @@ impl KDbBehaiver for KDb {
 }
 
 impl KDb {
-    pub(crate) fn db_type(&self) -> DbType {
+    pub fn db_type(&self) -> DbType {
         match self {
-            KDb::Sqlite(_) => DbType::Sqlite,
-            KDb::Postgres(_) => DbType::Postgres,
+            Self::Sqlite(_) => DbType::Sqlite,
+            Self::Postgres(_) => DbType::Postgres,
         }
     }
+}
 
-    pub(crate) async fn create_table(&self, sql: &str) -> EResult {
-        self.conn().await?.exec(SqlReader::new().raw(sql)).await?;
-        Ok(())
+#[allow(clippy::large_enum_variant)]
+pub(crate) enum KDbConn {
+    Sqlite(ActorSqliteConnClient),
+    Postgres(Client),
+}
+
+impl KDbConn {
+    pub async fn transaction<'a>(&'a mut self) -> AResult<KDbTx<'a>> {
+        match self {
+            KDbConn::Sqlite(c) => Ok(KDbTx::Sqlite(c.transaction().await?)),
+            KDbConn::Postgres(c) => Ok(KDbTx::Postgres(c.transaction().await?)),
+        }
     }
 }
 
@@ -110,16 +139,7 @@ macro_rules! expand_kdb_conn_branch {
     };
 }
 
-impl KDbConn {
-    pub async fn transaction<'a>(&'a mut self) -> AResult<KDbTx<'a>> {
-        match self {
-            KDbConn::Sqlite(c) => Ok(KDbTx::Sqlite(c.transaction().await?)),
-            KDbConn::Postgres(c) => Ok(KDbTx::Postgres(c.transaction().await?)),
-        }
-    }
-}
-
-impl KDbConnBehaiver for KDbConn {
+impl KDbExecutorBehaiver for KDbConn {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         expand_kdb_conn_branch!(self.exec(ssb))
     }
@@ -161,7 +181,32 @@ impl KDbConnBehaiver for KDbConn {
     {
         expand_kdb_conn_branch!(self.qry_list(ssb, mapper))
     }
+
+    fn db_type(&self) -> DbType {
+        match self {
+            Self::Sqlite(_) => DbType::Sqlite,
+            Self::Postgres(_) => DbType::Postgres,
+        }
+    }
 }
+
+impl<'a> KDbConnBehaiver<'a, KDbTx<'a>> for KDbConn {
+    async fn tx(&'a mut self) -> AResult<KDbTx<'a>> {
+        match self {
+            KDbConn::Sqlite(client) => Ok(KDbTx::Sqlite(client.tx().await?)),
+            KDbConn::Postgres(client) => Ok(KDbTx::Postgres(client.tx().await?)),
+        }
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+pub(crate) enum KDbTx<'a> {
+    Sqlite(ActorSqliteTxClient),
+    Postgres(Transaction<'a>),
+}
+
+unsafe impl Send for KDbTx<'_>{}
+unsafe impl Sync for KDbTx<'_>{}
 
 macro_rules! expand_kdbtx_branch {
     ($self:ident.$method:ident($($arg:expr),*)) => {
@@ -172,7 +217,7 @@ macro_rules! expand_kdbtx_branch {
     };
 }
 
-impl KDbConnBehaiver for KDbTx<'_> {
+impl KDbExecutorBehaiver for KDbTx<'_> {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         expand_kdbtx_branch!(self.exec(ssb))
     }
@@ -214,10 +259,27 @@ impl KDbConnBehaiver for KDbTx<'_> {
     {
         expand_kdbtx_branch!(self.qry_list(ssb, mapper))
     }
+    fn db_type(&self) -> DbType {
+        match self {
+            Self::Sqlite(_) => DbType::Sqlite,
+            Self::Postgres(_) => DbType::Postgres,
+        }
+    }
+}
+
+impl<'a> KDbConnBehaiver<'a, &'a KDbTx<'a>> for KDbTx<'a> {
+    async fn tx(&'a mut self) -> AResult<&'a KDbTx<'a>> {
+        Ok(self)
+    }
+}
+
+pub(crate) enum KDbRow {
+    Postgres(tokio_postgres::Row),
+    SqlValueRow(SqlValueRow<SqlValueOwned>),
 }
 
 macro_rules! common_try_get {
-    ($tp:tt) => {
+    ($tp:ty) => {
         impl KDbRowBehavier<$tp> for KDbRow {
             fn try_get(&self, key: &str) -> AResult<$tp> {
                 match self {
@@ -243,21 +305,153 @@ common_try_get! {i32}
 common_try_get! {f64}
 common_try_get! {String}
 common_try_get! {bool}
+common_try_get! {DateTime<FixedOffset>}
 
-impl KDbRowBehavier<DateTime<FixedOffset>> for KDbRow {
-    fn try_get(&self, key: &str) -> AResult<DateTime<FixedOffset>> {
+pub trait ToSqlInserter {
+    fn to_sql_inserter(self) -> SqlInserter<'static>;
+}
+
+impl<T: KDbExecutorBehaiver, E: ToSqlInserter> InserterBehavier<E> for T {
+    async fn insert(&self, t: E, on_conflict: OnConflict) -> AResult<usize> {
+        let sql_inserter = t.to_sql_inserter().on_conflict(on_conflict);
+        self.exec(sql_inserter).await
+    }
+}
+
+pub enum KDbExecutor<'e> {
+    Conn(&'e KDbConn),
+    Tx(&'e KDbTx<'e>),
+}
+
+macro_rules! expand_KDbExecutor_branch {
+    ($self:ident.$method:ident($($arg:expr),*)) => {
+        match $self {
+            KDbExecutor::Conn(db) => db.$method($($arg),*).await,
+            KDbExecutor::Tx(db) => db.$method($($arg),*).await,
+        }
+    };
+}
+
+impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
+    async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
+        expand_KDbExecutor_branch!(self.exec(ssb))
+    }
+
+    async fn exec_and_check<'a, T: IntoSqlSeg<'a>, C>(
+        &self,
+        ssb: T,
+        check_count: C,
+    ) -> AResult<usize>
+    where
+        C: (FnOnce(usize) -> bool) + Send + 'static,
+    {
+        expand_KDbExecutor_branch!(self.exec_and_check(ssb, check_count))
+    }
+
+    async fn qry_opt<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Option<E>>
+    where
+        T: IntoSqlSeg<'a>,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        expand_KDbExecutor_branch!(self.qry_opt(ssb, mapper))
+    }
+
+    async fn qry_one<'a, E, T, F>(&self, ssb: T, mapper: F, only_one: bool) -> AResult<E>
+    where
+        T: IntoSqlSeg<'a>,
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        expand_KDbExecutor_branch!(self.qry_one(ssb, mapper, only_one))
+    }
+
+    async fn qry_list<'a, E, T, F>(&self, ssb: T, mapper: F) -> AResult<Vec<E>>
+    where
+        T: IntoSqlSeg<'a>,
+        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        expand_KDbExecutor_branch!(self.qry_list(ssb, mapper))
+    }
+
+    fn db_type(&self) -> DbType {
         match self {
-            KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
+            KDbExecutor::Conn(kdb_conn) => kdb_conn.db_type(),
+            KDbExecutor::Tx(kdb_tx) => kdb_tx.db_type(),
         }
     }
 }
 
-impl KDbRowBehavier<Option<DateTime<FixedOffset>>> for KDbRow {
-    fn try_get(&self, key: &str) -> AResult<Option<DateTime<FixedOffset>>> {
-        match self {
-            KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
+/* pub trait ExecBehavier<T> {
+    async fn exec(self, executor: &T) -> AResult<usize>;
+
+    async fn exec_and_check<C>(self, executor: &T, check_count: C) -> AResult<usize>
+    where
+        C: (FnOnce(usize) -> bool) + Send + 'static;
+}
+
+pub trait QueryBehavier<T> {
+    async fn qry_opt<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Option<E>>
+    where
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static;
+
+    async fn qry_one<'a, E, F>(self, executor: &T, mapper: F, only_one: bool) -> AResult<E>
+    where
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static;
+
+    async fn qry_list<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Vec<E>>
+    where
+        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static;
+}
+
+macro_rules! impl_exec_behavier {
+    ($tp:ty) => {
+        impl<T: KDbConnBehaiver> ExecBehavier<T> for $tp {
+            async fn exec(self, executor: &T) -> AResult<usize> {
+                executor.exec(self).await
+            }
+
+            async fn exec_and_check<C>(self, executor: &T, check_count: C) -> AResult<usize>
+            where
+                C: (FnOnce(usize) -> bool) + Send + 'static,
+            {
+                executor.exec_and_check(self, check_count).await
+            }
         }
+    };
+}
+
+impl_exec_behavier!(SqlUpdater<'_>);
+impl_exec_behavier!(SqlDeleter<'_>);
+impl_exec_behavier!(SqlInserter<'_>);
+
+impl<T: KDbConnBehaiver> QueryBehavier<T> for SqlReader<'_> {
+    async fn qry_opt<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Option<E>>
+    where
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        executor.qry_opt(self, mapper).await
+    }
+
+    async fn qry_one<'a, E, F>(self, executor: &T, mapper: F, only_one: bool) -> AResult<E>
+    where
+        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        executor.qry_one(self, mapper, only_one).await
+    }
+
+    async fn qry_list<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Vec<E>>
+    where
+        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
+        E: Send + 'static,
+    {
+        executor.qry_list(self, mapper).await
     }
 }
+ */

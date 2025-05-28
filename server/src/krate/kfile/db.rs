@@ -1,10 +1,13 @@
 use super::{mapper::KFileMapper, *};
-use crate::{mapper::db::KDbRow, model::dto::KReq};
+use crate::{
+    mapper::db::KDbRow,
+    model::dto::KReq,
+};
 use chin_tools::{AResult, EResult};
 use chrono::{DateTime, FixedOffset, TimeDelta};
 
 use super::mapper::KFileDeserializeMapper;
-use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRowBehavier};
+use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{LimitOffset, OnConflict, SqlDeleter, SqlInserter, SqlReader, Wheres};
 
@@ -42,11 +45,11 @@ impl KFileDeserializeMapper for KDbRow {
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
         self.ensure_table_inline_kfile().await?;
-        self.create_table(KFile::schema(self.db_type())).await
+        self.conn().await?.create_table(KFile::schema(self.db_type())).await
     }
 
     async fn ensure_table_inline_kfile(&self) -> EResult {
-        self.create_table(InlineKFile::schema(self.db_type())).await
+        self.conn().await?.create_table(InlineKFile::schema(self.db_type())).await
     }
 
     async fn insert_kfile(&self, res: &KFile) -> AResult<KFile> {
@@ -67,13 +70,13 @@ impl KFileMapper for KDb {
 
         conn.exec(
             SqlInserter::new(KFile::TABLE)
-                .fields(KFile::ID, id.to_owned())
-                .fields(KFile::ORI_FILENAME, ori_filename.to_owned())
-                .fields(KFile::KSPACE, kspace.to_owned())
-                .fields(KFile::CONTENT_TYPE, content_type.to_owned())
-                .fields(KFile::INSERT_TIME, insert_time.to_owned())
-                .fields(KFile::FILESIZE, *filesize)
-                .fields(KFile::ORI_LAST_MODIFIED, *ori_last_modified),
+                .field(KFile::ID, id.to_owned())
+                .field(KFile::ORI_FILENAME, ori_filename.to_owned())
+                .field(KFile::KSPACE, kspace.to_owned())
+                .field(KFile::CONTENT_TYPE, content_type.to_owned())
+                .field(KFile::INSERT_TIME, insert_time.to_owned())
+                .field(KFile::FILESIZE, *filesize)
+                .field(KFile::ORI_LAST_MODIFIED, *ori_last_modified),
         )
         .await
         .map(|_| KFile {
@@ -135,14 +138,14 @@ impl KFileMapper for KDb {
             .await?
             .exec(
                 SqlInserter::new(InlineKFile::TABLE)
-                    .fields(InlineKFile::ID, &req.res.id)
-                    .fields(InlineKFile::RID, &req.res.rid)
-                    .fields(InlineKFile::NAME, &req.res.name)
-                    .fields(InlineKFile::CONTENT, &req.res.content)
-                    .fields(InlineKFile::CONTENT_TYPE, &req.res.content_type)
-                    .fields(InlineKFile::INSERT_TIME, req.res.insert_time)
-                    .fields(InlineKFile::KSPACE, &req.res.kspace)
-                    .fields(InlineKFile::ARCHOR, archorp)
+                    .field(InlineKFile::ID, &req.res.id)
+                    .field(InlineKFile::RID, &req.res.rid)
+                    .field(InlineKFile::NAME, &req.res.name)
+                    .field(InlineKFile::CONTENT, &req.res.content)
+                    .field(InlineKFile::CONTENT_TYPE, &req.res.content_type)
+                    .field(InlineKFile::INSERT_TIME, req.res.insert_time)
+                    .field(InlineKFile::KSPACE, &req.res.kspace)
+                    .field(InlineKFile::ARCHOR, archorp)
                     .on_conflict({
                         match req.ignore_conflict.as_ref() {
                             Some(ic) => {

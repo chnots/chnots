@@ -30,12 +30,6 @@ pub(crate) trait ChnotMapper {
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 
-    async fn chnot_tag_update_single_chnot(
-        &self,
-        content: &str,
-        meta_id: &str,
-        kspace: &str,
-    ) -> EResult;
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult;
     async fn chnot_tag_query(
         &self,
@@ -45,7 +39,6 @@ pub(crate) trait ChnotMapper {
         &self,
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>>;
-    async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult;
     async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult;
 
     async fn ensure_table_chnot_record(&self) -> EResult;
@@ -104,21 +97,8 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_tag_names(req))
     }
 
-    async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult {
-        expand_mt_branch!(self.chnot_tag_insert(req))
-    }
-
     async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
         expand_mt_branch!(self.chnot_tag_delete(chnot_meta_ids))
-    }
-
-    async fn chnot_tag_update_single_chnot(
-        &self,
-        content: &str,
-        meta_id: &str,
-        kspace: &str,
-    ) -> EResult {
-        expand_mt_branch!(self.chnot_tag_update_single_chnot(content, meta_id, kspace))
     }
 
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {

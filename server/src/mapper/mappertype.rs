@@ -1,8 +1,9 @@
-use chin_tools::EResult;
+use chin_sql::OnConflict;
+use chin_tools::{AResult, EResult};
 
 use crate::krate::{
-    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kspace::mapper::KSpaceMapper,
-    kkv::mapper::KKVMapper, llmchat::mapper::LLMChatMapper,
+    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
+    kspace::mapper::KSpaceMapper, llmchat::mapper::LLMChatMapper,
 };
 
 use super::{
@@ -33,7 +34,6 @@ impl MapperType {
         self.ensure_table_chnot().await?;
         self.ensure_table_kfile().await?;
         self.ensure_table_kkv().await?;
-        self.ensure_table_kspace().await?;
         self.ensure_table_llm_chat().await?;
         Ok(())
     }
@@ -50,6 +50,12 @@ macro_rules! expand_mt_branch {
 
 impl MapperType {
     pub(crate) async fn dump_and_callback(&self, writer: &RecordCallbackType) -> EResult {
-        expand_mt_branch!(self.dump_and_callback(writer))
+        match self {
+            MapperType::KDb(kdb) => kdb.dump_and_callback(writer).await,
+        }
     }
+}
+
+pub(crate) trait InserterBehavier<T> {
+    async fn insert(&self, t: T, on_conflict: OnConflict) -> AResult<usize>;
 }

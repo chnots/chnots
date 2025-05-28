@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["server"]
+members = ["./server", "./tools/kdb-derives"]
 
 
 [workspace.dependencies]

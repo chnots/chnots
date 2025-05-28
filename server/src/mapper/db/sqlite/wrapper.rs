@@ -2,8 +2,7 @@ use chin_sql::{IntoSqlSeg, SqlSeg, SqlValueOwned};
 use chin_tools::AResult;
 
 use crate::mapper::db::{
-    kdb::{KDbBehaiver, KDbConn, KDbConnBehaiver},
-    KDbRow, KDbTransactionBehaiver,
+    kdb::{KDbBehaiver, KDbConn, KDbExecutorBehaiver}, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver
 };
 
 use super::Sqlite;
@@ -15,9 +14,9 @@ impl KDbBehaiver for Sqlite {
     }
 }
 
-macro_rules! impl_KDbConnBehaiver {
+macro_rules! impl_KDbExecutorBehaiver {
     ($tt:ty) => {
-        impl KDbConnBehaiver for $tt {
+        impl KDbExecutorBehaiver for $tt {
             async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
                 tracing::info!("exec {:?}", seg);
@@ -110,12 +109,28 @@ macro_rules! impl_KDbConnBehaiver {
                     .map(|r| mapper(KDbRow::SqlValueRow(r)))
                     .collect()
             }
+            
+            fn db_type(&self) -> chin_sql::DbType {
+                chin_sql::DbType::Sqlite
+            }
         }
     };
 }
 
-impl_KDbConnBehaiver!(ActorSqliteConnClient);
-impl_KDbConnBehaiver!(ActorSqliteTxClient);
+impl_KDbExecutorBehaiver!(ActorSqliteConnClient);
+impl_KDbExecutorBehaiver!(ActorSqliteTxClient);
+
+impl<'a> KDbConnBehaiver<'a, ActorSqliteTxClient> for ActorSqliteConnClient {
+    async fn tx(&'a mut self) -> AResult<ActorSqliteTxClient> {
+        Ok(self.transaction().await?)
+    }
+}
+
+impl<'a> KDbConnBehaiver<'a, &'a ActorSqliteTxClient> for ActorSqliteTxClient {
+    async fn tx(&'a mut self) -> AResult<&'a ActorSqliteTxClient> {
+        Ok(self)
+    }
+}
 
 impl KDbTransactionBehaiver for ActorSqliteTxClient {
     async fn cmt(self) -> chin_tools::EResult {

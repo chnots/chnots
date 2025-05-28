@@ -3,7 +3,7 @@ use chin_sql::{SqlInserter, SqlReader, SqlUpdater, Wheres};
 use chrono::Local;
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRowBehavier},
+    mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbConnBehaiver, KDbRowBehavier, KDbTx},
     model::dto::KReq,
 };
 
@@ -34,12 +34,12 @@ impl KTabMapper for KDb {
             )]));
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
-            .fields(KTabMeta::ID, id)
-            .fields(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
-            .fields(KTabMeta::TABLE_NAME, table_name)
-            .fields(KTabMeta::CREATE_TIME, create_time)
-            .fields(KTabMeta::TABLE_COMMENT, table_comment)
-            .fields(KTabMeta::REAL_TABLE, *real_table);
+            .field(KTabMeta::ID, id)
+            .field(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
+            .field(KTabMeta::TABLE_NAME, table_name)
+            .field(KTabMeta::CREATE_TIME, create_time)
+            .field(KTabMeta::TABLE_COMMENT, table_comment)
+            .field(KTabMeta::REAL_TABLE, *real_table);
 
         self.conn().await?.exec(omit_sql).await?;
         self.conn().await?.exec(insert_sql).await?;
@@ -70,10 +70,10 @@ impl KTabMapper for KDb {
         macro_rules! overwrite {
             ($table:tt, $c:expr) => {
                 let csql = SqlInserter::new($table::TABLE)
-                    .fields($table::TABLE_ID, &$c.table_id)
-                    .fields($table::COL_IDX, $c.col_idx)
-                    .fields($table::ROW_IDX, $c.row_idx)
-                    .fields($table::INSERT_TIME, &$c.insert_time);
+                    .field($table::TABLE_ID, &$c.table_id)
+                    .field($table::COL_IDX, $c.col_idx)
+                    .field($table::ROW_IDX, $c.row_idx)
+                    .field($table::INSERT_TIME, &$c.insert_time);
                 let omit_sql = SqlUpdater::new($table::TABLE)
                     .set($table::DELETE_TIME, Local::now().fixed_offset())
                     .r#where(Wheres::and([
@@ -117,9 +117,7 @@ impl KTabMapper for KDb {
                     Wheres::is_null($sub_table::DELETE_TIME),
                 ]));
 
-                let data: Vec<KTabCell> = self
-                    .conn()
-                    .await?
+                let data: Vec<KTabCell> = self.conn().await?
                     .qry_list(reader, |row| {
                         Ok($sub_table {
                             table_id: row.try_get($sub_table::TABLE_ID)?,
@@ -154,9 +152,7 @@ impl KTabMapper for KDb {
             Wheres::equal(KTabMeta::TABLE, &req.table_name),
             Wheres::is_null(KTabMeta::DELETE_TIME),
         ]));
-        let meta = self
-            .conn()
-            .await?
+        let meta = self.conn().await?
             .qry_one(
                 ssb,
                 |row| {
@@ -194,9 +190,7 @@ impl KTabMapper for KDb {
                     Wheres::is_null($sub_table::DELETE_TIME),
                 ]));
 
-                let data: Vec<KTabCell> = self
-                    .conn()
-                    .await?
+                let data: Vec<KTabCell> = self.conn().await?
                     .qry_list(reader, |row| {
                         Ok($sub_table {
                             table_id: row.try_get($sub_table::TABLE_ID)?,
@@ -224,26 +218,11 @@ impl KTabMapper for KDb {
     }
 
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
-        self.conn()
-            .await?
-            .exec(KTabCellDate::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabCellInteger::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabCellStr1024::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabCellText::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabMeta::schema(self.db_type()))
-            .await?;
+        self.conn().await?.exec(KTabCellDate::schema(self.db_type())).await?;
+        self.conn().await?.exec(KTabCellInteger::schema(self.db_type())).await?;
+        self.conn().await?.exec(KTabCellStr1024::schema(self.db_type())).await?;
+        self.conn().await?.exec(KTabCellText::schema(self.db_type())).await?;
+        self.conn().await?.exec(KTabMeta::schema(self.db_type())).await?;
 
         Ok(())
     }

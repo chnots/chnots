@@ -8,12 +8,13 @@ use chin_sql::SqlValue;
 /// but the name "knot" is too repetitive, so I made a change.
 ///
 use chrono::{DateTime, FixedOffset};
+use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 use strum::Display;
 use strum_macros::EnumString;
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct ChnotRecord {
     #[gts_primary]
     #[gts_length = 40]
@@ -25,7 +26,7 @@ pub(crate) struct ChnotRecord {
     pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct ChnotMetadata {
     #[gts_primary]
     #[gts_length = 40]
@@ -41,7 +42,7 @@ pub(crate) struct ChnotMetadata {
     pub(crate) archive_time: Option<DateTime<FixedOffset>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct ChnotTag {
     #[gts_primary]
     #[gts_length = 40]
@@ -88,13 +89,4 @@ impl From<ChnotTagType> for SqlValue<'_> {
     fn from(value: ChnotTagType) -> Self {
         SqlValue::I32(value as i32)
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
-pub(crate) struct ChnotSubTypeRelation {
-    #[gts_primary]
-    pub(crate) chnot_meta_id: String,
-    pub(crate) sub_type_id: String,
-    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
-    pub(crate) insert_time: DateTime<FixedOffset>,
 }

@@ -1,5 +1,6 @@
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 use chrono::{DateTime, FixedOffset};
+use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, str::FromStr};
 use strum::{AsRefStr, EnumString};
@@ -29,7 +30,7 @@ impl KDbRowBehavier<KKVType> for KDbRow {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 #[allow(clippy::upper_case_acronyms)]
 pub(crate) struct KKV {
     #[gts_primary]
@@ -39,6 +40,9 @@ pub(crate) struct KKV {
     #[gts_length = 100]
     #[gts_type = "String"]
     pub(crate) kind: KKVType,
+    #[gts_primary]
+    #[gts_length = 100]
+    pub(crate) kspace: String,
     pub(crate) value: String,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
     pub(crate) insert_time: DateTime<FixedOffset>,

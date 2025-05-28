@@ -52,6 +52,7 @@ tokio-postgres = { version = "0.7", optional = true, features = [
 postgres-types = { version = "0.2", optional = true }
 deadpool-postgres = { version = "0.14.0", optional = true }
 serde-pgrow = { version = "0.3.6", optional = true }
+kdb-derives = { path = "../tools/kdb-derives" }
 
 # Misc
 num-traits = "0.2"

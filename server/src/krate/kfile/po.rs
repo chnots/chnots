@@ -1,8 +1,9 @@
 use chin_sql::{DbType, GenerateTableSql};
 use chrono::{DateTime, FixedOffset};
+use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql)]
+#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct KFile {
     #[gts_primary]
     #[gts_length = 40]
@@ -21,7 +22,7 @@ pub(crate) struct KFile {
     pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql)]
+#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct InlineKFile {
     #[gts_primary]
     #[gts_length = 40]

@@ -4,6 +4,7 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use axum_macros::debug_handler;
 
 use super::{mapper::LLMChatMapper, *};
 

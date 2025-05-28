@@ -1,8 +1,9 @@
 use chin_sql::{DbType, GenerateTableSql};
 use chrono::{DateTime, FixedOffset};
+use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct LLMChatBot {
     #[gts_primary]
     #[gts_length = 500]
@@ -16,7 +17,7 @@ pub(crate) struct LLMChatBot {
     pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct LLMChatTemplate {
     #[gts_primary]
     #[gts_length = 40]
@@ -30,7 +31,7 @@ pub(crate) struct LLMChatTemplate {
     pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct LLMChatSession {
     #[gts_primary]
     #[gts_length = 40]
@@ -46,7 +47,7 @@ pub(crate) struct LLMChatSession {
     pub(crate) insert_time: DateTime<FixedOffset>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct LLMChatRecord {
     #[gts_primary]
     #[gts_length = 40]

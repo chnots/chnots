@@ -1,12 +1,11 @@
 use chin_sql::{IntoSqlSeg, SqlSeg};
 use chin_tools::AResult;
-use deadpool_postgres::Client;
-use tokio_postgres::Transaction;
+use deadpool_postgres::{Client, Transaction};
+use tokio_postgres::GenericClient;
 
 use crate::{
     mapper::db::{
-        kdb::{KDbBehaiver, KDbConnBehaiver, KDbRow},
-        KDbTransactionBehaiver,
+        kdb::{KDbBehaiver, KDbExecutorBehaiver, KDbRow}, KDbConnBehaiver, KDbTransactionBehaiver
     },
     util::result_util::ROSwap,
 };
@@ -14,9 +13,9 @@ use crate::{
 use super::Postgres;
 use crate::to_pgsql_params;
 
-macro_rules! impl_KDbConnBehaiver {
+macro_rules! impl_KDbExecutorBehaiver {
     ($ty:ident $(<$($lt:lifetime),+>)?) => {
-        impl $(<$($lt),+>)? KDbConnBehaiver for $ty $(<$($lt),+>)? {
+        impl $(<$($lt),+>)? KDbExecutorBehaiver for $ty $(<$($lt),+>)? {
             async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
                 tracing::info!("exec_and_check {:?} {:?}", seg, values);
@@ -101,6 +100,10 @@ macro_rules! impl_KDbConnBehaiver {
                     .map(|e| mapper(KDbRow::Postgres(e)))
                     .collect()
             }
+
+            fn db_type(&self) -> chin_sql::DbType {
+                chin_sql::DbType::Postgres
+            }
         }
     };
 }
@@ -111,8 +114,14 @@ impl KDbBehaiver for Postgres {
     }
 }
 
-impl_KDbConnBehaiver! {Client}
-impl_KDbConnBehaiver! {Transaction<'b>}
+impl_KDbExecutorBehaiver! {Client}
+impl_KDbExecutorBehaiver! {Transaction<'b>}
+
+impl<'b> KDbConnBehaiver<'b, Transaction<'b>> for Client {
+    async fn tx(&'b mut self) -> AResult<Transaction<'b>> {
+        Ok(self.transaction().await?)
+    }
+}
 
 impl<'b> KDbTransactionBehaiver for Transaction<'b> {
     async fn cmt(self) -> chin_tools::EResult {

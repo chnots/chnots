@@ -2,7 +2,6 @@ use actor_sqlite::{pool::ActorSqlitePool, WorkerConfig};
 use chin_tools::AResult;
 use serde::Deserialize;
 
-pub(crate) mod sqltype;
 pub(crate) mod wrapper;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -15,7 +14,7 @@ impl TryFrom<SqliteConfig> for ActorSqlitePool {
     type Error = anyhow::Error;
 
     fn try_from(value: SqliteConfig) -> Result<Self, Self::Error> {
-        ActorSqlitePool::create(WorkerConfig::default().path(value.filepath))
+        ActorSqlitePool::try_from(WorkerConfig::default().path(value.filepath))
     }
 }
 

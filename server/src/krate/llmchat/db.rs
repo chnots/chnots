@@ -6,7 +6,7 @@ use chin_tools::{AResult, EResult};
 use chrono::Local;
 
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
-use crate::mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbRow, KDbRowBehavier};
+use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier};
 use crate::model::dto::KReq;
 
 use super::mapper::{LLMChatDeserializeMapper, LLMChatDumpMapper, LLMChatMapper};
@@ -75,11 +75,11 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatOverwriteBotRsp> {
         let bot = &req.bot;
         let inserter = SqlInserter::new(LLMChatBot::TABLE)
-            .fields(LLMChatBot::ID, &bot.id)
-            .fields(LLMChatBot::NAME, &bot.name)
-            .fields(LLMChatBot::BODY, &bot.body)
-            .fields(LLMChatBot::SVG_LOGO, bot.svg_logo.as_ref())
-            .fields(LLMChatBot::INSERT_TIME, bot.insert_time)
+            .field(LLMChatBot::ID, &bot.id)
+            .field(LLMChatBot::NAME, &bot.name)
+            .field(LLMChatBot::BODY, &bot.body)
+            .field(LLMChatBot::SVG_LOGO, bot.svg_logo.as_ref())
+            .field(LLMChatBot::INSERT_TIME, bot.insert_time)
             .on_conflict(chin_sql::OnConflict::Replace("id".to_string()));
 
         self.conn().await?.exec(inserter).await?;
@@ -93,11 +93,11 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatOverwriteTemplateRsp> {
         let tmpl = &req.template;
         let inserter = SqlInserter::new(LLMChatTemplate::TABLE)
-            .fields(LLMChatTemplate::ID, &tmpl.id)
-            .fields(LLMChatTemplate::NAME, &tmpl.name)
-            .fields(LLMChatTemplate::PROMPT, &tmpl.prompt)
-            .fields(LLMChatTemplate::SVG_LOGO, tmpl.svg_logo.as_ref())
-            .fields(LLMChatTemplate::INSERT_TIME, tmpl.insert_time);
+            .field(LLMChatTemplate::ID, &tmpl.id)
+            .field(LLMChatTemplate::NAME, &tmpl.name)
+            .field(LLMChatTemplate::PROMPT, &tmpl.prompt)
+            .field(LLMChatTemplate::SVG_LOGO, tmpl.svg_logo.as_ref())
+            .field(LLMChatTemplate::INSERT_TIME, tmpl.insert_time);
 
         self.conn().await?.exec(inserter).await?;
 
@@ -111,11 +111,11 @@ impl LLMChatMapper for KDb {
         let title: String = req.session.title.chars().take(300).collect();
         let session = &req.session;
         let inserter = SqlInserter::new(LLMChatSession::TABLE)
-            .fields(LLMChatSession::ID, &session.id)
-            .fields(LLMChatSession::TEMPLATE_ID, &session.template_id)
-            .fields(LLMChatSession::TITLE, &title)
-            .fields(LLMChatSession::KSPACE, &session.kspace)
-            .fields(LLMChatSession::INSERT_TIME, session.insert_time);
+            .field(LLMChatSession::ID, &session.id)
+            .field(LLMChatSession::TEMPLATE_ID, &session.template_id)
+            .field(LLMChatSession::TITLE, &title)
+            .field(LLMChatSession::KSPACE, &session.kspace)
+            .field(LLMChatSession::INSERT_TIME, session.insert_time);
 
         self.conn().await?.exec(inserter).await?;
 
@@ -128,14 +128,14 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatInsertRecordRsp> {
         let rec = &req.record;
         let inserter = SqlInserter::new(LLMChatRecord::TABLE)
-            .fields(LLMChatRecord::ID, &rec.id)
-            .fields(LLMChatRecord::SESSION_ID, &rec.session_id)
-            .fields(LLMChatRecord::PRE_RECORD_ID, rec.pre_record_id.as_ref())
-            .fields(LLMChatRecord::CONTENT, &rec.content)
-            .fields(LLMChatRecord::ROLE, &rec.role)
-            .fields(LLMChatRecord::ROLE_ID, rec.role_id.as_ref())
-            .fields(LLMChatRecord::REASONING_CONTENT, &rec.reasoning_content)
-            .fields(LLMChatRecord::INSERT_TIME, rec.insert_time);
+            .field(LLMChatRecord::ID, &rec.id)
+            .field(LLMChatRecord::SESSION_ID, &rec.session_id)
+            .field(LLMChatRecord::PRE_RECORD_ID, rec.pre_record_id.as_ref())
+            .field(LLMChatRecord::CONTENT, &rec.content)
+            .field(LLMChatRecord::ROLE, &rec.role)
+            .field(LLMChatRecord::ROLE_ID, rec.role_id.as_ref())
+            .field(LLMChatRecord::REASONING_CONTENT, &rec.reasoning_content)
+            .field(LLMChatRecord::INSERT_TIME, rec.insert_time);
 
         self.conn().await?.exec(inserter).await?;
 
@@ -278,25 +278,33 @@ impl LLMChatMapper for KDb {
     }
 
     async fn ensure_table_llm_chat_bot(&self) -> EResult {
-        self.create_table(LLMChatBot::schema(self.db_type()))
+        self.conn()
+            .await?
+            .exec(LLMChatBot::schema(self.conn().await?.db_type()))
             .await?;
         Ok(())
     }
 
     async fn ensure_table_llm_chat_template(&self) -> EResult {
-        self.create_table(LLMChatTemplate::schema(self.db_type()))
+        self.conn()
+            .await?
+            .create_table(LLMChatTemplate::schema(self.conn().await?.db_type()))
             .await?;
         Ok(())
     }
 
     async fn ensure_table_llm_chat_session(&self) -> EResult {
-        self.create_table(LLMChatSession::schema(self.db_type()))
+        self.conn()
+            .await?
+            .create_table(LLMChatSession::schema(self.conn().await?.db_type()))
             .await?;
         Ok(())
     }
 
     async fn ensure_table_llm_chat_record(&self) -> EResult {
-        self.create_table(LLMChatRecord::schema(self.db_type()))
+        self.conn()
+            .await?
+            .create_table(LLMChatRecord::schema(self.conn().await?.db_type()))
             .await?;
         Ok(())
     }
@@ -375,6 +383,15 @@ impl LLMChatMapper for KDb {
         let count = self.conn().await?.exec(updater).await?;
 
         Ok(LLMChatTruncateSessionRsp { count })
+    }
+
+    async fn ensure_table_llm_chat(&self) -> EResult {
+        self.ensure_table_llm_chat_bot().await?;
+        self.ensure_table_llm_chat_template().await?;
+        self.ensure_table_llm_chat_session().await?;
+        self.ensure_table_llm_chat_record().await?;
+
+        Ok(())
     }
 }
 

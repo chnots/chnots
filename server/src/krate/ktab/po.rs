@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use chin_sql::{ChinSqlError, DbType, GenerateTableSql};
 use chrono::{DateTime, FixedOffset};
+use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -88,7 +89,7 @@ pub(crate) struct KTabMeta {
 
 macro_rules! type_table {
     ($suffix:tt, $data_type:ty $(, #[$attr:meta])*) => {
-        #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
+        #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
         pub(crate) struct $suffix {
             pub(crate) table_id: String,
             pub(crate) col_idx: i32,
