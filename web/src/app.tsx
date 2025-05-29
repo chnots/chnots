@@ -4,7 +4,7 @@ import useLocalStorage from "react-use/lib/useLocalStorage";
 import LoadingPage from "@/common/pages/loading-page";
 import Navigation from "@/common/component/navigation";
 import { RoutePaths } from "@/router";
-import { useKSpaceStore } from "./store/kspace";
+import { useKSpaceStore } from "./krate/kspace/store/store";
 import faviconSvg from "../public/static/favicon/chnots.svg?raw";
 
 const App = () => {

@@ -1,5 +1,5 @@
 import Icon from "./icon";
-import { useKSpaceStore } from "@/store/kspace";
+import { useKSpaceStore } from "@/krate/kspace/store/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import KButton from "./kbutton";
 

@@ -2,14 +2,14 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import ToentPage from "@/common/pages/toent-page";
-import ChnotPage from "@/features/chnot/page/chnot";
+import ChnotPage from "@/krate/chnot/page/chnot";
 import SettingsPage from "@/common/pages/settings-page";
 import App from "@/app";
 import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
-import LLMChatPage from "./features/llmchat/page/llmchat";
-import FullScreenTimer from "./features/timer/timer";
-import ExcalidrawPage from "./features/tool/excalidraw/page/excalidraw";
+import LLMChatPage from "./krate/llmchat/page/llmchat";
+import FullScreenTimer from "./krate/timer/timer";
+import ExcalidrawPage from "./krate/tool/excalidraw/page/excalidraw";
 
 export enum RoutePaths {
   ROOT = "/",

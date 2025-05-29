@@ -4,9 +4,9 @@ import { useTranslate } from "@/utils/i18n";
 import Icon from "./icon";
 import { KSpaceSelect } from "./kspace-select";
 import { RoutePaths } from "@/router";
-import { useKSpaceStore } from "@/store/kspace";
+import { useKSpaceStore } from "@/krate/kspace/store/store";
 import KButton from "./kbutton";
-import { useCommonStore } from "@/store/common";
+import { useCommonStore } from "@/common/store/common";
 import useParamState from "@/hooks/use-param-state";
 
 interface NavLinkItem {
@@ -46,13 +46,13 @@ const Navigation = ({
     icon: (
       <Icon.CircleCheckBigIcon className="w-6 h-auto opacity-70 shrink-0" />
     ),
-  };
+  }; */
   const settingsNavLink: NavLinkItem = {
     id: "header-settings",
     path: RoutePaths.Settings,
     title: t("Settings"),
     icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
-  }; */
+  };
   const timerNavLink: NavLinkItem = {
     id: "header-timer",
     path: RoutePaths.Timer,
@@ -60,7 +60,12 @@ const Navigation = ({
     icon: <Icon.Timer className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
-  const navLinks: NavLinkItem[] = [chnotNavLink, llmChatNavLink, timerNavLink];
+  const navLinks: NavLinkItem[] = [
+    chnotNavLink,
+    llmChatNavLink,
+    timerNavLink,
+    settingsNavLink,
+  ];
 
   return (
     <div

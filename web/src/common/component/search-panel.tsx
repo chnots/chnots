@@ -1,4 +1,4 @@
-import { useChnotStore } from "@/store/chnot/store";
+import { useChnotStore } from "@/krate/chnot/store/store";
 import DebounceInput from "./debounce-input";
 
 const SearchPanel = () => {
