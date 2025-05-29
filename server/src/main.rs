@@ -11,15 +11,16 @@ use mapper::{
     MapperType,
 };
 use tracing::{info, Level};
+use tracing_log::LogTracer;
 
 pub(crate) mod app;
 pub(crate) mod arguments;
 pub(crate) mod config;
+pub(crate) mod controller;
 pub(crate) mod krate;
 pub(crate) mod magics;
 pub(crate) mod mapper;
 pub(crate) mod model;
-pub(crate) mod controller;
 pub(crate) mod util;
 
 #[tokio::main]
@@ -29,13 +30,14 @@ async fn main() -> EResult {
         .with_thread_ids(true)
         .with_line_number(true)
         .with_timer(tracing_subscriber::fmt::time::time());
+    LogTracer::init()?;
 
     #[cfg(debug_assertions)]
     let subscriber = subscriber.with_max_level(Level::DEBUG);
 
     let subscriber = subscriber.finish();
 
-    tracing::subscriber::set_global_default(subscriber).unwrap();
+    tracing::subscriber::set_global_default(subscriber)?;
 
     let args = Arguments::parse();
 

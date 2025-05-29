@@ -2,7 +2,6 @@ import React, { useCallback, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import useDebounce from "@/hooks/use-debounce";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
-import { KSpaceSelect } from "@/common/component/kspace-select";
 import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import {
@@ -21,7 +20,8 @@ import { enumFromStringValue } from "@/utils/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
 import { CommonKFile } from "@/krate/kfile/components/common-kfile";
-import { insertKKV } from "@/store/kfile/service";
+import { insertKKV } from "@/krate/kfile/store/service";
+import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 
 enum RequestState {
   Saved,

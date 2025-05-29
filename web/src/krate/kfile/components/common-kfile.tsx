@@ -3,15 +3,15 @@ import {
   queryKKV,
   kfileQueryInfo,
   kfileUpload,
-} from "@/store/kfile/service";
+} from "@/krate/kfile/store/service";
 import { genId } from "@/utils/id_util";
 import { useCallback, useEffect, useState } from "react";
 
 import KButton from "@/common/component/kbutton";
 import RelativeTime from "@/common/component/relative-time";
 import { humanFileSize } from "@/utils/unit-utils";
-import { KFile } from "@/store/kfile/db";
 import FileNameToIcon from "./filename-to-icon";
+import { KFile } from "../store/db";
 
 type FileLike = {
   name: string;

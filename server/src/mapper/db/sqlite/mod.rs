@@ -14,7 +14,7 @@ impl TryFrom<SqliteConfig> for ActorSqlitePool {
     type Error = anyhow::Error;
 
     fn try_from(value: SqliteConfig) -> Result<Self, Self::Error> {
-        ActorSqlitePool::try_from(WorkerConfig::default().path(value.filepath))
+        Ok(ActorSqlitePool::try_from(WorkerConfig::default().path(value.filepath))?)
     }
 }
 

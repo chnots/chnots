@@ -21,6 +21,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { KSpace } from "../store/po";
+import { allKSpaces } from "../store/service";
 
 const Example = () => {
   const [validationErrors, setValidationErrors] = useState<
@@ -30,64 +31,36 @@ const Example = () => {
   const columns = useMemo<MRT_ColumnDef<KSpace>[]>(
     () => [
       {
-        accessorKey: "id",
-        header: "Id",
+        accessorKey: "name",
+        header: "Name",
         enableEditing: false,
         size: 80,
       },
       {
-        accessorKey: "firstName",
-        header: "First Name",
+        accessorKey: "accent_color",
+        header: "Accent Color",
         mantineEditTextInputProps: {
-          type: "email",
           required: true,
-          error: validationErrors?.firstName,
           //remove any previous validation errors when user focuses on the input
           onFocus: () =>
             setValidationErrors({
               ...validationErrors,
-              firstName: undefined,
+              accentColor: undefined,
             }),
-          //optionally add validation checking for onBlur or onChange
         },
       },
       {
-        accessorKey: "lastName",
-        header: "Last Name",
+        accessorKey: "Managers",
+        header: "managers",
         mantineEditTextInputProps: {
-          type: "email",
-          required: true,
-          error: validationErrors?.lastName,
+          required: false,
+          error: validationErrors?.managers,
           //remove any previous validation errors when user focuses on the input
           onFocus: () =>
             setValidationErrors({
               ...validationErrors,
-              lastName: undefined,
+              managers: undefined,
             }),
-        },
-      },
-      {
-        accessorKey: "email",
-        header: "Email",
-        mantineEditTextInputProps: {
-          type: "email",
-          required: true,
-          error: validationErrors?.email,
-          //remove any previous validation errors when user focuses on the input
-          onFocus: () =>
-            setValidationErrors({
-              ...validationErrors,
-              email: undefined,
-            }),
-        },
-      },
-      {
-        accessorKey: "state",
-        header: "State",
-        editVariant: "select",
-        mantineEditSelectProps: {
-          data: usStates,
-          error: validationErrors?.state,
         },
       },
     ],
@@ -99,70 +72,58 @@ const Example = () => {
     useCreateUser();
   //call READ hook
   const {
-    data: fetchedUsers = [],
+    data: fetchedKSpaces = [],
     isError: isLoadingUsersError,
     isFetching: isFetchingUsers,
     isLoading: isLoadingUsers,
-  } = useGetUsers();
+  } = useGetKSpace();
   //call UPDATE hook
   const { mutateAsync: updateUser, isPending: isUpdatingUser } =
-    useUpdateUser();
+    useUpdateKSpace();
   //call DELETE hook
   const { mutateAsync: deleteUser, isPending: isDeletingUser } =
-    useDeleteUser();
+    useDeleteKSpace();
 
   //CREATE action
-  const handleCreateUser: MRT_TableOptions<User>["onCreatingRowSave"] = async ({
-    values,
-    exitCreatingMode,
-  }) => {
-    const newValidationErrors = validateUser(values);
-    if (Object.values(newValidationErrors).some((error) => error)) {
-      setValidationErrors(newValidationErrors);
-      return;
-    }
-    setValidationErrors({});
-    await createUser(values);
-    exitCreatingMode();
-  };
+  const handleCreateUser: MRT_TableOptions<KSpace>["onCreatingRowSave"] =
+    async ({ values, exitCreatingMode }) => {
+      setValidationErrors({});
+      await createUser(values);
+      exitCreatingMode();
+    };
 
   //UPDATE action
-  const handleSaveUser: MRT_TableOptions<User>["onEditingRowSave"] = async ({
+  const handleSaveUser: MRT_TableOptions<KSpace>["onEditingRowSave"] = async ({
     values,
     table,
   }) => {
-    const newValidationErrors = validateUser(values);
-    if (Object.values(newValidationErrors).some((error) => error)) {
-      setValidationErrors(newValidationErrors);
-      return;
-    }
     setValidationErrors({});
     await updateUser(values);
     table.setEditingRow(null); //exit editing mode
   };
 
   //DELETE action
-  const openDeleteConfirmModal = (row: MRT_Row<User>) =>
+  const openDeleteConfirmModal = (row: MRT_Row<KSpace>) =>
     modals.openConfirmModal({
       title: "Are you sure you want to delete this user?",
       children: (
         <Text>
-          Are you sure you want to delete {row.original.firstName}{" "}
-          {row.original.lastName}? This action cannot be undone.
+          Are you sure you want to delete {row.original.name}? This action
+          cannot be undone.
         </Text>
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
       confirmProps: { color: "red" },
-      onConfirm: () => deleteUser(row.original.id),
+      onConfirm: () => deleteUser(row.original.name),
     });
 
   const table = useMantineReactTable({
     columns,
-    data: fetchedUsers,
+    data: fetchedKSpaces,
     createDisplayMode: "row", // ('modal', and 'custom' are also available)
     editDisplayMode: "row", // ('modal', 'cell', 'table', and 'custom' are also available)
     enableEditing: true,
-    getRowId: (row) => row.id,
+    getRowId: (row) => row.name,
     mantineToolbarAlertBannerProps: isLoadingUsersError
       ? {
           color: "red",
@@ -204,7 +165,7 @@ const Example = () => {
           // );
         }}
       >
-        Create New User
+        Create New KSpace
       </Button>
     ),
     state: {
@@ -222,13 +183,13 @@ const Example = () => {
 function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (user: User) => {
+    mutationFn: async (user: KSpace) => {
       //send api update request here
       await new Promise((resolve) => setTimeout(resolve, 1000)); //fake api call
       return Promise.resolve();
     },
     //client side optimistic update
-    onMutate: (newUserInfo: User) => {
+    onMutate: (newUserInfo: KSpace) => {
       queryClient.setQueryData(
         ["users"],
         (prevUsers: any) =>
@@ -238,7 +199,7 @@ function useCreateUser() {
               ...newUserInfo,
               id: (Math.random() + 1).toString(36).substring(7),
             },
-          ] as User[]
+          ] as KSpace[]
       );
     },
     // onSettled: () => queryClient.invalidateQueries({ queryKey: ['users'] }), //refetch users after mutation, disabled for demo
@@ -246,41 +207,37 @@ function useCreateUser() {
 }
 
 //READ hook (get users from api)
-function useGetUsers() {
-  return useQuery<User[]>({
-    queryKey: ["users"],
+const useGetKSpace = () => {
+  return useQuery<KSpace[]>({
+    queryKey: ["kspace-infos"],
     queryFn: async () => {
-      //send api request here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); //fake api call
-      return Promise.resolve(fakeData);
+      return (await allKSpaces({})).kspaces;
     },
     refetchOnWindowFocus: false,
   });
-}
+};
 
 //UPDATE hook (put user in api)
-function useUpdateUser() {
+const useUpdateKSpace = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (user: User) => {
-      //send api update request here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); //fake api call
-      return Promise.resolve();
+    mutationFn: async (space: KSpace) => {
+      alert("do not implemented delete kspace action");
     },
     //client side optimistic update
-    onMutate: (newUserInfo: User) => {
-      queryClient.setQueryData(["users"], (prevUsers: any) =>
-        prevUsers?.map((prevUser: User) =>
-          prevUser.id === newUserInfo.id ? newUserInfo : prevUser
+    onMutate: (newKSpace: KSpace) => {
+      queryClient.setQueryData(["kspace-infos"], (prevUsers: any) =>
+        prevUsers?.map((prevKSpace: KSpace) =>
+          prevKSpace.name === newKSpace.name ? newKSpace : prevKSpace
         )
       );
     },
     // onSettled: () => queryClient.invalidateQueries({ queryKey: ['users'] }), //refetch users after mutation, disabled for demo
   });
-}
+};
 
 //DELETE hook (delete user in api)
-function useDeleteUser() {
+const useDeleteKSpace = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
@@ -289,14 +246,14 @@ function useDeleteUser() {
       return Promise.resolve();
     },
     //client side optimistic update
-    onMutate: (userId: string) => {
-      queryClient.setQueryData(["users"], (prevUsers: any) =>
-        prevUsers?.filter((user: User) => user.id !== userId)
+    onMutate: (kspaceName: string) => {
+      queryClient.setQueryData(["kspace-infos"], (prevUsers: any) =>
+        prevUsers?.filter((user: KSpace) => user.name !== kspaceName)
       );
     },
     // onSettled: () => queryClient.invalidateQueries({ queryKey: ['users'] }), //refetch users after mutation, disabled for demo
   });
-}
+};
 
 const queryClient = new QueryClient();
 

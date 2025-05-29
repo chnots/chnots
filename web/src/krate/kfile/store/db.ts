@@ -1,5 +1,3 @@
-import { KSpace } from "../../model";
-
 export interface KFile {
   id: string;
 

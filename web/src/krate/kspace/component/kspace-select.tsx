@@ -1,7 +1,7 @@
-import Icon from "./icon";
+import Icon from "@/common/component/icon";
+import KButton from "@/common/component/kbutton";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
-import KButton from "./kbutton";
 
 const KSpaceIcon = ({
   name,

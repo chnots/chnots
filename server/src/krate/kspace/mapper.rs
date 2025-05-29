@@ -68,7 +68,7 @@ impl KSpaceMapper for MapperType {
         self.kkv_overwrite(req.frame(KKVOverwriteReq {
             key: req.body.kspace.name.clone(),
             kind: KKVType::KSpaceInfo,
-            value: serde_json::to_string(&req.body)?,
+            value: serde_json::to_string(&req.body.kspace)?,
         }))
         .await?;
 

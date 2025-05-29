@@ -26,7 +26,7 @@ import {
   insertInlineKFile,
   queryInlineKFile,
   queryKKV,
-} from "@/store/kfile/service";
+} from "@/krate/kfile/store/service";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";

@@ -2,12 +2,12 @@ import clsx from "clsx";
 import { NavLink } from "react-router-dom";
 import { useTranslate } from "@/utils/i18n";
 import Icon from "./icon";
-import { KSpaceSelect } from "./kspace-select";
 import { RoutePaths } from "@/router";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
 import KButton from "./kbutton";
 import { useCommonStore } from "@/common/store/common";
 import useParamState from "@/hooks/use-param-state";
+import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 
 interface NavLinkItem {
   id: string;

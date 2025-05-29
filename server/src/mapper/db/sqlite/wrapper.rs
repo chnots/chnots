@@ -1,17 +1,31 @@
-use chin_sql::{IntoSqlSeg, SqlSeg, SqlValueOwned};
+use chin_sql::{IntoSqlSeg, SqlSeg, SqlValueOwned, SqlValueRow};
 use chin_tools::AResult;
 
 use crate::mapper::db::{
-    kdb::{KDbBehaiver, KDbConn, KDbExecutorBehaiver}, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver
+    kdb::{KDbBehaiver, KDbConn, KDbExecutorBehaiver},
+    KDbConnBehaiver, KDbRow, KDbTransactionBehaiver,
 };
 
 use super::Sqlite;
-use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
+use actor_sqlite::RsValue;
+use actor_sqlite::{
+    client::{ActorSqliteConnClient, ActorSqliteTxClient},
+    ActorSqliteRow,
+};
 
 impl KDbBehaiver for Sqlite {
     async fn conn(&self) -> chin_tools::AResult<crate::mapper::db::kdb::KDbConn> {
         Ok(KDbConn::Sqlite(self.pool.get().await?))
     }
+}
+
+fn map_row2row(row: ActorSqliteRow) -> SqlValueRow<SqlValueOwned> {
+    let inner = row
+        .cells
+        .into_iter()
+        .map(|(k, v)| (k, SqlValueOwned::from(v)))
+        .collect();
+    SqlValueRow { row: inner }
 }
 
 macro_rules! impl_KDbExecutorBehaiver {
@@ -20,8 +34,7 @@ macro_rules! impl_KDbExecutorBehaiver {
             async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
                 tracing::info!("exec {:?}", seg);
-                let values: Vec<SqlValueOwned> =
-                    values.into_iter().map(SqlValueOwned::from).collect();
+                let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 let count = self.execute(seg, values).await?;
                 Ok(count)
@@ -51,14 +64,13 @@ macro_rules! impl_KDbExecutorBehaiver {
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
                 tracing::info!("qry one {:?}", seg);
-                let values: Vec<SqlValueOwned> =
-                    values.into_iter().map(SqlValueOwned::from).collect();
+                let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 let rows = self.query(seg, values).await?;
 
                 let length = rows.len();
                 if let Some(row) = rows.into_iter().nth(0) {
-                    let first_res = mapper(KDbRow::SqlValueRow(row))?;
+                    let first_res = mapper(KDbRow::SqlValueRow(map_row2row(row)))?;
                     if !only_one {
                         Ok(first_res)
                     } else if length > 1 {
@@ -79,13 +91,12 @@ macro_rules! impl_KDbExecutorBehaiver {
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
                 tracing::info!("qry one {:?}", seg);
-                let values: Vec<SqlValueOwned> =
-                    values.into_iter().map(SqlValueOwned::from).collect();
+                let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 let rows = self.query(seg, values).await?;
 
                 if let Some(row) = rows.into_iter().nth(0) {
-                    let first_res = mapper(KDbRow::SqlValueRow(row))?;
+                    let first_res = mapper(KDbRow::SqlValueRow(map_row2row(row)))?;
                     Ok(Some(first_res))
                 } else {
                     Ok(None)
@@ -100,16 +111,15 @@ macro_rules! impl_KDbExecutorBehaiver {
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
                 tracing::info!("qry one {:?}", seg);
-                let values: Vec<SqlValueOwned> =
-                    values.into_iter().map(SqlValueOwned::from).collect();
+                let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 self.query(seg, values)
                     .await?
                     .into_iter()
-                    .map(|r| mapper(KDbRow::SqlValueRow(r)))
+                    .map(|r| mapper(KDbRow::SqlValueRow(map_row2row(r))))
                     .collect()
             }
-            
+
             fn db_type(&self) -> chin_sql::DbType {
                 chin_sql::DbType::Sqlite
             }
