@@ -1,5 +1,5 @@
 use anyhow::Ok;
-use chin_tools::{AResult, SharedStr};
+use chin_tools::{AResult, EResult, SharedStr};
 
 use crate::{
     krate::kkv::{mapper::KKVMapper, KKVOverwriteReq, KKVQueryManyReq, KKVType},
@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    dto::{KSpaceOverwriteRsp, KSpaceOverwriteReq, KSpaceQueryAllReq, KSpaceQueryAllRsp},
+    dto::{KSpaceOverwriteReq, KSpaceOverwriteRsp, KSpaceQueryAllReq, KSpaceQueryAllRsp},
     *,
 };
 
@@ -19,6 +19,30 @@ pub(crate) trait KSpaceMapper {
         &self,
         kspace: KReq<KSpaceOverwriteReq>,
     ) -> AResult<KSpaceOverwriteRsp>;
+    async fn kspace_ensure_data(&self) -> EResult {
+        let kreq = KReq {
+            body: KSpaceQueryAllReq {},
+            kspace: NO_KSPACE.to_owned(),
+        };
+        let all_kspaces = self.kspace_read_all(kreq.clone()).await?.kspaces;
+        for data in [
+            ("private", "#aa0000", vec!["public", "work"]),
+            ("work", "#aa0000", vec!["public"]),
+            ("public", "#aa0000", vec![]),
+        ] {
+            if !all_kspaces.iter().any(|k| k.name == data.0) {
+                self.kspace_overwrite(kreq.frame(KSpaceOverwriteReq {
+                    kspace: KSpace {
+                        name: data.0.to_owned(),
+                        color: data.1.to_owned(),
+                        managers: data.2.iter().map(|s| s.to_string()).collect(),
+                    },
+                })).await?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl KSpaceMapper for MapperType {
