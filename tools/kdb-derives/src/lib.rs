@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{ToTokens, format_ident, quote};
+use quote::{format_ident, quote};
 
 use syn::{Data, DeriveInput, Fields, parse_macro_input, spanned::Spanned};
 
