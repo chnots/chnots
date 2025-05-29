@@ -1,14 +1,9 @@
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 /// When there are some global data, use this.
 /// e.g. in table KKV.
 pub const NO_KSPACE: &str = "#NO_KSPACE#";
-pub fn kspace_name(name: Option<&String>) -> &str {
-    match name {
-        Some(n) => n,
-        None => NO_KSPACE,
-    }
-}
+
 
 pub(crate) struct KImplWrapper<T: Send + Sync>(pub(crate) T);
 impl<T: Send + Sync> From<T> for KImplWrapper<T> {

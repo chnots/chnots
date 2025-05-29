@@ -12,6 +12,9 @@ pub(crate) enum KKVType {
     #[strum(serialize = "chnot_sub_type")]
     #[serde(rename = "chnot_sub_type")]
     ChnotSubType,
+    #[strum(serialize = "k_space_info")]
+    #[serde(rename = "k_space_info")]
+    KSpaceInfo,
     #[strum(serialize = "def")]
     #[serde(rename = "def")]
     Default,

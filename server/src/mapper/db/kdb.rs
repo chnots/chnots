@@ -267,12 +267,6 @@ impl KDbExecutorBehaiver for KDbTx<'_> {
     }
 }
 
-impl<'a> KDbConnBehaiver<'a, &'a KDbTx<'a>> for KDbTx<'a> {
-    async fn tx(&'a mut self) -> AResult<&'a KDbTx<'a>> {
-        Ok(self)
-    }
-}
-
 pub(crate) enum KDbRow {
     Postgres(tokio_postgres::Row),
     SqlValueRow(SqlValueRow<SqlValueOwned>),

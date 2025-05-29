@@ -3,7 +3,7 @@ use chin_tools::{AResult, EResult};
 
 use crate::krate::{
     chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
-    kspace::mapper::KSpaceMapper, llmchat::mapper::LLMChatMapper,
+    llmchat::mapper::LLMChatMapper,
 };
 
 use super::{

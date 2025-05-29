@@ -3,7 +3,7 @@ use chin_sql::{SqlInserter, SqlReader, SqlUpdater, Wheres};
 use chrono::Local;
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbConnBehaiver, KDbRowBehavier, KDbTx},
+    mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier},
     model::dto::KReq,
 };
 

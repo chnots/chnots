@@ -1,7 +1,6 @@
 use chin_sql::{IntoSqlSeg, SqlSeg};
 use chin_tools::AResult;
 use deadpool_postgres::{Client, Transaction};
-use tokio_postgres::GenericClient;
 
 use crate::{
     mapper::db::{

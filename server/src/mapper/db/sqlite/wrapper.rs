@@ -126,12 +126,6 @@ impl<'a> KDbConnBehaiver<'a, ActorSqliteTxClient> for ActorSqliteConnClient {
     }
 }
 
-impl<'a> KDbConnBehaiver<'a, &'a ActorSqliteTxClient> for ActorSqliteTxClient {
-    async fn tx(&'a mut self) -> AResult<&'a ActorSqliteTxClient> {
-        Ok(self)
-    }
-}
-
 impl KDbTransactionBehaiver for ActorSqliteTxClient {
     async fn cmt(self) -> chin_tools::EResult {
         self.commit().await?;
