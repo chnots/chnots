@@ -1,5 +1,5 @@
-import request from "@/utils/request";
-import { BASE_URL } from "@/utils/request";
+import request from "@/lib/request";
+import { BASE_URL } from "@/lib/request";
 import {
   InsertInlineKFileReq,
   KKVInserterReq,

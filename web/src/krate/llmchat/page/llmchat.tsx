@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useCommonStore } from "@/common/store/common";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import { v4 as uuid } from "uuid";
-import { genId } from "@/utils/id_util";
+import { genId } from "@/lib/id_util";
 
 const LLMChatPage = () => {
   const { refreshAll, currentSessionId, setCurrentSessionId } =

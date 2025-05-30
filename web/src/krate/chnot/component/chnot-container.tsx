@@ -16,7 +16,7 @@ import MarkdownEditor from "./chnot-markdown-editor";
 import { ChnotType } from "@/krate/chnot/store/db";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
 import KButton, { KButtonProps } from "@/common/component/kbutton";
-import { enumFromStringValue } from "@/utils/enum-util";
+import { enumFromStringValue } from "@/lib/enum-util";
 
 import * as RadixPopover from "@radix-ui/react-popover";
 import { CommonKFile } from "@/krate/kfile/components/common-kfile";

@@ -1,4 +1,4 @@
-import { insertMapAtIndex } from "@/utils/map-utils";
+import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { useKSpaceStore } from "../../kspace/store/store";

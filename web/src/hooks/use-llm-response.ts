@@ -1,6 +1,6 @@
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/db";
 import { LLMChatContainerSession } from "@/krate/llmchat/store/dto";
-import { genId } from "@/utils/id_util";
+import { genId } from "@/lib/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

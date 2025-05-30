@@ -1,4 +1,4 @@
-import request from "@/utils/request";
+import request from "@/lib/request";
 import {
   ChnotDeletionReq,
   ChnotOverwriteReq,
@@ -44,7 +44,8 @@ export const chnotKFileRelationInsert = async (
   return await request.post(`api/v1/chnot-tag-names`, req);
 };
 
-
-export const toentGuess = async (req: ToentGuessReq): Promise<ToentGuessRsp> => {
+export const toentGuess = async (
+  req: ToentGuessReq
+): Promise<ToentGuessRsp> => {
   return await request.post(`api/v1/toent-guess`, req);
-}
+};

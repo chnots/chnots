@@ -1,15 +1,8 @@
-import { insertMapAtIndex } from "@/utils/map-utils";
+import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import {
-  LLMChatSession,
-  LLMChatBot,
-  LLMChatTemplate,
-} from "./db";
-import {
-  LLMChatListBotRsp,
-  LLMChatListSessionRsp,
-} from "./dto";
+import { LLMChatSession, LLMChatBot, LLMChatTemplate } from "./db";
+import { LLMChatListBotRsp, LLMChatListSessionRsp } from "./dto";
 import {
   llmchatBotList,
   llmchatSessionList,

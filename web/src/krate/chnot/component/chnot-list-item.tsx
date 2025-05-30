@@ -1,5 +1,5 @@
 import React, { ForwardedRef } from "react";
-import { chnotShortDate } from "@/utils/date-utils";
+import { chnotShortDate } from "@/lib/date-utils";
 import KListItem from "@/common/component/klistitem";
 import Icon from "@/common/component/icon";
 import { useChnotStore } from "@/krate/chnot/store/store";

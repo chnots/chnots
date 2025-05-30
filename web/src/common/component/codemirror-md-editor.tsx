@@ -9,7 +9,7 @@ import {
   markdownLanguage,
 } from "@codemirror/lang-markdown";
 import { toast } from "sonner";
-import { html2mdAsync } from "@/utils/markdown-utils";
+import { html2mdAsync } from "@/lib/markdown-utils";
 import React from "react";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";

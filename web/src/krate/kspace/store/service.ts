@@ -1,5 +1,10 @@
-import request from "@/utils/request";
-import { KSpaceOverwriteReq, KSpaceOverwriteRsp, KSpaceQueryAllReq, KSpaceQueryAllRsp } from "./dto";
+import request from "@/lib/request";
+import {
+  KSpaceOverwriteReq,
+  KSpaceOverwriteRsp,
+  KSpaceQueryAllReq,
+  KSpaceQueryAllRsp,
+} from "./dto";
 
 export const allKSpaces = async (
   req: KSpaceQueryAllReq
@@ -12,5 +17,3 @@ export const overwriteKSpace = async (
 ): Promise<KSpaceOverwriteRsp> => {
   return await request.put(`/api/v1/kspace`, req);
 };
-
-

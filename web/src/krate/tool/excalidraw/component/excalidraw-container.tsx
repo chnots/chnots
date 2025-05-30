@@ -29,7 +29,7 @@ import {
 } from "@/krate/kfile/store/service";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
 import { useSearchParams } from "react-router-dom";
-import { resolvablePromise, ResolvablePromise } from "@/utils/resolve-promise";
+import { resolvablePromise, ResolvablePromise } from "@/lib/resolve-promise";
 import md5 from "crypto-js/md5";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 
