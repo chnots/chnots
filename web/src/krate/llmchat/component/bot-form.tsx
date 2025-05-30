@@ -1,4 +1,4 @@
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 import KSVG from "@/common/component/svg";
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/db";
 import React, { RefObject, useEffect, useRef, useState } from "react";
@@ -194,25 +194,14 @@ const BotForm = ({
           </div>
           <LLMChatBotBodyOpenAIV1Body bodyRef={bodyRef} />
           <div className="flex flex-row justify-center space-x-4">
-            <KButton
-              className="p-2"
-              type="submit"
-              aria-label="Submit Template"
-              showBorder={true}
-            >
+            <KButton className="p-2" type="submit" aria-label="Submit Template">
               Submit
             </KButton>
-            <KButton
-              className="p-2"
-              aria-label="Close"
-              onClick={onClose}
-              showBorder={true}
-            >
+            <KButton className="p-2" aria-label="Close" onClick={onClose}>
               Close
             </KButton>
             <KButton
               className="p-2"
-              showBorder={true}
               aria-label="Duplicate"
               onClick={() => {
                 setFormData((prev) => {

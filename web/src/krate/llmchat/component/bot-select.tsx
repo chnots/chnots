@@ -1,7 +1,7 @@
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import { useRef, useState } from "react";
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 import { LLMChatBot } from "@/krate/llmchat/store/db";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
@@ -41,7 +41,7 @@ const LLMChatBotSelect = () => {
     settings?: () => void;
   }) => {
     return (
-      <KButton className="py-1 px-2 text-xs justify-between w-full" falseButton>
+      <KButton className="py-1 px-2 text-xs justify-between w-full">
         <div
           className="flex flex-row space-x-2"
           onClick={() => {

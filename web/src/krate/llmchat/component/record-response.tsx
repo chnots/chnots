@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/krate/llmchat/store/service";
 import Icon from "@/common/component/icon";
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 
 export const RecordAnswering = ({
   containerSession,

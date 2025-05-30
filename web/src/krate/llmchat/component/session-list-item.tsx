@@ -7,7 +7,7 @@ import { LLMChatSession } from "@/krate/llmchat/store/db";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import { llmchatSessionUpdate } from "@/krate/llmchat/store/service";
 import * as Separator from "@radix-ui/react-separator";
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 
 const LLMChatSessionListItem = React.forwardRef(
   (

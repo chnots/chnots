@@ -1,5 +1,18 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
+
+/* https://github.com/uiwjs/react-markdown-preview/issues/200#issuecomment-1235548530 */
+@layer base {
+  ul {
+    @apply list-disc;
+  }
+
+  ol {
+    @apply list-decimal;
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -120,4 +133,42 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  .wmde-markdown {
+    background-color: transparent !important;
+  }
+}
+
+@utility kc-basic {
+  @apply bg-background text-foreground;
+}
+
+@utility kc-basic-with-bdr {
+  @apply bg-background text-foreground border-border;
+}
+
+@utility kc-active {
+  @apply bg-accent text-accent-foreground border-border;
+}
+
+@utility kc-inactive {
+  @apply bg-secondary text-secondary-foreground border-border;
+}
+
+@utility kc-muted {
+  @apply bg-muted text-muted-foreground border-border;
+}
+
+@utility kc-accent {
+  @apply bg-accent text-accent-foreground border-border;
+}
+
+@utility kbut {
+  @apply border border-transparent rounded-xl cursor-pointer;
+}
+
+@utility no-scrollbar {
+  @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
 }

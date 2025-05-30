@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import ChnotListItem from "./chnot-list-item";
 import { useChnotStore } from "@/krate/chnot/store/store";
 import KPageList from "@/common/component/kpagelist";
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
 import { chnotTagNames } from "@/krate/chnot/store/service";
 import ChnotTagListItem from "./chnot-tag-list-item";

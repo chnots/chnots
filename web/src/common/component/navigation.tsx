@@ -4,10 +4,10 @@ import { useTranslate } from "@/lib/i18n";
 import Icon from "./icon";
 import { RoutePaths } from "@/router";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
-import KButton from "./kbutton";
 import { useCommonStore } from "@/common/store/common";
 import useParamState from "@/hooks/use-param-state";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
+import { Button } from "./ui/button";
 
 interface NavLinkItem {
   id: string;
@@ -74,14 +74,14 @@ const Navigation = ({
         className
       )}
     >
-      <KButton
+      <Button
         onClick={() => {
           toggleSidebar();
         }}
         className="p-2 hover:cursor-pointer rounded-xl"
       >
         <Icon.Sidebar />
-      </KButton>
+      </Button>
       <KSpaceSelect
         onSelect={(ns) => {
           changeKSpace(ns);

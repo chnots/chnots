@@ -7,7 +7,7 @@ import {
 import { genId } from "@/lib/id_util";
 import { useCallback, useEffect, useState } from "react";
 
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 import RelativeTime from "@/common/component/relative-time";
 import { humanFileSize } from "@/lib/unit-utils";
 import FileNameToIcon from "./filename-to-icon";

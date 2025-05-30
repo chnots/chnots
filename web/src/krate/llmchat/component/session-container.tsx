@@ -222,7 +222,7 @@ const SessionContainer = ({
   });
 
   return (
-    <div className="bg-active flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
+    <div className="flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
       <div
         className="flex flex-row h-full overflow-y-auto justify-center w-full"
         onScroll={onScroll}

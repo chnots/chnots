@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 import LLMChatBotSelect from "./bot-select";
 
 const LLMChatSessionInput = ({
@@ -62,7 +62,6 @@ const LLMChatSessionInput = ({
                 onNewButton();
               }}
               className="p-1 h-7 mx-2 text-xs"
-              showBorder={true}
             >
               <Icon.BadgePlus className="w-4 h-4" />
               <span>New</span>

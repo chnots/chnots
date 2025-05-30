@@ -62,7 +62,7 @@ const App = () => {
       <div className="h-full justify-start items-start select-none  z-2 border-b w-16">
         <Navigation />
       </div>
-      <div className="bg-kbg w-full h-full">
+      <div className="w-full h-full">
         <Suspense fallback={<LoadingPage />}>
           <Outlet />
         </Suspense>

@@ -15,13 +15,19 @@ import MarkdownViewer from "./chnot-markdown-viewer";
 import MarkdownEditor from "./chnot-markdown-editor";
 import { ChnotType } from "@/krate/chnot/store/db";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
-import KButton, { KButtonProps } from "@/common/component/kbutton";
 import { enumFromStringValue } from "@/lib/enum-util";
 
-import * as RadixPopover from "@radix-ui/react-popover";
 import { CommonKFile } from "@/krate/kfile/components/common-kfile";
 import { insertKKV } from "@/krate/kfile/store/service";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
+import { Button } from "@/common/component/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/common/component/ui/popover";
+import { PopoverAnchor } from "@radix-ui/react-popover";
+import { Tabs, TabsList, TabsTrigger } from "@/common/component/ui/tabs";
 
 enum RequestState {
   Saved,
@@ -34,14 +40,6 @@ interface ChnotEditState {
   requestState: RequestState;
   isComposing: boolean;
 }
-
-const TopbarButton = (props: KButtonProps) => {
-  return (
-    <KButton {...props} className={clsx("px-2 py-1", props.className)}>
-      {props.children}
-    </KButton>
-  );
-};
 
 export const ChnotContainer = ({
   chnot,
@@ -146,50 +144,45 @@ export const ChnotContainer = ({
     true
   );
 
-  const ChnotTypeButton = ({
-    thisChnotType,
-    children,
-  }: {
-    thisChnotType: ChnotType;
-    children: React.ReactNode;
-  }) => {
-    return (
-      <TopbarButton
-        className={chnotType === thisChnotType ? "kc-accent" : ""}
-        onClick={() => {
-          setChnotType(thisChnotType);
-        }}
-      >
-        {children}
-      </TopbarButton>
-    );
-  };
-
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
       <div className="w-full flex items-center border-b kc-basic-with-bdr px-3 justify-between text-xs align-middle">
         <div className="text-xs flex space-x-2 p-1 items-center">
           {onClickNewButton &&
             (chnot ? (
-              <TopbarButton
-                className="py-1.5"
-                onClick={() => onClickNewButton()}
-              >
+              <Button className="py-1.5" onClick={() => onClickNewButton()}>
                 <Icon.BadgePlus className="w-4 h-4" />
                 <span>New</span>
-              </TopbarButton>
+              </Button>
             ) : (
-              <div className="flex border kc-active rounded-xl p-0.5 space-x-2">
-                <ChnotTypeButton thisChnotType={ChnotType.MarkdownWithToent}>
-                  <Icon.TextCursor className="w-4 h-4" />
-                </ChnotTypeButton>
-                <ChnotTypeButton thisChnotType={ChnotType.ExcalidrawV1}>
-                  <Icon.Pen className="w-4 h-4" />
-                </ChnotTypeButton>
-                <ChnotTypeButton thisChnotType={ChnotType.KFileV1}>
-                  <Icon.File className="w-4 h-4" />
-                </ChnotTypeButton>
-              </div>
+              <Tabs defaultValue={chnotType}>
+                <TabsList>
+                  <TabsTrigger
+                    onClick={() => {
+                      setChnotType(ChnotType.MarkdownWithToent);
+                    }}
+                    value={ChnotType.MarkdownWithToent}
+                  >
+                    <Icon.TextCursor className="w-4 h-4" />
+                  </TabsTrigger>
+                  <TabsTrigger
+                    onClick={() => {
+                      setChnotType(ChnotType.ExcalidrawV1);
+                    }}
+                    value={ChnotType.ExcalidrawV1}
+                  >
+                    <Icon.Pen className="w-4 h-4" />
+                  </TabsTrigger>
+                  <TabsTrigger
+                    onClick={() => {
+                      setChnotType(ChnotType.KFileV1);
+                    }}
+                    value={ChnotType.KFileV1}
+                  >
+                    <Icon.File className="w-4 h-4" />
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             ))}
           {chnot && (
             <div className="bg-inactive border kc-active rounded-xl p-0.5 flex space-x-1">
@@ -209,7 +202,7 @@ export const ChnotContainer = ({
                 }}
                 currentKSpace={chnot.meta.kspace}
               />
-              <TopbarButton
+              <Button
                 onClick={() => {
                   if (globalViewMode) {
                     globalViewMode.current = !viewMode;
@@ -218,17 +211,17 @@ export const ChnotContainer = ({
                 }}
               >
                 <Icon.Eye className="w-4 h-4" />
-              </TopbarButton>
+              </Button>
               {chnotType !== ChnotType.MarkdownWithToent && (
-                <RadixPopover.Root>
-                  <RadixPopover.Trigger>
-                    <TopbarButton falseButton={true}>
+                <Popover>
+                  <PopoverTrigger>
+                    <Button>
                       <Icon.NotebookText className="w-4 h-4" />
-                    </TopbarButton>
-                  </RadixPopover.Trigger>
+                    </Button>
+                  </PopoverTrigger>
 
-                  <RadixPopover.Portal>
-                    <RadixPopover.Content
+                  <PopoverAnchor>
+                    <PopoverContent
                       className="PopoverContent z-10 rounded-xl p-2 max-w-240 w-120"
                       sideOffset={5}
                     >
@@ -238,9 +231,9 @@ export const ChnotContainer = ({
                         content={chnot?.record.content}
                         foldGutter={false}
                       />
-                    </RadixPopover.Content>
-                  </RadixPopover.Portal>
-                </RadixPopover.Root>
+                    </PopoverContent>
+                  </PopoverAnchor>
+                </Popover>
               )}
             </div>
           )}
@@ -264,7 +257,7 @@ export const ChnotContainer = ({
         </div>
       </div>
       <div
-        className="h-full w-full flex items-center justify-center align-middle overflow-auto content-center bg-active"
+        className="h-full w-full flex items-center justify-center align-middle overflow-auto content-centere"
         ref={cmRef}
       >
         {chnotType === ChnotType.MarkdownWithToent &&

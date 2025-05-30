@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Icon from "@/common/component/icon";
 import React, { useCallback, useRef, useState } from "react";
-import KButton from "@/common/component/kbutton";
+import { Button as KButton } from "@/common/component/ui/button";
 
 const getAvatar = (role: string) => {
   switch (role) {
