@@ -1,5 +1,7 @@
+import EditableTable from "@/common/component/editable-table";
+
 const KSpaceSettings = () => {
-  return <></>;
+  return <EditableTable />;
 };
 
 export default KSpaceSettings;
