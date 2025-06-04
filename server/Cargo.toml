@@ -22,7 +22,8 @@ tower-http = { version = "^0", features = [
 mime_guess = { version = "2" }
 
 # to embed frontend into the server
-rust-embed = { version = "^8", features = ["axum"] }
+# with compression to have a smaller embedded data.
+rust-embed = { version = "^8", features = ["axum", "compression"] }
 bytes = { version = "^1", optional = true }
 
 
@@ -86,6 +87,7 @@ itertools = "0.14.0"
 axum_typed_multipart = "0.16.2"
 blake3 = "1.8.2"
 tracing-log = "0.2.0"
+enum-tag = "0.3.0"
 
 
 [features]
