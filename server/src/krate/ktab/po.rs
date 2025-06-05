@@ -1,81 +1,36 @@
 use core::str;
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
 
-use chin_sql::{ChinSqlError, DbType, GenerateTableSql};
+use chin_sql::{DbType, GenerateTableSql};
 use chrono::{DateTime, FixedOffset};
 use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) enum KTabColumnType {
-    Bool,
-    I8,
-    I16,
-    I32,
+#[serde(rename_all = "lowercase")]
+pub(crate) enum KTabColumnStoreKind {
     I64,
     F64,
     Str,
-    FixedOffset,
-    Utc,
-    Blob,
-    Opt(Option<Box<KTabColumnType>>),
-}
-
-impl Display for KTabColumnType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match &self {
-            KTabColumnType::Bool => "bool".into(),
-            KTabColumnType::I8 => "i8".into(),
-            KTabColumnType::I16 => "i16".into(),
-            KTabColumnType::I32 => "i32".into(),
-            KTabColumnType::I64 => "i64".into(),
-            KTabColumnType::F64 => "f64".into(),
-            KTabColumnType::Str => "str".into(),
-            KTabColumnType::FixedOffset => "fixedoffset".into(),
-            KTabColumnType::Utc => "utc".into(),
-            KTabColumnType::Blob => "blob".into(),
-            KTabColumnType::Opt(sql_value_type) => match sql_value_type {
-                Some(v) => format!("opt.{}", v),
-                None => unreachable!(),
-            },
-        };
-        f.write_str(s.as_str())
-    }
-}
-
-impl TryFrom<&str> for KTabColumnType {
-    type Error = ChinSqlError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let res = match value {
-            "bool" => KTabColumnType::Bool,
-            s => {
-                if let Some(s) = s.strip_prefix("opt.") {
-                    return KTabColumnType::try_from(s);
-                } else {
-                    Err(ChinSqlError::TransformError(format!(
-                        "error getting sql value type, {}",
-                        s
-                    )))?
-                }
-            }
-        };
-
-        Ok(res)
-    }
+    Date,
+    // Blob,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct KTabColumnMeta {
-    pub(crate) index: u32,
+    pub(crate) idx: i64,
     pub(crate) name: String,
     pub(crate) comment: String,
-    pub(crate) stype: KTabColumnType,
+    pub(crate) store_kind: KTabColumnStoreKind,
+    pub(crate) view_kind: String,
+    pub(crate) required: bool,
+    pub(crate) order_by: i32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
 pub(crate) struct KTabMeta {
-    pub(crate) id: String,
+    #[gts_primary]
+    pub(crate) id: i64,
     #[gts_type = "String"]
     pub(crate) columns: HashMap<String, KTabColumnMeta>,
     pub(crate) table_name: String,
@@ -88,12 +43,12 @@ pub(crate) struct KTabMeta {
 }
 
 macro_rules! type_table {
-    ($suffix:tt, $data_type:ty $(, #[$attr:meta])*) => {
+    ($sname:tt, $data_type:ty $(, #[$attr:meta])*) => {
         #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
-        pub(crate) struct $suffix {
-            pub(crate) table_id: String,
-            pub(crate) col_idx: i32,
-            pub(crate) row_idx: i32,
+        pub(crate) struct $sname {
+            pub(crate) table_id: i64,
+            pub(crate) col_idx: i64, // actually is the insert time(unix timestamp), so it is easy for data merge
+            pub(crate) row_idx: i64, // actually is the insert time(unix timestamp), so it is easy for data merge
             pub(crate) insert_time: DateTime<FixedOffset>,
             pub(crate) delete_time: Option<DateTime<FixedOffset>>,
             $(#[$attr])*
@@ -102,7 +57,17 @@ macro_rules! type_table {
     }
 }
 
-type_table!(KTabCellStr1024, String, #[gts_length = 1024]);
 type_table!(KTabCellText, String);
-type_table!(KTabCellInteger, i64);
+type_table!(KTabCellI64, i64);
 type_table!(KTabCellDate, DateTime<FixedOffset>);
+type_table!(KTabCellF64, f64);
+
+#[cfg(test)]
+mod ktab_column_type_test {
+    #[test]
+    fn test() {
+        use crate::krate::ktab::po::KTabColumnStoreKind;
+
+        println!("{:?}", serde_json::to_string(&KTabColumnStoreKind::I64));
+    }
+}

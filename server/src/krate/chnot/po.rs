@@ -76,6 +76,10 @@ pub(crate) enum ChnotKind {
     #[strum(serialize = "resov1")]
     #[serde(rename = "resov1")]
     KFileV1,
+
+    #[strum(serialize = "ktabv1")]
+    #[serde(rename = "ktabv1")]
+    KTabV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]

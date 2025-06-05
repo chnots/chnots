@@ -1,83 +1,183 @@
+use std::collections::HashMap;
+
+use chin_sql::SqlValue;
+use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) enum KTabCell {
-    String(KTabCellStr1024),
-    Text(KTabCellText),
-    Integer(KTabCellInteger),
-    Date(KTabCellDate),
+pub(crate) struct KTabMetaOverwriteReq {
+    pub(crate) meta: KTabMeta,
 }
 
-macro_rules! into_cell {
-    ($sub_type:tt, $etype:tt) => {
-        impl From<$sub_type> for KTabCell {
-            fn from(value: $sub_type) -> Self {
-                Self::$etype(value)
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabMetaOverwriteRsp {}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabMetaQueryReq {
+    pub(crate) table_id: i64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabMetaQueryRsp {
+    pub(crate) meta: Option<KTabMeta>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabCellsOverwriteReq {
+    pub(crate) table_id: i64,
+    pub(crate) cells: Vec<KTabViewCell>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabCellsOverwriteRsp {}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) enum KTabRowsQueryReqFilter {
+    OneRowByIdx {
+        row_idx: usize,
+    },
+    RowsByIdx {
+        row_idx_included: usize,
+        page_size: usize,
+    },
+    FieldSortPage {
+        field_name: String,
+        field_kind: KTabColumnStoreKind,
+        start_included: usize,
+        page_size: usize,
+    },
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabRowsQueryReq {
+    pub(crate) table_id: i64,
+    pub(crate) filter: KTabRowsQueryReqFilter,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabRowsQueryRspRow {
+    pub(crate) row_idx: i64,
+    pub(crate) cells: Vec<KTabViewCell>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabRowsQueryRsp {
+    pub(crate) rows: Vec<KTabRowsQueryRspRow>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) enum KTabStoreValue {
+    I64(i64),
+    F64(f64),
+    Text(String),
+    Date(DateTime<FixedOffset>),
+    // Blob(Vec<u8>),
+}
+
+impl<'a> From<KTabStoreValue> for SqlValue<'a> {
+    fn from(value: KTabStoreValue) -> Self {
+        match value {
+            KTabStoreValue::I64(v) => v.into(),
+            KTabStoreValue::F64(v) => v.into(),
+            KTabStoreValue::Text(v) => v.into(),
+            KTabStoreValue::Date(v) => v.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabViewCell {
+    pub(crate) row_idx: i64,
+    pub(crate) column_name: String,
+    pub(crate) value: KTabStoreValue,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct KTabCell {
+    pub(crate) table_id: i64,
+    pub(crate) col_idx: i64,
+    pub(crate) row_idx: i64,
+    pub(crate) insert_time: DateTime<FixedOffset>,
+    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
+    pub(crate) cell_data: KTabStoreValue,
+}
+
+impl KTabCell {
+    pub(super) fn into_view(self, column_names: &HashMap<i64, String>) -> Option<KTabViewCell> {
+        let cell = KTabViewCell {
+            row_idx: self.row_idx,
+            column_name: column_names.get(&self.col_idx)?.to_string(),
+            value: self.cell_data,
+        };
+
+        Some(cell)
+    }
+}
+
+macro_rules! impl_from_ktab_cell {
+    ($source:tt, $variant:ident) => {
+        impl From<$source> for KTabCell {
+            fn from(value: $source) -> Self {
+                let $source {
+                    table_id,
+                    col_idx,
+                    row_idx,
+                    insert_time,
+                    delete_time,
+                    cell_data,
+                } = value;
+
+                Self {
+                    table_id,
+                    col_idx,
+                    row_idx,
+                    insert_time,
+                    delete_time,
+                    cell_data: KTabStoreValue::$variant(cell_data),
+                }
             }
         }
     };
 }
+impl_from_ktab_cell! {KTabCellDate, Date}
+impl_from_ktab_cell! {KTabCellText, Text}
+impl_from_ktab_cell! {KTabCellI64, I64}
+impl_from_ktab_cell! {KTabCellF64, F64}
 
-into_cell! {KTabCellStr1024, String}
-into_cell! {KTabCellText, Text}
-into_cell! {KTabCellInteger, Integer}
-into_cell! {KTabCellDate, Date}
+#[cfg(test)]
+mod tests {
+    use crate::krate::ktab::{
+        KTabCellsOverwriteReq, KTabStoreValue, KTabRowsQueryReq, KTabViewCell,
+    };
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabOverwriteMetaReq {
-    pub(crate) meta: KTabMeta,
-}
+    #[test]
+    fn test_key() {
+        let req = KTabRowsQueryReq {
+            table_id: 100,
+            filter: super::KTabRowsQueryReqFilter::FieldSortPage {
+                field_name: "fn".to_owned(),
+                field_kind: crate::krate::ktab::KTabColumnStoreKind::Date,
+                start_included: 0,
+                page_size: 100,
+            },
+        };
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabOverwriteMetaRsp {}
+        println!("{:#?}", serde_json::to_string(&req).unwrap());
+    }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabOverwriteRowReq {
-    pub(crate) row: Vec<KTabCell>,
-}
+    #[test]
+    fn test_ktab_overwrite_cells_req() {
+        let req = KTabCellsOverwriteReq {
+            table_id: 123,
+            cells: vec![KTabViewCell {
+                row_idx: 1,
+                column_name: "int".into(),
+                value: KTabStoreValue::I64(123),
+            }],
+        };
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabOverwriteRowRsp {}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabOverwriteCellReq {
-    pub(crate) cell: KTabCell,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabOverwriteCellRsp {}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabQueryRowReq {
-    pub(crate) table_id: String,
-    pub(crate) row_index: i64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabQueryRowRsp {
-    pub(crate) row: Vec<KTabCell>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabQueryTableMetaReq {
-    pub(crate) table_name: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabQueryTableMetaRsp {
-    pub(crate) meta: KTabMeta,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabQueryTableDataReq {
-    pub(crate) table_id: String,
-    pub(crate) start_index: usize,
-    pub(crate) page_size: usize,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabQueryTableDataRsp {
-    pub(crate) cells: Vec<KTabCell>,
+        println!("{:#?}", serde_json::to_string(&req).unwrap());
+    }
 }

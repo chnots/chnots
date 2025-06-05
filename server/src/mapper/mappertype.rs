@@ -2,7 +2,8 @@ use chin_sql::OnConflict;
 use chin_tools::{AResult, EResult};
 
 use crate::krate::{
-    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper, kspace::mapper::KSpaceMapper, llmchat::mapper::LLMChatMapper
+    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
+    kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper, llmchat::mapper::LLMChatMapper,
 };
 
 use super::{
@@ -35,6 +36,7 @@ impl MapperType {
         self.ensure_table_kkv().await?;
         self.ensure_table_llm_chat().await?;
         self.kspace_ensure_data().await?;
+        self.ensure_ktab_tables().await?;
         Ok(())
     }
 }
