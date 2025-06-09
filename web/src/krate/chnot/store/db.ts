@@ -2,6 +2,7 @@ export enum ChnotType {
   MarkdownWithToent = "mdwt",
   ExcalidrawV1 = "exdrv1",
   KFileV1 = "resov1",
+  KTab = "ktabv1",
 }
 
 export interface ChnotRecord {

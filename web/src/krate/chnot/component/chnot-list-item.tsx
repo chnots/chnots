@@ -51,6 +51,9 @@ const ChnotListItem = React.forwardRef(
             {chnot.meta.kind === ChnotType.KFileV1 && (
               <Icon.File className="h-4 w-4 min-w-4 text-red-600" />
             )}
+            {chnot.meta.kind === ChnotType.KTab && (
+              <Icon.Table className="h-4 w-4 min-w-4 text-purple-600" />
+            )}
             <div
               className="text-gray-600 mr-2"
               title={chnot.meta.insert_time.toISOString()}

@@ -18,6 +18,8 @@ import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
 
+import { clouds } from "thememirror";
+
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
     // adopted from https://github.com/Zettlr/Zettlr/blob/develop/source/common/modules/markdown-editor/plugins/md-paste-drop-handlers.ts
@@ -170,7 +172,8 @@ const CodeMirrorEditor = ({
   const _extensions = [
     md,
     EditorView.lineWrapping,
-    editorTheme,
+    // editorTheme,
+    clouds,
     eventHandlers,
     autocompletion({
       override: [(context) => autoCompletion(context)],

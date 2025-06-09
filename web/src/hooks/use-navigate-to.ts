@@ -4,7 +4,6 @@ const useNavigateTo = () => {
   const navigateTo = useNavigate();
 
   const navigateToWithViewTransition = (to: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const document = window.document as any;
     if (!document.startViewTransition) {
       navigateTo(to);

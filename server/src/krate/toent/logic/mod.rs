@@ -157,7 +157,7 @@ impl PossibleToent {
 
     pub(crate) fn guess(input: &str) -> Vec<PossibleToent> {
         if let Some(mut guesses) = EventEnum::guess(&input.into()) {
-            guesses.sort_by(|e1, e2| e2.1.cmp(&e1.1));
+            guesses.sort_by(|e1, e2| e2.1.partial_cmp(&e1.1).unwrap_or(std::cmp::Ordering::Equal));
 
             guesses
                 .into_iter()

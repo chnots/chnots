@@ -28,6 +28,9 @@ import {
 } from "@/common/component/ui/popover";
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import { Tabs, TabsList, TabsTrigger } from "@/common/component/ui/tabs";
+import { Toggle } from "@/common/component/ui/toggle";
+import { KTabMeta } from "@/krate/ktab/store/po";
+import KTabChnot from "@/krate/ktab/component/ktab-container";
 
 enum RequestState {
   Saved,
@@ -54,6 +57,8 @@ export const ChnotContainer = ({
   onClickNewButton?: () => void;
   globalViewMode?: React.RefObject<boolean>;
 }) => {
+  console.log("render ChnotContainer");
+
   const { currentKSpace } = useKSpaceStore();
   const { overwriteChnot, validateChnotCache, listViewType } = useChnotStore();
 
@@ -127,7 +132,7 @@ export const ChnotContainer = ({
     [setEditState, editState, onChnotChange, chnot, chnotType]
   );
 
-  const onOtherTypeInit = useCallback(
+  const onSubKindRelationPersist = useCallback(
     async (content: string, subTypeId: string) => {
       if (!chnot) {
         saveContent(content, subTypeId);
@@ -181,6 +186,14 @@ export const ChnotContainer = ({
                   >
                     <Icon.File className="w-4 h-4" />
                   </TabsTrigger>
+                  <TabsTrigger
+                    onClick={() => {
+                      setChnotType(ChnotType.KTab);
+                    }}
+                    value={ChnotType.KTab}
+                  >
+                    <Icon.Table className="w-4 h-4" />
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             ))}
@@ -215,9 +228,7 @@ export const ChnotContainer = ({
               {chnotType !== ChnotType.MarkdownWithToent && (
                 <Popover>
                   <PopoverTrigger>
-                    <Button>
-                      <Icon.NotebookText className="w-4 h-4" />
-                    </Button>
+                    <Icon.NotebookText className="w-4 h-4" />
                   </PopoverTrigger>
 
                   <PopoverAnchor>
@@ -238,6 +249,11 @@ export const ChnotContainer = ({
             </div>
           )}
         </div>
+        {chnot && chnotType === ChnotType.KTab && (
+          <Toggle>
+            <Icon.Settings />
+          </Toggle>
+        )}
 
         <div className="flex space-x-2 items-center">
           <div>{chnot?.record.insert_time.toLocaleDateString()}</div>
@@ -257,7 +273,7 @@ export const ChnotContainer = ({
         </div>
       </div>
       <div
-        className="h-full w-full flex items-center justify-center align-middle overflow-auto content-centere"
+        className="h-full w-full flex justify-center overflow-auto content-centere"
         ref={cmRef}
       >
         {chnotType === ChnotType.MarkdownWithToent &&
@@ -287,7 +303,7 @@ export const ChnotContainer = ({
           <ExcalidrawContainer
             chnotMetaId={chnot?.meta.id}
             afterSaveCallback={(id) => {
-              onOtherTypeInit(
+              onSubKindRelationPersist(
                 `# Excalidraw ${new Date().toLocaleTimeString()}\n\n${
                   listViewTypeGetTagPath(listViewType) ?? ""
                 }`,
@@ -300,13 +316,28 @@ export const ChnotContainer = ({
           <CommonKFile
             chnotMetaId={chnot?.meta.id}
             onSave={(r) => {
-              onOtherTypeInit(
+              onSubKindRelationPersist(
                 `# ${r.ori_filename}\n\n${
                   listViewTypeGetTagPath(listViewType) ?? ""
                 }`,
                 r.id
               );
             }}
+          />
+        )}
+        {chnotType === ChnotType.KTab && (
+          <KTabChnot
+            chnotMetaId={chnot?.meta.id}
+            onInitialSave={async (meta: KTabMeta) => {
+              onSubKindRelationPersist(
+                `# Table ${meta.table_name}\n\n${meta.table_comment}\n\n ${
+                  listViewTypeGetTagPath(listViewType) ?? ""
+                }`,
+                meta.id.toString()
+              );
+            }}
+            kspace={currentKSpace.name}
+            isEditing={!viewMode}
           />
         )}
       </div>
