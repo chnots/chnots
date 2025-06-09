@@ -162,7 +162,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatListTemplateRsp> {
         let query = SqlReader::read_all(LLMChatTemplate::TABLE)
             .r#where(Wheres::and([Wheres::is_null(LLMChatTemplate::DELETE_TIME)]))
-            .raw("order by insert_time desc");
+            .sov("order by insert_time desc");
 
         let templates: Vec<LLMChatTemplate> = self
             .conn()
@@ -185,7 +185,7 @@ impl LLMChatMapper for KDb {
                     Wheres::equal(LLMChatSession::ID, id)
                 }),
             ]))
-            .raw("order by insert_time desc");
+            .sov("order by insert_time desc");
 
         let sessions = self
             .conn()
@@ -228,7 +228,7 @@ impl LLMChatMapper for KDb {
                     |_| Wheres::is_null(LLMChatRecord::OMIT_TIME),
                 ),
             ]))
-            .raw("order by insert_time desc");
+            .sov("order by insert_time desc");
 
         let records: Vec<LLMChatRecord> = self
             .conn()

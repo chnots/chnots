@@ -8,6 +8,7 @@ use crate::mapper::db::{
     KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
+use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
 use anyhow::Ok;
 use chin_sql::{ILikeType, SqlReader, SqlValue};
@@ -23,9 +24,9 @@ const UNTAGGED_TAG: &str = "#_untagged";
 #[inline]
 fn chnot_query_sql<'a>() -> SqlReader<'a> {
     SqlReader::new()
-    .raw("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
-    .raw("m.id as mid, m.kspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
-    .raw("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
+    .sov("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
+    .sov("m.id as mid, m.kspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
+    .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
 }
 
 #[inline]
@@ -109,7 +110,7 @@ impl KDb {
                 ),
                 Wheres::equal("kspace", ns),
             ]))
-            .raw("order by tag asc")
+            .sov("order by tag asc")
             .custom(LimitOffset::new(page_size).offset(start_index));
 
         let mut data = self.conn().await?.qry_list(query, mapper).await?;
@@ -156,7 +157,14 @@ impl ChnotMapper for KDb {
         let page_size = req.page_size;
         let page_start = req.start_index;
 
-        let chnot_sql = chnot_query_sql()
+        let chnot_sql = SqlReader::new()
+        .sov("select * from ")
+        .sub("t", 
+            SqlReader::new()
+            .sov("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time, r.content as search_part,")
+            .sov("m.id as mid, m.kspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time, m.insert_time")
+            .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id ")
+            )
             .some_then(
                 match &req.view_type {
                     ChnotViewType::Timeline => None,
@@ -168,8 +176,8 @@ impl ChnotMapper for KDb {
                         }
                     }
                 },
-                |tag, ss| {
-                    ss.raw("inner join")
+                |tag, sr| {
+                    sr.sov("inner join")
                         .sub(
                             "ct",
                             SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
@@ -192,13 +200,13 @@ impl ChnotMapper for KDb {
                                 },
                             ])),
                         )
-                        .raw("on r.meta_id = ct.chnot_meta_id")
+                        .sov("on t.mid = ct.chnot_meta_id")
                 },
             )
             .r#where(Wheres::and([
                 // default without deleted chnot
                 Wheres::transform(req.with_deleted, |e| {
-                    if e.unwrap_or(false) {
+                    if e.default_false() {
                         Wheres::none()
                     } else {
                         Wheres::is_null("delete_time")
@@ -207,29 +215,29 @@ impl ChnotMapper for KDb {
                 // default without omit chnot record
                 // TODO: group by perm id
                 Wheres::transform(req.with_omitted, |e| {
-                    if e.unwrap_or(false) {
+                    if e.default_false() {
                         Wheres::none()
                     } else {
                         Wheres::is_null("omit_time")
                     }
                 }),
                 Wheres::transform(req.with_archived, |e| {
-                    if !e.unwrap_or(false) {
-                        Wheres::is_null("m.archive_time")
+                    if !e.default_false() {
+                        Wheres::is_null("t.archive_time")
                     } else {
                         Wheres::none()
                     }
                 }),
-                Wheres::equal("m.kspace", req.kspace.clone()),
+                Wheres::equal("t.kspace", req.kspace.clone()),
                 Wheres::if_some(req.query.as_ref(), |content| {
-                    Wheres::ilike("content", content, ILikeType::Fuzzy)
+                    Wheres::ilike("t.search_part", content, ILikeType::Fuzzy)
                 }),
                 // TODO how to use as_ref?
-                Wheres::if_some(req.record_id.to_owned(), |id| Wheres::equal("r.id", id)),
+                Wheres::if_some(req.record_id.to_owned(), |id| Wheres::equal("t.rid", id)),
                 // TODO how to use as_ref?
-                Wheres::if_some(req.meta_id.to_owned(), |id| Wheres::equal("r.meta_id", id)),
+                Wheres::if_some(req.meta_id.to_owned(), |id| Wheres::equal("t.mid", id)),
             ]))
-            .raw("ORDER BY m.pin_time DESC, m.insert_time desc")
+            .sov("ORDER BY t.pin_time DESC, t.insert_time desc")
             .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
 
         let cs = self

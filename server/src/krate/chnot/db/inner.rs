@@ -5,6 +5,7 @@ use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
 use chin_sql::{SqlDeleter, Wheres};
 use chin_sql::{SqlInserter, SqlReader, SqlUpdater};
+use chin_tools::utils::id_util::generate_uuid;
 use chin_tools::{utils::id_util, AResult, SharedStr};
 
 use chrono::{DateTime, FixedOffset, TimeDelta};
@@ -165,6 +166,7 @@ impl<'a> KDbTx<'a> {
             .set(ChnotMetadata::UPDATE_TIME, req.insert_time)
             .r#where(Wheres::equal(ChnotMetadata::ID, (*meta_id).to_string()));
 
+        let rec_id = generate_uuid();
         match meta_id {
             MetaId::Old(_) => {
                 // Query for existing record
@@ -211,11 +213,11 @@ impl<'a> KDbTx<'a> {
                     self.exec_and_check(update_rec(old_id), |c| c == 1).await?;
                 } else {
                     self.exec(update_omit).await?;
-                    self.exec(insert_rec(id_util::generate_uuid())).await?;
+                    self.exec(insert_rec(rec_id.clone())).await?;
                 }
             }
             MetaId::New(_) => {
-                self.exec(insert_rec(id_util::generate_uuid())).await?;
+                self.exec(insert_rec(rec_id.clone())).await?;
                 self.exec(insert_meta).await?;
             }
         }

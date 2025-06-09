@@ -31,6 +31,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/common/component/ui/tabs";
 import { Toggle } from "@/common/component/ui/toggle";
 import { KTabMeta } from "@/krate/ktab/store/po";
 import KTabChnot from "@/krate/ktab/component/ktab-container";
+import LLMChatPage from "@/krate/llmchat/page/llmchat";
+import SessionContainer from "@/krate/llmchat/component/session-container";
+import { genId } from "@/lib/id_util";
 
 enum RequestState {
   Saved,
@@ -194,6 +197,14 @@ export const ChnotContainer = ({
                   >
                     <Icon.Table className="w-4 h-4" />
                   </TabsTrigger>
+                  <TabsTrigger
+                    onClick={() => {
+                      setChnotType(ChnotType.LLMChat);
+                    }}
+                    value={ChnotType.LLMChat}
+                  >
+                    <Icon.Bot className="w-4 h-4" />
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             ))}
@@ -339,6 +350,23 @@ export const ChnotContainer = ({
             kspace={currentKSpace.name}
             isEditing={!viewMode}
           />
+        )}
+        {chnotType === ChnotType.LLMChat && (
+          <div className="w-full">
+            <SessionContainer
+              chnotMetaId={chnot?.meta.id}
+              onNewButton={() => {}}
+              afterInit={(session) => {
+                onSubKindRelationPersist(
+                  `# ${session.title}  \n\n ${
+                    listViewTypeGetTagPath(listViewType) ?? ""
+                  }`,
+                  session.id
+                );
+              }}
+              kspace={currentKSpace.name}
+            />
+          </div>
         )}
       </div>
     </div>

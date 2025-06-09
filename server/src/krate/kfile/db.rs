@@ -186,7 +186,7 @@ impl KFileMapper for KDb {
                 ),
                 Wheres::if_some(req.rid.to_owned(), |id| Wheres::equal(InlineKFile::RID, id)),
             ]))
-            .raw("order by insert_time desc")
+            .sov("order by insert_time desc")
             .custom(LimitOffset::new(1));
 
         let res = self

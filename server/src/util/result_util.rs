@@ -56,3 +56,18 @@ macro_rules! flatten_result3 {
         }
     };
 }
+
+pub(crate) trait UnwrapOr {
+    fn default_false(&self) -> bool;
+    fn default_true(&self) -> bool;
+}
+
+impl UnwrapOr for Option<bool> {
+    fn default_false(&self) -> bool {
+        *self.as_ref().unwrap_or(&false)
+    }
+
+    fn default_true(&self) -> bool {
+        *self.as_ref().unwrap_or(&true)
+    }
+}

@@ -3,6 +3,7 @@ export enum ChnotType {
   ExcalidrawV1 = "exdrv1",
   KFileV1 = "resov1",
   KTab = "ktabv1",
+  LLMChat = "llm_chat"
 }
 
 export interface ChnotRecord {

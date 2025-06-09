@@ -9,7 +9,11 @@ import React, {
 import { v4 as uuid } from "uuid";
 import { useKSpaceStore } from "@/krate/kspace/store/store";
 import { RecordAnswering } from "./record-response";
-import { LLMChatRecord, LLMChatTemplate } from "@/krate/llmchat/store/db";
+import {
+  LLMChatRecord,
+  LLMChatSession,
+  LLMChatTemplate,
+} from "@/krate/llmchat/store/db";
 import {
   LLMChatContainerSession,
   LLMChatSessionDetailRsp,
@@ -23,19 +27,25 @@ import {
 import RecordUser from "./record-user";
 import RecordAssistant from "./record-assistant";
 import LLMChatSessionInput from "./session-input";
-import Icon from "@/common/component/icon";
+import { queryKKV } from "@/krate/kfile/store/service";
 
 const SessionContainer = ({
-  sessionIdOrUUID,
+  chnotMetaId,
   onNewButton,
   afterInit,
+  kspace,
 }: {
-  sessionIdOrUUID: string;
+  kspace: string;
+  chnotMetaId?: string;
   onNewButton: () => void;
-  afterInit?: (id: string) => void;
+  afterInit?: (session: LLMChatSession) => void;
 }) => {
   const { currentBot, unshiftSession } = useLLMChatStore();
-  const { currentKSpace } = useKSpaceStore();
+  const { refreshTemplates, refreshBots } = useLLMChatStore();
+  useEffect(() => {
+    refreshTemplates();
+    refreshBots();
+  }, []);
 
   const [containerSession, setContainerSession] =
     useState<LLMChatContainerSession>();
@@ -48,9 +58,14 @@ const SessionContainer = ({
 
   // Used to load from database.
   useEffect(() => {
-    if (sessionIdOrUUID) {
-      llmchatSessionRecords(sessionIdOrUUID).then(
-        (rsp: LLMChatSessionDetailRsp) => {
+    (async () => {
+      if (chnotMetaId) {
+        const value = await queryKKV({
+          key: chnotMetaId,
+          kind: "chnot_sub_type",
+        });
+        if (value.value) {
+          const rsp = await llmchatSessionRecords(value.value);
           if (rsp.session) {
             const pids = new Set(rsp.records.map((e) => e.id));
             pids.add(rsp.session.id);
@@ -61,8 +76,9 @@ const SessionContainer = ({
             });
           }
         }
-      );
-    }
+        throw new Error(`find no ktab with chnotMetaId: ${chnotMetaId}`);
+      }
+    })();
   }, [responseId]);
 
   const newTemplateSession = useCallback(
@@ -72,7 +88,7 @@ const SessionContainer = ({
         bot_id: currentBot ? currentBot.id : "1",
         template_id: template.id,
         title: "Untitled",
-        kspace: currentKSpace.name,
+        kspace: kspace,
         insert_time: new Date(),
       };
 
@@ -111,7 +127,7 @@ const SessionContainer = ({
           await unshiftSession(session);
           pids.add(session.id);
           if (afterInit) {
-            afterInit(session.id);
+            afterInit(session);
           }
           added = true;
         }

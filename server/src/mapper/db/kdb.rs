@@ -47,7 +47,7 @@ pub(crate) trait KDbExecutorBehaiver: Send + Sync {
     fn db_type(&self) -> DbType;
 
     async fn create_table(&self, sql: &str) -> EResult {
-        self.exec(SqlReader::new().raw(sql)).await?;
+        self.exec(SqlReader::new().sov(sql)).await?;
         Ok(())
     }
 }
@@ -204,9 +204,6 @@ pub(crate) enum KDbTx<'a> {
     Sqlite(ActorSqliteTxClient),
     Postgres(Transaction<'a>),
 }
-
-unsafe impl Send for KDbTx<'_>{}
-unsafe impl Sync for KDbTx<'_>{}
 
 macro_rules! expand_kdbtx_branch {
     ($self:ident.$method:ident($($arg:expr),*)) => {
@@ -377,75 +374,3 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
     }
 }
 
-/* pub trait ExecBehavier<T> {
-    async fn exec(self, executor: &T) -> AResult<usize>;
-
-    async fn exec_and_check<C>(self, executor: &T, check_count: C) -> AResult<usize>
-    where
-        C: (FnOnce(usize) -> bool) + Send + 'static;
-}
-
-pub trait QueryBehavier<T> {
-    async fn qry_opt<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Option<E>>
-    where
-        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
-        E: Send + 'static;
-
-    async fn qry_one<'a, E, F>(self, executor: &T, mapper: F, only_one: bool) -> AResult<E>
-    where
-        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
-        E: Send + 'static;
-
-    async fn qry_list<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Vec<E>>
-    where
-        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
-        E: Send + 'static;
-}
-
-macro_rules! impl_exec_behavier {
-    ($tp:ty) => {
-        impl<T: KDbConnBehaiver> ExecBehavier<T> for $tp {
-            async fn exec(self, executor: &T) -> AResult<usize> {
-                executor.exec(self).await
-            }
-
-            async fn exec_and_check<C>(self, executor: &T, check_count: C) -> AResult<usize>
-            where
-                C: (FnOnce(usize) -> bool) + Send + 'static,
-            {
-                executor.exec_and_check(self, check_count).await
-            }
-        }
-    };
-}
-
-impl_exec_behavier!(SqlUpdater<'_>);
-impl_exec_behavier!(SqlDeleter<'_>);
-impl_exec_behavier!(SqlInserter<'_>);
-
-impl<T: KDbConnBehaiver> QueryBehavier<T> for SqlReader<'_> {
-    async fn qry_opt<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Option<E>>
-    where
-        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
-        E: Send + 'static,
-    {
-        executor.qry_opt(self, mapper).await
-    }
-
-    async fn qry_one<'a, E, F>(self, executor: &T, mapper: F, only_one: bool) -> AResult<E>
-    where
-        F: (FnOnce(KDbRow) -> AResult<E>) + Send + 'static,
-        E: Send + 'static,
-    {
-        executor.qry_one(self, mapper, only_one).await
-    }
-
-    async fn qry_list<'a, E, F>(self, executor: &T, mapper: F) -> AResult<Vec<E>>
-    where
-        F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
-        E: Send + 'static,
-    {
-        executor.qry_list(self, mapper).await
-    }
-}
- */

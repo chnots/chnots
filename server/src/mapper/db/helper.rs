@@ -1,10 +1,10 @@
 use std::{borrow::Borrow, ops::Deref};
 
 use anyhow::anyhow;
+use chin_sql::SqlValueRow;
 use chin_sql::{SqlValue, SqlValueOwned};
 use chin_tools::AResult;
 use chrono::{DateTime, FixedOffset};
-use chin_sql::{SqlValueRow};
 
 use super::KDbRowBehavier;
 
@@ -25,19 +25,11 @@ macro_rules! row_behavier {
         impl KDbRowBehavier<Option<$tp>> for SqlValueRow<SqlValueOwned> {
             fn try_get(&self, key: &str) -> AResult<Option<$tp>> {
                 match self.row.get(key) {
-                    Some(value) => {
-                        match value.deref() {
-                            SqlValue::Opt(None) => {
-                                Ok(None)
-                            }
-                            SqlValue::Opt(Some(v)) => {
-                                Ok(Some(<$tp>::try_from(v.as_ref().clone())?))
-                            }
-                            v => {
-                                Ok(Some(<$tp>::try_from(v.borrow().clone())?))
-                            }
-                        }
-                    }
+                    Some(value) => match value.deref() {
+                        SqlValue::Opt(None) => Ok(None),
+                        SqlValue::Opt(Some(v)) => Ok(Some(<$tp>::try_from(v.as_ref().clone())?)),
+                        v => Ok(Some(<$tp>::try_from(v.borrow().clone())?)),
+                    },
                     None => Err(anyhow!("absent value for key: {}", key)),
                 }
             }

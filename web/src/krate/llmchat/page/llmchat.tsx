@@ -43,15 +43,16 @@ const LLMChatPage = () => {
       )}
       <div className="flex-1 h-full">
         <SessionContainer
+          kspace={currentKSpace.name}
           key={containerId}
-          sessionIdOrUUID={sessionIdOrUUID}
+          chnotMetaId={sessionIdOrUUID}
           onNewButton={() => {
             setCurrentSessionId(undefined);
             setSessionIdOrUUID(genId());
           }}
-          afterInit={(id) => {
-            setCurrentSessionId(id);
-            setSessionIdOrUUID(id);
+          afterInit={(session) => {
+            setCurrentSessionId(session.id);
+            setSessionIdOrUUID(session.id);
           }}
         />
       </div>
