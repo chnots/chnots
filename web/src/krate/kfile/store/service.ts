@@ -11,6 +11,7 @@ import {
   KFileUploadRsp,
 } from "./dto";
 import { KFile } from "./db";
+import { chnotShortDate } from "@/lib/date-utils";
 
 export const kfileUpload = async ({
   chunk,
@@ -52,7 +53,13 @@ export const queryInlineKFile = async (
 };
 
 export const getResouceDownloadUrl = (kfile: KFile): string => {
-  return BASE_URL + "/api/v1/kfile/" + kfile.id;
+  return (
+    BASE_URL +
+    "/api/v1/kfile/" +
+    kfile.id +
+    "/" +
+    encodeURI(chnotShortDate() + "-" + kfile.ori_filename)
+  );
 };
 
 export const insertKKV = async (req: KKVInserterReq) => {

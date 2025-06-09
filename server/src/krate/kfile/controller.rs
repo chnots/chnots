@@ -157,9 +157,9 @@ pub(crate) async fn kfile_info(
 // https://github.com/tokio-rs/axum/discussions/608
 pub(crate) async fn download(
     state: State<ShareAppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path((id, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
-    info!("download id: {}", id);
+    info!("download id: {}, {}", id, filename);
 
     async fn inner(
         state: State<ShareAppState>,
@@ -258,7 +258,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
-        .route("/api/v1/kfile/{id}", get(download))
+        .route("/api/v1/kfile/{id}/{filename}", get(download))
         .route("/api/v1/kfile-info/{id}", get(kfile_info))
         .route("/api/v1/inline-kfile", put(insert_inline_kfile))
         .route("/api/v1/inline-kfile", get(query_inline_kfile))
