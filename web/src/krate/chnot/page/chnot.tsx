@@ -1,11 +1,17 @@
-import ChnotList from "@/krate/chnot/component/chnot-list";
+import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
 import { ChnotContainer } from "@/krate/chnot/component/chnot-container";
 import { useChnotStore } from "@/krate/chnot/store/store";
-import { useCommonStore } from "@/common/store/common";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { Chnot } from "@/krate/chnot/store/dto";
+import { SidebarInset, SidebarProvider } from "@/common/component/ui/sidebar";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/common/component/ui/dialog";
+import { Pencil } from "lucide-react";
+import { Button } from "@/common/component/ui/button";
 
 /**
  * This component is only to improve performance, that is to say, when
@@ -72,23 +78,21 @@ const MonoChnot = () => {
  * @returns Chnot Page
  */
 const ChnotPage = () => {
-  const { refreshChnots } = useChnotStore();
-  const { currentKSpace } = useKSpaceStore();
-  const { showSidebar } = useCommonStore();
-  useEffect(() => {
-    refreshChnots();
-  }, [currentKSpace]);
-
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
-      <title>{`Chnots`}</title>
-      {showSidebar && (
-        <div className="shrink-0 border-r kc-basic-with-bdr flex flex-col w-3/12 p-2">
-          <ChnotList />
-        </div>
-      )}
-
-      <MonoChnot />
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 96)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <ChnotSidebar />
+        <SidebarInset className="min-w-0">
+          <MonoChnot />
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   );
 };

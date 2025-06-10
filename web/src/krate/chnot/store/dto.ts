@@ -1,4 +1,4 @@
-import { ChnotRecord, ChnotMetadata, ChnotTag } from "./db";
+import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind } from "./db";
 
 export interface Chnot {
   record: ChnotRecord;
@@ -23,6 +23,7 @@ export interface ChnotQueryReq {
   record_id?: string;
   meta_id?: string;
   view_type: ListViewType;
+  kinds: ChnotKind[];
 
   with_omited?: boolean;
   query?: string;

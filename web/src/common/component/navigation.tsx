@@ -88,7 +88,6 @@ const Navigation = ({
           setKSpaceParam(ns);
         }}
         currentKSpace={currentKSpace.name}
-        menuClassName="p-2 border  hover:cursor-pointer rounded-xl"
       />
       {navLinks.map((navLink) => (
         <NavLink

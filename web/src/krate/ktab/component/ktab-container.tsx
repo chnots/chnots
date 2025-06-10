@@ -51,7 +51,7 @@ const KTabChnot = ({
   }, []);
 
   return meta ? (
-    <div className="w-full">
+    <div className="w-full p-2">
       <DataTable
         tableMeta={meta}
         fetchData={async (

@@ -75,6 +75,7 @@ export const useChnotStore = create(
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
         view_type: listViewType,
+        kinds: [],
       });
 
       set((state) => {

@@ -1,9 +1,12 @@
 import KSVG from "@/common/component/svg";
+import { Button } from "@/common/component/ui/button";
+import { Input } from "@/common/component/ui/input";
+import { Textarea } from "@/common/component/ui/textarea";
 import { LLMChatTemplate } from "@/krate/llmchat/store/db";
 import React, { useState } from "react";
 import { v4 } from "uuid";
 
-const AddTemplate = ({
+const TemplateForm = ({
   template,
   onSubmit,
   onClose,
@@ -50,84 +53,67 @@ const AddTemplate = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-150 relative">
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              htmlFor="name"
-              className="block text-gray-700 font-bold mb-2"
-            >
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name ?? ""}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-              tabIndex={0}
-              aria-label="Template Name"
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="svg_logo"
-              className="block text-gray-700 font-bold mb-2"
-            >
-              Svg Logo Url
-            </label>
-            <div className="flex flex-row space-x-2 items-center">
-              {formData.svg_logo && <KSVG inner={formData.svg_logo} />}
-              <textarea
-                id="svg_logo"
-                name="svg_logo"
-                value={formData.svg_logo ?? ""}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                aria-label="Template Name"
-              />
-            </div>
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="prompt"
-              className="block text-gray-700 font-bold mb-2"
-            >
-              Prompt
-            </label>
-            <textarea
-              id="prompt"
-              name="prompt"
-              value={formData.prompt ?? ""}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              required
-              aria-label="Template Prompt"
-            />
-          </div>
-          <div className="flex flex-row justify-center space-x-4">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              aria-label="Submit Template"
-            >
-              Submit
-            </button>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              aria-label="Close"
-              onClick={onClose}
-            >
-              Close
-            </button>
-          </div>
-        </form>
+    <form onSubmit={handleSubmit}>
+      <div className="mb-4">
+        <label htmlFor="name" className="block text-gray-700 font-bold mb-2">
+          Name
+        </label>
+        <Input
+          type="text"
+          id="name"
+          name="name"
+          value={formData.name ?? ""}
+          onChange={handleInputChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          required
+          tabIndex={0}
+          aria-label="Template Name"
+        />
       </div>
-    </div>
+      <div className="mb-4">
+        <label
+          htmlFor="svg_logo"
+          className="block text-gray-700 font-bold mb-2"
+        >
+          Svg Logo Data
+        </label>
+        <div className="flex flex-row space-x-2 items-center">
+          <div className="border rounded-md">
+            <KSVG inner={formData.svg_logo ?? ""} />
+          </div>
+
+          <Textarea
+            id="svg_logo"
+            name="svg_logo"
+            value={formData.svg_logo ?? ""}
+            onChange={handleInputChange}
+            aria-label="Template Name"
+          />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label htmlFor="prompt" className="block text-gray-700 font-bold mb-2">
+          Prompt
+        </label>
+        <Textarea
+          id="prompt"
+          name="prompt"
+          value={formData.prompt ?? ""}
+          onChange={handleInputChange}
+          required
+          aria-label="Template Prompt"
+        />
+      </div>
+      <div className="flex flex-row justify-center space-x-4">
+        <Button type="submit" aria-label="Submit Template">
+          Submit
+        </Button>
+        <Button aria-label="Close" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+    </form>
   );
 };
 
-export default AddTemplate;
+export default TemplateForm;

@@ -110,6 +110,7 @@ pub(crate) struct ChnotQueryReq {
     pub(crate) record_id: Option<String>,
     pub(crate) tag_path: Option<String>,
     pub(crate) view_type: ChnotViewType,
+    pub(crate) kinds: Vec<ChnotKind>,
 
     pub(crate) with_deleted: Option<bool>,
     pub(crate) with_omitted: Option<bool>,

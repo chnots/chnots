@@ -1,9 +1,9 @@
-export enum ChnotType {
+export enum ChnotKind {
   MarkdownWithToent = "mdwt",
   ExcalidrawV1 = "exdrv1",
   KFileV1 = "resov1",
   KTab = "ktabv1",
-  LLMChat = "llm_chat"
+  LLMChat = "llm_chat",
 }
 
 export interface ChnotRecord {

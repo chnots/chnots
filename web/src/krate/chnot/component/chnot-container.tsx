@@ -13,7 +13,7 @@ import { useChnotStore } from "@/krate/chnot/store/store";
 import { chnotUpdate } from "@/krate/chnot/store/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
 import MarkdownEditor from "./chnot-markdown-editor";
-import { ChnotType } from "@/krate/chnot/store/db";
+import { ChnotKind } from "@/krate/chnot/store/db";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
 import { enumFromStringValue } from "@/lib/enum-util";
 
@@ -31,9 +31,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/common/component/ui/tabs";
 import { Toggle } from "@/common/component/ui/toggle";
 import { KTabMeta } from "@/krate/ktab/store/po";
 import KTabChnot from "@/krate/ktab/component/ktab-container";
-import LLMChatPage from "@/krate/llmchat/page/llmchat";
 import SessionContainer from "@/krate/llmchat/component/session-container";
-import { genId } from "@/lib/id_util";
+import { SidebarTrigger } from "@/common/component/ui/sidebar";
 
 enum RequestState {
   Saved,
@@ -79,11 +78,11 @@ export const ChnotContainer = ({
     setHeight(entry.contentRect.height);
   });
 
-  const [chnotType, setChnotType] = useState<ChnotType>(
+  const [chnotType, setChnotType] = useState<ChnotKind>(
     enumFromStringValue(
-      ChnotType,
+      ChnotKind,
       chnot?.meta.kind,
-      ChnotType.MarkdownWithToent
+      ChnotKind.MarkdownWithToent
     )!
   );
 
@@ -156,9 +155,10 @@ export const ChnotContainer = ({
     <div className={clsx(className, "flex flex-col h-full")}>
       <div className="w-full flex items-center border-b kc-basic-with-bdr px-3 justify-between text-xs align-middle">
         <div className="text-xs flex space-x-2 p-1 items-center">
+          <SidebarTrigger />
           {onClickNewButton &&
             (chnot ? (
-              <Button className="py-1.5" onClick={() => onClickNewButton()}>
+              <Button size="sm" onClick={() => onClickNewButton()}>
                 <Icon.BadgePlus className="w-4 h-4" />
                 <span>New</span>
               </Button>
@@ -167,41 +167,41 @@ export const ChnotContainer = ({
                 <TabsList>
                   <TabsTrigger
                     onClick={() => {
-                      setChnotType(ChnotType.MarkdownWithToent);
+                      setChnotType(ChnotKind.MarkdownWithToent);
                     }}
-                    value={ChnotType.MarkdownWithToent}
+                    value={ChnotKind.MarkdownWithToent}
                   >
                     <Icon.TextCursor className="w-4 h-4" />
                   </TabsTrigger>
                   <TabsTrigger
                     onClick={() => {
-                      setChnotType(ChnotType.ExcalidrawV1);
+                      setChnotType(ChnotKind.ExcalidrawV1);
                     }}
-                    value={ChnotType.ExcalidrawV1}
+                    value={ChnotKind.ExcalidrawV1}
                   >
                     <Icon.Pen className="w-4 h-4" />
                   </TabsTrigger>
                   <TabsTrigger
                     onClick={() => {
-                      setChnotType(ChnotType.KFileV1);
+                      setChnotType(ChnotKind.KFileV1);
                     }}
-                    value={ChnotType.KFileV1}
+                    value={ChnotKind.KFileV1}
                   >
                     <Icon.File className="w-4 h-4" />
                   </TabsTrigger>
                   <TabsTrigger
                     onClick={() => {
-                      setChnotType(ChnotType.KTab);
+                      setChnotType(ChnotKind.KTab);
                     }}
-                    value={ChnotType.KTab}
+                    value={ChnotKind.KTab}
                   >
                     <Icon.Table className="w-4 h-4" />
                   </TabsTrigger>
                   <TabsTrigger
                     onClick={() => {
-                      setChnotType(ChnotType.LLMChat);
+                      setChnotType(ChnotKind.LLMChat);
                     }}
-                    value={ChnotType.LLMChat}
+                    value={ChnotKind.LLMChat}
                   >
                     <Icon.Bot className="w-4 h-4" />
                   </TabsTrigger>
@@ -209,10 +209,8 @@ export const ChnotContainer = ({
               </Tabs>
             ))}
           {chnot && (
-            <div className="bg-inactive border kc-active rounded-xl p-0.5 flex space-x-1">
+            <div className="flex space-x-2">
               <KSpaceSelect
-                className="w-4 h-4"
-                menuClassName="px-1 py-1 bg-inactive rounded-xl flex items-center "
                 onSelect={(ns) => {
                   chnotUpdate({
                     meta_id: chnot.meta.id,
@@ -225,8 +223,9 @@ export const ChnotContainer = ({
                   });
                 }}
                 currentKSpace={chnot.meta.kspace}
+                onlyIcon={true}
               />
-              <Button
+              <Toggle
                 onClick={() => {
                   if (globalViewMode) {
                     globalViewMode.current = !viewMode;
@@ -235,11 +234,13 @@ export const ChnotContainer = ({
                 }}
               >
                 <Icon.Eye className="w-4 h-4" />
-              </Button>
-              {chnotType !== ChnotType.MarkdownWithToent && (
+              </Toggle>
+              {chnotType !== ChnotKind.MarkdownWithToent && (
                 <Popover>
                   <PopoverTrigger>
-                    <Icon.NotebookText className="w-4 h-4" />
+                    <Button variant={"ghost"}>
+                      <Icon.NotebookText className="w-4 h-4" />
+                    </Button>
                   </PopoverTrigger>
 
                   <PopoverAnchor>
@@ -260,11 +261,6 @@ export const ChnotContainer = ({
             </div>
           )}
         </div>
-        {chnot && chnotType === ChnotType.KTab && (
-          <Toggle>
-            <Icon.Settings />
-          </Toggle>
-        )}
 
         <div className="flex space-x-2 items-center">
           <div>{chnot?.record.insert_time.toLocaleDateString()}</div>
@@ -287,7 +283,7 @@ export const ChnotContainer = ({
         className="h-full w-full flex justify-center overflow-auto content-centere"
         ref={cmRef}
       >
-        {chnotType === ChnotType.MarkdownWithToent &&
+        {chnotType === ChnotKind.MarkdownWithToent &&
           (viewMode && chnot ? (
             <div className="p-2 overflow-y-auto w-full">
               <MarkdownViewer
@@ -310,7 +306,7 @@ export const ChnotContainer = ({
               )}
             </div>
           ))}
-        {chnotType === ChnotType.ExcalidrawV1 && (
+        {chnotType === ChnotKind.ExcalidrawV1 && (
           <ExcalidrawContainer
             chnotMetaId={chnot?.meta.id}
             afterSaveCallback={(id) => {
@@ -323,7 +319,7 @@ export const ChnotContainer = ({
             }}
           />
         )}
-        {chnotType === ChnotType.KFileV1 && (
+        {chnotType === ChnotKind.KFileV1 && (
           <CommonKFile
             chnotMetaId={chnot?.meta.id}
             onSave={(r) => {
@@ -336,7 +332,7 @@ export const ChnotContainer = ({
             }}
           />
         )}
-        {chnotType === ChnotType.KTab && (
+        {chnotType === ChnotKind.KTab && (
           <KTabChnot
             chnotMetaId={chnot?.meta.id}
             onInitialSave={async (meta: KTabMeta) => {
@@ -351,7 +347,7 @@ export const ChnotContainer = ({
             isEditing={!viewMode}
           />
         )}
-        {chnotType === ChnotType.LLMChat && (
+        {chnotType === ChnotKind.LLMChat && (
           <div className="w-full">
             <SessionContainer
               chnotMetaId={chnot?.meta.id}

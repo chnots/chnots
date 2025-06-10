@@ -1,7 +1,7 @@
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import { useRef, useState } from "react";
-import { Button as KButton } from "@/common/component/ui/button";
+import { Button } from "@/common/component/ui/button";
 import { LLMChatBot } from "@/krate/llmchat/store/db";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
@@ -20,16 +20,18 @@ const LLMChatBotSelect = () => {
 
   const AddButton = () => {
     return (
-      <KButton
-        className="py-1 px-2 text-xs w-full space-x-2"
-        onClick={() => {
-          selectedBotRef.current = undefined;
-          setShowBotForm(true);
-        }}
-      >
-        <Icon.PlusCircle className="w-4 h-4" />
-        <span className="ml-1">Add Bot</span>
-      </KButton>
+      <div className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md">
+        <div
+          className="flex flex-row space-x-2 items-center"
+          onClick={() => {
+            selectedBotRef.current = undefined;
+            setShowBotForm(true);
+          }}
+        >
+          <Icon.PlusCircle className="w-4 h-4" />
+          <span className="ml-1">Add Bot</span>
+        </div>
+      </div>
     );
   };
 
@@ -41,9 +43,9 @@ const LLMChatBotSelect = () => {
     settings?: () => void;
   }) => {
     return (
-      <KButton className="py-1 px-2 text-xs justify-between w-full">
+      <div className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md">
         <div
-          className="flex flex-row space-x-2"
+          className="flex flex-row space-x-2 items-center"
           onClick={() => {
             handleSelect(bot.id);
           }}
@@ -51,7 +53,7 @@ const LLMChatBotSelect = () => {
           {bot.svg_logo ? (
             <KSVG inner={bot.svg_logo} className="w-4 h-4" />
           ) : (
-            <Icon.Bot />
+            <Icon.Bot className="w-4 h-4" />
           )}
           <span>{bot.name}</span>
         </div>
@@ -61,7 +63,7 @@ const LLMChatBotSelect = () => {
             className="size-4 hover:animate-spin"
           />
         )}
-      </KButton>
+      </div>
     );
   };
 

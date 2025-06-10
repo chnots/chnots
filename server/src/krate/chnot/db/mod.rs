@@ -228,6 +228,13 @@ impl ChnotMapper for KDb {
                         Wheres::none()
                     }
                 }),
+                Wheres::transform(&req.kinds, |k| {
+                    if !k.is_empty() {
+                        Wheres::r#in("t.kind", k.iter().map(|e| e.to_string()).collect())
+                    } else {
+                        Wheres::None
+                    }
+                }),
                 Wheres::equal("t.kspace", req.kspace.clone()),
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("t.search_part", content, ILikeType::Fuzzy)

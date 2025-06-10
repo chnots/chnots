@@ -30,7 +30,7 @@ const buttonVariants = cva(
     },
     defaultVariants: {
       variant: "outline",
-      size: "default",
+      size: "sm",
     },
   }
 );

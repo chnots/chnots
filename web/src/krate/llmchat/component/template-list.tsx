@@ -1,168 +1,89 @@
 import Icon from "@/common/component/icon";
 import clsx from "clsx";
 import KSVG from "@/common/component/svg";
-import { RefObject, useEffect, useRef, useState } from "react";
-import AddTemplate from "@/krate/llmchat/component/template-form";
+import { useRef, useState } from "react";
+import TemplateForm from "@/krate/llmchat/component/template-form";
 import { LLMChatTemplate } from "@/krate/llmchat/store/db";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import { llmchatTemplateAdd } from "@/krate/llmchat/store/service";
-
-const ContextMenu = ({
-  x,
-  y,
-  onEdit,
-  onDelete,
-  divRef,
-}: {
-  x: number;
-  y: number;
-  onEdit: () => void;
-  onDelete: () => void;
-  divRef: RefObject<HTMLDivElement | null>;
-}) => {
-  const items = [
-    { title: "Edit", onClick: onEdit },
-    { title: "Delete", onClick: onDelete },
-  ];
-
-  return (
-    <div ref={divRef} className="p-1 m-1">
-      <ul
-        className="absolute bg-white shadow-md rounded-md border border-gray-200 z-50"
-        style={{ left: x, top: y }}
-        role="menu"
-        aria-label="context-menu"
-      >
-        {items.map((item) => (
-          <li
-            key={item.title}
-            role="menuitem"
-            tabIndex={0}
-            className="cursor-pointer hover:bg-gray-200 p-2 list-none"
-            onClick={() => {
-              console.log("click", item.title);
-              item.onClick();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                item.onClick();
-              }
-            }}
-            aria-label={item.title}
-          >
-            {item.title}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+import { Button } from "@/common/component/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/common/component/ui/dropdown-menu";
+import { Dialog, DialogTrigger } from "@/common/component/ui/dialog";
+import { DialogContent } from "@radix-ui/react-dialog";
 
 const LLMChatTemplateList = ({
   onClickTemplate,
+  onChangeEditTemplate,
 }: {
   onClickTemplate: (template: LLMChatTemplate) => void;
+  onChangeEditTemplate: (template: LLMChatTemplate) => void;
 }) => {
+  const isMobile = useIsMobile();
   const { listTemplates, refreshTemplates } = useLLMChatStore();
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [contextMenuVisable, setContextMenuVisable] = useState<boolean>();
   const selectedTemplate = useRef<LLMChatTemplate>(undefined);
-  const [contextMenuPosition, setContextMenuPosition] = useState({
-    x: 0,
-    y: 0,
-  });
 
   const items = listTemplates();
   const className =
     " p-2 flex space-x-2 text-black w-auto align-mie justify-center rounded-md";
 
-  const contextMenuRef = useRef<HTMLDivElement>(null);
-
-  const handleContextMenu = (
-    e: React.MouseEvent,
-    template: LLMChatTemplate
-  ) => {
-    e.preventDefault();
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-    console.log("add setContextMenuTemplate");
-    selectedTemplate.current = template;
-    setContextMenuVisable(true);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        contextMenuVisable &&
-        contextMenuRef.current &&
-        !contextMenuRef.current.contains(e.target as Node)
-      ) {
-        console.log("remove setContextMenuTemplate");
-        contextMenuRef.current = null;
-        setContextMenuVisable(false);
-      }
-    };
-    if (!contextMenuVisable) {
-      document.removeEventListener("mousedown", handleClickOutside);
-    } else {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-  }, [contextMenuVisable]);
-
   return (
-    <div>
-      {showNewForm && (
-        <AddTemplate
-          onClose={() => {
-            setShowNewForm(false);
-          }}
-          onSubmit={async (template) => {
-            await llmchatTemplateAdd(template);
-            await refreshTemplates();
-            return true;
-          }}
-          template={selectedTemplate.current}
-        />
-      )}
-      <div className="flex flex-row flex-wrap p-3 m-3 text-sm space-x-2 max-w-3xl">
-        <button
-          className={clsx(className, "bg-blue-50 hover:cursor-pointer")}
-          onClick={() => setShowNewForm(true)}
-        >
-          <Icon.PlusCircle strokeWidth={1.5} />
-          <span>Add New Template</span>
-        </button>
+    <>
+      <div className="flex flex-row flex-wrap p-3 m-3 text-sm space-x-2 max-w-3xl align-middle items-center">
+        <DialogTrigger>
+          <Button
+            className={clsx(className, "bg-blue-50 hover:cursor-pointer")}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Icon.PlusCircle strokeWidth={1.5} />
+            <span>Add New Template</span>
+          </Button>
+        </DialogTrigger>
         {items.map((item: LLMChatTemplate) => (
           <div
             key={item.id}
-            onClick={() => onClickTemplate(item)}
-            onContextMenu={(event) => {
-              handleContextMenu(event, item);
-            }}
             className={clsx(className, "hover:cursor-pointer items-center")}
           >
-            {item.svg_logo ? (
-              <KSVG inner={item.svg_logo} />
-            ) : (
-              <Icon.MessageCircle />
-            )}
-            <span>{item.name}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                {item.svg_logo ? (
+                  <KSVG inner={item.svg_logo} />
+                ) : (
+                  <Icon.MessageCircle />
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-48 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
+                align={isMobile ? "end" : "start"}
+              >
+                <DialogTrigger>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onChangeEditTemplate(item);
+                    }}
+                  >
+                    Edit
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DropdownMenuItem onClick={(e) => e.preventDefault()}>
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <span onClick={() => onClickTemplate(item)}>{item.name}</span>
           </div>
         ))}
       </div>
-      {contextMenuVisable && (
-        <ContextMenu
-          x={contextMenuPosition.x}
-          y={contextMenuPosition.y}
-          onEdit={() => {
-            setShowNewForm(true);
-            setContextMenuVisable(false);
-          }}
-          onDelete={() => {}}
-          divRef={contextMenuRef}
-        />
-      )}
-      <div></div>
-    </div>
+    </>
   );
 };
 

@@ -23,11 +23,19 @@ import {
   llmchatRecordInsert,
   llmchatSessionRecords,
   llmchatSessionTruncate,
+  llmchatTemplateAdd,
 } from "@/krate/llmchat/store/service";
 import RecordUser from "./record-user";
 import RecordAssistant from "./record-assistant";
 import LLMChatSessionInput from "./session-input";
 import { queryKKV } from "@/krate/kfile/store/service";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/common/component/ui/dialog";
+import { Button } from "@/common/component/ui/button";
+import TemplateForm from "./template-form";
 
 const SessionContainer = ({
   chnotMetaId,
@@ -55,6 +63,7 @@ const SessionContainer = ({
 
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef<boolean>(false);
+  const [editTemplate, setEditTemplate] = useState<LLMChatTemplate>();
 
   // Used to load from database.
   useEffect(() => {
@@ -296,13 +305,26 @@ const SessionContainer = ({
             )}
           </div>
         ) : (
-          <div className={"flex flex-col h-full justify-center"}>
+          <Dialog>
             <LLMChatTemplateList
               onClickTemplate={(template) => {
                 newTemplateSession(template);
               }}
+              onChangeEditTemplate={(template: LLMChatTemplate) => {
+                setEditTemplate(template);
+              }}
             />
-          </div>
+            <DialogContent>
+              <TemplateForm
+                onSubmit={async (data: LLMChatTemplate): Promise<boolean> => {
+                  await llmchatTemplateAdd(data);
+                  return true;
+                }}
+                onClose={function (): void {}}
+                template={editTemplate}
+              />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
       <LLMChatSessionInput

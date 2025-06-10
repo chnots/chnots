@@ -2,7 +2,6 @@ import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import LoadingPage from "@/common/pages/loading-page";
-import Navigation from "@/common/component/navigation";
 import { RoutePaths } from "@/router";
 import { useKSpaceStore } from "./krate/kspace/store/store";
 import faviconSvg from "../public/static/favicon/chnots.svg?raw";
@@ -59,9 +58,6 @@ const App = () => {
     <LoadingPage />
   ) : (
     <div className="h-screen max-h-screen flex flex-row kc-basic">
-      <div className="h-full justify-start items-start select-none  z-2 border-b w-16">
-        <Navigation />
-      </div>
       <div className="w-full h-full">
         <Suspense fallback={<LoadingPage />}>
           <Outlet />
