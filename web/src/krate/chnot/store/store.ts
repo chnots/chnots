@@ -158,7 +158,7 @@ export const useChnotStore = create(
           .values()
           .filter((e) => {
             const result =
-              e.meta.kspace == useKSpaceStore.getState().currentKSpace.name;
+              e.meta.kspace == useKSpaceStore.getState().currentKSpace;
             return !result;
           })
           .map((e) => {

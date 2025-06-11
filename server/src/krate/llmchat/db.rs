@@ -206,6 +206,7 @@ impl LLMChatMapper for KDb {
                     session_id: Some(req.session_id.clone()),
                 },
                 kspace: req.kspace.clone(),
+                mkspaces: vec![],
             })
             .await?
             .sessions
@@ -340,6 +341,7 @@ impl LLMChatMapper for KDb {
                     with_omit: Some(true),
                 },
                 kspace: req.kspace.clone(),
+                mkspaces: vec![],
             })
             .await?
             .records;

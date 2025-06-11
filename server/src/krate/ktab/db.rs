@@ -43,10 +43,10 @@ impl KDb {
                 overwrite!(KTabCellI64, cell, *c);
             }
             KTabStoreValue::Date(c) => {
-                overwrite!(KTabCellDate,cell, c);
+                overwrite!(KTabCellDate, cell, c);
             }
             KTabStoreValue::F64(c) => {
-                overwrite!(KTabCellF64,cell, *c);
+                overwrite!(KTabCellF64, cell, *c);
             }
         }
 
@@ -103,7 +103,11 @@ impl KTabMapper for KDb {
         req: KReq<KTabCellsOverwriteReq>,
     ) -> chin_tools::AResult<KTabCellsOverwriteRsp> {
         let empty_wrapper = req.frame(());
-        let KReq { body, kspace: _ } = req;
+        let KReq {
+            body,
+            kspace: _,
+            mkspaces: _,
+        } = req;
 
         let KTabCellsOverwriteReq {
             cells: row,
@@ -124,14 +128,15 @@ impl KTabMapper for KDb {
                 .context("the column is not existed")?
                 .idx;
 
-            self.ktab_overwrite_cell(KTabCell{
-                    table_id: table_id.clone(),
-                    col_idx: column_index,
-                    row_idx: ele.row_idx,
-                    insert_time: Local::now().fixed_offset(),
-                    delete_time: None,
-                    cell_data: ele.value,
-                }).await?;
+            self.ktab_overwrite_cell(KTabCell {
+                table_id: table_id.clone(),
+                col_idx: column_index,
+                row_idx: ele.row_idx,
+                insert_time: Local::now().fixed_offset(),
+                delete_time: None,
+                cell_data: ele.value,
+            })
+            .await?;
         }
 
         Ok(KTabCellsOverwriteRsp {})
@@ -224,7 +229,10 @@ impl KTabMapper for KDb {
 
         let cells: AResult<Vec<KTabViewCell>> = cells
             .into_iter()
-            .map(|cell| cell.into_view(&col_names).context("unable find this column"))
+            .map(|cell| {
+                cell.into_view(&col_names)
+                    .context("unable find this column")
+            })
             .collect();
         let cells = cells?;
         let mut result_map = HashMap::new();

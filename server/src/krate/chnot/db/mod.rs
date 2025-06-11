@@ -235,7 +235,7 @@ impl ChnotMapper for KDb {
                         Wheres::None
                     }
                 }),
-                Wheres::equal("t.kspace", req.kspace.clone()),
+                Wheres::r#in("t.kspace", req.mkspaces.clone().into_iter().merge(vec![req.kspace.clone()]).collect()),
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("t.search_part", content, ILikeType::Fuzzy)
                 }),

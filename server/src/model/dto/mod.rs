@@ -11,6 +11,7 @@ use serde::{de::DeserializeOwned, Serialize};
 pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {
     pub(crate) body: E,
     pub(crate) kspace: String,
+    pub(crate) mkspaces: Vec<String>,
 }
 
 pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> String {
@@ -21,9 +22,19 @@ pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> String {
 }
 
 pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
+    let mkspaces: Vec<String> = headers
+        .get("K-mkspaces")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .split(",")
+        .into_iter()       
+        .map(|e| e.trim().to_owned()) 
+        .collect();
+
     KReq {
         body,
         kspace: read_kspace_from_header(&headers),
+        mkspaces,
     }
 }
 
@@ -46,6 +57,7 @@ where
         KReq {
             body: t,
             kspace: self.kspace.clone(),
+            mkspaces: self.mkspaces.clone(),
         }
     }
 }

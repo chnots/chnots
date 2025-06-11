@@ -98,7 +98,8 @@ const ChnotSidebar = () => {
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
 
-  const { currentKSpace, changeKSpace } = useKSpaceStore();
+  const { currentKSpace, setKSpace: changeKSpace, mkspaces } = useKSpaceStore();
+
   useEffect(() => {
     refreshChnots();
   }, [currentKSpace]);
@@ -119,7 +120,12 @@ const ChnotSidebar = () => {
       });
     }
     refreshChnots();
-  }, [listViewType, setTagList, keyword, refreshChnots]);
+  }, [
+    listViewType,
+    keyword,
+    mkspaces,
+    currentKSpace,
+  ]);
 
   return (
     <Sidebar variant="inset">
@@ -129,8 +135,9 @@ const ChnotSidebar = () => {
             onSelect={function (kspace: string): void {
               changeKSpace(kspace);
             }}
-            currentKSpace={currentKSpace.name}
+            currentKSpace={currentKSpace}
             onlyIcon={true}
+            showMKspaces={true}
           />
           <Toggle
             size={"sm"}
@@ -191,7 +198,11 @@ const ChnotSidebar = () => {
             hasNextPage={chnotMapByMetaId.hasNextPage}
           >
             {[...chnotMapByMetaId.dbCache.values()].map((chnot) => (
-              <ChnotSidebarItem chnot={chnot} key={chnot.record.id} />
+              <ChnotSidebarItem
+                chnot={chnot}
+                key={chnot.record.id}
+                showKSpace={mkspaces.length > 0}
+              />
             ))}
           </KPageList>
         </div>

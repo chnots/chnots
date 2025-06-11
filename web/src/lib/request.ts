@@ -4,7 +4,6 @@ import { useKSpaceStore } from "@/krate/kspace/store/store";
 import axios from "axios";
 import type {
   AxiosInstance,
-  AxiosRequestConfig,
   AxiosResponse,
   CreateAxiosDefaults,
   InternalAxiosRequestConfig,
@@ -23,8 +22,9 @@ class Request {
 
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const kspace = useKSpaceStore.getState().currentKSpace.name;
-        config.headers!["K-kspace"] = kspace;
+        const kspace = useKSpaceStore.getState();
+        config.headers!["K-kspace"] = kspace.currentKSpace;
+        config.headers!["K-mkspaces"] = kspace.mkspaces.join(",");
 
         const controller = new AbortController();
         const url = config.url || "";

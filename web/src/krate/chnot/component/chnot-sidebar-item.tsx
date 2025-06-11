@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
   useSidebar,
+  SidebarSeparator,
 } from "@/common/component/ui/sidebar";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import clsx from "clsx";
@@ -20,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { KSpaceIcon } from "@/krate/kspace/component/kspace-select";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -55,7 +57,10 @@ const ChnotSidebarTagItem = React.forwardRef(
 ChnotSidebarTagItem.displayName = "ChnotTagListItem";
 
 const ChnotSidebarItem = React.forwardRef(
-  ({ chnot }: { chnot: Chnot }, ref: ForwardedRef<HTMLLIElement>) => {
+  (
+    { chnot, showKSpace }: { chnot: Chnot; showKSpace: boolean },
+    ref: ForwardedRef<HTMLLIElement>
+  ) => {
     const { setCurrentChnotMetaId, getCurrentChnot, validateChnotCache } =
       useChnotStore();
 
@@ -70,7 +75,7 @@ const ChnotSidebarItem = React.forwardRef(
     const isSelected = currentChnot?.record.id === chnot.record.id;
 
     const title = chnot.record.content.startsWith("# ")
-      ? chnot.record.content.split("\n")[0]
+      ? chnot.record.content.split("\n")[0].substring(2)
       : chnot.record.content.substring(0, 500);
 
     const onDelete = async () => {
@@ -84,41 +89,72 @@ const ChnotSidebarItem = React.forwardRef(
 
     return (
       <SidebarMenuItem key={chnot.record.id}>
-        <SidebarMenuButton
-          size="lg"
-          asChild
+        <a
+          href={"#" + chnot.meta.id}
+          key={chnot.meta.id}
           onClick={onClick}
-          className={clsx(isSelected ? "border" : "border border-transparent")}
+          className={cn(
+            "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
+            "hover:shadow-xs border",
+            isSelected ? "bg-background" : "bg-transparent border-transparent"
+          )}
+          tabIndex={0}
+          aria-label={`Navigate to ${title}`}
         >
-          <div>
-            <div className="flex flex-row text-xs m-2 space-x-2">
-              {chnot.meta.kind === ChnotKind.MarkdownWithToent && (
-                <Icon.TextCursor className="h-4 w-4 min-w-4 text-blue-600" />
+          <div
+            className={cn(
+              "flex-shrink-0 p-1.5 rounded",
+              "text-muted-foreground group-hover:text-sidebar-accent-foreground",
+              isSelected
+                ? "text-sidebar-accent-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {chnot.meta.kind === ChnotKind.MarkdownWithToent ? (
+              <Icon.Text className="h-4 w-4" />
+            ) : chnot.meta.kind === ChnotKind.ExcalidrawV1 ? (
+              <Icon.Flower className="h-4 w-4" />
+            ) : chnot.meta.kind === ChnotKind.KFileV1 ? (
+              <Icon.File className="h-4 w-4" />
+            ) : chnot.meta.kind === ChnotKind.KTab ? (
+              <Icon.Table className="h-4 w-4" />
+            ) : chnot.meta.kind === ChnotKind.LLMChat ? (
+              <Icon.Bot className="h-4 w-4" />
+            ) : (
+              <Icon.TextCursor className="h-4 w-4" />
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {showKSpace && (
+                <KSpaceIcon
+                  name={chnot.meta.kspace}
+                  className="h-3.5 w-3.5 text-muted-foreground/60"
+                />
               )}
-              {chnot.meta.kind === ChnotKind.ExcalidrawV1 && (
-                <Icon.Pen className="h-4 w-4 min-w-4 text-red-600" />
-              )}
-              {chnot.meta.kind === ChnotKind.KFileV1 && (
-                <Icon.File className="h-4 w-4 min-w-4 text-red-600" />
-              )}
-              {chnot.meta.kind === ChnotKind.KTab && (
-                <Icon.Table className="h-4 w-4 min-w-4 text-purple-600" />
-              )}
-              {chnot.meta.kind === ChnotKind.LLMChat && (
-                <Icon.Bot className="h-4 w-4 min-w-4 text-gray-600" />
-              )}
-              <div
-                className="text-gray-600"
-                title={chnot.meta.insert_time.toISOString()}
+              <time
+                dateTime={chnot.meta.insert_time.toISOString()}
+                className="text-[0.7rem]"
               >
                 {chnotShortDate(chnot.meta.insert_time)}
-              </div>
-              <div className="relative line-clamp-2 break-all" title={title}>
-                {title}
-              </div>
+              </time>
             </div>
+
+            <h3
+              className={cn(
+                "text-xs font-medium line-clamp-2 leading-tight",
+                "text-foreground group-hover:text-sidebar-accent-foreground",
+                isSelected
+                  ? "text-sidebar-accent-foreground"
+                  : "text-foreground"
+              )}
+              title={title}
+            >
+              {title}
+            </h3>
           </div>
-        </SidebarMenuButton>
+        </a>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction showOnHover>

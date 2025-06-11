@@ -4,7 +4,8 @@ import { combine } from "zustand/middleware";
 
 interface State {
   kspaceMapByName: Map<string, KSpace>;
-  currentKSpace: KSpace;
+  currentKSpace: string;
+  mkspaces: string[];
 }
 
 const kspaces = new Map<string, KSpace>([
@@ -40,13 +41,9 @@ const getDefaultState = (): State => {
     currentKSpace: (() => {
       const searchParams = new URLSearchParams(window.location.search.slice(1));
       console.log("search params:", location.hash);
-      const ns = searchParams.get("ns");
-      if (ns === null || !kspaces.has(ns)) {
-        return kspaces.get("public")!;
-      }
-
-      return kspaces.get(ns)!;
+      return searchParams.get("ns") ?? "public";
     })(),
+    mkspaces: [],
   };
 };
 
@@ -57,18 +54,51 @@ export const useKSpaceStore = create(
       set({ kspaceMapByName: kspaces });
       return kspaces;
     },
-    changeKSpace: async (kspace: string) => {
-      console.log("change ns:", kspace);
-      const newkspace = get().kspaceMapByName.get(kspace);
-      set({
-        currentKSpace: newkspace,
+    setKSpace: async (kspace: string) => {
+      set((prev) => {
+        return {
+          ...prev,
+          currentKSpace: kspace,
+        };
+      });
+    },
+    setMKSpaces: (mkspaces: string[]) => {
+      set((prev) => {
+        return {
+          ...prev,
+          mkspaces: [...new Set(mkspaces)].filter(
+            (e) => e != prev.currentKSpace
+          ),
+        };
+      });
+    },
+    addMKSpace: (mkspace: string) => {
+      set((prev) => {
+        return {
+          ...prev,
+          mkspaces: [...new Set([...prev.mkspaces, mkspace])].filter(
+            (e) => e != prev.currentKSpace
+          ),
+        };
+      });
+    },
+    removeMKSpace: (mkspace: string) => {
+      set((prev) => {
+        return {
+          ...prev,
+          mkspaces: prev.mkspaces.filter((e) => e != mkspace),
+        };
       });
     },
     getKSpace: (kspaceName: string) => {
       return get().kspaceMapByName.get(kspaceName);
     },
-    kspaces: () => {
+    allKSpaces: () => {
       return [...get().kspaceMapByName.values()];
+    },
+    getCurrentKSpace: () => {
+      const read = get();
+      return read.kspaceMapByName.get(read.currentKSpace);
     },
   }))
 );

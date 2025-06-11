@@ -217,7 +217,7 @@ export const ChnotContainer = ({
                     update_time: false,
                     kspace: ns,
                   }).then((_) => {
-                    if (ns !== currentKSpace.name) {
+                    if (ns !== currentKSpace) {
                       validateChnotCache([chnot.meta.id]);
                     }
                   });
@@ -343,7 +343,7 @@ export const ChnotContainer = ({
                 meta.id.toString()
               );
             }}
-            kspace={currentKSpace.name}
+            kspace={currentKSpace}
             isEditing={!viewMode}
           />
         )}
@@ -360,7 +360,7 @@ export const ChnotContainer = ({
                   session.id
                 );
               }}
-              kspace={currentKSpace.name}
+              kspace={currentKSpace}
             />
           </div>
         )}

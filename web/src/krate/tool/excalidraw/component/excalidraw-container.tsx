@@ -176,7 +176,7 @@ export default function ExcalidrawContainer({
                 res: {
                   id: md5(newVar).toString(),
                   rid: fileId,
-                  kspace: currentKSpace.name,
+                  kspace: currentKSpace,
                   archor: true,
                   name: fileId,
                   content: file.dataURL,
@@ -194,7 +194,7 @@ export default function ExcalidrawContainer({
             res: {
               id: uuid(),
               rid: excalidrawId,
-              kspace: currentKSpace.name,
+              kspace: currentKSpace,
               archor: false,
               name: chnotMetaId ?? uuid(),
               content,

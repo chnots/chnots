@@ -23,7 +23,7 @@ const Navigation = ({
   orientation?: "vertical" | "horizontal";
 }) => {
   const t = useTranslate();
-  const { currentKSpace, changeKSpace } = useKSpaceStore();
+  const { currentKSpace, setKSpace: changeKSpace } = useKSpaceStore();
   const { toggleSidebar } = useCommonStore();
   const [, setKSpaceParam] = useParamState<string>("ns", "public");
 
@@ -87,7 +87,7 @@ const Navigation = ({
           changeKSpace(ns);
           setKSpaceParam(ns);
         }}
-        currentKSpace={currentKSpace.name}
+        currentKSpace={currentKSpace}
       />
       {navLinks.map((navLink) => (
         <NavLink
