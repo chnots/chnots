@@ -1,6 +1,7 @@
 use chin_sql::DbType;
 use chin_sql::GenerateTableSql;
 use chin_sql::SqlValue;
+use chin_tools::time_type::TID;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -14,47 +15,49 @@ use strum::AsRefStr;
 use strum::Display;
 use strum_macros::EnumString;
 
+use crate::model::omit_tid::OmitTID;
+
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct ChnotRecord {
     #[gts_primary]
-    #[gts_length = 40]
-    pub(crate) id: String,
-    #[gts_length = 40]
-    pub(crate) meta_id: String,
+    #[gts_type = "i64"]
+    pub(crate) tid: TID,
+    #[gts_type = "i64"]
+    pub(crate) meta_tid: TID,
+    #[gts_type = "i64"]
+    pub(crate) omit_tid: OmitTID,
     pub(crate) content: String,
-    pub(crate) omit_time: Option<DateTime<FixedOffset>>,
-    pub(crate) insert_time: DateTime<FixedOffset>,
+    pub(crate) archor: bool
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct ChnotMetadata {
     #[gts_primary]
-    #[gts_length = 40]
-    pub(crate) id: String,
+    #[gts_type = "i64"]
+    pub(crate) tid: TID,
     #[gts_length = 40]
     pub(crate) kspace: String,
     #[gts_length = 40]
     pub(crate) kind: String,
     pub(crate) pin_time: Option<DateTime<FixedOffset>>,
-    pub(crate) delete_time: Option<DateTime<FixedOffset>>,
-    pub(crate) update_time: Option<DateTime<FixedOffset>>,
-    pub(crate) insert_time: DateTime<FixedOffset>,
+    #[gts_type = "i64"]
+    pub(crate) omit_tid: OmitTID,
     pub(crate) archive_time: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
 pub(crate) struct ChnotTag {
     #[gts_primary]
-    #[gts_length = 40]
-    pub(crate) id: String,
+    #[gts_type = "i64"]
+    pub(crate) tid: TID,
     #[gts_length = 40]
     pub(crate) kspace: String,
     #[gts_length = 800]
     pub(crate) tag: String,
     #[gts_type = "i32"]
     pub(crate) category: ChnotTagType,
-    pub(crate) chnot_meta_id: String,
-    pub(crate) insert_time: DateTime<FixedOffset>,
+    #[gts_type = "i64"]
+    pub(crate) meta_tid: TID,
 }
 
 impl AsRef<str> for ChnotTag {

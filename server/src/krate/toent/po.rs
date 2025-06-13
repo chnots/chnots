@@ -25,9 +25,9 @@ pub(crate) enum ToentType {
 pub(crate) struct Toent {
     #[gts_primary]
     #[gts_length = 40]
-    id: String,
+    tid: TID,
     #[gts_length = 40]
-    chnot_id: String,
+    chnot_id: TID,
     active_flag: bool,
     #[gts_length = 500]
     original_str: String,
@@ -48,9 +48,9 @@ pub(crate) struct Toent {
 pub(crate) struct ToentInst {
     #[gts_primary]
     #[gts_length = 40]
-    id: String,
+    tid: TID,
     #[gts_length = 40]
-    toent_id: String,
+    toent_id: TID,
     active_flag: bool,
     alert_time: DateTime<FixedOffset>,
     toent_time: DateTime<FixedOffset>,

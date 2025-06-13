@@ -10,10 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
   useSidebar,
-  SidebarSeparator,
 } from "@/common/component/ui/sidebar";
 import { MoreHorizontal, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,14 +63,14 @@ const ChnotSidebarItem = React.forwardRef(
       useChnotStore();
 
     const onClick = (_: React.MouseEvent) => {
-      setCurrentChnotMetaId(chnot.meta.id);
+      setCurrentChnotMetaId(chnot.meta.tid);
     };
 
     const currentChnot = getCurrentChnot();
 
     const { isMobile } = useSidebar();
 
-    const isSelected = currentChnot?.record.id === chnot.record.id;
+    const isSelected = currentChnot?.record.tid === chnot.record.tid;
 
     const title = chnot.record.content.startsWith("# ")
       ? chnot.record.content.split("\n")[0].substring(2)
@@ -80,18 +78,18 @@ const ChnotSidebarItem = React.forwardRef(
 
     const onDelete = async () => {
       await chnotUpdate({
-        meta_id: chnot.meta.id,
+        meta_tid: chnot.meta.tid,
         archive: true,
         update_time: false,
       });
-      validateChnotCache([chnot.meta.id]);
+      validateChnotCache([chnot.meta.tid]);
     };
 
     return (
-      <SidebarMenuItem key={chnot.record.id}>
+      <SidebarMenuItem key={chnot.record.tid}>
         <a
-          href={"#" + chnot.meta.id}
-          key={chnot.meta.id}
+          href={"#" + chnot.meta.tid}
+          key={chnot.meta.tid}
           onClick={onClick}
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
@@ -134,10 +132,10 @@ const ChnotSidebarItem = React.forwardRef(
                 />
               )}
               <time
-                dateTime={chnot.meta.insert_time.toISOString()}
+                dateTime={new Date(chnot.meta.tid).toISOString()}
                 className="text-[0.7rem]"
               >
-                {chnotShortDate(chnot.meta.insert_time)}
+                {chnotShortDate(new Date(chnot.meta.tid))}
               </time>
             </div>
 

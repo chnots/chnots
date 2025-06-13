@@ -1,5 +1,8 @@
+import { TID } from "@/lib/id_util";
+
 export interface KFile {
-  id: string;
+  sid: string;
+  tid: TID;
 
   kspace?: string;
   ori_filename: string;
@@ -8,18 +11,16 @@ export interface KFile {
 
   content_type: string;
 
-  delete_time?: string; // Using ISO 8601 format for DateTime
-  insert_time: string; // Using ISO 8601 format for DateTime
+  omit_tid?: string; // Using ISO 8601 format for DateTime
 }
 
 export interface InlineKFile {
-  id: string;
-  rid: string;
+  sid: string;
+  tid: TID;
   kspace: string;
   archor: boolean;
   name: string;
   content: string;
   content_type: string;
-  delete_time?: Date;
-  insert_time: Date;
+  omit_tid?: TID;
 }

@@ -2,16 +2,13 @@ import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
 import { ChnotContainer } from "@/krate/chnot/component/chnot-container";
 import { useChnotStore } from "@/krate/chnot/store/store";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { v4 as uuid } from "uuid";
 import { Chnot } from "@/krate/chnot/store/dto";
-import { SidebarInset, SidebarProvider } from "@/common/component/ui/sidebar";
 import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/common/component/ui/dialog";
-import { Pencil } from "lucide-react";
-import { Button } from "@/common/component/ui/button";
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/common/component/ui/sidebar";
+import { genTID, TID } from "@/lib/id_util";
 
 /**
  * This component is only to improve performance, that is to say, when
@@ -30,7 +27,7 @@ const MonoChnot = () => {
   //   2. Highlight then editing chnot item in the list.
   //   3. Do not disturb user's workflow
   // So to use a mid-state to decouple them.
-  const [chnotEditorId, setChnotEditorId] = useState<string>(uuid());
+  const [chnotEditorId, setChnotEditorId] = useState<TID>(genTID());
 
   // Extract from ChnotMarkdownEditor.
   const [editorChnot, setEditorChnot] = useState<Chnot | undefined>(
@@ -38,8 +35,8 @@ const MonoChnot = () => {
   );
 
   useEffect(() => {
-    if (curMetaId !== editorChnot?.meta.id) {
-      setChnotEditorId(curMetaId ?? uuid());
+    if (curMetaId !== editorChnot?.meta.tid) {
+      setChnotEditorId(curMetaId ?? genTID());
       setEditorChnot(getCurrentChnot());
     }
   }, [curMetaId, setChnotEditorId, editorChnot, getCurrentChnot]);
@@ -47,8 +44,8 @@ const MonoChnot = () => {
   const updateEditorChnot = useCallback(
     async (chnot: Chnot) => {
       setEditorChnot(chnot);
-      if (curMetaId !== chnot.meta.id) {
-        setCurrentChnotMetaId(chnot.meta.id);
+      if (curMetaId !== chnot.meta.tid) {
+        setCurrentChnotMetaId(chnot.meta.tid);
       }
     },
     [setCurrentChnotMetaId, setEditorChnot]
@@ -58,15 +55,16 @@ const MonoChnot = () => {
 
   return (
     <ChnotContainer
-      onClickNewButton={() => {
-        setChnotEditorId(uuid());
-        setCurrentChnotMetaId(undefined);
-      }}
       key={chnotEditorId}
       chnot={editorChnot}
-      globalViewMode={viewModeRef}
       className="w-full h-full"
+      onClickNewButton={() => {
+        setChnotEditorId(genTID());
+        setCurrentChnotMetaId(undefined);
+      }}
+      globalViewMode={viewModeRef}
       onChnotChange={updateEditorChnot}
+      lefttop={<SidebarTrigger />}
     />
   );
 };

@@ -1,3 +1,4 @@
+use chin_tools::time_type::TID;
 use serde::{Deserialize, Serialize};
 
 use super::*;
@@ -49,7 +50,7 @@ pub(crate) struct LLMChatListTemplateRsp {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatListSessionReq {
-    pub(crate) session_id: Option<String>,
+    pub(crate) session_id: Option<TID>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -60,7 +61,7 @@ pub(crate) struct LLMChatListSessionRsp {
 pub(crate) struct LLMChatUpdateSessionReq {
     pub(crate) title: Option<String>,
     pub(crate) delete: Option<bool>,
-    pub(crate) session_id: String,
+    pub(crate) session_id: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,8 +69,8 @@ pub(crate) struct LLMChatUpdateSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatTruncateSessionReq {
-    pub(crate) remove_rid_included: String,
-    pub(crate) session_id: String,
+    pub(crate) remove_rid_included: TID,
+    pub(crate) session_id: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,7 +80,7 @@ pub(crate) struct LLMChatTruncateSessionRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatSessionDetialReq {
-    pub(crate) session_id: String,
+    pub(crate) session_id: TID,
     pub(crate) with_omit: Option<bool>,
 }
 
@@ -91,7 +92,7 @@ pub(crate) struct LLMChatSessionDetailRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatDeleteBotReq {
-    pub(crate) bot_id: String,
+    pub(crate) bot_id: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,7 +100,7 @@ pub(crate) struct LLMChatDeleteBotRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatDeleteTemplateReq {
-    pub(crate) template_id: String,
+    pub(crate) template_id: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,7 +108,7 @@ pub(crate) struct LLMChatDeleteTemplateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatDeleteSessionReq {
-    pub(crate) session_id: String,
+    pub(crate) session_id: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

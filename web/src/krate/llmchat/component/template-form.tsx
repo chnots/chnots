@@ -3,8 +3,8 @@ import { Button } from "@/common/component/ui/button";
 import { Input } from "@/common/component/ui/input";
 import { Textarea } from "@/common/component/ui/textarea";
 import { LLMChatTemplate } from "@/krate/llmchat/store/db";
+import { genTID } from "@/lib/id_util";
 import React, { useState } from "react";
-import { v4 } from "uuid";
 
 const TemplateForm = ({
   template,
@@ -39,11 +39,10 @@ const TemplateForm = ({
     }
 
     const toInsert: LLMChatTemplate = {
-      id: template ? template.id : v4(),
+      tid: template ? template.tid : genTID(),
       name: formData.name!,
       prompt: formData.prompt!,
       svg_logo: formData.svg_logo,
-      insert_time: new Date(),
     };
 
     const submiResult = await onSubmit(toInsert);

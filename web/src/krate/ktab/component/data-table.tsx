@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/common/component/ui/select";
 import EditableCell, { KTabRowData } from "./editable-cell";
-import { genTSID } from "@/lib/id_util";
+import { genTID } from "@/lib/id_util";
 import { KTabMeta } from "../store/po";
 import { ktabToStoreValue } from "../store/dto";
 import { ktabCellsOverwrite } from "../store/service";
@@ -92,7 +92,7 @@ export function DataTable({
       console.log("row index: ", rowIndex);
       if (tableMeta) {
         await ktabCellsOverwrite({
-          table_id: tableMeta.id,
+          table_id: tableMeta.tid,
           cells: [
             {
               row_idx: rowIndex,
@@ -127,7 +127,7 @@ export function DataTable({
     try {
       if (tableMeta) {
         const newData = await fetchData(
-          tableMeta.id,
+          tableMeta.tid,
           page * pageSize,
           pageSize
         );
@@ -181,7 +181,7 @@ export function DataTable({
       columns: {
         ...tableMeta.columns,
         [newColumnId]: {
-          idx: genTSID(),
+          idx: genTID(),
           name: newColumnId,
           comment: "",
           store_kind: "str",
@@ -200,7 +200,7 @@ export function DataTable({
         acc[col.accessorKey as string] = null;
         return acc;
       },
-      { row_idx: genTSID() }
+      { row_idx: genTID() }
     );
     setData((prev) => [...prev, newRow]);
   };

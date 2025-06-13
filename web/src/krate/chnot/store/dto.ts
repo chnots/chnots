@@ -1,3 +1,4 @@
+import { TID } from "@/lib/id_util";
 import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind } from "./db";
 
 export interface Chnot {
@@ -20,13 +21,14 @@ export const listViewTypeGetTagPath = (lvt: ListViewType) => {
 };
 
 export interface ChnotQueryReq {
-  record_id?: string;
-  meta_id?: string;
+  query?: string;
+  meta_tid?: TID;
+  record_tid?: TID;
+
   view_type: ListViewType;
   kinds: ChnotKind[];
 
   with_omited?: boolean;
-  query?: string;
   start_index: number;
   page_size: number;
 }
@@ -39,24 +41,27 @@ export interface ChnotQueryRsp {
 }
 
 export interface ChnotOverwriteReq {
-  id?: string;
-  meta_id?: string;
+  tid?: TID;
+  meta_tid?: TID;
   content: string;
   kind: string;
-  insert_time: Date;
+  kind_id?: string;
 }
 
 export interface ChnotOverwriteRsp {
-  chnot: Chnot;
+  meta_tid: TID;
+  rec_tid: TID;
+  archor: boolean;
+  kspace: string;
 }
 
 export interface ChnotDeletionReq {
-  chnot_id: string;
+  chnot_id: TID;
   logic: boolean;
 }
 
 export interface ChnotUpdateReq {
-  meta_id: string;
+  meta_tid: TID;
 
   kspace?: string;
 
@@ -67,12 +72,10 @@ export interface ChnotUpdateReq {
 }
 
 export interface ChnotCommentAddReq {
-  id: string;
+  tid: TID;
 
-  chnot_meta_id: string;
+  chnot_meta_id: TID;
   content: string;
-
-  insert_time: Date;
 }
 
 export interface ChnotTagQueryReq {
@@ -84,8 +87,7 @@ export interface ChnotTagQueryReq {
 }
 
 export type ChnotKFileRelationInsert = {
-  insert_time: Date;
-  chnot_meta_id: string;
+  chnot_meta_id: TID;
 };
 
 export interface ChnotTagQueryRsp {
@@ -101,7 +103,7 @@ export interface ChnotTagNamesRsp {
 }
 
 export interface Toent {
-  id: string;
+  tid: TID;
   input: string;
   event: string;
 }

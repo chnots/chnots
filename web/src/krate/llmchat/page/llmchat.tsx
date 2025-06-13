@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useCommonStore } from "@/common/store/common";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import { v4 as uuid } from "uuid";
-import { genId } from "@/lib/id_util";
+import { genUId, genTID, TID } from "@/lib/id_util";
 
 const LLMChatPage = () => {
   const { refreshAll, currentSessionId, setCurrentSessionId } =
@@ -13,7 +13,7 @@ const LLMChatPage = () => {
   const { currentKSpace } = useKSpaceStore();
   const { showSidebar } = useCommonStore();
 
-  const [sessionIdOrUUID, setSessionIdOrUUID] = useState<string>(uuid());
+  const [sessionIdOrUUID, setSessionIdOrUUID] = useState<TID>(genTID());
   const [containerId, setContainerId] = useState<string | undefined>(uuid());
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const LLMChatPage = () => {
   }, [currentKSpace]);
 
   useEffect(() => {
-    setSessionIdOrUUID(currentSessionId ?? uuid());
+    setSessionIdOrUUID(currentSessionId ?? genTID());
   }, [currentSessionId]);
 
   useEffect(() => {
@@ -48,11 +48,11 @@ const LLMChatPage = () => {
           chnotMetaId={sessionIdOrUUID}
           onNewButton={() => {
             setCurrentSessionId(undefined);
-            setSessionIdOrUUID(genId());
+            setSessionIdOrUUID(genTID());
           }}
           afterInit={(session) => {
-            setCurrentSessionId(session.id);
-            setSessionIdOrUUID(session.id);
+            setCurrentSessionId(session.tid);
+            setSessionIdOrUUID(session.tid);
           }}
         />
       </div>

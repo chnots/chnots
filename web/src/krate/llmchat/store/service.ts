@@ -13,6 +13,7 @@ import {
   LLMChatSession,
   LLMChatTemplate,
 } from "./db";
+import { TID } from "@/lib/id_util";
 
 export const llmchatBotList = async (): Promise<LLMChatListBotRsp> => {
   return await request.get(`api/v1/llmchat/bots`);
@@ -40,7 +41,7 @@ export const llmchatBotAdd = async (bot: LLMChatBot) => {
 };
 
 export const llmchatSessionRecords = async (
-  session_id: string
+  session_id: TID
 ): Promise<LLMChatSessionDetailRsp> => {
   return await request.get(`api/v1/llmchat/session`, {
     session_id,

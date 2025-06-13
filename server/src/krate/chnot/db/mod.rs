@@ -8,13 +8,14 @@ use crate::mapper::db::{
     KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
+use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
-use anyhow::Ok;
 use chin_sql::{ILikeType, SqlReader, SqlValue};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
+use chin_tools::time_type::TID;
 use chin_tools::{AResult, EResult};
-use chrono::{Local, Utc};
+use chrono::Local;
 use itertools::Itertools;
 use serde::Serialize;
 use tracing::info;
@@ -24,29 +25,27 @@ const UNTAGGED_TAG: &str = "#_untagged";
 #[inline]
 fn chnot_query_sql<'a>() -> SqlReader<'a> {
     SqlReader::new()
-    .sov("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time,")
-    .sov("m.id as mid, m.kspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time")
-    .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id")
+    .sov("SELECT r.tid as rec_tid, r.content, r.omit_tid as rec_omit_tid, r.archor,")
+    .sov("m.tid as meta_tid, m.kspace, m.kind, m.pin_time, m.omit_tid as meta_omit_tid, m.archive_time")
+    .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_tid = m.tid")
 }
 
 #[inline]
 fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
     tracing::debug!("begin to build chnot");
     let record = ChnotRecord {
-        id: row.try_get("rid")?,
-        meta_id: row.try_get("mid")?,
+        tid: row.try_get("rec_tid")?,
+        meta_tid: row.try_get("meta_tid")?,
         content: row.try_get("content")?,
-        omit_time: row.try_get("omit_time")?,
-        insert_time: row.try_get("version_time")?,
+        omit_tid: row.try_get("rec_omit_tid")?,
+        archor: row.try_get("archor")?,
     };
     let meta = ChnotMetadata {
-        id: row.try_get("mid")?,
+        tid: row.try_get("meta_tid")?,
         kspace: row.try_get("kspace")?,
         kind: row.try_get("kind")?,
         pin_time: row.try_get("pin_time")?,
-        delete_time: row.try_get("delete_time")?,
-        update_time: row.try_get("update_time")?,
-        insert_time: row.try_get("init_time")?,
+        omit_tid: row.try_get("meta_omit_tid")?,
         archive_time: row.try_get("archive_time")?,
     };
     Ok(Chnot { record, meta })
@@ -145,8 +144,8 @@ impl ChnotMapper for KDb {
             .await?
             .exec(
                 SqlUpdater::new(ChnotMetadata::TABLE)
-                    .set(ChnotMetadata::DELETE_TIME, Local::now().fixed_offset())
-                    .r#where(Wheres::equal(ChnotMetadata::ID, &req.chnot_id)),
+                    .set(ChnotMetadata::OMIT_TID, Local::now().fixed_offset())
+                    .r#where(Wheres::equal(ChnotMetadata::TID, req.meta_tid)),
             )
             .await?;
 
@@ -158,13 +157,8 @@ impl ChnotMapper for KDb {
         let page_start = req.start_index;
 
         let chnot_sql = SqlReader::new()
-        .sov("select * from ")
-        .sub("t", 
-            SqlReader::new()
-            .sov("SELECT r.id as rid, r.content, r.omit_time, r.insert_time as version_time, r.content as search_part,")
-            .sov("m.id as mid, m.kspace, m.kind, m.pin_time, m.delete_time, m.update_time, m.insert_time as init_time, m.archive_time, m.insert_time")
-            .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_id = m.id ")
-            )
+            .sov("select * from ")
+            .sub("t", chnot_query_sql())
             .some_then(
                 match &req.view_type {
                     ChnotViewType::Timeline => None,
@@ -200,33 +194,18 @@ impl ChnotMapper for KDb {
                                 },
                             ])),
                         )
-                        .sov("on t.mid = ct.chnot_meta_id")
+                        .sov("on t.meta_tid = ct.meta_tid")
                 },
             )
             .r#where(Wheres::and([
-                // default without deleted chnot
-                Wheres::transform(req.with_deleted, |e| {
-                    if e.default_false() {
-                        Wheres::none()
-                    } else {
-                        Wheres::is_null("delete_time")
-                    }
-                }),
                 // default without omit chnot record
-                // TODO: group by perm id
+                // TODO: group by perm tid
                 Wheres::transform(req.with_omitted, |e| {
-                    if e.default_false() {
-                        Wheres::none()
-                    } else {
-                        Wheres::is_null("omit_time")
-                    }
-                }),
-                Wheres::transform(req.with_archived, |e| {
-                    if !e.default_false() {
-                        Wheres::is_null("t.archive_time")
-                    } else {
-                        Wheres::none()
-                    }
+                    Wheres::compare(
+                        "meta_omit_tid",
+                        if e.default_false() { "<" } else { "=" },
+                        OmitTID::never(),
+                    )
                 }),
                 Wheres::transform(&req.kinds, |k| {
                     if !k.is_empty() {
@@ -235,16 +214,25 @@ impl ChnotMapper for KDb {
                         Wheres::None
                     }
                 }),
-                Wheres::r#in("t.kspace", req.mkspaces.clone().into_iter().merge(vec![req.kspace.clone()]).collect()),
+                Wheres::r#in(
+                    "t.kspace",
+                    req.mkspaces
+                        .clone()
+                        .into_iter()
+                        .merge(vec![req.kspace.clone()])
+                        .collect(),
+                ),
                 Wheres::if_some(req.query.as_ref(), |content| {
-                    Wheres::ilike("t.search_part", content, ILikeType::Fuzzy)
+                    Wheres::ilike("t.content", content, ILikeType::Fuzzy)
                 }),
-                // TODO how to use as_ref?
-                Wheres::if_some(req.record_id.to_owned(), |id| Wheres::equal("t.rid", id)),
-                // TODO how to use as_ref?
-                Wheres::if_some(req.meta_id.to_owned(), |id| Wheres::equal("t.mid", id)),
+                Wheres::if_some(req.record_tid.to_owned(), |tid| {
+                    Wheres::equal("t.rec_tid", tid)
+                }),
+                Wheres::if_some(req.meta_tid.to_owned(), |tid| {
+                    Wheres::equal("t.meta_tid", tid)
+                }),
             ]))
-            .sov("ORDER BY t.pin_time DESC, t.insert_time desc")
+            .sov("ORDER BY t.pin_time DESC, t.meta_tid desc")
             .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
 
         let cs = self
@@ -268,7 +256,7 @@ impl ChnotMapper for KDb {
                 req.archive.map(|_| Local::now().fixed_offset()),
             )
             .set_if_some("kspace", req.body.kspace.as_ref())
-            .r#where(Wheres::equal("id", &req.meta_id));
+            .r#where(Wheres::equal("tid", req.meta_tid));
 
         self.conn().await?.exec(su).await?;
 
@@ -319,11 +307,11 @@ impl ChnotMapper for KDb {
 
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
         let get_all = SqlReader::new()
-            .sov("select r.content, m.id as meta_id from ")
+            .sov("select r.content, m.tid as meta_id from ")
             .sov(ChnotRecord::TABLE)
             .sov(" as r left join")
             .sov(ChnotMetadata::TABLE)
-            .sov(" as m on r.meta_id = m.id where r.omit_time is null and kspace = ")
+            .sov(" as m on r.meta_id = m.tid where r.omit_time is null and kspace = ")
             .sov(SqlValue::Str(kspace.into()));
 
         let kspace = kspace.to_owned();
@@ -332,7 +320,7 @@ impl ChnotMapper for KDb {
             .qry_list(get_all, move |e| {
                 Ok(ChnotTagUpdateReq {
                     content: e.try_get(ChnotRecord::CONTENT)?,
-                    meta_id: e.try_get("meta_id")?,
+                    meta_tid: e.try_get("meta_id")?,
                     kspace: kspace.to_owned(),
                 })
             })
@@ -346,7 +334,7 @@ impl ChnotMapper for KDb {
         Ok(())
     }
 
-    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<TID>) -> EResult {
         let mut conn = self.conn().await?;
         let wrapper = KImplWrapper(conn.transaction().await?);
         wrapper.chnot_tag_delete(chnot_meta_ids).await
@@ -356,13 +344,11 @@ impl ChnotMapper for KDb {
 impl ChnotDeserializeMapper for KDbRow {
     fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
         let chnot = ChnotMetadata {
-            id: self.try_get(ChnotMetadata::ID)?,
+            tid: self.try_get(ChnotMetadata::TID)?,
             kspace: self.try_get(ChnotMetadata::KSPACE)?,
             kind: self.try_get(ChnotMetadata::KIND)?,
             pin_time: self.try_get(ChnotMetadata::PIN_TIME)?,
-            delete_time: self.try_get(ChnotMetadata::DELETE_TIME)?,
-            update_time: self.try_get(ChnotMetadata::UPDATE_TIME)?,
-            insert_time: self.try_get(ChnotMetadata::INSERT_TIME)?,
+            omit_tid: self.try_get(ChnotMetadata::OMIT_TID)?,
             archive_time: self.try_get(ChnotMetadata::ARCHIVE_TIME)?,
         };
         Ok(chnot)
@@ -370,22 +356,21 @@ impl ChnotDeserializeMapper for KDbRow {
 
     fn to_chnot_record(self) -> AResult<ChnotRecord> {
         let chnot = ChnotRecord {
-            id: self.try_get(ChnotRecord::ID)?,
-            meta_id: self.try_get(ChnotRecord::META_ID)?,
+            meta_tid: self.try_get(ChnotRecord::META_TID)?,
             content: self.try_get(ChnotRecord::CONTENT)?,
-            omit_time: self.try_get(ChnotRecord::OMIT_TIME)?,
-            insert_time: self.try_get(ChnotRecord::INSERT_TIME)?,
+            omit_tid: self.try_get(ChnotRecord::OMIT_TID)?,
+            tid: self.try_get(ChnotRecord::TID)?,
+            archor: self.try_get(ChnotRecord::ARCHOR)?,
         };
         Ok(chnot)
     }
 
     fn to_chnot_tag(self) -> AResult<ChnotTag> {
         let obj = ChnotTag {
-            id: self.try_get(ChnotTag::ID)?,
+            tid: self.try_get(ChnotTag::TID)?,
             kspace: self.try_get(ChnotTag::KSPACE)?,
             tag: self.try_get(ChnotTag::TAG)?,
-            chnot_meta_id: self.try_get(ChnotTag::CHNOT_META_ID)?,
-            insert_time: self.try_get(ChnotTag::INSERT_TIME)?,
+            meta_tid: self.try_get(ChnotTag::META_TID)?,
             category: ChnotTagType::Common,
         };
         Ok(obj)

@@ -15,6 +15,9 @@ pub(crate) enum KKVType {
     #[strum(serialize = "k_space_info")]
     #[serde(rename = "k_space_info")]
     KSpaceInfo,
+    #[strum(serialize = "to_kfile")]
+    #[serde(rename = "to_kfile")]
+    ToKFile,
     #[strum(serialize = "def")]
     #[serde(rename = "def")]
     Default,

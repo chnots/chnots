@@ -7,6 +7,7 @@ import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import { llmchatBotAdd } from "@/krate/llmchat/store/service";
 import BotForm from "./bot-form";
+import { TID } from "@/lib/id_util";
 
 const LLMChatBotSelect = () => {
   const [showBotForm, setShowBotForm] = useState(false);
@@ -14,8 +15,8 @@ const LLMChatBotSelect = () => {
 
   const { bots, currentBot, setCurrentBot, refreshBots } = useLLMChatStore();
 
-  const handleSelect = (id: string) => {
-    setCurrentBot(bots.get(id));
+  const handleSelect = (tid: TID) => {
+    setCurrentBot(bots.get(tid));
   };
 
   const AddButton = () => {
@@ -47,7 +48,7 @@ const LLMChatBotSelect = () => {
         <div
           className="flex flex-row space-x-2 items-center"
           onClick={() => {
-            handleSelect(bot.id);
+            handleSelect(bot.tid);
           }}
         >
           {bot.svg_logo ? (
@@ -78,7 +79,7 @@ const LLMChatBotSelect = () => {
             <RadixDropmenu.Content className="kc-inactive p-2 rounded-xl space-y-2 shadow-lg border ">
               {[...bots.values()].map((bot) => {
                 return (
-                  <RadixDropmenu.Item key={bot.id}>
+                  <RadixDropmenu.Item key={bot.tid}>
                     <BotComponent
                       bot={bot}
                       settings={() => {

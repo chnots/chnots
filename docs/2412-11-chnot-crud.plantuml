@@ -6,7 +6,7 @@ participant c [
     meta_id
     tree_id
     content
-    delete_time
+    omit_tid
     insert_time
 ]
 
@@ -28,7 +28,7 @@ participant n [
     ""title""
     namespace
     pinned
-    delete_time
+    omit_tid
     insert_time
     update_time
 ]

@@ -8,7 +8,7 @@ import { queryKKV } from "@/krate/kfile/store/service";
 import { DataTable } from "./data-table";
 import { ktabGetViewValue } from "../store/dto";
 import { KTabRowData } from "./editable-cell";
-import { genTSID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
 import { useEffect, useState } from "react";
 import { TableForm } from "./table-meta";
 import { TypeOf, ZodObject, ZodString, ZodOptional, ZodTypeAny } from "zod";
@@ -19,7 +19,7 @@ const KTabChnot = ({
   onInitialSave,
   isEditing,
 }: {
-  chnotMetaId?: string;
+  chnotMetaId?: TID;
   onInitialSave: (meta: KTabMeta) => Promise<void>;
   kspace: string;
   isEditing: boolean;
@@ -28,7 +28,7 @@ const KTabChnot = ({
   const loadMeta = async () => {
     if (chnotMetaId) {
       const value = await queryKKV({
-        key: chnotMetaId,
+        key: chnotMetaId.toString(),
         kind: "chnot_sub_type",
       });
       if (value.value) {
@@ -103,7 +103,7 @@ const KTabChnot = ({
         >
       ) => {
         const meta = {
-          id: genTSID(),
+          tid: genTID(),
           columns: {},
           table_name: values.name,
           table_comment: values.description,

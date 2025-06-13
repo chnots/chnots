@@ -51,20 +51,20 @@ const useFormField = () => {
     throw new Error("useFormField should be used within <FormField>")
   }
 
-  const { id } = itemContext
+  const { tid } = itemContext
 
   return {
-    id,
+    tid,
     name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
+    formItemId: `${tid}-form-item`,
+    formDescriptionId: `${tid}-form-item-description`,
+    formMessageId: `${tid}-form-item-message`,
     ...fieldState,
   }
 }
 
 type FormItemContextValue = {
-  id: string
+  tid: string
 }
 
 const FormItemContext = React.createContext<FormItemContextValue>(
@@ -72,10 +72,10 @@ const FormItemContext = React.createContext<FormItemContextValue>(
 )
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
-  const id = React.useId()
+  const tid = React.useId()
 
   return (
-    <FormItemContext.Provider value={{ id }}>
+    <FormItemContext.Provider value={{ tid }}>
       <div
         data-slot="form-item"
         className={cn("grid gap-2", className)}

@@ -16,6 +16,7 @@ import {
 } from "@/common/component/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from "@/common/component/ui/dialog";
 import { DialogContent } from "@radix-ui/react-dialog";
+import { genTID } from "@/lib/id_util";
 
 const LLMChatTemplateList = ({
   onClickTemplate,
@@ -38,7 +39,13 @@ const LLMChatTemplateList = ({
         <DialogTrigger>
           <Button
             className={clsx(className, "bg-blue-50 hover:cursor-pointer")}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              onChangeEditTemplate({
+                tid: genTID(),
+                name: "",
+                prompt: "",
+              })
+            }
           >
             <Icon.PlusCircle strokeWidth={1.5} />
             <span>Add New Template</span>
@@ -46,7 +53,7 @@ const LLMChatTemplateList = ({
         </DialogTrigger>
         {items.map((item: LLMChatTemplate) => (
           <div
-            key={item.id}
+            key={item.tid}
             className={clsx(className, "hover:cursor-pointer items-center")}
           >
             <DropdownMenu>

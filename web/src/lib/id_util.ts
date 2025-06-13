@@ -1,9 +1,14 @@
 import { v4 as uuid } from "uuid";
+import { number } from "zod";
 
-export const genId = () => {
+export const genUId = () => {
   return uuid();
 };
 
-export const genTSID = () => {
-  return Date.now();
+export type TID = number;
+let counter = 0;
+
+export const genTID = () => {
+  const c = counter++ % 1000;
+  return Date.now() * 1000 + c;
 };

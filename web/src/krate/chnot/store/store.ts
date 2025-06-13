@@ -11,6 +11,8 @@ import {
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
 import { DbCache } from "../../../common/store/common";
+import { TID } from "@/lib/id_util";
+import { ChnotMetadata, ChnotRecord } from "./db";
 
 const newChnotMap = () => {
   return {
@@ -44,7 +46,7 @@ interface State {
   /**
    * Current Chnot Meta Id
    */
-  curMetaId?: string;
+  curMetaId?: TID;
 
   /**
    * Current Query Input
@@ -83,7 +85,7 @@ export const useChnotStore = create(
         const cm = cmm.dbCache;
 
         for (const c of cs.data) {
-          cm.set(c.meta.id, c);
+          cm.set(c.meta.tid, c);
         }
 
         return {
@@ -114,26 +116,38 @@ export const useChnotStore = create(
     overwriteChnot: async (
       req: ChnotOverwriteReq,
       overwriteCache: boolean
-    ): Promise<ChnotOverwriteRsp> => {
+    ): Promise<Chnot> => {
       return chnotOverwrite(req).then((value: ChnotOverwriteRsp) => {
+        const meta_tid = value.meta_tid;
+        const meta: ChnotMetadata = {
+          tid: meta_tid,
+          kspace: value.kspace,
+          kind: req.kind,
+        };
+        const rec: ChnotRecord = {
+          tid: value.rec_tid,
+          meta_tid: meta_tid,
+          content: req.content,
+          archor: value.archor,
+        };
+        const chnot = { meta: meta, record: rec };
         if (overwriteCache) {
-          const chnot = value.chnot;
           set((state) => {
             const cmm = state.chnotMapByMetaId;
             let cm = cmm.dbCache;
-            if (cm.has(chnot.meta.id)) {
-              cm.set(chnot.meta.id, chnot);
+            if (cm.has(chnot.meta.tid)) {
+              cm.set(chnot.meta.tid, chnot);
             } else {
-              cm = insertMapAtIndex(0, chnot.meta.id, chnot, cm);
+              cm = insertMapAtIndex(0, chnot.meta.tid, chnot, cm);
             }
             cmm.dbCache = cm;
             return { ...state, chnotMapByMetaId: cmm };
           });
         }
-        return value;
+        return chnot;
       });
     },
-    setCurrentChnotMetaId: (chnotMetaId?: string) => {
+    setCurrentChnotMetaId: (chnotMetaId?: TID) => {
       set((state) => {
         return { ...state, curMetaId: chnotMetaId };
       });
@@ -149,7 +163,7 @@ export const useChnotStore = create(
         ? read.chnotMapByMetaId.dbCache.get(read.curMetaId)
         : undefined;
     },
-    validateChnotCache: (toRemoves: string[]) => {
+    validateChnotCache: (toRemoves: TID[]) => {
       const cmm = get().chnotMapByMetaId;
       const map = cmm.dbCache;
 
@@ -162,7 +176,7 @@ export const useChnotStore = create(
             return !result;
           })
           .map((e) => {
-            return e.record.id;
+            return e.record.tid;
           })
       );
 

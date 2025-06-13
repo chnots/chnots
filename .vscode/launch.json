@@ -20,7 +20,7 @@
       },
       "args": [
         "--config",
-        "../config/config.example.toml"
+        "../config/config.postgres.toml"
       ]
     },
     {

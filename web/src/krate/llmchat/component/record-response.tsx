@@ -11,6 +11,7 @@ import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/krate/llmchat/store/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
+import { genTID } from "@/lib/id_util";
 
 export const RecordAnswering = ({
   containerSession,
@@ -68,14 +69,13 @@ export const RecordAnswering = ({
       if (savedStateRef.current) {
         const response = savedStateRef.current;
         const record: LLMChatRecord = {
-          id: response.id,
+          tid: response.tid,
           session_id: response.sessionId,
           content: response.content,
           reasoning_content: response.reasoningContent,
           role: "assistant",
           role_id: response.roleId,
           pre_record_id: response.prevRecordId,
-          insert_time: new Date(),
         };
         llmchatRecordInsert(record);
       }
@@ -85,14 +85,13 @@ export const RecordAnswering = ({
   useEffect(() => {
     const buildRecord = (responseState: ResponseState) => {
       const record: LLMChatRecord = {
-        id: responseState.id,
+        tid: responseState.tid,
         session_id: responseState.sessionId,
         content: responseState.content,
         reasoning_content: responseState.reasoningContent,
         role: "assistant",
         role_id: responseState.roleId,
         pre_record_id: responseState.prevRecordId,
-        insert_time: new Date(),
       };
 
       return record;
@@ -113,14 +112,13 @@ export const RecordAnswering = ({
     <>
       <RecordAssistant
         logo={bot.svg_logo}
-        role_id={bot.id}
+        role_id={bot.tid}
         onRegenerate={onRegenerate}
-        id={response.sessionId + "-response"}
+        tid={genTID()}
         session_id={response.sessionId}
         content={response.content}
         reasoning_content={response.reasoningContent}
         role={"response-assistant"}
-        insert_time={new Date()}
       />
       <div className="flex justify-center">
         <KButton

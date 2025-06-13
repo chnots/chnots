@@ -15,6 +15,9 @@ run-web:
 run-server-sqlite:
 	cd $(SERVER_DIR) && cargo run -- --config ../config/config.sqlite.toml
 
+run-server-postgres:
+	cd $(SERVER_DIR) && cargo run -- --config ../config/config.postgres.toml
+
 build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)
 

@@ -174,8 +174,8 @@ impl EventBuilder for BaseTime {
             let mut minute = None::<String>;
             let mut second = None::<String>;
 
-            for (id, value) in standard[0].split("-").enumerate() {
-                match id {
+            for (tid, value) in standard[0].split("-").enumerate() {
+                match tid {
                     0 => year = Some(value.into()),
                     1 => month = Some(value.into()),
                     2 => day = Some(value.into()),
@@ -184,8 +184,8 @@ impl EventBuilder for BaseTime {
             }
 
             if standard.len() == 2 {
-                for (id, value) in standard[1].split(":").enumerate() {
-                    match id {
+                for (tid, value) in standard[1].split(":").enumerate() {
+                    match tid {
                         0 => hour = Some(value.into()),
                         1 => minute = Some(value.into()),
                         2 => second = Some(value.into()),

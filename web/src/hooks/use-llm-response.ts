@@ -1,6 +1,6 @@
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/db";
 import { LLMChatContainerSession } from "@/krate/llmchat/store/dto";
-import { genId } from "@/lib/id_util";
+import { genUId, genTID, TID } from "@/lib/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -20,22 +20,22 @@ export enum ResponseCtl {
 }
 
 export interface ResponseState {
-  id: string;
+  tid: TID;
   step: ResponseStep;
-  sessionId: string;
-  prevRecordId?: string;
-  roleId: string;
+  sessionId: TID;
+  prevRecordId?: TID;
+  roleId: TID;
   reasoningContent: string;
   content: string;
 }
 
 const emptyResponse = (detail: LLMChatContainerSession, bot: LLMChatBot) => {
   return {
-    id: genId(),
+    tid: genTID(),
     step: ResponseStep.Initial,
-    prevRecordId: detail.session.id,
-    sessionId: detail.session.id,
-    roleId: bot.id,
+    prevRecordId: detail.session.tid,
+    sessionId: detail.session.tid,
+    roleId: bot.tid,
     content: "",
     reasoningContent: "",
   };

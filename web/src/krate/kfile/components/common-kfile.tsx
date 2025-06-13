@@ -4,7 +4,7 @@ import {
   kfileQueryInfo,
   kfileUpload,
 } from "@/krate/kfile/store/service";
-import { genId } from "@/lib/id_util";
+import { genUId, genTID, TID } from "@/lib/id_util";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button as KButton } from "@/common/component/ui/button";
@@ -72,7 +72,7 @@ export const CommonKFile = ({
   chnotMetaId,
   onSave,
 }: {
-  chnotMetaId?: string;
+  chnotMetaId?: TID;
   onSave?: (r: KFile) => void;
 }) => {
   const [progress, setProgress] = useState(0);
@@ -82,7 +82,7 @@ export const CommonKFile = ({
 
   useEffect(() => {
     if (chnotMetaId) {
-      queryKKV({ key: chnotMetaId, kind: "chnot_sub_type" }).then(
+      queryKKV({ key: chnotMetaId.toString(), kind: "chnot_sub_type" }).then(
         ({ value }) => {
           if (value) {
             kfileQueryInfo(value).then(({ res }) => {
@@ -103,7 +103,7 @@ export const CommonKFile = ({
     const chunkSize = 1 * 1024 * 1024; // 1 MB
     const totalChunks = Math.ceil(uploadFile.size / chunkSize);
     let currentChunk = Number(localStorage.getItem(uploadFile.name)) || 0;
-    const res_id = genId();
+    const res_id = genTID();
 
     setProgress(0);
 

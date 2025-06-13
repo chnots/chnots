@@ -1,3 +1,4 @@
+import { TID } from "@/lib/id_util";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
@@ -32,13 +33,12 @@ export const useCommonStore = create(
   }))
 );
 
-
 export interface DbCache<T> {
   /**
- * for db result empty hole
- */
+   * for db result empty hole
+   */
   dbNextStartIndex: number;
   dbPageSize: number;
   hasNextPage: boolean;
-  dbCache: Map<string, T>
+  dbCache: Map<TID, T>;
 }

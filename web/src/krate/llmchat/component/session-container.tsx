@@ -36,6 +36,7 @@ import {
 } from "@/common/component/ui/dialog";
 import { Button } from "@/common/component/ui/button";
 import TemplateForm from "./template-form";
+import { genTID, TID } from "@/lib/id_util";
 
 const SessionContainer = ({
   chnotMetaId,
@@ -44,7 +45,7 @@ const SessionContainer = ({
   kspace,
 }: {
   kspace: string;
-  chnotMetaId?: string;
+  chnotMetaId?: TID;
   onNewButton: () => void;
   afterInit?: (session: LLMChatSession) => void;
 }) => {
@@ -59,7 +60,7 @@ const SessionContainer = ({
     useState<LLMChatContainerSession>();
   const [triggerAnswer, setTriggerAnswer] = useState<boolean>(false);
   const [responsing, setResponsing] = useState<boolean>(false);
-  const [responseId, setResponseId] = useState<string>(uuid());
+  const [responseId, setResponseId] = useState<TID>(genTID());
 
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef<boolean>(false);
@@ -70,14 +71,14 @@ const SessionContainer = ({
     (async () => {
       if (chnotMetaId) {
         const value = await queryKKV({
-          key: chnotMetaId,
+          key: chnotMetaId.toString(),
           kind: "chnot_sub_type",
         });
         if (value.value) {
-          const rsp = await llmchatSessionRecords(value.value);
+          const rsp = await llmchatSessionRecords(parseInt(value.value, 10));
           if (rsp.session) {
-            const pids = new Set(rsp.records.map((e) => e.id));
-            pids.add(rsp.session.id);
+            const pids = new Set(rsp.records.map((e) => e.tid));
+            pids.add(rsp.session.tid);
             setContainerSession({
               session: rsp.session,
               records: rsp.records,
@@ -93,22 +94,20 @@ const SessionContainer = ({
   const newTemplateSession = useCallback(
     async (template: LLMChatTemplate) => {
       const session = {
-        id: uuid(),
-        bot_id: currentBot ? currentBot.id : "1",
-        template_id: template.id,
+        tid: genTID(),
+        bot_id: currentBot ? currentBot.tid : 1,
+        template_id: template.tid,
         title: "Untitled",
         kspace: kspace,
-        insert_time: new Date(),
       };
 
       const record: LLMChatRecord = {
-        id: uuid(),
-        session_id: session.id,
+        tid: genTID(),
+        session_id: session.tid,
         content: template.prompt,
         reasoning_content: "",
-        role_id: template.id,
+        role_id: template.tid,
         role: "system",
-        insert_time: new Date(),
       };
       setContainerSession({
         records: [record],
@@ -130,21 +129,21 @@ const SessionContainer = ({
         const records = containerSession.records;
         const pids = containerSession.persistedIds;
         let added = false;
-        if (!pids.has(session.id)) {
+        if (!pids.has(session.tid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
           await unshiftSession(session);
-          pids.add(session.id);
+          pids.add(session.tid);
           if (afterInit) {
             afterInit(session);
           }
           added = true;
         }
         for (const record of records) {
-          if (!pids.has(record.id)) {
+          if (!pids.has(record.tid)) {
             await llmchatRecordInsert(record);
             console.log("insert record", record);
-            pids.add(record.id);
+            pids.add(record.tid);
             added = true;
           }
         }
@@ -183,15 +182,15 @@ const SessionContainer = ({
   );
 
   const truncateSession = useCallback(
-    async (recordId: string) => {
+    async (recordId: TID) => {
       if (containerSession) {
         if (containerSession.persistedIds.has(recordId)) {
           await llmchatSessionTruncate({
-            session_id: containerSession.session.id,
+            session_id: containerSession.session.tid,
             remove_rid_included: recordId,
           });
         }
-        setResponseId(uuid());
+        setResponseId(genTID());
         setTriggerAnswer(true);
       }
     },
@@ -202,13 +201,12 @@ const SessionContainer = ({
     (content: string) => {
       if (containerSession && containerSession.records.length > 0) {
         const record: LLMChatRecord = {
-          id: uuid(),
-          session_id: containerSession.session.id,
-          pre_record_id: containerSession.records.at(-1)?.id,
+          tid: genTID(),
+          session_id: containerSession.session.tid,
+          pre_record_id: containerSession.records.at(-1)?.tid,
           content,
           reasoning_content: "",
           role: "user",
-          insert_time: new Date(),
         };
         appendRecord(record);
         setTriggerAnswer(true);
@@ -258,19 +256,19 @@ const SessionContainer = ({
               <>
                 {containerSession.records
                   .toSorted((a, b) => {
-                    return a.insert_time > b.insert_time ? 1 : -1;
+                    return a.tid > b.tid ? 1 : -1;
                   })
                   .map((record) => {
                     return record.role === "user" ? (
-                      <RecordUser record={record} key={record.id} />
+                      <RecordUser record={record} key={record.tid} />
                     ) : (
                       <RecordAssistant
                         {...record}
-                        key={record.id}
+                        key={record.tid}
                         onRegenerate={
                           record.role === "assistant"
                             ? async () => {
-                                truncateSession(record.id);
+                                truncateSession(record.tid);
                               }
                             : undefined
                         }

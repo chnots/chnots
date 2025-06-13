@@ -1,101 +1,84 @@
+use std::io::Write;
+
 use super::{mapper::KFileMapper, *};
 use crate::{
-    mapper::db::KDbRow,
-    model::dto::KReq,
+    krate::kkv::{KKVOverwriteReq, KKVQueryOneReq},
+    mapper::db::{KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver, ToSqlInserter},
+    model::{dto::KReq, omit_tid::OmitTID},
+    util::result_util::UnwrapOr,
 };
 use chin_tools::{AResult, EResult};
-use chrono::{DateTime, FixedOffset, TimeDelta};
+use tracing::info;
 
 use super::mapper::KFileDeserializeMapper;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
-use chin_sql::{LimitOffset, OnConflict, SqlDeleter, SqlInserter, SqlReader, Wheres};
+use chin_sql::{LimitOffset, OnConflict, SqlReader, Wheres};
 
 impl KFileDeserializeMapper for KDbRow {
     fn to_inline_kfile(self) -> AResult<InlineKFile> {
         let obj = InlineKFile {
-            id: self.try_get(InlineKFile::ID)?,
+            tid: self.try_get(InlineKFile::TID)?,
             name: self.try_get(InlineKFile::NAME)?,
             content: self.try_get(InlineKFile::CONTENT)?,
             content_type: self.try_get(InlineKFile::CONTENT_TYPE)?,
-            delete_time: self.try_get(InlineKFile::DELETE_TIME)?,
-            insert_time: self.try_get(InlineKFile::INSERT_TIME)?,
+            omit_tid: self.try_get(InlineKFile::OMIT_TID)?,
             kspace: self.try_get(InlineKFile::KSPACE)?,
-            rid: self.try_get(InlineKFile::RID)?,
             archor: self.try_get(InlineKFile::ARCHOR)?,
+            sid: self.try_get(InlineKFile::SID)?,
         };
         Ok(obj)
     }
 
     fn to_kfile(self) -> AResult<KFile> {
         let obj = KFile {
-            id: self.try_get(KFile::ID)?,
-            insert_time: self.try_get(KFile::INSERT_TIME)?,
-            delete_time: self.try_get(KFile::DELETE_TIME)?,
+            tid: self.try_get(KFile::TID)?,
+            omit_tid: self.try_get(KFile::OMIT_TID)?,
             kspace: self.try_get(KFile::KSPACE)?,
             ori_filename: self.try_get(KFile::ORI_FILENAME)?,
             content_type: self.try_get(KFile::CONTENT_TYPE)?,
             ori_last_modified: self.try_get(KFile::ORI_LAST_MODIFIED)?,
             filesize: self.try_get(KFile::FILESIZE)?,
+            sid: self.try_get(InlineKFile::SID)?,
         };
         Ok(obj)
     }
 }
 
+impl KDbExecutor<'_> {}
+
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
         self.ensure_table_inline_kfile().await?;
-        self.conn().await?.create_table(KFile::schema(self.db_type())).await
+        self.conn()
+            .await?
+            .create_table(KFile::schema(self.db_type()))
+            .await
     }
 
     async fn ensure_table_inline_kfile(&self) -> EResult {
-        self.conn().await?.create_table(InlineKFile::schema(self.db_type())).await
+        self.conn()
+            .await?
+            .create_table(InlineKFile::schema(self.db_type()))
+            .await
     }
 
-    async fn insert_kfile(&self, res: &KFile) -> AResult<KFile> {
-        let KFile {
-            ori_filename,
-            id,
-            content_type,
-            kspace,
-            delete_time: _,
-            insert_time: _,
-            filesize,
-            ori_last_modified,
-        } = res;
-
+    async fn insert_kfile(&self, res: KFile) -> EResult {
         let conn = self.conn().await?;
 
-        let insert_time = chrono::Utc::now().to_owned().fixed_offset();
-
         conn.exec(
-            SqlInserter::new(KFile::TABLE)
-                .field(KFile::ID, id.to_owned())
-                .field(KFile::ORI_FILENAME, ori_filename.to_owned())
-                .field(KFile::KSPACE, kspace.to_owned())
-                .field(KFile::CONTENT_TYPE, content_type.to_owned())
-                .field(KFile::INSERT_TIME, insert_time.to_owned())
-                .field(KFile::FILESIZE, *filesize)
-                .field(KFile::ORI_LAST_MODIFIED, *ori_last_modified),
+            res.to_sql_inserter()
+                .on_conflict(OnConflict::Replace(KFile::SID.to_string())),
         )
-        .await
-        .map(|_| KFile {
-            id: id.to_owned(),
-            kspace: kspace.to_owned(),
-            ori_filename: ori_filename.to_string(),
-            content_type: content_type.to_owned(),
-            insert_time: insert_time.fixed_offset(),
-            delete_time: None,
-            filesize: *filesize,
-            ori_last_modified: *ori_last_modified,
-        })
+        .await?;
+        Ok(())
     }
 
-    async fn query_kfile_by_id(&self, id: &str) -> AResult<KFile> {
+    async fn query_kfile_by_sid(&self, sid: &str) -> AResult<KFile> {
         let conn = self.conn().await?;
         let res = conn
             .qry_one(
-                SqlReader::read_all(KFile::TABLE).r#where(Wheres::equal(KFile::ID, id)),
+                SqlReader::read_all(KFile::TABLE).r#where(Wheres::equal(KFile::SID, sid)),
                 |e| e.to_kfile(),
                 false,
             )
@@ -105,88 +88,74 @@ impl KFileMapper for KDb {
 
     async fn insert_inline_kfile(
         &self,
-        req: &KReq<InsertInlineKFileReq>,
+        mut req: KReq<InsertInlineKFileReq>,
     ) -> anyhow::Result<InsertInlineKFileRsp> {
-        let delete_sql = SqlDeleter::new(InlineKFile::TABLE).r#where(Wheres::and([
-            Wheres::equal(InlineKFile::RID, &req.res.rid),
-            Wheres::equal(InlineKFile::ARCHOR, false),
-        ]));
+        let mut bh = blake3::Hasher::new();
+        bh.write_all(req.body.res.content.as_bytes())?;
+        let sid = bh.finalize().to_string();
 
-        let last_archor_sql = SqlReader::read(InlineKFile::TABLE, &[InlineKFile::INSERT_TIME])
-            .r#where(Wheres::and([
-                Wheres::equal(InlineKFile::RID, &req.res.rid),
-                Wheres::equal(InlineKFile::ARCHOR, true),
-            ]))
-            .limit(1);
-
-        self.conn().await?.exec(delete_sql).await?;
-        let last_archor: Option<DateTime<FixedOffset>> = self
-            .conn()
-            .await?
-            .qry_opt(last_archor_sql, |e| e.try_get(InlineKFile::INSERT_TIME))
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        info!("begin to insert {} -- {}", req.kkv_key, req.res.sid);
+        tx.as_executor()
+            .kkv_overwrite(req.frame(KKVOverwriteReq {
+                key: req.kkv_key.clone(),
+                kind: crate::krate::kkv::KKVType::ToKFile,
+                value: sid.clone(),
+            }))
             .await?;
+        req.body.res.sid = sid.clone();
+        tx.exec(
+            req.body
+                .res
+                .to_sql_inserter()
+                .on_conflict(OnConflict::Ignore),
+        )
+        .await?;
 
-        let archorp = match last_archor {
-            Some(last) => {
-                req.res.insert_time.signed_duration_since(last)
-                    > TimeDelta::seconds(req.archor_intervals)
-            }
-            None => true,
-        };
+        tx.cmt().await?;
 
-        self.conn()
-            .await?
-            .exec(
-                SqlInserter::new(InlineKFile::TABLE)
-                    .field(InlineKFile::ID, &req.res.id)
-                    .field(InlineKFile::RID, &req.res.rid)
-                    .field(InlineKFile::NAME, &req.res.name)
-                    .field(InlineKFile::CONTENT, &req.res.content)
-                    .field(InlineKFile::CONTENT_TYPE, &req.res.content_type)
-                    .field(InlineKFile::INSERT_TIME, req.res.insert_time)
-                    .field(InlineKFile::KSPACE, &req.res.kspace)
-                    .field(InlineKFile::ARCHOR, archorp)
-                    .on_conflict({
-                        match req.ignore_conflict.as_ref() {
-                            Some(ic) => {
-                                if *ic {
-                                    OnConflict::Ignore
-                                } else {
-                                    OnConflict::Default
-                                }
-                            }
-                            None => OnConflict::Default,
-                        }
-                    }),
-            )
-            .await?;
-
-        Ok(InsertInlineKFileRsp {})
+        Ok(InsertInlineKFileRsp { true_sid: sid })
     }
 
     async fn query_inline_kfile(
         &self,
         req: KReq<QueryInlineKFileReq>,
     ) -> anyhow::Result<QueryInlineKFileRsp> {
+        let sid = if let Some(key) = req.kkv_key.clone() {
+            let sid = self
+                .conn()
+                .await?
+                .as_executor()
+                .kkv_query(req.frame(KKVQueryOneReq {
+                    key,
+                    kind: crate::krate::kkv::KKVType::ToKFile,
+                }))
+                .await?
+                .value;
+            sid
+        } else {
+            None
+        };
         let query = SqlReader::read_all(InlineKFile::TABLE)
             .r#where(Wheres::and([
                 Wheres::if_some(req.content_type.to_owned(), |e| {
                     Wheres::equal(InlineKFile::CONTENT_TYPE, e)
                 }),
-                Wheres::if_some(req.id.to_owned(), |e| Wheres::equal(InlineKFile::ID, e)),
+                Wheres::if_some(req.sid.to_owned(), |e| Wheres::equal(InlineKFile::SID, e)),
                 Wheres::if_some(req.name_like.to_owned(), |e| {
                     Wheres::ilike(InlineKFile::NAME, e, chin_sql::ILikeType::Fuzzy)
                 }),
-                Wheres::if_some(
-                    match req.with_del {
-                        Some(true) => None,
-                        _ => Some(()),
-                    },
-                    |_| Wheres::is_null(InlineKFile::DELETE_TIME),
-                ),
-                Wheres::if_some(req.rid.to_owned(), |id| Wheres::equal(InlineKFile::RID, id)),
+                Wheres::transform(req.with_del.default_false(), |flag| {
+                    if flag {
+                        Wheres::None
+                    } else {
+                        Wheres::equal(InlineKFile::OMIT_TID, OmitTID::never())
+                    }
+                }),
+                Wheres::if_some(sid, |e| Wheres::equal(InlineKFile::SID, e)),
             ]))
-            .sov("order by insert_time desc")
+            .sov("order by tid desc")
             .custom(LimitOffset::new(1));
 
         let res = self

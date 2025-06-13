@@ -17,8 +17,8 @@ const RecordAssistant = ({
   role_id,
   reasoning_content,
   content,
-  insert_time,
   logo,
+  tid,
 }: {
   onRegenerate?: () => void;
   logo?: string;
@@ -53,7 +53,7 @@ const RecordAssistant = ({
   return (
     <RecordFrame
       name={bt?.name ?? "A Bot"}
-      timestamp={insert_time}
+      timestamp={tid}
       logo={svgLogo}
       limitHeight={role === "system" ? true : undefined}
       onRegenerate={onRegenerate}

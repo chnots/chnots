@@ -1,15 +1,16 @@
+import { TID } from "@/lib/id_util";
+
 // Date type definition for compatibility
 type DateTime = Date;
 
 // LLMChatBot structure
 export interface LLMChatBot {
-  id: string;
+  tid: TID;
   name: string;
   body: string;
   svg_logo?: string;
-  delete_time?: DateTime; // Optional field
+  omit_tid?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-  insert_time: DateTime;
 }
 
 // the body of LLMChatBot body.
@@ -21,35 +22,32 @@ export interface LLMChatBotBodyOpenAIV1 {
 
 // LLMChatTemplate structure
 export interface LLMChatTemplate {
-  id: string;
+  tid: TID;
   name: string;
   prompt: string;
   svg_logo?: string;
-  delete_time?: DateTime; // Optional field
+  omit_tid?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-  insert_time: DateTime;
 }
 
 // LLMChatSession structure
 export interface LLMChatSession {
-  id: string;
-  bot_id: string;
-  template_id: string;
+  tid: TID;
+  bot_id: TID;
+  template_id: TID;
   title: string;
   kspace: string;
-  delete_time?: DateTime; // Optional field
+  omit_tid?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-  insert_time: DateTime;
 }
 
 // LLMChatRecord structure
 export interface LLMChatRecord {
-  id: string;
-  session_id: string;
-  pre_record_id?: string; // Optional field
+  tid: TID;
+  session_id: TID;
+  pre_record_id?: TID; // Optional field
   content: string;
   reasoning_content: string;
   role: "user" | "system" | "assistant" | "response-assistant";
-  role_id?: string;
-  insert_time: DateTime;
+  role_id?: TID;
 }

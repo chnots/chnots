@@ -9,15 +9,16 @@ import {
   llmchatSessionOverwrite,
   llmchatTemplateList,
 } from "./service";
+import { TID } from "@/lib/id_util";
 
 interface State {
   refreshSessions: () => void;
   refreshTemplates: () => void;
   refreshBots: () => void;
-  bots: Map<string, LLMChatBot>;
-  templates: Map<string, LLMChatTemplate>;
-  sessions: Map<string, LLMChatSession>;
-  currentSessionId?: string;
+  bots: Map<TID, LLMChatBot>;
+  templates: Map<TID, LLMChatTemplate>;
+  sessions: Map<TID, LLMChatSession>;
+  currentSessionId?: TID;
   currentBot?: LLMChatBot;
 }
 
@@ -40,7 +41,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          bots: new Map(bots.bots.map((e) => [e.id, e])),
+          bots: new Map(bots.bots.map((e) => [e.tid, e])),
           currentBot: bots.bots.at(0),
         };
       });
@@ -50,7 +51,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          templates: new Map(templates.templates.map((e) => [e.id, e])),
+          templates: new Map(templates.templates.map((e) => [e.tid, e])),
         };
       });
     },
@@ -59,7 +60,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          sessions: new Map(sessions.sessions.map((e) => [e.id, e])),
+          sessions: new Map(sessions.sessions.map((e) => [e.tid, e])),
         };
       });
     },
@@ -81,12 +82,12 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          sessions: insertMapAtIndex(0, session.id, session, sessions),
+          sessions: insertMapAtIndex(0, session.tid, session, sessions),
         };
       });
     },
 
-    deleteCacheSession: async (sessionId: string) => {
+    deleteCacheSession: async (sessionId: TID) => {
       set((state) => {
         const sessions = state.sessions;
         sessions.delete(sessionId);
@@ -102,7 +103,7 @@ export const useLLMChatStore = create(
       });
     },
 
-    setCurrentSessionId: (sessionId?: string) => {
+    setCurrentSessionId: (sessionId?: TID) => {
       set((state) => {
         return { ...state, currentSessionId: sessionId };
       });

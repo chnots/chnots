@@ -1,3 +1,4 @@
+import { TID } from "@/lib/id_util";
 import {
   LLMChatBot,
   LLMChatTemplate,
@@ -23,19 +24,19 @@ export interface LLMChatSessionDetailRsp {
 }
 
 export interface LLMChatSessionUpdateReq {
-  session_id: string;
+  session_id: TID;
   delete?: boolean;
   title?: string;
 }
 
 export interface LLMChatSessionTruncateReq {
-  session_id: string;
-  remove_rid_included: string;
+  session_id: TID;
+  remove_rid_included: TID;
 }
 
 export interface LLMChatContainerSession {
   session: LLMChatSession;
   records: LLMChatRecord[];
 
-  persistedIds: Set<string>;
+  persistedIds: Set<TID>;
 }

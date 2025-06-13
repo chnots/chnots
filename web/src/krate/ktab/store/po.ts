@@ -39,13 +39,13 @@ export type KTabColumnMeta = {
 };
 
 export type KTabMeta = {
-  id: number;
+  tid: number;
   columns: Record<string, KTabColumnMeta>;
   table_name: string;
   table_comment?: string;
   create_time: Date;
   update_time?: Date;
-  delete_time?: Date;
+  omit_tid?: Date;
   kspace: string;
   real_table: boolean;
 };
@@ -54,8 +54,7 @@ interface KTabCell {
   table_id: number;
   col_idx: number;
   row_idx: number;
-  insert_time: Date;
-  delete_time?: Date;
+  omit_tid?: Date;
   cell_data: KTabCellData;
 }
 

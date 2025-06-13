@@ -33,6 +33,7 @@ import { KTabMeta } from "@/krate/ktab/store/po";
 import KTabChnot from "@/krate/ktab/component/ktab-container";
 import SessionContainer from "@/krate/llmchat/component/session-container";
 import { SidebarTrigger } from "@/common/component/ui/sidebar";
+import { TID } from "@/lib/id_util";
 
 enum RequestState {
   Saved,
@@ -52,12 +53,14 @@ export const ChnotContainer = ({
   globalViewMode,
   onChnotChange,
   onClickNewButton,
+  lefttop,
 }: {
   className?: string;
   chnot?: Chnot;
   onChnotChange?: (chnot: Chnot) => void;
   onClickNewButton?: () => void;
   globalViewMode?: React.RefObject<boolean>;
+  lefttop?: React.ReactElement;
 }) => {
   console.log("render ChnotContainer");
 
@@ -87,7 +90,7 @@ export const ChnotContainer = ({
   );
 
   const saveContent = useCallback(
-    async (content?: string, subTypeId?: string) => {
+    async (content?: string, kindId?: string) => {
       if (content === null || content === undefined) {
         return;
       }
@@ -102,24 +105,16 @@ export const ChnotContainer = ({
       try {
         const req: ChnotOverwriteReq = {
           content: content ?? "",
-          insert_time: new Date(),
-          meta_id: chnot?.meta.id,
+          meta_tid: chnot?.meta.tid,
           kind: chnotType,
+          kind_id: kindId,
         };
 
-        const rsp = await overwriteChnot(req, true);
+        const rspChnot = await overwriteChnot(req, true);
         if (onChnotChange) {
-          onChnotChange(rsp.chnot);
+          onChnotChange(rspChnot);
         }
         requestState = RequestState.Saved;
-
-        if (subTypeId) {
-          await insertKKV({
-            key: rsp.chnot.meta.id,
-            value: subTypeId,
-            kind: "chnot_sub_type",
-          });
-        }
       } catch {
         requestState = RequestState.Error;
       }
@@ -155,7 +150,7 @@ export const ChnotContainer = ({
     <div className={clsx(className, "flex flex-col h-full")}>
       <div className="w-full flex items-center border-b kc-basic-with-bdr px-3 justify-between text-xs align-middle">
         <div className="text-xs flex space-x-2 p-1 items-center">
-          <SidebarTrigger />
+          {lefttop}
           {onClickNewButton &&
             (chnot ? (
               <Button size="sm" onClick={() => onClickNewButton()}>
@@ -213,12 +208,12 @@ export const ChnotContainer = ({
               <KSpaceSelect
                 onSelect={(ns) => {
                   chnotUpdate({
-                    meta_id: chnot.meta.id,
+                    meta_tid: chnot.meta.tid,
                     update_time: false,
                     kspace: ns,
                   }).then((_) => {
                     if (ns !== currentKSpace) {
-                      validateChnotCache([chnot.meta.id]);
+                      validateChnotCache([chnot.meta.tid]);
                     }
                   });
                 }}
@@ -263,7 +258,7 @@ export const ChnotContainer = ({
         </div>
 
         <div className="flex space-x-2 items-center">
-          <div>{chnot?.record.insert_time.toLocaleDateString()}</div>
+          <div>{chnot && new Date(chnot?.record.tid).toLocaleDateString()}</div>
           {editState.requestState === RequestState.Requesting ? (
             <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
               <Icon.Loader2 className="animate-spin h-5 w-5" />
@@ -308,39 +303,39 @@ export const ChnotContainer = ({
           ))}
         {chnotType === ChnotKind.ExcalidrawV1 && (
           <ExcalidrawContainer
-            chnotMetaId={chnot?.meta.id}
-            afterSaveCallback={(id) => {
+            chnotMetaId={chnot?.meta.tid}
+            afterSaveCallback={(tid) => {
               onSubKindRelationPersist(
                 `# Excalidraw ${new Date().toLocaleTimeString()}\n\n${
                   listViewTypeGetTagPath(listViewType) ?? ""
                 }`,
-                id
+                tid.toString()
               );
             }}
           />
         )}
         {chnotType === ChnotKind.KFileV1 && (
           <CommonKFile
-            chnotMetaId={chnot?.meta.id}
+            chnotMetaId={chnot?.meta.tid}
             onSave={(r) => {
               onSubKindRelationPersist(
                 `# ${r.ori_filename}\n\n${
                   listViewTypeGetTagPath(listViewType) ?? ""
                 }`,
-                r.id
+                r.sid
               );
             }}
           />
         )}
         {chnotType === ChnotKind.KTab && (
           <KTabChnot
-            chnotMetaId={chnot?.meta.id}
+            chnotMetaId={chnot?.meta.tid}
             onInitialSave={async (meta: KTabMeta) => {
               onSubKindRelationPersist(
                 `# Table ${meta.table_name}\n\n${meta.table_comment}\n\n ${
                   listViewTypeGetTagPath(listViewType) ?? ""
                 }`,
-                meta.id.toString()
+                meta.tid.toString()
               );
             }}
             kspace={currentKSpace}
@@ -350,14 +345,14 @@ export const ChnotContainer = ({
         {chnotType === ChnotKind.LLMChat && (
           <div className="w-full">
             <SessionContainer
-              chnotMetaId={chnot?.meta.id}
+              chnotMetaId={chnot?.meta.tid}
               onNewButton={() => {}}
               afterInit={(session) => {
                 onSubKindRelationPersist(
                   `# ${session.title}  \n\n ${
                     listViewTypeGetTagPath(listViewType) ?? ""
                   }`,
-                  session.id
+                  session.tid.toString()
                 );
               }}
               kspace={currentKSpace}

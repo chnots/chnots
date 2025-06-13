@@ -1,8 +1,5 @@
-import request from "@/lib/request";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { kfileUpload } from "./service";
-import { KFileUploadRsp } from "./dto";
 
 type State = object;
 

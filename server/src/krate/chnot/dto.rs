@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset};
+use chin_tools::time_type::TID;
 use serde::{de, Deserialize, Serialize};
 
 use super::*;
@@ -11,9 +11,8 @@ pub(crate) struct Chnot {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotUpdateReq {
-    pub(crate) meta_id: String,
+    pub(crate) meta_tid: TID,
     pub(crate) kspace: Option<String>,
-    pub(crate) update_time: bool,
     pub(crate) pinned: Option<bool>,
     pub(crate) archive: Option<bool>,
 }
@@ -23,21 +22,23 @@ pub(crate) struct ChnotUpdateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotOverwriteReq {
-    pub(crate) id: Option<String>,
-    pub(crate) meta_id: Option<String>,
+    pub(crate) meta_tid: Option<TID>,
     pub(crate) content: String,
     pub(crate) kind: ChnotKind,
-    pub(crate) insert_time: DateTime<FixedOffset>,
+    pub(crate) kind_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotOverwriteRsp {
-    pub(crate) chnot: Chnot,
+    pub(crate) meta_tid: TID,
+    pub(crate) rec_tid: TID,
+    pub(crate) ksapce: String,
+    pub(crate) archor: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotDeletionReq {
-    pub(crate) chnot_id: String,
+    pub(crate) meta_tid: TID,
     /// logic or physical deletion
     pub(crate) logic: bool,
 }
@@ -106,15 +107,13 @@ impl<'a> Deserialize<'a> for ChnotViewType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotQueryReq {
     pub(crate) query: Option<String>,
-    pub(crate) meta_id: Option<String>,
-    pub(crate) record_id: Option<String>,
-    pub(crate) tag_path: Option<String>,
+    pub(crate) meta_tid: Option<TID>,
+    pub(crate) record_tid: Option<String>,
+
     pub(crate) view_type: ChnotViewType,
     pub(crate) kinds: Vec<ChnotKind>,
 
-    pub(crate) with_deleted: Option<bool>,
     pub(crate) with_omitted: Option<bool>,
-    pub(crate) with_archived: Option<bool>,
 
     // Paging
     pub(crate) start_index: usize,
@@ -164,6 +163,6 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotTagUpdateReq {
     pub(crate) content: String,
-    pub(crate) meta_id: String,
+    pub(crate) meta_tid: TID,
     pub(crate) kspace: String,
 }

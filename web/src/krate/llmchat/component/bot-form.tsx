@@ -3,6 +3,7 @@ import KSVG from "@/common/component/svg";
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/db";
 import React, { RefObject, useEffect, useRef, useState } from "react";
 import { v4 } from "uuid";
+import { genTID, TID } from "@/lib/id_util";
 
 const LLMChatBotBodyOpenAIV1Body = ({
   bodyRef,
@@ -103,7 +104,7 @@ const BotForm = ({
     svg_logo: bot?.svg_logo,
   });
 
-  const [botId, setBotId] = useState<string>(bot?.id ?? v4());
+  const [botId, setBotId] = useState<TID>(bot?.tid ?? genTID());
 
   const body = bot?.body
     ? (JSON.parse(bot?.body) as LLMChatBotBodyOpenAIV1)
@@ -136,10 +137,9 @@ const BotForm = ({
       };
 
       const toInsert: LLMChatBot = {
-        id: botId,
+        tid: botId,
         name: formData.name,
         svg_logo: formData.svg_logo,
-        insert_time: new Date(),
         body: JSON.stringify(body),
       };
 
@@ -207,7 +207,7 @@ const BotForm = ({
                 setFormData((prev) => {
                   return { ...prev, name: prev.name + " -- Clone" };
                 });
-                setBotId(v4());
+                setBotId(genTID());
               }}
               type="button"
             >

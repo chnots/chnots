@@ -32,13 +32,14 @@ import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/lib/resolve-promise";
 import md5 from "crypto-js/md5";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
+import { genUId, genTID, TID } from "../../../../lib/id_util";
 
 export interface ExcalidrawProps {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
-  chnotMetaId?: string;
+  chnotMetaId?: TID;
   viewMode?: boolean;
-  afterSaveCallback?: (id: string) => void;
+  afterSaveCallback?: (tid: TID) => void;
 }
 
 const CONTENT_TYPE = "excalidraw-v1";
@@ -69,19 +70,19 @@ export default function ExcalidrawContainer({
 
   useEffect(() => {
     (async () => {
-      let id = searchParams.get("exdId");
-      if (!id && chnotMetaId) {
+      let tid = searchParams.get("exdId");
+      if (!tid && chnotMetaId) {
         const { value } = await queryKKV({
-          key: chnotMetaId,
+          key: chnotMetaId.toString(),
           kind: "chnot_sub_type",
         });
         if (value) {
-          id = value;
+          tid = value;
         }
       }
-      id = id ?? uuid();
-      console.log("chnot_sub_id", id);
-      setExcalidrawId(id);
+      tid = tid ?? uuid();
+      console.log("chnot_sub_id", tid);
+      setExcalidrawId(tid);
     })();
   }, [setExcalidrawId, searchParams]);
 
@@ -107,7 +108,7 @@ export default function ExcalidrawContainer({
     }
     (async () => {
       const rsp = await queryInlineKFile({
-        rid: excalidrawId,
+        kkv_key: excalidrawId,
       });
       try {
         const dataState = JSON.parse(rsp.res[0].content);
@@ -120,7 +121,7 @@ export default function ExcalidrawContainer({
             if (element.type === "image" && element.fileId) {
               try {
                 const fileInlineRsp = await queryInlineKFile({
-                  rid: element.fileId,
+                  kkv_key: element.fileId,
                 });
 
                 const fileInline = fileInlineRsp.res.at(0);
@@ -128,10 +129,9 @@ export default function ExcalidrawContainer({
                   fileMap.set(element.fileId, {
                     // @ts-ignore
                     mimeType: fileInline.content_type,
-                    id: fileInline.rid as FileId,
                     dataURL: fileInline.content as DataURL,
-                    created: fileInline.insert_time?.getTime(),
-                    lastRetrieved: fileInline.insert_time?.getTime(),
+                    created: fileInline.tid,
+                    lastRetrieved: fileInline.tid,
                   });
                 }
               } catch (error) {
@@ -163,7 +163,7 @@ export default function ExcalidrawContainer({
       elements: NonDeletedExcalidrawElement[],
       state: AppState,
       files: BinaryFiles,
-      afterSave: (id: string) => void
+      afterSave: (tid: string) => void
     ) => {
       if (elements.length > 0) {
         const content = serializeAsJSON(elements, state, files, "database");
@@ -174,15 +174,16 @@ export default function ExcalidrawContainer({
             if (!ver || ver != newVar) {
               await insertInlineKFile({
                 res: {
-                  id: md5(newVar).toString(),
-                  rid: fileId,
+                  tid: genTID(),
                   kspace: currentKSpace,
                   archor: true,
                   name: fileId,
                   content: file.dataURL,
                   content_type: file.mimeType,
-                  insert_time: new Date(file.created),
+                  sid: "placeholder",
                 },
+                kkv_key: fileId,
+
                 archor_intervals: 3600,
                 ignore_conflict: true,
               });
@@ -192,15 +193,16 @@ export default function ExcalidrawContainer({
 
           await insertInlineKFile({
             res: {
-              id: uuid(),
-              rid: excalidrawId,
+              tid: genTID(),
+
               kspace: currentKSpace,
               archor: false,
-              name: chnotMetaId ?? uuid(),
+              name: chnotMetaId?.toString() ?? genTID().toString(),
               content,
               content_type: CONTENT_TYPE,
-              insert_time: new Date(),
+              sid: "placeholder",
             },
+            kkv_key: excalidrawId,
             archor_intervals: 3600,
           });
           afterSave(excalidrawId);

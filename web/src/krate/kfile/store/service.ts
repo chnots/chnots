@@ -9,9 +9,11 @@ import {
   QueryInlineKFileRsp,
   KFileUploadReq,
   KFileUploadRsp,
+  InsertInlineKFileRsp,
 } from "./dto";
 import { KFile } from "./db";
 import { chnotShortDate } from "@/lib/date-utils";
+import { TID } from "@/lib/id_util";
 
 export const kfileUpload = async ({
   chunk,
@@ -25,7 +27,7 @@ export const kfileUpload = async ({
 }: KFileUploadReq): Promise<KFileUploadRsp> => {
   const data = new FormData();
   data.append("chunk", chunk);
-  data.append("res_id", res_id);
+  data.append("res_id", res_id.toString());
   data.append("filename", filename);
   data.append("chunk_no", chunk_no.toString());
   data.append("total_chunks", total_chunks.toString());
@@ -37,12 +39,14 @@ export const kfileUpload = async ({
 };
 
 export const kfileQueryInfo = async (
-  resId: string
+  sid: string
 ): Promise<{ res?: KFile }> => {
-  return await request.get("api/v1/kfile-info/" + resId);
+  return await request.get("api/v1/kfile-info/" + sid);
 };
 
-export const insertInlineKFile = async (req: InsertInlineKFileReq) => {
+export const insertInlineKFile = async (
+  req: InsertInlineKFileReq
+): Promise<InsertInlineKFileRsp> => {
   return await request.put("api/v1/inline-kfile", req);
 };
 
@@ -56,7 +60,7 @@ export const getResouceDownloadUrl = (kfile: KFile): string => {
   return (
     BASE_URL +
     "/api/v1/kfile/" +
-    kfile.id +
+    kfile.sid +
     "/" +
     encodeURI(chnotShortDate() + "-" + kfile.ori_filename)
   );

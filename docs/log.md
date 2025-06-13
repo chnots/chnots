@@ -40,7 +40,7 @@ create table chnots (
     type VARCHAR(255) NOT NULL,
     domain TEXT NOT NULL,
 
-    delete_time timestamptz DEFAULT NULL,
+    omit_tid timestamptz DEFAULT NULL,
     insert_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     update_time timestamptz NOT NULL,
     primary key (id)

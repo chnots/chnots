@@ -68,7 +68,7 @@ const eventHandlers = EditorView.domEventHandlers({
               .then((kfile?) => {
                 if (kfile !== undefined) {
                   insertions.push(
-                    `![${new Date().toISOString()}](${kfile.id})`
+                    `![${new Date().toISOString()}](${kfile.tid})`
                   );
                 }
                 resolve();

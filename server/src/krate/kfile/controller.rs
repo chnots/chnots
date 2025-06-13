@@ -1,7 +1,11 @@
-use crate::controller::asset::{asset_to_response, ContentEnum};
+use crate::{
+    controller::asset::{asset_to_response, ContentEnum},
+    model::omit_tid::OmitTID,
+};
 use axum::{
     body::{self},
     extract::{DefaultBodyLimit, Query, State},
+    handler::HandlerWithoutStateExt,
     http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
     routing::{get, post, put},
@@ -10,7 +14,8 @@ use axum::{
 use axum_typed_multipart::TypedMultipart;
 use chin_tools::{
     aanyhow,
-    utils::{id_util, path_util::split_uuid_to_file_name},
+    time_type::TID,
+    utils::{id_util::generate_uuid, path_util::split_uuid_to_file_name},
     AResult,
 };
 use chrono::Local;
@@ -19,21 +24,24 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tokio::{fs::OpenOptions, io::AsyncWriteExt};
+use tokio::{
+    fs::OpenOptions,
+    io::{AsyncReadExt, AsyncWriteExt},
+};
 use tokio_util::io::ReaderStream;
 use tracing::info;
 
 use crate::{
     app::ShareAppState,
     config::AttachmentConfig,
-    model::dto::{kreq, read_kspace_from_header},
     controller::KResponse,
+    model::dto::{kreq, read_kspace_from_header},
 };
 
 use super::{mapper::KFileMapper, *};
 
-pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf {
-    let filename_parts = split_uuid_to_file_name(id);
+pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, sid: &str) -> PathBuf {
+    let filename_parts = split_uuid_to_file_name(sid);
 
     let save_filepath = std::path::Path::new(&config.base_dir)
         .join(filename_parts.0)
@@ -42,29 +50,23 @@ pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, id: &str) -> PathBuf
     save_filepath
 }
 
-pub(crate) fn asset_tmp_path(config: &AttachmentConfig, id: &str) -> PathBuf {
+pub(crate) fn asset_tmp_path(config: &AttachmentConfig, sid: &str) -> PathBuf {
     std::path::Path::new(&config.base_dir)
         .join("tmp-chunks")
-        .join(id)
+        .join(sid)
 }
 
 async fn assemble_file<P: AsRef<Path>>(
     temp_dir: &P,
-    filepath: P,
+    config: &AttachmentConfig,
     total_chunks: usize,
 ) -> AResult<String> {
-    tokio::fs::create_dir_all(
-        filepath
-            .as_ref()
-            .parent()
-            .ok_or(aanyhow!("unable to get parent"))?,
-    )
-    .await?;
+    let output_filepath = temp_dir.as_ref().join(generate_uuid());
     let mut output_file = OpenOptions::new()
         .create(true)
         .truncate(true)
         .write(true)
-        .open(filepath.as_ref())
+        .open(&output_filepath)
         .await?;
     let mut bh = blake3::Hasher::new();
 
@@ -75,10 +77,15 @@ async fn assemble_file<P: AsRef<Path>>(
         output_file.write_all(&chunk_data).await?;
     }
 
+    let sid = bh.finalize().to_string();
+    let path = asset_path_by_uuid(config, sid.as_str());
+    tokio::fs::create_dir_all(path.parent().ok_or(aanyhow!("unable to get parent"))?).await?;
+
+    tokio::fs::rename(output_filepath, path).await?;
     // Clean up the temporary chunks
     tokio::fs::remove_dir_all(temp_dir).await?;
 
-    Ok(bh.finalize().to_string())
+    Ok(sid)
 }
 
 async fn upload(
@@ -89,14 +96,14 @@ async fn upload(
         chunk_no,
         total_chunks,
         chunk,
-        res_id,
+        res_id: _,
         last_modified,
         filesize,
     }): TypedMultipart<KFileUploadReq>,
 ) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
 
-    let tmp_dir = asset_tmp_path(&state.config.attachment, &res_id);
+    let tmp_dir = asset_tmp_path(&state.config.attachment, &generate_uuid());
 
     if tokio::fs::metadata(&tmp_dir).await.is_err() {
         tokio::fs::create_dir_all(&tmp_dir).await?;
@@ -115,23 +122,21 @@ async fn upload(
     }
 
     let kfile = if all_existed {
-        let id = id_util::generate_uuid();
-        let final_filepath = asset_path_by_uuid(&state.config.attachment, &id);
-        assemble_file(&tmp_dir, final_filepath, total_chunks).await?;
+        let tid = TID::default();
+        let blake3_sum = assemble_file(&tmp_dir, &state.config.attachment, total_chunks).await?;
 
-        let res = mapper
-            .insert_kfile(&KFile {
-                id,
-                kspace: read_kspace_from_header(&headers),
-                ori_filename: filename,
-                content_type: "".to_owned(),
-                delete_time: None,
-                insert_time: Local::now().into(),
-                ori_last_modified: last_modified,
-                filesize,
-            })
-            .await?;
-        Some(res)
+        let kfile = KFile {
+            tid,
+            kspace: read_kspace_from_header(&headers),
+            ori_filename: filename,
+            content_type: "".to_owned(),
+            omit_tid: OmitTID::never(),
+            ori_last_modified: last_modified,
+            filesize,
+            sid: blake3_sum,
+        };
+        mapper.insert_kfile(kfile.clone()).await?;
+        Some(kfile)
     } else {
         None
     };
@@ -144,11 +149,11 @@ async fn upload(
 
 pub(crate) async fn kfile_info(
     state: State<ShareAppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(sid): axum::extract::Path<String>,
 ) -> KResponse<QueryKFileRsp> {
     state
         .mapper
-        .query_kfile_by_id(&id)
+        .query_kfile_by_sid(&sid)
         .await
         .map(|res| QueryKFileRsp { res: Some(res) })
         .into()
@@ -157,17 +162,17 @@ pub(crate) async fn kfile_info(
 // https://github.com/tokio-rs/axum/discussions/608
 pub(crate) async fn download(
     state: State<ShareAppState>,
-    axum::extract::Path((id, filename)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((sid, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
-    info!("download id: {}, {}", id, filename);
+    info!("download sid: {}, {}", sid, filename);
 
     async fn inner(
         state: State<ShareAppState>,
-        id: &str,
+        sid: &str,
     ) -> AResult<([(HeaderName, String); 2], body::Body)> {
-        let kfile = state.mapper.query_kfile_by_id(id).await?;
+        let kfile = state.mapper.query_kfile_by_sid(sid).await?;
 
-        let save_filepath = asset_path_by_uuid(&state.config.attachment, id);
+        let save_filepath = asset_path_by_uuid(&state.config.attachment, sid);
 
         let file = tokio::fs::File::open(&save_filepath).await?;
 
@@ -184,7 +189,7 @@ pub(crate) async fn download(
         Ok((headers, body))
     }
 
-    let res = inner(state, &id).await;
+    let res = inner(state, &sid).await;
 
     match res {
         Ok(res) => Ok(res),
@@ -214,7 +219,7 @@ async fn insert_inline_kfile(
 ) -> KResponse<InsertInlineKFileRsp> {
     state
         .mapper
-        .insert_inline_kfile(&kreq(headers, req))
+        .insert_inline_kfile(kreq(headers, req))
         .await
         .into()
 }
@@ -222,7 +227,7 @@ async fn insert_inline_kfile(
 async fn query_svg(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(tid): axum::extract::Path<String>,
 ) -> Response {
     let mut headers = headers.clone();
     headers.append("K-kspace", HeaderValue::from_str("default").unwrap());
@@ -230,11 +235,11 @@ async fn query_svg(
         headers,
         state,
         Query(QueryInlineKFileReq {
-            id: Some(id),
+            sid: Some(tid),
             content_type: Some("svg".into()),
             name_like: None,
-            rid: None,
             with_del: Some(false),
+            kkv_key: None,
         }),
     )
     .await
@@ -258,9 +263,9 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
-        .route("/api/v1/kfile/{id}/{filename}", get(download))
-        .route("/api/v1/kfile-info/{id}", get(kfile_info))
+        .route("/api/v1/kfile/{sid}/{filename}", get(download))
+        .route("/api/v1/kfile-info/{sid}", get(kfile_info))
         .route("/api/v1/inline-kfile", put(insert_inline_kfile))
         .route("/api/v1/inline-kfile", get(query_inline_kfile))
-        .route("/api/v1/inline-svg/{id}", get(query_svg))
+        .route("/api/v1/inline-svg/{tid}", get(query_svg))
 }

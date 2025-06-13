@@ -120,7 +120,7 @@ for c in rel_dict.values():
 
 
 def chnot_sql(c: Chnot):
-    return f"INSERT INTO public.chnots(id, meta_id, tree_id, \"content\", \"type\", \"namespace\", delete_time, insert_time) VALUES('{c.newest_id()}', '{c.meta_id}', '{c.tree_id}', '{c.content()}', 'mwdt', 'public', null, CURRENT_TIMESTAMP);"
+    return f"INSERT INTO public.chnots(id, meta_id, tree_id, \"content\", \"type\", \"namespace\", omit_tid, insert_time) VALUES('{c.newest_id()}', '{c.meta_id}', '{c.tree_id}', '{c.content()}', 'mwdt', 'public', null, CURRENT_TIMESTAMP);"
 
 
 def chnot_hierarchy_sql(c: Chnot):

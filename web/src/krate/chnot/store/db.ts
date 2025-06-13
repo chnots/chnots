@@ -1,3 +1,5 @@
+import { TID as TID } from "@/lib/id_util";
+
 export enum ChnotKind {
   MarkdownWithToent = "mdwt",
   ExcalidrawV1 = "exdrv1",
@@ -7,27 +9,25 @@ export enum ChnotKind {
 }
 
 export interface ChnotRecord {
-  id: string;
-  meta_id: string;
+  tid: TID;
+  meta_tid: TID;
   content: string;
-  omit_time?: Date;
-  insert_time: Date;
+  omit_tid?: TID;
+  archor: boolean;
 }
 
 export interface ChnotMetadata {
-  id: string;
+  tid: TID;
   kspace: string;
   kind: string;
   pin_time?: Date;
-  delete_time?: Date;
-  update_time?: Date;
-  insert_time: Date;
+  omit_tid?: TID;
+  archive_time?: Date;
 }
 
 export interface ChnotTag {
-  id: string;
+  tid: TID;
   kspace: string;
   tag: string;
-  chnot_meta_id: string;
-  insert_time: Date;
+  meta_id: TID;
 }

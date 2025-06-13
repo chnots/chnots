@@ -3,7 +3,7 @@ use chin_tools::AResult;
 use chrono::Local;
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier},
+    mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier},
     model::dto::KReq,
 };
 
@@ -26,6 +26,36 @@ impl KKVDeserializeMapper for KDbRow {
     }
 }
 
+impl KDbExecutor<'_> {
+    pub async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
+        let inserter = SqlInserter::new(KKV::TABLE)
+            .field(KKV::KEY, &req.key)
+            .field(KKV::KIND, req.kind)
+            .field(KKV::VALUE, &req.value)
+            .field(KKV::KSPACE, &req.kspace)
+            .field(KKV::INSERT_TIME, Local::now().fixed_offset())
+            .on_conflict(chin_sql::OnConflict::Replace([KKV::KEY, KKV::KIND, KKV::KSPACE].join(",")));
+        self.exec(inserter).await?;
+
+        Ok(KKVOverwriteRsp {})
+    }
+
+    pub async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
+        let query = SqlReader::read_all(KKV::TABLE).r#where(Wheres::and([
+            Wheres::equal(KKV::KEY, req.key.as_str()),
+            Wheres::equal(KKV::KIND, req.kind),
+            Wheres::equal(KKV::KSPACE, &req.kspace),
+        ]));
+
+        let kv = self.qry_opt(query, KDbRow::to_kkv).await?;
+
+        Ok(KKVQueryOneRsp {
+            value: kv.map(|kv| kv.value),
+        })
+    }
+
+}
+
 impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
         self.conn()
@@ -35,31 +65,6 @@ impl KKVMapper for KDb {
         Ok(())
     }
 
-    async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
-        let inserter = SqlInserter::new(KKV::TABLE)
-            .field(KKV::KEY, &req.key)
-            .field(KKV::KIND, req.kind)
-            .field(KKV::VALUE, &req.value)
-            .field(KKV::KSPACE, &req.kspace)
-            .field(KKV::INSERT_TIME, Local::now().fixed_offset());
-        self.conn().await?.exec(inserter).await?;
-
-        Ok(KKVOverwriteRsp {})
-    }
-
-    async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
-        let query = SqlReader::read_all(KKV::TABLE).r#where(Wheres::and([
-            Wheres::equal(KKV::KEY, req.key.as_str()),
-            Wheres::equal(KKV::KIND, req.kind),
-            Wheres::equal(KKV::KSPACE, &req.kspace),
-        ]));
-
-        let kv = self.conn().await?.qry_opt(query, KDbRow::to_kkv).await?;
-
-        Ok(KKVQueryOneRsp {
-            value: kv.map(|kv| kv.value),
-        })
-    }
 
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {
         let query = SqlReader::read_all(KKV::TABLE).r#where(Wheres::and([
@@ -83,5 +88,13 @@ impl KKVMapper for KDb {
         self.conn().await?.exec(del).await?;
 
         Ok(KKVDeleteRsp {})
+    }
+    
+    async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
+        self.conn().await?.as_executor().kkv_overwrite(req).await
+    }
+    
+    async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
+        self.conn().await?.as_executor().kkv_query(req).await
     }
 }

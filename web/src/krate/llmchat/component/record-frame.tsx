@@ -2,6 +2,7 @@ import clsx from "clsx";
 import Icon from "@/common/component/icon";
 import React, { useCallback, useRef, useState } from "react";
 import { Button as KButton } from "@/common/component/ui/button";
+import { TID } from "@/lib/id_util";
 
 const getAvatar = (role: string) => {
   switch (role) {
@@ -29,7 +30,7 @@ const RecordFrame = ({
   justifyEnd,
 }: {
   name?: string;
-  timestamp?: Date;
+  timestamp?: TID;
   limitHeight?: boolean;
   justifyEnd?: boolean;
   onCopy?: () => void;

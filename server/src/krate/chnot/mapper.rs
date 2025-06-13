@@ -1,4 +1,4 @@
-use chin_tools::{AResult, EResult};
+use chin_tools::{time_type::TID, AResult, EResult};
 
 use crate::{expand_mt_branch, model::dto::KReq, MapperType, RecordCallbackType};
 
@@ -39,7 +39,7 @@ pub(crate) trait ChnotMapper {
         &self,
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>>;
-    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult;
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<TID>) -> EResult;
 
     async fn ensure_table_chnot_record(&self) -> EResult;
     async fn ensure_table_chnot_metadata(&self) -> EResult;
@@ -97,7 +97,7 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_tag_names(req))
     }
 
-    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<&str>) -> EResult {
+    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<TID>) -> EResult {
         expand_mt_branch!(self.chnot_tag_delete(chnot_meta_ids))
     }
 

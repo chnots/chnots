@@ -2,13 +2,12 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Ok};
 use chin_sql::{SqlInserter, SqlReader, SqlUpdater, Wheres};
-use chin_tools::AResult;
-use chrono::Local;
+use chin_tools::{time_type::TID, AResult};
 use itertools::Itertools;
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier},
-    model::dto::KReq,
+    mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier, KDbTransactionBehaiver},
+    model::{dto::KReq, omit_tid::OmitTID},
 };
 
 use super::{mapper::KTabMapper, *};
@@ -21,10 +20,11 @@ impl KDb {
                     .field($table::TABLE_ID, $c.table_id)
                     .field($table::COL_IDX, $c.col_idx)
                     .field($table::ROW_IDX, $c.row_idx)
+                    .field($table::OMIT_TID, $c.omit_tid)
                     .field($table::CELL_DATA, $v)
-                    .field($table::INSERT_TIME, &$c.insert_time);
+                    .field($table::TID, $c.tid);
                 let omit_sql = SqlUpdater::new($table::TABLE)
-                    .set($table::DELETE_TIME, Local::now().fixed_offset())
+                    .set($table::OMIT_TID, OmitTID::now())
                     .r#where(Wheres::and([
                         Wheres::equal($table::TABLE_ID, $c.table_id),
                         Wheres::equal($table::ROW_IDX, $c.row_idx),
@@ -60,13 +60,12 @@ impl KTabMapper for KDb {
         req: KReq<KTabMetaOverwriteReq>,
     ) -> chin_tools::AResult<KTabMetaOverwriteRsp> {
         let KTabMeta {
-            id,
+            tid,
             columns,
             table_name,
             table_comment,
-            create_time,
             update_time: _,
-            delete_time: _,
+            omit_tid,
             real_table,
             kspace,
         } = &req.meta;
@@ -76,24 +75,25 @@ impl KTabMapper for KDb {
         }
 
         let omit_sql = SqlUpdater::new(KTabMeta::TABLE)
-            .set(KTabMeta::DELETE_TIME, Local::now().fixed_offset())
-            .r#where(Wheres::and([Wheres::equal(
-                KTabMeta::TABLE_NAME,
-                table_name,
-            )]));
+            .set(KTabMeta::OMIT_TID, OmitTID::now())
+            .r#where(Wheres::and([Wheres::equal(KTabMeta::TID, *tid)]));
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
-            .field(KTabMeta::ID, *id)
+            .field(KTabMeta::TID, *tid)
             .field(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
             .field(KTabMeta::TABLE_NAME, table_name)
-            .field(KTabMeta::CREATE_TIME, create_time)
             .field(KTabMeta::TABLE_COMMENT, table_comment)
             .field(KTabMeta::KSPACE, kspace)
             .field(KTabMeta::REAL_TABLE, *real_table)
-            .on_conflict(chin_sql::OnConflict::Replace(KTabMeta::ID.to_owned()));
-
-        self.conn().await?.exec(omit_sql).await?;
-        self.conn().await?.exec(insert_sql).await?;
+            .field(KTabMeta::OMIT_TID, *omit_tid)
+            .on_conflict(chin_sql::OnConflict::Replace(
+                [KTabMeta::TID, KTabMeta::OMIT_TID].join(", "),
+            ));
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.exec(omit_sql).await?;
+        tx.exec(insert_sql).await?;
+        tx.cmt().await?;
 
         Ok(KTabMetaOverwriteRsp {})
     }
@@ -118,7 +118,7 @@ impl KTabMapper for KDb {
             .await?
             .meta
             .context("unable to get this table")?;
-        let table_id = table_meta.id;
+        let table_id = table_meta.tid;
 
         let columns = table_meta.columns;
 
@@ -132,9 +132,9 @@ impl KTabMapper for KDb {
                 table_id: table_id.clone(),
                 col_idx: column_index,
                 row_idx: ele.row_idx,
-                insert_time: Local::now().fixed_offset(),
-                delete_time: None,
+                omit_tid: OmitTID::never(),
                 cell_data: ele.value,
+                tid: TID::default(),
             })
             .await?;
         }
@@ -147,8 +147,8 @@ impl KTabMapper for KDb {
         req: KReq<KTabMetaQueryReq>,
     ) -> chin_tools::AResult<KTabMetaQueryRsp> {
         let ssb = SqlReader::read_all(KTabMeta::TABLE).r#where(Wheres::and([
-            Wheres::equal(KTabMeta::ID, req.table_id),
-            Wheres::is_null(KTabMeta::DELETE_TIME),
+            Wheres::equal(KTabMeta::TID, req.table_id),
+            Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
             Wheres::equal(KTabMeta::KSPACE, &req.kspace),
         ]));
         let meta = self
@@ -162,11 +162,10 @@ impl KTabMapper for KDb {
                     },
                     table_name: row.try_get(KTabMeta::TABLE_NAME)?,
                     table_comment: row.try_get(KTabMeta::TABLE_COMMENT)?,
-                    create_time: row.try_get(KTabMeta::CREATE_TIME)?,
                     update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
-                    delete_time: row.try_get(KTabMeta::DELETE_TIME)?,
+                    omit_tid: row.try_get(KTabMeta::OMIT_TID)?,
                     real_table: row.try_get(KTabMeta::REAL_TABLE)?,
-                    id: row.try_get(KTabMeta::ID)?,
+                    tid: row.try_get(KTabMeta::TID)?,
                     kspace: row.try_get(KTabMeta::KSPACE)?,
                 })
             })
@@ -188,7 +187,7 @@ impl KTabMapper for KDb {
             .await?
             .meta
             .context("cannot find table")?;
-        let col_names: HashMap<i64, String> = config
+        let col_names: HashMap<TID, String> = config
             .columns
             .into_values()
             .map(|c| (c.idx, c.name))
@@ -198,7 +197,7 @@ impl KTabMapper for KDb {
             ($sub_table:tt) => {
                 let reader = SqlReader::read_all($sub_table::TABLE).r#where(Wheres::and([
                     Wheres::equal($sub_table::TABLE_ID, table_id),
-                    Wheres::is_null($sub_table::DELETE_TIME),
+                    Wheres::equal($sub_table::OMIT_TID, OmitTID::never()),
                 ]));
 
                 let data: Vec<KTabCell> = self
@@ -210,8 +209,8 @@ impl KTabMapper for KDb {
                             col_idx: row.try_get($sub_table::COL_IDX)?,
                             row_idx: row.try_get($sub_table::ROW_IDX)?,
                             cell_data: row.try_get($sub_table::CELL_DATA)?,
-                            insert_time: row.try_get($sub_table::INSERT_TIME)?,
-                            delete_time: row.try_get($sub_table::DELETE_TIME)?,
+                            tid: row.try_get($sub_table::TID)?,
+                            omit_tid: row.try_get($sub_table::OMIT_TID)?,
                         })
                     })
                     .await?

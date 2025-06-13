@@ -26,19 +26,19 @@ const LLMChatSessionListItem = React.forwardRef(
 
     const handleDelete = async () => {
       await llmchatSessionUpdate({
-        session_id: session.id,
+        session_id: session.tid,
         delete: true,
       });
-      deleteCacheSession(session.id);
+      deleteCacheSession(session.tid);
     };
 
     return (
       <KListItem
         onClick={() => {
-          return setCurrentSessionId(session.id);
+          return setCurrentSessionId(session.tid);
         }}
-        focused={currentSessionId === session.id}
-        key={session.id}
+        focused={currentSessionId === session.tid}
+        key={session.tid}
         ref={ref}
         className="relative flex space-x-2 justify-center"
       >
@@ -54,7 +54,7 @@ const LLMChatSessionListItem = React.forwardRef(
             <span>{tmplName}</span>
 
             <div className="flex align-middle">
-              <RelativeTime date={session.insert_time} />
+              <RelativeTime date={new Date(session.tid)} />
               <KButton onClick={handleDelete}>
                 <Icon.X className="h-4 opacity-0 group-hover:opacity-100" />
               </KButton>

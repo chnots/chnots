@@ -1,13 +1,13 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
 use anyhow::Ok;
 use chin_sql::{
-    DbType, IntoSqlSeg, OnConflict, SqlInserter, SqlReader, SqlValueOwned, SqlValueRow,
+    DbType, IntoSqlSeg, OnConflict, SqlInserter, SqlReader, SqlUpdater, SqlValueOwned, SqlValueRow, Wheres
 };
-use chin_tools::{AResult, EResult};
+use chin_tools::{time_type::TID, AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 
-use crate::mapper::mappertype::InserterBehavier;
+use crate::{mapper::mappertype::InserterBehavier, model::omit_tid::OmitTID};
 
 use super::{postgres, sqlite};
 
@@ -65,8 +65,8 @@ pub(crate) trait KDbTransactionBehaiver: KDbExecutorBehaiver {
 impl KDbTransactionBehaiver for KDbTx<'_> {
     async fn cmt(self) -> EResult {
         match self {
-            KDbTx::Sqlite(actor_sqlite_tx_client) => actor_sqlite_tx_client.commit().await?,
-            KDbTx::Postgres(transaction) => transaction.commit().await?,
+            KDbTx::Sqlite(tx) => tx.commit().await?,
+            KDbTx::Postgres(tx) => tx.commit().await?,
         }
 
         Ok(())
@@ -74,8 +74,8 @@ impl KDbTransactionBehaiver for KDbTx<'_> {
 
     async fn rbk(self) -> EResult {
         match self {
-            KDbTx::Sqlite(actor_sqlite_tx_client) => actor_sqlite_tx_client.rollback().await?,
-            KDbTx::Postgres(transaction) => transaction.rollback().await?,
+            KDbTx::Sqlite(tx) => tx.rollback().await?,
+            KDbTx::Postgres(tx) => tx.rollback().await?,
         }
 
         Ok(())
@@ -297,6 +297,16 @@ common_try_get! {f64}
 common_try_get! {String}
 common_try_get! {bool}
 common_try_get! {DateTime<FixedOffset>}
+common_try_get! {TID}
+
+impl KDbRowBehavier<OmitTID> for KDbRow {
+    fn try_get(&self, key: &str) -> AResult<OmitTID> {
+        match self {
+            KDbRow::Postgres(row) => Ok(row.try_get(key)?),
+            KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
+        }
+    }
+}
 
 pub trait ToSqlInserter {
     fn to_sql_inserter(self) -> SqlInserter<'static>;
@@ -321,6 +331,18 @@ macro_rules! expand_KDbExecutor_branch {
             KDbExecutor::Tx(db) => db.$method($($arg),*).await,
         }
     };
+}
+
+impl KDbConn {
+    pub fn as_executor(&self) -> KDbExecutor<'_> {
+        KDbExecutor::Conn(self)
+    }
+}
+
+impl KDbTx<'_> {
+    pub fn as_executor(&self) -> KDbExecutor<'_> {
+        KDbExecutor::Tx(self)
+    }
 }
 
 impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
@@ -374,3 +396,10 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
     }
 }
 
+pub fn omit_table_tid<'a>(table_name: &'static str, tid: TID) -> SqlUpdater<'a> {
+    SqlUpdater::new(table_name).set("omit_tid", OmitTID::now())
+        .r#where(Wheres::and([
+            Wheres::equal("tid", tid),
+            Wheres::equal("omit_tid", OmitTID::never())
+        ]))
+}
