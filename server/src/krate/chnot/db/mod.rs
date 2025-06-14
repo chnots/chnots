@@ -11,9 +11,9 @@ use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
-use chin_sql::{ILikeType, SqlReader, SqlValue};
+use chin_sql::{ILikeType, SqlBuilder, SqlValue};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
-use chin_tools::time_type::TID;
+use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 use itertools::Itertools;
@@ -23,8 +23,8 @@ use tracing::info;
 const UNTAGGED_TAG: &str = "#_untagged";
 
 #[inline]
-fn chnot_query_sql<'a>() -> SqlReader<'a> {
-    SqlReader::new()
+fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
+    SqlBuilder::new()
     .sov("SELECT r.tid as rec_tid, r.content, r.omit_tid as rec_omit_tid, r.archor,")
     .sov("m.tid as meta_tid, m.kspace, m.kind, m.pin_time, m.omit_tid as meta_omit_tid, m.archive_time")
     .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_tid = m.tid")
@@ -81,9 +81,9 @@ impl KDb {
         let origin_count = level(query_type1.path());
         info!("original count: {}", origin_count);
         let sr = if name_only {
-            SqlReader::read(ChnotTag::TABLE, &["distinct tag"])
+            SqlBuilder::read(ChnotTag::TABLE, &["distinct tag"])
         } else {
-            SqlReader::read_all(ChnotTag::TABLE)
+            SqlBuilder::read_all(ChnotTag::TABLE)
         };
 
         let query = sr
@@ -128,15 +128,18 @@ impl ChnotMapper for KDb {
     async fn ensure_table_chnot_record(&self) -> EResult {
         self.conn()
             .await?
-            .create_table(ChnotRecord::schema(self.db_type()))
+            .exec(ChnotRecord::create_sql())
             .await
+            .map(|_| ())
     }
 
     async fn ensure_table_chnot_metadata(&self) -> EResult {
+        self.conn().await?.exec(ChnotMetadata::create_sql()).await?;
         self.conn()
             .await?
-            .create_table(ChnotMetadata::schema(self.db_type()))
+            .exec(ChnotKindId::create_sql())
             .await
+            .map(|_| ())
     }
 
     async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp> {
@@ -156,7 +159,7 @@ impl ChnotMapper for KDb {
         let page_size = req.page_size;
         let page_start = req.start_index;
 
-        let chnot_sql = SqlReader::new()
+        let chnot_sql = SqlBuilder::new()
             .sov("select * from ")
             .sub("t", chnot_query_sql())
             .some_then(
@@ -174,7 +177,7 @@ impl ChnotMapper for KDb {
                     sr.sov("inner join")
                         .sub(
                             "ct",
-                            SqlReader::read_all(ChnotTag::TABLE).r#where(Wheres::and([
+                            SqlBuilder::read_all(ChnotTag::TABLE).r#where(Wheres::and([
                                 Wheres::equal(ChnotTag::KSPACE, req.kspace.to_owned()),
                                 match tag {
                                     ChnotTagTreeType::Children(path) => Wheres::and([
@@ -266,8 +269,9 @@ impl ChnotMapper for KDb {
     async fn ensure_table_chnot_tag(&self) -> EResult {
         self.conn()
             .await?
-            .create_table(ChnotTag::schema(self.db_type()))
+            .exec(ChnotTag::create_sql())
             .await
+            .map(|_| ())
     }
 
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
@@ -306,7 +310,7 @@ impl ChnotMapper for KDb {
     }
 
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
-        let get_all = SqlReader::new()
+        let get_all = SqlBuilder::new()
             .sov("select r.content, m.tid as meta_id from ")
             .sov(ChnotRecord::TABLE)
             .sov(" as r left join")
@@ -372,6 +376,7 @@ impl ChnotDeserializeMapper for KDbRow {
             tag: self.try_get(ChnotTag::TAG)?,
             meta_tid: self.try_get(ChnotTag::META_TID)?,
             category: ChnotTagType::Common,
+            omit_tid: self.try_get(ChnotTag::OMIT_TID)?,
         };
         Ok(obj)
     }

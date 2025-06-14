@@ -6,8 +6,8 @@ use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx, ToSqlIn
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use chin_sql::{SqlDeleter, Wheres};
-use chin_sql::{SqlReader, SqlUpdater};
-use chin_tools::time_type::TID;
+use chin_sql::{SqlBuilder, SqlUpdater};
+use chin_sql::time_type::TID;
 use chin_tools::AResult;
 
 use chrono::TimeDelta;
@@ -107,6 +107,7 @@ impl<'a> KDbTx<'a> {
                     tag: UNTAGGED_TAG.to_owned(),
                     meta_tid: meta_id,
                     category: ChnotTagType::Dir,
+                    omit_tid: OmitTID::never(),
                 })
                 .await?;
         }
@@ -118,6 +119,7 @@ impl<'a> KDbTx<'a> {
                     tag: tag.to_owned(),
                     meta_tid: meta_id,
                     category: ChnotTagType::ParentDir,
+                    omit_tid: OmitTID::never(),
                 })
                 .await?;
         }
@@ -130,6 +132,7 @@ impl<'a> KDbTx<'a> {
                     tag: tag.to_owned(),
                     meta_tid: meta_id,
                     category: ChnotTagType::Dir,
+                    omit_tid: OmitTID::never(),
                 })
                 .await?;
         }
@@ -153,7 +156,7 @@ impl<'a> KDbTx<'a> {
         match meta_tid {
             MetaId::Old(meta_tid) => {
                 // Query for existing record
-                let query_old_rec = SqlReader::read(
+                let query_old_rec = SqlBuilder::read(
                     ChnotRecord::TABLE,
                     &[ChnotRecord::META_TID, ChnotRecord::CONTENT],
                 )

@@ -1,7 +1,8 @@
+use chin_sql::ChinSqlCrud;
 use chin_sql::DbType;
-use chin_sql::GenerateTableSql;
+use chin_sql::GenerateTableSchema;
 use chin_sql::SqlValue;
-use chin_tools::time_type::TID;
+use chin_sql::time_type::TID;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -9,7 +10,6 @@ use chin_tools::time_type::TID;
 /// but the name "knot" is too repetitive, so I made a change.
 ///
 use chrono::{DateTime, FixedOffset};
-use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 use strum::Display;
@@ -17,7 +17,7 @@ use strum_macros::EnumString;
 
 use crate::model::omit_tid::OmitTID;
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -27,10 +27,10 @@ pub(crate) struct ChnotRecord {
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
     pub(crate) content: String,
-    pub(crate) archor: bool
+    pub(crate) archor: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct ChnotMetadata {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -40,16 +40,21 @@ pub(crate) struct ChnotMetadata {
     #[gts_length = 40]
     pub(crate) kind: String,
     pub(crate) pin_time: Option<DateTime<FixedOffset>>,
+    #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
     pub(crate) archive_time: Option<DateTime<FixedOffset>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct ChnotTag {
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) tid: TID,
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub(crate) omit_tid: OmitTID,
+
     #[gts_length = 40]
     pub(crate) kspace: String,
     #[gts_length = 800]
@@ -58,6 +63,19 @@ pub(crate) struct ChnotTag {
     pub(crate) category: ChnotTagType,
     #[gts_type = "i64"]
     pub(crate) meta_tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
+pub(crate) struct ChnotKindId {
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub(crate) meta_tid: TID,
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub(crate) omit_tid: OmitTID,
+
+    #[gts_length = 200]
+    pub(crate) kind_id: String,
 }
 
 impl AsRef<str> for ChnotTag {

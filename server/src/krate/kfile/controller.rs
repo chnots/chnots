@@ -12,9 +12,9 @@ use axum::{
     Json, Router,
 };
 use axum_typed_multipart::TypedMultipart;
+use chin_sql::time_type::TID;
 use chin_tools::{
     aanyhow,
-    time_type::TID,
     utils::{id_util::generate_uuid, path_util::split_uuid_to_file_name},
     AResult,
 };

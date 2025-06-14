@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Ok};
-use chin_sql::{SqlInserter, SqlReader, SqlUpdater, Wheres};
-use chin_tools::{time_type::TID, AResult};
+use chin_sql::{time_type::TID, SqlBuilder, SqlInserter, SqlUpdater, Wheres};
+use chin_tools::{ AResult};
 use itertools::Itertools;
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier, KDbTransactionBehaiver},
+    mapper::db::{
+        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier,
+        KDbTransactionBehaiver,
+    },
     model::{dto::KReq, omit_tid::OmitTID},
 };
 
@@ -143,7 +146,7 @@ impl KTabMapper for KDb {
         &self,
         req: KReq<KTabMetaQueryReq>,
     ) -> chin_tools::AResult<KTabMetaQueryRsp> {
-        let ssb = SqlReader::read_all(KTabMeta::TABLE).r#where(Wheres::and([
+        let ssb = SqlBuilder::read_all(KTabMeta::TABLE).r#where(Wheres::and([
             Wheres::equal(KTabMeta::TID, req.table_id),
             Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
             Wheres::equal(KTabMeta::KSPACE, &req.kspace),
@@ -192,7 +195,7 @@ impl KTabMapper for KDb {
 
         macro_rules! extend_cells {
             ($sub_table:tt) => {
-                let reader = SqlReader::read_all($sub_table::TABLE).r#where(Wheres::and([
+                let reader = SqlBuilder::read_all($sub_table::TABLE).r#where(Wheres::and([
                     Wheres::equal($sub_table::TABLE_ID, table_id),
                     Wheres::equal($sub_table::OMIT_TID, OmitTID::never()),
                 ]));
@@ -247,22 +250,13 @@ impl KTabMapper for KDb {
     }
 
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
+        self.conn().await?.exec(KTabCellDate::create_sql()).await?;
         self.conn()
             .await?
-            .exec(KTabCellDate::schema(self.db_type()))
+            .exec(KTabCellDecimal::create_sql())
             .await?;
-        self.conn()
-            .await?
-            .exec(KTabCellDecimal::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabCellText::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabMeta::schema(self.db_type()))
-            .await?;
+        self.conn().await?.exec(KTabCellText::create_sql()).await?;
+        self.conn().await?.exec(KTabMeta::create_sql()).await?;
 
         Ok(())
     }

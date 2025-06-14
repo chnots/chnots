@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use chin_sql::SqlValue;
-use chin_tools::time_type::TID;
+use chin_sql::time_type::TID;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 

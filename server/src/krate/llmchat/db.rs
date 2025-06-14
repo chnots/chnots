@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::Ok;
-use chin_sql::{SqlReader, SqlUpdater, Wheres};
-use chin_tools::time_type::TID;
+use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
+use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 
@@ -158,7 +158,7 @@ impl LLMChatMapper for KDb {
         &self,
         _req: KReq<LLMChatListTemplateReq>,
     ) -> AResult<LLMChatListTemplateRsp> {
-        let query = SqlReader::read_all(LLMChatTemplate::TABLE)
+        let query = SqlBuilder::read_all(LLMChatTemplate::TABLE)
             .r#where(Wheres::and([Wheres::equal(
                 LLMChatTemplate::OMIT_TID,
                 OmitTID::never(),
@@ -178,7 +178,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatListSessionReq>,
     ) -> AResult<LLMChatListSessionRsp> {
-        let query = SqlReader::read_all(LLMChatSession::TABLE)
+        let query = SqlBuilder::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
                 Wheres::is_null(LLMChatSession::OMIT_TID),
                 Wheres::equal(LLMChatSession::KSPACE, &req.kspace),
@@ -214,7 +214,7 @@ impl LLMChatMapper for KDb {
             .into_iter()
             .nth(0);
 
-        let query = SqlReader::read_all(LLMChatRecord::TABLE)
+        let query = SqlBuilder::read_all(LLMChatRecord::TABLE)
             .r#where(Wheres::and([
                 Wheres::equal(LLMChatRecord::SESSION_ID, req.session_id.clone()),
                 Wheres::if_some(
@@ -282,7 +282,7 @@ impl LLMChatMapper for KDb {
     async fn ensure_table_llm_chat_bot(&self) -> EResult {
         self.conn()
             .await?
-            .exec(LLMChatBot::schema(self.conn().await?.db_type()))
+            .exec(LLMChatBot::create_sql())
             .await?;
         Ok(())
     }
@@ -290,7 +290,7 @@ impl LLMChatMapper for KDb {
     async fn ensure_table_llm_chat_template(&self) -> EResult {
         self.conn()
             .await?
-            .create_table(LLMChatTemplate::schema(self.conn().await?.db_type()))
+            .exec(LLMChatTemplate::create_sql())
             .await?;
         Ok(())
     }
@@ -298,7 +298,7 @@ impl LLMChatMapper for KDb {
     async fn ensure_table_llm_chat_session(&self) -> EResult {
         self.conn()
             .await?
-            .create_table(LLMChatSession::schema(self.conn().await?.db_type()))
+            .exec(LLMChatSession::create_sql())
             .await?;
         Ok(())
     }
@@ -306,7 +306,7 @@ impl LLMChatMapper for KDb {
     async fn ensure_table_llm_chat_record(&self) -> EResult {
         self.conn()
             .await?
-            .create_table(LLMChatRecord::schema(self.conn().await?.db_type()))
+            .exec(LLMChatRecord::create_sql())
             .await?;
         Ok(())
     }

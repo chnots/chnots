@@ -1,4 +1,5 @@
-use chin_tools::{time_type::TID, AResult, EResult};
+use chin_sql::time_type::TID;
+use chin_tools::{ AResult, EResult};
 
 use crate::{expand_mt_branch, model::dto::KReq, MapperType, RecordCallbackType};
 

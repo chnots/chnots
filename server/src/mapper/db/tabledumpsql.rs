@@ -1,4 +1,4 @@
-use chin_sql::{DbType, IntoSqlSeg, SqlReader, SqlSeg, Wheres};
+use chin_sql::{DbType, IntoSqlSeg, SqlBuilder, SqlSeg, Wheres};
 use chin_tools::AResult;
 
 pub(crate) struct TableDumpSqlBuilder<'a> {
@@ -31,7 +31,7 @@ impl<'a> TableDumpSqlBuilder<'a> {
     }
 
     pub(crate) fn build(self, db_type: DbType) -> AResult<SqlSeg<'a>> {
-        let sql = SqlReader::read_all(self.table_name)
+        let sql = SqlBuilder::read_all(self.table_name)
             .r#where(Wheres::and([
                 Wheres::if_some(self.start_seg, |e| e),
                 Wheres::if_some(self.end_seg, |e| e),

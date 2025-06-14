@@ -1,4 +1,4 @@
-use chin_tools::time_type::TID;
+use chin_sql::time_type::TID;
 use serde::{de, Deserialize, Serialize};
 
 use super::*;

@@ -1,11 +1,10 @@
-use core::str;
+use chin_sql::ChinSqlCrud;
 use std::collections::HashMap;
 use super::decimal::Decimal;
 
-use chin_sql::{DbType, GenerateTableSql};
-use chin_tools::time_type::TID;
+use chin_sql::{DbType, GenerateTableSchema};
+use chin_sql::time_type::TID;
 use chrono::{DateTime, FixedOffset};
-use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 
 use crate::model::omit_tid::OmitTID;
@@ -30,7 +29,7 @@ pub(crate) struct KTabColumnMeta {
     pub(crate) order_by: i32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql)]
+#[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct KTabMeta {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -52,7 +51,7 @@ pub(crate) struct KTabMeta {
 
 macro_rules! type_table {
     ($sname:tt, $data_type:ty $(, #[$attr:meta])*) => {
-        #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+        #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
         pub(crate) struct $sname {
             #[gts_primary]
             #[gts_type = "i64"]            

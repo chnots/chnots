@@ -1,12 +1,11 @@
-use chin_sql::{DbType, GenerateTableSql};
-use chin_tools::time_type::TID;
+use chin_sql::{ChinSqlCrud, DbType, GenerateTableSchema};
+use chin_sql::time_type::TID;
 use chrono::{DateTime, FixedOffset};
-use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 
 use crate::model::omit_tid::OmitTID;
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct LLMChatBot {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -22,7 +21,7 @@ pub(crate) struct LLMChatBot {
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct LLMChatTemplate {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -37,7 +36,7 @@ pub(crate) struct LLMChatTemplate {
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct LLMChatSession {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -54,7 +53,7 @@ pub(crate) struct LLMChatSession {
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct LLMChatRecord {
     #[gts_primary]
     #[gts_type = "i64"]

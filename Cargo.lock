@@ -568,24 +568,32 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 name = "chin-sql"
 version = "0.1.0"
 dependencies = [
- "bytes",
  "chin-sql-derive",
- "chin-tools-types",
- "chrono",
- "log",
- "postgres-types",
- "rusqlite",
- "thiserror 2.0.12",
+ "chin-sql-inner",
 ]
 
 [[package]]
 name = "chin-sql-derive"
 version = "0.1.0"
 dependencies = [
- "chin-tools-types",
+ "chin-sql-inner",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
+]
+
+[[package]]
+name = "chin-sql-inner"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "chin-tools-types",
+ "chrono",
+ "log",
+ "postgres-types",
+ "rusqlite",
+ "serde",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -609,7 +617,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "postgres-types",
  "serde",
  "smol_str",
 ]

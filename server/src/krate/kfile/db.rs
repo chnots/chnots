@@ -13,7 +13,7 @@ use tracing::info;
 use super::mapper::KFileDeserializeMapper;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
-use chin_sql::{LimitOffset, OnConflict, SqlReader, Wheres};
+use chin_sql::{LimitOffset, OnConflict, SqlBuilder, Wheres};
 
 impl KFileDeserializeMapper for KDbRow {
     fn to_inline_kfile(self) -> AResult<InlineKFile> {
@@ -52,15 +52,15 @@ impl KFileMapper for KDb {
         self.ensure_table_inline_kfile().await?;
         self.conn()
             .await?
-            .create_table(KFile::schema(self.db_type()))
-            .await
+            .exec(KFile::create_sql())
+            .await.map(|_| ())
     }
 
     async fn ensure_table_inline_kfile(&self) -> EResult {
         self.conn()
             .await?
-            .create_table(InlineKFile::schema(self.db_type()))
-            .await
+            .exec(InlineKFile::create_sql())
+            .await.map(|_| ())
     }
 
     async fn insert_kfile(&self, res: KFile) -> EResult {
@@ -78,7 +78,7 @@ impl KFileMapper for KDb {
         let conn = self.conn().await?;
         let res = conn
             .qry_one(
-                SqlReader::read_all(KFile::TABLE).r#where(Wheres::equal(KFile::SID, sid)),
+                SqlBuilder::read_all(KFile::TABLE).r#where(Wheres::equal(KFile::SID, sid)),
                 |e| e.to_kfile(),
                 false,
             )
@@ -137,7 +137,7 @@ impl KFileMapper for KDb {
         } else {
             None
         };
-        let query = SqlReader::read_all(InlineKFile::TABLE)
+        let query = SqlBuilder::read_all(InlineKFile::TABLE)
             .r#where(Wheres::and([
                 Wheres::if_some(req.content_type.to_owned(), |e| {
                     Wheres::equal(InlineKFile::CONTENT_TYPE, e)

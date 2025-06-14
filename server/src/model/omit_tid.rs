@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
-use chin_sql::{SqlValue, SqlValueOwned, SqlValueRow};
-use chin_tools::time_type::TID;
+use chin_sql::{time_type::TID, SqlValue, SqlValueOwned, SqlValueRow};
 use serde::{Deserialize, Serialize, Serializer};
 
 use crate::mapper::db::KDbRowBehavier;
@@ -65,7 +64,7 @@ impl From<OmitTID> for SqlValue<'_> {
 }
 
 pub mod pg {
-    use chin_tools::time_type::TID;
+    use chin_sql::time_type::TID;
     use postgres_types::{accepts, FromSql, Type};
 
     use crate::model::omit_tid::OmitTID;

@@ -1,4 +1,4 @@
-use chin_sql::{SqlDeleter, SqlInserter, SqlReader, Wheres};
+use chin_sql::{SqlDeleter, SqlInserter, SqlBuilder, Wheres};
 use chin_tools::AResult;
 use chrono::Local;
 
@@ -41,7 +41,7 @@ impl KDbExecutor<'_> {
     }
 
     pub async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
-        let query = SqlReader::read_all(KKV::TABLE).r#where(Wheres::and([
+        let query = SqlBuilder::read_all(KKV::TABLE).r#where(Wheres::and([
             Wheres::equal(KKV::KEY, req.key.as_str()),
             Wheres::equal(KKV::KIND, req.kind),
             Wheres::equal(KKV::KSPACE, &req.kspace),
@@ -60,14 +60,13 @@ impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
         self.conn()
             .await?
-            .create_table(KKV::schema(self.db_type()))
-            .await?;
-        Ok(())
+            .exec(KKV::create_sql())
+            .await.map(|_| ())
     }
 
 
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {
-        let query = SqlReader::read_all(KKV::TABLE).r#where(Wheres::and([
+        let query = SqlBuilder::read_all(KKV::TABLE).r#where(Wheres::and([
             Wheres::if_some(req.key, |key| Wheres::equal(KKV::KEY, key)),
             Wheres::if_some(req.kind, |kind| Wheres::equal(KKV::KIND, kind)),
             Wheres::if_some(req.kspace, |kspace| Wheres::equal(KKV::KSPACE, kspace.to_string())),

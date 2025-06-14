@@ -3,7 +3,7 @@ use std::{borrow::Borrow, ops::Deref};
 use anyhow::anyhow;
 use chin_sql::SqlValueRow;
 use chin_sql::{SqlValue, SqlValueOwned};
-use chin_tools::time_type::TID;
+use chin_sql::time_type::TID;
 use chin_tools::AResult;
 use chrono::{DateTime, FixedOffset};
 

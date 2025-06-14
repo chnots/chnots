@@ -1,11 +1,10 @@
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 use chrono::{DateTime, FixedOffset};
-use kdb_derives::KdbSqlInserter;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, str::FromStr};
 use strum::{AsRefStr, EnumString};
 
-use chin_sql::{DbType, GenerateTableSql, SqlValue};
+use chin_sql::{ChinSqlCrud, DbType, GenerateTableSchema, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, AsRefStr)]
 pub(crate) enum KKVType {
@@ -36,7 +35,7 @@ impl KDbRowBehavier<KKVType> for KDbRow {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSql, KdbSqlInserter)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 #[allow(clippy::upper_case_acronyms)]
 pub(crate) struct KKV {
     #[gts_primary]

@@ -1,11 +1,10 @@
-use chin_sql::{DbType, GenerateTableSql};
-use chin_tools::time_type::TID;
-use kdb_derives::KdbSqlInserter;
+use chin_sql::time_type::TID;
+use chin_sql::{ChinSqlCrud, DbType, GenerateTableSchema};
 use serde::{Deserialize, Serialize};
 
 use crate::model::omit_tid::OmitTID;
 
-#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql, KdbSqlInserter)]
+#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct KFile {
     #[gts_primary]
     pub(crate) sid: String,
@@ -28,7 +27,7 @@ pub(crate) struct KFile {
     pub(crate) kspace: String,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSql, KdbSqlInserter)]
+#[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct InlineKFile {
     #[gts_primary]
     pub(crate) sid: String,

@@ -1,9 +1,9 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
 use anyhow::Ok;
 use chin_sql::{
-    DbType, IntoSqlSeg, OnConflict, SqlInserter, SqlReader, SqlUpdater, SqlValueOwned, SqlValueRow, Wheres
+    time_type::TID, DbType, IntoSqlSeg, OnConflict, SqlBuilder, SqlInserter, SqlUpdater, SqlValueOwned, SqlValueRow, Wheres
 };
-use chin_tools::{time_type::TID, AResult, EResult};
+use chin_tools::{ AResult, EResult};
 use chrono::{DateTime, FixedOffset};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 
@@ -47,7 +47,7 @@ pub(crate) trait KDbExecutorBehaiver: Send + Sync {
     fn db_type(&self) -> DbType;
 
     async fn create_table(&self, sql: &str) -> EResult {
-        self.exec(SqlReader::new().sov(sql)).await?;
+        self.exec(SqlBuilder::new().sov(sql)).await?;
         Ok(())
     }
 }
