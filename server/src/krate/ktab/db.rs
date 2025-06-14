@@ -129,7 +129,7 @@ impl KTabMapper for KDb {
                 .idx;
 
             self.ktab_overwrite_cell(KTabCell {
-                table_id: table_id.clone(),
+                table_id,
                 col_idx: column_index,
                 row_idx: ele.row_idx,
                 omit_tid: OmitTID::never(),

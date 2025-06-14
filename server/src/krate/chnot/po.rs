@@ -1,5 +1,4 @@
 use chin_sql::ChinSqlCrud;
-use chin_sql::DbType;
 use chin_sql::GenerateTableSchema;
 use chin_sql::SqlValue;
 use chin_sql::time_type::TID;

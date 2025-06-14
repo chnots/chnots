@@ -5,10 +5,9 @@ use chin_sql::{SqlValue, SqlValueOwned, SqlValueRow};
 use chin_tools::AResult;
 use postgres_types::FromSql;
 use serde::{
-    de::{self, Error},
+    de::{self},
     Deserialize, Serialize,
 };
-use tokio_postgres::Row;
 
 use crate::{common_try_get, mapper::db::{KDbRow, KDbRowBehavier}};
 
@@ -66,7 +65,7 @@ impl<'de> Deserialize<'de> for Decimal {
 impl KDbRowBehavier<Decimal> for SqlValueRow<SqlValueOwned> {
     fn try_get(&self, key: &str) -> AResult<Decimal> {
         let s: String = self.try_get(key)?;
-        Ok(Decimal::try_from(s)?)
+        Decimal::try_from(s)
     }
 }
 

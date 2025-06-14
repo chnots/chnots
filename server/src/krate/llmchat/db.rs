@@ -216,7 +216,7 @@ impl LLMChatMapper for KDb {
 
         let query = SqlBuilder::read_all(LLMChatRecord::TABLE)
             .r#where(Wheres::and([
-                Wheres::equal(LLMChatRecord::SESSION_ID, req.session_id.clone()),
+                Wheres::equal(LLMChatRecord::SESSION_ID, req.session_id),
                 Wheres::if_some(
                     {
                         match req.with_omit.as_ref() {
@@ -338,7 +338,7 @@ impl LLMChatMapper for KDb {
         let records = self
             .llm_chat_session_detail(KReq {
                 body: LLMChatSessionDetialReq {
-                    session_id: req.session_id.clone(),
+                    session_id: req.session_id,
                     with_omit: Some(true),
                 },
                 kspace: req.kspace.clone(),

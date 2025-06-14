@@ -1,5 +1,5 @@
 use chin_sql::time_type::TID;
-use chin_sql::{ChinSqlCrud, DbType, GenerateTableSchema};
+use chin_sql::{ChinSqlCrud, GenerateTableSchema};
 use serde::{Deserialize, Serialize};
 
 use crate::model::omit_tid::OmitTID;

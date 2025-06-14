@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, str::FromStr};
 use strum::{AsRefStr, EnumString};
 
-use chin_sql::{ChinSqlCrud, DbType, GenerateTableSchema, SqlValue};
+use chin_sql::{ChinSqlCrud, GenerateTableSchema, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, AsRefStr)]
 pub(crate) enum KKVType {
