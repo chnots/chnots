@@ -269,6 +269,7 @@ pub(crate) enum KDbRow {
     SqlValueRow(SqlValueRow<SqlValueOwned>),
 }
 
+#[macro_export]
 macro_rules! common_try_get {
     ($tp:ty) => {
         impl KDbRowBehavier<$tp> for KDbRow {

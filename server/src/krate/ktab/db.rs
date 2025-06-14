@@ -39,14 +39,11 @@ impl KDb {
             KTabStoreValue::Text(c) => {
                 overwrite!(KTabCellText, cell, c);
             }
-            KTabStoreValue::I64(c) => {
-                overwrite!(KTabCellI64, cell, *c);
+            KTabStoreValue::Decimal(c) => {
+                overwrite!(KTabCellDecimal, cell, c);
             }
             KTabStoreValue::Date(c) => {
                 overwrite!(KTabCellDate, cell, c);
-            }
-            KTabStoreValue::F64(c) => {
-                overwrite!(KTabCellF64, cell, *c);
             }
         }
 
@@ -223,8 +220,7 @@ impl KTabMapper for KDb {
 
         extend_cells!(KTabCellText);
         extend_cells!(KTabCellDate);
-        extend_cells!(KTabCellI64);
-        extend_cells!(KTabCellF64);
+        extend_cells!(KTabCellDecimal);
 
         let cells: AResult<Vec<KTabViewCell>> = cells
             .into_iter()
@@ -257,11 +253,7 @@ impl KTabMapper for KDb {
             .await?;
         self.conn()
             .await?
-            .exec(KTabCellI64::schema(self.db_type()))
-            .await?;
-        self.conn()
-            .await?
-            .exec(KTabCellF64::schema(self.db_type()))
+            .exec(KTabCellDecimal::schema(self.db_type()))
             .await?;
         self.conn()
             .await?

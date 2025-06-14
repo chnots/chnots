@@ -20,8 +20,7 @@ export type KTabViewTypeName = "string" | "date" | "demical";
 
 export type KTabStoreValue =
   | { Text: string }
-  | { I64: number }
-  | { F64: number }
+  | { Decimal: string }
   | { Date: Date }
   | { Blob: Blob };
 
@@ -33,7 +32,7 @@ export const ktabToStoreValue = (
     case "string":
       return { Text: value as string };
     case "demical":
-      return { I64: value as number };
+      return { Decimal: value as string };
     case "date":
       return { Date: value as Date };
     default:
@@ -46,10 +45,8 @@ export function ktabGetViewValue(
 ): string | number | Date {
   if ("Text" in cellValue) {
     return cellValue.Text;
-  } else if ("I64" in cellValue) {
-    return cellValue.I64;
-  } else if ("F64" in cellValue) {
-    return cellValue.F64;
+  } else if ("Decimal" in cellValue) {
+    return cellValue.Decimal;
   } else if ("Date" in cellValue) {
     return cellValue.Date;
   } else {

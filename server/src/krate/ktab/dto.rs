@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::omit_tid::OmitTID;
 
-use super::*;
+use super::{decimal::Decimal, *};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct KTabMetaOverwriteReq {
@@ -72,8 +72,7 @@ pub(crate) struct KTabRowsQueryRsp {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) enum KTabStoreValue {
-    I64(i64),
-    F64(f64),
+    Decimal(Decimal),
     Text(String),
     Date(DateTime<FixedOffset>),
     // Blob(Vec<u8>),
@@ -82,8 +81,7 @@ pub(crate) enum KTabStoreValue {
 impl<'a> From<KTabStoreValue> for SqlValue<'a> {
     fn from(value: KTabStoreValue) -> Self {
         match value {
-            KTabStoreValue::I64(v) => v.into(),
-            KTabStoreValue::F64(v) => v.into(),
+            KTabStoreValue::Decimal(v) => v.into(),
             KTabStoreValue::Text(v) => v.into(),
             KTabStoreValue::Date(v) => v.into(),
         }
@@ -146,8 +144,7 @@ macro_rules! impl_from_ktab_cell {
 }
 impl_from_ktab_cell! {KTabCellDate, Date}
 impl_from_ktab_cell! {KTabCellText, Text}
-impl_from_ktab_cell! {KTabCellI64, I64}
-impl_from_ktab_cell! {KTabCellF64, F64}
+impl_from_ktab_cell! {KTabCellDecimal, Decimal}
 
 #[cfg(test)]
 mod tests {
@@ -177,7 +174,7 @@ mod tests {
             cells: vec![KTabViewCell {
                 row_idx: 1.into(),
                 column_name: "int".into(),
-                value: KTabStoreValue::I64(123),
+                value: KTabStoreValue::Decimal(123.into()),
             }],
         };
 

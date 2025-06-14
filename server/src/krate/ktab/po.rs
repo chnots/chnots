@@ -1,5 +1,6 @@
 use core::str;
 use std::collections::HashMap;
+use super::decimal::Decimal;
 
 use chin_sql::{DbType, GenerateTableSql};
 use chin_tools::time_type::TID;
@@ -12,8 +13,7 @@ use crate::model::omit_tid::OmitTID;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum KTabColumnStoreKind {
-    I64,
-    F64,
+    Decimal,
     Str,
     Date,
     // Blob,
@@ -76,9 +76,8 @@ macro_rules! type_table {
 }
 
 type_table!(KTabCellText, String);
-type_table!(KTabCellI64, i64);
+type_table!(KTabCellDecimal, Decimal, #[gts_type = "String"]);
 type_table!(KTabCellDate, DateTime<FixedOffset>);
-type_table!(KTabCellF64, f64);
 
 #[cfg(test)]
 mod ktab_column_type_test {
@@ -86,6 +85,6 @@ mod ktab_column_type_test {
     fn test() {
         use crate::krate::ktab::po::KTabColumnStoreKind;
 
-        println!("{:?}", serde_json::to_string(&KTabColumnStoreKind::I64));
+        println!("{:?}", serde_json::to_string(&KTabColumnStoreKind::Str));
     }
 }
