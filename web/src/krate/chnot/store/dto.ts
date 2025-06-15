@@ -1,5 +1,5 @@
 import { TID } from "@/lib/id_util";
-import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind } from "./db";
+import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind } from "./po";
 
 export interface Chnot {
   record: ChnotRecord;

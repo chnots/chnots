@@ -33,7 +33,7 @@ use crate::{
     app::ShareAppState,
     config::AttachmentConfig,
     controller::KResponse,
-    model::dto::{kreq, read_kspace_from_header},
+    model::dto::kreq,
 };
 
 use super::{mapper::KFileMapper, *};
@@ -94,9 +94,9 @@ async fn upload(
         chunk_no,
         total_chunks,
         chunk,
-        res_id: _,
         last_modified,
         filesize,
+        meta_id,
     }): TypedMultipart<KFileUploadReq>,
 ) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
@@ -125,15 +125,21 @@ async fn upload(
 
         let kfile = KFile {
             tid,
-            kspace: read_kspace_from_header(&headers),
             ori_filename: filename,
             content_type: "".to_owned(),
-            omit_tid: OmitTID::never(),
             ori_last_modified: last_modified,
             filesize,
-            sid: blake3_sum,
+            sid: blake3_sum.to_string(),
         };
-        mapper.insert_kfile(kfile.clone()).await?;
+        let meta = KFileMeta {
+            tid,
+            omit_tid: OmitTID::never(),
+            archor: false,
+            inline: false,
+            sid: blake3_sum,
+            id: meta_id,
+        };
+            mapper.insert_kfile(meta, kfile.clone()).await?;
         Some(kfile)
     } else {
         None
@@ -237,7 +243,7 @@ async fn query_svg(
             content_type: Some("svg".into()),
             name_like: None,
             with_del: Some(false),
-            kkv_key: None,
+            meta_id: None,
         }),
     )
     .await

@@ -4,7 +4,7 @@ import {
   ResponseState,
   useLLMResponse,
 } from "@/hooks/use-llm-response";
-import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/store/db";
+import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/store/po";
 import { LLMChatContainerSession } from "@/krate/llmchat/store/dto";
 import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";

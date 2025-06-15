@@ -13,7 +13,7 @@ import { useChnotStore } from "@/krate/chnot/store/store";
 import { chnotUpdate } from "@/krate/chnot/store/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
 import MarkdownEditor from "./chnot-markdown-editor";
-import { ChnotKind } from "@/krate/chnot/store/db";
+import { ChnotKind } from "@/krate/chnot/store/po";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
 import { enumFromStringValue } from "@/lib/enum-util";
 

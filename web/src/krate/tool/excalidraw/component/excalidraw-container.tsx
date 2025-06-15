@@ -174,16 +174,15 @@ export default function ExcalidrawContainer({
             if (!ver || ver != newVar) {
               await insertInlineKFile({
                 res: {
-                  tid: genTID(),
-                  kspace: currentKSpace,
-                  archor: true,
-                  name: fileId,
-                  content: file.dataURL,
-                  content_type: file.mimeType,
-                  sid: "placeholder",
+                    tid: genTID(),
+                    name: fileId,
+                    content: file.dataURL,
+                    content_type: file.mimeType,
+                    sid: "placeholder",
+                    kspace: "",
+                    archor: false
                 },
-                kkv_key: fileId,
-
+                tid: genTID,
                 archor_intervals: 3600,
                 ignore_conflict: true,
               });

@@ -1,8 +1,7 @@
 use std::ops::Deref;
 
 use super::*;
-use crate::krate::kkv::{KKVOverwriteReq, KKVType};
-use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx, ToSqlInserter};
+use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use chin_sql::{SqlDeleter, Wheres};
@@ -228,11 +227,11 @@ impl<'a> KDbTx<'a> {
         }
         if let Some(kid) = req.kind_id.clone() {
             self.as_executor()
-                .kkv_overwrite(req.frame(KKVOverwriteReq {
-                    key: (*meta_tid).to_string(),
-                    kind: KKVType::ChnotSubType,
-                    value: kid.to_string(),
-                }))
+                .exec(ChnotKindId {
+                    meta_tid: *meta_tid,
+                    omit_tid: OmitTID::never(),
+                    kind_id: kid,
+                }.to_sql_inserter())
                 .await?;
         }
 

@@ -5,6 +5,7 @@ use chin_tools::{AResult, EResult};
 pub(crate) trait KFileDeserializeMapper {
     fn to_kfile(self) -> AResult<KFile>;
     fn to_inline_kfile(self) -> AResult<InlineKFile>;
+    fn to_kfile_meta(self) -> AResult<KFileMeta>;
 }
 
 pub(crate) trait KFileDumpMapper {
@@ -13,7 +14,7 @@ pub(crate) trait KFileDumpMapper {
 }
 
 pub(crate) trait KFileMapper {
-    async fn insert_kfile(&self, kfile: KFile) -> anyhow::Result<()>;
+    async fn insert_kfile(&self, meta: KFileMeta, kfile: KFile) -> anyhow::Result<()>;
     async fn query_kfile_by_sid(&self, tid: &str) -> anyhow::Result<KFile>;
     ///
     /// Try to insert inline kfile.
@@ -36,8 +37,8 @@ pub(crate) trait KFileMapper {
 }
 
 impl KFileMapper for MapperType {
-    async fn insert_kfile(&self, kfile: KFile) -> anyhow::Result<()> {
-        expand_mt_branch!(self.insert_kfile(kfile))
+    async fn insert_kfile(&self, meta: KFileMeta, kfile: KFile) -> anyhow::Result<()> {
+        expand_mt_branch!(self.insert_kfile(meta, kfile))
     }
 
     async fn query_kfile_by_sid(&self, sid: &str) -> anyhow::Result<KFile> {

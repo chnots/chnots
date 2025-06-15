@@ -1,4 +1,4 @@
-import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/db";
+import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/po";
 import { LLMChatContainerSession } from "@/krate/llmchat/store/dto";
 import { genUId, genTID, TID } from "@/lib/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";

@@ -11,7 +11,7 @@ import { Button as KButton } from "@/common/component/ui/button";
 import RelativeTime from "@/common/component/relative-time";
 import { humanFileSize } from "@/lib/unit-utils";
 import FileNameToIcon from "./filename-to-icon";
-import { KFile } from "../store/db";
+import { KFile } from "../store/po";
 
 type FileLike = {
   name: string;

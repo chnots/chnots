@@ -17,10 +17,7 @@ export interface KFile {
 export interface InlineKFile {
   sid: string;
   tid: TID;
-  kspace: string;
-  archor: boolean;
   name: string;
   content: string;
   content_type: string;
-  omit_tid?: TID;
 }

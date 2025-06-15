@@ -1,6 +1,6 @@
 import { Button as KButton } from "@/common/component/ui/button";
 import KSVG from "@/common/component/svg";
-import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/db";
+import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/po";
 import React, { RefObject, useEffect, useRef, useState } from "react";
 import { v4 } from "uuid";
 import { genTID, TID } from "@/lib/id_util";

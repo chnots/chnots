@@ -12,7 +12,7 @@ import {
 import { chnotOverwrite, chnotQuery } from "./service";
 import { DbCache } from "../../../common/store/common";
 import { TID } from "@/lib/id_util";
-import { ChnotMetadata, ChnotRecord } from "./db";
+import { ChnotMetadata, ChnotRecord } from "./po";
 
 const newChnotMap = () => {
   return {

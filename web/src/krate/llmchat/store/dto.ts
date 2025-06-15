@@ -4,7 +4,7 @@ import {
   LLMChatTemplate,
   LLMChatSession,
   LLMChatRecord,
-} from "./db";
+} from "./po";
 
 export interface LLMChatListBotRsp {
   bots: LLMChatBot[];

@@ -2,7 +2,7 @@ import {
   LLMChatBot,
   LLMChatRecord,
   LLMChatTemplate,
-} from "@/krate/llmchat/store/db";
+} from "@/krate/llmchat/store/po";
 import RecordFrame from "./record-frame";
 import KSVG from "@/common/component/svg";
 import { useState } from "react";

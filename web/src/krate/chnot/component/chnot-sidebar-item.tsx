@@ -4,7 +4,7 @@ import Icon from "@/common/component/icon";
 import { useChnotStore } from "@/krate/chnot/store/store";
 import { Chnot } from "@/krate/chnot/store/dto";
 import { chnotUpdate } from "@/krate/chnot/store/service";
-import { ChnotKind } from "@/krate/chnot/store/db";
+import { ChnotKind } from "@/krate/chnot/store/po";
 import {
   SidebarMenuItem,
   SidebarMenuButton,

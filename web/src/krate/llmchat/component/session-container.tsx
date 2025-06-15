@@ -13,7 +13,7 @@ import {
   LLMChatRecord,
   LLMChatSession,
   LLMChatTemplate,
-} from "@/krate/llmchat/store/db";
+} from "@/krate/llmchat/store/po";
 import {
   LLMChatContainerSession,
   LLMChatSessionDetailRsp,

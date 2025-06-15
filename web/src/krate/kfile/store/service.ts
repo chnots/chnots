@@ -11,7 +11,7 @@ import {
   KFileUploadRsp,
   InsertInlineKFileRsp,
 } from "./dto";
-import { KFile } from "./db";
+import { KFile } from "./po";
 import { chnotShortDate } from "@/lib/date-utils";
 import { TID } from "@/lib/id_util";
 

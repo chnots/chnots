@@ -2,7 +2,7 @@ import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import { useRef, useState } from "react";
 import { Button } from "@/common/component/ui/button";
-import { LLMChatBot } from "@/krate/llmchat/store/db";
+import { LLMChatBot } from "@/krate/llmchat/store/po";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import { llmchatBotAdd } from "@/krate/llmchat/store/service";

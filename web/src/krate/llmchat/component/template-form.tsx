@@ -2,7 +2,7 @@ import KSVG from "@/common/component/svg";
 import { Button } from "@/common/component/ui/button";
 import { Input } from "@/common/component/ui/input";
 import { Textarea } from "@/common/component/ui/textarea";
-import { LLMChatTemplate } from "@/krate/llmchat/store/db";
+import { LLMChatTemplate } from "@/krate/llmchat/store/po";
 import { genTID } from "@/lib/id_util";
 import React, { useState } from "react";
 

@@ -12,7 +12,7 @@ import {
   LLMChatRecord,
   LLMChatSession,
   LLMChatTemplate,
-} from "./db";
+} from "./po";
 import { TID } from "@/lib/id_util";
 
 export const llmchatBotList = async (): Promise<LLMChatListBotRsp> => {

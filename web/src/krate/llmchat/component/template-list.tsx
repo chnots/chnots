@@ -3,7 +3,7 @@ import clsx from "clsx";
 import KSVG from "@/common/component/svg";
 import { useRef, useState } from "react";
 import TemplateForm from "@/krate/llmchat/component/template-form";
-import { LLMChatTemplate } from "@/krate/llmchat/store/db";
+import { LLMChatTemplate } from "@/krate/llmchat/store/po";
 import { useLLMChatStore } from "@/krate/llmchat/store/store";
 import { llmchatTemplateAdd } from "@/krate/llmchat/store/service";
 import { Button } from "@/common/component/ui/button";

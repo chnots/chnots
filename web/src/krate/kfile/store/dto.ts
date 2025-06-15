@@ -1,5 +1,5 @@
 import { TID } from "@/lib/id_util";
-import { InlineKFile, KFile } from "./db";
+import { InlineKFile, KFile } from "./po";
 
 export interface KFileUploadReq {
   res_id: TID;
@@ -19,7 +19,7 @@ export interface KFileUploadRsp {
 
 export interface InsertInlineKFileReq {
   res: InlineKFile;
-  kkv_key: string;
+  meta_tid: TID;
   archor_intervals: number;
   ignore_conflict?: boolean;
 }
