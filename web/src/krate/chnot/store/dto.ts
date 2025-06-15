@@ -1,7 +1,7 @@
 import { TID } from "@/lib/id_util";
 import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind } from "./po";
 
-export interface Chnot {
+export type Chnot= {
   record: ChnotRecord;
   meta: ChnotMetadata;
 }
@@ -20,7 +20,7 @@ export const listViewTypeGetTagPath = (lvt: ListViewType) => {
   }
 };
 
-export interface ChnotQueryReq {
+export type ChnotQueryReq= {
   query?: string;
   meta_tid?: TID;
   record_tid?: TID;
@@ -33,14 +33,14 @@ export interface ChnotQueryReq {
   page_size: number;
 }
 
-export interface ChnotQueryRsp {
+export type ChnotQueryRsp= {
   next_start: number;
   data: Chnot[];
 
   has_next: boolean;
 }
 
-export interface ChnotOverwriteReq {
+export type ChnotOverwriteReq= {
   tid?: TID;
   meta_tid?: TID;
   content: string;
@@ -48,19 +48,19 @@ export interface ChnotOverwriteReq {
   kind_id?: string;
 }
 
-export interface ChnotOverwriteRsp {
+export type ChnotOverwriteRsp= {
   meta_tid: TID;
   rec_tid: TID;
   archor: boolean;
   kspace: string;
 }
 
-export interface ChnotDeletionReq {
+export type ChnotDeletionReq= {
   chnot_id: TID;
   logic: boolean;
 }
 
-export interface ChnotUpdateReq {
+export type ChnotUpdateReq= {
   meta_tid: TID;
 
   kspace?: string;
@@ -71,14 +71,14 @@ export interface ChnotUpdateReq {
   update_time: boolean;
 }
 
-export interface ChnotCommentAddReq {
+export type ChnotCommentAddReq= {
   tid: TID;
 
   chnot_meta_id: TID;
   content: string;
 }
 
-export interface ChnotTagQueryReq {
+export type ChnotTagQueryReq= {
   query?: string;
   tag_tree: ChnotTagTreeType;
 
@@ -90,28 +90,28 @@ export type ChnotKFileRelationInsert = {
   chnot_meta_id: TID;
 };
 
-export interface ChnotTagQueryRsp {
+export type ChnotTagQueryRsp= {
   data: ChnotTag[];
 
   start_index: number;
 }
 
-export interface ChnotTagNamesRsp {
+export type ChnotTagNamesRsp= {
   data: string[];
 
   start_index: number;
 }
 
-export interface Toent {
+export type Toent= {
   tid: TID;
   input: string;
   event: string;
 }
 
-export interface ToentGuessReq {
+export type ToentGuessReq= {
   input: string;
 }
 
-export interface ToentGuessRsp {
+export type ToentGuessRsp= {
   toents: Toent[];
 }

@@ -1,5 +1,5 @@
-export interface KSpace {
+export type KSpace = {
   name: string;
   managers: string[];
   color: string;
-}
+};

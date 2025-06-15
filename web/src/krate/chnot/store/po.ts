@@ -8,7 +8,7 @@ export enum ChnotKind {
   LLMChat = "llm_chat",
 }
 
-export interface ChnotRecord {
+export type ChnotRecord= {
   tid: TID;
   meta_tid: TID;
   content: string;
@@ -16,7 +16,7 @@ export interface ChnotRecord {
   archor: boolean;
 }
 
-export interface ChnotMetadata {
+export type ChnotMetadata= {
   tid: TID;
   kspace: string;
   kind: string;
@@ -25,7 +25,7 @@ export interface ChnotMetadata {
   archive_time?: Date;
 }
 
-export interface ChnotTag {
+export type ChnotTag= {
   tid: TID;
   kspace: string;
   tag: string;

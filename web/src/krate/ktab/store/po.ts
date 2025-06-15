@@ -50,7 +50,7 @@ export type KTabMeta = {
   real_table: boolean;
 };
 
-interface KTabCell {
+export type KTabCell = {
   table_id: number;
   col_idx: number;
   row_idx: number;

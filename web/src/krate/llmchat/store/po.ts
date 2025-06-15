@@ -4,34 +4,34 @@ import { TID } from "@/lib/id_util";
 type DateTime = Date;
 
 // LLMChatBot structure
-export interface LLMChatBot {
+export type LLMChatBot = {
   tid: TID;
   name: string;
   body: string;
   svg_logo?: string;
   omit_tid?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-}
+};
 
 // the body of LLMChatBot body.
-export interface LLMChatBotBodyOpenAIV1 {
+export type LLMChatBotBodyOpenAIV1 = {
   url: string;
   token: string;
   model_name: string;
-}
+};
 
 // LLMChatTemplate structure
-export interface LLMChatTemplate {
+export type LLMChatTemplate = {
   tid: TID;
   name: string;
   prompt: string;
   svg_logo?: string;
   omit_tid?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-}
+};
 
 // LLMChatSession structure
-export interface LLMChatSession {
+export type LLMChatSession = {
   tid: TID;
   bot_id: TID;
   template_id: TID;
@@ -39,10 +39,10 @@ export interface LLMChatSession {
   kspace: string;
   omit_tid?: DateTime; // Optional field
   update_time?: DateTime; // Optional field
-}
+};
 
 // LLMChatRecord structure
-export interface LLMChatRecord {
+export type LLMChatRecord = {
   tid: TID;
   session_id: TID;
   pre_record_id?: TID; // Optional field
@@ -50,4 +50,4 @@ export interface LLMChatRecord {
   reasoning_content: string;
   role: "user" | "system" | "assistant" | "response-assistant";
   role_id?: TID;
-}
+};

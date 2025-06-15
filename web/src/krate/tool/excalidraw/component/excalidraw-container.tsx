@@ -34,13 +34,13 @@ import md5 from "crypto-js/md5";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 import { genUId, genTID, TID } from "../../../../lib/id_util";
 
-export interface ExcalidrawProps {
+export type ExcalidrawProps = {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
   chnotMetaId?: TID;
   viewMode?: boolean;
   afterSaveCallback?: (tid: TID) => void;
-}
+};
 
 const CONTENT_TYPE = "excalidraw-v1";
 
@@ -174,17 +174,15 @@ export default function ExcalidrawContainer({
             if (!ver || ver != newVar) {
               await insertInlineKFile({
                 res: {
-                    tid: genTID(),
-                    name: fileId,
-                    content: file.dataURL,
-                    content_type: file.mimeType,
-                    sid: "placeholder",
-                    kspace: "",
-                    archor: false
+                  tid: genTID(),
+                  name: fileId,
+                  content: file.dataURL,
+                  content_type: file.mimeType,
+                  sid: "placeholder",
                 },
-                tid: genTID,
                 archor_intervals: 3600,
                 ignore_conflict: true,
+                meta_id: ""
               });
               savedFilesRef.current.set(fileId, newVar);
             }
@@ -193,16 +191,13 @@ export default function ExcalidrawContainer({
           await insertInlineKFile({
             res: {
               tid: genTID(),
-
-              kspace: currentKSpace,
-              archor: false,
               name: chnotMetaId?.toString() ?? genTID().toString(),
               content,
               content_type: CONTENT_TYPE,
               sid: "placeholder",
             },
-            kkv_key: excalidrawId,
             archor_intervals: 3600,
+            meta_id: "",
           });
           afterSave(excalidrawId);
         })();

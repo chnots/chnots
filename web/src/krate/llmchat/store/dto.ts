@@ -6,37 +6,37 @@ import {
   LLMChatRecord,
 } from "./po";
 
-export interface LLMChatListBotRsp {
+export type LLMChatListBotRsp = {
   bots: LLMChatBot[];
-}
+};
 
-export interface LLMChatListTemplateRsp {
+export type LLMChatListTemplateRsp = {
   templates: LLMChatTemplate[];
-}
+};
 
-export interface LLMChatListSessionRsp {
+export type LLMChatListSessionRsp = {
   sessions: LLMChatSession[];
-}
+};
 
-export interface LLMChatSessionDetailRsp {
+export type LLMChatSessionDetailRsp = {
   session?: LLMChatSession;
   records: LLMChatRecord[];
-}
+};
 
-export interface LLMChatSessionUpdateReq {
+export type LLMChatSessionUpdateReq = {
   session_id: TID;
   delete?: boolean;
   title?: string;
-}
+};
 
-export interface LLMChatSessionTruncateReq {
+export type LLMChatSessionTruncateReq = {
   session_id: TID;
   remove_rid_included: TID;
-}
+};
 
-export interface LLMChatContainerSession {
+export type LLMChatContainerSession = {
   session: LLMChatSession;
   records: LLMChatRecord[];
 
   persistedIds: Set<TID>;
-}
+};

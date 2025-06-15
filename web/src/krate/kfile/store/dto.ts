@@ -1,7 +1,7 @@
 import { TID } from "@/lib/id_util";
 import { InlineKFile, KFile } from "./po";
 
-export interface KFileUploadReq {
+export type KFileUploadReq = {
   res_id: TID;
   filename: string;
   chunk_no: number;
@@ -10,50 +10,49 @@ export interface KFileUploadReq {
   filetype: string;
   last_modified: number;
   filesize: number;
-}
+};
 
-export interface KFileUploadRsp {
+export type KFileUploadRsp = {
   kfile?: KFile;
   finished: boolean;
-}
+};
 
-export interface InsertInlineKFileReq {
+export type InsertInlineKFileReq = {
   res: InlineKFile;
-  meta_tid: TID;
+  meta_id: string;
   archor_intervals: number;
   ignore_conflict?: boolean;
-}
+};
 
-export interface InsertInlineKFileRsp {
+export type InsertInlineKFileRsp = {
   true_sid: string;
-}
+};
 
-export interface QueryInlineKFileReq {
+export type QueryInlineKFileReq = {
   tid?: TID;
   kkv_key?: string;
   with_del?: boolean;
   content_type?: string;
   name_like?: string;
-}
+};
 
-export interface QueryInlineKFileRsp {
+export type QueryInlineKFileRsp = {
   res: InlineKFile[];
-}
+};
 
-export interface KKVInserterReq {
+export type KKVInserterReq = {
   key: string;
   kind: string;
   value: string;
-}
+};
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface KKVInserterRsp {}
+export type KKVInserterRsp = object;
 
-export interface KKVQueryReq {
+export type KKVQueryReq = {
   key: string;
   kind: "to_file" | "chnot_sub_type";
-}
+};
 
-export interface KKVQueryRsp {
+export type KKVQueryRsp = {
   value?: string;
-}
+};

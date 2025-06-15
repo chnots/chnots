@@ -1,6 +1,6 @@
 import { TID } from "@/lib/id_util";
 
-export interface KFile {
+export type KFile = {
   sid: string;
   tid: TID;
 
@@ -12,12 +12,12 @@ export interface KFile {
   content_type: string;
 
   omit_tid?: string; // Using ISO 8601 format for DateTime
-}
+};
 
-export interface InlineKFile {
+export type InlineKFile = {
   sid: string;
   tid: TID;
   name: string;
   content: string;
   content_type: string;
-}
+};

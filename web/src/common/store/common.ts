@@ -33,7 +33,7 @@ export const useCommonStore = create(
   }))
 );
 
-export interface DbCache<T> {
+export type DbCache<T> = {
   /**
    * for db result empty hole
    */

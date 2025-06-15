@@ -19,7 +19,7 @@ export enum ResponseCtl {
   Abort = "abt",
 }
 
-export interface ResponseState {
+export type ResponseState = {
   tid: TID;
   step: ResponseStep;
   sessionId: TID;
