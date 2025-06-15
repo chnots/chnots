@@ -26,8 +26,8 @@ import {
   insertInlineKFile,
   queryInlineKFile,
   queryKKV,
-} from "@/krate/kfile/store/service";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+} from "@/krate/kfile/service";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/lib/resolve-promise";
 import md5 from "crypto-js/md5";

@@ -3,9 +3,9 @@ import RelativeTime from "@/common/component/relative-time";
 import KSVG from "@/common/component/svg";
 import Icon from "@/common/component/icon";
 import KListItem from "@/common/component/klistitem";
-import { LLMChatSession } from "@/krate/llmchat/store/po";
-import { useLLMChatStore } from "@/krate/llmchat/store/store";
-import { llmchatSessionUpdate } from "@/krate/llmchat/store/service";
+import { LLMChatSession } from "@/krate/llmchat/po";
+import { useLLMChatStore } from "@/krate/llmchat/store";
+import { llmchatSessionUpdate } from "@/krate/llmchat/service";
 import * as Separator from "@radix-ui/react-separator";
 import { Button as KButton } from "@/common/component/ui/button";
 

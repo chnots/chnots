@@ -7,28 +7,28 @@ import React, {
   useState,
 } from "react";
 import { v4 as uuid } from "uuid";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import { RecordAnswering } from "./record-response";
 import {
   LLMChatRecord,
   LLMChatSession,
   LLMChatTemplate,
-} from "@/krate/llmchat/store/po";
+} from "@/krate/llmchat/po";
 import {
   LLMChatContainerSession,
   LLMChatSessionDetailRsp,
-} from "@/krate/llmchat/store/dto";
-import { useLLMChatStore } from "@/krate/llmchat/store/store";
+} from "@/krate/llmchat/dto";
+import { useLLMChatStore } from "@/krate/llmchat/store";
 import {
   llmchatRecordInsert,
   llmchatSessionRecords,
   llmchatSessionTruncate,
   llmchatTemplateAdd,
-} from "@/krate/llmchat/store/service";
+} from "@/krate/llmchat/service";
 import RecordUser from "./record-user";
 import RecordAssistant from "./record-assistant";
 import LLMChatSessionInput from "./session-input";
-import { queryKKV } from "@/krate/kfile/store/service";
+import { queryKKV } from "@/krate/kfile/service";
 import {
   Dialog,
   DialogContent,

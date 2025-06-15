@@ -30,9 +30,9 @@ import {
 } from "@/common/component/ui/select";
 import EditableCell, { KTabRowData } from "./editable-cell";
 import { genTID } from "@/lib/id_util";
-import { KTabMeta } from "../store/po";
-import { ktabToStoreValue } from "../store/dto";
-import { ktabCellsOverwrite } from "../store/service";
+import { KTabMeta } from "../po";
+import { ktabToStoreValue } from "../dto";
+import { ktabCellsOverwrite } from "../service";
 
 export function DataTable({
   tableMeta,

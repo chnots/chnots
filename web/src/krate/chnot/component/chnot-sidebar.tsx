@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { useChnotStore } from "@/krate/chnot/store/store";
+import { useChnotStore } from "@/krate/chnot/store";
 import KPageList from "@/common/component/kpagelist";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
-import { chnotTagNames } from "@/krate/chnot/store/service";
+import { chnotTagNames } from "@/krate/chnot/service";
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +18,7 @@ import { Toggle } from "@/common/component/ui/toggle";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Search } from "lucide-react";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
 
 const TagPath = () => {

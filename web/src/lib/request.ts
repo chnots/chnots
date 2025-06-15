@@ -1,6 +1,6 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import axios from "axios";
 import type {
   AxiosInstance,

@@ -1,10 +1,10 @@
 import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/lib/date-utils";
 import Icon from "@/common/component/icon";
-import { useChnotStore } from "@/krate/chnot/store/store";
-import { Chnot } from "@/krate/chnot/store/dto";
-import { chnotUpdate } from "@/krate/chnot/store/service";
-import { ChnotKind } from "@/krate/chnot/store/po";
+import { useChnotStore } from "@/krate/chnot/store";
+import { Chnot } from "@/krate/chnot/dto";
+import { chnotUpdate } from "@/krate/chnot/service";
+import { ChnotKind } from "@/krate/chnot/po";
 import {
   SidebarMenuItem,
   SidebarMenuButton,

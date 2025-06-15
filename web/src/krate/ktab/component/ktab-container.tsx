@@ -1,12 +1,8 @@
-import {
-  ktabCellsRead,
-  ktabMetaOverwrite,
-  ktabMetaRead,
-} from "../store/service";
-import { KTabMeta } from "../store/po";
-import { queryKKV } from "@/krate/kfile/store/service";
+import { ktabCellsRead, ktabMetaOverwrite, ktabMetaRead } from "../service";
+import { KTabMeta } from "../po";
+import { queryKKV } from "@/krate/kfile/service";
 import { DataTable } from "./data-table";
-import { ktabGetViewValue } from "../store/dto";
+import { ktabGetViewValue } from "../dto";
 import { KTabRowData } from "./editable-cell";
 import { genTID, TID } from "@/lib/id_util";
 import { useEffect, useState } from "react";

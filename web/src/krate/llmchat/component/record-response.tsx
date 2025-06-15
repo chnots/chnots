@@ -4,11 +4,11 @@ import {
   ResponseState,
   useLLMResponse,
 } from "@/hooks/use-llm-response";
-import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/store/po";
-import { LLMChatContainerSession } from "@/krate/llmchat/store/dto";
+import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/po";
+import { LLMChatContainerSession } from "@/krate/llmchat/dto";
 import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";
-import { llmchatRecordInsert } from "@/krate/llmchat/store/service";
+import { llmchatRecordInsert } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
 import { genTID } from "@/lib/id_util";

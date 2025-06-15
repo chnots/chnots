@@ -1,8 +1,8 @@
 import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
 import { ChnotContainer } from "@/krate/chnot/component/chnot-container";
-import { useChnotStore } from "@/krate/chnot/store/store";
+import { useChnotStore } from "@/krate/chnot/store";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Chnot } from "@/krate/chnot/store/dto";
+import { Chnot } from "@/krate/chnot/dto";
 import {
   SidebarInset,
   SidebarProvider,

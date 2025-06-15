@@ -1,4 +1,4 @@
-import { LLMChatRecord } from "@/krate/llmchat/store/po";
+import { LLMChatRecord } from "@/krate/llmchat/po";
 import RecordFrame from "./record-frame";
 
 const RecordUser = ({ record }: { record: LLMChatRecord }) => {

@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 

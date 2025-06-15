@@ -1,5 +1,5 @@
 import Icon from "./icon";
-import { useCommonStore } from "@/common/store/common";
+import { useCommonStore } from "@/common/store";
 import clsx from "clsx";
 
 const SearchButton = () => {

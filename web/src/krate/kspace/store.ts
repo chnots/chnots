@@ -1,4 +1,4 @@
-import { KSpace } from "@/krate/kspace/store/po";
+import { KSpace } from "@/krate/kspace/po";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 

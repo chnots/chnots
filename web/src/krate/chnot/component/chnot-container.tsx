@@ -1,24 +1,24 @@
 import React, { useCallback, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import useDebounce from "@/hooks/use-debounce";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import {
   Chnot,
   ChnotOverwriteReq,
   listViewTypeGetTagPath,
-} from "@/krate/chnot/store/dto";
-import { useChnotStore } from "@/krate/chnot/store/store";
-import { chnotUpdate } from "@/krate/chnot/store/service";
+} from "@/krate/chnot/dto";
+import { useChnotStore } from "@/krate/chnot/store";
+import { chnotUpdate } from "@/krate/chnot/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
 import MarkdownEditor from "./chnot-markdown-editor";
-import { ChnotKind } from "@/krate/chnot/store/po";
+import { ChnotKind } from "@/krate/chnot/po";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
 import { enumFromStringValue } from "@/lib/enum-util";
 
 import { CommonKFile } from "@/krate/kfile/components/common-kfile";
-import { insertKKV } from "@/krate/kfile/store/service";
+import { insertKKV } from "@/krate/kfile/service";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { Button } from "@/common/component/ui/button";
 import {
@@ -29,7 +29,7 @@ import {
 import { PopoverAnchor } from "@radix-ui/react-popover";
 import { Tabs, TabsList, TabsTrigger } from "@/common/component/ui/tabs";
 import { Toggle } from "@/common/component/ui/toggle";
-import { KTabMeta } from "@/krate/ktab/store/po";
+import { KTabMeta } from "@/krate/ktab/po";
 import KTabChnot from "@/krate/ktab/component/ktab-container";
 import SessionContainer from "@/krate/llmchat/component/session-container";
 import { SidebarTrigger } from "@/common/component/ui/sidebar";

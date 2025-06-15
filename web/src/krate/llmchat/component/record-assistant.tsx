@@ -1,13 +1,9 @@
-import {
-  LLMChatBot,
-  LLMChatRecord,
-  LLMChatTemplate,
-} from "@/krate/llmchat/store/po";
+import { LLMChatBot, LLMChatRecord, LLMChatTemplate } from "@/krate/llmchat/po";
 import RecordFrame from "./record-frame";
 import KSVG from "@/common/component/svg";
 import { useState } from "react";
 import Icon from "@/common/component/icon";
-import { useLLMChatStore } from "@/krate/llmchat/store/store";
+import { useLLMChatStore } from "@/krate/llmchat/store";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 

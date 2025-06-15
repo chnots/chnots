@@ -1,7 +1,6 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { useKSpaceStore } from "../../kspace/store/store";
 import {
   Chnot,
   ChnotQueryRsp,
@@ -10,9 +9,10 @@ import {
   ListViewType,
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
-import { DbCache } from "../../../common/store/common";
 import { TID } from "@/lib/id_util";
 import { ChnotMetadata, ChnotRecord } from "./po";
+import { DbCache } from "@/common/store";
+import { useKSpaceStore } from "../kspace/store";
 
 const newChnotMap = () => {
   return {

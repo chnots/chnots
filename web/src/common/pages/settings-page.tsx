@@ -1,7 +1,7 @@
 import KSpaceSettings from "@/krate/kspace/component/settings";
 import { useState } from "react";
 import KListItem from "../component/klistitem";
-import { useCommonStore } from "@/common/store/common";
+import { useCommonStore } from "@/common/store";
 
 type SettingsType = "kspace" | "profile";
 

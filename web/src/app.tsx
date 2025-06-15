@@ -3,7 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import useLocalStorage from "react-use/lib/useLocalStorage";
 import LoadingPage from "@/common/pages/loading-page";
 import { RoutePaths } from "@/router";
-import { useKSpaceStore } from "./krate/kspace/store/store";
+import { useKSpaceStore } from "./krate/kspace/store";
 import faviconSvg from "../public/static/favicon/chnots.svg?raw";
 
 const App = () => {

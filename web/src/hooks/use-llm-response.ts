@@ -1,5 +1,5 @@
-import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/store/po";
-import { LLMChatContainerSession } from "@/krate/llmchat/store/dto";
+import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/po";
+import { LLMChatContainerSession } from "@/krate/llmchat/dto";
 import { genUId, genTID, TID } from "@/lib/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useRef, useState } from "react";

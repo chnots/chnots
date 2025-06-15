@@ -1,11 +1,11 @@
 import SessionList from "@/krate/llmchat/component/session-list";
 import SessionContainer from "@/krate/llmchat/component/session-container";
-import { useKSpaceStore } from "@/krate/kspace/store/store";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import { useEffect, useState } from "react";
-import { useCommonStore } from "@/common/store/common";
-import { useLLMChatStore } from "@/krate/llmchat/store/store";
+import { useLLMChatStore } from "@/krate/llmchat/store";
 import { v4 as uuid } from "uuid";
 import { genUId, genTID, TID } from "@/lib/id_util";
+import { useCommonStore } from "@/common/store";
 
 const LLMChatPage = () => {
   const { refreshAll, currentSessionId, setCurrentSessionId } =
