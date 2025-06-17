@@ -26,6 +26,7 @@ import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/lib/resolve-promise";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 import { genUID as genUID, genTID, TID } from "../../../../lib/id_util";
+import { SaveState } from "@/common/types";
 
 export type ExcalidrawProps = {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
@@ -33,6 +34,7 @@ export type ExcalidrawProps = {
   kindId?: string;
   readOnly?: boolean;
   onAfterSave?: (tid: TID) => void;
+  onSetSaveState: (state: SaveState) => void;
 };
 
 const CONTENT_TYPE = "chnots/excalidraw-v1";
@@ -40,6 +42,7 @@ const CONTENT_TYPE = "chnots/excalidraw-v1";
 export default function ExcalidrawContainer({
   kindId: initialKindId,
   onAfterSave,
+  onSetSaveState,
   useCustom,
   customArgs,
   readOnly: viewMode,
@@ -49,7 +52,6 @@ export default function ExcalidrawContainer({
   const [gridModeEnabled, setGridModeEnabled] = useState(true);
   const [theme, setTheme] = useState<Theme>("light");
   const [kindId, setKindId] = useState(initialKindId);
-  console.log(`ExcalidrawContainer: kindId: ${kindId}`);
 
   const [searchParams] = useSearchParams();
   const [idInfo, setDrawId] = useState<{
@@ -98,7 +100,6 @@ export default function ExcalidrawContainer({
     }
 
     (async () => {
-      console.log("load from kfile table");
       try {
         const rsp = await queryInlineKFile({
           meta_id: idInfo.drawId,
@@ -192,6 +193,7 @@ export default function ExcalidrawContainer({
             content_type: CONTENT_TYPE,
           });
           afterSave(excalidrawId);
+          onSetSaveState(SaveState.Saved);
         })();
       }
     },
@@ -227,6 +229,7 @@ export default function ExcalidrawContainer({
       excalidrawAPI={excalidrawRefCallback}
       initialData={initialStatePromiseRef.current.promise}
       onChange={(e1, e2, e3) => {
+        onSetSaveState(SaveState.Dirty);
         onChange(idInfo?.drawId, e1, e2, e3, onAfterSave);
       }}
       viewModeEnabled={viewModeEnabled}

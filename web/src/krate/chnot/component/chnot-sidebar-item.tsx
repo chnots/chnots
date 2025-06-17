@@ -125,18 +125,18 @@ const ChnotSidebarItem = React.forwardRef(
 
           <div className="flex-1 min-w-0 space-y-0.5">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              {showKSpace && (
-                <KSpaceIcon
-                  name={chnot.meta.kspace}
-                  className="h-3.5 w-3.5 text-muted-foreground/60"
-                />
-              )}
               <time
                 dateTime={new Date(chnot.meta.tid / 1e3).toISOString()}
                 className="text-[0.7rem]"
               >
                 {chnotShortDate(new Date(chnot.meta.tid / 1e3))}
               </time>
+              {showKSpace && (
+                <KSpaceIcon
+                  name={chnot.meta.kspace}
+                  className="h-3.5 w-3.5 text-muted-foreground/60"
+                />
+              )}
             </div>
 
             <h3

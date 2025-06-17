@@ -42,14 +42,9 @@ import { useShallow } from "zustand/react/shallow";
 import { Chnot, ChnotOverwriteReq } from "../dto";
 import useDebounce from "@/hooks/use-debounce";
 import LoadingPage from "@/common/pages/loading-page";
+import { SaveState } from "@/common/types";
 
-enum RequestState {
-  Saved,
-  Requesting,
-  Error,
-}
-
-interface ChnotProps {
+interface ChnotEditorProps {
   metaTid?: TID;
   kind: ChnotKind;
   kspace: string;
@@ -58,40 +53,41 @@ interface ChnotProps {
   onClickNewButton: () => void;
   onSetReadonly: (readonly: boolean) => void;
   onChnotChange: (chnot: Chnot) => void;
+  onSetMetaTid: (metaTid: TID) => void;
 }
 
-interface ChnotState extends ChnotProps {
+interface ChnotEditorState extends ChnotEditorProps {
   recTid?: TID;
   isUploadingKFile: boolean;
-  requestState: RequestState;
+  saveState: SaveState;
   isComposing: boolean;
   content?: string;
   kindId?: string;
   onSetRecTid: (recTid: TID) => void;
-  onSetMetaTid: (metaTid: TID) => void;
   onSetKind: (kind: ChnotKind) => void;
   onSetKindId: (kindId: string) => void;
-  onSetRequestState: (requestState: RequestState) => void;
+  onSetSaveState: (saveState: SaveState) => void;
   onSetContent: (content: string) => void;
 }
 
-function createChnotStore(props: ChnotProps) {
-  return createStore<ChnotState>()((set) => ({
+function createChnotStore(props: ChnotEditorProps) {
+  return createStore<ChnotEditorState>()((set) => ({
     ...props,
     isUploadingKFile: false,
-    requestState: RequestState.Saved,
+    saveState: SaveState.Saved,
     isComposing: false,
     onSetKind: (kind: ChnotKind) => {
       set((prev) => {
         return { ...prev, kind: kind };
       });
     },
-    onSetRequestState: (requestState: RequestState) => {
+    onSetSaveState: (saveState: SaveState) => {
       set((prev) => {
-        return { ...prev, requestState: requestState };
+        return { ...prev, saveState: saveState };
       });
     },
     onSetMetaTid: (metaTid) => {
+      props.onSetMetaTid(metaTid);
       set((prev) => {
         console.log("tids:", metaTid);
         return { ...prev, metaTid: metaTid };
@@ -116,10 +112,12 @@ function createChnotStore(props: ChnotProps) {
   }));
 }
 
-const ChnotContext = createContext<StoreApi<ChnotState> | null>(null);
+const ChnotEditorContext = createContext<StoreApi<ChnotEditorState> | null>(
+  null
+);
 
-function useChnotComStore<T>(selector: (state: ChnotState) => T) {
-  const store = useContext(ChnotContext);
+function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
+  const store = useContext(ChnotEditorContext);
 
   return useStore(
     store!,
@@ -133,13 +131,15 @@ function ChnotEditorProvider({
   props,
   children,
 }: {
-  props: ChnotProps;
+  props: ChnotEditorProps;
   children: React.ReactNode;
 }) {
-  const [store] = useState<StoreApi<ChnotState>>(createChnotStore(props));
+  const [store] = useState<StoreApi<ChnotEditorState>>(createChnotStore(props));
 
   return store ? (
-    <ChnotContext.Provider value={store}>{children}</ChnotContext.Provider>
+    <ChnotEditorContext.Provider value={store}>
+      {children}
+    </ChnotEditorContext.Provider>
   ) : (
     <LoadingPage />
   );
@@ -151,10 +151,10 @@ const ChnotSaver = () => {
     metaTid,
     chnotKind,
     kindId,
-    onSetRequestState,
+    onSetSaveState,
     onSetMetaTid,
     onSetRecTid,
-    requestState,
+    saveState,
     onChnotChange,
     kind,
   } = useChnotComStore((store) => {
@@ -164,19 +164,18 @@ const ChnotSaver = () => {
       metaTid: store.metaTid,
       kindId: store.kindId,
       kind: store.kind,
-      onSetRequestState: store.onSetRequestState,
+      onSetSaveState: store.onSetSaveState,
       onSetMetaTid: store.onSetMetaTid,
       onSetRecTid: store.onSetRecTid,
-      requestState: store.requestState,
+      saveState: store.saveState,
       onChnotChange: store.onChnotChange,
-      
     };
   });
   const metaTidRef = useRef(metaTid);
 
   const debounceSave = useDebounce(
     async (req: ChnotOverwriteReq) => {
-      onSetRequestState(RequestState.Requesting);
+      onSetSaveState(SaveState.Saving);
       const rsp = await chnotOverwrite(req);
       console.log("set Tid: ", rsp);
       if (!metaTidRef.current) {
@@ -184,7 +183,7 @@ const ChnotSaver = () => {
         metaTidRef.current = rsp.meta_tid;
       }
       onSetRecTid(rsp.rec_tid);
-      onSetRequestState(RequestState.Saved);
+      onSetSaveState(SaveState.Saved);
       onChnotChange({
         record: {
           tid: rsp.rec_tid,
@@ -198,7 +197,6 @@ const ChnotSaver = () => {
           kind: kind,
         },
       });
-      
     },
     1000,
     true
@@ -207,38 +205,43 @@ const ChnotSaver = () => {
     if (!content) {
       return;
     }
-
+    onSetSaveState(SaveState.Dirty);
     const req: ChnotOverwriteReq = {
       content: content ?? "",
       kind: chnotKind!,
       meta_tid: metaTidRef.current,
       kind_id: kindId,
     };
+
     debounceSave(req);
   }, [content, chnotKind, kindId]);
 
-  return requestState === RequestState.Requesting ? (
+  return saveState === SaveState.Saving ? (
     <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
       <Icon.Loader2 className="animate-spin h-5 w-5" />
     </div>
-  ) : requestState === RequestState.Error ? (
-    <div className="flex items-center text-red-600 transition-opacity duration-300 ease-in-out opacity-100">
-      <Icon.FileQuestion className="h-5 w-5" />
+  ) : saveState === SaveState.Saved ? (
+    <div className="flex items-center text-green-600 transition-opacity duration-300 ease-in-out opacity-100">
+      <Icon.Sun className="h-5 w-5" />
+    </div>
+  ) : saveState === SaveState.Dirty ? (
+    <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
+      <Icon.CloudOff className="h-5 w-5" />
     </div>
   ) : (
-    <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
-      <Icon.CheckCircle className="h-5 w-5" />
+    <div className="flex items-center text-red-600 transition-opacity duration-300 ease-in-out opacity-100">
+      <Icon.CloudAlert className="h-5 w-5" />
     </div>
   );
 };
 
-const ChnotTopbar = () => {
+const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
   const {
+    content,
     lefttop,
     kspace,
     readonly,
     recTid,
-    content,
     metaTid,
     chnotKind,
     onSetKind,
@@ -338,7 +341,7 @@ const ChnotTopbar = () => {
                         }
                       }}
                       height={200}
-                      content={content}
+                      content={content ?? initialContent}
                       foldGutter={false}
                     />
                   </PopoverContent>
@@ -359,45 +362,30 @@ const ChnotTopbar = () => {
 
 const ChnotBody = ({
   metaTid,
+  initialContent,
   readonly,
 }: {
   metaTid?: TID;
+  initialContent?: string;
   readonly: boolean;
   kind: ChnotKind;
 }) => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
-  const [content, setContent] = useState<string | undefined>();
   useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
     setHeight(entry.contentRect.height);
   });
 
-  const { chnotKind, onSetKindId, onSetContent } = useChnotComStore((store) => {
-    return {
-      chnotKind: store.kind,
-      onSetKindId: store.onSetKindId,
-      onSetContent: store.onSetContent,
-    };
-  });
+  const { chnotKind, onSetKindId, onSetContent, onSetSaveState } =
+    useChnotComStore((store) => {
+      return {
+        chnotKind: store.kind,
+        onSetKindId: store.onSetKindId,
+        onSetContent: store.onSetContent,
+        onSetSaveState: store.onSetSaveState,
+      };
+    });
 
-  useEffect(() => {
-    if (metaTid) {
-      chnotQuery({
-        view_type: {
-          kind: "timeline",
-        },
-        kinds: [],
-        start_index: 0,
-        page_size: 1,
-        meta_tid: metaTid,
-      })
-        .then((rsp) => {
-          const chnot = rsp.data.at(0);
-          setContent(chnot?.record.content);
-        })
-        .finally(() => {});
-    }
-  }, []);
 
   return (
     <div
@@ -405,9 +393,9 @@ const ChnotBody = ({
       ref={bodyRef}
     >
       {chnotKind === ChnotKind.MarkdownWithToent ? (
-        readonly && content ? (
+        readonly && initialContent ? (
           <div className="p-2 overflow-y-auto w-full">
-            <MarkdownViewer content={content.replace("\n", "  \n") ?? ""} />
+            <MarkdownViewer content={initialContent.replace("\n", "  \n") ?? ""} />
           </div>
         ) : (
           <div
@@ -419,7 +407,7 @@ const ChnotBody = ({
                   onSetContent(content);
                 }}
                 height={height}
-                content={content}
+                content={initialContent}
                 foldGutter={true}
               />
             ) : (
@@ -433,12 +421,13 @@ const ChnotBody = ({
           metaTid={metaTid}
           chnotKind={chnotKind}
           commonText={() => ""}
-          onInitRel={function (content: string, kind_id: string): void {
+          onInitRel={function(content: string, kind_id: string): void {
             if (!metaTid) {
               onSetContent(content);
             }
             onSetKindId(kind_id);
           }}
+          onSetSaveState={onSetSaveState}
         />
       )}
     </div>
@@ -456,11 +445,30 @@ const ChnotEditor = ({ className }: { className?: string }) => {
   });
 
   const [metaTid] = useState(metaTidStore);
+  const [content, setContent] = useState<string | undefined>();
+  useEffect(() => {
+    if (metaTid) {
+      chnotQuery({
+        view_type: {
+          kind: "timeline",
+        },
+        kinds: [],
+        start_index: 0,
+        page_size: 1,
+        meta_tid: metaTid,
+      })
+        .then((rsp) => {
+          const chnot = rsp.data.at(0);
+          setContent(chnot?.record.content);
+        })
+        .finally(() => { });
+    }
+  }, []);
 
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
-      <ChnotTopbar />
-      <ChnotBodyMemo readonly={readonly} kind={kind} metaTid={metaTid} />
+      <ChnotTopbar initialContent={content ?? ""} />
+      <ChnotBodyMemo readonly={readonly} kind={kind} metaTid={metaTid} initialContent={content} />
     </div>
   );
 };
@@ -476,15 +484,16 @@ const RichChnot = ({
   commonText,
   readOnly,
   onInitRel,
+  onSetSaveState,
 }: {
   chnotKind: ChnotKind;
   metaTid?: TID;
   commonText: () => string;
   readOnly: boolean;
   onInitRel: (content: string, kind_id: string) => void;
+  onSetSaveState: (state: SaveState) => void;
 }) => {
   const [kindId, setKindId] = useState<string>();
-  console.log(`RichChnot: kindId: ${kindId}, metaTid ${metaTid}`);
 
   useEffect(() => {
     if (metaTid)
@@ -514,6 +523,9 @@ const RichChnot = ({
               );
             }}
             readOnly={readOnly}
+            onSetSaveState={(state: SaveState) => {
+              onSetSaveState(state);
+            }}
           />
         ) : chnotKind === ChnotKind.KFileV1 ? (
           <CommonKFile
@@ -527,8 +539,7 @@ const RichChnot = ({
             kindId={kindId}
             onAfterSave={async (meta: KTabMeta) => {
               handleSaveRel(
-                `# Table ${meta.table_name}\n\n${
-                  meta.table_comment
+                `# Table ${meta.table_name}\n\n${meta.table_comment
                 }\n\n ${commonText()}`,
                 meta.tid.toString()
               );
@@ -556,4 +567,4 @@ const RichChnot = ({
 };
 
 export { ChnotEditorProvider, ChnotEditor };
-export type { ChnotProps };
+export type { ChnotEditorProps as ChnotProps };

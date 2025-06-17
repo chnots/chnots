@@ -47,7 +47,6 @@ const MonoChnot = () => {
 
   const updateEditorChnot = useCallback(
     async (chnot: Chnot) => {
-      metaTidRef.current = chnot.meta.tid;
       if (curMetaId !== chnot.meta.tid) {
         setCurrentChnotMetaId(chnot.meta.tid);
       }
@@ -78,6 +77,9 @@ const MonoChnot = () => {
         onChnotChange: (chnot) => {
           updateEditorChnot(chnot);
         },
+        onSetMetaTid: (tid) => {
+          metaTidRef.current = tid; 
+        }
       }}
     >
       <ChnotEditor className="w-full h-full" />

@@ -129,7 +129,7 @@ const ChnotSidebar = () => {
   }, [listViewType, keyword, mkspaces, currentKSpace]);
 
   return (
-    <Sidebar variant="inset" className="pr-4">
+    <Sidebar>
       <SidebarHeader className="text-sm">
         <div className="flex flex-row">
           <KSpaceSelect
@@ -175,7 +175,7 @@ const ChnotSidebar = () => {
           </SidebarGroup>
         </form>
       </SidebarHeader>
-      <SidebarSeparator />
+      <SidebarSeparator className="mx-0"/>
       <SidebarContent>
         <div className="overflow-auto h-full overflow-x-hidden overflow-y-auto">
           {tagList && listViewType.kind === "tagtree" && (
