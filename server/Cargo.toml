@@ -89,6 +89,8 @@ blake3 = "1.8.2"
 tracing-log = "0.2.0"
 enum-tag = "0.3.0"
 
+[profile.release]
+lto = true
 
 [features]
 postgres = [
