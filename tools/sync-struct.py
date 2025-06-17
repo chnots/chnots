@@ -1,8 +1,22 @@
 import re
 import typing
 import os
+import os.path as path
 
-type_map = {}
+WORK_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+print("=> workdir:", WORK_DIR)
+os.chdir(WORK_DIR)
+
+TYPE_MAP = {
+    "DateTime<FixedOffset>": "Date",
+    "FieldData<Bytes>": "Blob",
+    "HashMap<String, KTabColumnMeta>": "Record<string, KTabColumnMeta>",
+    "bool": "boolean",
+    "String": "string",
+    "i64": "number",
+    "i32": "number",
+    "usize": "number",
+}
 
 
 class RustStruct:
@@ -28,7 +42,7 @@ def parse_rust_struct_block(struct_block_code: str) -> RustStruct:
     struct_decl_pattern = re.compile(r"pub(?:\(crate\))?\s+struct\s+(\w+)\s*{")
 
     field_name_pattern = re.compile(
-        r"pub(?:\(crate\))?\s+(\w+):\s*([a-zA-Z0-9_:<>,]+),?"
+        r"pub(?:\(crate\))?\s+(\w+):\s*([a-zA-Z0-9_:<>, ]+),?"
     )
 
     for line in lines:
@@ -75,16 +89,23 @@ def parse_rust_struct_block(struct_block_code: str) -> RustStruct:
 
 def parse_rust_file_structs(file_path: str) -> typing.List[RustStruct]:
     if not os.path.exists(file_path):
-        print(f"错误: 文件不存在 - {file_path}")
+        print(f"{file_path} is absent")
         return []
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
+    rmod = file_path.replace("server/src/", "").replace(".rs", "").replace("/", "::")
+    import subprocess
+
+    content = subprocess.check_output(
+        ["cargo", "expand", rmod],
+        cwd=WORK_DIR + "/server",
+        encoding="utf8",
+        stderr=subprocess.DEVNULL,
+    )
+    lines = content.split("\n")
 
     parsed_structs = []
 
     struct_blocks = []
-    lines = content.splitlines()
     in_struct_block = False
     brace_level = 0
     current_struct_lines = []
@@ -117,19 +138,89 @@ def parse_rust_file_structs(file_path: str) -> typing.List[RustStruct]:
     return parsed_structs
 
 
-def work_and_do(directory_path):
-    found_files = []
-    try:
-        for root, dirs, files in os.walk(directory_path, topdown=False):
-            for name in files:
-                fullpath = os.path.join(root, name)
-                if name == "dto.rs":
-                    print(parse_rust_file_structs(fullpath))
-    except FileNotFoundError:
-        print(f"错误：目录 '{directory_path}' 不存在。")
-    except Exception as e:
-        print(f"错误：{e}")
-    return found_files
+def get_type_position(code: str, type_name: str):
+    type_patterns = [
+        re.compile(r"export type\s+(\w+)\s*=\s*{([^}]+)};?", re.DOTALL),
+        re.compile(r"export type\s+(\w+)\s*=\s*object;?"),
+    ]
+
+    for type_pattern in type_patterns:
+        matches = list(type_pattern.finditer(code))
+
+        for match in matches:
+            name = match.group(1)
+
+            if name == type_name:
+                start_pos = match.start(0)
+                end_pos = match.end(0)
+                print("=> start and end", code[start_pos:end_pos])
+                return start_pos, end_pos
+
+    return None
 
 
-work_and_do("../server/src")
+def get_ts_type(rust_type: str, inner=True):
+    if rust_type.startswith("Option<"):
+        return ("" if inner else "?: ") + get_ts_type(rust_type.lstrip("Option<")[:-1])
+    elif rust_type == "OmitTID":
+        return ("" if inner else "?: ") + "OmitTID"
+    elif rust_type.startswith("Vec<"):
+        return (
+            ("" if inner else ": ") + get_ts_type(rust_type.lstrip("Vec<")[:-1]) + "[]"
+        )
+    else:
+        return ("" if inner else ": ") + (
+            TYPE_MAP[rust_type] if rust_type in TYPE_MAP else rust_type
+        )
+
+
+def convert_rs_2_ts(rtype: RustStruct):
+    fields = "object"
+    if len(rtype.fields) > 0:
+        fields = (
+            "{\n"
+            + "\n".join(
+                [
+                    f"  {k}{get_ts_type(v.strip().rstrip(','), False)};"
+                    for (k, v) in rtype.fields.items()
+                ]
+            )
+            + "\n}"
+        )
+
+    return f"""export type {rtype.struct_name} = {fields}; """
+
+
+def sync_one_file(serverfile: str):
+    webfile = serverfile.replace("server/src", "web/src").replace(".rs", ".ts")
+
+    print("=> work on:", serverfile, webfile)
+    if not path.exists(webfile):
+        raise Exception(f"file {webfile} is absent")
+
+    rtypes = parse_rust_file_structs(serverfile)
+    with open(webfile) as f:
+        web_content = f.read()
+    for rt in rtypes:
+        print("=> parse struct:", rt.struct_name)
+
+        pos = get_type_position(web_content, rt.struct_name)
+        web_new = convert_rs_2_ts(rt)
+        if pos is not None:
+            web_content = web_content[0 : pos[0]] + web_new + web_content[pos[1] :]
+        else:
+            web_content = web_content + "\n" + web_new
+
+    with open(webfile, "w") as f:
+        f.write(web_content)
+
+
+def work_and_do():
+    for root, dirs, files in os.walk("server/src", topdown=False):
+        for name in files:
+            fullpath = os.path.join(root, name)
+            if name == "dto.rs" or name == "po.rs":
+                sync_one_file(fullpath)
+
+
+work_and_do()

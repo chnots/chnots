@@ -28,6 +28,11 @@ build-web: build-web-dir
 
 build: build-web build-server
 
+sync-struct:  
+	python tools/sync-struct.py
+
+full-build: sync-struct build
+
 install:
 	cd $(SERVER_DIR) && cargo install --path .
 
