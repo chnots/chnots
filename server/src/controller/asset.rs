@@ -49,7 +49,6 @@ pub(crate) enum ContentEnum {
     String(String),
 }
 
-
 pub(crate) fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -> Response {
     match data {
         Some((mime, data)) => match data {

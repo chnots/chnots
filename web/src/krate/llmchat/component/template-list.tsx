@@ -1,11 +1,9 @@
 import Icon from "@/common/component/icon";
 import clsx from "clsx";
 import KSVG from "@/common/component/svg";
-import { useRef, useState } from "react";
-import TemplateForm from "@/krate/llmchat/component/template-form";
+import { useRef } from "react";
 import { LLMChatTemplate } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
-import { llmchatTemplateAdd } from "@/krate/llmchat/service";
 import { Button } from "@/common/component/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -14,8 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
-import { Dialog, DialogTrigger } from "@/common/component/ui/dialog";
-import { DialogContent } from "@radix-ui/react-dialog";
+import { DialogTrigger } from "@/common/component/ui/dialog";
 import { genTID } from "@/lib/id_util";
 
 const LLMChatTemplateList = ({
@@ -46,9 +43,12 @@ const LLMChatTemplateList = ({
                 prompt: "",
               })
             }
+            asChild
           >
-            <Icon.PlusCircle strokeWidth={1.5} />
-            <span>Add New Template</span>
+            <div>
+              <Icon.PlusCircle strokeWidth={1.5} />
+              <span>Add New Template</span>
+            </div>
           </Button>
         </DialogTrigger>
         {items.map((item: LLMChatTemplate) => (
@@ -57,7 +57,7 @@ const LLMChatTemplateList = ({
             className={clsx(className, "hover:cursor-pointer items-center")}
           >
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger>
                 {item.svg_logo ? (
                   <KSVG inner={item.svg_logo} />
                 ) : (

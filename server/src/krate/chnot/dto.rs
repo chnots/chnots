@@ -32,7 +32,7 @@ pub(crate) struct ChnotOverwriteReq {
 pub(crate) struct ChnotOverwriteRsp {
     pub(crate) meta_tid: TID,
     pub(crate) rec_tid: TID,
-    pub(crate) ksapce: String,
+    pub(crate) kspace: String,
     pub(crate) archor: bool,
 }
 
@@ -108,12 +108,13 @@ impl<'a> Deserialize<'a> for ChnotViewType {
 pub(crate) struct ChnotQueryReq {
     pub(crate) query: Option<String>,
     pub(crate) meta_tid: Option<TID>,
-    pub(crate) record_tid: Option<String>,
+    pub(crate) record_tid: Option<TID>,
 
     pub(crate) view_type: ChnotViewType,
     pub(crate) kinds: Vec<ChnotKind>,
 
     pub(crate) with_omitted: Option<bool>,
+    pub(crate) with_archive: Option<bool>,
 
     // Paging
     pub(crate) start_index: usize,
@@ -122,7 +123,7 @@ pub(crate) struct ChnotQueryReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotQueryRsp<T> {
-    pub(crate) data: T,
+    pub(crate) data: Vec<T>,
     pub(crate) has_next: bool,
     pub(crate) next_start: usize,
 }
@@ -165,4 +166,14 @@ pub(crate) struct ChnotTagUpdateReq {
     pub(crate) content: String,
     pub(crate) meta_tid: TID,
     pub(crate) kspace: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct ChnotKindRelQueryReq {
+    pub(crate) meta_tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct ChnotKindRelQueryRsp {
+    pub(crate) kind_rel: ChnotKindRel,
 }

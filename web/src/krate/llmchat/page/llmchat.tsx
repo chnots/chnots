@@ -4,7 +4,7 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { useEffect, useState } from "react";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { v4 as uuid } from "uuid";
-import { genUId, genTID, TID } from "@/lib/id_util";
+import { genUID, genTID, TID } from "@/lib/id_util";
 import { useCommonStore } from "@/common/store";
 
 const LLMChatPage = () => {
@@ -13,7 +13,7 @@ const LLMChatPage = () => {
   const { currentKSpace } = useKSpaceStore();
   const { showSidebar } = useCommonStore();
 
-  const [sessionIdOrUUID, setSessionIdOrUUID] = useState<TID>(genTID());
+  const [sessionIdOrTID, setSessionIdOrTID] = useState<TID>(genTID());
   const [containerId, setContainerId] = useState<string | undefined>(uuid());
 
   useEffect(() => {
@@ -21,14 +21,14 @@ const LLMChatPage = () => {
   }, [currentKSpace]);
 
   useEffect(() => {
-    setSessionIdOrUUID(currentSessionId ?? genTID());
+    setSessionIdOrTID(currentSessionId ?? genTID());
   }, [currentSessionId]);
 
   useEffect(() => {
-    if (sessionIdOrUUID != currentSessionId) {
+    if (sessionIdOrTID != currentSessionId) {
       setContainerId(uuid());
     }
-  }, [currentSessionId, sessionIdOrUUID, setContainerId]);
+  }, [currentSessionId, sessionIdOrTID, setContainerId]);
 
   return (
     <div className="flex flex-row w-full h-full max-h-full overflow-hidden">
@@ -43,16 +43,15 @@ const LLMChatPage = () => {
       )}
       <div className="flex-1 h-full">
         <SessionContainer
-          kspace={currentKSpace}
           key={containerId}
-          chnotMetaId={sessionIdOrUUID}
+          kindId={sessionIdOrTID.toString()}
           onNewButton={() => {
             setCurrentSessionId(undefined);
-            setSessionIdOrUUID(genTID());
+            setSessionIdOrTID(genTID());
           }}
-          afterInit={(session) => {
+          onAfterSave={(session) => {
             setCurrentSessionId(session.tid);
-            setSessionIdOrUUID(session.tid);
+            setSessionIdOrTID(session.tid);
           }}
         />
       </div>

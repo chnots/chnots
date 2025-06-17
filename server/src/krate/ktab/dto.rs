@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use chin_sql::SqlValue;
 use chin_sql::time_type::TID;
+use chin_sql::SqlValue;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
@@ -127,7 +127,7 @@ macro_rules! impl_from_ktab_cell {
                     row_idx,
                     omit_tid,
                     cell_data,
-                    tid
+                    tid,
                 } = value;
 
                 Self {
@@ -149,7 +149,7 @@ impl_from_ktab_cell! {KTabCellDecimal, Decimal}
 #[cfg(test)]
 mod tests {
     use crate::krate::ktab::{
-        KTabCellsOverwriteReq, KTabStoreValue, KTabRowsQueryReq, KTabViewCell,
+        KTabCellsOverwriteReq, KTabRowsQueryReq, KTabStoreValue, KTabViewCell,
     };
 
     #[test]

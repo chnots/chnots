@@ -1,41 +1,32 @@
 import { ktabCellsRead, ktabMetaOverwrite, ktabMetaRead } from "../service";
 import { KTabMeta } from "../po";
-import { queryKKV } from "@/krate/kfile/service";
 import { DataTable } from "./data-table";
 import { ktabGetViewValue } from "../dto";
 import { KTabRowData } from "./editable-cell";
-import { genTID, TID } from "@/lib/id_util";
+import { genTID, omit_tid_never, TID } from "@/lib/id_util";
 import { useEffect, useState } from "react";
 import { TableForm } from "./table-meta";
 import { TypeOf, ZodObject, ZodString, ZodOptional, ZodTypeAny } from "zod";
 
 const KTabChnot = ({
-  chnotMetaId,
-  kspace,
-  onInitialSave,
+  kindId,
+  onAfterSave,
   isEditing,
 }: {
-  chnotMetaId?: TID;
-  onInitialSave: (meta: KTabMeta) => Promise<void>;
-  kspace: string;
+  kindId?: string;
+  onAfterSave: (meta: KTabMeta) => Promise<void>;
   isEditing: boolean;
 }) => {
   const [meta, setMeta] = useState<KTabMeta>();
   const loadMeta = async () => {
-    if (chnotMetaId) {
-      const value = await queryKKV({
-        key: chnotMetaId.toString(),
-        kind: "chnot_sub_type",
+    if (kindId) {
+      const meta = await ktabMetaRead({
+        table_id: parseInt(kindId, 10),
       });
-      if (value.value) {
-        const meta = await ktabMetaRead({
-          table_id: parseInt(value.value, 10),
-        });
-        if (meta.meta) {
-          return meta.meta;
-        }
+      if (meta.meta) {
+        return meta.meta;
       }
-      throw new Error(`find no ktab with chnotMetaId: ${chnotMetaId}`);
+      throw new Error(`find no ktab with kindId: ${kindId}`);
     }
   };
   useEffect(() => {
@@ -58,7 +49,6 @@ const KTabChnot = ({
         ): Promise<KTabRowData[]> => {
           const data = await ktabCellsRead({
             table_id,
-            fields: [],
             filter: {
               RowsByIdx: {
                 row_idx_included: start,
@@ -102,15 +92,14 @@ const KTabChnot = ({
           tid: genTID(),
           columns: {},
           table_name: values.name,
-          table_comment: values.description,
+          table_comment: values.description ?? "",
           create_time: new Date(),
-          kspace: kspace,
           real_table: false,
         };
         await ktabMetaOverwrite({
           meta: meta,
         });
-        await onInitialSave(meta);
+        await onAfterSave(meta);
         setMeta(meta);
       }}
     />

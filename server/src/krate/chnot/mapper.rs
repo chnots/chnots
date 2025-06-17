@@ -1,5 +1,5 @@
 use chin_sql::time_type::TID;
-use chin_tools::{ AResult, EResult};
+use chin_tools::{AResult, EResult};
 
 use crate::{expand_mt_branch, model::dto::KReq, MapperType, RecordCallbackType};
 
@@ -9,6 +9,7 @@ pub(crate) trait ChnotDeserializeMapper {
     fn to_chnot_meta(self) -> AResult<ChnotMetadata>;
     fn to_chnot_record(self) -> AResult<ChnotRecord>;
     fn to_chnot_tag(self) -> AResult<ChnotTag>;
+    fn to_chnot_kind_rel(self) -> AResult<ChnotKindRel>;
 }
 
 pub(crate) trait ChnotDumpMapper {
@@ -28,7 +29,11 @@ pub(crate) trait ChnotDumpMapper {
 pub(crate) trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
     async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
-    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>>;
+    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>>;
+    async fn chnot_query_kind_rel(
+        &self,
+        req: KReq<ChnotKindRelQueryReq>,
+    ) -> AResult<ChnotKindRelQueryRsp>;
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult;
@@ -64,7 +69,7 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_delete(req))
     }
 
-    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
+    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>> {
         expand_mt_branch!(self.chnot_query(req))
     }
 
@@ -104,5 +109,12 @@ impl ChnotMapper for MapperType {
 
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
         expand_mt_branch!(self.chnot_tag_update_all(kspace))
+    }
+
+    async fn chnot_query_kind_rel(
+        &self,
+        chnot_meta_id: KReq<ChnotKindRelQueryReq>,
+    ) -> AResult<ChnotKindRelQueryRsp> {
+        expand_mt_branch!(self.chnot_query_kind_rel(chnot_meta_id))
     }
 }

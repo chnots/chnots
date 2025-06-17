@@ -1,4 +1,4 @@
-use chin_sql::{IntoSqlSeg, SqlSeg, SqlValueOwned, SqlValueRow};
+use chin_sql::{IntoSqlSeg, SqlSeg, SqlValueRow, SqlValueStatic};
 use chin_tools::AResult;
 
 use crate::mapper::db::{
@@ -19,11 +19,11 @@ impl KDbBehaiver for Sqlite {
     }
 }
 
-fn map_row2row(row: ActorSqliteRow) -> SqlValueRow<SqlValueOwned> {
+fn map_row2row(row: ActorSqliteRow) -> SqlValueRow {
     let inner = row
         .cells
         .into_iter()
-        .map(|(k, v)| (k, SqlValueOwned::from(v)))
+        .map(|(k, v)| (k, SqlValueStatic::from(v)))
         .collect();
     SqlValueRow { row: inner }
 }
@@ -70,7 +70,7 @@ macro_rules! impl_KDbExecutorBehaiver {
 
                 let length = rows.len();
                 if let Some(row) = rows.into_iter().nth(0) {
-                    let first_res = mapper(KDbRow::SqlValueRow(map_row2row(row)))?;
+                    let first_res = mapper(KDbRow::SqlValue(map_row2row(row)))?;
                     if !only_one {
                         Ok(first_res)
                     } else if length > 1 {
@@ -96,7 +96,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 let rows = self.query(seg, values).await?;
 
                 if let Some(row) = rows.into_iter().nth(0) {
-                    let first_res = mapper(KDbRow::SqlValueRow(map_row2row(row)))?;
+                    let first_res = mapper(KDbRow::SqlValue(map_row2row(row)))?;
                     Ok(Some(first_res))
                 } else {
                     Ok(None)
@@ -116,7 +116,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 self.query(seg, values)
                     .await?
                     .into_iter()
-                    .map(|r| mapper(KDbRow::SqlValueRow(map_row2row(r))))
+                    .map(|r| mapper(KDbRow::SqlValue(map_row2row(r))))
                     .collect()
             }
 

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(TryFromMultipart)]
 pub(crate) struct KFileUploadReq {
+    pub(crate) upload_id: String,
     pub(crate) meta_id: String,
     pub(crate) filename: String,
     pub(crate) chunk_no: usize,
@@ -13,11 +14,12 @@ pub(crate) struct KFileUploadReq {
     pub(crate) chunk: FieldData<Bytes>,
     pub(crate) last_modified: i64,
     pub(crate) filesize: i64,
+    pub(crate) content_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct KFileUploadRsp {
-    pub(crate) kfile: Option<KFile>,
+    pub(crate) kfile: Option<KFileMeta>,
     pub(crate) finished: bool,
 }
 
@@ -27,6 +29,8 @@ pub(crate) struct InsertInlineKFileReq {
     pub(crate) res: InlineKFile,
     /// archor interval second.
     pub(crate) archor_intervals: i64,
+    pub(crate) filename: Option<String>,
+    pub(crate) content_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,9 +42,7 @@ pub(crate) struct InsertInlineKFileRsp {
 pub(crate) struct QueryInlineKFileReq {
     pub(crate) sid: Option<String>,
     pub(crate) meta_id: Option<String>,
-    pub(crate) with_del: Option<bool>,
-    pub(crate) content_type: Option<String>,
-    pub(crate) name_like: Option<String>,
+    pub(crate) with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,7 +57,12 @@ pub(crate) struct QueryKFileReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct QueryKFileRsp {
-    pub(crate) res: Option<KFile>,
+    pub(crate) res: Option<KFileMeta>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct QueryKFileMetaRsp {
+    pub(crate) meta: Option<KFileMeta>,
 }
 
 #[test]

@@ -4,9 +4,9 @@ use super::*;
 use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
-use chin_sql::{SqlDeleter, Wheres};
-use chin_sql::{SqlBuilder, SqlUpdater};
 use chin_sql::time_type::TID;
+use chin_sql::{SqlBuilder, SqlUpdater};
+use chin_sql::{SqlDeleter, Wheres};
 use chin_tools::AResult;
 
 use chrono::TimeDelta;
@@ -217,7 +217,7 @@ impl<'a> KDbTx<'a> {
                 let meta = ChnotMetadata {
                     tid: meta_tid,
                     kspace: req.kspace.clone(),
-                    kind: req.kind.to_string(),
+                    kind: req.kind.clone(),
                     pin_time: None,
                     omit_tid: OmitTID::never(),
                     archive_time: None,
@@ -226,13 +226,20 @@ impl<'a> KDbTx<'a> {
             }
         }
         if let Some(kid) = req.kind_id.clone() {
-            self.as_executor()
-                .exec(ChnotKindId {
+            self.exec(
+                ChnotKindRel::pkey_updater(*meta_tid, OmitTID::never())
+                    .set(ChnotKindRel::OMIT_TID, OmitTID::now()),
+            )
+            .await?;
+            self.exec(
+                ChnotKindRel {
                     meta_tid: *meta_tid,
                     omit_tid: OmitTID::never(),
                     kind_id: kid,
-                }.to_sql_inserter())
-                .await?;
+                }
+                .to_sql_inserter(),
+            )
+            .await?;
         }
 
         self.chnot_tag_update_single_chnot(ChnotTagUpdateReq {
@@ -245,7 +252,7 @@ impl<'a> KDbTx<'a> {
         Ok(ChnotOverwriteRsp {
             meta_tid: *meta_tid,
             rec_tid,
-            ksapce: req.kspace,
+            kspace: req.kspace,
             archor,
         })
     }

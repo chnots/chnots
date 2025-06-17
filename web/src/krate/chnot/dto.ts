@@ -1,18 +1,18 @@
 import { TID } from "@/lib/id_util";
-import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind } from "./po";
+import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind, ChnotKindRel } from "./po";
 
-export type Chnot= {
+export type Chnot = {
   record: ChnotRecord;
   meta: ChnotMetadata;
-}
+};                    
 
 export type ChnotTagTreeType = {
   kind: "tagtree";
   tagkind: "children" | "descendants";
   tagpath: string;
 };
-export type ListViewType = { kind: "timeline" } | ChnotTagTreeType;
-export const listViewTypeGetTagPath = (lvt: ListViewType) => {
+export type ChnotViewType = { kind: "timeline" } | ChnotTagTreeType;
+export const listViewTypeGetTagPath = (lvt: ChnotViewType) => {
   if (lvt.kind === "tagtree") {
     return lvt.tagpath;
   } else {
@@ -20,98 +20,108 @@ export const listViewTypeGetTagPath = (lvt: ListViewType) => {
   }
 };
 
-export type ChnotQueryReq= {
+export type ChnotQueryReq = {
   query?: string;
   meta_tid?: TID;
   record_tid?: TID;
-
-  view_type: ListViewType;
+  view_type: ChnotViewType;
   kinds: ChnotKind[];
-
-  with_omited?: boolean;
+  with_omitted?: boolean;
+  with_archive?: boolean;
   start_index: number;
   page_size: number;
-}
+};                      
 
-export type ChnotQueryRsp= {
+export type ChnotQueryRsp = {
   next_start: number;
   data: Chnot[];
 
   has_next: boolean;
-}
+};
 
-export type ChnotOverwriteReq= {
-  tid?: TID;
+export type ChnotOverwriteReq = {
   meta_tid?: TID;
   content: string;
-  kind: string;
+  kind: ChnotKind;
   kind_id?: string;
-}
+};                    
 
-export type ChnotOverwriteRsp= {
+export type ChnotOverwriteRsp = {
   meta_tid: TID;
   rec_tid: TID;
-  archor: boolean;
   kspace: string;
-}
+  archor: boolean;
+};                      
 
-export type ChnotDeletionReq= {
-  chnot_id: TID;
-  logic: boolean;
-}
-
-export type ChnotUpdateReq= {
+export type ChnotDeletionReq = {
   meta_tid: TID;
+  logic: boolean;
+};                    
 
+export type ChnotUpdateReq = {
+  meta_tid: TID;
   kspace?: string;
-
   pinned?: boolean;
   archive?: boolean;
+};                      
 
-  update_time: boolean;
-}
-
-export type ChnotCommentAddReq= {
+export type ChnotCommentAddReq = {
   tid: TID;
 
   chnot_meta_id: TID;
   content: string;
-}
+};
 
-export type ChnotTagQueryReq= {
+export type ChnotTagQueryReq = {
   query?: string;
   tag_tree: ChnotTagTreeType;
-
   start_index: number;
   page_size: number;
-}
+};                    
 
 export type ChnotKFileRelationInsert = {
   chnot_meta_id: TID;
 };
 
-export type ChnotTagQueryRsp= {
+export type ChnotTagQueryRsp = {
   data: ChnotTag[];
 
   start_index: number;
-}
+};
 
-export type ChnotTagNamesRsp= {
+export type ChnotTagNamesRsp = {
   data: string[];
 
   start_index: number;
-}
+};
 
-export type Toent= {
+export type Toent = {
   tid: TID;
   input: string;
   event: string;
-}
+};
 
-export type ToentGuessReq= {
+export type ToentGuessReq = {
   input: string;
-}
+};
 
-export type ToentGuessRsp= {
+export type ToentGuessRsp = {
   toents: Toent[];
-}
+};
+
+export type ChnotUpdateRsp = object;                     
+
+export type ChnotDeletionRsp = object;                    
+
+export type ChnotTagUpdateReq = {
+  content: string;
+  meta_tid: TID;
+  kspace: string;
+};                      
+
+export type ChnotKindRelQueryRsp = {
+  kind_rel: ChnotKindRel;
+};           
+export type ChnotKindRelQueryReq = {
+  meta_tid: TID;
+};          

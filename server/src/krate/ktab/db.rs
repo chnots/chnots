@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Ok};
 use chin_sql::{time_type::TID, SqlBuilder, SqlInserter, SqlUpdater, Wheres};
-use chin_tools::{ AResult};
+use chin_tools::AResult;
 use itertools::Itertools;
 
 use crate::{
@@ -67,7 +67,6 @@ impl KTabMapper for KDb {
             update_time: _,
             omit_tid,
             real_table,
-            kspace,
         } = &req.meta;
         let full = columns.values().map(|e| e.idx).collect_vec();
         if full.iter().unique().count() < full.len() {
@@ -83,7 +82,6 @@ impl KTabMapper for KDb {
             .field(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
             .field(KTabMeta::TABLE_NAME, table_name)
             .field(KTabMeta::TABLE_COMMENT, table_comment)
-            .field(KTabMeta::KSPACE, kspace)
             .field(KTabMeta::REAL_TABLE, *real_table)
             .field(KTabMeta::OMIT_TID, *omit_tid)
             .on_conflict(chin_sql::OnConflict::Replace(
@@ -149,7 +147,6 @@ impl KTabMapper for KDb {
         let ssb = SqlBuilder::read_all(KTabMeta::TABLE).r#where(Wheres::and([
             Wheres::equal(KTabMeta::TID, req.table_id),
             Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
-            Wheres::equal(KTabMeta::KSPACE, &req.kspace),
         ]));
         let meta = self
             .conn()
@@ -166,7 +163,6 @@ impl KTabMapper for KDb {
                     omit_tid: row.try_get(KTabMeta::OMIT_TID)?,
                     real_table: row.try_get(KTabMeta::REAL_TABLE)?,
                     tid: row.try_get(KTabMeta::TID)?,
-                    kspace: row.try_get(KTabMeta::KSPACE)?,
                 })
             })
             .await?;

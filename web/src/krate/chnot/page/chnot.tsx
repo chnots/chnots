@@ -1,5 +1,8 @@
 import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
-import { ChnotContainer } from "@/krate/chnot/component/chnot-container";
+import {
+  ChnotEditor,
+  ChnotEditorProvider,
+} from "@/krate/chnot/component/chnot-container";
 import { useChnotStore } from "@/krate/chnot/store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Chnot } from "@/krate/chnot/dto";
@@ -8,7 +11,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/common/component/ui/sidebar";
-import { genTID, TID } from "@/lib/id_util";
+import { genUID, TID } from "@/lib/id_util";
+import { ChnotKind } from "../po";
+import { useShallow } from "zustand/react/shallow";
 
 /**
  * This component is only to improve performance, that is to say, when
@@ -17,55 +22,66 @@ import { genTID, TID } from "@/lib/id_util";
  * @returns Chnot Editor Container
  */
 const MonoChnot = () => {
-  const { curMetaId, getCurrentChnot, setCurrentChnotMetaId } = useChnotStore();
-  // This state is used for decoupling global currentChnotMetaId and chnotEditorId.
-  // From user's opinion, I want to edit when I enter this page, there should not any other steps,
-  // like to click or something.
-  // Then if we create new records in the db, which could make many dirty data.
-  // Consider this:
-  //   1. Insert into db and cache.
-  //   2. Highlight then editing chnot item in the list.
-  //   3. Do not disturb user's workflow
-  // So to use a mid-state to decouple them.
-  const [chnotEditorId, setChnotEditorId] = useState<TID>(genTID());
+  const { curMetaId, getCurrentChnot, setCurrentChnotMetaId, appendChnot } =
+    useChnotStore(
+      useShallow((store) => {
+        return {
+          curMetaId: store.curMetaId,
+          getCurrentChnot: store.getCurrentChnot,
+          setCurrentChnotMetaId: store.setCurrentChnotMetaId,
+          appendChnot: store.appendChnot,
+        };
+      })
+    );
 
-  // Extract from ChnotMarkdownEditor.
-  const [editorChnot, setEditorChnot] = useState<Chnot | undefined>(
-    getCurrentChnot()
-  );
+  const [comKey, setComKey] = useState<string>(genUID());
+  const metaTidRef = useRef<TID>(null);
+  const [editorChnot, setEditorChnot] = useState<Chnot | undefined>();
 
   useEffect(() => {
-    if (curMetaId !== editorChnot?.meta.tid) {
-      setChnotEditorId(curMetaId ?? genTID());
+    if (curMetaId !== metaTidRef.current) {
+      setComKey(genUID());
       setEditorChnot(getCurrentChnot());
     }
-  }, [curMetaId, setChnotEditorId, editorChnot, getCurrentChnot]);
+  }, [curMetaId, editorChnot]);
 
   const updateEditorChnot = useCallback(
     async (chnot: Chnot) => {
-      setEditorChnot(chnot);
+      metaTidRef.current = chnot.meta.tid;
       if (curMetaId !== chnot.meta.tid) {
         setCurrentChnotMetaId(chnot.meta.tid);
       }
+      appendChnot(chnot);
     },
-    [setCurrentChnotMetaId, setEditorChnot]
+    [curMetaId]
   );
 
   const viewModeRef = useRef(false);
 
   return (
-    <ChnotContainer
-      key={chnotEditorId}
-      chnot={editorChnot}
-      className="w-full h-full"
-      onClickNewButton={() => {
-        setChnotEditorId(genTID());
-        setCurrentChnotMetaId(undefined);
+    <ChnotEditorProvider
+      key={comKey}
+      props={{
+        kind: editorChnot?.meta.kind ?? ChnotKind.MarkdownWithToent,
+        metaTid: editorChnot?.meta.tid,
+        kspace: editorChnot?.meta.kspace ?? "public",
+        readonly: false,
+        topleft: <SidebarTrigger />,
+        onClickNewButton: () => {
+          setComKey(genUID());
+          metaTidRef.current = null;
+          setCurrentChnotMetaId(undefined);
+        },
+        onSetReadonly: (readonly: boolean) => {
+          viewModeRef.current = readonly;
+        },
+        onChnotChange: (chnot) => {
+          updateEditorChnot(chnot);
+        },
       }}
-      globalViewMode={viewModeRef}
-      onChnotChange={updateEditorChnot}
-      lefttop={<SidebarTrigger />}
-    />
+    >
+      <ChnotEditor className="w-full h-full" />
+    </ChnotEditorProvider>
   );
 };
 

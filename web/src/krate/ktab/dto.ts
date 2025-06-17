@@ -1,3 +1,4 @@
+import { OmitTID, TID } from "@/lib/id_util";
 import { KTabColumnStoreKind, KTabMeta } from "./po";
 
 export type KTabOverwriteCellsRsp = object;
@@ -6,15 +7,15 @@ export type KTabOverwriteMetaReq = {
   meta: KTabMeta;
 };
 
-export type KTabMetaOverwriteRsp = object;
+export type KTabMetaOverwriteRsp = object;                    
 
 export type KTabMetaQueryReq = {
-  table_id: number;
-};
+  table_id: TID;
+};                     
 
 export type KTabMetaQueryRsp = {
   meta?: KTabMeta;
-};
+};                     
 
 export type KTabViewTypeName = "string" | "date" | "demical";
 
@@ -61,11 +62,11 @@ export type KTabStoreCell = {
 };
 
 export type KTabCellsOverwriteReq = {
-  table_id: number;
-  cells: KTabStoreCell[];
-};
+  table_id: TID;
+  cells: KTabViewCell[];
+};                     
 
-export type KtabRowsQueryReqFilter =
+export type KTabRowsQueryReqFilter =
   | {
       OneRowByIdx: {
         row_idx: number;
@@ -87,11 +88,36 @@ export type KtabRowsQueryReqFilter =
     };
 
 export type KTabRowsQueryReq = {
-  table_id: number;
-  fields: string[];
-  filter: KtabRowsQueryReqFilter;
-};
+  table_id: TID;
+  filter: KTabRowsQueryReqFilter;
+};                     
 
 export type KTabRowsQueryRsp = {
-  rows: { row_idx: number; cells: KTabStoreCell[] }[];
-};
+  rows: KTabRowsQueryRspRow[];
+};                     
+
+export type KTabMetaOverwriteReq = {
+  meta: KTabMeta;
+};                     
+
+export type KTabCellsOverwriteRsp = object;                    
+
+export type KTabRowsQueryRspRow = {
+  row_idx: TID;
+  cells: KTabViewCell[];
+};                     
+
+export type KTabViewCell = {
+  row_idx: TID;
+  column_name: string;
+  value: KTabStoreValue;
+};                     
+
+export type KTabCell = {
+  tid: TID;
+  table_id: TID;
+  col_idx: TID;
+  row_idx: TID;
+  omit_tid?: OmitTID;
+  cell_data: KTabStoreValue;
+};                    

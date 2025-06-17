@@ -5,13 +5,13 @@ import {
   useLLMResponse,
 } from "@/hooks/use-llm-response";
 import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/po";
-import { LLMChatContainerSession } from "@/krate/llmchat/dto";
+import { LLMChatSessionDetail } from "@/krate/llmchat/dto";
 import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
-import { genTID } from "@/lib/id_util";
+import { genTID, omit_tid_never } from "@/lib/id_util";
 
 export const RecordAnswering = ({
   containerSession,
@@ -22,7 +22,7 @@ export const RecordAnswering = ({
   onEnd,
   onSetResponsing,
 }: {
-  containerSession: LLMChatContainerSession;
+  containerSession: LLMChatSessionDetail;
   bot: LLMChatBot;
   triggerAnswer: boolean;
   onScrollToEnd?: () => void;

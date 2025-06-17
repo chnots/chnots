@@ -1,4 +1,4 @@
-use chin_sql::{DbType, GenerateTableSchema};
+use chin_sql::time_type::TID;
 /// Toent: todo and event
 ///
 /// The file mainly contains models related to todos and events.
@@ -21,21 +21,13 @@ pub(crate) enum ToentType {
     Event,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct Toent {
-    #[gts_primary]
-    #[gts_length = 40]
     tid: TID,
-    #[gts_length = 40]
     chnot_id: TID,
     active_flag: bool,
-    #[gts_length = 500]
     original_str: String,
-    #[gts_length = 500]
-    #[gts_type = "String"]
     date_type: ToentDateType,
-    #[gts_length = 500]
-    #[gts_type = "String"]
     toent_type: ToentType,
     toent_time: DateTime<FixedOffset>,
     start_time: DateTime<FixedOffset>,
@@ -44,12 +36,9 @@ pub(crate) struct Toent {
     update_time: DateTime<FixedOffset>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ToentInst {
-    #[gts_primary]
-    #[gts_length = 40]
     tid: TID,
-    #[gts_length = 40]
     toent_id: TID,
     active_flag: bool,
     alert_time: DateTime<FixedOffset>,

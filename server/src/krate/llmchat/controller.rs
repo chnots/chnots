@@ -7,7 +7,7 @@ use axum::{
 
 use super::{mapper::LLMChatMapper, *};
 
-use crate::{app::ShareAppState, model::dto::kreq, controller::KResponse};
+use crate::{app::ShareAppState, controller::KResponse, model::dto::kreq};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()

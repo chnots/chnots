@@ -1,8 +1,6 @@
 use serde::Deserialize;
 
-use crate::{
-    mapper::{dump::filedump::FileBackupConfig, MapperConfig},
-};
+use crate::mapper::{dump::filedump::FileBackupConfig, MapperConfig};
 
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct ServerConfig {

@@ -26,8 +26,8 @@ pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body
         .get("K-mkspaces")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("")
-        .split(",")       
-        .map(|e| e.trim().to_owned()) 
+        .split(",")
+        .map(|e| e.trim().to_owned())
         .collect();
 
     KReq {

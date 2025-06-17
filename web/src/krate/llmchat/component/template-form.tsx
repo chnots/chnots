@@ -1,19 +1,21 @@
 import KSVG from "@/common/component/svg";
 import { Button } from "@/common/component/ui/button";
+import { DialogClose, DialogFooter } from "@/common/component/ui/dialog";
 import { Input } from "@/common/component/ui/input";
+import { Label } from "@/common/component/ui/label";
 import { Textarea } from "@/common/component/ui/textarea";
 import { LLMChatTemplate } from "@/krate/llmchat/po";
-import { genTID } from "@/lib/id_util";
+import { genTID, omit_tid_never } from "@/lib/id_util";
+import { detectSVG } from "@/lib/svg-utils";
 import React, { useState } from "react";
+import { useLLMChatStore } from "../store";
 
 const TemplateForm = ({
   template,
   onSubmit,
-  onClose,
 }: {
   template?: LLMChatTemplate;
   onSubmit: (data: LLMChatTemplate) => Promise<boolean>;
-  onClose: () => void;
 }) => {
   const [formData, setFormData] = useState<{
     name?: string;
@@ -24,6 +26,7 @@ const TemplateForm = ({
     prompt: template?.prompt,
     svg_logo: template?.svg_logo,
   });
+  const { refreshTemplates } = useLLMChatStore();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -42,21 +45,24 @@ const TemplateForm = ({
       tid: template ? template.tid : genTID(),
       name: formData.name!,
       prompt: formData.prompt!,
-      svg_logo: formData.svg_logo,
+      svg_logo:
+        formData.svg_logo && detectSVG(formData.svg_logo)
+          ? formData.svg_logo
+          : "",
     };
 
     const submiResult = await onSubmit(toInsert);
     if (submiResult) {
-      onClose();
+      refreshTemplates();
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <label htmlFor="name" className="block text-gray-700 font-bold mb-2">
+        <Label htmlFor="name" className="block mb-2">
           Name
-        </label>
+        </Label>
         <Input
           type="text"
           id="name"
@@ -70,12 +76,9 @@ const TemplateForm = ({
         />
       </div>
       <div className="mb-4">
-        <label
-          htmlFor="svg_logo"
-          className="block text-gray-700 font-bold mb-2"
-        >
+        <Label htmlFor="svg_logo" className="block mb-2">
           Svg Logo Data
-        </label>
+        </Label>
         <div className="flex flex-row space-x-2 items-center">
           <div className="border rounded-md">
             <KSVG inner={formData.svg_logo ?? ""} />
@@ -91,9 +94,9 @@ const TemplateForm = ({
         </div>
       </div>
       <div className="mb-4">
-        <label htmlFor="prompt" className="block text-gray-700 font-bold mb-2">
+        <Label htmlFor="prompt" className="block mb-2">
           Prompt
-        </label>
+        </Label>
         <Textarea
           id="prompt"
           name="prompt"
@@ -103,14 +106,14 @@ const TemplateForm = ({
           aria-label="Template Prompt"
         />
       </div>
-      <div className="flex flex-row justify-center space-x-4">
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Cancel</Button>
+        </DialogClose>
         <Button type="submit" aria-label="Submit Template">
           Submit
         </Button>
-        <Button aria-label="Close" onClick={onClose}>
-          Close
-        </Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 };

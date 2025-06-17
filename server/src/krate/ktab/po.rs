@@ -1,9 +1,9 @@
+use super::decimal::Decimal;
 use chin_sql::ChinSqlCrud;
 use std::collections::HashMap;
-use super::decimal::Decimal;
 
-use chin_sql::GenerateTableSchema;
 use chin_sql::time_type::TID;
+use chin_sql::GenerateTableSchema;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
@@ -18,13 +18,14 @@ pub(crate) enum KTabColumnStoreKind {
     // Blob,
 }
 
+pub(crate) type KTabColumnViewKind = String;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct KTabColumnMeta {
     pub(crate) idx: TID,
     pub(crate) name: String,
     pub(crate) comment: String,
     pub(crate) store_kind: KTabColumnStoreKind,
-    pub(crate) view_kind: String,
+    pub(crate) view_kind: KTabColumnViewKind,
     pub(crate) required: bool,
     pub(crate) order_by: i32,
 }
@@ -37,7 +38,6 @@ pub(crate) struct KTabMeta {
 
     #[gts_primary]
     #[gts_type = "i64"]
-    #[serde(default = "OmitTID::never")]
     pub(crate) omit_tid: OmitTID,
 
     #[gts_type = "String"]
@@ -45,7 +45,6 @@ pub(crate) struct KTabMeta {
     pub(crate) table_name: String,
     pub(crate) table_comment: String,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
-    pub(crate) kspace: String,
     pub(crate) real_table: bool,
 }
 
@@ -54,9 +53,9 @@ macro_rules! type_table {
         #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
         pub(crate) struct $sname {
             #[gts_primary]
-            #[gts_type = "i64"]            
+            #[gts_type = "i64"]
             pub(crate) tid: TID,
-            
+
             #[gts_primary]
             #[gts_type = "i64"]
             pub(crate) omit_tid: OmitTID,

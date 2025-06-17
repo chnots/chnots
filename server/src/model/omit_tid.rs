@@ -1,20 +1,20 @@
 use std::ops::Deref;
 
-use chin_sql::{time_type::TID, SqlValue, SqlValueOwned, SqlValueRow};
+use chin_sql::{time_type::TID, ChinSqlError, SqlUpdater, SqlValue};
 use serde::{Deserialize, Serialize, Serializer};
 
-use crate::mapper::db::KDbRowBehavier;
+use postgres_types::{accepts, FromSql, Type};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct OmitTID(TID);
 
 impl OmitTID {
     pub fn omitted(&self) -> bool {
-        self.0.is_very_very_big()
+        !self.0.is_never()
     }
 
     pub fn never() -> Self {
-        Self(TID::very_very_big())
+        Self(TID::never())
     }
 
     pub fn now() -> Self {
@@ -48,12 +48,20 @@ impl<'a> Deserialize<'a> for OmitTID {
     where
         D: serde::Deserializer<'a>,
     {
-        Option::<TID>::deserialize(deserializer).map(|e| {
-            match e {
-                Some(e) => OmitTID(e),
-                None => OmitTID::never(),
-            }
+        Option::<TID>::deserialize(deserializer).map(|e| match e {
+            Some(e) => OmitTID(e),
+            None => OmitTID::never(),
         })
+    }
+}
+
+pub trait OmitNow {
+    fn omit_now(self, key: &'static str) -> Self;
+}
+
+impl OmitNow for SqlUpdater<'_> {
+    fn omit_now(self, key: &'static str) -> Self {
+        self.set(key, OmitTID::now())
     }
 }
 
@@ -63,27 +71,22 @@ impl From<OmitTID> for SqlValue<'_> {
     }
 }
 
-pub mod pg {
-    use chin_sql::time_type::TID;
-    use postgres_types::{accepts, FromSql, Type};
+impl<'a> TryFrom<SqlValue<'a>> for OmitTID {
+    type Error = ChinSqlError;
 
-    use crate::model::omit_tid::OmitTID;
-
-    impl<'a> FromSql<'a> for OmitTID {
-        fn from_sql(
-            ty: &Type,
-            raw: &'a [u8],
-        ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-            TID::from_sql(ty, raw).map(OmitTID)
-        }
-
-        accepts! {INT2, INT4, INT8}
+    fn try_from(value: SqlValue<'a>) -> Result<Self, Self::Error> {
+        let v: i64 = value.try_into()?;
+        Ok(Self(v.into()))
     }
 }
 
-impl KDbRowBehavier<OmitTID> for SqlValueRow<SqlValueOwned> {
-    fn try_get(&self, key: &str) -> chin_tools::AResult<OmitTID> {
-        let tid: i64 = self.try_get(key)?;
-        Ok(OmitTID(TID::from(tid)))
+impl<'a> FromSql<'a> for OmitTID {
+    fn from_sql(
+        ty: &Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        TID::from_sql(ty, raw).map(OmitTID)
     }
+
+    accepts! {INT8}
 }

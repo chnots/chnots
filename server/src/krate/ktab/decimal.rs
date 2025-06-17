@@ -1,15 +1,14 @@
 use std::convert::TryFrom;
 
 use anyhow::anyhow;
-use chin_sql::{SqlValue, SqlValueOwned, SqlValueRow};
-use chin_tools::AResult;
+use chin_sql::SqlValue;
 use postgres_types::FromSql;
 use serde::{
     de::{self},
     Deserialize, Serialize,
 };
 
-use crate::{common_try_get, mapper::db::{KDbRow, KDbRowBehavier}};
+use crate::mapper::db::{KDbRow, KDbRowBehavier};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Decimal(String);
@@ -62,23 +61,6 @@ impl<'de> Deserialize<'de> for Decimal {
     }
 }
 
-impl KDbRowBehavier<Decimal> for SqlValueRow<SqlValueOwned> {
-    fn try_get(&self, key: &str) -> AResult<Decimal> {
-        let s: String = self.try_get(key)?;
-        Decimal::try_from(s)
-    }
-}
-
-impl KDbRowBehavier<Option<Decimal>> for SqlValueRow<SqlValueOwned> {
-    fn try_get(&self, key: &str) -> AResult<Option<Decimal>> {
-        let s: Option<String> = self.try_get(key)?;
-        match s {
-            Some(s) => Ok(Some(Decimal::try_from(s)?)),
-            None => Ok(None),
-        }
-    }
-}
-
 impl From<i64> for Decimal {
     fn from(value: i64) -> Self {
         Self(value.to_string())
@@ -86,7 +68,10 @@ impl From<i64> for Decimal {
 }
 
 impl<'a> FromSql<'a> for Decimal {
-    fn from_sql(ty: &postgres_types::Type, raw: &'a [u8]) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
         let s: String = String::from_sql(ty, raw)?;
         Ok(Decimal::try_from(s)?)
     }
@@ -96,18 +81,22 @@ impl<'a> FromSql<'a> for Decimal {
     }
 }
 
-common_try_get! {Decimal}
-
-
 impl From<Decimal> for SqlValue<'_> {
     fn from(value: Decimal) -> Self {
         SqlValue::Str(value.0.into())
     }
 }
 
-
 impl<'a> From<&'a Decimal> for SqlValue<'a> {
     fn from(value: &'a Decimal) -> Self {
         SqlValue::Str(value.0.as_str().into())
+    }
+}
+
+impl<'a> KDbRowBehavier<'a, Decimal> for KDbRow {
+    fn try_get(&'a self, key: &str) -> chin_tools::AResult<Decimal> {
+        let s: String = self.try_get(key)?;
+
+        Ok(Decimal(s))
     }
 }

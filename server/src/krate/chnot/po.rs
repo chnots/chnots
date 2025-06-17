@@ -1,7 +1,7 @@
+use chin_sql::time_type::TID;
 use chin_sql::ChinSqlCrud;
 use chin_sql::GenerateTableSchema;
 use chin_sql::SqlValue;
-use chin_sql::time_type::TID;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -12,8 +12,11 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 use strum::Display;
+use strum::IntoStaticStr;
 use strum_macros::EnumString;
 
+use crate::mapper::db::KDbRow;
+use crate::mapper::db::KDbRowBehavier;
 use crate::model::omit_tid::OmitTID;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
@@ -37,7 +40,8 @@ pub(crate) struct ChnotMetadata {
     #[gts_length = 40]
     pub(crate) kspace: String,
     #[gts_length = 40]
-    pub(crate) kind: String,
+    #[gts_type = "String"]
+    pub(crate) kind: ChnotKind,
     pub(crate) pin_time: Option<DateTime<FixedOffset>>,
     #[gts_primary]
     #[gts_type = "i64"]
@@ -65,7 +69,7 @@ pub(crate) struct ChnotTag {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
-pub(crate) struct ChnotKindId {
+pub(crate) struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) meta_tid: TID,
@@ -83,7 +87,7 @@ impl AsRef<str> for ChnotTag {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display, AsRefStr)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display, AsRefStr, IntoStaticStr)]
 pub(crate) enum ChnotKind {
     #[strum(serialize = "mdwt")]
     #[serde(rename = "mdwt")]
@@ -116,5 +120,19 @@ pub(crate) enum ChnotTagType {
 impl From<ChnotTagType> for SqlValue<'_> {
     fn from(value: ChnotTagType) -> Self {
         SqlValue::I32(value as i32)
+    }
+}
+
+impl From<ChnotKind> for SqlValue<'_> {
+    fn from(value: ChnotKind) -> Self {
+        SqlValue::Str(std::borrow::Cow::Borrowed(value.into()))
+    }
+}
+
+impl<'a> KDbRowBehavier<'a, ChnotKind> for KDbRow {
+    fn try_get(&'a self, key: &str) -> chin_tools::AResult<ChnotKind> {
+        let s: String = self.try_get(key)?;
+
+        Ok(ChnotKind::try_from(s.as_str())?)
     }
 }

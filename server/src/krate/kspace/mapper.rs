@@ -23,7 +23,7 @@ pub(crate) trait KSpaceMapper {
         let kreq = KReq {
             body: KSpaceQueryAllReq {},
             kspace: NO_KSPACE.to_owned(),
-            mkspaces: vec![]
+            mkspaces: vec![],
         };
         let all_kspaces = self.kspace_read_all(kreq.clone()).await?.kspaces;
         for data in [
@@ -38,7 +38,8 @@ pub(crate) trait KSpaceMapper {
                         color: data.1.to_owned(),
                         managers: data.2.iter().map(|s| s.to_string()).collect(),
                     },
-                })).await?;
+                }))
+                .await?;
             }
         }
 

@@ -41,4 +41,4 @@ export type DbCache<T> = {
   dbPageSize: number;
   hasNextPage: boolean;
   dbCache: Map<TID, T>;
-}
+};

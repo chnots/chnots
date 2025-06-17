@@ -1,16 +1,11 @@
 use super::dto::*;
 use super::mapper::*;
 use crate::app::ShareAppState;
-use crate::model::dto::kreq;
 use crate::controller::KResponse;
+use crate::model::dto::kreq;
 use axum::extract::Query;
 use axum::routing::get;
-use axum::{
-    extract::State,
-    http::HeaderMap,
-    routing::put,
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::put, Json, Router};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
@@ -23,7 +18,11 @@ async fn kspace_overwrite(
     state: State<ShareAppState>,
     Json(req): Json<KSpaceOverwriteReq>,
 ) -> KResponse<KSpaceOverwriteRsp> {
-    state.mapper.kspace_overwrite(kreq(headers, req)).await.into()
+    state
+        .mapper
+        .kspace_overwrite(kreq(headers, req))
+        .await
+        .into()
 }
 
 async fn kspace_read_all(
@@ -31,5 +30,9 @@ async fn kspace_read_all(
     state: State<ShareAppState>,
     Query(req): Query<KSpaceQueryAllReq>,
 ) -> KResponse<KSpaceQueryAllRsp> {
-    state.mapper.kspace_read_all(kreq(headers, req)).await.into()
+    state
+        .mapper
+        .kspace_read_all(kreq(headers, req))
+        .await
+        .into()
 }

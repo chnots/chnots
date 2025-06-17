@@ -1,17 +1,17 @@
 import {
   getResouceDownloadUrl,
-  queryKKV,
   kfileQueryInfo,
   kfileUpload,
 } from "@/krate/kfile/service";
-import { genUId, genTID, TID } from "@/lib/id_util";
+import { genUID, genTID, TID } from "@/lib/id_util";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button as KButton } from "@/common/component/ui/button";
 import RelativeTime from "@/common/component/relative-time";
 import { humanFileSize } from "@/lib/unit-utils";
 import FileNameToIcon from "./filename-to-icon";
-import { KFile } from "../po";
+import { queryKKV } from "@/krate/kkv/service";
+import { KFileMeta } from "../po";
 
 type FileLike = {
   name: string;
@@ -69,30 +69,24 @@ const KFileIcon = ({ file }: { file?: FileLike }) => {
 
 // inspired by https://github.com/AarambhDevHub/frontend-file-Chunks/blob/main/app/page.tsx
 export const CommonKFile = ({
-  chnotMetaId,
-  onSave,
+  kindId,
+  onAfterSave,
 }: {
-  chnotMetaId?: TID;
-  onSave?: (r: KFile) => void;
+  kindId?: string;
+  onAfterSave?: (r: KFileMeta) => void;
 }) => {
   const [progress, setProgress] = useState(0);
   const [uploadFile, setUploadFile] = useState<File | undefined>(undefined);
-  const [kfile, setKFile] = useState<KFile | undefined>(undefined);
+  const [kfile, setKFile] = useState<KFileMeta | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    if (chnotMetaId) {
-      queryKKV({ key: chnotMetaId.toString(), kind: "chnot_sub_type" }).then(
-        ({ value }) => {
-          if (value) {
-            kfileQueryInfo(value).then(({ res }) => {
-              setKFile(res);
-            });
-          }
-        }
-      );
+    if (kindId) {
+      kfileQueryInfo(kindId.toString()).then(({ res }) => {
+        setKFile(res);
+      });
     }
-  }, [chnotMetaId, setKFile]);
+  }, [kindId]);
 
   const uploadFileInChunks = async () => {
     if (!uploadFile) {
@@ -103,7 +97,7 @@ export const CommonKFile = ({
     const chunkSize = 1 * 1024 * 1024; // 1 MB
     const totalChunks = Math.ceil(uploadFile.size / chunkSize);
     let currentChunk = Number(localStorage.getItem(uploadFile.name)) || 0;
-    const res_id = genTID();
+    const uploadId = genUID();
 
     setProgress(0);
 
@@ -114,19 +108,20 @@ export const CommonKFile = ({
 
       try {
         const { kfile } = await kfileUpload({
+          upload_id: uploadId,
           chunk,
           filename: uploadFile.name,
           chunk_no: currentChunk,
           total_chunks: totalChunks,
-          res_id,
-          filetype: uploadFile.type,
+          meta_id: uploadId,
+          content_type: uploadFile.type,
           filesize: uploadFile.size,
           last_modified: uploadFile.lastModified,
         });
 
         if (kfile) {
-          if (onSave) {
-            onSave(kfile);
+          if (onAfterSave) {
+            onAfterSave(kfile);
           }
           setKFile(kfile);
           setUploadFile(undefined);
@@ -194,9 +189,9 @@ export const CommonKFile = ({
             >
               <KFileIcon
                 file={{
-                  name: kfile.ori_filename,
+                  name: kfile.filename,
                   size: kfile.filesize,
-                  modified: new Date(kfile.ori_last_modified),
+                  modified: new Date(kfile.last_modified),
                 }}
               />
             </div>

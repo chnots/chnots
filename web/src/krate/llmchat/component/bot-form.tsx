@@ -2,8 +2,10 @@ import { Button as KButton } from "@/common/component/ui/button";
 import KSVG from "@/common/component/svg";
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/po";
 import React, { RefObject, useEffect, useRef, useState } from "react";
-import { v4 } from "uuid";
 import { genTID, TID } from "@/lib/id_util";
+import { Textarea } from "@/common/component/ui/textarea";
+import { Input } from "@/common/component/ui/input";
+import { detectSVG } from "@/lib/svg-utils";
 
 const LLMChatBotBodyOpenAIV1Body = ({
   bodyRef,
@@ -38,10 +40,10 @@ const LLMChatBotBodyOpenAIV1Body = ({
   return (
     <div className="w-full">
       <div className="mb-4">
-        <label htmlFor="url" className="block text-gray-700 font-bold mb-2">
+        <label htmlFor="url" className="block mb-2">
           Url
         </label>
-        <input
+        <Input
           type="text"
           id="url"
           name="url"
@@ -54,10 +56,10 @@ const LLMChatBotBodyOpenAIV1Body = ({
         />
       </div>
       <div className="mb-4">
-        <label htmlFor="token" className="block text-gray-700 font-bold mb-2">
+        <label htmlFor="token" className="block mb-2">
           Token
         </label>
-        <input
+        <Input
           id="token"
           name="token"
           value={formData.token ?? ""}
@@ -67,13 +69,10 @@ const LLMChatBotBodyOpenAIV1Body = ({
         />
       </div>
       <div className="mb-4">
-        <label
-          htmlFor="model_name"
-          className="block text-gray-700 font-bold mb-2"
-        >
+        <label htmlFor="model_name" className="block mb-2">
           Model Name
         </label>
-        <input
+        <Input
           id="model_name"
           name="model_name"
           value={formData.model_name ?? ""}
@@ -139,7 +138,10 @@ const BotForm = ({
       const toInsert: LLMChatBot = {
         tid: botId,
         name: formData.name,
-        svg_logo: formData.svg_logo,
+        svg_logo:
+          formData.svg_logo && detectSVG(formData.svg_logo)
+            ? formData.svg_logo
+            : "",
         body: JSON.stringify(body),
       };
 
@@ -155,13 +157,10 @@ const BotForm = ({
       <div className="bg-white rounded-lg shadow-lg p-6 w-150 relative">
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label
-              htmlFor="name"
-              className="block text-gray-700 font-bold mb-2"
-            >
+            <label htmlFor="name" className="block mb-2">
               Name
             </label>
-            <input
+            <Input
               type="text"
               id="name"
               name="name"
@@ -174,15 +173,12 @@ const BotForm = ({
             />
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="svg_logo"
-              className="block text-gray-700 font-bold mb-2"
-            >
+            <label htmlFor="svg_logo" className="block mb-2">
               Svg Logo
             </label>
             <div className="flex flex-row space-x-2 items-center">
               {formData.svg_logo && <KSVG inner={formData.svg_logo} />}
-              <textarea
+              <Textarea
                 id="svg_logo"
                 name="svg_logo"
                 value={formData.svg_logo ?? ""}

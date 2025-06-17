@@ -600,7 +600,6 @@ dependencies = [
 name = "chin-tools"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "bytes",
  "chin-tools-types",
  "chrono",

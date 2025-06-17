@@ -1,11 +1,12 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use anyhow::Ok;
 use chin_sql::{
-    time_type::TID, DbType, IntoSqlSeg, OnConflict, SqlBuilder, SqlInserter, SqlUpdater, SqlValueOwned, SqlValueRow, Wheres
+    time_type::TID, DbType, IntoSqlSeg, OnConflict, SqlBuilder, SqlInserter, SqlUpdater, SqlValue,
+    SqlValueRow, Wheres,
 };
-use chin_tools::{ AResult, EResult};
-use chrono::{DateTime, FixedOffset};
+use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
+use postgres_types::FromSql;
+use tokio_postgres::Row;
 
 use crate::{mapper::mappertype::InserterBehavier, model::omit_tid::OmitTID};
 
@@ -62,28 +63,50 @@ pub(crate) trait KDbTransactionBehaiver: KDbExecutorBehaiver {
     async fn rbk(self) -> EResult;
 }
 
-impl KDbTransactionBehaiver for KDbTx<'_> {
-    async fn cmt(self) -> EResult {
-        match self {
-            KDbTx::Sqlite(tx) => tx.commit().await?,
-            KDbTx::Postgres(tx) => tx.commit().await?,
-        }
+pub(crate) trait KDbRowBehavier<'a, T> {
+    fn try_get(&'a self, key: &str) -> AResult<T>;
+}
 
-        Ok(())
-    }
+pub(crate) enum KDbRow {
+    Postgres(tokio_postgres::Row),
+    SqlValue(SqlValueRow),
+}
 
-    async fn rbk(self) -> EResult {
-        match self {
-            KDbTx::Sqlite(tx) => tx.rollback().await?,
-            KDbTx::Postgres(tx) => tx.rollback().await?,
-        }
-
-        Ok(())
+impl<'a, T> KDbRowBehavier<'a, T> for Row
+where
+    T: FromSql<'a>,
+{
+    fn try_get(&'a self, key: &str) -> AResult<T> {
+        Ok(self.try_get(key)?)
     }
 }
 
-pub(crate) trait KDbRowBehavier<T> {
-    fn try_get(&self, key: &str) -> AResult<T>;
+impl<'a, E, T> KDbRowBehavier<'a, T> for SqlValueRow
+where
+    T: TryFrom<SqlValue<'a>, Error = E>,
+    E: std::error::Error + Send + Sync + 'static,
+{
+    fn try_get(&'a self, key: &str) -> AResult<T> {
+        let sv = self.row.get(key);
+        if let Some(sv) = sv {
+            Ok(sv.clone().try_into()?)
+        } else {
+            anyhow::bail!("unable to read for key {}", key)
+        }
+    }
+}
+
+impl<'a, T, E> KDbRowBehavier<'a, T> for KDbRow
+where
+    T: TryFrom<SqlValue<'a>, Error = E> + FromSql<'a>,
+    E: std::error::Error + Send + Sync + 'static,
+{
+    fn try_get(&'a self, key: &str) -> AResult<T> {
+        match self {
+            KDbRow::Postgres(row) => Ok(row.try_get(key)?),
+            KDbRow::SqlValue(row) => row.try_get(key),
+        }
+    }
 }
 
 pub(crate) enum KDb {
@@ -214,6 +237,26 @@ macro_rules! expand_kdbtx_branch {
     };
 }
 
+impl KDbTransactionBehaiver for KDbTx<'_> {
+    async fn cmt(self) -> EResult {
+        match self {
+            KDbTx::Sqlite(tx) => tx.commit().await?,
+            KDbTx::Postgres(tx) => tx.commit().await?,
+        }
+
+        Ok(())
+    }
+
+    async fn rbk(self) -> EResult {
+        match self {
+            KDbTx::Sqlite(tx) => tx.rollback().await?,
+            KDbTx::Postgres(tx) => tx.rollback().await?,
+        }
+
+        Ok(())
+    }
+}
+
 impl KDbExecutorBehaiver for KDbTx<'_> {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
         expand_kdbtx_branch!(self.exec(ssb))
@@ -260,51 +303,6 @@ impl KDbExecutorBehaiver for KDbTx<'_> {
         match self {
             Self::Sqlite(_) => DbType::Sqlite,
             Self::Postgres(_) => DbType::Postgres,
-        }
-    }
-}
-
-pub(crate) enum KDbRow {
-    Postgres(tokio_postgres::Row),
-    SqlValueRow(SqlValueRow<SqlValueOwned>),
-}
-
-#[macro_export]
-macro_rules! common_try_get {
-    ($tp:ty) => {
-        impl KDbRowBehavier<$tp> for KDbRow {
-            fn try_get(&self, key: &str) -> AResult<$tp> {
-                match self {
-                    KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-                    KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
-                }
-            }
-        }
-
-        impl KDbRowBehavier<Option<$tp>> for KDbRow {
-            fn try_get(&self, key: &str) -> AResult<Option<$tp>> {
-                match self {
-                    KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-                    KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
-                }
-            }
-        }
-    };
-}
-
-common_try_get! {i64}
-common_try_get! {i32}
-common_try_get! {f64}
-common_try_get! {String}
-common_try_get! {bool}
-common_try_get! {DateTime<FixedOffset>}
-common_try_get! {TID}
-
-impl KDbRowBehavier<OmitTID> for KDbRow {
-    fn try_get(&self, key: &str) -> AResult<OmitTID> {
-        match self {
-            KDbRow::Postgres(row) => Ok(row.try_get(key)?),
-            KDbRow::SqlValueRow(row) => Ok(row.try_get(key)?),
         }
     }
 }
@@ -398,9 +396,10 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
 }
 
 pub fn omit_table_tid<'a>(table_name: &'static str, tid: TID) -> SqlUpdater<'a> {
-    SqlUpdater::new(table_name).set("omit_tid", OmitTID::now())
+    SqlUpdater::new(table_name)
+        .set("omit_tid", OmitTID::now())
         .r#where(Wheres::and([
             Wheres::equal("tid", tid),
-            Wheres::equal("omit_tid", OmitTID::never())
+            Wheres::equal("omit_tid", OmitTID::never()),
         ]))
 }

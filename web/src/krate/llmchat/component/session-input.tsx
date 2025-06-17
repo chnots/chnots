@@ -10,7 +10,7 @@ const LLMChatSessionInput = ({
 }: {
   disabled: boolean;
   onAppendRecord: (content: string) => boolean;
-  onNewButton: () => void;
+  onNewButton?: () => void;
 }) => {
   const [message, setMessage] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);

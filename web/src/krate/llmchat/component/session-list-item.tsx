@@ -54,7 +54,7 @@ const LLMChatSessionListItem = React.forwardRef(
             <span>{tmplName}</span>
 
             <div className="flex align-middle">
-              <RelativeTime date={new Date(session.tid)} />
+              <RelativeTime date={new Date(session.tid / 1e3)} />
               <KButton onClick={handleDelete}>
                 <Icon.X className="h-4 opacity-0 group-hover:opacity-100" />
               </KButton>

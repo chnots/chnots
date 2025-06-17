@@ -20,6 +20,8 @@ import {
 } from "@/common/component/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { KSpaceIcon } from "@/krate/kspace/component/kspace-select";
+import { ChnotKindIcon } from "./chnot-kind-icon";
+import { useShallow } from "zustand/react/shallow";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -60,7 +62,15 @@ const ChnotSidebarItem = React.forwardRef(
     ref: ForwardedRef<HTMLLIElement>
   ) => {
     const { setCurrentChnotMetaId, getCurrentChnot, validateChnotCache } =
-      useChnotStore();
+      useChnotStore(
+        useShallow((store) => {
+          return {
+            setCurrentChnotMetaId: store.setCurrentChnotMetaId,
+            getCurrentChnot: store.getCurrentChnot,
+            validateChnotCache: store.validateChnotCache,
+          };
+        })
+      );
 
     const onClick = (_: React.MouseEvent) => {
       setCurrentChnotMetaId(chnot.meta.tid);
@@ -80,7 +90,6 @@ const ChnotSidebarItem = React.forwardRef(
       await chnotUpdate({
         meta_tid: chnot.meta.tid,
         archive: true,
-        update_time: false,
       });
       validateChnotCache([chnot.meta.tid]);
     };
@@ -108,19 +117,10 @@ const ChnotSidebarItem = React.forwardRef(
                 : "text-muted-foreground"
             )}
           >
-            {chnot.meta.kind === ChnotKind.MarkdownWithToent ? (
-              <Icon.Text className="h-4 w-4" />
-            ) : chnot.meta.kind === ChnotKind.ExcalidrawV1 ? (
-              <Icon.Flower className="h-4 w-4" />
-            ) : chnot.meta.kind === ChnotKind.KFileV1 ? (
-              <Icon.File className="h-4 w-4" />
-            ) : chnot.meta.kind === ChnotKind.KTab ? (
-              <Icon.Table className="h-4 w-4" />
-            ) : chnot.meta.kind === ChnotKind.LLMChat ? (
-              <Icon.Bot className="h-4 w-4" />
-            ) : (
-              <Icon.TextCursor className="h-4 w-4" />
-            )}
+            <ChnotKindIcon
+              kind={chnot.meta.kind as ChnotKind}
+              className={"w-4 h-4"}
+            />
           </div>
 
           <div className="flex-1 min-w-0 space-y-0.5">
@@ -132,16 +132,16 @@ const ChnotSidebarItem = React.forwardRef(
                 />
               )}
               <time
-                dateTime={new Date(chnot.meta.tid).toISOString()}
+                dateTime={new Date(chnot.meta.tid / 1e3).toISOString()}
                 className="text-[0.7rem]"
               >
-                {chnotShortDate(new Date(chnot.meta.tid))}
+                {chnotShortDate(new Date(chnot.meta.tid / 1e3))}
               </time>
             </div>
 
             <h3
               className={cn(
-                "text-xs font-medium line-clamp-2 leading-tight",
+                "text-xs font-medium line-clamp-2 leading-tight break-all",
                 "text-foreground group-hover:text-sidebar-accent-foreground",
                 isSelected
                   ? "text-sidebar-accent-foreground"

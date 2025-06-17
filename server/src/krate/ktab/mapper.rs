@@ -15,15 +15,11 @@ pub(crate) trait KTabMapper {
         req: KReq<KTabCellsOverwriteReq>,
     ) -> AResult<KTabCellsOverwriteRsp>;
 
-    async fn ktab_query_table_meta(
-        &self,
-        req: KReq<KTabMetaQueryReq>,
-    ) -> AResult<KTabMetaQueryRsp>;
-    
-    async fn ktab_query_table_data(
-        &self,
-        req: KReq<KTabRowsQueryReq>,
-    ) -> AResult<KTabRowsQueryRsp>;
+    async fn ktab_query_table_meta(&self, req: KReq<KTabMetaQueryReq>)
+        -> AResult<KTabMetaQueryRsp>;
+
+    async fn ktab_query_table_data(&self, req: KReq<KTabRowsQueryReq>)
+        -> AResult<KTabRowsQueryRsp>;
 
     async fn ensure_ktab_tables(&self) -> EResult;
 }

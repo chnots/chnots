@@ -20,3 +20,9 @@ export async function fetchAndModifySvg(url: string) {
     return null; // Or throw the error, depending on your error handling strategy
   }
 }
+
+export const detectSVG = (s: string) => {
+  const regex =
+    /^\s*(?:<\?xml[^>]*>\s*)?(?:<!doctype svg[^>]*\s*(?:\[?(?:\s*<![^>]*>\s*)*\]?)*[^>]*>\s*)?(?:<svg[^>]*>[^]*<\/svg>|<svg[^/>]*\/\s*>)\s*$/i;
+  return regex.test(s);
+};

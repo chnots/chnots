@@ -1,13 +1,14 @@
 use crate::app::ShareAppState;
 use crate::controller::KResponse;
 use crate::model::dto::{kreq, read_kspace_from_header};
+use axum::extract::Query;
+use axum::routing::get;
 use axum::{
     extract::State,
     http::HeaderMap,
     routing::{delete, post, put},
     Json, Router,
 };
-use axum_macros::debug_handler;
 
 use super::mapper::ChnotMapper;
 use super::*;
@@ -21,6 +22,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
         .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
         .route("/api/v1/chnot-tag-refresh-all", post(chnot_tag_refresh_all))
+        .route("/api/v1/chnot-query-kind-rel", get(chnot_query_kind_rel))
 }
 
 async fn chnot_overwrite(
@@ -55,8 +57,20 @@ async fn chnot_query(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotQueryReq>,
-) -> KResponse<ChnotQueryRsp<Vec<Chnot>>> {
+) -> KResponse<ChnotQueryRsp<Chnot>> {
     state.mapper.chnot_query(kreq(headers, req)).await.into()
+}
+
+async fn chnot_query_kind_rel(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<ChnotKindRelQueryReq>,
+) -> KResponse<ChnotKindRelQueryRsp> {
+    state
+        .mapper
+        .chnot_query_kind_rel(kreq(headers, req))
+        .await
+        .into()
 }
 
 async fn chnot_tag_query(
@@ -83,7 +97,6 @@ async fn chnot_tag_names(
         .into()
 }
 
-#[debug_handler]
 async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state
         .mapper

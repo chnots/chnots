@@ -1,12 +1,12 @@
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, str::FromStr};
-use strum::{AsRefStr, EnumString};
+use std::borrow::Cow;
+use strum::{EnumString, IntoStaticStr};
 
 use chin_sql::{ChinSqlCrud, GenerateTableSchema, SqlValue};
 
-#[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, AsRefStr)]
+#[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
 pub(crate) enum KKVType {
     #[strum(serialize = "chnot_sub_type")]
     #[serde(rename = "chnot_sub_type")]
@@ -24,14 +24,16 @@ pub(crate) enum KKVType {
 
 impl<'a> From<KKVType> for SqlValue<'a> {
     fn from(val: KKVType) -> Self {
-        SqlValue::Str(Cow::Owned(val.as_ref().to_owned()))
+        let s: &'static str = val.into();
+        SqlValue::Str(Cow::Borrowed(s))
     }
 }
 
-impl KDbRowBehavier<KKVType> for KDbRow {
-    fn try_get(&self, key: &str) -> chin_tools::AResult<KKVType> {
+impl<'a> KDbRowBehavier<'a, KKVType> for KDbRow {
+    fn try_get(&'a self, key: &str) -> chin_tools::AResult<KKVType> {
         let s: String = self.try_get(key)?;
-        Ok(KKVType::from_str(&s)?)
+
+        Ok(KKVType::try_from(s.as_str())?)
     }
 }
 

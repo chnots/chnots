@@ -1,58 +1,55 @@
 import { TID } from "@/lib/id_util";
-import { InlineKFile, KFile } from "./po";
+import { InlineKFile, KFileMeta } from "./po";
 
 export type KFileUploadReq = {
-  res_id: TID;
+  upload_id: string;
+  meta_id: string;
   filename: string;
   chunk_no: number;
   total_chunks: number;
   chunk: Blob;
-  filetype: string;
   last_modified: number;
   filesize: number;
-};
+  content_type: string;
+};                      
 
 export type KFileUploadRsp = {
-  kfile?: KFile;
+  kfile?: KFileMeta;
   finished: boolean;
-};
+};           
 
 export type InsertInlineKFileReq = {
-  res: InlineKFile;
   meta_id: string;
+  res: InlineKFile;
   archor_intervals: number;
-  ignore_conflict?: boolean;
-};
+  filename?: string;
+  content_type: string;
+};                      
 
 export type InsertInlineKFileRsp = {
   true_sid: string;
-};
+};           
 
 export type QueryInlineKFileReq = {
-  tid?: TID;
-  kkv_key?: string;
-  with_del?: boolean;
-  content_type?: string;
-  name_like?: string;
-};
+  sid?: string;
+  meta_id?: string;
+  with_omit?: boolean;
+};                      
 
 export type QueryInlineKFileRsp = {
   res: InlineKFile[];
-};
+};           
 
-export type KKVInserterReq = {
-  key: string;
-  kind: string;
-  value: string;
-};
 
-export type KKVInserterRsp = object;
 
-export type KKVQueryReq = {
-  key: string;
-  kind: "to_file" | "chnot_sub_type";
-};
+export type QueryKFileReq = {
+  tid: TID;
+};                      
 
-export type KKVQueryRsp = {
-  value?: string;
-};
+export type QueryKFileRsp = {
+  res?: KFileMeta;
+};           
+
+export type QueryKFileMetaRsp = {
+  meta?: KFileMeta;
+};            

@@ -1,9 +1,11 @@
+import { OmitTID, TID } from "@/lib/id_util";
+
 export type KTabColumnStoreKind = "str" | "i64" | "f64" | "date" | "blob";
 
-export type KTabColumnViewKind =
-  | "string"
-  | "date"
-  | "decimal";
+export type KTabColumnViewKind = "string" | "date" | "decimal";
+
+// To use Decimal to avoid any lost.
+type Decimal = string;
 
 export const ktabViewToStoreKind = (
   kind: KTabColumnViewKind
@@ -29,26 +31,24 @@ export const ktabViewToStoreKind = (
 };
 
 export type KTabColumnMeta = {
-  idx: number;
+  idx: TID;
   name: string;
-  comment?: string;
+  comment: string;
   store_kind: KTabColumnStoreKind;
   view_kind: KTabColumnViewKind;
   required: boolean;
   order_by: number;
-};
+};                  
 
 export type KTabMeta = {
-  tid: number;
+  tid: TID;
+  omit_tid?: OmitTID;
   columns: Record<string, KTabColumnMeta>;
   table_name: string;
-  table_comment?: string;
-  create_time: Date;
+  table_comment: string;
   update_time?: Date;
-  omit_tid?: Date;
-  kspace: string;
   real_table: boolean;
-};
+};                  
 
 export type KTabCell = {
   table_id: number;
@@ -56,6 +56,33 @@ export type KTabCell = {
   row_idx: number;
   omit_tid?: Date;
   cell_data: KTabCellData;
-}
+};
 
 export type KTabCellData = { Date: Date } | { Text: string };
+
+export type KTabCellText = {
+  tid: TID;
+  omit_tid?: OmitTID;
+  table_id: TID;
+  col_idx: TID;
+  row_idx: TID;
+  cell_data: string;
+};                  
+
+export type KTabCellDecimal = {
+  tid: TID;
+  omit_tid?: OmitTID;
+  table_id: TID;
+  col_idx: TID;
+  row_idx: TID;
+  cell_data: Decimal;
+};                  
+
+export type KTabCellDate = {
+  tid: TID;
+  omit_tid?: OmitTID;
+  table_id: TID;
+  col_idx: TID;
+  row_idx: TID;
+  cell_data: Date;
+};                  

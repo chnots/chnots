@@ -36,7 +36,7 @@ const RecordFrame = ({
   onCopy?: () => void;
   onRegenerate?: () => void;
   logo?: React.ReactElement;
-  children: React.ReactElement;
+  children: React.ReactNode;
 }) => {
   const contentRef = useRef<string>("");
   const handleCopy = useCallback(() => {

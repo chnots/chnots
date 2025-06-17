@@ -1,6 +1,7 @@
 import request from "@/lib/request";
 import {
   ChnotDeletionReq,
+  ChnotKindRelQueryRsp,
   ChnotOverwriteReq,
   ChnotOverwriteRsp,
   ChnotQueryReq,
@@ -11,6 +12,7 @@ import {
   ToentGuessReq,
   ToentGuessRsp,
 } from "./dto";
+import { TID } from "@/lib/id_util";
 
 export const chnotQuery = async (
   req: ChnotQueryReq
@@ -49,3 +51,12 @@ export const toentGuess = async (
 ): Promise<ToentGuessRsp> => {
   return await request.post(`api/v1/toent-guess`, req);
 };
+
+export const chnotQueryKindRel = async (
+  chnotMetaTid: TID
+): Promise<ChnotKindRelQueryRsp> => {
+  return await request.get(`/api/v1/chnot-query-kind-rel`, {
+    meta_tid: chnotMetaTid,
+  });
+};
+

@@ -6,7 +6,7 @@ import {
   ChnotQueryRsp,
   ChnotOverwriteReq,
   ChnotOverwriteRsp,
-  ListViewType,
+  ChnotViewType,
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
 import { TID } from "@/lib/id_util";
@@ -52,7 +52,7 @@ interface State {
    * Current Query Input
    */
   query?: string;
-  listViewType: ListViewType;
+  listViewType: ChnotViewType;
   isFetchingNextPage: boolean;
 }
 
@@ -113,38 +113,17 @@ export const useChnotStore = create(
 
       await get().fetchMoreChnots();
     },
-    overwriteChnot: async (
-      req: ChnotOverwriteReq,
-      overwriteCache: boolean
-    ): Promise<Chnot> => {
-      return chnotOverwrite(req).then((value: ChnotOverwriteRsp) => {
-        const meta_tid = value.meta_tid;
-        const meta: ChnotMetadata = {
-          tid: meta_tid,
-          kspace: value.kspace,
-          kind: req.kind,
-        };
-        const rec: ChnotRecord = {
-          tid: value.rec_tid,
-          meta_tid: meta_tid,
-          content: req.content,
-          archor: value.archor,
-        };
-        const chnot = { meta: meta, record: rec };
-        if (overwriteCache) {
-          set((state) => {
-            const cmm = state.chnotMapByMetaId;
-            let cm = cmm.dbCache;
-            if (cm.has(chnot.meta.tid)) {
-              cm.set(chnot.meta.tid, chnot);
-            } else {
-              cm = insertMapAtIndex(0, chnot.meta.tid, chnot, cm);
-            }
-            cmm.dbCache = cm;
-            return { ...state, chnotMapByMetaId: cmm };
-          });
+    appendChnot: (chnot: Chnot) => {
+      set((state) => {
+        const cmm = state.chnotMapByMetaId;
+        let cm = cmm.dbCache;
+        if (cm.has(chnot.meta.tid)) {
+          cm.set(chnot.meta.tid, chnot);
+        } else {
+          cm = insertMapAtIndex(0, chnot.meta.tid, chnot, cm);
         }
-        return chnot;
+        cmm.dbCache = cm;
+        return { ...state, chnotMapByMetaId: cmm };
       });
     },
     setCurrentChnotMetaId: (chnotMetaId?: TID) => {
@@ -199,7 +178,7 @@ export const useChnotStore = create(
         };
       });
     },
-    setListViewType: (newType: ListViewType) => {
+    setListViewType: (newType: ChnotViewType) => {
       set((prev) => {
         return {
           ...prev,

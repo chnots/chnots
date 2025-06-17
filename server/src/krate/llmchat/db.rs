@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use anyhow::Ok;
-use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
 use chin_sql::time_type::TID;
+use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     omit_table_tid, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-    KDbTransactionBehaiver, ToSqlInserter,
+    KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
@@ -47,7 +47,6 @@ impl LLMChatDeserializeMapper for KDbRow {
             tid: self.try_get(LLMChatSession::TID)?,
             template_id: self.try_get(LLMChatSession::TEMPLATE_ID)?,
             title: self.try_get(LLMChatSession::TITLE)?,
-            kspace: self.try_get(LLMChatSession::KSPACE)?,
             omit_tid: self.try_get(LLMChatSession::OMIT_TID)?,
             update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
         };
@@ -180,8 +179,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatListSessionRsp> {
         let query = SqlBuilder::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
-                Wheres::is_null(LLMChatSession::OMIT_TID),
-                Wheres::equal(LLMChatSession::KSPACE, &req.kspace),
+                Wheres::equal(LLMChatSession::OMIT_TID, OmitTID::never()),
                 Wheres::if_some(req.session_id.as_ref(), |tid| {
                     Wheres::equal(LLMChatSession::TID, *tid)
                 }),
@@ -280,10 +278,7 @@ impl LLMChatMapper for KDb {
     }
 
     async fn ensure_table_llm_chat_bot(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(LLMChatBot::create_sql())
-            .await?;
+        self.conn().await?.exec(LLMChatBot::create_sql()).await?;
         Ok(())
     }
 
@@ -304,10 +299,7 @@ impl LLMChatMapper for KDb {
     }
 
     async fn ensure_table_llm_chat_record(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(LLMChatRecord::create_sql())
-            .await?;
+        self.conn().await?.exec(LLMChatRecord::create_sql()).await?;
         Ok(())
     }
 

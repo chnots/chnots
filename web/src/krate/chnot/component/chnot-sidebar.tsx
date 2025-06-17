@@ -20,9 +20,17 @@ import { Search } from "lucide-react";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
+import { useShallow } from "zustand/react/shallow";
 
 const TagPath = () => {
-  const { setListViewType, listViewType } = useChnotStore();
+  const { setListViewType, listViewType } = useChnotStore(
+    useShallow((store) => {
+      return {
+        setListViewType: store.setListViewType,
+        listViewType: store.listViewType,
+      };
+    })
+  );
   if (listViewType.kind !== "tagtree") {
     return <></>;
   }
@@ -65,19 +73,17 @@ const TagPath = () => {
       </Button>
       {parts.map((layer, index) => {
         return (
-          <>
-            <Button
-              className="p-1"
-              variant={"link"}
-              key={segments[index]}
-              onClick={() => {
-                setListViewType({ ...listViewType, tagpath: segments[index] });
-              }}
-            >
-              <span>{layer}</span>
-            </Button>
+          <Button
+            className="p-1"
+            variant={"link"}
+            key={segments[index]}
+            onClick={() => {
+              setListViewType({ ...listViewType, tagpath: segments[index] });
+            }}
+          >
+            <span>{layer}</span>
             <span>/</span>
-          </>
+          </Button>
         );
       })}
     </div>
@@ -98,7 +104,7 @@ const ChnotSidebar = () => {
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
 
-  const { currentKSpace, setKSpace: changeKSpace, mkspaces } = useKSpaceStore();
+  const { currentKSpace, setKSpace, mkspaces } = useKSpaceStore();
 
   useEffect(() => {
     refreshChnots();
@@ -120,20 +126,15 @@ const ChnotSidebar = () => {
       });
     }
     refreshChnots();
-  }, [
-    listViewType,
-    keyword,
-    mkspaces,
-    currentKSpace,
-  ]);
+  }, [listViewType, keyword, mkspaces, currentKSpace]);
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar variant="inset" className="pr-4">
       <SidebarHeader className="text-sm">
         <div className="flex flex-row">
           <KSpaceSelect
             onSelect={function (kspace: string): void {
-              changeKSpace(kspace);
+              setKSpace(kspace);
             }}
             currentKSpace={currentKSpace}
             onlyIcon={true}

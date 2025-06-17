@@ -1,5 +1,5 @@
-use chin_sql::{ChinSqlCrud, GenerateTableSchema};
 use chin_sql::time_type::TID;
+use chin_sql::{ChinSqlCrud, GenerateTableSchema};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
@@ -49,7 +49,6 @@ pub(crate) struct LLMChatSession {
     #[gts_length = 200]
     pub(crate) title: String,
     #[gts_length = 200]
-    pub(crate) kspace: String,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
 }
 

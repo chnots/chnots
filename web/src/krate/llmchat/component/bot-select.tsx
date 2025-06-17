@@ -97,7 +97,9 @@ const LLMChatBotSelect = () => {
           </RadixDropmenu.Portal>
         </RadixDropmenu.Root>
       ) : (
-        <AddButton />
+        <div>
+          <AddButton />
+        </div>
       )}
       {showBotForm && (
         <BotForm

@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { v4 as uuid } from "uuid";
 
 import "./excalidraw.scss";
 import {
@@ -22,47 +21,41 @@ import {
   useHandleLibrary,
 } from "@excalidraw/excalidraw";
 import useDebounce from "@/hooks/use-debounce";
-import {
-  insertInlineKFile,
-  queryInlineKFile,
-  queryKKV,
-} from "@/krate/kfile/service";
-import { useKSpaceStore } from "@/krate/kspace/store";
+import { insertInlineKFile, queryInlineKFile } from "@/krate/kfile/service";
 import { useSearchParams } from "react-router-dom";
 import { resolvablePromise, ResolvablePromise } from "@/lib/resolve-promise";
-import md5 from "crypto-js/md5";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
-import { genUId, genTID, TID } from "../../../../lib/id_util";
+import { genUID as genUID, genTID, TID } from "../../../../lib/id_util";
 
 export type ExcalidrawProps = {
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
-  chnotMetaId?: TID;
-  viewMode?: boolean;
-  afterSaveCallback?: (tid: TID) => void;
+  kindId?: string;
+  readOnly?: boolean;
+  onAfterSave?: (tid: TID) => void;
 };
 
-const CONTENT_TYPE = "excalidraw-v1";
+const CONTENT_TYPE = "chnots/excalidraw-v1";
 
 export default function ExcalidrawContainer({
-  chnotMetaId,
-  afterSaveCallback,
+  kindId: initialKindId,
+  onAfterSave,
   useCustom,
   customArgs,
-  viewMode,
+  readOnly: viewMode,
 }: ExcalidrawProps) {
-  useEffect(() => {
-    console.log("redraw excalidraw", chnotMetaId);
-  }, []);
-  const { currentKSpace } = useKSpaceStore();
-
   const [viewModeEnabled, setViewModeEnabled] = useState(viewMode);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
   const [gridModeEnabled, setGridModeEnabled] = useState(true);
   const [theme, setTheme] = useState<Theme>("light");
+  const [kindId, setKindId] = useState(initialKindId);
+  console.log(`ExcalidrawContainer: kindId: ${kindId}`);
 
   const [searchParams] = useSearchParams();
-  const [excalidrawId, setExcalidrawId] = useState<string>();
+  const [idInfo, setDrawId] = useState<{
+    drawId: string;
+    persisted: boolean;
+  }>();
 
   useEffect(() => {
     setViewModeEnabled(viewMode ?? false);
@@ -70,21 +63,14 @@ export default function ExcalidrawContainer({
 
   useEffect(() => {
     (async () => {
-      let tid = searchParams.get("exdId");
-      if (!tid && chnotMetaId) {
-        const { value } = await queryKKV({
-          key: chnotMetaId.toString(),
-          kind: "chnot_sub_type",
-        });
-        if (value) {
-          tid = value;
-        }
+      const kfileMetaId = searchParams.get("exdId") ?? kindId;
+      if (kfileMetaId) {
+        setDrawId({ drawId: kfileMetaId, persisted: true });
+      } else {
+        setDrawId({ drawId: genUID(), persisted: false });
       }
-      tid = tid ?? uuid();
-      console.log("chnot_sub_id", tid);
-      setExcalidrawId(tid);
     })();
-  }, [setExcalidrawId, searchParams]);
+  }, [setDrawId, searchParams, kindId]);
 
   const [excalidrawAPI, excalidrawRefCallback] =
     useCallbackRefState<ExcalidrawImperativeAPI>();
@@ -103,25 +89,32 @@ export default function ExcalidrawContainer({
       resolvablePromise<ExcalidrawInitialDataState | null>();
   }
   useEffect(() => {
-    if (!excalidrawAPI || !excalidrawId) {
+    if (!excalidrawAPI || !idInfo) {
       return;
     }
+    if (!idInfo.persisted) {
+      initialStatePromiseRef.current.promise.resolve({});
+      return;
+    }
+
     (async () => {
-      const rsp = await queryInlineKFile({
-        kkv_key: excalidrawId,
-      });
+      console.log("load from kfile table");
       try {
+        const rsp = await queryInlineKFile({
+          meta_id: idInfo.drawId,
+        });
         const dataState = JSON.parse(rsp.res[0].content);
         const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
-        const eles = dataState.elements as readonly ExcalidrawElement[] | null;
+        const elements = dataState.elements as
+          | readonly ExcalidrawElement[]
+          | null;
 
-        if (eles) {
-          console.log("eles", eles);
-          for (const element of eles) {
+        if (elements) {
+          for (const element of elements) {
             if (element.type === "image" && element.fileId) {
               try {
                 const fileInlineRsp = await queryInlineKFile({
-                  kkv_key: element.fileId,
+                  meta_id: element.fileId,
                 });
 
                 const fileInline = fileInlineRsp.res.at(0);
@@ -132,6 +125,7 @@ export default function ExcalidrawContainer({
                     dataURL: fileInline.content as DataURL,
                     created: fileInline.tid,
                     lastRetrieved: fileInline.tid,
+                    id: element.fileId as FileId,
                   });
                 }
               } catch (error) {
@@ -150,11 +144,11 @@ export default function ExcalidrawContainer({
           elements: dataState.elements,
         });
       } catch (e) {
-        console.log("unable to fetch inline-kfile", excalidrawId, e);
+        console.log("unable to fetch inline-kfile", idInfo, e);
         initialStatePromiseRef.current.promise.resolve({});
       }
     })();
-  }, [excalidrawAPI, excalidrawId]);
+  }, [excalidrawAPI, idInfo]);
 
   const savedFilesRef = useRef(new Map<string, string>());
   const onChange = useDebounce(
@@ -163,7 +157,7 @@ export default function ExcalidrawContainer({
       elements: NonDeletedExcalidrawElement[],
       state: AppState,
       files: BinaryFiles,
-      afterSave: (tid: string) => void
+      afterSave: (kid: string) => void
     ) => {
       if (elements.length > 0) {
         const content = serializeAsJSON(elements, state, files, "database");
@@ -171,18 +165,17 @@ export default function ExcalidrawContainer({
           for (const [fileId, file] of Object.entries(files)) {
             const ver = savedFilesRef.current.get(fileId);
             const newVar = file.created + "-" + file.version;
+            console.log("save images");
             if (!ver || ver != newVar) {
               await insertInlineKFile({
                 res: {
                   tid: genTID(),
-                  name: fileId,
                   content: file.dataURL,
-                  content_type: file.mimeType,
                   sid: "placeholder",
                 },
                 archor_intervals: 3600,
-                ignore_conflict: true,
-                meta_id: ""
+                meta_id: file.id,
+                content_type: file.mimeType ?? "chnots/unknown",
               });
               savedFilesRef.current.set(fileId, newVar);
             }
@@ -191,13 +184,12 @@ export default function ExcalidrawContainer({
           await insertInlineKFile({
             res: {
               tid: genTID(),
-              name: chnotMetaId?.toString() ?? genTID().toString(),
               content,
-              content_type: CONTENT_TYPE,
               sid: "placeholder",
             },
             archor_intervals: 3600,
-            meta_id: "",
+            meta_id: excalidrawId,
+            content_type: CONTENT_TYPE,
           });
           afterSave(excalidrawId);
         })();
@@ -235,7 +227,7 @@ export default function ExcalidrawContainer({
       excalidrawAPI={excalidrawRefCallback}
       initialData={initialStatePromiseRef.current.promise}
       onChange={(e1, e2, e3) => {
-        onChange(excalidrawId, e1, e2, e3, afterSaveCallback);
+        onChange(idInfo?.drawId, e1, e2, e3, onAfterSave);
       }}
       viewModeEnabled={viewModeEnabled}
       zenModeEnabled={zenModeEnabled}

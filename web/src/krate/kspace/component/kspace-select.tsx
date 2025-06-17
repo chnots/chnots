@@ -48,7 +48,7 @@ export const KSpaceSelect = ({
   return (
     <DropdownMenu>
       <div className="flex align-middle items-center">
-        <DropdownMenuTrigger className="flex justify-center items-center text-sm">
+        <DropdownMenuTrigger className="flex justify-center items-center text-sm" asChild>
           {onlyIcon ? (
             <Button variant={"ghost"}>
               <KSpaceIcon name={currentKSpace} className="w-4 h-4" />

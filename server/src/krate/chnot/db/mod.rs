@@ -11,9 +11,9 @@ use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
+use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, SqlBuilder, SqlValue};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
-use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 use itertools::Itertools;
@@ -137,7 +137,7 @@ impl ChnotMapper for KDb {
         self.conn().await?.exec(ChnotMetadata::create_sql()).await?;
         self.conn()
             .await?
-            .exec(ChnotKindId::create_sql())
+            .exec(ChnotKindRel::create_sql())
             .await
             .map(|_| ())
     }
@@ -147,7 +147,7 @@ impl ChnotMapper for KDb {
             .await?
             .exec(
                 SqlUpdater::new(ChnotMetadata::TABLE)
-                    .set(ChnotMetadata::OMIT_TID, Local::now().fixed_offset())
+                    .set(ChnotMetadata::OMIT_TID, OmitTID::now())
                     .r#where(Wheres::equal(ChnotMetadata::TID, req.meta_tid)),
             )
             .await?;
@@ -155,7 +155,7 @@ impl ChnotMapper for KDb {
         Ok(ChnotDeletionRsp {})
     }
 
-    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Vec<Chnot>>> {
+    async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>> {
         let page_size = req.page_size;
         let page_start = req.start_index;
 
@@ -210,6 +210,20 @@ impl ChnotMapper for KDb {
                         OmitTID::never(),
                     )
                 }),
+                Wheres::transform(req.with_omitted, |e| {
+                    Wheres::compare(
+                        "rec_omit_tid",
+                        if e.default_false() { "<" } else { "=" },
+                        OmitTID::never(),
+                    )
+                }),
+                Wheres::transform(req.with_archive, |e| {
+                    if e.default_false() {
+                        Wheres::None
+                    } else {
+                        Wheres::is_null("archive_time")
+                    }
+                }),
                 Wheres::transform(&req.kinds, |k| {
                     if !k.is_empty() {
                         Wheres::r#in("t.kind", k.iter().map(|e| e.to_string()).collect())
@@ -228,12 +242,8 @@ impl ChnotMapper for KDb {
                 Wheres::if_some(req.query.as_ref(), |content| {
                     Wheres::ilike("t.content", content, ILikeType::Fuzzy)
                 }),
-                Wheres::if_some(req.record_tid.to_owned(), |tid| {
-                    Wheres::equal("t.rec_tid", tid)
-                }),
-                Wheres::if_some(req.meta_tid.to_owned(), |tid| {
-                    Wheres::equal("t.meta_tid", tid)
-                }),
+                Wheres::if_some(req.record_tid, |tid| Wheres::equal("t.rec_tid", tid)),
+                Wheres::if_some(req.meta_tid, |tid| Wheres::equal("t.meta_tid", tid)),
             ]))
             .sov("ORDER BY t.pin_time DESC, t.meta_tid desc")
             .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
@@ -343,6 +353,21 @@ impl ChnotMapper for KDb {
         let wrapper = KImplWrapper(conn.transaction().await?);
         wrapper.chnot_tag_delete(chnot_meta_ids).await
     }
+
+    async fn chnot_query_kind_rel(
+        &self,
+        req: KReq<ChnotKindRelQueryReq>,
+    ) -> AResult<ChnotKindRelQueryRsp> {
+        self.conn()
+            .await?
+            .qry_one(
+                ChnotKindRel::pkey_reader(req.meta_tid, OmitTID::never()),
+                |e| e.to_chnot_kind_rel(),
+                false,
+            )
+            .await
+            .map(|e| ChnotKindRelQueryRsp { kind_rel: e })
+    }
 }
 
 impl ChnotDeserializeMapper for KDbRow {
@@ -379,6 +404,14 @@ impl ChnotDeserializeMapper for KDbRow {
             omit_tid: self.try_get(ChnotTag::OMIT_TID)?,
         };
         Ok(obj)
+    }
+
+    fn to_chnot_kind_rel(self) -> AResult<ChnotKindRel> {
+        Ok(ChnotKindRel {
+            meta_tid: self.try_get(ChnotKindRel::META_TID)?,
+            omit_tid: self.try_get(ChnotKindRel::OMIT_TID)?,
+            kind_id: self.try_get(ChnotKindRel::KIND_ID)?,
+        })
     }
 }
 

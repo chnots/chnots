@@ -1,4 +1,5 @@
-import { TID as TID } from "@/lib/id_util";
+import { OmitTID, TID as TID } from "@/lib/id_util";
+import { object } from "zod";
 
 export enum ChnotKind {
   MarkdownWithToent = "mdwt",
@@ -8,26 +9,43 @@ export enum ChnotKind {
   LLMChat = "llm_chat",
 }
 
-export type ChnotRecord= {
+// TODO: true type
+export type ChnotTagType = object;
+
+export type ChnotRecord = {
   tid: TID;
   meta_tid: TID;
+  omit_tid?: OmitTID;
   content: string;
-  omit_tid?: TID;
   archor: boolean;
-}
+};                       
 
-export type ChnotMetadata= {
+export type ChnotMetadata = {
   tid: TID;
   kspace: string;
-  kind: string;
+  kind: ChnotKind;
   pin_time?: Date;
-  omit_tid?: TID;
+  omit_tid?: OmitTID;
   archive_time?: Date;
-}
+};                       
 
-export type ChnotTag= {
+export type ChnotTag = {
   tid: TID;
+  omit_tid?: OmitTID;
   kspace: string;
   tag: string;
-  meta_id: TID;
-}
+  category: ChnotTagType;
+  meta_tid: TID;
+};                       
+
+export type ChnotKindId = {
+  meta_tid: TID;
+  omit_tid?: OmitTID;
+  kind_id: string;
+};           
+
+export type ChnotKindRel = {
+  meta_tid: TID;
+  omit_tid?: OmitTID;
+  kind_id: string;
+};            
