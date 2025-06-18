@@ -39,6 +39,9 @@ impl EventBuilder for WesTime {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
         let mut guessed = vec![];
         let trimmed = gt.original;
+        if trimmed.is_empty() {
+            guessed.push((WesTime::now_date(), PossibleScore::Likely(100)));
+        }
 
         if equals_any(
             trimmed.to_ascii_lowercase().as_str(),

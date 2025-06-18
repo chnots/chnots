@@ -29,6 +29,15 @@ pub(crate) struct RawInputSegs<'a> {
     pub(crate) spans: Vec<Span<'a>>,
 }
 
+impl Default for RawInputSegs<'_> {
+    fn default() -> Self {
+        Self {
+            original: "",
+            spans: Default::default(),
+        }
+    }
+}
+
 impl<'a> RawInputSegs<'a> {
     pub(crate) fn sub_start(&self, start: usize) -> RawInputSegs<'a> {
         RawInputSegs {
@@ -57,6 +66,13 @@ impl<'a> RawInputSegs<'a> {
                 .filter(|s| s.start_in >= start && s.end_ex <= end)
                 .copied()
                 .collect(),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            original: "",
+            spans: vec![],
         }
     }
 }

@@ -52,7 +52,7 @@ impl TimeEvent {
 
 #[derive(Default)]
 pub(crate) struct InputSegs<'a> {
-    pub(crate) base: Option<RawInputSegs<'a>>,
+    pub(crate) base: RawInputSegs<'a>,
     pub(crate) interval: Option<RawInputSegs<'a>>,
     pub(crate) alert: Option<RawInputSegs<'a>>,
     pub(crate) end: Option<RawInputSegs<'a>>,
@@ -99,7 +99,7 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
                 });
             } else if Repeater::end_start(seg) {
                 parse_step = ParseStep::End;
-                input_segs.base = convert_temp(temp);
+                input_segs.base = convert_temp(temp).unwrap_or_default();
                 temp = vec![];
                 temp.push(*span);
             } else {
@@ -109,7 +109,7 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
 
         match parse_step {
             ParseStep::Base => {
-                input_segs.base = convert_temp(temp);
+                input_segs.base = convert_temp(temp).unwrap_or_default();
             }
 
             ParseStep::End => {
@@ -124,11 +124,12 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
 
 impl EventBuilder for TimeEvent {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+
         let Ok(input_segs) = InputSegs::try_from(gt) else {
             return None;
         };
 
-        let bases = input_segs.base.map(|e| TimeEnum::guess(&e));
+        let bases = TimeEnum::guess(&input_segs.base);
 
         let repeaters = Repeater::guess_from_segs(
             input_segs.interval.as_ref(),
@@ -136,8 +137,8 @@ impl EventBuilder for TimeEvent {
             input_segs.alert.as_ref(),
         );
 
-        if let Some(Some(vs)) = bases {
-            let guesses = vs
+        if let Some(time_enums) = bases {
+            let guesses = time_enums
                 .iter()
                 .map(|(base, score)| {
                     (
@@ -163,11 +164,8 @@ impl EventBuilder for TimeEvent {
     fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let input_segs = InputSegs::try_from(gt)?;
 
-        let base = if let Some(base) = input_segs.base {
-            Some(TimeEnum::from_standard(&base)?)
-        } else {
-            None
-        };
+        let base = Some(TimeEnum::from_standard(&input_segs.base)?);
+
         let reminder = Some(Repeater::standard_from_segs(
             input_segs.interval.as_ref(),
             input_segs.end.as_ref(),
