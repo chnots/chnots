@@ -25,6 +25,7 @@ pub(crate) trait RowCallback {
     async fn callback<E: Serialize>(&self, obj: E) -> EResult;
 }
 
+#[allow(dead_code)]
 pub(crate) enum RecordCallbackType {
     File(FileDumpWorker),
     Network(),

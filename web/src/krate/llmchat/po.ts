@@ -12,7 +12,7 @@ export type LLMChatBot = {
   body: string;
   svg_logo?: string;
   update_time?: Date;
-};             
+};              
 
 // the body of LLMChatBot body.
 export type LLMChatBotBodyOpenAIV1 = {
@@ -30,7 +30,7 @@ export type LLMChatTemplate = {
   prompt: string;
   svg_logo?: string;
   update_time?: Date;
-};             
+};              
 
 // LLMChatSession structure
 
@@ -40,7 +40,7 @@ export type LLMChatSession = {
   template_id: TID;
   title: string;
   update_time?: Date;
-};             
+};              
 
 // LLMChatRecord structure
 
@@ -53,4 +53,4 @@ export type LLMChatRecord = {
   reasoning_content: string;
   role: string;
   role_id?: TID;
-};             
+};              

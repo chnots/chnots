@@ -1,5 +1,4 @@
-use chin_sql::OnConflict;
-use chin_tools::{AResult, EResult};
+use chin_tools::EResult;
 
 use crate::krate::{
     chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
@@ -56,8 +55,4 @@ impl MapperType {
             MapperType::KDb(kdb) => kdb.dump_and_callback(writer).await,
         }
     }
-}
-
-pub(crate) trait InserterBehavier<T> {
-    async fn insert(&self, t: T, on_conflict: OnConflict) -> AResult<usize>;
 }

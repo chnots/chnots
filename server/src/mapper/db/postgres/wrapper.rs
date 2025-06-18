@@ -100,10 +100,6 @@ macro_rules! impl_KDbExecutorBehaiver {
                     .map(|e| mapper(KDbRow::Postgres(e)))
                     .collect()
             }
-
-            fn db_type(&self) -> chin_sql::DbType {
-                chin_sql::DbType::Postgres
-            }
         }
     };
 }

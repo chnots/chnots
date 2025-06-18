@@ -1,6 +1,6 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
 use chin_sql::{
-    time_type::TID, DbType, IntoSqlSeg, OnConflict, SqlBuilder, SqlInserter, SqlUpdater, SqlValue,
+    time_type::TID, DbType, IntoSqlSeg, SqlBuilder, SqlUpdater, SqlValue,
     SqlValueRow, Wheres,
 };
 use chin_tools::{AResult, EResult};
@@ -8,7 +8,7 @@ use deadpool_postgres::{Client, GenericClient, Transaction};
 use postgres_types::FromSql;
 use tokio_postgres::Row;
 
-use crate::{mapper::mappertype::InserterBehavier, model::omit_tid::OmitTID};
+use crate::model::omit_tid::OmitTID;
 
 use super::{postgres, sqlite};
 
@@ -44,13 +44,6 @@ pub(crate) trait KDbExecutorBehaiver: Send + Sync {
         T: IntoSqlSeg<'a>,
         F: (Fn(KDbRow) -> AResult<E>) + Send + 'static,
         E: Send + 'static;
-
-    fn db_type(&self) -> DbType;
-
-    async fn create_table(&self, sql: &str) -> EResult {
-        self.exec(SqlBuilder::new().sov(sql)).await?;
-        Ok(())
-    }
 }
 
 pub(crate) trait KDbConnBehaiver<'a, Tx>: KDbExecutorBehaiver {
@@ -129,15 +122,6 @@ impl KDbBehaiver for KDb {
     }
 }
 
-impl KDb {
-    pub fn db_type(&self) -> DbType {
-        match self {
-            Self::Sqlite(_) => DbType::Sqlite,
-            Self::Postgres(_) => DbType::Postgres,
-        }
-    }
-}
-
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum KDbConn {
     Sqlite(ActorSqliteConnClient),
@@ -205,12 +189,6 @@ impl KDbExecutorBehaiver for KDbConn {
         expand_kdb_conn_branch!(self.qry_list(ssb, mapper))
     }
 
-    fn db_type(&self) -> DbType {
-        match self {
-            Self::Sqlite(_) => DbType::Sqlite,
-            Self::Postgres(_) => DbType::Postgres,
-        }
-    }
 }
 
 impl<'a> KDbConnBehaiver<'a, KDbTx<'a>> for KDbConn {
@@ -299,23 +277,7 @@ impl KDbExecutorBehaiver for KDbTx<'_> {
     {
         expand_kdbtx_branch!(self.qry_list(ssb, mapper))
     }
-    fn db_type(&self) -> DbType {
-        match self {
-            Self::Sqlite(_) => DbType::Sqlite,
-            Self::Postgres(_) => DbType::Postgres,
-        }
-    }
-}
 
-pub trait ToSqlInserter {
-    fn to_sql_inserter(self) -> SqlInserter<'static>;
-}
-
-impl<T: KDbExecutorBehaiver, E: ToSqlInserter> InserterBehavier<E> for T {
-    async fn insert(&self, t: E, on_conflict: OnConflict) -> AResult<usize> {
-        let sql_inserter = t.to_sql_inserter().on_conflict(on_conflict);
-        self.exec(sql_inserter).await
-    }
 }
 
 pub enum KDbExecutor<'e> {
@@ -387,12 +349,6 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
         expand_KDbExecutor_branch!(self.qry_list(ssb, mapper))
     }
 
-    fn db_type(&self) -> DbType {
-        match self {
-            KDbExecutor::Conn(kdb_conn) => kdb_conn.db_type(),
-            KDbExecutor::Tx(kdb_tx) => kdb_tx.db_type(),
-        }
-    }
 }
 
 pub fn omit_table_tid<'a>(table_name: &'static str, tid: TID) -> SqlUpdater<'a> {

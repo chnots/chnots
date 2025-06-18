@@ -7,6 +7,8 @@ import {
   KFileUploadReq,
   KFileUploadRsp,
   InsertInlineKFileRsp,
+  QueryKFileReq,
+  QueryKFileMetaRsp,
 } from "./dto";
 import { chnotShortDate } from "@/lib/date-utils";
 import { TID } from "@/lib/id_util";
@@ -38,9 +40,9 @@ export const kfileUpload = async ({
 };
 
 export const kfileQueryInfo = async (
-  sid: string
-): Promise<{ res?: KFileMeta }> => {
-  return await request.get("api/v1/kfile-info/" + sid);
+  req: QueryKFileReq
+): Promise<QueryKFileMetaRsp> => {
+  return await request.get("api/v1/kfile-info", req);
 };
 
 export const insertInlineKFile = async (
@@ -59,7 +61,7 @@ export const getResouceDownloadUrl = (kfile: KFileMeta): string => {
   return (
     BASE_URL +
     "/api/v1/kfile/" +
-    kfile.sid +
+    kfile.id +
     "/" +
     encodeURI(chnotShortDate() + "-" + kfile.filename)
   );

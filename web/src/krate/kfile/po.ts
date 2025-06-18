@@ -4,7 +4,7 @@ export type InlineKFile = {
   sid: string;
   tid: TID;
   content: string;
-};                
+};                 
 
 export type KFileMeta = {
   id: string;
@@ -17,4 +17,4 @@ export type KFileMeta = {
   last_modified: TID;
   sid: string;
   filesize: number;
-};                
+};                 

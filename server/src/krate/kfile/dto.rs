@@ -52,12 +52,7 @@ pub(crate) struct QueryInlineKFileRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct QueryKFileReq {
-    pub(crate) tid: TID,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct QueryKFileRsp {
-    pub(crate) res: Option<KFileMeta>,
+    pub(crate) meta_id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -69,4 +64,5 @@ pub(crate) struct QueryKFileMetaRsp {
 fn tst() {
     let s = "{\"res\":{\"tid\":1749701191901010,\"rid\":\"d0d48143-f149-40eb-bb65-739559a1e2d8\",\"kspace\":\"public\",\"archor\":false,\"name\":\"1749701191901011\",\"content\":\"\",\"content_type\":\"excalidraw-v1\"},\"archor_intervals\":3600}";
     let c: Result<InsertInlineKFileReq, serde_json::Error> = serde_json::from_str(s);
+    c.unwrap();
 }

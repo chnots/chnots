@@ -4,7 +4,7 @@ import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind, ChnotKindRel } from ".
 export type Chnot = {
   record: ChnotRecord;
   meta: ChnotMetadata;
-};                    
+};                     
 
 export type ChnotTagTreeType = {
   kind: "tagtree";
@@ -30,7 +30,7 @@ export type ChnotQueryReq = {
   with_archive?: boolean;
   start_index: number;
   page_size: number;
-};                      
+};                       
 
 export type ChnotQueryRsp = {
   next_start: number;
@@ -44,26 +44,26 @@ export type ChnotOverwriteReq = {
   content: string;
   kind: ChnotKind;
   kind_id?: string;
-};                    
+};                     
 
 export type ChnotOverwriteRsp = {
   meta_tid: TID;
   rec_tid: TID;
   kspace: string;
   archor: boolean;
-};                      
+};                       
 
 export type ChnotDeletionReq = {
   meta_tid: TID;
   logic: boolean;
-};                    
+};                     
 
 export type ChnotUpdateReq = {
   meta_tid: TID;
   kspace?: string;
   pinned?: boolean;
   archive?: boolean;
-};                      
+};                       
 
 export type ChnotCommentAddReq = {
   tid: TID;
@@ -77,7 +77,7 @@ export type ChnotTagQueryReq = {
   tag_tree: ChnotTagTreeType;
   start_index: number;
   page_size: number;
-};                    
+};                     
 
 export type ChnotKFileRelationInsert = {
   chnot_meta_id: TID;
@@ -109,19 +109,19 @@ export type ToentGuessRsp = {
   toents: Toent[];
 };
 
-export type ChnotUpdateRsp = object;                     
+export type ChnotUpdateRsp = object;                      
 
-export type ChnotDeletionRsp = object;                    
+export type ChnotDeletionRsp = object;                     
 
 export type ChnotTagUpdateReq = {
   content: string;
   meta_tid: TID;
   kspace: string;
-};                      
+};                       
 
 export type ChnotKindRelQueryRsp = {
   kind_rel: ChnotKindRel;
-};           
+};            
 export type ChnotKindRelQueryReq = {
   meta_tid: TID;
-};          
+};           

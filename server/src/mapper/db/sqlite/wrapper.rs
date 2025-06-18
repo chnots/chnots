@@ -119,10 +119,6 @@ macro_rules! impl_KDbExecutorBehaiver {
                     .map(|r| mapper(KDbRow::SqlValue(map_row2row(r))))
                     .collect()
             }
-
-            fn db_type(&self) -> chin_sql::DbType {
-                chin_sql::DbType::Sqlite
-            }
         }
     };
 }

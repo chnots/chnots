@@ -23,20 +23,12 @@ impl<'a> Deref for Span<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct RawInputSegs<'a> {
     pub(crate) original: &'a str,
     pub(crate) spans: Vec<Span<'a>>,
 }
 
-impl Default for RawInputSegs<'_> {
-    fn default() -> Self {
-        Self {
-            original: "",
-            spans: Default::default(),
-        }
-    }
-}
 
 impl<'a> RawInputSegs<'a> {
     pub(crate) fn sub_start(&self, start: usize) -> RawInputSegs<'a> {

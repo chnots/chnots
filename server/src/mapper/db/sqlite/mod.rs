@@ -31,8 +31,4 @@ impl Sqlite {
             pool: ActorSqlitePool::try_from(config)?,
         })
     }
-
-    pub(crate) fn pool(&self) -> &ActorSqlitePool {
-        &self.pool
-    }
 }

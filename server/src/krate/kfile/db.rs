@@ -75,18 +75,6 @@ impl KFileMapper for KDb {
         Ok(())
     }
 
-    async fn query_kfile_by_id(&self, id: &str) -> AResult<KFileMeta> {
-        let conn = self.conn().await?;
-        let res = conn
-            .qry_one(
-                SqlBuilder::read_all(KFileMeta::TABLE).r#where(Wheres::equal(KFileMeta::ID, id)),
-                |e| e.to_kfile_meta(),
-                false,
-            )
-            .await?;
-        Ok(res)
-    }
-
     async fn insert_inline_kfile(
         &self,
         mut req: KReq<InsertInlineKFileReq>,
@@ -170,12 +158,27 @@ impl KFileMapper for KDb {
         Ok(QueryInlineKFileRsp { res })
     }
 
-    async fn query_kfile_meta(&self, meta_id: &str) -> anyhow::Result<QueryKFileMetaRsp> {
+    async fn query_kfile_meta(
+        &self,
+        req: QueryKFileReq,
+    ) -> anyhow::Result<QueryKFileMetaRsp> {
         let meta = self
             .conn()
             .await?
             .qry_opt(
-                KFileMeta::pkey_reader(meta_id.to_string(), OmitTID::never()),
+                KFileMeta::pkey_reader(req.meta_id, OmitTID::never()),
+                |e| e.to_kfile_meta(),
+            )
+            .await?;
+        Ok(QueryKFileMetaRsp { meta })
+    }
+
+    async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp> {
+        let meta = self
+            .conn()
+            .await?
+            .qry_opt(
+                KFileMeta::pkey_reader(sid.to_string(), OmitTID::never()),
                 |e| e.to_kfile_meta(),
             )
             .await?;

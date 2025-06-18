@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use axum::{
     body,
     extract::State,
@@ -20,8 +20,8 @@ use tokio_util::io::ReaderStream;
 use crate::{
     config::AttachmentConfig,
     krate::kfile::{
-        controller::asset_path_by_uuid, mapper::KFileMapper, KFileMeta, KFileUploadReq,
-        KFileUploadRsp,
+        controller::asset_path_by_sid, mapper::KFileMapper, KFileMeta, KFileUploadReq,
+        KFileUploadRsp, QueryKFileReq,
     },
     model::omit_tid::OmitTID,
     ShareAppState,
@@ -54,7 +54,7 @@ fn assemble_file_sync<P: AsRef<Path> + Send>(
     }
 
     let sid = bh.finalize().to_string();
-    let path = asset_path_by_uuid(&config, sid.as_str());
+    let path = asset_path_by_sid(&config, sid.as_str());
     std::fs::create_dir_all(path.parent().ok_or(anyhow!("unable to get parent"))?)?;
 
     std::fs::rename(output_filepath, path)?;
@@ -142,17 +142,24 @@ pub(super) async fn upload(
 // https://github.com/tokio-rs/axum/discussions/608
 pub(crate) async fn download(
     state: State<ShareAppState>,
-    axum::extract::Path((sid, filename)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((meta_tid, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
-    info!("download sid: {}, {}", sid, filename);
+    info!("download sid: {}, {}", meta_tid, filename);
 
     async fn inner(
         state: State<ShareAppState>,
-        sid: &str,
+        meta_id: &str,
     ) -> AResult<([(HeaderName, String); 2], body::Body)> {
-        let kfile = state.mapper.query_kfile_by_id(sid).await?;
+        let kfile = state
+            .mapper
+            .query_kfile_meta(QueryKFileReq {
+                meta_id: meta_id.to_string(),
+            })
+            .await?
+            .meta
+            .context("unable to find kfile")?;
 
-        let save_filepath = asset_path_by_uuid(&state.config.attachment, sid);
+        let save_filepath = asset_path_by_sid(&state.config.attachment, &kfile.sid);
 
         let file = tokio::fs::File::open(&save_filepath).await?;
 
@@ -169,7 +176,7 @@ pub(crate) async fn download(
         Ok((headers, body))
     }
 
-    let res = inner(state, &sid).await;
+    let res = inner(state, &meta_tid).await;
 
     match res {
         Ok(res) => Ok(res),

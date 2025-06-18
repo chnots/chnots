@@ -14,9 +14,8 @@ pub(crate) trait KFileDumpMapper {
 
 pub(crate) trait KFileMapper {
     async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()>;
-    async fn query_kfile_by_id(&self, tid: &str) -> anyhow::Result<KFileMeta>;
-
-    async fn query_kfile_meta(&self, meta_id: &str) -> anyhow::Result<QueryKFileMetaRsp>;
+    async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp>;
+    async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp>;
 
     ///
     /// Try to insert inline kfile.
@@ -44,10 +43,6 @@ impl KFileMapper for MapperType {
         expand_mt_branch!(self.insert_kfile(kfile))
     }
 
-    async fn query_kfile_by_id(&self, sid: &str) -> anyhow::Result<KFileMeta> {
-        expand_mt_branch!(self.query_kfile_by_id(sid))
-    }
-
     async fn ensure_table_kfile(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_kfile())
     }
@@ -70,7 +65,11 @@ impl KFileMapper for MapperType {
         expand_mt_branch!(self.ensure_table_inline_kfile())
     }
 
-    async fn query_kfile_meta(&self, meta_id: &str) -> anyhow::Result<QueryKFileMetaRsp> {
-        expand_mt_branch!(self.query_kfile_meta(meta_id))
+    async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp> {
+        expand_mt_branch!(self.query_kfile_meta(req))
+    }
+    
+    async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp> {
+        expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
     }
 }

@@ -174,12 +174,13 @@ impl<'a> KDbTx<'a> {
                 };
 
                 // Determine update strategy
-                archor = !textdistance::str::sift4_simple(&old_cont, &req.content) <= 50
-                    && rec_tid
-                        .as_utc()
-                        .signed_duration_since(old_id.as_utc())
-                        .abs()
-                        < TimeDelta::hours(1);
+                let time_delta = rec_tid
+                    .as_utc()
+                    .signed_duration_since(old_id.as_utc())
+                    .abs();
+                archor = (textdistance::str::sift4_simple(&old_cont, &req.content) >= 60
+                    && time_delta > TimeDelta::minutes(3))
+                    || time_delta > TimeDelta::hours(1);
 
                 let rec = ChnotRecord {
                     tid: rec_tid,

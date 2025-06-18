@@ -16,7 +16,7 @@ use crate::{
 
 use super::{mapper::KFileMapper, *};
 
-pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, sid: &str) -> PathBuf {
+pub(crate) fn asset_path_by_sid(config: &AttachmentConfig, sid: &str) -> PathBuf {
     let filename_parts = split_uuid_to_file_name(sid);
 
     let save_filepath = std::path::Path::new(&config.base_dir)
@@ -27,22 +27,16 @@ pub(crate) fn asset_path_by_uuid(config: &AttachmentConfig, sid: &str) -> PathBu
 }
 
 pub(crate) async fn query_kfile(
+    headers: HeaderMap,
+
     state: State<ShareAppState>,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> KResponse<QueryKFileRsp> {
+    Query(req): Query<QueryKFileReq>,
+) -> KResponse<QueryKFileMetaRsp> {
     state
         .mapper
-        .query_kfile_by_id(&id)
+        .query_kfile_meta(req)
         .await
-        .map(|res| QueryKFileRsp { res: Some(res) })
         .into()
-}
-
-pub(crate) async fn query_kfile_meta(
-    state: State<ShareAppState>,
-    axum::extract::Path(meta_id): axum::extract::Path<String>,
-) -> KResponse<QueryKFileMetaRsp> {
-    state.mapper.query_kfile_meta(&meta_id).await.into()
 }
 
 async fn query_inline_kfile(
@@ -107,8 +101,8 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
-        .route("/api/v1/kfile/{sid}/{filename}", get(transfer::download))
-        .route("/api/v1/kfile-info/{id}", get(query_kfile))
+        .route("/api/v1/kfile/{meta_tid}/{filename}", get(transfer::download))
+        .route("/api/v1/kfile-info", get(query_kfile))
         .route("/api/v1/inline-kfile", put(insert_inline_kfile))
         .route("/api/v1/inline-kfile", get(query_inline_kfile))
         .route("/api/v1/inline-svg/{tid}", get(query_svg))

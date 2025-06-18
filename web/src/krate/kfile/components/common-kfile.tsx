@@ -82,12 +82,11 @@ export const CommonKFile = ({
 
   useEffect(() => {
     if (kindId) {
-      kfileQueryInfo(kindId.toString()).then(({ res }) => {
-        setKFile(res);
+      kfileQueryInfo({ meta_id: kindId.toString() }).then(({ meta }) => {
+        setKFile(meta);
       });
     }
   }, [kindId]);
-
   const uploadFileInChunks = async () => {
     if (!uploadFile) {
       alert("Please select a file to upload");
