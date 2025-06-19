@@ -32,11 +32,7 @@ pub(crate) async fn query_kfile(
     state: State<ShareAppState>,
     Query(req): Query<QueryKFileReq>,
 ) -> KResponse<QueryKFileMetaRsp> {
-    state
-        .mapper
-        .query_kfile_meta(req)
-        .await
-        .into()
+    state.mapper.query_kfile_meta(req).await.into()
 }
 
 async fn query_inline_kfile(
@@ -101,7 +97,10 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
-        .route("/api/v1/kfile/{meta_tid}/{filename}", get(transfer::download))
+        .route(
+            "/api/v1/kfile/{meta_tid}/{filename}",
+            get(transfer::download),
+        )
         .route("/api/v1/kfile-info", get(query_kfile))
         .route("/api/v1/inline-kfile", put(insert_inline_kfile))
         .route("/api/v1/inline-kfile", get(query_inline_kfile))

@@ -1,29 +1,3 @@
+export type Toent = object;
 
-
-
-
-
-
-
-export type Toent = object;                        
-    
-    
-    
-    
-    
-    
-    
-
-
-
-
-
-
-export type ToentInst = object;                        
-    
-    
-    
-    
-    
-    
-    
+export type ToentInst = object;

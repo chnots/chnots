@@ -7,4 +7,4 @@ export type KKV = {
   value: string;
   update_time?: Date;
   insert_time: Date;
-};               
+};

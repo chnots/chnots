@@ -5,8 +5,8 @@ use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use chin_sql::time_type::TID;
-use chin_sql::{SqlBuilder, SqlUpdater};
 use chin_sql::Wheres;
+use chin_sql::{SqlBuilder, SqlUpdater};
 use chin_tools::AResult;
 
 use chrono::TimeDelta;

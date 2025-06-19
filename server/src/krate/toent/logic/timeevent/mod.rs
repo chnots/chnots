@@ -124,7 +124,6 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
 
 impl EventBuilder for TimeEvent {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-
         let Ok(input_segs) = InputSegs::try_from(gt) else {
             return None;
         };

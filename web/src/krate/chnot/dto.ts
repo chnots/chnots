@@ -1,5 +1,11 @@
 import { TID } from "@/lib/id_util";
-import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind, ChnotKindRel } from "./po";
+import {
+  ChnotRecord,
+  ChnotMetadata,
+  ChnotTag,
+  ChnotKind,
+  ChnotKindRel,
+} from "./po";
 
 export type Chnot = {
   record: ChnotRecord;
@@ -65,6 +71,7 @@ export type ChnotCommentAddReq = {
 export type ChnotTagQueryReq = {
   query?: string;
   tags?: ChnotTagSearchType;
+  remove_params?: boolean;
   start_index: number;
   page_size: number;
 };
@@ -114,4 +121,4 @@ export type ChnotKindRelQueryRsp = {
 };
 export type ChnotKindRelQueryReq = {
   meta_tid: TID;
-};            
+};

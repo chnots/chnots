@@ -11,12 +11,12 @@ export type KFileUploadReq = {
   last_modified: number;
   filesize: number;
   content_type: string;
-};                        
+};
 
 export type KFileUploadRsp = {
   kfile?: KFileMeta;
   finished: boolean;
-};             
+};
 
 export type InsertInlineKFileReq = {
   meta_id: string;
@@ -24,28 +24,26 @@ export type InsertInlineKFileReq = {
   archor_intervals: number;
   filename?: string;
   content_type: string;
-};                        
+};
 
 export type InsertInlineKFileRsp = {
   true_sid: string;
-};             
+};
 
 export type QueryInlineKFileReq = {
   sid?: string;
   meta_id?: string;
   with_omit?: boolean;
-};                        
+};
 
 export type QueryInlineKFileRsp = {
   res: InlineKFile[];
-};             
-
-
+};
 
 export type QueryKFileReq = {
   meta_id: string;
-};                               
+};
 
 export type QueryKFileMetaRsp = {
   meta?: KFileMeta;
-};              
+};

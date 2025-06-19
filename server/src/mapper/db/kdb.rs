@@ -1,7 +1,6 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
 use chin_sql::{
-    time_type::TID, DbType, IntoSqlSeg, SqlBuilder, SqlUpdater, SqlValue,
-    SqlValueRow, Wheres,
+    time_type::TID, DbType, IntoSqlSeg, SqlBuilder, SqlUpdater, SqlValue, SqlValueRow, Wheres,
 };
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
@@ -189,7 +188,6 @@ impl KDbExecutorBehaiver for KDbConn {
     {
         expand_kdb_conn_branch!(self.qry_list(ssb, mapper))
     }
-
 }
 
 impl<'a> KDbConnBehaiver<'a, KDbTx<'a>> for KDbConn {
@@ -278,7 +276,6 @@ impl KDbExecutorBehaiver for KDbTx<'_> {
     {
         expand_kdbtx_branch!(self.qry_list(ssb, mapper))
     }
-
 }
 
 pub enum KDbExecutor<'e> {
@@ -349,7 +346,6 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
     {
         expand_KDbExecutor_branch!(self.qry_list(ssb, mapper))
     }
-
 }
 
 pub fn omit_table_tid<'a>(table_name: &'static str, tid: TID) -> SqlUpdater<'a> {

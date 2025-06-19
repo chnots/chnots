@@ -8,7 +8,7 @@ export type KTabColumnViewKind = "string" | "date" | "decimal";
 type Decimal = string;
 
 export const ktabViewToStoreKind = (
-  kind: KTabColumnViewKind
+  kind: KTabColumnViewKind,
 ): KTabColumnStoreKind => {
   switch (kind.toLowerCase()) {
     case "string":
@@ -38,7 +38,7 @@ export type KTabColumnMeta = {
   view_kind: KTabColumnViewKind;
   required: boolean;
   order_by: number;
-};                    
+};
 
 export type KTabMeta = {
   tid: TID;
@@ -48,7 +48,7 @@ export type KTabMeta = {
   table_comment: string;
   update_time?: Date;
   real_table: boolean;
-};                    
+};
 
 export type KTabCell = {
   table_id: number;
@@ -67,7 +67,7 @@ export type KTabCellText = {
   col_idx: TID;
   row_idx: TID;
   cell_data: string;
-};                    
+};
 
 export type KTabCellDecimal = {
   tid: TID;
@@ -76,7 +76,7 @@ export type KTabCellDecimal = {
   col_idx: TID;
   row_idx: TID;
   cell_data: Decimal;
-};                    
+};
 
 export type KTabCellDate = {
   tid: TID;
@@ -85,4 +85,4 @@ export type KTabCellDate = {
   col_idx: TID;
   row_idx: TID;
   cell_data: Date;
-};                    
+};

@@ -48,7 +48,7 @@ pub(crate) struct ChnotDeletionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum ChnotTagSearchType {
-    Inset(Vec<String>)
+    Inset(Vec<String>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,7 +74,6 @@ pub(crate) struct ChnotQueryRsp<T> {
     pub(crate) has_next: bool,
     pub(crate) next_start: usize,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotTagQueryReq {

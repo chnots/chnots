@@ -158,17 +158,13 @@ impl KFileMapper for KDb {
         Ok(QueryInlineKFileRsp { res })
     }
 
-    async fn query_kfile_meta(
-        &self,
-        req: QueryKFileReq,
-    ) -> anyhow::Result<QueryKFileMetaRsp> {
+    async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp> {
         let meta = self
             .conn()
             .await?
-            .qry_opt(
-                KFileMeta::pkey_reader(req.meta_id, OmitTID::never()),
-                |e| e.to_kfile_meta(),
-            )
+            .qry_opt(KFileMeta::pkey_reader(req.meta_id, OmitTID::never()), |e| {
+                e.to_kfile_meta()
+            })
             .await?;
         Ok(QueryKFileMetaRsp { meta })
     }

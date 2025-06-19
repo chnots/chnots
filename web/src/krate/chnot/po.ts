@@ -18,7 +18,7 @@ export type ChnotRecord = {
   omit_tid?: OmitTID;
   content: string;
   archor: boolean;
-};                         
+};
 
 export type ChnotMetadata = {
   tid: TID;
@@ -27,24 +27,24 @@ export type ChnotMetadata = {
   pin_time?: Date;
   omit_tid?: OmitTID;
   archive_time?: Date;
-};                         
+};
 
 export type ChnotTag = {
-  tid: TID;
-  omit_tid?: OmitTID;
-  kspace: string;
   tag: string;
   meta_tid: TID;
-};                         
+  omit_tid?: OmitTID;
+  kspace: string;
+  tid: TID;
+};
 
 export type ChnotKindId = {
   meta_tid: TID;
   omit_tid?: OmitTID;
   kind_id: string;
-};           
+};
 
 export type ChnotKindRel = {
   meta_tid: TID;
   omit_tid?: OmitTID;
   kind_id: string;
-};              
+};

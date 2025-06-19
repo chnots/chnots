@@ -68,7 +68,7 @@ impl KFileMapper for MapperType {
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp> {
         expand_mt_branch!(self.query_kfile_meta(req))
     }
-    
+
     async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp> {
         expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
     }
