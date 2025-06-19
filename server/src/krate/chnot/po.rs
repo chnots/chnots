@@ -52,20 +52,19 @@ pub(crate) struct ChnotMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
 pub(crate) struct ChnotTag {
     #[gts_primary]
+    #[gts_length = 800]
+    pub(crate) tag: String,
+    #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub(crate) meta_tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
 
     #[gts_length = 40]
     pub(crate) kspace: String,
-    #[gts_length = 800]
-    pub(crate) tag: String,
-    #[gts_type = "i32"]
-    pub(crate) category: ChnotTagType,
     #[gts_type = "i64"]
-    pub(crate) meta_tid: TID,
+    pub(crate) tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]

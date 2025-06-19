@@ -4,33 +4,23 @@ import { ChnotRecord, ChnotMetadata, ChnotTag, ChnotKind, ChnotKindRel } from ".
 export type Chnot = {
   record: ChnotRecord;
   meta: ChnotMetadata;
-};                     
-
-export type ChnotTagTreeType = {
-  kind: "tagtree";
-  tagkind: "children" | "descendants";
-  tagpath: string;
 };
-export type ChnotViewType = { kind: "timeline" } | ChnotTagTreeType;
-export const listViewTypeGetTagPath = (lvt: ChnotViewType) => {
-  if (lvt.kind === "tagtree") {
-    return lvt.tagpath;
-  } else {
-    return undefined;
-  }
+
+export type ChnotTagSearchType = {
+  Inset: string[];
 };
 
 export type ChnotQueryReq = {
   query?: string;
   meta_tid?: TID;
   record_tid?: TID;
-  view_type: ChnotViewType;
+  tags?: ChnotTagSearchType;
   kinds: ChnotKind[];
   with_omitted?: boolean;
   with_archive?: boolean;
   start_index: number;
   page_size: number;
-};                       
+};
 
 export type ChnotQueryRsp = {
   next_start: number;
@@ -44,26 +34,26 @@ export type ChnotOverwriteReq = {
   content: string;
   kind: ChnotKind;
   kind_id?: string;
-};                     
+};
 
 export type ChnotOverwriteRsp = {
   meta_tid: TID;
   rec_tid: TID;
   kspace: string;
   archor: boolean;
-};                       
+};
 
 export type ChnotDeletionReq = {
   meta_tid: TID;
   logic: boolean;
-};                     
+};
 
 export type ChnotUpdateReq = {
   meta_tid: TID;
   kspace?: string;
   pinned?: boolean;
   archive?: boolean;
-};                       
+};
 
 export type ChnotCommentAddReq = {
   tid: TID;
@@ -74,10 +64,10 @@ export type ChnotCommentAddReq = {
 
 export type ChnotTagQueryReq = {
   query?: string;
-  tag_tree: ChnotTagTreeType;
+  tags?: ChnotTagSearchType;
   start_index: number;
   page_size: number;
-};                     
+};
 
 export type ChnotKFileRelationInsert = {
   chnot_meta_id: TID;
@@ -109,19 +99,19 @@ export type ToentGuessRsp = {
   toents: Toent[];
 };
 
-export type ChnotUpdateRsp = object;                      
+export type ChnotUpdateRsp = object;
 
-export type ChnotDeletionRsp = object;                     
+export type ChnotDeletionRsp = object;
 
 export type ChnotTagUpdateReq = {
   content: string;
   meta_tid: TID;
   kspace: string;
-};                       
+};
 
 export type ChnotKindRelQueryRsp = {
   kind_rel: ChnotKindRel;
-};            
+};
 export type ChnotKindRelQueryReq = {
   meta_tid: TID;
-};           
+};            

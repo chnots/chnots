@@ -268,7 +268,7 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
     useShallow((store) => {
       return {
         overwriteChnot: store.appendChnot,
-        listViewType: store.listViewType,
+        listViewType: store.tags,
       };
     })
   );
@@ -386,7 +386,6 @@ const ChnotBody = ({
       };
     });
 
-
   return (
     <div
       className="h-full w-full flex justify-center overflow-auto content-centere"
@@ -395,7 +394,9 @@ const ChnotBody = ({
       {chnotKind === ChnotKind.MarkdownWithToent ? (
         readonly && initialContent ? (
           <div className="p-2 overflow-y-auto w-full">
-            <MarkdownViewer content={initialContent.replace("\n", "  \n") ?? ""} />
+            <MarkdownViewer
+              content={initialContent.replace("\n", "  \n") ?? ""}
+            />
           </div>
         ) : (
           <div
@@ -421,7 +422,7 @@ const ChnotBody = ({
           metaTid={metaTid}
           chnotKind={chnotKind}
           commonText={() => ""}
-          onInitRel={function(content: string, kind_id: string): void {
+          onInitRel={function (content: string, kind_id: string): void {
             if (!metaTid) {
               onSetContent(content);
             }
@@ -449,9 +450,6 @@ const ChnotEditor = ({ className }: { className?: string }) => {
   useEffect(() => {
     if (metaTid) {
       chnotQuery({
-        view_type: {
-          kind: "timeline",
-        },
         kinds: [],
         start_index: 0,
         page_size: 1,
@@ -461,14 +459,19 @@ const ChnotEditor = ({ className }: { className?: string }) => {
           const chnot = rsp.data.at(0);
           setContent(chnot?.record.content);
         })
-        .finally(() => { });
+        .finally(() => {});
     }
   }, []);
 
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
       <ChnotTopbar initialContent={content ?? ""} />
-      <ChnotBodyMemo readonly={readonly} kind={kind} metaTid={metaTid} initialContent={content} />
+      <ChnotBodyMemo
+        readonly={readonly}
+        kind={kind}
+        metaTid={metaTid}
+        initialContent={content}
+      />
     </div>
   );
 };

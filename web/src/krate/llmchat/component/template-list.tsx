@@ -23,20 +23,19 @@ const LLMChatTemplateList = ({
   onChangeEditTemplate: (template: LLMChatTemplate) => void;
 }) => {
   const isMobile = useIsMobile();
-  const { listTemplates, refreshTemplates } = useLLMChatStore();
-  const selectedTemplate = useRef<LLMChatTemplate>(undefined);
+  const { listTemplates } = useLLMChatStore();
 
   const items = listTemplates();
   const className =
     " p-2 flex space-x-2 text-black w-auto align-mie justify-center rounded-md";
 
   return (
-    <>
+    <div className="w-full h-full items-center justify-center flex">
       <div className="flex flex-row flex-wrap p-3 m-3 text-sm space-x-2 max-w-3xl align-middle items-center">
         <DialogTrigger>
           <Button
             className={clsx(className, "bg-blue-50 hover:cursor-pointer")}
-            onClick={(e) =>
+            onClick={() =>
               onChangeEditTemplate({
                 tid: genTID(),
                 name: "",
@@ -90,7 +89,7 @@ const LLMChatTemplateList = ({
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 };
 

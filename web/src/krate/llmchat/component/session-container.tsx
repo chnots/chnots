@@ -26,7 +26,11 @@ import {
 import RecordUser from "./record-user";
 import RecordAssistant from "./record-assistant";
 import LLMChatSessionInput from "./session-input";
-import { Dialog, DialogClose, DialogContent } from "@/common/component/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+} from "@/common/component/ui/dialog";
 import TemplateForm from "./template-form";
 import { genTID, TID } from "@/lib/id_util";
 import { DialogTitle } from "@radix-ui/react-dialog";
@@ -207,7 +211,6 @@ const SessionContainer = ({
     scrollToEnd("smooth");
   });
 
-
   return (
     <div className="flex flex-col h-full max-h-full overflow-hidden rounded-md shadow">
       <div
@@ -268,14 +271,14 @@ const SessionContainer = ({
           </div>
         ) : (
           <Dialog>
-            <LLMChatTemplateList
-              onClickTemplate={(template) => {
-                newTemplateSession(template);
-              }}
-              onChangeEditTemplate={(template: LLMChatTemplate) => {
-                setEditTemplate(template);
-              }}
-            />
+              <LLMChatTemplateList
+                onClickTemplate={(template) => {
+                  newTemplateSession(template);
+                }}
+                onChangeEditTemplate={(template: LLMChatTemplate) => {
+                  setEditTemplate(template);
+                }}
+              />
             <DialogContent aria-describedby={undefined}>
               <DialogTitle>Edit Template</DialogTitle>
               <TemplateForm

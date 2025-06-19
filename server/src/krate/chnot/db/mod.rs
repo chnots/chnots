@@ -2,17 +2,15 @@ pub(crate) mod inner;
 
 use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
-use crate::magics::KImplWrapper;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
-use crate::model::omit_tid::OmitTID;
+use crate::model::omit_tid::{self, OmitTID};
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
-use chin_sql::time_type::TID;
-use chin_sql::{ILikeType, SqlBuilder, SqlValue};
+use chin_sql::{ILikeType, SegOrVal, SqlBuilder, SqlValue};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
@@ -20,7 +18,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use tracing::info;
 
-const UNTAGGED_TAG: &str = "#_untagged";
+const UNTAGGED_TAG: &str = "<NON>";
 
 #[inline]
 fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
@@ -28,6 +26,40 @@ fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
     .sov("SELECT r.tid as rec_tid, r.content, r.omit_tid as rec_omit_tid, r.archor,")
     .sov("m.tid as meta_tid, m.kspace, m.kind, m.pin_time, m.omit_tid as meta_omit_tid, m.archive_time")
     .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_tid = m.tid")
+}
+
+impl ChnotTag {
+    fn with_those_tag_meta_tids<'a>(
+        kspaces: Vec<&'a str>,
+        omit_tid: OmitTID,
+        tags: Option<&ChnotTagSearchType>,
+    ) -> SqlBuilder<'a> {
+        let v = vec![];
+        let tags = match tags {
+            Some(tags) => match tags {
+                ChnotTagSearchType::Inset(items) => items,
+            },
+            None => &v,
+        };
+        let len = if !tags.is_empty() {
+            Some(tags.len())
+        } else {
+            None
+        };
+        SqlBuilder::read(ChnotTag::TABLE, &[ChnotTag::META_TID])
+            .r#where(Wheres::and([
+                Wheres::r#in(ChnotTag::KSPACE, kspaces),
+                Wheres::equal(ChnotTag::OMIT_TID, omit_tid),
+                Wheres::if_some(len, |_| Wheres::r#in(ChnotTag::TAG, tags.to_vec())),
+            ]))
+            .sov("group by")
+            .sov(ChnotTag::META_TID)
+            .some_then(len, |l, sb| {
+                sb.sov("having")
+                    .sov(format!("COUNT(DISTINCT {}) = ", ChnotTag::TAG))
+                    .sov(SegOrVal::val(l as i64))
+            })
+    }
 }
 
 #[inline]
@@ -62,65 +94,32 @@ impl KDb {
         F: Fn(KDbRow) -> AResult<T> + Send + 'static,
         T: Serialize + Clone + Send + 'static + AsRef<str>,
     {
-        let ChnotTagQueryReq {
-            query,
-            page_size,
-            start_index,
-            tag_tree,
-        } = req.body;
-        let ns = req.kspace;
+        let field = if name_only { "distinct tag" } else { "*" };
 
-        let level = |s: &str| {
-            if s.is_empty() {
-                return -1;
-            }
-            s.char_indices().filter(|(_, c)| *c == '/').count() as i32
-        };
-        let query_type1 = tag_tree.clone();
+        let sql = SqlBuilder::new()
+            .sov("WITH qualified_tids AS (")
+            .merge(ChnotTag::with_those_tag_meta_tids(
+                req.get_spaces(),
+                OmitTID::never(),
+                req.tags.as_ref(),
+            ))
+            .sov(")")
+            .merge(
+                SqlBuilder::read(ChnotTag::TABLE, &[field])
+                    .sov("as t")
+                    .sov("right join qualified_tids q on t.meta_tid = q.meta_tid")
+                    .r#where(Wheres::and([
+                        Wheres::r#in(ChnotTag::KSPACE, req.get_spaces()),
+                        Wheres::equal(ChnotTag::OMIT_TID, OmitTID::never()),
+                    ]))
+                    .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index)),
+            );
+        let data = self.conn().await?.qry_list(sql, mapper).await?;
 
-        let origin_count = level(query_type1.path());
-        info!("original count: {}", origin_count);
-        let sr = if name_only {
-            SqlBuilder::read(ChnotTag::TABLE, &["distinct tag"])
-        } else {
-            SqlBuilder::read_all(ChnotTag::TABLE)
-        };
-
-        let query = sr
-            .r#where(Wheres::and([
-                Wheres::ilike(
-                    "tag",
-                    {
-                        let mut tag_str = String::new();
-                        let prefix = tag_tree.path();
-                        if !prefix.is_empty() {
-                            tag_str.push_str(prefix);
-                            tag_str.push('/');
-                        }
-                        tag_str.push('%');
-                        if let Some(fuzzy) = query {
-                            tag_str.push_str(&fuzzy);
-                            tag_str.push('%');
-                        }
-
-                        tag_str
-                    },
-                    chin_sql::ILikeType::Original,
-                ),
-                Wheres::equal("kspace", ns),
-            ]))
-            .sov("order by tag asc")
-            .custom(LimitOffset::new(page_size).offset(start_index));
-
-        let mut data = self.conn().await?.qry_list(query, mapper).await?;
-
-        if let ChnotTagTreeType::Children(prefix) = query_type1 {
-            data.retain(|tag| {
-                tag.as_ref().starts_with(&prefix) && level(tag.as_ref()) == origin_count + 1
-            });
-        }
-
-        Ok(ChnotTagQueryRsp { data, start_index })
+        Ok(ChnotTagQueryRsp {
+            data,
+            start_index: req.start_index,
+        })
     }
 }
 
@@ -162,44 +161,18 @@ impl ChnotMapper for KDb {
         let chnot_sql = SqlBuilder::new()
             .sov("select * from ")
             .sub("t", chnot_query_sql())
-            .some_then(
-                match &req.view_type {
-                    ChnotViewType::Timeline => None,
-                    ChnotViewType::TagTree(chnot_view_tag_tree) => {
-                        if chnot_view_tag_tree.is_empty() {
-                            None
-                        } else {
-                            Some(chnot_view_tag_tree)
-                        }
-                    }
-                },
-                |tag, sr| {
-                    sr.sov("inner join")
-                        .sub(
-                            "ct",
-                            SqlBuilder::read_all(ChnotTag::TABLE).r#where(Wheres::and([
-                                Wheres::equal(ChnotTag::KSPACE, req.kspace.to_owned()),
-                                match tag {
-                                    ChnotTagTreeType::Children(path) => Wheres::and([
-                                        Wheres::equal(
-                                            ChnotTag::TAG,
-                                            if path.starts_with("#") {
-                                                path
-                                            } else {
-                                                UNTAGGED_TAG
-                                            },
-                                        ),
-                                        Wheres::equal(ChnotTag::CATEGORY, ChnotTagType::Dir),
-                                    ]),
-                                    ChnotTagTreeType::Descendants(path) => {
-                                        Wheres::ilike(ChnotTag::TAG, path, ILikeType::RightFuzzy)
-                                    }
-                                },
-                            ])),
-                        )
-                        .sov("on t.meta_tid = ct.meta_tid")
-                },
-            )
+            .some_then(req.tags.as_ref(), |tag, sr| {
+                sr.sov("inner join")
+                    .sub(
+                        "ct",
+                        ChnotTag::with_those_tag_meta_tids(
+                            req.get_spaces(),
+                            OmitTID::never(),
+                            Some(tag),
+                        ),
+                    )
+                    .sov("on t.meta_tid = ct.meta_tid")
+            })
             .r#where(Wheres::and([
                 // default without omit chnot record
                 // TODO: group by perm tid
@@ -310,23 +283,49 @@ impl ChnotMapper for KDb {
         &self,
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>> {
+        info!("{:#?}", req);
+        let remove_params = req.remove_params.default_true();
+        let input_tag = req.body.tags.as_ref().map_or(vec![], |c| match c {
+            ChnotTagSearchType::Inset(items) => items.to_vec(),
+        });
         let mut result: ChnotTagQueryRsp<String> = self
             .chnot_tag_query_inner(req, |e| e.try_get(ChnotTag::TAG), true)
             .await?;
 
-        result.data = result.data.into_iter().unique().collect();
+        result.data = result
+            .data
+            .into_iter()
+            .unique()
+            .filter(|e| {
+                if remove_params {
+                    !input_tag.contains(e)
+                } else {
+                    true
+                }
+            })
+            .collect();
 
         Ok(result)
     }
 
     async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
-        let get_all = SqlBuilder::new()
-            .sov("select r.content, m.tid as meta_id from ")
-            .sov(ChnotRecord::TABLE)
-            .sov(" as r left join")
-            .sov(ChnotMetadata::TABLE)
-            .sov(" as m on r.meta_id = m.tid where r.omit_time is null and kspace = ")
-            .sov(SqlValue::Str(kspace.into()));
+        let get_all = SqlBuilder::read(
+            ChnotRecord::TABLE,
+            &[ChnotRecord::CONTENT, ChnotRecord::META_TID],
+        )
+        .r#where(Wheres::and([
+            Wheres::equal(ChnotRecord::OMIT_TID, OmitTID::never()),
+            Wheres::compare_str(
+                ChnotRecord::META_TID,
+                "in",
+                format!(
+                    "(select {} from {} where kspace = '{}')",
+                    ChnotMetadata::TID,
+                    ChnotMetadata::TABLE,
+                    kspace.replace("'", "<quote>")
+                ),
+            ),
+        ]));
 
         let kspace = kspace.to_owned();
         let mut conn = self.conn().await?;
@@ -334,7 +333,7 @@ impl ChnotMapper for KDb {
             .qry_list(get_all, move |e| {
                 Ok(ChnotTagUpdateReq {
                     content: e.try_get(ChnotRecord::CONTENT)?,
-                    meta_tid: e.try_get("meta_id")?,
+                    meta_tid: e.try_get(ChnotRecord::META_TID)?,
                     kspace: kspace.to_owned(),
                 })
             })
@@ -344,14 +343,9 @@ impl ChnotMapper for KDb {
         for one in chnots {
             tx.chnot_tag_update_single_chnot(one).await?;
         }
+        tx.cmt().await?;
 
         Ok(())
-    }
-
-    async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<TID>) -> EResult {
-        let mut conn = self.conn().await?;
-        let wrapper = KImplWrapper(conn.transaction().await?);
-        wrapper.chnot_tag_delete(chnot_meta_ids).await
     }
 
     async fn chnot_query_kind_rel(
@@ -400,7 +394,6 @@ impl ChnotDeserializeMapper for KDbRow {
             kspace: self.try_get(ChnotTag::KSPACE)?,
             tag: self.try_get(ChnotTag::TAG)?,
             meta_tid: self.try_get(ChnotTag::META_TID)?,
-            category: ChnotTagType::Common,
             omit_tid: self.try_get(ChnotTag::OMIT_TID)?,
         };
         Ok(obj)

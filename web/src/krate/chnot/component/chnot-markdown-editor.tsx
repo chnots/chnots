@@ -15,7 +15,6 @@ const chnotCompletions = async (
         query: word.text,
         start_index: 0,
         page_size: 20,
-        tag_tree: { kind: "tagtree", tagkind: "descendants", tagpath: "" },
       })
     ).data.map((name) => {
       return { label: name, type: "hashtag" };

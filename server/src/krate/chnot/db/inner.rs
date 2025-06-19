@@ -6,7 +6,7 @@ use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use chin_sql::time_type::TID;
 use chin_sql::{SqlBuilder, SqlUpdater};
-use chin_sql::{SqlDeleter, Wheres};
+use chin_sql::Wheres;
 use chin_tools::AResult;
 
 use chrono::TimeDelta;
@@ -43,12 +43,6 @@ fn to_old_info(row: KDbRow) -> AResult<OldInfo> {
 // implementation of std::marker::Send is not general enough will be raised.
 // Waiting for https://github.com/rust-lang/rust/issues/110338
 impl<'a> KDbExecutor<'a> {
-    async fn chnot_tag_insert(&self, req: ChnotTag) -> EResult {
-        self.exec(req.to_sql_inserter()).await?;
-
-        Ok(())
-    }
-
     async fn chnot_record_insert(&self, req: ChnotRecord) -> EResult {
         self.exec(req.to_sql_inserter()).await?;
 
@@ -63,76 +57,45 @@ impl<'a> KDbExecutor<'a> {
 }
 
 impl<'a> KDbTx<'a> {
-    pub(super) async fn chnot_tag_delete(&self, chnot_meta_ids: Vec<TID>) -> EResult {
-        for e in chnot_meta_ids {
-            self.exec(
-                SqlDeleter::new(ChnotTag::TABLE).r#where(Wheres::equal(ChnotTag::META_TID, e)),
-            )
-            .await?;
-        }
-
-        Ok(())
-    }
-
     pub(super) async fn chnot_tag_update_single_chnot(&self, req: ChnotTagUpdateReq) -> EResult {
         let ChnotTagUpdateReq {
             content,
-            meta_tid: meta_id,
+            meta_tid,
             kspace,
         } = req;
-        self.chnot_tag_delete(vec![meta_id]).await?;
 
-        let tags = get_hashtags(&content);
-        let parent_tags: Vec<&str> = tags
-            .iter()
-            .flat_map(|tag| {
-                let mut more = vec![];
-                for (size, c) in tag.char_indices() {
-                    if c == '/' {
-                        more.push(&tag[..size]);
-                    }
-                }
-                more
-            })
-            .unique()
-            .collect();
-
+        let mut tags = get_hashtags(&content);
+        self.exec(
+            SqlUpdater::new(ChnotTag::TABLE)
+                .set(ChnotTag::OMIT_TID, OmitTID::now())
+                .r#where(Wheres::and([
+                    Wheres::equal(ChnotTag::META_TID, meta_tid),
+                    if tags.is_empty() {
+                        Wheres::None
+                    } else {
+                        Wheres::not(Wheres::r#in(ChnotTag::TAG, tags.clone()))
+                    },
+                ])),
+        )
+        .await?;
         let executor = KDbExecutor::Tx(self);
-        if parent_tags.is_empty() {
-            executor
-                .chnot_tag_insert(ChnotTag {
-                    tid: TID::default(),
-                    kspace: kspace.to_owned(),
-                    tag: UNTAGGED_TAG.to_owned(),
-                    meta_tid: meta_id,
-                    category: ChnotTagType::Dir,
-                    omit_tid: OmitTID::never(),
-                })
-                .await?;
-        }
-        for tag in parent_tags {
-            executor
-                .chnot_tag_insert(ChnotTag {
-                    tid: TID::default(),
-                    kspace: kspace.to_owned(),
-                    tag: tag.to_owned(),
-                    meta_tid: meta_id,
-                    category: ChnotTagType::ParentDir,
-                    omit_tid: OmitTID::never(),
-                })
-                .await?;
+        if tags.is_empty() {
+            tags.push(UNTAGGED_TAG);
         }
 
         for tag in tags {
             executor
-                .chnot_tag_insert(ChnotTag {
-                    tid: TID::default(),
-                    kspace: kspace.to_owned(),
-                    tag: tag.to_owned(),
-                    meta_tid: meta_id,
-                    category: ChnotTagType::Dir,
-                    omit_tid: OmitTID::never(),
-                })
+                .exec(
+                    ChnotTag {
+                        tid: TID::default(),
+                        kspace: kspace.to_owned(),
+                        tag: tag.to_owned(),
+                        meta_tid,
+                        omit_tid: OmitTID::never(),
+                    }
+                    .to_sql_inserter()
+                    .on_conflict(chin_sql::OnConflict::Ignore),
+                )
                 .await?;
         }
 
@@ -190,20 +153,11 @@ impl<'a> KDbTx<'a> {
                     archor,
                 };
 
-                if archor {
-                    let update_rec = |tid| {
-                        SqlUpdater::new(ChnotRecord::TABLE)
-                            .set(ChnotRecord::CONTENT, &req.content)
-                            .r#where(Wheres::equal(ChnotRecord::META_TID, tid))
-                    };
-                    self.exec_and_check(update_rec(old_id), |c| c == 1).await?;
-                } else {
-                    let update_omit = SqlUpdater::new(ChnotRecord::TABLE)
-                        .set(ChnotRecord::OMIT_TID, OmitTID::now())
-                        .r#where(Wheres::equal(ChnotRecord::META_TID, meta_tid));
-                    self.exec(update_omit).await?;
-                    self.as_executor().chnot_record_insert(rec).await?;
-                }
+                let update_omit = SqlUpdater::new(ChnotRecord::TABLE)
+                    .set(ChnotRecord::OMIT_TID, OmitTID::now())
+                    .r#where(Wheres::equal(ChnotRecord::META_TID, meta_tid));
+                self.exec(update_omit).await?;
+                self.as_executor().chnot_record_insert(rec).await?;
             }
             MetaId::New(meta_tid) => {
                 archor = true;

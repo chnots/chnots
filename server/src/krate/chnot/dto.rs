@@ -1,5 +1,5 @@
 use chin_sql::time_type::TID;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
@@ -46,62 +46,9 @@ pub(crate) struct ChnotDeletionReq {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotDeletionRsp {}
 
-#[derive(Debug, Clone, Serialize)]
-pub(crate) enum ChnotTagTreeType {
-    Children(String),
-    Descendants(String),
-}
-
-impl ChnotTagTreeType {
-    pub(crate) fn is_empty(&self) -> bool {
-        match self {
-            ChnotTagTreeType::Children(prefix) => prefix.is_empty(),
-            ChnotTagTreeType::Descendants(prefix) => prefix.is_empty(),
-        }
-    }
-
-    pub(crate) fn path(&self) -> &str {
-        match self {
-            ChnotTagTreeType::Children(prefix) => prefix,
-            ChnotTagTreeType::Descendants(prefix) => prefix,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub(crate) enum ChnotViewType {
-    Timeline,
-    TagTree(ChnotTagTreeType),
-}
-
-impl<'a> Deserialize<'a> for ChnotViewType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'a>,
-    {
-        #[derive(Deserialize)]
-        #[allow(clippy::upper_case_acronyms)]
-        struct LVT {
-            kind: String,
-            tagkind: Option<String>,
-            tagpath: Option<String>,
-        }
-        let deser = LVT::deserialize(deserializer)?;
-
-        match deser.kind.as_str() {
-            "tagtree" => match deser.tagkind.as_deref() {
-                Some("children") => Ok(Self::TagTree(ChnotTagTreeType::Children(
-                    deser.tagpath.unwrap(),
-                ))),
-                Some("descendants") => Ok(Self::TagTree(ChnotTagTreeType::Descendants(
-                    deser.tagpath.unwrap(),
-                ))),
-                _ => Err(de::Error::custom("unknown tag type")),
-            },
-            "timeline" => Ok(Self::Timeline),
-            _ => Err(de::Error::custom("unknown type")),
-        }
-    }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) enum ChnotTagSearchType {
+    Inset(Vec<String>)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,7 +57,7 @@ pub(crate) struct ChnotQueryReq {
     pub(crate) meta_tid: Option<TID>,
     pub(crate) record_tid: Option<TID>,
 
-    pub(crate) view_type: ChnotViewType,
+    pub(crate) tags: Option<ChnotTagSearchType>,
     pub(crate) kinds: Vec<ChnotKind>,
 
     pub(crate) with_omitted: Option<bool>,
@@ -128,23 +75,12 @@ pub(crate) struct ChnotQueryRsp<T> {
     pub(crate) next_start: usize,
 }
 
-impl<'a> Deserialize<'a> for ChnotTagTreeType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'a>,
-    {
-        let des = ChnotViewType::deserialize(deserializer)?;
-        match des {
-            ChnotViewType::Timeline => Err(de::Error::custom("unable map  to TagTree")),
-            ChnotViewType::TagTree(chnot_tag_tree_type) => Ok(chnot_tag_tree_type),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotTagQueryReq {
     pub(crate) query: Option<String>,
-    pub(crate) tag_tree: ChnotTagTreeType,
+    pub(crate) tags: Option<ChnotTagSearchType>,
+    pub(crate) remove_params: Option<bool>,
 
     // Paging
     pub(crate) start_index: usize,

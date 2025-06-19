@@ -9,14 +9,17 @@ use postgres_types::{accepts, FromSql, Type};
 pub(crate) struct OmitTID(TID);
 
 impl OmitTID {
+    #[inline]
     pub fn omitted(&self) -> bool {
         !self.0.is_never()
     }
 
+    #[inline]
     pub fn never() -> Self {
         Self(TID::never())
     }
 
+    #[inline]
     pub fn now() -> Self {
         Self(TID::default())
     }

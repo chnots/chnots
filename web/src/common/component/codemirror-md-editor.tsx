@@ -146,7 +146,7 @@ const CodeMirrorEditor = ({
   const tagDeco = Decoration.mark({ class: "hashtag" });
   const highlightDeco = Decoration.mark({ class: "highlight" });
   const decorator = new MatchDecorator({
-    regexp: /(@\w+)|(::.*?::)|(#[^ #[\]]+)/g,
+    regexp: /(@\w+)|(::.*?::)|(\s#[^\s#[\]]+)/g,
     decoration: (m) => (m[1] ? mentionDeco : m[2] ? highlightDeco : tagDeco),
   });
 

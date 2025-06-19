@@ -21,71 +21,36 @@ import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
 import { useShallow } from "zustand/react/shallow";
+import { toast } from "sonner";
 
-const TagPath = () => {
-  const { setListViewType, listViewType } = useChnotStore(
+const TagsView = () => {
+  const { setTagsInset, tags } = useChnotStore(
     useShallow((store) => {
       return {
-        setListViewType: store.setListViewType,
-        listViewType: store.listViewType,
+        setTagsInset: store.setTagsInset,
+        tags: store.tags,
       };
     })
   );
-  if (listViewType.kind !== "tagtree") {
-    return <></>;
-  }
-
-  const { tagkind, tagpath } = listViewType;
-  const parts = tagpath.length > 0 ? tagpath.split("/") : [];
-
-  const segments: string[] = [];
-  if (parts.length > 0) {
-    segments.push(parts[0]);
-    for (let i = 1; i < parts.length; i++) {
-      segments.push(`${segments[i - 1]}/${parts[i]}`);
-    }
-    parts[0] = parts[0].replace(RegExp("#"), "");
-  }
 
   return (
-    <div className="w-full flex flex-row space-x-1 items-center">
-      <Toggle
-        className="py-1 px-2"
-        onClick={() => {
-          if (tagkind === "children") {
-            setListViewType({ ...listViewType, tagkind: "descendants" });
-          } else {
-            setListViewType({ ...listViewType, tagkind: "children" });
-          }
-        }}
-      >
-        <Icon.Flag />
-      </Toggle>
-      <Button
-        className="p-1"
-        key={"#root"}
-        variant={"link"}
-        onClick={() => {
-          setListViewType({ ...listViewType, tagpath: "" });
-        }}
-      >
-        #
-      </Button>
-      {parts.map((layer, index) => {
-        return (
+    <div className="w-full flex-row space-x-1 items-center inline">
+      {tags ? (
+        tags.Inset.map((tag) => (
           <Button
-            className="p-1"
-            variant={"link"}
-            key={segments[index]}
+            key={tag}
             onClick={() => {
-              setListViewType({ ...listViewType, tagpath: segments[index] });
+              setTagsInset([
+                ...new Set([...tags.Inset.filter((e) => e != tag)]),
+              ]);
             }}
           >
-            <span>{layer}</span>
-            <span>/</span>
+            {tag}
           </Button>
-        );
-      })}
+        ))
+      ) : (
+        <div />
+      )}
     </div>
   );
 };
@@ -97,9 +62,11 @@ const ChnotSidebar = () => {
     isFetchingNextPage,
     chnotMapByMetaId,
     changeKeyword,
-    listViewType,
-    setListViewType,
+    tags,
+    setTagsInset,
+    setTags,
   } = useChnotStore();
+  console.log("tag", tags);
 
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
@@ -115,18 +82,21 @@ const ChnotSidebar = () => {
   }, [keyword]);
 
   useEffect(() => {
-    if (listViewType.kind === "tagtree") {
+    if (tags) {
       chnotTagNames({
         start_index: 0,
         page_size: 9999,
-        tag_tree: listViewType,
+        tags,
         query: keyword,
       }).then((rsp) => {
         setTagList(rsp.data);
       });
+    } else {
+      setTagList(undefined);
     }
     refreshChnots();
-  }, [listViewType, keyword, mkspaces, currentKSpace]);
+  }, [tags, keyword, mkspaces, currentKSpace]);
+  console.log("tagList", tagList);
 
   return (
     <Sidebar>
@@ -143,21 +113,18 @@ const ChnotSidebar = () => {
           <Toggle
             size={"sm"}
             onClick={() => {
-              if (listViewType.kind !== "timeline") {
-                setListViewType({ kind: "timeline" });
+              console.log("set tags", tags);
+              if (tags) {
+                setTags(undefined);
               } else {
-                setListViewType({
-                  kind: "tagtree",
-                  tagkind: "children",
-                  tagpath: "",
-                });
+                setTagsInset([]);
               }
             }}
           >
-            <Icon.Folder />
+            <Icon.Hash />
           </Toggle>
         </div>
-        <TagPath />
+        <TagsView />
         <form>
           <SidebarGroup className="py-0">
             <SidebarGroupContent className="relative">
@@ -175,19 +142,19 @@ const ChnotSidebar = () => {
           </SidebarGroup>
         </form>
       </SidebarHeader>
-      <SidebarSeparator className="mx-0"/>
+      <SidebarSeparator className="mx-0" />
       <SidebarContent>
         <div className="overflow-auto h-full overflow-x-hidden overflow-y-auto">
-          {tagList && listViewType.kind === "tagtree" && (
-            <ul className="m-0 grid gap-2 pt-2 pr-1 pb-1 pl-2">
-              {tagList.map((tagpath) => (
+          {tagList && (
+            <ul className="m-0 gap-2 pt-2 pr-1 pb-1 pl-2">
+              {tagList.map((tagName) => (
                 <ChnotSidebarTagItem
-                  key={tagpath}
-                  tag={tagpath}
+                  key={tagName}
+                  tag={tagName}
                   onClick={() => {
-                    if (listViewType.kind === "tagtree") {
-                      setListViewType({ ...listViewType, tagpath });
-                    }
+                    setTagsInset([
+                      ...new Set([...(tags?.Inset ?? []), tagName]),
+                    ]);
                   }}
                 />
               ))}

@@ -6,36 +6,36 @@ export type KKVType = object;
 export type KKVQueryOneReq = {
   key: string;
   kind: KKVType;
-};            
+};             
 
 export type KKVQueryManyReq = {
   key?: string;
   kind?: KKVType;
   kspace?: SharedStr;
-};              
+};               
 
 export type KKVQueryOneRsp = {
   value?: string;
-};            
+};             
 
 export type KKVQueryManyRsp = {
   kkvs: KKV[];
-};              
+};               
 
 export type KKVOverwriteReq = {
   key: string;
   kind: KKVType;
   value: string;
-};            
+};             
 
-export type KKVOverwriteRsp = object;              
+export type KKVOverwriteRsp = object;               
 
 export type KKVDeleteReq = {
   key: string;
   kind: string;
-};            
+};             
 
-export type KKVDeleteRsp = object;              
+export type KKVDeleteRsp = object;               
 
 export type KKVInserterReq = {
   key: string;

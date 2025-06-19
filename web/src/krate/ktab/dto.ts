@@ -7,15 +7,15 @@ export type KTabOverwriteMetaReq = {
   meta: KTabMeta;
 };
 
-export type KTabMetaOverwriteRsp = object;                     
+export type KTabMetaOverwriteRsp = object;                      
 
 export type KTabMetaQueryReq = {
   table_id: TID;
-};                      
+};                       
 
 export type KTabMetaQueryRsp = {
   meta?: KTabMeta;
-};                      
+};                       
 
 export type KTabViewTypeName = "string" | "date" | "demical";
 
@@ -64,7 +64,7 @@ export type KTabStoreCell = {
 export type KTabCellsOverwriteReq = {
   table_id: TID;
   cells: KTabViewCell[];
-};                      
+};                       
 
 export type KTabRowsQueryReqFilter =
   | {
@@ -90,28 +90,28 @@ export type KTabRowsQueryReqFilter =
 export type KTabRowsQueryReq = {
   table_id: TID;
   filter: KTabRowsQueryReqFilter;
-};                      
+};                       
 
 export type KTabRowsQueryRsp = {
   rows: KTabRowsQueryRspRow[];
-};                      
+};                       
 
 export type KTabMetaOverwriteReq = {
   meta: KTabMeta;
-};                      
+};                       
 
-export type KTabCellsOverwriteRsp = object;                     
+export type KTabCellsOverwriteRsp = object;                      
 
 export type KTabRowsQueryRspRow = {
   row_idx: TID;
   cells: KTabViewCell[];
-};                      
+};                       
 
 export type KTabViewCell = {
   row_idx: TID;
   column_name: string;
   value: KTabStoreValue;
-};                      
+};                       
 
 export type KTabCell = {
   tid: TID;
@@ -120,4 +120,4 @@ export type KTabCell = {
   row_idx: TID;
   omit_tid?: OmitTID;
   cell_data: KTabStoreValue;
-};                     
+};                      

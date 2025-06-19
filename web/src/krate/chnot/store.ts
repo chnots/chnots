@@ -6,7 +6,7 @@ import {
   ChnotQueryRsp,
   ChnotOverwriteReq,
   ChnotOverwriteRsp,
-  ChnotViewType,
+  ChnotTagSearchType,
 } from "./dto";
 import { chnotOverwrite, chnotQuery } from "./service";
 import { TID } from "@/lib/id_util";
@@ -30,7 +30,7 @@ const getDefaultState = (): State => {
     chnotMapByMetaId: newChnotMap(),
     query: undefined,
     isFetchingNextPage: false,
-    listViewType: { kind: "timeline" },
+    tags: undefined,
   };
 };
 
@@ -52,7 +52,7 @@ interface State {
    * Current Query Input
    */
   query?: string;
-  listViewType: ChnotViewType;
+  tags?: ChnotTagSearchType;
   isFetchingNextPage: boolean;
 }
 
@@ -71,12 +71,12 @@ export const useChnotStore = create(
         };
       });
 
-      const { chnotMapByMetaId, query, listViewType } = get();
+      const { chnotMapByMetaId, query, tags } = get();
       const cs: ChnotQueryRsp = await chnotQuery({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
-        view_type: listViewType,
+        tags,
         kinds: [],
       });
 
@@ -178,11 +178,19 @@ export const useChnotStore = create(
         };
       });
     },
-    setListViewType: (newType: ChnotViewType) => {
+    setTagsInset: (newType: string[]) => {
       set((prev) => {
         return {
           ...prev,
-          listViewType: newType,
+          tags: { Inset: newType },
+        };
+      });
+    },
+    setTags: (newTags?: ChnotTagSearchType) => {
+      set((prev) => {
+        return {
+          ...prev,
+          tags: newTags,
         };
       });
     },

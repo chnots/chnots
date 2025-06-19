@@ -14,6 +14,19 @@ pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {
     pub(crate) mkspaces: Vec<String>,
 }
 
+impl<E: Debug + Clone + DeserializeOwned> KReq<E> {
+    pub fn get_spaces(&self) -> Vec<&str> {
+        let mut c: Vec<&str> = self
+            .mkspaces
+            .iter()
+            .filter(|e| !e.is_empty())
+            .map(|e| e.as_str())
+            .collect();
+        c.push(&self.kspace);
+        c
+    }
+}
+
 pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> String {
     headers
         .get("K-kspace")
@@ -28,6 +41,7 @@ pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body
         .unwrap_or("")
         .split(",")
         .map(|e| e.trim().to_owned())
+        .filter(|s| !s.is_empty())
         .collect();
 
     KReq {

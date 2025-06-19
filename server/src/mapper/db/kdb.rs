@@ -5,6 +5,7 @@ use chin_sql::{
 };
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
+use log::info;
 use postgres_types::FromSql;
 use tokio_postgres::Row;
 

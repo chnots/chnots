@@ -40,12 +40,6 @@ export const chnotTagNames = async (
   return await request.post(`api/v1/chnot-tag-names`, req);
 };
 
-export const chnotKFileRelationInsert = async (
-  req: ChnotTagQueryReq
-): Promise<void> => {
-  return await request.post(`api/v1/chnot-tag-names`, req);
-};
-
 export const toentGuess = async (
   req: ToentGuessReq
 ): Promise<ToentGuessRsp> => {
