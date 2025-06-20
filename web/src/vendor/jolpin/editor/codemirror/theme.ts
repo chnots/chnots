@@ -4,8 +4,9 @@ export const createCodemirrorTheme = () => {
   const isDarkTheme = false;
   const editorNoGuttersSelector = "&:not(:has(> .cm-scroller > .cm-gutters))";
   const theme = {
-    fontFamily: "IBM Plex Mono, IBM Plex Sans SC, monospace, sans",
-    fontSize: 12,
+    fontFamily:
+      "IBM Plex Mono, monospace, IBM Plex Sans SC, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif",
+    fontSize: 14,
     fontSizeUnits: undefined,
     isDesktop: true,
     marginLeft: 0,
@@ -50,7 +51,7 @@ export const createCodemirrorTheme = () => {
       background: "transparent !important",
     },
     ".cm-content": {
-      padding: "1em",
+      padding: "0em",
     },
     ".cm-lineWrapping": {
       wordBreak: "break-all",
@@ -118,7 +119,7 @@ export const createCodemirrorTheme = () => {
 
     "& .cm-codeBlock": {
       "&.cm-regionFirstLine, &.cm-regionLastLine": {
-        borderRadius: "3px",
+        borderRadius: "2px",
       },
       "&:not(.cm-regionFirstLine)": {
         borderTop: "none",

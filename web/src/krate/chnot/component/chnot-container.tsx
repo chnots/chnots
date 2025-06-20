@@ -399,7 +399,7 @@ const ChnotBody = ({
           </div>
         ) : (
           <div
-            className="h-full p-0 x-0 overflow-auto bg-editor w-full" // this part could resize when I add overflow-auto, magic?
+            className="h-full p-4 x-0 overflow-auto bg-editor w-full" // this part could resize when I add overflow-auto, magic?
           >
             {height ? (
               <MarkdownEditor
@@ -408,7 +408,7 @@ const ChnotBody = ({
                 }}
                 height={height}
                 content={initialContent}
-                foldGutter={true}
+                foldGutter={false}
               />
             ) : (
               <div />

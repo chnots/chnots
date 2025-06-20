@@ -151,7 +151,7 @@ const CodeMirrorEditor = ({
     autocompletion({
       override: [(context) => autoCompletion(context)],
     }),
-    // markPlugin.extension,
+    markPlugin.extension,
   ];
 
   return (

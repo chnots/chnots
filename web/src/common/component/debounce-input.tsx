@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Input } from "./ui/input";
 
 type DebounceProps = {
   handleDebounce: (value: string) => void;
@@ -9,7 +10,7 @@ export default function DebounceInput(props: DebounceProps) {
   const { handleDebounce, debounceTimeout, ...rest } = props;
 
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
+    undefined,
   );
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,5 +20,5 @@ export default function DebounceInput(props: DebounceProps) {
     }, debounceTimeout);
   };
 
-  return <input {...rest} onChange={handleChange} />;
+  return <Input {...rest} onChange={handleChange} />;
 }
