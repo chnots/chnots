@@ -27,8 +27,6 @@ pub(crate) fn asset_path_by_sid(config: &AttachmentConfig, sid: &str) -> PathBuf
 }
 
 pub(crate) async fn query_kfile(
-    headers: HeaderMap,
-
     state: State<ShareAppState>,
     Query(req): Query<QueryKFileReq>,
 ) -> KResponse<QueryKFileMetaRsp> {

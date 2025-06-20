@@ -591,6 +591,7 @@ dependencies = [
  "chrono",
  "log",
  "postgres-types",
+ "rand 0.9.1",
  "rusqlite",
  "serde",
  "thiserror 2.0.12",

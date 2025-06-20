@@ -30,7 +30,7 @@ const TagsView = () => {
         setTagsInset: store.setTagsInset,
         tags: store.tags,
       };
-    })
+    }),
   );
 
   return (
@@ -66,7 +66,6 @@ const ChnotSidebar = () => {
     setTagsInset,
     setTags,
   } = useChnotStore();
-  console.log("tag", tags);
 
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
@@ -96,7 +95,6 @@ const ChnotSidebar = () => {
     }
     refreshChnots();
   }, [tags, keyword, mkspaces, currentKSpace]);
-  console.log("tagList", tagList);
 
   return (
     <Sidebar>
@@ -113,7 +111,6 @@ const ChnotSidebar = () => {
           <Toggle
             size={"sm"}
             onClick={() => {
-              console.log("set tags", tags);
               if (tags) {
                 setTags(undefined);
               } else {

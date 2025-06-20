@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 const useDebounce = (
   fn: (...args: any[]) => void,
   duration?: number,
-  executeOnExit: boolean = false
+  executeOnExit: boolean = false,
 ) => {
   const timeoutRef = React.useRef(0);
   const argsRef = React.useRef<any[]>(undefined);
@@ -24,14 +24,14 @@ const useDebounce = (
       argsRef.current = args;
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(() => {
-        console.log("execute normally", args);
+        console.log("execute", args);
         fn(...args);
         // do nothing when exited if we invoke it.
         argsRef.current = undefined;
       }, duration ?? 1000);
     },
 
-    [duration, fn]
+    [duration, fn],
   );
 };
 

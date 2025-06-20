@@ -1,10 +1,7 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{
-    time_type::TID, DbType, IntoSqlSeg, SqlBuilder, SqlUpdater, SqlValue, SqlValueRow, Wheres,
-};
+use chin_sql::{time_type::TID, IntoSqlSeg, SqlUpdater, SqlValue, SqlValueRow, Wheres};
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
-use log::info;
 use postgres_types::FromSql;
 use tokio_postgres::Row;
 

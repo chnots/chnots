@@ -31,7 +31,7 @@ const MonoChnot = () => {
           setCurrentChnotMetaId: store.setCurrentChnotMetaId,
           appendChnot: store.appendChnot,
         };
-      })
+      }),
     );
 
   const [comKey, setComKey] = useState<string>(genUID());
@@ -41,7 +41,9 @@ const MonoChnot = () => {
   useEffect(() => {
     if (curMetaId !== metaTidRef.current) {
       setComKey(genUID());
-      setEditorChnot(getCurrentChnot());
+      const cc = getCurrentChnot();
+      setEditorChnot(cc);
+      metaTidRef.current = cc?.meta.tid ?? null;
     }
   }, [curMetaId, editorChnot]);
 
@@ -52,7 +54,7 @@ const MonoChnot = () => {
       }
       appendChnot(chnot);
     },
-    [curMetaId]
+    [curMetaId],
   );
 
   const viewModeRef = useRef(false);
@@ -78,8 +80,9 @@ const MonoChnot = () => {
           updateEditorChnot(chnot);
         },
         onSetMetaTid: (tid) => {
-          metaTidRef.current = tid; 
-        }
+          console.log("onSetMetaTid", tid);
+          metaTidRef.current = tid;
+        },
       }}
     >
       <ChnotEditor className="w-full h-full" />

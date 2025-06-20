@@ -113,7 +113,7 @@ function createChnotStore(props: ChnotEditorProps) {
 }
 
 const ChnotEditorContext = createContext<StoreApi<ChnotEditorState> | null>(
-  null
+  null,
 );
 
 function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
@@ -123,7 +123,7 @@ function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
     store!,
     useShallow((store) => {
       return selector(store);
-    })
+    }),
   );
 }
 
@@ -177,7 +177,6 @@ const ChnotSaver = () => {
     async (req: ChnotOverwriteReq) => {
       onSetSaveState(SaveState.Saving);
       const rsp = await chnotOverwrite(req);
-      console.log("set Tid: ", rsp);
       if (!metaTidRef.current) {
         onSetMetaTid(rsp.meta_tid);
         metaTidRef.current = rsp.meta_tid;
@@ -199,7 +198,7 @@ const ChnotSaver = () => {
       });
     },
     1000,
-    true
+    true,
   );
   useEffect(() => {
     if (!content) {
@@ -270,7 +269,7 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
         overwriteChnot: store.appendChnot,
         listViewType: store.tags,
       };
-    })
+    }),
   );
 
   return (
@@ -522,7 +521,7 @@ const RichChnot = ({
             onAfterSave={(tid) => {
               handleSaveRel(
                 `# Excalidraw ${new Date().toLocaleTimeString()}\n\n${commonText()}`,
-                tid.toString()
+                tid.toString(),
               );
             }}
             readOnly={readOnly}
@@ -542,9 +541,10 @@ const RichChnot = ({
             kindId={kindId}
             onAfterSave={async (meta: KTabMeta) => {
               handleSaveRel(
-                `# Table ${meta.table_name}\n\n${meta.table_comment
+                `# Table ${meta.table_name}\n\n${
+                  meta.table_comment
                 }\n\n ${commonText()}`,
-                meta.tid.toString()
+                meta.tid.toString(),
               );
             }}
             isEditing={!readOnly}
@@ -556,7 +556,7 @@ const RichChnot = ({
               onAfterSave={(session) => {
                 handleSaveRel(
                   `# LLM ${session.title}  \n\n ${commonText()}`,
-                  session.tid.toString()
+                  session.tid.toString(),
                 );
               }}
             />

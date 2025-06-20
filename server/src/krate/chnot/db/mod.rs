@@ -7,10 +7,10 @@ use crate::mapper::db::{
     KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
-use crate::model::omit_tid::{self, OmitTID};
+use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
-use chin_sql::{ILikeType, SegOrVal, SqlBuilder, SqlValue};
+use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
 use chin_sql::{LimitOffset, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
