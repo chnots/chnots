@@ -107,7 +107,7 @@ impl LLMChatMapper for KDb {
         &self,
         mut req: KReq<LLMChatInsertSessionReq>,
     ) -> AResult<LLMChatInsertSessionRsp> {
-        req.body.session.title = req.session.title.chars().take(300).collect();
+        req.body.session.title = req.session.title.chars().take(199).collect();
 
         let obj = req.body.session;
         let omit = omit_table_tid(LLMChatTemplate::TABLE, obj.tid);
