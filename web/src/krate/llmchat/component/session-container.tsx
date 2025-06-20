@@ -70,7 +70,10 @@ const SessionContainer = ({
         const rsp = await llmchatSessionRecords(parseInt(kindId, 10));
 
         if (rsp.session) {
-          const pids = new Set(rsp.records.map((e) => e.tid));
+          const pids = persistedIds.current;
+          rsp.records.forEach((r) => {
+            pids.add(r.tid);
+          });
           pids.add(rsp.session.tid);
           setSessionAndRecs({
             session: rsp.session,
@@ -102,7 +105,7 @@ const SessionContainer = ({
         session: session,
       });
     },
-    [setSessionAndRecs]
+    [setSessionAndRecs],
   );
 
   useEffect(() => {
@@ -114,7 +117,9 @@ const SessionContainer = ({
       ) {
         const session = sessionAndRecs.session;
         const records = sessionAndRecs.records;
+
         const pids = persistedIds.current;
+        console.log("pids: ", pids, session.tid);
         if (!pids.has(session.tid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
@@ -163,7 +168,7 @@ const SessionContainer = ({
         setTriggerAnswer(true);
       }
     },
-    [sessionAndRecs]
+    [sessionAndRecs],
   );
 
   const appendUserMsg = useCallback(
@@ -184,7 +189,7 @@ const SessionContainer = ({
         return false;
       }
     },
-    [sessionAndRecs, setTriggerAnswer]
+    [sessionAndRecs, setTriggerAnswer],
   );
 
   const onScroll = useCallback(() => {
@@ -271,14 +276,14 @@ const SessionContainer = ({
           </div>
         ) : (
           <Dialog>
-              <LLMChatTemplateList
-                onClickTemplate={(template) => {
-                  newTemplateSession(template);
-                }}
-                onChangeEditTemplate={(template: LLMChatTemplate) => {
-                  setEditTemplate(template);
-                }}
-              />
+            <LLMChatTemplateList
+              onClickTemplate={(template) => {
+                newTemplateSession(template);
+              }}
+              onChangeEditTemplate={(template: LLMChatTemplate) => {
+                setEditTemplate(template);
+              }}
+            />
             <DialogContent aria-describedby={undefined}>
               <DialogTitle>Edit Template</DialogTitle>
               <TemplateForm
