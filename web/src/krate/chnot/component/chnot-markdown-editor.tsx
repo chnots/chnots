@@ -1,9 +1,9 @@
-import { CodeMirrorEditorMemo } from "@/common/component/codemirror-md-editor";
+import { CodeMirrorEditorMemo } from "@/common/component/codemirror/codemirror-md-editor";
 import { chnotTagNames, toentGuess } from "@/krate/chnot/service";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 
 const chnotCompletions = async (
-  context: CompletionContext
+  context: CompletionContext,
 ): Promise<CompletionResult | null> => {
   const word = context.matchBefore(/#[^# ]*|<[^<>]*|\[/);
   let options;

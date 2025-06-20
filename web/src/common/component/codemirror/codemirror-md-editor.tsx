@@ -1,13 +1,8 @@
 import { useRef } from "react";
-import { EditorView, KeyBinding } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import {
-  deleteMarkupBackward,
-  insertNewlineContinueMarkup,
-  markdown,
-  markdownLanguage,
-} from "@codemirror/lang-markdown";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { toast } from "sonner";
 import { html2mdAsync } from "@/lib/markdown-utils";
 import React from "react";
@@ -17,8 +12,10 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
-
-import { clouds } from "thememirror";
+import { createCodemirrorTheme } from "../../../vendor/jolpin/editor/codemirror/theme";
+import decoratorExtension from "../../../vendor/jolpin/editor/codemirror/decoratorExtension";
+import { indentOnInput } from "@codemirror/language";
+import { generateKeybinding } from "@/common/component/codemirror/keybinding";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -77,7 +74,7 @@ const eventHandlers = EditorView.domEventHandlers({
                 toast.info(`unable to handle ${file}, ${err}`);
                 reject(err);
               }); */
-          })
+          }),
         );
       }
     }
@@ -95,36 +92,6 @@ const eventHandlers = EditorView.domEventHandlers({
   },
 });
 
-const editorTheme = EditorView.theme({
-  "&.cm-editor": {
-    background: "transparent !important",
-  },
-  // To Remove outline when focused, https://github.com/uiwjs/react-codemirror/issues/643
-  /*   "&.cm-editor.cm-focused": {
-    outline: "none",
-  }, */
-  /*   ".cm-line": {
-    background: "transparent !important",
-  }, */
-  ".cm-content": {
-    padding: "1em",
-  },
-  ".cm-lineWrapping": {
-    wordBreak: "break-all",
-  },
-  ".hashtag": {
-    border: "1px solid #602533",
-    padding: "1px",
-    borderRadius: "0.2em",
-    color: "#682d4b",
-  },
-});
-
-export const markdownKeymap: readonly KeyBinding[] = [
-  { key: "Enter", run: insertNewlineContinueMarkup },
-  { key: "Backspace", run: deleteMarkupBackward },
-];
-
 const CodeMirrorEditor = ({
   content,
   onContentChange,
@@ -135,7 +102,7 @@ const CodeMirrorEditor = ({
   content?: string;
   onContentChange: (content: string) => void;
   autoCompletion: (
-    context: CompletionContext
+    context: CompletionContext,
   ) => Promise<CompletionResult | null>;
   foldGutter: boolean;
   height: number;
@@ -159,34 +126,38 @@ const CodeMirrorEditor = ({
     }),
     {
       decorations: (v) => v.decorations,
-    }
+    },
   );
 
-  const md = markdown({
+  const markdownExtension = markdown({
     base: markdownLanguage,
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
   });
 
-  const _extensions = [
-    md,
+  const extensions = [
+    markdownExtension,
+    generateKeybinding(),
+
     EditorView.lineWrapping,
-    // editorTheme,
-    clouds,
+    wrappedLineIndent,
+    decoratorExtension,
+    createCodemirrorTheme(),
+
     eventHandlers,
+
+    indentOnInput(),
     autocompletion({
       override: [(context) => autoCompletion(context)],
     }),
-    indentationMarkers(),
-    wrappedLineIndent,
-    markPlugin.extension,
+    // markPlugin.extension,
   ];
 
   return (
     <CodeMirror
       height={`${height}px`}
-      extensions={_extensions}
+      extensions={extensions}
       ref={codeMirror}
       style={{
         font: "serif",
