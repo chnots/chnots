@@ -70,6 +70,7 @@ impl<'a> KDbTx<'a> {
                 .set(ChnotTag::OMIT_TID, OmitTID::now())
                 .r#where(Wheres::and([
                     Wheres::equal(ChnotTag::META_TID, meta_tid),
+                    Wheres::equal(ChnotTag::OMIT_TID, OmitTID::never()),
                     if tags.is_empty() {
                         Wheres::None
                     } else {
