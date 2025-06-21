@@ -107,7 +107,6 @@ const ChnotSidebar = () => {
               setKSpace(kspace);
             }}
             currentKSpace={currentKSpace}
-            onlyIcon={true}
             showMKspaces={true}
           />
           <ChnotKindSelect />

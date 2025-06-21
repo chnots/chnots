@@ -260,6 +260,9 @@ importers:
       oxlint:
         specifier: ^1.1.0
         version: 1.1.0
+      prettier:
+        specifier: ^3.5.3
+        version: 3.5.3
       typescript:
         specifier: ^5.7.3
         version: 5.8.3
@@ -4698,6 +4701,14 @@ packages:
       }
     engines: { node: ^10 || ^12 || >=14 }
 
+  prettier@3.5.3:
+    resolution:
+      {
+        integrity: sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw==,
+      }
+    engines: { node: ">=14" }
+    hasBin: true
+
   prop-types@15.8.1:
     resolution:
       {
@@ -9028,6 +9039,8 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  prettier@3.5.3: {}
 
   prop-types@15.8.1:
     dependencies:

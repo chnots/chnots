@@ -18,6 +18,11 @@ run-server-sqlite:
 run-server-postgres:
 	cd $(SERVER_DIR) && cargo run -- --config ../config/config.postgres.toml
 
+sync-struct:  
+	python tools/sync-struct.py
+	cd $(WEB_DIR) && $(PNPM_INSTALL)
+	find -name 'dto.ts' -o -name 'po.ts' |  xargs ./web/node_modules/.bin/prettier --ignore-unknown --write
+
 build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)
 
@@ -26,10 +31,8 @@ build-web-dir:
 
 build-web: build-web-dir
 
-build: build-web build-server
+build: sync-struct build-web build-server
 
-sync-struct:  
-	python tools/sync-struct.py
 
 full-build: sync-struct build
 

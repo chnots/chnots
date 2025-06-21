@@ -18,7 +18,7 @@ cd chnots
 
 cd web && pnpm install
 cd ..
-make build-web
+make build
 make run-server-sqlite
 ```
 
