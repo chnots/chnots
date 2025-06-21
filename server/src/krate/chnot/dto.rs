@@ -37,14 +37,14 @@ pub(crate) struct ChnotOverwriteRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotDeletionReq {
+pub(crate) struct ChnotArchiveReq {
     pub(crate) meta_tid: TID,
     /// logic or physical deletion
     pub(crate) logic: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotDeletionRsp {}
+pub(crate) struct ChnotArchiveRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum ChnotTagSearchType {

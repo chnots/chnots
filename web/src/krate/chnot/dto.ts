@@ -49,7 +49,7 @@ export type ChnotOverwriteRsp = {
   archor: boolean;
 };
 
-export type ChnotDeletionReq = {
+export type ChnotArchiveReq = {
   meta_tid: TID;
   logic: boolean;
 };
@@ -108,7 +108,7 @@ export type ToentGuessRsp = {
 
 export type ChnotUpdateRsp = object;
 
-export type ChnotDeletionRsp = object;
+export type ChnotArchiveRsp = object;
 
 export type ChnotTagUpdateReq = {
   content: string;

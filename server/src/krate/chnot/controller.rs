@@ -40,9 +40,9 @@ async fn chnot_overwrite(
 async fn chnot_deletetion(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotDeletionReq>,
-) -> KResponse<ChnotDeletionRsp> {
-    state.mapper.chnot_delete(kreq(headers, req)).await.into()
+    Json(req): Json<ChnotArchiveReq>,
+) -> KResponse<ChnotArchiveRsp> {
+    state.mapper.chnot_archive(kreq(headers, req)).await.into()
 }
 
 async fn chnot_update(

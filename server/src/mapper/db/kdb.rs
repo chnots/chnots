@@ -344,12 +344,3 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
         expand_KDbExecutor_branch!(self.qry_list(ssb, mapper))
     }
 }
-
-pub fn omit_table_tid<'a>(table_name: &'static str, tid: TID) -> SqlUpdater<'a> {
-    SqlUpdater::new(table_name)
-        .set("omit_tid", OmitTID::now())
-        .r#where(Wheres::and([
-            Wheres::equal("tid", tid),
-            Wheres::equal("omit_tid", OmitTID::never()),
-        ]))
-}

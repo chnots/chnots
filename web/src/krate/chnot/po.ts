@@ -13,9 +13,9 @@ export enum ChnotKind {
 export type ChnotTagType = object;
 
 export type ChnotRecord = {
-  tid: TID;
   meta_tid: TID;
   omit_tid?: OmitTID;
+  tid: TID;
   content: string;
   archor: boolean;
 };

@@ -39,10 +39,10 @@ pub(crate) struct KTabCellsOverwriteRsp {}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) enum KTabRowsQueryReqFilter {
     OneRowByIdx {
-        row_idx: usize,
+        row_tid: usize,
     },
     RowsByIdx {
-        row_idx_included: usize,
+        row_tid_included: usize,
         page_size: usize,
     },
     FieldSortPage {
@@ -61,7 +61,7 @@ pub(crate) struct KTabRowsQueryReq {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct KTabRowsQueryRspRow {
-    pub(crate) row_idx: TID,
+    pub(crate) row_tid: TID,
     pub(crate) cells: Vec<KTabViewCell>,
 }
 
@@ -90,7 +90,7 @@ impl<'a> From<KTabStoreValue> for SqlValue<'a> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct KTabViewCell {
-    pub(crate) row_idx: TID,
+    pub(crate) row_tid: TID,
     pub(crate) column_name: String,
     pub(crate) value: KTabStoreValue,
 }
@@ -99,8 +99,8 @@ pub(crate) struct KTabViewCell {
 pub(crate) struct KTabCell {
     pub(crate) tid: TID,
     pub(crate) table_id: TID,
-    pub(crate) col_idx: TID,
-    pub(crate) row_idx: TID,
+    pub(crate) col_tid: TID,
+    pub(crate) row_tid: TID,
     pub(crate) omit_tid: OmitTID,
     pub(crate) cell_data: KTabStoreValue,
 }
@@ -108,8 +108,8 @@ pub(crate) struct KTabCell {
 impl KTabCell {
     pub(super) fn into_view(self, column_names: &HashMap<TID, String>) -> Option<KTabViewCell> {
         let cell = KTabViewCell {
-            row_idx: self.row_idx,
-            column_name: column_names.get(&self.col_idx)?.to_string(),
+            row_tid: self.row_tid,
+            column_name: column_names.get(&self.col_tid)?.to_string(),
             value: self.cell_data,
         };
 
@@ -123,8 +123,8 @@ macro_rules! impl_from_ktab_cell {
             fn from(value: $source) -> Self {
                 let $source {
                     table_id,
-                    col_idx,
-                    row_idx,
+                    col_tid,
+                    row_tid,
                     omit_tid,
                     cell_data,
                     tid,
@@ -133,8 +133,8 @@ macro_rules! impl_from_ktab_cell {
                 Self {
                     tid,
                     table_id,
-                    col_idx,
-                    row_idx,
+                    col_tid,
+                    row_tid,
                     omit_tid,
                     cell_data: KTabStoreValue::$variant(cell_data),
                 }
@@ -172,7 +172,7 @@ mod tests {
         let req = KTabCellsOverwriteReq {
             table_id: 123.into(),
             cells: vec![KTabViewCell {
-                row_idx: 1.into(),
+                row_tid: 1.into(),
                 column_name: "int".into(),
                 value: KTabStoreValue::Decimal(123.into()),
             }],

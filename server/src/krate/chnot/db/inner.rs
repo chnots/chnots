@@ -154,9 +154,8 @@ impl<'a> KDbTx<'a> {
                     archor,
                 };
 
-                let update_omit = SqlUpdater::new(ChnotRecord::TABLE)
-                    .set(ChnotRecord::OMIT_TID, OmitTID::now())
-                    .r#where(Wheres::equal(ChnotRecord::META_TID, meta_tid));
+                let update_omit = ChnotRecord::pkey_updater(meta_tid, OmitTID::never())
+                    .set(ChnotRecord::OMIT_TID, OmitTID::now());
                 self.exec(update_omit).await?;
                 self.as_executor().chnot_record_insert(rec).await?;
             }

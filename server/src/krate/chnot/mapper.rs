@@ -27,7 +27,7 @@ pub(crate) trait ChnotDumpMapper {
 
 pub(crate) trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
-    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp>;
+    async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp>;
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>>;
     async fn chnot_query_kind_rel(
         &self,
@@ -63,8 +63,8 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_overwrite(req))
     }
 
-    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp> {
-        expand_mt_branch!(self.chnot_delete(req))
+    async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp> {
+        expand_mt_branch!(self.chnot_archive(req))
     }
 
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>> {

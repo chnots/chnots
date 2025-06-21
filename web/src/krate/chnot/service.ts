@@ -1,6 +1,6 @@
 import request from "@/lib/request";
 import {
-  ChnotDeletionReq,
+  ChnotArchiveReq,
   ChnotKindRelQueryRsp,
   ChnotOverwriteReq,
   ChnotOverwriteRsp,
@@ -15,17 +15,17 @@ import {
 import { TID } from "@/lib/id_util";
 
 export const chnotQuery = async (
-  req: ChnotQueryReq
+  req: ChnotQueryReq,
 ): Promise<ChnotQueryRsp> => {
   return await request.post(`api/v1/chnot-query`, req);
 };
 
-export const chnotDelete = async (req: ChnotDeletionReq) => {
+export const chnotDelete = async (req: ChnotArchiveReq) => {
   return await request.post(`api/v1/chnot-deletion`, req);
 };
 
 export const chnotOverwrite = async (
-  req: ChnotOverwriteReq
+  req: ChnotOverwriteReq,
 ): Promise<ChnotOverwriteRsp> => {
   return await request.put(`api/v1/chnot`, req);
 };
@@ -35,22 +35,21 @@ export const chnotUpdate = async (req: ChnotUpdateReq) => {
 };
 
 export const chnotTagNames = async (
-  req: ChnotTagQueryReq
+  req: ChnotTagQueryReq,
 ): Promise<ChnotTagNamesRsp> => {
   return await request.post(`api/v1/chnot-tag-names`, req);
 };
 
 export const toentGuess = async (
-  req: ToentGuessReq
+  req: ToentGuessReq,
 ): Promise<ToentGuessRsp> => {
   return await request.post(`api/v1/toent-guess`, req);
 };
 
 export const chnotQueryKindRel = async (
-  chnotMetaTid: TID
+  chnotMetaTid: TID,
 ): Promise<ChnotKindRelQueryRsp> => {
   return await request.get(`/api/v1/chnot-query-kind-rel`, {
     meta_tid: chnotMetaTid,
   });
 };
-

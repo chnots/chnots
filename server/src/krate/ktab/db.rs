@@ -19,22 +19,21 @@ impl KDb {
     async fn ktab_overwrite_cell(&self, cell: KTabCell) -> chin_tools::AResult<usize> {
         macro_rules! overwrite {
             ($table:tt, $c:expr, $v:expr) => {
+                let mut conn = self.conn().await?;
+                let tx = conn.tx().await?;
                 let csql = SqlInserter::new($table::TABLE)
                     .field($table::TABLE_ID, $c.table_id)
-                    .field($table::COL_IDX, $c.col_idx)
-                    .field($table::ROW_IDX, $c.row_idx)
+                    .field($table::COL_TID, $c.col_tid)
+                    .field($table::ROW_TID, $c.row_tid)
                     .field($table::OMIT_TID, $c.omit_tid)
                     .field($table::CELL_DATA, $v)
                     .field($table::TID, $c.tid);
-                let omit_sql = SqlUpdater::new($table::TABLE)
-                    .set($table::OMIT_TID, OmitTID::now())
-                    .r#where(Wheres::and([
-                        Wheres::equal($table::TABLE_ID, $c.table_id),
-                        Wheres::equal($table::ROW_IDX, $c.row_idx),
-                        Wheres::equal($table::COL_IDX, $c.col_idx),
-                    ]));
-                self.conn().await?.exec(omit_sql).await?;
-                self.conn().await?.exec(csql).await?;
+                let omit_sql =
+                    $table::pkey_updater($c.table_id, $c.row_tid, $c.col_tid, OmitTID::never())
+                        .set($table::OMIT_TID, OmitTID::now());
+                tx.exec(omit_sql).await?;
+                tx.exec(csql).await?;
+                tx.cmt().await?;
             };
         }
 
@@ -75,7 +74,10 @@ impl KTabMapper for KDb {
 
         let omit_sql = SqlUpdater::new(KTabMeta::TABLE)
             .set(KTabMeta::OMIT_TID, OmitTID::now())
-            .r#where(Wheres::and([Wheres::equal(KTabMeta::TID, *tid)]));
+            .r#where(Wheres::and([
+                Wheres::equal(KTabMeta::TID, *tid),
+                Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
+            ]));
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
             .field(KTabMeta::TID, *tid)
@@ -128,8 +130,8 @@ impl KTabMapper for KDb {
 
             self.ktab_overwrite_cell(KTabCell {
                 table_id,
-                col_idx: column_index,
-                row_idx: ele.row_idx,
+                col_tid: column_index,
+                row_tid: ele.row_tid,
                 omit_tid: OmitTID::never(),
                 cell_data: ele.value,
                 tid: TID::default(),
@@ -202,8 +204,8 @@ impl KTabMapper for KDb {
                     .qry_list(reader, |row| {
                         Ok($sub_table {
                             table_id: row.try_get($sub_table::TABLE_ID)?,
-                            col_idx: row.try_get($sub_table::COL_IDX)?,
-                            row_idx: row.try_get($sub_table::ROW_IDX)?,
+                            col_tid: row.try_get($sub_table::COL_TID)?,
+                            row_tid: row.try_get($sub_table::ROW_TID)?,
                             cell_data: row.try_get($sub_table::CELL_DATA)?,
                             tid: row.try_get($sub_table::TID)?,
                             omit_tid: row.try_get($sub_table::OMIT_TID)?,
@@ -231,15 +233,15 @@ impl KTabMapper for KDb {
         let cells = cells?;
         let mut result_map = HashMap::new();
         for cell in cells {
-            result_map.entry(cell.row_idx).or_insert(vec![]).push(cell);
+            result_map.entry(cell.row_tid).or_insert(vec![]).push(cell);
         }
         let result = result_map
             .into_iter()
             .map(|(k, r)| KTabRowsQueryRspRow {
-                row_idx: k,
+                row_tid: k,
                 cells: r,
             })
-            .sorted_by(|r1, r2| r1.row_idx.cmp(&r2.row_idx))
+            .sorted_by(|r1, r2| r1.row_tid.cmp(&r2.row_tid))
             .collect();
 
         Ok(KTabRowsQueryRsp { rows: result })

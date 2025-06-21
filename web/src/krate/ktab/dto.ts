@@ -56,7 +56,7 @@ export function ktabGetViewValue(
 }
 
 export type KTabStoreCell = {
-  row_idx: number;
+  row_tid: number;
   column_name: string;
   value: KTabStoreValue;
 };
@@ -69,12 +69,12 @@ export type KTabCellsOverwriteReq = {
 export type KTabRowsQueryReqFilter =
   | {
       OneRowByIdx: {
-        row_idx: number;
+        row_tid: number;
       };
     }
   | {
       RowsByIdx: {
-        row_idx_included: number;
+        row_tid_included: number;
         page_size: number;
       };
     }
@@ -103,12 +103,12 @@ export type KTabMetaOverwriteReq = {
 export type KTabCellsOverwriteRsp = object;
 
 export type KTabRowsQueryRspRow = {
-  row_idx: TID;
+  row_tid: TID;
   cells: KTabViewCell[];
 };
 
 export type KTabViewCell = {
-  row_idx: TID;
+  row_tid: TID;
   column_name: string;
   value: KTabStoreValue;
 };
@@ -116,8 +116,8 @@ export type KTabViewCell = {
 export type KTabCell = {
   tid: TID;
   table_id: TID;
-  col_idx: TID;
-  row_idx: TID;
+  col_tid: TID;
+  row_tid: TID;
   omit_tid?: OmitTID;
   cell_data: KTabStoreValue;
 };

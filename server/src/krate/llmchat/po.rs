@@ -45,7 +45,7 @@ pub(crate) struct LLMChatSession {
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
     #[gts_type = "i64"]
-    pub(crate) template_id: TID,
+    pub(crate) template_tid: TID,
     #[gts_length = 200]
     pub(crate) title: String,
     #[gts_length = 200]
@@ -60,9 +60,9 @@ pub(crate) struct LLMChatRecord {
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
     #[gts_type = "i64"]
-    pub(crate) session_id: TID,
+    pub(crate) session_tid: TID,
     #[gts_type = "i64"]
-    pub(crate) pre_record_id: Option<TID>,
+    pub(crate) pre_record_tid: Option<TID>,
     pub(crate) content: String,
     pub(crate) reasoning_content: String,
     #[gts_length = 40]

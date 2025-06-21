@@ -46,14 +46,14 @@ const EditableCell = ({
   const initialValue = getValue();
   const [value, setValue] = React.useState(initialValue);
   const { isEditing } = table.options.meta;
-  const row_idx = original.row_idx as number;
+  const row_tid = original.row_tid as number;
 
   React.useEffect(() => {
     setValue(initialValue);
   }, [initialValue]);
 
   const onBlur = () => {
-    updateData(row_idx, id, value);
+    updateData(row_tid, id, value);
   };
 
   if (!isEditing) {
@@ -72,7 +72,7 @@ const EditableCell = ({
               variant={"outline"}
               className={cn(
                 "w-[240px] pl-3 text-left font-normal",
-                !value && "text-muted-foreground"
+                !value && "text-muted-foreground",
               )}
             >
               {value ? (
@@ -88,7 +88,7 @@ const EditableCell = ({
               selected={new Date(value)}
               onSelect={(date) => {
                 setValue(date);
-                updateData(row_idx, id, date);
+                updateData(row_tid, id, date);
               }}
               autoFocus
             />

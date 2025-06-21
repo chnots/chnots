@@ -88,13 +88,13 @@ const SessionContainer = ({
     async (template: LLMChatTemplate) => {
       const session: LLMChatSession = {
         tid: genTID(),
-        template_id: template.tid,
+        template_tid: template.tid,
         title: "Untitled",
       };
 
       const record: LLMChatRecord = {
         tid: genTID(),
-        session_id: session.tid,
+        session_tid: session.tid,
         content: template.prompt,
         reasoning_content: "",
         role_id: template.tid,
@@ -160,7 +160,7 @@ const SessionContainer = ({
       if (sessionAndRecs) {
         if (persistedIds.current.has(recordId)) {
           await llmchatSessionTruncate({
-            session_id: sessionAndRecs.session.tid,
+            session_tid: sessionAndRecs.session.tid,
             remove_rid_included: recordId,
           });
         }
@@ -176,8 +176,8 @@ const SessionContainer = ({
       if (sessionAndRecs && sessionAndRecs.records.length > 0) {
         const record: LLMChatRecord = {
           tid: genTID(),
-          session_id: sessionAndRecs.session.tid,
-          pre_record_id: sessionAndRecs.records.at(-1)?.tid,
+          session_tid: sessionAndRecs.session.tid,
+          pre_record_tid: sessionAndRecs.records.at(-1)?.tid,
           content,
           reasoning_content: "",
           role: "user",

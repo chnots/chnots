@@ -46,7 +46,7 @@ export function DataTable({
     table_id: number,
     start: number,
     size: number,
-    column_name?: string
+    column_name?: string,
   ) => Promise<KTabRowData[]>;
   isEditing: boolean;
 }) {
@@ -82,7 +82,7 @@ export function DataTable({
               dataType: column.view_kind,
             },
           };
-        }, {})
+        }, {}),
       );
     }
   }, [tableMeta]);
@@ -95,11 +95,11 @@ export function DataTable({
           table_id: tableMeta.tid,
           cells: [
             {
-              row_idx: rowIndex,
+              row_tid: rowIndex,
               column_name: columnId,
               value: ktabToStoreValue(
                 tableMeta.columns[columnId].view_kind,
-                value
+                value,
               ),
             },
           ],
@@ -113,11 +113,11 @@ export function DataTable({
               };
             }
             return row;
-          })
+          }),
         );
       }
     },
-    [tableMeta]
+    [tableMeta],
   );
 
   const loadMoreData = async () => {
@@ -129,7 +129,7 @@ export function DataTable({
         const newData = await fetchData(
           tableMeta.tid,
           page * pageSize,
-          pageSize
+          pageSize,
         );
         setData((prev) => [...prev, ...newData]);
         setPage((prev) => prev + 1);
@@ -200,7 +200,7 @@ export function DataTable({
         acc[col.accessorKey as string] = null;
         return acc;
       },
-      { row_idx: genTID() }
+      { row_tid: genTID() },
     );
     setData((prev) => [...prev, newRow]);
   };
@@ -223,7 +223,7 @@ export function DataTable({
 
     const activeElement = document.activeElement;
     const allInputs = Array.from(
-      e.currentTarget.querySelectorAll('input, button[role="combobox"]')
+      e.currentTarget.querySelectorAll('input, button[role="combobox"]'),
     );
     const currentIndex = allInputs.findIndex((el) => el === activeElement);
 
@@ -234,7 +234,7 @@ export function DataTable({
       // TODO: unable to auto focus now line.
       setTimeout(() => {
         const newInputs = Array.from(
-          e.currentTarget.querySelectorAll('input, button[role="combobox"]')
+          e.currentTarget.querySelectorAll('input, button[role="combobox"]'),
         );
         (newInputs[currentIndex + 1] as HTMLElement)?.focus();
       }, 100);
@@ -279,7 +279,7 @@ export function DataTable({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -297,7 +297,7 @@ export function DataTable({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

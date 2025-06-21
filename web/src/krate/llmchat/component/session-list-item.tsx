@@ -12,7 +12,7 @@ import { Button as KButton } from "@/common/component/ui/button";
 const LLMChatSessionListItem = React.forwardRef(
   (
     { session }: { session: LLMChatSession },
-    ref: ForwardedRef<HTMLLIElement>
+    ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const {
       currentSessionId,
@@ -20,13 +20,13 @@ const LLMChatSessionListItem = React.forwardRef(
       templates,
       deleteCacheSession,
     } = useLLMChatStore();
-    const template = templates.get(session.template_id);
+    const template = templates.get(session.template_tid);
     const logo = template?.svg_logo;
     const tmplName = template?.name;
 
     const handleDelete = async () => {
       await llmchatSessionUpdate({
-        session_id: session.tid,
+        session_tid: session.tid,
         delete: true,
       });
       deleteCacheSession(session.tid);
@@ -66,7 +66,7 @@ const LLMChatSessionListItem = React.forwardRef(
         </div>
       </KListItem>
     );
-  }
+  },
 );
 
 LLMChatSessionListItem.displayName = "LLMChatSessionListItem";

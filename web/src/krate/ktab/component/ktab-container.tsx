@@ -45,13 +45,13 @@ const KTabChnot = ({
           table_id: number,
           start: number,
           size: number,
-          column_name?: string
+          column_name?: string,
         ): Promise<KTabRowData[]> => {
           const data = await ktabCellsRead({
             table_id,
             filter: {
               RowsByIdx: {
-                row_idx_included: start,
+                row_tid_included: start,
                 page_size: size,
               },
             },
@@ -62,7 +62,7 @@ const KTabChnot = ({
                 acc[cell.column_name] = ktabGetViewValue(cell.value);
                 return acc;
               },
-              { row_idx: row.row_idx }
+              { row_tid: row.row_tid },
             );
           });
         }}
@@ -86,7 +86,7 @@ const KTabChnot = ({
             { name: string; description?: string | undefined },
             { name: string; description?: string | undefined }
           >
-        >
+        >,
       ) => {
         const meta = {
           tid: genTID(),

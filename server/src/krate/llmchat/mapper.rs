@@ -170,7 +170,7 @@ impl LLMChatMapper for MapperType {
             &mut raw_result.records,
             false,
             |r| &r.tid,
-            |r| &r.pre_record_id,
+            |r| &r.pre_record_tid,
             |e| &e.tid,
         );
 

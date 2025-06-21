@@ -54,18 +54,22 @@ macro_rules! type_table {
         pub(crate) struct $sname {
             #[gts_primary]
             #[gts_type = "i64"]
-            pub(crate) tid: TID,
+            pub(crate) table_id: TID,
+
+            #[gts_primary]
+            #[gts_type = "i64"]
+            pub(crate) col_tid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
+
+            #[gts_primary]
+            #[gts_type = "i64"]
+            pub(crate) row_tid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
 
             #[gts_primary]
             #[gts_type = "i64"]
             pub(crate) omit_tid: OmitTID,
 
             #[gts_type = "i64"]
-            pub(crate) table_id: TID,
-            #[gts_type = "i64"]
-            pub(crate) col_idx: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
-            #[gts_type = "i64"]
-            pub(crate) row_idx: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
+            pub(crate) tid: TID,
 
             $(#[$attr])*
             pub(crate) cell_data: $data_type

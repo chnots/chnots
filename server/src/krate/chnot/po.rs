@@ -23,11 +23,12 @@ use crate::model::omit_tid::OmitTID;
 pub(crate) struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
-    #[gts_type = "i64"]
     pub(crate) meta_tid: TID,
+    #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
+    #[gts_type = "i64"]
+    pub(crate) tid: TID,
     pub(crate) content: String,
     pub(crate) archor: bool,
 }

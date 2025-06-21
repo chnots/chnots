@@ -41,10 +41,10 @@ export const llmchatBotAdd = async (bot: LLMChatBot) => {
 };
 
 export const llmchatSessionRecords = async (
-  session_id: TID
+  session_tid: TID,
 ): Promise<LLMChatSessionDetailRsp> => {
   return await request.get(`api/v1/llmchat/session`, {
-    session_id,
+    session_tid,
   });
 };
 
@@ -61,7 +61,7 @@ export const llmchatSessionUpdate = async (req: LLMChatSessionUpdateReq) => {
 };
 
 export const llmchatSessionTruncate = async (
-  req: LLMChatSessionTruncateReq
+  req: LLMChatSessionTruncateReq,
 ) => {
   await request.post(`api/v1/llmchat/truncate-session`, {
     ...req,

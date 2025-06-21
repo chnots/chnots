@@ -37,7 +37,7 @@ export type LLMChatTemplate = {
 export type LLMChatSession = {
   tid: TID;
   omit_tid?: OmitTID;
-  template_id: TID;
+  template_tid: TID;
   title: string;
   update_time?: Date;
 };
@@ -47,8 +47,8 @@ export type LLMChatSession = {
 export type LLMChatRecord = {
   tid: TID;
   omit_tid?: OmitTID;
-  session_id: TID;
-  pre_record_id?: TID;
+  session_tid: TID;
+  pre_record_tid?: TID;
   content: string;
   reasoning_content: string;
   role: string;

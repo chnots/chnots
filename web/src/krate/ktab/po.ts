@@ -52,8 +52,8 @@ export type KTabMeta = {
 
 export type KTabCell = {
   table_id: number;
-  col_idx: number;
-  row_idx: number;
+  col_tid: number;
+  row_tid: number;
   omit_tid?: Date;
   cell_data: KTabCellData;
 };
@@ -61,28 +61,28 @@ export type KTabCell = {
 export type KTabCellData = { Date: Date } | { Text: string };
 
 export type KTabCellText = {
-  tid: TID;
-  omit_tid?: OmitTID;
   table_id: TID;
-  col_idx: TID;
-  row_idx: TID;
+  col_tid: TID;
+  row_tid: TID;
+  omit_tid?: OmitTID;
+  tid: TID;
   cell_data: string;
 };
 
 export type KTabCellDecimal = {
-  tid: TID;
-  omit_tid?: OmitTID;
   table_id: TID;
-  col_idx: TID;
-  row_idx: TID;
+  col_tid: TID;
+  row_tid: TID;
+  omit_tid?: OmitTID;
+  tid: TID;
   cell_data: Decimal;
 };
 
 export type KTabCellDate = {
-  tid: TID;
-  omit_tid?: OmitTID;
   table_id: TID;
-  col_idx: TID;
-  row_idx: TID;
+  col_tid: TID;
+  row_tid: TID;
+  omit_tid?: OmitTID;
+  tid: TID;
   cell_data: Date;
 };

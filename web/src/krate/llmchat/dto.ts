@@ -24,13 +24,13 @@ export type LLMChatSessionDetailRsp = {
 };
 
 export type LLMChatSessionUpdateReq = {
-  session_id: TID;
+  session_tid: TID;
   delete?: boolean;
   title?: string;
 };
 
 export type LLMChatSessionTruncateReq = {
-  session_id: TID;
+  session_tid: TID;
   remove_rid_included: TID;
 };
 
@@ -68,20 +68,20 @@ export type LLMChatListBotReq = object;
 export type LLMChatListTemplateReq = object;
 
 export type LLMChatListSessionReq = {
-  session_id?: TID;
+  session_tid?: TID;
 };
 
 export type LLMChatUpdateSessionReq = {
   title?: string;
   delete?: boolean;
-  session_id: TID;
+  session_tid: TID;
 };
 
 export type LLMChatUpdateSessionRsp = object;
 
 export type LLMChatTruncateSessionReq = {
   remove_rid_included: TID;
-  session_id: TID;
+  session_tid: TID;
 };
 
 export type LLMChatTruncateSessionRsp = {
@@ -89,24 +89,24 @@ export type LLMChatTruncateSessionRsp = {
 };
 
 export type LLMChatSessionDetialReq = {
-  session_id: TID;
+  session_tid: TID;
   with_omit?: boolean;
 };
 
 export type LLMChatDeleteBotReq = {
-  bot_id: TID;
+  bot_tid: TID;
 };
 
 export type LLMChatDeleteBotRsp = object;
 
 export type LLMChatDeleteTemplateReq = {
-  template_id: TID;
+  template_tid: TID;
 };
 
 export type LLMChatDeleteTemplateRsp = object;
 
 export type LLMChatDeleteSessionReq = {
-  session_id: TID;
+  session_tid: TID;
 };
 
 export type LLMChatDeleteSessionRsp = object;

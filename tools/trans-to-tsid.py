@@ -11,10 +11,10 @@ tf = [
     ("llm_chat_bot", "id"),
     ("llm_chat_template", "id"),
     ("llm_chat_session", "id"),
-    ("llm_chat_session", "template_id"),
+    ("llm_chat_session", "template_tid"),
     ("llm_chat_record", "id"),
-    ("llm_chat_record", "session_id"),
-    ("llm_chat_record", "pre_record_id"),
+    ("llm_chat_record", "session_tid"),
+    ("llm_chat_record", "pre_record_tid"),
     ("llm_chat_record", "role_id"),
 ]
 

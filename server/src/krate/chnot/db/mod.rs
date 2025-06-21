@@ -4,14 +4,16 @@ use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
-    KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver,
+    KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+    KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
+use anyhow::anyhow;
 use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
-use chin_sql::{LimitOffset, SqlUpdater, Wheres};
+use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 use itertools::Itertools;
@@ -141,17 +143,16 @@ impl ChnotMapper for KDb {
             .map(|_| ())
     }
 
-    async fn chnot_delete(&self, req: KReq<ChnotDeletionReq>) -> AResult<ChnotDeletionRsp> {
+    async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp> {
         self.conn()
             .await?
             .exec(
-                SqlUpdater::new(ChnotMetadata::TABLE)
-                    .set(ChnotMetadata::OMIT_TID, OmitTID::now())
-                    .r#where(Wheres::equal(ChnotMetadata::TID, req.meta_tid)),
+                ChnotMetadata::pkey_updater(req.meta_tid, OmitTID::never())
+                    .set(ChnotMetadata::ARCHIVE_TIME, Local::now().fixed_offset()),
             )
             .await?;
 
-        Ok(ChnotDeletionRsp {})
+        Ok(ChnotArchiveRsp {})
     }
 
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>> {
@@ -235,16 +236,33 @@ impl ChnotMapper for KDb {
     }
 
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
-        let su = SqlUpdater::new("chnot_metadata")
-            .set_if_some("pinned", req.pinned)
-            .set_if_some(
-                "archive_time",
-                req.archive.map(|_| Local::now().fixed_offset()),
-            )
-            .set_if_some("kspace", req.body.kspace.as_ref())
-            .r#where(Wheres::equal("tid", req.meta_tid));
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        let reader = ChnotMetadata::pkey_reader(req.meta_tid, OmitTID::never());
+        let meta = tx.qry_opt(reader, KDbRow::to_chnot_meta).await?;
+        let Some(mut meta) = meta else {
+            return Err(anyhow!("unable to file this chnot meta, {:?}", req));
+        };
 
-        self.conn().await?.exec(su).await?;
+        let omit = ChnotMetadata::pkey_updater(req.meta_tid, OmitTID::never())
+            .set(ChnotMetadata::OMIT_TID, OmitTID::now());
+        tx.exec(omit).await?;
+
+        if req.pinned.default_false() {
+            meta.pin_time = Some(Local::now().into())
+        };
+
+        if req.archive.default_false() {
+            meta.archive_time = Some(Local::now().into())
+        }
+
+        if let Some(kspace) = req.body.kspace {
+            meta.kspace = kspace;
+        }
+
+        meta.omit_tid = OmitTID::never();
+
+        self.conn().await?.exec(meta.to_sql_inserter()).await?;
 
         Ok(ChnotUpdateRsp {})
     }

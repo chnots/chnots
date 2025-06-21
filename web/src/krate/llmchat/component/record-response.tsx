@@ -49,7 +49,7 @@ export const RecordAnswering = ({
   useEffect(() => {
     if (onSetResponsing) {
       onSetResponsing(
-        (response && response.step !== ResponseStep.End) ?? false
+        (response && response.step !== ResponseStep.End) ?? false,
       );
     }
   }, [onSetResponsing, response]);
@@ -70,12 +70,12 @@ export const RecordAnswering = ({
         const response = savedStateRef.current;
         const record: LLMChatRecord = {
           tid: response.tid,
-          session_id: response.sessionId,
+          session_tid: response.sessionId,
           content: response.content,
           reasoning_content: response.reasoningContent,
           role: "assistant",
           role_id: response.roleId,
-          pre_record_id: response.prevRecordId,
+          pre_record_tid: response.prevRecordId,
         };
         llmchatRecordInsert(record);
       }
@@ -86,12 +86,12 @@ export const RecordAnswering = ({
     const buildRecord = (responseState: ResponseState) => {
       const record: LLMChatRecord = {
         tid: responseState.tid,
-        session_id: responseState.sessionId,
+        session_tid: responseState.sessionId,
         content: responseState.content,
         reasoning_content: responseState.reasoningContent,
         role: "assistant",
         role_id: responseState.roleId,
-        pre_record_id: responseState.prevRecordId,
+        pre_record_tid: responseState.prevRecordId,
       };
 
       return record;
@@ -115,7 +115,7 @@ export const RecordAnswering = ({
         role_id={bot.tid}
         onRegenerate={onRegenerate}
         tid={genTID()}
-        session_id={response.sessionId}
+        session_tid={response.sessionId}
         content={response.content}
         reasoning_content={response.reasoningContent}
         role={"response-assistant"}
