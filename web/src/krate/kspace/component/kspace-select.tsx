@@ -1,14 +1,16 @@
 import Icon from "@/common/component/icon";
-import { Button, Button as KButton } from "@/common/component/ui/button";
+import { Button } from "@/common/component/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import React, { useEffect } from "react";
 
 export const KSpaceIcon = ({
   name,
@@ -31,71 +33,69 @@ export const KSpaceIcon = ({
 export const KSpaceSelect = ({
   onSelect,
   currentKSpace,
-  onlyIcon,
-  showMKspaces,
 }: {
   onSelect: (kspace: string) => void;
   currentKSpace: string;
-  onlyIcon?: boolean;
   showMKspaces?: boolean;
 }) => {
-  const {
-    allKSpaces: kspaces,
-    addMKSpace,
-    mkspaces,
-    removeMKSpace,
-  } = useKSpaceStore();
+  const { allKSpaces, toggleMKSpace, mkspaces } = useKSpaceStore();
+  const [position, setPosition] = React.useState(currentKSpace);
+  useEffect(() => {
+    onSelect(position);
+  }, [position]);
+
   return (
     <DropdownMenu>
-      <div className="flex align-middle items-center">
-        <DropdownMenuTrigger className="flex justify-center items-center text-sm" asChild>
-          {onlyIcon ? (
-            <Button variant={"ghost"}>
-              <KSpaceIcon name={currentKSpace} className="w-4 h-4" />
-            </Button>
-          ) : (
-            <>
-              <div className="space-x-4 flex items-center">
-                <KSpaceIcon name={currentKSpace} className="w-4 h-4" />
-                <span>{currentKSpace}</span>
-              </div>
-              <ChevronDown className="ml-auto w-4 h-4" />
-            </>
-          )}
-        </DropdownMenuTrigger>
-        {showMKspaces &&
-          mkspaces &&
-          mkspaces.length > 0 &&
-          mkspaces.map((s) => {
-            return (
-              <div key={s} onClick={() => removeMKSpace(s)}>
-                <KSpaceIcon name={s} className="w-5 h-4 text-gray-400 pr-1" />
-              </div>
-            );
-          })}
-      </div>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className=" bg-transparent"
+          size="sm"
+          aria-label="Select knowledge space"
+        >
+          <KSpaceIcon name={currentKSpace} className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuLabel>KSpace</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
+          {allKSpaces().map((e) => (
+            <DropdownMenuRadioItem value={e.name} key={e.name}>
+              <div className="flex items-center justify-between w-full px-0 py-0">
+                <div
+                  className="flex items-center flex-1 gap-2 cursor-pointer "
+                  onClick={() => setPosition(e.name)}
+                  tabIndex={0}
+                  aria-label={`Select ${e.name}`}
+                  onKeyDown={(event) =>
+                    (event.key === "Enter" || event.key === " ") &&
+                    setPosition(e.name)
+                  }
+                >
+                  <KSpaceIcon name={e.name} />
+                  <span className="truncate">{e.name}</span>
+                </div>
 
-      <DropdownMenuContent className="RadixDropmenuContent z-20" sideOffset={5}>
-        {kspaces().map((e) => (
-          <DropdownMenuItem className="p-2" key={e.name}>
-            <Button
-              onClick={() => {
-                onSelect(e.name);
-              }}
-              variant={"ghost"}
-            >
-              <KSpaceIcon name={e.name} />
-              {e.name}
-            </Button>
-            <Button
-              onClick={() => {
-                addMKSpace(e.name);
-              }}
-            >
-              M
-            </Button>
-          </DropdownMenuItem>
-        ))}
+                <Button
+                  variant="ghost"
+                  className="h-5"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleMKSpace(e.name);
+                  }}
+                  aria-label={`Add ${e.name} to mkspace`}
+                >
+                  {currentKSpace === e.name || mkspaces.includes(e.name) ? (
+                    <Icon.CircleCheckBig />
+                  ) : (
+                    <Icon.PlusCircle />
+                  )}
+                </Button>
+              </div>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

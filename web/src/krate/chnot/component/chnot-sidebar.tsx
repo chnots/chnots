@@ -22,6 +22,7 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
+import { ChnotKindSelect } from "./chnot-kind-select";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotStore(
@@ -65,6 +66,7 @@ const ChnotSidebar = () => {
     tags,
     setTagsInset,
     setTags,
+    kinds,
   } = useChnotStore();
 
   const [keyword, setKeyword] = useState<string>();
@@ -94,12 +96,12 @@ const ChnotSidebar = () => {
       setTagList(undefined);
     }
     refreshChnots();
-  }, [tags, keyword, mkspaces, currentKSpace]);
+  }, [tags, keyword, mkspaces, currentKSpace, kinds]);
 
   return (
     <Sidebar>
       <SidebarHeader className="text-sm">
-        <div className="flex flex-row">
+        <div className="flex flex-row space-x-2">
           <KSpaceSelect
             onSelect={function (kspace: string): void {
               setKSpace(kspace);
@@ -108,6 +110,7 @@ const ChnotSidebar = () => {
             onlyIcon={true}
             showMKspaces={true}
           />
+          <ChnotKindSelect />
           <Toggle
             size={"sm"}
             onClick={() => {

@@ -263,11 +263,11 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
     };
   });
 
-  const { listViewType } = useChnotStore(
+  const { tags, kinds } = useChnotStore(
     useShallow((store) => {
       return {
-        overwriteChnot: store.appendChnot,
-        listViewType: store.tags,
+        tags: store.tags,
+        kinds: store.kinds,
       };
     }),
   );
@@ -285,7 +285,10 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
           ) : (
             <Tabs defaultValue={chnotKind}>
               <TabsList>
-                {Object.values(ChnotKind).map((e) => (
+                {(kinds && kinds.length > 0
+                  ? kinds
+                  : Object.values(ChnotKind)
+                ).map((e) => (
                   <TabsTrigger
                     key={e}
                     onClick={() => {
@@ -309,7 +312,6 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
                 });
               }}
               currentKSpace={kspace}
-              onlyIcon={true}
             />
             <Toggle
               onClick={() => {
@@ -336,7 +338,7 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
                         if (metaTid) {
                           onSetContent(content);
                         } else {
-                          onSetContent(content + "\n" + (listViewType ?? ""));
+                          onSetContent(content + "\n" + (tags ?? ""));
                         }
                       }}
                       height={200}

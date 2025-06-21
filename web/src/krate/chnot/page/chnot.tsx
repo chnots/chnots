@@ -22,17 +22,23 @@ import { useShallow } from "zustand/react/shallow";
  * @returns Chnot Editor Container
  */
 const MonoChnot = () => {
-  const { curMetaId, getCurrentChnot, setCurrentChnotMetaId, appendChnot } =
-    useChnotStore(
-      useShallow((store) => {
-        return {
-          curMetaId: store.curMetaId,
-          getCurrentChnot: store.getCurrentChnot,
-          setCurrentChnotMetaId: store.setCurrentChnotMetaId,
-          appendChnot: store.appendChnot,
-        };
-      }),
-    );
+  const {
+    curMetaId,
+    getCurrentChnot,
+    setCurrentChnotMetaId,
+    appendChnot,
+    kinds,
+  } = useChnotStore(
+    useShallow((store) => {
+      return {
+        curMetaId: store.curMetaId,
+        getCurrentChnot: store.getCurrentChnot,
+        setCurrentChnotMetaId: store.setCurrentChnotMetaId,
+        appendChnot: store.appendChnot,
+        kinds: store.kinds,
+      };
+    }),
+  );
 
   const [comKey, setComKey] = useState<string>(genUID());
   const metaTidRef = useRef<TID>(null);
@@ -63,7 +69,11 @@ const MonoChnot = () => {
     <ChnotEditorProvider
       key={comKey}
       props={{
-        kind: editorChnot?.meta.kind ?? ChnotKind.MarkdownWithToent,
+        kind:
+          editorChnot?.meta.kind ??
+          (kinds && kinds.length == 1
+            ? kinds.at(0)!
+            : ChnotKind.MarkdownWithToent),
         metaTid: editorChnot?.meta.tid,
         kspace: editorChnot?.meta.kspace ?? "public",
         readonly: false,

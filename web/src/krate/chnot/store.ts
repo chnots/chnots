@@ -1,18 +1,12 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import {
-  Chnot,
-  ChnotQueryRsp,
-  ChnotOverwriteReq,
-  ChnotOverwriteRsp,
-  ChnotTagSearchType,
-} from "./dto";
-import { chnotOverwrite, chnotQuery } from "./service";
+import { Chnot, ChnotQueryRsp, ChnotTagSearchType } from "./dto";
+import { chnotQuery } from "./service";
 import { TID } from "@/lib/id_util";
-import { ChnotMetadata, ChnotRecord } from "./po";
 import { DbCache } from "@/common/store";
 import { useKSpaceStore } from "../kspace/store";
+import { ChnotKind } from "./po";
 
 const newChnotMap = () => {
   return {
@@ -53,6 +47,7 @@ interface State {
    */
   query?: string;
   tags?: ChnotTagSearchType;
+  kinds?: ChnotKind[];
   isFetchingNextPage: boolean;
 }
 
@@ -71,13 +66,13 @@ export const useChnotStore = create(
         };
       });
 
-      const { chnotMapByMetaId, query, tags } = get();
+      const { chnotMapByMetaId, query, tags, kinds } = get();
       const cs: ChnotQueryRsp = await chnotQuery({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
         tags,
-        kinds: [],
+        kinds: kinds ?? [],
       });
 
       set((state) => {
@@ -136,6 +131,11 @@ export const useChnotStore = create(
         return { ...state, tagPath: tagKeyword };
       });
     },
+    setChnotKinds: (changeKinds: (kinds?: ChnotKind[]) => ChnotKind[]) => {
+      set((state) => {
+        return { ...state, kinds: [...new Set(changeKinds(state.kinds))] };
+      });
+    },
     getCurrentChnot: () => {
       const read = get();
       return read.curMetaId
@@ -156,7 +156,7 @@ export const useChnotStore = create(
           })
           .map((e) => {
             return e.record.tid;
-          })
+          }),
       );
 
       for (const key of toRemove2) {
@@ -194,5 +194,5 @@ export const useChnotStore = create(
         };
       });
     },
-  }))
+  })),
 );

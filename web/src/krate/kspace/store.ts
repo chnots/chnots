@@ -58,6 +58,7 @@ export const useKSpaceStore = create(
       set((prev) => {
         return {
           ...prev,
+          mkspaces: [],
           currentKSpace: kspace,
         };
       });
@@ -67,17 +68,7 @@ export const useKSpaceStore = create(
         return {
           ...prev,
           mkspaces: [...new Set(mkspaces)].filter(
-            (e) => e != prev.currentKSpace
-          ),
-        };
-      });
-    },
-    addMKSpace: (mkspace: string) => {
-      set((prev) => {
-        return {
-          ...prev,
-          mkspaces: [...new Set([...prev.mkspaces, mkspace])].filter(
-            (e) => e != prev.currentKSpace
+            (e) => e != prev.currentKSpace,
           ),
         };
       });
@@ -87,6 +78,17 @@ export const useKSpaceStore = create(
         return {
           ...prev,
           mkspaces: prev.mkspaces.filter((e) => e != mkspace),
+        };
+      });
+    },
+    toggleMKSpace: (mkspace: string) => {
+      set((prev) => {
+        const mkspaces = prev.mkspaces.includes(mkspace)
+          ? prev.mkspaces.filter((e) => e != mkspace)
+          : [...new Set([...prev.mkspaces, mkspace])];
+        return {
+          ...prev,
+          mkspaces,
         };
       });
     },
@@ -100,5 +102,5 @@ export const useKSpaceStore = create(
       const read = get();
       return read.kspaceMapByName.get(read.currentKSpace);
     },
-  }))
+  })),
 );
