@@ -155,7 +155,7 @@ const SessionContainer = ({
     return true;
   }, []);
 
-  const truncateSession = useCallback(
+  const truncateAndRegen = useCallback(
     async (recordId: TID) => {
       if (sessionAndRecs) {
         if (persistedIds.current.has(recordId)) {
@@ -164,8 +164,20 @@ const SessionContainer = ({
             remove_rid_included: recordId,
           });
         }
-        setResponseId(genTID());
+        setSessionAndRecs((prev) => {
+          const newRecs: LLMChatRecord[] = [];
+          if (prev?.records) {
+            for (const rec of prev.records) {
+              if (rec.tid === recordId) {
+                break;
+              }
+              newRecs.push(rec);
+            }
+          }
+          return { session: prev!.session, records: newRecs };
+        });
         setTriggerAnswer(true);
+        setResponseId(genTID());
       }
     },
     [sessionAndRecs],
@@ -240,7 +252,7 @@ const SessionContainer = ({
                         onRegenerate={
                           record.role === "assistant"
                             ? async () => {
-                                truncateSession(record.tid);
+                                truncateAndRegen(record.tid);
                               }
                             : undefined
                         }
@@ -255,7 +267,7 @@ const SessionContainer = ({
                       triggerAnswer={triggerAnswer}
                       bot={currentBot}
                       onRegenerate={() => {
-                        truncateSession(responseId);
+                        truncateAndRegen(responseId);
                       }}
                       onSetResponsing={(flag) => {
                         setResponsing(flag);
