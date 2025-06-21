@@ -262,7 +262,8 @@ impl ChnotMapper for KDb {
 
         meta.omit_tid = OmitTID::never();
 
-        self.conn().await?.exec(meta.to_sql_inserter()).await?;
+        tx.exec(meta.to_sql_inserter()).await?;
+        tx.cmt().await?;
 
         Ok(ChnotUpdateRsp {})
     }
