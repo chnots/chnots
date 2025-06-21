@@ -14,14 +14,12 @@ import {
   chnotOverwrite,
   chnotQuery,
   chnotQueryKindRel,
-  chnotUpdate,
 } from "@/krate/chnot/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
 import MarkdownEditor from "./chnot-markdown-editor";
 import { ChnotKind } from "@/krate/chnot/po";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
 
-import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { Button } from "@/common/component/ui/button";
 import {
   Popover,
@@ -47,7 +45,6 @@ import { SaveState } from "@/common/types";
 interface ChnotEditorProps {
   metaTid?: TID;
   kind: ChnotKind;
-  kspace: string;
   readonly: boolean;
   topleft: ReactNode;
   onClickNewButton: () => void;
@@ -238,7 +235,6 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
   const {
     content,
     lefttop,
-    kspace,
     readonly,
     recTid,
     metaTid,
@@ -251,7 +247,6 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
     return {
       content: store.content,
       lefttop: store.topleft,
-      kspace: store.kspace,
       readonly: store.readonly,
       recTid: store.recTid,
       chnotKind: store.kind,
@@ -304,15 +299,6 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
           ))}
         {metaTid && (
           <div className="flex space-x-2">
-            <KSpaceSelect
-              onSelect={(ns) => {
-                chnotUpdate({
-                  meta_tid: metaTid,
-                  kspace: ns,
-                });
-              }}
-              currentKSpace={kspace}
-            />
             <Toggle
               onClick={() => {
                 onSetReadonly(!readonly);

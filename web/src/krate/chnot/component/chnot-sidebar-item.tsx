@@ -16,12 +16,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { KSpaceIcon } from "@/krate/kspace/component/kspace-select";
+import {
+  KSpaceIcon,
+  KSpaceSelectDropDownGroup,
+} from "@/krate/kspace/component/kspace-select";
 import { ChnotKindIcon } from "./chnot-kind-icon";
 import { useShallow } from "zustand/react/shallow";
+import { KSpace } from "@/krate/kspace/po";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -30,7 +39,7 @@ const ChnotSidebarTagItem = React.forwardRef(
       focused,
       onClick,
     }: { tag: string; focused?: boolean; onClick: () => void },
-    ref: ForwardedRef<HTMLLIElement>
+    ref: ForwardedRef<HTMLLIElement>,
   ) => {
     return (
       <SidebarMenuItem onClick={onClick} ref={ref}>
@@ -51,7 +60,7 @@ const ChnotSidebarTagItem = React.forwardRef(
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
-  }
+  },
 );
 
 ChnotSidebarTagItem.displayName = "ChnotTagListItem";
@@ -59,7 +68,7 @@ ChnotSidebarTagItem.displayName = "ChnotTagListItem";
 const ChnotSidebarItem = React.forwardRef(
   (
     { chnot, showKSpace }: { chnot: Chnot; showKSpace: boolean },
-    ref: ForwardedRef<HTMLLIElement>
+    ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const { setCurrentChnotMetaId, getCurrentChnot, validateChnotCache } =
       useChnotStore(
@@ -69,7 +78,7 @@ const ChnotSidebarItem = React.forwardRef(
             getCurrentChnot: store.getCurrentChnot,
             validateChnotCache: store.validateChnotCache,
           };
-        })
+        }),
       );
 
     const onClick = (_: React.MouseEvent) => {
@@ -86,7 +95,7 @@ const ChnotSidebarItem = React.forwardRef(
       ? chnot.record.content.split("\n")[0].substring(2)
       : chnot.record.content.substring(0, 500);
 
-    const onDelete = async () => {
+    const onArchive = async () => {
       await chnotUpdate({
         meta_tid: chnot.meta.tid,
         archive: true,
@@ -103,7 +112,7 @@ const ChnotSidebarItem = React.forwardRef(
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
             "hover:shadow-xs border",
-            isSelected ? "bg-background" : "bg-transparent border-transparent"
+            isSelected ? "bg-background" : "bg-transparent border-transparent",
           )}
           tabIndex={0}
           aria-label={`Navigate to ${title}`}
@@ -114,7 +123,7 @@ const ChnotSidebarItem = React.forwardRef(
               "text-muted-foreground group-hover:text-sidebar-accent-foreground",
               isSelected
                 ? "text-sidebar-accent-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
             )}
           >
             <ChnotKindIcon
@@ -145,7 +154,7 @@ const ChnotSidebarItem = React.forwardRef(
                 "text-foreground group-hover:text-sidebar-accent-foreground",
                 isSelected
                   ? "text-sidebar-accent-foreground"
-                  : "text-foreground"
+                  : "text-foreground",
               )}
               title={title}
             >
@@ -165,15 +174,36 @@ const ChnotSidebarItem = React.forwardRef(
             side={isMobile ? "bottom" : "right"}
             align={isMobile ? "end" : "start"}
           >
-            <DropdownMenuItem onClick={onDelete}>
-              <Trash2 className="text-muted-foreground" />
-              <span>Delete</span>
+            <DropdownMenuItem onClick={onArchive}>
+              <Icon.Trash2 className="text-muted-foreground" />
+              <span>Archive</span>
             </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="space-x-2">
+                <Icon.Warehouse className="text-muted-foreground w-4 h-4" />
+                <span>Workspace</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  <KSpaceSelectDropDownGroup
+                    kspace={chnot.meta.kspace}
+                    onSelect={(e) => {
+                      chnotUpdate({
+                        meta_tid: chnot.meta.tid,
+                        kspace: e,
+                      }).then(() => {
+                        validateChnotCache([chnot.meta.tid]);
+                      });
+                    }}
+                  />
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>{" "}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     );
-  }
+  },
 );
 
 ChnotSidebarItem.displayName = "ChnotListItem";

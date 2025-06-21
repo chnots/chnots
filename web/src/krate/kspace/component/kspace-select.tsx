@@ -11,6 +11,7 @@ import {
 } from "@/common/component/ui/dropdown-menu";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import React, { useEffect } from "react";
+import { KSpace } from "../po";
 
 export const KSpaceIcon = ({
   name,
@@ -30,6 +31,43 @@ export const KSpaceIcon = ({
   }
 };
 
+export const KSpaceSelectDropDownGroup = ({
+  kspace,
+  onSelect,
+  extra,
+}: {
+  kspace: string;
+  onSelect: (kspace: string) => void;
+  extra?: (kspace: KSpace) => React.ReactNode;
+}) => {
+  const { allKSpaces } = useKSpaceStore();
+  const [position, setPosition] = React.useState(kspace);
+
+  return (
+    <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
+      {allKSpaces().map((e) => (
+        <DropdownMenuRadioItem value={e.name} key={e.name}>
+          <div className="flex items-center justify-between w-full px-0 py-0">
+            <div
+              className="flex items-center flex-1 gap-2 cursor-pointer "
+              onClick={() => onSelect(e.name)}
+              tabIndex={0}
+              aria-label={`Select ${e.name}`}
+              onKeyDown={(event) =>
+                (event.key === "Enter" || event.key === " ") && onSelect(e.name)
+              }
+            >
+              <KSpaceIcon name={e.name} />
+              <span className="truncate">{e.name}</span>
+            </div>
+          </div>
+          {extra && extra(e)}
+        </DropdownMenuRadioItem>
+      ))}
+    </DropdownMenuRadioGroup>
+  );
+};
+
 export const KSpaceSelect = ({
   onSelect,
   currentKSpace,
@@ -38,12 +76,7 @@ export const KSpaceSelect = ({
   currentKSpace: string;
   showMKspaces?: boolean;
 }) => {
-  const { allKSpaces, toggleMKSpace, mkspaces } = useKSpaceStore();
-  const [position, setPosition] = React.useState(currentKSpace);
-  useEffect(() => {
-    onSelect(position);
-  }, [position]);
-
+  const { toggleMKSpace, mkspaces } = useKSpaceStore();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -59,43 +92,27 @@ export const KSpaceSelect = ({
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>KSpace</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
-          {allKSpaces().map((e) => (
-            <DropdownMenuRadioItem value={e.name} key={e.name}>
-              <div className="flex items-center justify-between w-full px-0 py-0">
-                <div
-                  className="flex items-center flex-1 gap-2 cursor-pointer "
-                  onClick={() => setPosition(e.name)}
-                  tabIndex={0}
-                  aria-label={`Select ${e.name}`}
-                  onKeyDown={(event) =>
-                    (event.key === "Enter" || event.key === " ") &&
-                    setPosition(e.name)
-                  }
-                >
-                  <KSpaceIcon name={e.name} />
-                  <span className="truncate">{e.name}</span>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  className="h-5"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    toggleMKSpace(e.name);
-                  }}
-                  aria-label={`Add ${e.name} to mkspace`}
-                >
-                  {currentKSpace === e.name || mkspaces.includes(e.name) ? (
-                    <Icon.CircleCheckBig />
-                  ) : (
-                    <Icon.PlusCircle />
-                  )}
-                </Button>
-              </div>
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
+        <KSpaceSelectDropDownGroup
+          kspace={currentKSpace}
+          onSelect={onSelect}
+          extra={(e) => (
+            <Button
+              variant="ghost"
+              className="h-5"
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleMKSpace(e.name);
+              }}
+              aria-label={`Add ${e.name} to mkspace`}
+            >
+              {currentKSpace === e.name || mkspaces.includes(e.name) ? (
+                <Icon.CircleCheckBig />
+              ) : (
+                <Icon.PlusCircle />
+              )}
+            </Button>
+          )}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

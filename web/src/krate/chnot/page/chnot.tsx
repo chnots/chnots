@@ -75,7 +75,6 @@ const MonoChnot = () => {
             ? kinds.at(0)!
             : ChnotKind.MarkdownWithToent),
         metaTid: editorChnot?.meta.tid,
-        kspace: editorChnot?.meta.kspace ?? "public",
         readonly: false,
         topleft: <SidebarTrigger />,
         onClickNewButton: () => {
