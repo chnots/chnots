@@ -1,6 +1,5 @@
-use chin_sql::{SqlBuilder, SqlDeleter, SqlInserter, Wheres};
+use chin_sql::{time_type::TID, SqlBuilder, SqlDeleter, SqlInserter, Wheres};
 use chin_tools::AResult;
-use chrono::Local;
 
 use crate::{
     mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier},
@@ -15,7 +14,7 @@ use super::{
 impl KKVDeserializeMapper for KDbRow {
     fn to_kkv(self) -> AResult<KKV> {
         let obj = KKV {
-            insert_time: self.try_get(KKV::INSERT_TIME)?,
+            tid: self.try_get(KKV::TID)?,
             key: self.try_get(KKV::KEY)?,
             value: self.try_get(KKV::VALUE)?,
             kind: self.try_get(KKV::KIND)?,
@@ -33,7 +32,7 @@ impl KDbExecutor<'_> {
             .field(KKV::KIND, req.kind)
             .field(KKV::VALUE, &req.value)
             .field(KKV::KSPACE, &req.kspace)
-            .field(KKV::INSERT_TIME, Local::now().fixed_offset())
+            .field(KKV::TID, TID::default())
             .on_conflict(chin_sql::OnConflict::Replace(
                 [KKV::KEY, KKV::KIND, KKV::KSPACE].join(","),
             ));

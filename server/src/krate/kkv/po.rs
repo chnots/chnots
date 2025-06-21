@@ -4,19 +4,13 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use strum::{EnumString, IntoStaticStr};
 
-use chin_sql::{ChinSqlCrud, GenerateTableSchema, SqlValue};
+use chin_sql::{time_type::TID, ChinSqlCrud, GenerateTableSchema, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
 pub(crate) enum KKVType {
-    #[strum(serialize = "chnot_sub_type")]
-    #[serde(rename = "chnot_sub_type")]
-    ChnotSubType,
     #[strum(serialize = "k_space_info")]
     #[serde(rename = "k_space_info")]
     KSpaceInfo,
-    #[strum(serialize = "to_kfile")]
-    #[serde(rename = "to_kfile")]
-    ToKFile,
     #[strum(serialize = "def")]
     #[serde(rename = "def")]
     Default,
@@ -50,7 +44,10 @@ pub(crate) struct KKV {
     #[gts_primary]
     #[gts_length = 100]
     pub(crate) kspace: String,
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub(crate) tid: TID,
+
     pub(crate) value: String,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
-    pub(crate) insert_time: DateTime<FixedOffset>,
 }

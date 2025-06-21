@@ -47,4 +47,5 @@ export type ChnotKindRel = {
   meta_tid: TID;
   omit_tid?: OmitTID;
   kind_id: string;
+  tid: TID;
 };

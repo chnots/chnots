@@ -191,6 +191,7 @@ impl<'a> KDbTx<'a> {
                     meta_tid: *meta_tid,
                     omit_tid: OmitTID::never(),
                     kind_id: kid,
+                    tid: TID::default(),
                 }
                 .to_sql_inserter(),
             )

@@ -79,6 +79,9 @@ pub(crate) struct ChnotKindRel {
 
     #[gts_length = 200]
     pub(crate) kind_id: String,
+
+    #[gts_type = "i64"]
+    pub(crate) tid: TID,
 }
 
 impl AsRef<str> for ChnotTag {

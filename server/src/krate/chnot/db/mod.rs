@@ -262,8 +262,7 @@ impl ChnotMapper for KDb {
 
         meta.omit_tid = OmitTID::never();
 
-        tx.exec(meta.to_sql_inserter()).await?;
-        tx.cmt().await?;
+        self.conn().await?.exec(meta.to_sql_inserter()).await?;
 
         Ok(ChnotUpdateRsp {})
     }
@@ -423,6 +422,7 @@ impl ChnotDeserializeMapper for KDbRow {
             meta_tid: self.try_get(ChnotKindRel::META_TID)?,
             omit_tid: self.try_get(ChnotKindRel::OMIT_TID)?,
             kind_id: self.try_get(ChnotKindRel::KIND_ID)?,
+            tid: self.try_get(ChnotKindRel::TID)?,
         })
     }
 }
