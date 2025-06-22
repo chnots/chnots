@@ -2,7 +2,7 @@ import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
 import {
   ChnotEditor,
   ChnotEditorProvider,
-} from "@/krate/chnot/component/chnot-container";
+} from "@/krate/chnot/component/chnot-editor";
 import { useChnotStore } from "@/krate/chnot/store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Chnot } from "@/krate/chnot/dto";

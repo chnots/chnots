@@ -10,7 +10,7 @@ WEB_DIR = web
 SERVER_DIR = server
 
 run-web:
-	cd $(WEB_DIR) && pnpm run dev
+	cd $(WEB_DIR) && $(PNPM_INSTALL) && pnpm run dev
 
 run-server-sqlite:
 	cd $(SERVER_DIR) && cargo run -- --config ../config/config.sqlite.toml
