@@ -2,6 +2,7 @@ pub(crate) mod inner;
 
 use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
+use crate::krate::kspace;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -12,6 +13,7 @@ use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use crate::util::string_util::get_hashtags;
 use anyhow::anyhow;
+use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
@@ -237,32 +239,39 @@ impl ChnotMapper for KDb {
 
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
         let mut conn = self.conn().await?;
+
         let tx = conn.tx().await?;
         let reader = ChnotMetadata::pkey_reader(req.meta_tid, OmitTID::never());
         let meta = tx.qry_opt(reader, KDbRow::to_chnot_meta).await?;
+
         let Some(mut meta) = meta else {
             return Err(anyhow!("unable to file this chnot meta, {:?}", req));
         };
+        meta.omit_tid = OmitTID::now();
+
+        tx.exec(meta.to_sql_inserter()).await?;
 
         let omit = ChnotMetadata::pkey_updater(req.meta_tid, OmitTID::never())
-            .set(ChnotMetadata::OMIT_TID, OmitTID::now());
+            .set_if_some(
+                ChnotMetadata::PIN_TIME,
+                if req.pinned.default_false() {
+                    Some(Local::now().fixed_offset())
+                } else {
+                    None
+                },
+            )
+            .set_if_some(
+                ChnotMetadata::ARCHIVE_TIME,
+                if req.archive.default_false() {
+                    Some(Local::now().fixed_offset())
+                } else {
+                    None
+                },
+            )
+            .set_if_some(ChnotMetadata::KSPACE, req.body.kspace);
+
         tx.exec(omit).await?;
-
-        if req.pinned.default_false() {
-            meta.pin_time = Some(Local::now().into())
-        };
-
-        if req.archive.default_false() {
-            meta.archive_time = Some(Local::now().into())
-        }
-
-        if let Some(kspace) = req.body.kspace {
-            meta.kspace = kspace;
-        }
-
-        meta.omit_tid = OmitTID::never();
-
-        self.conn().await?.exec(meta.to_sql_inserter()).await?;
+        tx.cmt().await?;
 
         Ok(ChnotUpdateRsp {})
     }

@@ -24,4 +24,6 @@ make run-server-sqlite
 
 ## Credits
 
-- Jolpin: for its wonderful markdown and codemirror utils.
+- **Jolpin**: for its wonderful markdown and codemirror utils.
+- **Excalidraw**: the powerful drawing tools.
+- **tanstack-table**: the powerful table.

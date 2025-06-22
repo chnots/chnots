@@ -35,7 +35,6 @@ macro_rules! impl_KDbExecutorBehaiver {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
                 tracing::info!("exec {:?}", seg);
                 let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
-
                 let count = self.execute(seg, values).await?;
                 Ok(count)
             }
