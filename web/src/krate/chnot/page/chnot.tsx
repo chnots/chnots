@@ -75,7 +75,7 @@ const MonoChnot = () => {
             ? kinds.at(0)!
             : ChnotKind.MarkdownWithToent),
         metaTid: editorChnot?.meta.tid,
-        readonly: false,
+        readonly: viewModeRef.current,
         topleft: <SidebarTrigger />,
         onClickNewButton: () => {
           setComKey(genUID());

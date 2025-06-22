@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import React, { useEffect } from "react";
+import React from "react";
 import { KSpace } from "../po";
 
 export const KSpaceIcon = ({

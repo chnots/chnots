@@ -106,6 +106,13 @@ function createChnotStore(props: ChnotEditorProps) {
         return { ...prev, kindId: kindId };
       });
     },
+    onSetReadonly: (readonly) => {
+      console.log("set read only", readonly);
+      props.onSetReadonly(readonly);
+      set((prev) => {
+        return { ...prev, readonly: readonly };
+      });
+    },
   }));
 }
 
@@ -303,6 +310,7 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
               onClick={() => {
                 onSetReadonly(!readonly);
               }}
+              defaultPressed={readonly}
             >
               <Icon.Eye className="w-4 h-4" />
             </Toggle>
