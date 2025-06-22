@@ -34,7 +34,7 @@ impl KDbExecutor<'_> {
             .field(KKV::KSPACE, &req.kspace)
             .field(KKV::TID, TID::default())
             .on_conflict(chin_sql::OnConflict::Replace(
-                [KKV::KEY, KKV::KIND, KKV::KSPACE].join(","),
+                [KKV::KEY, KKV::KIND, KKV::KSPACE, KKV::TID].join(","),
             ));
         self.exec(inserter).await?;
 
