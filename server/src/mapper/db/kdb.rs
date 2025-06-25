@@ -5,7 +5,6 @@ use deadpool_postgres::{Client, GenericClient, Transaction};
 use postgres_types::FromSql;
 use tokio_postgres::Row;
 
-
 use super::{postgres, sqlite};
 
 pub(crate) trait KDbBehaiver {

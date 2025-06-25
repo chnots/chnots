@@ -1,7 +1,6 @@
 import Icon from "@/common/component/icon";
 import clsx from "clsx";
 import KSVG from "@/common/component/svg";
-import { useRef } from "react";
 import { LLMChatTemplate } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { Button } from "@/common/component/ui/button";
@@ -14,6 +13,7 @@ import {
 } from "@/common/component/ui/dropdown-menu";
 import { DialogTrigger } from "@/common/component/ui/dialog";
 import { genTID } from "@/lib/id_util";
+import { llmchatTemplateDelete } from "../service";
 
 const LLMChatTemplateList = ({
   onClickTemplate,
@@ -79,7 +79,12 @@ const LLMChatTemplateList = ({
                     Edit
                   </DropdownMenuItem>
                 </DialogTrigger>
-                <DropdownMenuItem onClick={(e) => e.preventDefault()}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    llmchatTemplateDelete({ template_tid: item.tid });
+                  }}
+                >
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>

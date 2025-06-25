@@ -1,5 +1,6 @@
 import request from "@/lib/request";
 import {
+  LLMChatDeleteTemplateReq,
   LLMChatListBotRsp,
   LLMChatListSessionRsp,
   LLMChatListTemplateRsp,
@@ -32,6 +33,12 @@ export const llmchatTemplateAdd = async (template: LLMChatTemplate) => {
   return await request.put(`api/v1/llmchat/template`, {
     template,
   });
+};
+
+export const llmchatTemplateDelete = async (
+  template: LLMChatDeleteTemplateReq,
+) => {
+  return await request.post(`api/v1/llmchat/template`, template);
 };
 
 export const llmchatBotAdd = async (bot: LLMChatBot) => {
