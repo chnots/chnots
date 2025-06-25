@@ -14,7 +14,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         .route("/api/v1/llmchat/bot", put(bot_overwrite))
         .route("/api/v1/llmchat/bot", delete(bot_deletetion))
         .route("/api/v1/llmchat/bots", get(bot_list))
-        .route("/api/v1/llmchat/template", delete(template_deletetion))
+        .route("/api/v1/llmchat/template-delete", post(template_deletetion))
         .route("/api/v1/llmchat/template", put(template_overwrite))
         .route("/api/v1/llmchat/templates", get(template_list))
         .route("/api/v1/llmchat/session", put(session_insertion))

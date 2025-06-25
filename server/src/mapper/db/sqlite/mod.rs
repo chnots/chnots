@@ -1,4 +1,4 @@
-use actor_sqlite::{pool::ActorSqlitePool, WorkerConfig};
+use actor_sqlite::{pool::ActorSqlitePool, pool_config::PoolConfig};
 use chin_tools::AResult;
 use serde::Deserialize;
 
@@ -15,7 +15,9 @@ impl TryFrom<SqliteConfig> for ActorSqlitePool {
 
     fn try_from(value: SqliteConfig) -> Result<Self, Self::Error> {
         Ok(ActorSqlitePool::try_from(
-            WorkerConfig::default().path(value.filepath),
+            PoolConfig::default()
+                .path(value.filepath)
+                .pool_size(value.pool_size.unwrap_or(4)),
         )?)
     }
 }

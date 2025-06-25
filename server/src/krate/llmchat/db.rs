@@ -74,7 +74,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatOverwriteBotRsp> {
         let bot = req.body.bot;
 
-        let omit = LLMChatBot::pkey_updater(bot.tid, OmitTID::now())
+        let omit = LLMChatBot::pkey_updater(bot.tid, OmitTID::never())
             .set(LLMChatBot::OMIT_TID, OmitTID::now());
         let inserter = bot.to_sql_inserter();
         let mut conn = self.conn().await?;
@@ -91,7 +91,7 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatOverwriteTemplateReq>,
     ) -> AResult<LLMChatOverwriteTemplateRsp> {
         let tmpl = req.body.template;
-        let omit = LLMChatTemplate::pkey_updater(tmpl.tid, OmitTID::now())
+        let omit = LLMChatTemplate::pkey_updater(tmpl.tid, OmitTID::never())
             .set(LLMChatTemplate::OMIT_TID, OmitTID::now());
         let inserter = tmpl.to_owned().to_sql_inserter();
 
@@ -111,7 +111,7 @@ impl LLMChatMapper for KDb {
         req.body.session.title = req.session.title.chars().take(199).collect();
 
         let obj = req.body.session;
-        let omit = LLMChatSession::pkey_updater(obj.tid, OmitTID::now())
+        let omit = LLMChatSession::pkey_updater(obj.tid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());
         let inserter = obj.to_owned().to_sql_inserter();
 
