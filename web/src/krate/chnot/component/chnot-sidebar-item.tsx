@@ -39,7 +39,7 @@ const ChnotSidebarTagItem = React.forwardRef(
       focused,
       onClick,
     }: { tag: string; focused?: boolean; onClick: () => void },
-    ref: ForwardedRef<HTMLLIElement>,
+    ref: ForwardedRef<HTMLLIElement>
   ) => {
     return (
       <SidebarMenuItem onClick={onClick} ref={ref}>
@@ -60,7 +60,7 @@ const ChnotSidebarTagItem = React.forwardRef(
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
-  },
+  }
 );
 
 ChnotSidebarTagItem.displayName = "ChnotTagListItem";
@@ -68,18 +68,23 @@ ChnotSidebarTagItem.displayName = "ChnotTagListItem";
 const ChnotSidebarItem = React.forwardRef(
   (
     { chnot, showKSpace }: { chnot: Chnot; showKSpace: boolean },
-    ref: ForwardedRef<HTMLLIElement>,
+    ref: ForwardedRef<HTMLLIElement>
   ) => {
-    const { setCurrentChnotMetaId, getCurrentChnot, validateChnotCache } =
-      useChnotStore(
-        useShallow((store) => {
-          return {
-            setCurrentChnotMetaId: store.setCurrentChnotMetaId,
-            getCurrentChnot: store.getCurrentChnot,
-            validateChnotCache: store.validateChnotCache,
-          };
-        }),
-      );
+    const {
+      setCurrentChnotMetaId,
+      getCurrentChnot,
+      validateChnotCache,
+      overwriteChnotCache,
+    } = useChnotStore(
+      useShallow((store) => {
+        return {
+          overwriteChnotCache: store.overwriteChnotCache,
+          setCurrentChnotMetaId: store.setCurrentChnotMetaId,
+          getCurrentChnot: store.getCurrentChnot,
+          validateChnotCache: store.validateChnotCache,
+        };
+      })
+    );
 
     const onClick = (_: React.MouseEvent) => {
       setCurrentChnotMetaId(chnot.meta.tid);
@@ -103,6 +108,16 @@ const ChnotSidebarItem = React.forwardRef(
       validateChnotCache([chnot.meta.tid]);
     };
 
+    const onTogglePin = async () => {
+      const pin = chnot.meta.pin_time ? false : true;
+      await chnotUpdate({
+        meta_tid: chnot.meta.tid,
+        pinned: pin,
+      });
+      chnot.meta.pin_time = pin ? new Date() : undefined;
+      overwriteChnotCache(chnot);
+    };
+
     return (
       <SidebarMenuItem key={chnot.record.tid}>
         <a
@@ -112,7 +127,7 @@ const ChnotSidebarItem = React.forwardRef(
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
             "hover:shadow-xs border",
-            isSelected ? "bg-background" : "bg-transparent border-transparent",
+            isSelected ? "bg-background" : "bg-transparent border-transparent"
           )}
           tabIndex={0}
           aria-label={`Navigate to ${title}`}
@@ -123,7 +138,7 @@ const ChnotSidebarItem = React.forwardRef(
               "text-muted-foreground group-hover:text-sidebar-accent-foreground",
               isSelected
                 ? "text-sidebar-accent-foreground"
-                : "text-muted-foreground",
+                : "text-muted-foreground"
             )}
           >
             <ChnotKindIcon
@@ -146,6 +161,9 @@ const ChnotSidebarItem = React.forwardRef(
                   className="h-3.5 w-3.5 text-muted-foreground/60"
                 />
               )}
+              {chnot.meta.pin_time && (
+                <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
+              )}
             </div>
 
             <h3
@@ -154,7 +172,7 @@ const ChnotSidebarItem = React.forwardRef(
                 "text-foreground group-hover:text-sidebar-accent-foreground",
                 isSelected
                   ? "text-sidebar-accent-foreground"
-                  : "text-foreground",
+                  : "text-foreground"
               )}
               title={title}
             >
@@ -174,6 +192,10 @@ const ChnotSidebarItem = React.forwardRef(
             side={isMobile ? "bottom" : "right"}
             align={isMobile ? "end" : "start"}
           >
+            <DropdownMenuItem onClick={onTogglePin}>
+              <Icon.Pin className="text-muted-foreground" />
+              <span>Pin</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={onArchive}>
               <Icon.Trash2 className="text-muted-foreground" />
               <span>Archive</span>
@@ -203,7 +225,7 @@ const ChnotSidebarItem = React.forwardRef(
         </DropdownMenu>
       </SidebarMenuItem>
     );
-  },
+  }
 );
 
 ChnotSidebarItem.displayName = "ChnotListItem";

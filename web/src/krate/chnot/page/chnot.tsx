@@ -34,7 +34,7 @@ const MonoChnot = () => {
         curMetaId: store.curMetaId,
         getCurrentChnot: store.getCurrentChnot,
         setCurrentChnotMetaId: store.setCurrentChnotMetaId,
-        appendChnot: store.appendChnot,
+        appendChnot: store.overwriteChnotCache,
         kinds: store.kinds,
       };
     }),

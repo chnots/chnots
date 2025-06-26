@@ -108,7 +108,7 @@ export const useChnotStore = create(
 
       await get().fetchMoreChnots();
     },
-    appendChnot: (chnot: Chnot) => {
+    overwriteChnotCache: (chnot: Chnot) => {
       set((state) => {
         const cmm = state.chnotMapByMetaId;
         let cm = cmm.dbCache;
@@ -156,7 +156,7 @@ export const useChnotStore = create(
           })
           .map((e) => {
             return e.record.tid;
-          }),
+          })
       );
 
       for (const key of toRemove2) {
@@ -194,5 +194,5 @@ export const useChnotStore = create(
         };
       });
     },
-  })),
+  }))
 );

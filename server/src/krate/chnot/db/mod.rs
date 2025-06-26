@@ -219,7 +219,7 @@ impl ChnotMapper for KDb {
                 Wheres::if_some(req.record_tid, |tid| Wheres::equal("t.rec_tid", tid)),
                 Wheres::if_some(req.meta_tid, |tid| Wheres::equal("t.meta_tid", tid)),
             ]))
-            .sov("ORDER BY t.pin_time DESC, t.meta_tid desc")
+            .sov("ORDER BY t.pin_time asc, t.meta_tid desc")
             .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
 
         let cs = self
@@ -252,16 +252,24 @@ impl ChnotMapper for KDb {
         let omit = ChnotMetadata::pkey_updater(req.meta_tid, OmitTID::never())
             .set_if_some(
                 ChnotMetadata::PIN_TIME,
-                if req.pinned.default_false() {
-                    Some(Local::now().fixed_offset())
+                if let Some(o) = req.pinned {
+                    if o {
+                        Some(Some(Local::now().fixed_offset()))
+                    } else {
+                        Some(None)
+                    }
                 } else {
                     None
                 },
             )
             .set_if_some(
                 ChnotMetadata::ARCHIVE_TIME,
-                if req.archive.default_false() {
-                    Some(Local::now().fixed_offset())
+                if let Some(o) = req.archive {
+                    if o {
+                        Some(Some(Local::now().fixed_offset()))
+                    } else {
+                        Some(None)
+                    }
                 } else {
                     None
                 },
