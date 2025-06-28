@@ -2,11 +2,5 @@
 resolver = "3"
 members = ["./server", "./tools/kdb-derives"]
 
-
-[workspace.dependencies]
-log = "0.4.27"
-rusqlite = { version = "0.35.0" }
-thiserror = "2.0.12"
-
 [profile.release]
 lto = true
