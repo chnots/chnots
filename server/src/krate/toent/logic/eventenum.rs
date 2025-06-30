@@ -39,7 +39,7 @@ impl<'de> Deserialize<'de> for EventEnum {
             where
                 E: de::Error,
             {
-                EventEnum::from_standard(&RawInputSegs::from(value))
+                EventEnum::try_from_standard(&RawInputSegs::from(value))
                     .map_err(|e| de::Error::custom(e))
             }
         }
@@ -91,11 +91,11 @@ impl EventBuilder for EventEnum {
         }
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let event: EventEnum;
-        if let Ok(todo_event) = TodoEvent::from_standard(gt) {
+        if let Ok(todo_event) = TodoEvent::try_from_standard(gt) {
             event = todo_event.into();
-        } else if let Ok(time_event) = TimeEvent::from_standard(gt) {
+        } else if let Ok(time_event) = TimeEvent::try_from_standard(gt) {
             event = time_event.into();
         } else {
             anyhow::bail!("input {gt:?} could not be parsed by todo enum or time enum",);

@@ -50,14 +50,14 @@ impl EventBuilder for WesTime {
             guessed.push((WesTime::now_time(), PossibleScore::Likely(100)));
         }
 
-        if let Ok(standard) = Self::from_standard(gt) {
+        if let Ok(standard) = Self::try_from_standard(gt) {
             guessed.push((standard, PossibleScore::Yes(100)));
         }
 
         Some(guessed)
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let standard = &gt.spans;
         if standard.len() != 2 && standard.len() != 1 && standard.len() != 3 {
             anyhow::bail!("unable to parse westen timestamp: {:?}", standard)
@@ -89,7 +89,7 @@ impl EventBuilder for WesTime {
                 original: gt.original,
                 spans: ts_segs,
             };
-            let timestamp = BaseTime::from_standard(&sub)?;
+            let timestamp = BaseTime::try_from_standard(&sub)?;
 
             Ok(WesTime { offset, timestamp })
         }
@@ -158,7 +158,7 @@ mod test {
 
     #[test]
     fn from_test() {
-        let wes = WesTime::from_standard(&"2020-12-02 11:12:13 +1:00".into());
+        let wes = WesTime::try_from_standard(&"2020-12-02 11:12:13 +1:00".into());
         print!("{:?}", wes.unwrap().standard_str())
     }
 }

@@ -160,10 +160,10 @@ impl EventBuilder for TimeEvent {
             && self.reminder.as_ref().is_none_or(|e| e.is_valid())
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let input_segs = InputSegs::try_from(gt)?;
 
-        let base = Some(TimeEnum::from_standard(&input_segs.base)?);
+        let base = Some(TimeEnum::try_from_standard(&input_segs.base)?);
 
         let reminder = Some(Repeater::standard_from_segs(
             input_segs.interval.as_ref(),

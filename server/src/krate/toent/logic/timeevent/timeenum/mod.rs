@@ -63,10 +63,10 @@ impl EventBuilder for TimeEnum {
         }
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        if let Ok(res) = WesTime::from_standard(gt) {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+        if let Ok(res) = WesTime::try_from_standard(gt) {
             Ok(Self::Wes(res))
-        } else if let Ok(res) = ChnTime::from_standard(gt) {
+        } else if let Ok(res) = ChnTime::try_from_standard(gt) {
             Ok(Self::Chn(res))
         } else {
             anyhow::bail!(

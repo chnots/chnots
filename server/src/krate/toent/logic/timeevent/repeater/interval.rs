@@ -30,7 +30,7 @@ impl DerefMut for TimeInterval {
 
 impl EventBuilder for TimeInterval {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        match Self::from_standard(gt) {
+        match Self::try_from_standard(gt) {
             Ok(v) => Some(vec![(v, PossibleScore::Yes(10))]),
             Err(_) => None,
         }
@@ -40,7 +40,7 @@ impl EventBuilder for TimeInterval {
         true
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let mut num = String::new();
         let mut interval = TimeInterval::default();
         for c in gt.spans[0].chars() {
@@ -117,7 +117,7 @@ mod test {
 
     #[test]
     fn test() {
-        let ti = TimeInterval::from_standard(&RawInputSegs::from("1d2m444w")).unwrap();
+        let ti = TimeInterval::try_from_standard(&RawInputSegs::from("1d2m444w")).unwrap();
         println!("{}", ti.standard_str());
     }
 }

@@ -144,7 +144,7 @@ where
 
     fn is_valid(&self) -> bool;
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self>;
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self>;
     fn standard_str(&self) -> String;
 }
 
@@ -158,7 +158,7 @@ impl PossibleToent {
     pub(crate) fn from_standard(input: &str) -> anyhow::Result<PossibleToent> {
         Ok(PossibleToent {
             input: input.to_owned(),
-            event: EventEnum::from_standard(&RawInputSegs::from(input))?,
+            event: EventEnum::try_from_standard(&RawInputSegs::from(input))?,
         })
     }
 

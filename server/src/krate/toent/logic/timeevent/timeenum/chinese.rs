@@ -94,7 +94,7 @@ impl EventBuilder for ChnTime {
         self.timestamp.is_valid()
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let segs = &gt.spans;
         let mut leap_month = false;
         if segs.len() < 2 {
@@ -110,7 +110,7 @@ impl EventBuilder for ChnTime {
             }
 
             let start = if leap_month { 2 } else { 1 };
-            let timestamp = BaseTime::from_standard(&gt.sub_start(start))?;
+            let timestamp = BaseTime::try_from_standard(&gt.sub_start(start))?;
 
             Ok(ChnTime {
                 leap_month,
@@ -134,7 +134,7 @@ mod test {
 
     #[test]
     fn test() {
-        let r = ChnTime::from_standard(&"农 2023-12-02".into());
+        let r = ChnTime::try_from_standard(&"农 2023-12-02".into());
         println!("{:?}", r);
     }
 }

@@ -100,7 +100,7 @@ impl EventBuilder for TodoEvent {
         true
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         match gt.spans.first() {
             Some(s) => Ok(Self::from_str(s.text)?),
             None => {

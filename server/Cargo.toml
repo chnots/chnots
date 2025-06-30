@@ -88,7 +88,8 @@ axum_typed_multipart = "0.16.2"
 blake3 = "1.8.2"
 tracing-log = "0.2.0"
 enum-tag = "0.3.0"
-markdown-it = {version = "0.6.1", default-features = false}
+
+markdown = "*"
 
 [features]
 postgres = [

@@ -51,7 +51,7 @@ impl EventBuilder for EndCondition {
         }
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         if gt.is_empty() {
             anyhow::bail!("end condition should not be empty");
         }
@@ -61,11 +61,11 @@ impl EventBuilder for EndCondition {
 
         let gt = gt.remove_first_prefix("=");
 
-        if let Ok(v) = TimeEnum::from_standard(&gt) {
+        if let Ok(v) = TimeEnum::try_from_standard(&gt) {
             Ok(v.into())
-        } else if let Ok(v) = TimeInterval::from_standard(&gt) {
+        } else if let Ok(v) = TimeInterval::try_from_standard(&gt) {
             Ok(v.into())
-        } else if let Ok(v) = Times::from_standard(&gt) {
+        } else if let Ok(v) = Times::try_from_standard(&gt) {
             Ok(v.into())
         } else {
             anyhow::bail!("unable to parse it into end condition: {:?}", gt)
@@ -102,17 +102,17 @@ mod tests {
     #[test]
     fn test_standard_str() {
         assert_eq!(
-            EndCondition::Interval(TimeInterval::from_standard(&"3d".into()).unwrap())
+            EndCondition::Interval(TimeInterval::try_from_standard(&"3d".into()).unwrap())
                 .standard_str(),
             "=3d"
         );
         assert_eq!(
-            EndCondition::Time(TimeEnum::from_standard(&"2025-12-25".into()).unwrap())
+            EndCondition::Time(TimeEnum::try_from_standard(&"2025-12-25".into()).unwrap())
                 .standard_str(),
             "=2025-12-25"
         );
         assert_eq!(
-            EndCondition::Times(Times::from_standard(&"10t".into()).unwrap()).standard_str(),
+            EndCondition::Times(Times::try_from_standard(&"10t".into()).unwrap()).standard_str(),
             "=10t"
         );
     }
@@ -125,7 +125,7 @@ mod tests {
                 .first()
                 .unwrap()
                 .0
-                == EndCondition::Interval(TimeInterval::from_standard(&"10d".into()).unwrap())
+                == EndCondition::Interval(TimeInterval::try_from_standard(&"10d".into()).unwrap())
         );
     }
 
@@ -137,7 +137,7 @@ mod tests {
                 .first()
                 .unwrap()
                 .0,
-            EndCondition::from_standard(&"=2025-12-12".into()).unwrap()
+            EndCondition::try_from_standard(&"=2025-12-12".into()).unwrap()
         );
 
         assert_eq!(
@@ -146,7 +146,7 @@ mod tests {
                 .first()
                 .unwrap()
                 .0,
-            EndCondition::from_standard(&"=2025-12-12 12:00:00".into()).unwrap()
+            EndCondition::try_from_standard(&"=2025-12-12 12:00:00".into()).unwrap()
         );
     }
 }

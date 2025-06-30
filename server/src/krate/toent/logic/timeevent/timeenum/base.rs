@@ -159,7 +159,7 @@ impl EventBuilder for BaseTime {
             ))
     }
 
-    fn from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         let standard = &gt.spans;
         if standard.len() != 2 && standard.len() != 1 {
             anyhow::bail!(
@@ -232,7 +232,7 @@ impl EventBuilder for BaseTime {
     }
 
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        match Self::from_standard(gt) {
+        match Self::try_from_standard(gt) {
             Ok(base) => Some(vec![(base, PossibleScore::Likely(100))]),
             Err(_) => None,
         }
@@ -294,11 +294,11 @@ mod test {
         // println!("{:?}", BaseTimestamp::from_standard(&["asdasd"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12:03"]));
-        println!("{:?}", BaseTime::from_standard(&"12-03".into()));
-        println!("{:?}", BaseTime::from_standard(&"12-03-04".into()));
-        println!("{:?}", BaseTime::from_standard(&"12-03-04 12".into()));
-        println!("{:?}", BaseTime::from_standard(&"12-03-04 12:12".into()));
-        println!("{:?}", BaseTime::from_standard(&"12-03-04 2:12:12".into()));
+        println!("{:?}", BaseTime::try_from_standard(&"12-03".into()));
+        println!("{:?}", BaseTime::try_from_standard(&"12-03-04".into()));
+        println!("{:?}", BaseTime::try_from_standard(&"12-03-04 12".into()));
+        println!("{:?}", BaseTime::try_from_standard(&"12-03-04 12:12".into()));
+        println!("{:?}", BaseTime::try_from_standard(&"12-03-04 2:12:12".into()));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e", "asdasd"]));
     }
