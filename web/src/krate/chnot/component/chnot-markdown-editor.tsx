@@ -5,7 +5,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 const chnotCompletions = async (
   context: CompletionContext,
 ): Promise<CompletionResult | null> => {
-  const word = context.matchBefore(/#[^# ]*|<[^<>]*|\[/);
+  const word = context.matchBefore(/#[^# ]*|{[^{}]*|\[/);
   let options;
   if (!word || (word?.from == word?.to && !context.explicit)) {
     return null;
@@ -19,11 +19,11 @@ const chnotCompletions = async (
     ).data.map((name) => {
       return { label: name, type: "hashtag" };
     });
-  } else if (word.text.startsWith("<")) {
+  } else if (word.text.startsWith("{")) {
     options = (
-      await toentGuess({ input: word.text.replace("<", "") })
+      await toentGuess({ input: word.text.replace("{", "") })
     ).toents.map((toent) => {
-      return { label: `<${toent.event}>`, type: "toent" };
+      return { label: `{${toent.event}}`, type: "toent" };
     });
   } else if (word.text.startsWith("[")) {
     options = [{ label: `[](chnot://ed:)`, type: "excalidraw" }];

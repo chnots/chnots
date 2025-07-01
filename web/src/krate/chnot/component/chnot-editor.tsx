@@ -193,6 +193,7 @@ const ChnotSaver = () => {
           meta_tid: rsp.meta_tid,
           content: req.content,
           archor: rsp.archor,
+          todo_event: rsp.todo_event,
         },
         meta: {
           tid: rsp.meta_tid,

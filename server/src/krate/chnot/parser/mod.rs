@@ -6,6 +6,7 @@ use crate::krate::toent::logic::{
 use chrono::NaiveDateTime;
 use itertools::Itertools;
 use lazy_regex::Lazy;
+use log::info;
 use markdown::mdast::{Node, Paragraph};
 use regex::Regex;
 
@@ -312,6 +313,38 @@ impl<'a> ChnotParser<'a> {
             .map(|c| c.as_str())
             .unique()
             .collect()
+    }
+
+    pub fn get_outer_todo_event(&self) -> Option<TodoEvent> {
+        let te: Vec<TodoEvent> = self
+            .chnot_map
+            .values()
+            .filter_map(|c| c.todo_event)
+            .collect();
+
+        if te.is_empty() {
+            return None;
+        }
+
+        if te.iter().any(|e| matches!(e, &TodoEvent::Doing)) {
+            return Some(TodoEvent::Doing);
+        }
+        if te.iter().any(|e| matches!(e, &TodoEvent::Todo)) {
+            return Some(TodoEvent::Todo);
+        }
+
+        if te.iter().any(|e| matches!(e, &TodoEvent::Wait)) {
+            return Some(TodoEvent::Wait);
+        }
+        if te.iter().any(|e| matches!(e, &TodoEvent::Done)) {
+            return Some(TodoEvent::Done);
+        }
+
+        if te.iter().any(|e| matches!(e, &TodoEvent::Cancel)) {
+            return Some(TodoEvent::Cancel);
+        }
+
+        None
     }
 }
 

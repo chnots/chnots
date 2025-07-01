@@ -3,13 +3,13 @@ use std::str::FromStr;
 use super::PossibleScore;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de};
 
 use super::{EventBuilder, RawInputSegs};
 
 use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
 
-#[derive(Clone, Debug, EnumString, AsRefStr, EnumIter, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumString, AsRefStr, EnumIter, PartialEq)]
 #[strum(serialize_all = "UPPERCASE")]
 pub(crate) enum TodoEvent {
     Todo,
@@ -102,7 +102,7 @@ impl EventBuilder for TodoEvent {
 
     fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         match gt.spans.first() {
-            Some(s) => Ok(Self::from_str(s.text)?),
+            Some(s) => Ok(Self::from_str(s.text.to_uppercase().as_str())?),
             None => {
                 anyhow::bail!("There should at least one seg to deserialize TodoEnum")
             }

@@ -1,5 +1,6 @@
 import { OmitTID, TID as TID } from "@/lib/id_util";
 import { DbText, Varchar } from "@/lib/types";
+import { TodoEvent } from "../toent/po";
 
 export enum ChnotKind {
   MarkdownWithToent = "mdwt",
@@ -16,6 +17,7 @@ export type ChnotRecord = {
   meta_tid: TID;
   omit_tid?: OmitTID;
   tid: TID;
+  todo_event?: TodoEvent;
   content: DbText;
   archor: boolean;
 };

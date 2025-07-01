@@ -1,4 +1,4 @@
-use chin_sql::time_type::TID;
+use chin_sql::{SqlValue, time_type::TID};
 /// Toent: todo and event
 ///
 /// The file mainly contains models related to todos and events.
@@ -8,6 +8,8 @@ use chin_sql::time_type::TID;
 /// I merged them into the word "toent."
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
+
+use crate::krate::toent::logic::todoevent::TodoEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum ToentDateType {
@@ -45,4 +47,11 @@ pub(crate) struct ToentInst {
     toent_time: DateTime<FixedOffset>,
     insert_time: DateTime<FixedOffset>,
     update_time: DateTime<FixedOffset>,
+}
+
+impl<'a> From<TodoEvent> for SqlValue<'a> {
+    fn from(val: TodoEvent) -> Self {
+        let s = val.as_ref().to_string();
+        SqlValue::Str(s.into())
+    }
 }

@@ -1,8 +1,8 @@
+use chin_sql::GenerateTableSchema;
+use chin_sql::SqlValue;
 use chin_sql::str_type::Text;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::GenerateTableSchema;
-use chin_sql::SqlValue;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -16,6 +16,7 @@ use strum::Display;
 use strum::IntoStaticStr;
 use strum_macros::EnumString;
 
+use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
 use crate::model::omit_tid::OmitTID;
@@ -31,8 +32,18 @@ pub(crate) struct ChnotRecord {
     #[gts_unique]
     #[gts_type = "i64"]
     pub(crate) tid: TID,
+    #[gts_type = "Varchar<20>"]
+    #[gts_tosql = "opt_todo_tosql"]
+    pub(crate) todo_event: Option<TodoEvent>,
     pub(crate) content: Text,
     pub(crate) archor: bool,
+}
+
+fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
+    match opt {
+        Some(te) => te.into(),
+        None => SqlValue::Null(chin_sql::LogicFieldType::Varchar(20)),
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
@@ -80,8 +91,6 @@ pub(crate) struct ChnotKindRel {
     #[gts_type = "i64"]
     pub(crate) tid: TID,
 }
-
-
 
 impl AsRef<str> for ChnotTag {
     fn as_ref(&self) -> &str {

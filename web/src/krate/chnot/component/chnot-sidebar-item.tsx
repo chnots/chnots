@@ -31,6 +31,7 @@ import {
 import { ChnotKindIcon } from "./chnot-kind-icon";
 import { useShallow } from "zustand/react/shallow";
 import { KSpace } from "@/krate/kspace/po";
+import TodoLabel from "@/krate/toent/component/todo-label";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -163,6 +164,9 @@ const ChnotSidebarItem = React.forwardRef(
               )}
               {chnot.meta.pin_time && (
                 <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
+              )}
+              {chnot.record.todo_event && (
+                <TodoLabel todoEvent={chnot.record.todo_event} />
               )}
             </div>
 

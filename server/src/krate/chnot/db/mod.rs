@@ -1,7 +1,10 @@
 pub(crate) mod inner;
 
+use std::str::FromStr;
+
 use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
+use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
@@ -13,7 +16,7 @@ use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use anyhow::anyhow;
 use chin_sql::str_type::Varchar;
-use chin_sql::{ChinSqlError, ILikeType, SegOrVal, SqlBuilder};
+use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
@@ -27,7 +30,7 @@ const UNTAGGED_TAG: &str = "<NON>";
 fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
     SqlBuilder::new()
     .sov("SELECT r.tid as rec_tid, r.content, r.omit_tid as rec_omit_tid, r.archor,")
-    .sov("m.tid as meta_tid, m.kspace, m.kind, m.pin_time, m.omit_tid as meta_omit_tid, m.archive_time")
+    .sov("m.tid as meta_tid, m.kspace, m.kind, m.pin_time, m.omit_tid as meta_omit_tid, m.archive_time, r.todo_event")
     .sov("FROM chnot_record r LEFT JOIN chnot_metadata m ON r.meta_tid = m.tid")
 }
 
@@ -74,6 +77,13 @@ fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
         content: row.try_get("content")?,
         omit_tid: row.try_get("rec_omit_tid")?,
         archor: row.try_get("archor")?,
+        todo_event: {
+            let opt: Option<String> = row.try_get("todo_event")?;
+            match opt {
+                Some(opt) => Some(TodoEvent::from_str(opt.as_str())?),
+                None => None,
+            }
+        },
     };
     let meta = ChnotMetadata {
         tid: row.try_get("meta_tid")?,
@@ -363,7 +373,10 @@ impl ChnotMapper for KDb {
 
         let tx = conn.transaction().await?;
         for one in chnots {
-            tx.chnot_tag_update_single_chnot(one).await?;
+            let mut chnot_parser = parser::ChnotParser::new(one.content.as_str());
+            chnot_parser.parse();
+            tx.chnot_tag_update_single_chnot(one.clone(), &chnot_parser)
+                .await?;
         }
         tx.cmt().await?;
 
@@ -406,6 +419,13 @@ impl ChnotDeserializeMapper for KDbRow {
             omit_tid: self.try_get(ChnotRecord::OMIT_TID)?,
             tid: self.try_get(ChnotRecord::TID)?,
             archor: self.try_get(ChnotRecord::ARCHOR)?,
+            todo_event: {
+                let opt: Option<String> = self.try_get(ChnotRecord::TODO_EVENT)?;
+                match opt {
+                    Some(opt) => Some(TodoEvent::from_str(opt.as_str())?),
+                    None => None,
+                }
+            },
         };
         Ok(chnot)
     }

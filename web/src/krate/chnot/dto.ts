@@ -11,7 +11,7 @@ import { DbText, Varchar } from "@/lib/types";
 export type Chnot = {
   record: ChnotRecord;
   meta: ChnotMetadata;
-}; 
+};
 
 export type ChnotTagSearchType = {
   Inset: string[];
@@ -27,7 +27,7 @@ export type ChnotQueryReq = {
   with_archive?: boolean;
   start_index: number;
   page_size: number;
-}; 
+};
 
 export type ChnotQueryRsp = {
   next_start: number;
@@ -41,26 +41,27 @@ export type ChnotOverwriteReq = {
   content: DbText;
   kind: ChnotKind;
   kind_id?: string;
-}; 
+};
 
 export type ChnotOverwriteRsp = {
   meta_tid: TID;
   rec_tid: TID;
   kspace: Varchar<40>;
   archor: boolean;
-}; 
+  todo_event?: TodoEvent;
+};
 
 export type ChnotArchiveReq = {
   meta_tid: TID;
   logic: boolean;
-}; 
+};
 
 export type ChnotUpdateReq = {
   meta_tid: TID;
   kspace?: Varchar<40>;
   pinned?: boolean;
   archive?: boolean;
-}; 
+};
 
 export type ChnotCommentAddReq = {
   tid: TID;
@@ -75,7 +76,7 @@ export type ChnotTagQueryReq = {
   remove_params?: boolean;
   start_index: number;
   page_size: number;
-}; 
+};
 
 export type ChnotKFileRelationInsert = {
   chnot_meta_id: TID;
@@ -107,19 +108,19 @@ export type ToentGuessRsp = {
   toents: Toent[];
 };
 
-export type ChnotUpdateRsp = object; 
+export type ChnotUpdateRsp = object;
 
-export type ChnotArchiveRsp = object; 
+export type ChnotArchiveRsp = object;
 
 export type ChnotTagUpdateReq = {
   content: DbText;
   meta_tid: TID;
   kspace: Varchar<40>;
-}; 
+};
 
 export type ChnotKindRelQueryRsp = {
   kind_rel: ChnotKindRel;
-}; 
+};
 export type ChnotKindRelQueryReq = {
   meta_tid: TID;
-}; 
+};

@@ -1,6 +1,8 @@
 use chin_sql::{str_type::{Text, Varchar}, time_type::TID};
 use serde::{Deserialize, Serialize};
 
+use crate::krate::toent::logic::todoevent::TodoEvent;
+
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,6 +36,7 @@ pub(crate) struct ChnotOverwriteRsp {
     pub(crate) rec_tid: TID,
     pub(crate) kspace: Varchar<40>,
     pub(crate) archor: bool,
+    pub(crate) todo_event: Option<TodoEvent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

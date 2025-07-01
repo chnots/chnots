@@ -5,8 +5,8 @@ use crate::krate::chnot::parser::ChnotParser;
 use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
-use chin_sql::{ChinSqlError, Wheres};
 use chin_sql::time_type::TID;
+use chin_sql::{ChinSqlError, Wheres};
 use chin_sql::{SqlBuilder, SqlUpdater};
 use chin_tools::AResult;
 
@@ -58,15 +58,17 @@ impl<'a> KDbExecutor<'a> {
 }
 
 impl<'a> KDbTx<'a> {
-    pub(super) async fn chnot_tag_update_single_chnot(&self, req: ChnotTagUpdateReq) -> EResult {
+    pub(super) async fn chnot_tag_update_single_chnot(
+        &self,
+        req: ChnotTagUpdateReq,
+        chnot_parser: &ChnotParser<'_>,
+    ) -> EResult {
         let ChnotTagUpdateReq {
-            content,
+            content: _,
             meta_tid,
             kspace,
         } = req;
 
-        let mut chnot_parser = ChnotParser::new(content.as_str());
-        chnot_parser.parse();
         let tags: Result<Vec<Varchar<800>>, ChinSqlError> = chnot_parser
             .get_all_tags()
             .iter()
@@ -124,6 +126,11 @@ impl<'a> KDbTx<'a> {
         let archor: bool;
 
         let rec_tid = TID::default();
+
+        let mut chnot_parser = ChnotParser::new(req.content.as_str());
+        chnot_parser.parse();
+        let todo_event = chnot_parser.get_outer_todo_event();
+
         match meta_tid {
             MetaId::Old(meta_tid) => {
                 // Query for existing record
@@ -160,6 +167,7 @@ impl<'a> KDbTx<'a> {
                     omit_tid: OmitTID::never(),
                     content: req.content.clone(),
                     archor,
+                    todo_event,
                 };
 
                 let update_omit = ChnotRecord::pkey_updater(meta_tid, OmitTID::never())
@@ -175,6 +183,7 @@ impl<'a> KDbTx<'a> {
                     omit_tid: OmitTID::never(),
                     content: req.content.clone(),
                     archor: true,
+                    todo_event,
                 };
                 self.as_executor().chnot_record_insert(rec).await?;
                 let meta = ChnotMetadata {
@@ -206,11 +215,14 @@ impl<'a> KDbTx<'a> {
             .await?;
         }
 
-        self.chnot_tag_update_single_chnot(ChnotTagUpdateReq {
-            content: req.content.clone(),
-            meta_tid: *meta_tid,
-            kspace: req.kspace.clone(),
-        })
+        self.chnot_tag_update_single_chnot(
+            ChnotTagUpdateReq {
+                content: req.content.clone(),
+                meta_tid: *meta_tid,
+                kspace: req.kspace.clone(),
+            },
+            &chnot_parser,
+        )
         .await?;
 
         Ok(ChnotOverwriteRsp {
@@ -218,6 +230,7 @@ impl<'a> KDbTx<'a> {
             rec_tid,
             kspace: req.kspace,
             archor,
+            todo_event,
         })
     }
 }
