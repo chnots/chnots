@@ -96,9 +96,7 @@ impl KFileMapper for KDb {
             sid: sid.clone(),
             id: req.meta_id.clone(),
             filename: req
-                .filename
-                .as_ref()
-                .map(|e| e.clone())
+                .filename.clone()
                 .unwrap_or(format!("inline-kfile-{}", &TID::default().as_num()).try_into()?)
                 .try_into()?,
             content_type: req.content_type.clone(),
@@ -137,7 +135,7 @@ impl KFileMapper for KDb {
                 })
                 .await?
                 .map(|e| e.sid);
-            Some(sid.context(format!("unable to find sid for {}", key))?)
+            Some(sid.context(format!("unable to find sid for {key}"))?)
         } else {
             None
         };

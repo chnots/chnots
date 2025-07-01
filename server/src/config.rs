@@ -32,6 +32,6 @@ pub(crate) mod tests {
     "#;
 
         let config: super::Config = toml::from_str(toml_str).unwrap();
-        println!("{:?}", config);
+        println!("{config:?}");
     }
 }

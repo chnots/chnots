@@ -1,4 +1,4 @@
-use chin_sql::{SqlBuilder, SqlDeleter, SqlInserter, Wheres, time_type::TID};
+use chin_sql::{SqlBuilder, SqlDeleter, Wheres};
 use chin_tools::AResult;
 
 use crate::{

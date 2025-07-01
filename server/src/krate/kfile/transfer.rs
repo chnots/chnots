@@ -144,7 +144,7 @@ pub(crate) async fn download(
     state: State<ShareAppState>,
     axum::extract::Path((meta_tid, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
-    info!("download sid: {}, {}", meta_tid, filename);
+    info!("download sid: {meta_tid}, {filename}");
 
     async fn inner(
         state: State<ShareAppState>,

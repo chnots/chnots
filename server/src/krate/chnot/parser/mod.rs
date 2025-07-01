@@ -344,8 +344,8 @@ mod tests {
     fn markdown_it() {
         let mut v = ChnotParser::new(TEST_MARKDOWN);
         v.parse();
-        for ele in v.chnot_map.iter().sorted_by(|e, v| e.0.cmp(&v.0)) {
-            println!("{:?}", ele)
+        for ele in v.chnot_map.iter().sorted_by(|e, v| e.0.cmp(v.0)) {
+            println!("{ele:?}")
         }
     }
 }

@@ -135,6 +135,6 @@ mod test {
     #[test]
     fn test() {
         let r = ChnTime::try_from_standard(&"农 2023-12-02".into());
-        println!("{:?}", r);
+        println!("{r:?}");
     }
 }

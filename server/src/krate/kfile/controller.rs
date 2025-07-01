@@ -19,11 +19,11 @@ use super::{mapper::KFileMapper, *};
 pub(crate) fn asset_path_by_sid(config: &AttachmentConfig, sid: &str) -> PathBuf {
     let filename_parts = split_uuid_to_file_name(sid);
 
-    let save_filepath = std::path::Path::new(&config.base_dir)
+    
+    std::path::Path::new(&config.base_dir)
         .join(filename_parts.0)
         .join(filename_parts.1)
-        .join(filename_parts.2);
-    save_filepath
+        .join(filename_parts.2)
 }
 
 pub(crate) async fn query_kfile(

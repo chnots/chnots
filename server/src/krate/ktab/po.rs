@@ -2,7 +2,7 @@ use super::decimal::Decimal;
 use std::collections::HashMap;
 
 use chin_sql::str_type::Text;
-use chin_sql::{ChinSqlError, GenerateTableSchema};
+use chin_sql::GenerateTableSchema;
 use chin_sql::{str_type::Varchar, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};

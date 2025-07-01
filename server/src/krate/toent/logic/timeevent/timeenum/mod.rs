@@ -32,7 +32,7 @@ impl From<ChnTime> for TimeEnum {
 
 impl EventBuilder for TimeEnum {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        println!("{:#?}", gt);
+        println!("{gt:#?}");
 
         let mut result: Vec<(TimeEnum, PossibleScore)> = vec![];
         if gt.len() <= 2 {

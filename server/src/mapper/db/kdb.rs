@@ -1,5 +1,5 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{IntoSqlSeg, SqlValue, SqlValueRow, str_type::Text};
+use chin_sql::{IntoSqlSeg, SqlValue, SqlValueRow};
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 use postgres_types::FromSql;

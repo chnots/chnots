@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Ok};
-use chin_sql::{SqlBuilder, SqlInserter, SqlUpdater, Wheres, time_type::TID};
+use chin_sql::{SqlBuilder, SqlInserter, Wheres, time_type::TID};
 use chin_tools::AResult;
 use itertools::Itertools;
 

@@ -150,7 +150,7 @@ impl<'a> KDbTx<'a> {
                     .as_utc()
                     .signed_duration_since(old_id.as_utc())
                     .abs();
-                archor = (textdistance::str::sift4_simple(&old_cont, &req.content.as_str()) >= 60
+                archor = (textdistance::str::sift4_simple(&old_cont, req.content.as_str()) >= 60
                     && time_delta > TimeDelta::minutes(3))
                     || time_delta > TimeDelta::hours(1);
 

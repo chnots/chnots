@@ -1,5 +1,4 @@
 use crate::{mapper::db::{KDbRow, KDbRowBehavier}, model::omit_tid::OmitTID};
-use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use strum::{EnumString, IntoStaticStr};

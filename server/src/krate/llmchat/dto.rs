@@ -1,4 +1,4 @@
-use chin_sql::{str_type::{Text, Varchar}, time_type::TID};
+use chin_sql::{str_type::Varchar, time_type::TID};
 use serde::{Deserialize, Serialize};
 
 use super::*;
