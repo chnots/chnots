@@ -7,6 +7,7 @@ import {
   ChnotKindRel,
 } from "./po";
 import { DbText, Varchar } from "@/lib/types";
+import { TodoEvent } from "../toent/po";
 
 export type Chnot = {
   record: ChnotRecord;
