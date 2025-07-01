@@ -10,8 +10,8 @@ use crate::mapper::db::{
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
-use crate::util::string_util::get_hashtags;
 use anyhow::anyhow;
+use chin_sql::str_type::Varchar;
 use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
@@ -32,7 +32,7 @@ fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
 
 impl ChnotTag {
     fn with_those_tag_meta_tids<'a>(
-        kspaces: Vec<&'a str>,
+        kspaces: Vec<Varchar<40>>,
         omit_tid: OmitTID,
         tags: Option<&ChnotTagSearchType>,
     ) -> SqlBuilder<'a> {
@@ -341,7 +341,7 @@ impl ChnotMapper for KDb {
         Ok(result)
     }
 
-    async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
+    async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult {
         let get_all = SqlBuilder::read(
             ChnotRecord::TABLE,
             &[ChnotRecord::CONTENT, ChnotRecord::META_TID],
@@ -355,7 +355,7 @@ impl ChnotMapper for KDb {
                     "(select {} from {} where kspace = '{}')",
                     ChnotMetadata::TID,
                     ChnotMetadata::TABLE,
-                    kspace.replace("'", "<quote>")
+                    kspace.as_str().replace("'", "<quote>")
                 ),
             ),
         ]));

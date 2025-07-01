@@ -1,4 +1,4 @@
-use chin_sql::time_type::TID;
+use chin_sql::{str_type::{Text, Varchar}, time_type::TID};
 use serde::{Deserialize, Serialize};
 
 use super::*;
@@ -23,7 +23,7 @@ pub(crate) struct ChnotUpdateRsp {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotOverwriteReq {
     pub(crate) meta_tid: Option<TID>,
-    pub(crate) content: String,
+    pub(crate) content: Text,
     pub(crate) kind: ChnotKind,
     pub(crate) kind_id: Option<String>,
 }
@@ -32,7 +32,7 @@ pub(crate) struct ChnotOverwriteReq {
 pub(crate) struct ChnotOverwriteRsp {
     pub(crate) meta_tid: TID,
     pub(crate) rec_tid: TID,
-    pub(crate) kspace: String,
+    pub(crate) kspace: Varchar<40>,
     pub(crate) archor: bool,
 }
 
@@ -98,9 +98,9 @@ where
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotTagUpdateReq {
-    pub(crate) content: String,
+    pub(crate) content: Text,
     pub(crate) meta_tid: TID,
-    pub(crate) kspace: String,
+    pub(crate) kspace: Varchar<40>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

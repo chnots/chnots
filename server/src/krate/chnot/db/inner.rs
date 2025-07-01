@@ -1,11 +1,12 @@
 use std::ops::Deref;
 
 use super::*;
+use crate::krate::chnot::parser::ChnotParser;
 use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
+use chin_sql::{ChinSqlError, Wheres};
 use chin_sql::time_type::TID;
-use chin_sql::Wheres;
 use chin_sql::{SqlBuilder, SqlUpdater};
 use chin_tools::AResult;
 
@@ -64,7 +65,14 @@ impl<'a> KDbTx<'a> {
             kspace,
         } = req;
 
-        let mut tags = get_hashtags(&content);
+        let mut chnot_parser = ChnotParser::new(content.as_str());
+        chnot_parser.parse();
+        let tags: Result<Vec<Varchar<800>>, ChinSqlError> = chnot_parser
+            .get_all_tags()
+            .iter()
+            .map(|t| t.to_string().try_into())
+            .collect();
+        let mut tags = tags?;
         self.exec(
             SqlUpdater::new(ChnotTag::TABLE)
                 .set(ChnotTag::OMIT_TID, OmitTID::now())
@@ -81,7 +89,7 @@ impl<'a> KDbTx<'a> {
         .await?;
         let executor = KDbExecutor::Tx(self);
         if tags.is_empty() {
-            tags.push(UNTAGGED_TAG);
+            tags.push(UNTAGGED_TAG.try_into()?);
         }
 
         for tag in tags {
@@ -142,7 +150,7 @@ impl<'a> KDbTx<'a> {
                     .as_utc()
                     .signed_duration_since(old_id.as_utc())
                     .abs();
-                archor = (textdistance::str::sift4_simple(&old_cont, &req.content) >= 60
+                archor = (textdistance::str::sift4_simple(&old_cont, &req.content.as_str()) >= 60
                     && time_delta > TimeDelta::minutes(3))
                     || time_delta > TimeDelta::hours(1);
 
@@ -190,7 +198,7 @@ impl<'a> KDbTx<'a> {
                 ChnotKindRel {
                     meta_tid: *meta_tid,
                     omit_tid: OmitTID::never(),
-                    kind_id: kid,
+                    kind_id: kid.try_into()?,
                     tid: TID::default(),
                 }
                 .to_sql_inserter(),

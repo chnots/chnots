@@ -1,5 +1,6 @@
+use chin_sql::str_type::Text;
+use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::ChinSqlCrud;
 use chin_sql::GenerateTableSchema;
 use chin_sql::SqlValue;
 /// Chnot: knot, which stands for the note.
@@ -19,7 +20,7 @@ use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
 use crate::model::omit_tid::OmitTID;
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -29,19 +30,17 @@ pub(crate) struct ChnotRecord {
     pub(crate) omit_tid: OmitTID,
     #[gts_type = "i64"]
     pub(crate) tid: TID,
-    pub(crate) content: String,
+    pub(crate) content: Text,
     pub(crate) archor: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotMetadata {
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) tid: TID,
-    #[gts_length = 40]
-    pub(crate) kspace: String,
-    #[gts_length = 40]
-    #[gts_type = "String"]
+    pub(crate) kspace: Varchar<40>,
+    #[gts_type = "Varchar<40>"]
     pub(crate) kind: ChnotKind,
     pub(crate) pin_time: Option<DateTime<FixedOffset>>,
     #[gts_primary]
@@ -50,25 +49,22 @@ pub(crate) struct ChnotMetadata {
     pub(crate) archive_time: Option<DateTime<FixedOffset>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotTag {
     #[gts_primary]
-    #[gts_length = 800]
-    pub(crate) tag: String,
+    pub(crate) tag: Varchar<800>,
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) meta_tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
-
-    #[gts_length = 40]
-    pub(crate) kspace: String,
+    pub(crate) kspace: Varchar<40>,
     #[gts_type = "i64"]
     pub(crate) tid: TID,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
@@ -76,17 +72,16 @@ pub(crate) struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
-
-    #[gts_length = 200]
-    pub(crate) kind_id: String,
-
+    pub(crate) kind_id: Varchar<200>,
     #[gts_type = "i64"]
     pub(crate) tid: TID,
 }
 
+
+
 impl AsRef<str> for ChnotTag {
     fn as_ref(&self) -> &str {
-        &self.tag
+        &self.tag.as_str()
     }
 }
 

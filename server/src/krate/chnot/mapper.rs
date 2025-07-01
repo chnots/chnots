@@ -1,3 +1,4 @@
+use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
 use crate::{expand_mt_branch, model::dto::KReq, MapperType, RecordCallbackType};
@@ -35,7 +36,7 @@ pub(crate) trait ChnotMapper {
     ) -> AResult<ChnotKindRelQueryRsp>;
     async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
 
-    async fn chnot_tag_update_all(&self, kspace: &str) -> EResult;
+    async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult;
     async fn chnot_tag_query(
         &self,
         req: KReq<ChnotTagQueryReq>,
@@ -101,7 +102,7 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_tag_names(req))
     }
 
-    async fn chnot_tag_update_all(&self, kspace: &str) -> EResult {
+    async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult {
         expand_mt_branch!(self.chnot_tag_update_all(kspace))
     }
 

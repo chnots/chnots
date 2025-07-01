@@ -5,43 +5,47 @@ use std::{fmt::Debug, ops::Deref};
 
 use axum::http::HeaderMap;
 
-use serde::{de::DeserializeOwned, Serialize};
+use chin_sql::str_type::Varchar;
+use serde::{Serialize, de::DeserializeOwned};
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {
     pub(crate) body: E,
-    pub(crate) kspace: String,
-    pub(crate) mkspaces: Vec<String>,
+    pub(crate) kspace: Varchar<40>,
+    pub(crate) mkspaces: Vec<Varchar<40>>,
 }
 
 impl<E: Debug + Clone + DeserializeOwned> KReq<E> {
-    pub fn get_spaces(&self) -> Vec<&str> {
-        let mut c: Vec<&str> = self
+    pub fn get_spaces(&self) -> Vec<Varchar<40>> {
+        let mut c: Vec<Varchar<40>> = self
             .mkspaces
             .iter()
-            .filter(|e| !e.is_empty())
-            .map(|e| e.as_str())
+            .filter(|e| !e.as_str().is_empty())
+            .map(|e| e.to_owned())
             .collect();
-        c.push(&self.kspace);
+        c.push(self.kspace.clone());
         c
     }
 }
 
-pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> String {
+pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> Varchar<40> {
     headers
         .get("K-kspace")
         .and_then(|v| v.to_str().ok().map(|e| e.to_string()))
         .unwrap()
+        .try_into()
+        .unwrap()
 }
 
 pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
-    let mkspaces: Vec<String> = headers
+    let mkspaces: Vec<Varchar<40>> = headers
         .get("K-mkspaces")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("")
         .split(",")
         .map(|e| e.trim().to_owned())
         .filter(|s| !s.is_empty())
+        .map(|c| c.try_into().unwrap())
         .collect();
 
     KReq {

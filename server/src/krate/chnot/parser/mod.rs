@@ -88,7 +88,7 @@ impl<'a> ChnotParser<'a> {
         }
     }
 
-    fn parse(&mut self) {
+    pub fn parse(&mut self) {
         /// extract toent only from the listitem first line and headline
         fn extract_toent(node: &Node, chnot_block: &mut ChnotBlock) -> bool {
             match node {
@@ -303,6 +303,15 @@ impl<'a> ChnotParser<'a> {
                 walk(self, node);
             }
         }
+    }
+
+    pub fn get_all_tags(&self) -> Vec<&str> {
+        self.chnot_map
+            .iter()
+            .flat_map(|(_, c)| c.hashtags.iter())
+            .map(|c| c.as_str())
+            .unique()
+            .collect()
     }
 }
 
