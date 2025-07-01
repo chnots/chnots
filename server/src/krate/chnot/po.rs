@@ -28,6 +28,7 @@ pub(crate) struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
+    #[gts_unique]
     #[gts_type = "i64"]
     pub(crate) tid: TID,
     pub(crate) content: Text,
@@ -60,6 +61,7 @@ pub(crate) struct ChnotTag {
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
     pub(crate) kspace: Varchar<40>,
+    #[gts_unique]
     #[gts_type = "i64"]
     pub(crate) tid: TID,
 }
@@ -72,7 +74,9 @@ pub(crate) struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
+    #[gts_key]
     pub(crate) kind_id: Varchar<200>,
+    #[gts_unique]
     #[gts_type = "i64"]
     pub(crate) tid: TID,
 }
@@ -81,7 +85,7 @@ pub(crate) struct ChnotKindRel {
 
 impl AsRef<str> for ChnotTag {
     fn as_ref(&self) -> &str {
-        &self.tag.as_str()
+        self.tag.as_str()
     }
 }
 

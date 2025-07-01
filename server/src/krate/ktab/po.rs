@@ -1,9 +1,9 @@
 use super::decimal::Decimal;
-use chin_sql::ChinSqlCrud;
 use std::collections::HashMap;
 
-use chin_sql::time_type::TID;
-use chin_sql::GenerateTableSchema;
+use chin_sql::str_type::Text;
+use chin_sql::{ChinSqlError, GenerateTableSchema};
+use chin_sql::{str_type::Varchar, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +30,11 @@ pub(crate) struct KTabColumnMeta {
     pub(crate) order_by: i32,
 }
 
+fn map_to_sql(value: HashMap<String, KTabColumnMeta>) -> String {
+    // Only serde_json do not fail.
+    serde_json::to_string(&value).unwrap()
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct KTabMeta {
     #[gts_primary]
@@ -40,17 +45,18 @@ pub(crate) struct KTabMeta {
     #[gts_type = "i64"]
     pub(crate) omit_tid: OmitTID,
 
-    #[gts_type = "String"]
+    #[gts_type = "Text"]
+    #[gts_tosql = "map_to_sql"]
     pub(crate) columns: HashMap<String, KTabColumnMeta>,
-    pub(crate) table_name: String,
-    pub(crate) table_comment: String,
+    pub(crate) table_name: Varchar<300>,
+    pub(crate) table_comment: Varchar<1000>,
     pub(crate) update_time: Option<DateTime<FixedOffset>>,
     pub(crate) real_table: bool,
 }
 
 macro_rules! type_table {
     ($sname:tt, $data_type:ty $(, #[$attr:meta])*) => {
-        #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
+        #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema)]
         pub(crate) struct $sname {
             #[gts_primary]
             #[gts_type = "i64"]
@@ -77,8 +83,8 @@ macro_rules! type_table {
     }
 }
 
-type_table!(KTabCellText, String);
-type_table!(KTabCellDecimal, Decimal, #[gts_type = "String"]);
+type_table!(KTabCellText, Text);
+type_table!(KTabCellDecimal, Decimal, #[gts_type = "Text"]);
 type_table!(KTabCellDate, DateTime<FixedOffset>);
 
 #[cfg(test)]

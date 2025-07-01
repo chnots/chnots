@@ -1,5 +1,6 @@
 use super::*;
-use crate::{expand_mt_branch, model::dto::KReq, MapperType};
+use crate::{MapperType, expand_mt_branch, model::dto::KReq};
+use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
 pub(crate) trait KFileDeserializeMapper {
@@ -15,7 +16,8 @@ pub(crate) trait KFileDumpMapper {
 pub(crate) trait KFileMapper {
     async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()>;
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp>;
-    async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp>;
+    async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>)
+    -> anyhow::Result<QueryKFileMetaRsp>;
 
     ///
     /// Try to insert inline kfile.
@@ -69,7 +71,10 @@ impl KFileMapper for MapperType {
         expand_mt_branch!(self.query_kfile_meta(req))
     }
 
-    async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp> {
+    async fn query_kfile_meta_by_sid(
+        &self,
+        sid: Varchar<100>,
+    ) -> anyhow::Result<QueryKFileMetaRsp> {
         expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
     }
 }

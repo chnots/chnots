@@ -14,7 +14,7 @@ use chin_tools::{AResult, EResult};
 use super::mapper::KFileDeserializeMapper;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
-use chin_sql::{time_type::TID, LimitOffset, OnConflict, SqlBuilder, Wheres};
+use chin_sql::{LimitOffset, OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 
 impl KFileDeserializeMapper for KDbRow {
     fn to_inline_kfile(self) -> AResult<InlineKFile> {
@@ -80,9 +80,9 @@ impl KFileMapper for KDb {
         mut req: KReq<InsertInlineKFileReq>,
     ) -> anyhow::Result<InsertInlineKFileRsp> {
         let mut bh = blake3::Hasher::new();
-        let bytes = req.body.res.content.as_bytes();
+        let bytes = req.body.res.content.as_str().as_bytes();
         bh.write_all(bytes)?;
-        let sid = bh.finalize().to_string();
+        let sid: Varchar<100> = bh.finalize().to_string().try_into()?;
 
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
@@ -98,8 +98,9 @@ impl KFileMapper for KDb {
             filename: req
                 .filename
                 .as_ref()
-                .map(|e| e.to_string())
-                .unwrap_or("inline-kfile".to_string() + &TID::default().as_num().to_string()),
+                .map(|e| e.clone())
+                .unwrap_or(format!("inline-kfile-{}", &TID::default().as_num()).try_into()?)
+                .try_into()?,
             content_type: req.content_type.clone(),
             last_modified: TID::default(),
             filesize: bytes.len() as i64,
@@ -169,12 +170,12 @@ impl KFileMapper for KDb {
         Ok(QueryKFileMetaRsp { meta })
     }
 
-    async fn query_kfile_meta_by_sid(&self, sid: &str) -> anyhow::Result<QueryKFileMetaRsp> {
+    async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>) -> anyhow::Result<QueryKFileMetaRsp> {
         let meta = self
             .conn()
             .await?
             .qry_opt(
-                KFileMeta::pkey_reader(sid.to_string(), OmitTID::never()),
+                KFileMeta::pkey_reader(sid, OmitTID::never()),
                 |e| e.to_kfile_meta(),
             )
             .await?;

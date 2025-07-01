@@ -12,7 +12,7 @@ pub(crate) struct Chnot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct ChnotUpdateReq {
     pub(crate) meta_tid: TID,
-    pub(crate) kspace: Option<String>,
+    pub(crate) kspace: Option<Varchar<40>>,
     pub(crate) pinned: Option<bool>,
     pub(crate) archive: Option<bool>,
 }

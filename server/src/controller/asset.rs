@@ -1,10 +1,11 @@
 use std::borrow::Cow;
 
 use axum::{
-    http::{header, StatusCode, Uri},
+    http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
-    routing::{get, Router},
+    routing::{Router, get},
 };
+use chin_sql::str_type::Text;
 use rust_embed::RustEmbed;
 use tracing::debug;
 
@@ -47,6 +48,7 @@ pub(crate) struct StaticFile<T>(pub(crate) T);
 pub(crate) enum ContentEnum {
     Cow(Cow<'static, [u8]>),
     String(String),
+    Text(Text),
 }
 
 pub(crate) fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -> Response {
@@ -57,6 +59,9 @@ pub(crate) fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -
             }
             ContentEnum::String(data) => {
                 ([(header::CONTENT_TYPE, mime.as_ref())], data).into_response()
+            }
+            ContentEnum::Text(text) => {
+                ([(header::CONTENT_TYPE, mime.as_ref())], text.to_string()).into_response()
             }
         },
         None => (StatusCode::NOT_FOUND, "404 Not Found").into_response(),

@@ -106,10 +106,8 @@ impl LLMChatMapper for KDb {
 
     async fn llm_chat_insert_session(
         &self,
-        mut req: KReq<LLMChatInsertSessionReq>,
+        req: KReq<LLMChatInsertSessionReq>,
     ) -> AResult<LLMChatInsertSessionRsp> {
-        req.body.session.title = req.session.title.chars().take(199).collect();
-
         let obj = req.body.session;
         let omit = LLMChatSession::pkey_updater(obj.tid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Ok};
-use chin_sql::{time_type::TID, SqlBuilder, SqlInserter, SqlUpdater, Wheres};
+use chin_sql::{SqlBuilder, SqlInserter, SqlUpdater, Wheres, time_type::TID};
 use chin_tools::AResult;
 use itertools::Itertools;
 
@@ -72,18 +72,14 @@ impl KTabMapper for KDb {
             anyhow::bail!("the column indexes are not unique.");
         }
 
-        let omit_sql = SqlUpdater::new(KTabMeta::TABLE)
-            .set(KTabMeta::OMIT_TID, OmitTID::now())
-            .r#where(Wheres::and([
-                Wheres::equal(KTabMeta::TID, *tid),
-                Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
-            ]));
+        let omit_sql =
+            KTabMeta::pkey_updater(*tid, OmitTID::never()).set(KTabMeta::OMIT_TID, OmitTID::now());
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
             .field(KTabMeta::TID, *tid)
             .field(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
-            .field(KTabMeta::TABLE_NAME, table_name)
-            .field(KTabMeta::TABLE_COMMENT, table_comment)
+            .field(KTabMeta::TABLE_NAME, table_name.clone())
+            .field(KTabMeta::TABLE_COMMENT, table_comment.clone())
             .field(KTabMeta::REAL_TABLE, *real_table)
             .field(KTabMeta::OMIT_TID, *omit_tid)
             .on_conflict(chin_sql::OnConflict::Replace(

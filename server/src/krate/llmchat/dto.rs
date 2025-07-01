@@ -1,4 +1,4 @@
-use chin_sql::time_type::TID;
+use chin_sql::{str_type::{Text, Varchar}, time_type::TID};
 use serde::{Deserialize, Serialize};
 
 use super::*;
@@ -59,7 +59,7 @@ pub(crate) struct LLMChatListSessionRsp {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct LLMChatUpdateSessionReq {
-    pub(crate) title: Option<String>,
+    pub(crate) title: Option<Varchar<200>>,
     pub(crate) delete: Option<bool>,
     pub(crate) session_tid: TID,
 }

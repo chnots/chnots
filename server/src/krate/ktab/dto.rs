@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chin_sql::time_type::TID;
+use chin_sql::{str_type::Text, time_type::TID};
 use chin_sql::SqlValue;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
@@ -73,7 +73,7 @@ pub(crate) struct KTabRowsQueryRsp {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) enum KTabStoreValue {
     Decimal(Decimal),
-    Text(String),
+    Text(Text),
     Date(DateTime<FixedOffset>),
     // Blob(Vec<u8>),
 }

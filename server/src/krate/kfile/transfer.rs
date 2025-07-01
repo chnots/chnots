@@ -116,14 +116,14 @@ pub(super) async fn upload(
 
         let kfile = KFileMeta {
             tid,
-            content_type,
+            content_type: content_type.try_into()?,
             filesize,
-            sid: blake3_sum.to_string(),
-            id: meta_id,
+            sid: blake3_sum.to_string().try_into()?,
+            id: meta_id.try_into()?,
             omit_tid: OmitTID::never(),
             inline: false,
             archor: false,
-            filename,
+            filename: filename.try_into()?,
             last_modified: last_modified.into(),
         };
 
@@ -153,13 +153,13 @@ pub(crate) async fn download(
         let kfile = state
             .mapper
             .query_kfile_meta(QueryKFileReq {
-                meta_id: meta_id.to_string(),
+                meta_id: meta_id.to_string().try_into()?,
             })
             .await?
             .meta
             .context("unable to find kfile")?;
 
-        let save_filepath = asset_path_by_sid(&state.config.attachment, &kfile.sid);
+        let save_filepath = asset_path_by_sid(&state.config.attachment, kfile.sid.as_str());
 
         let file = tokio::fs::File::open(&save_filepath).await?;
 
@@ -167,10 +167,10 @@ pub(crate) async fn download(
         let body: body::Body = body::Body::from_stream(stream);
 
         let headers = [
-            (header::CONTENT_TYPE, kfile.content_type),
+            (header::CONTENT_TYPE, kfile.content_type.as_str().to_owned()),
             (
                 header::CONTENT_DISPOSITION,
-                format!("attachment; filename=\"{:?}\"", &kfile.filename),
+                format!("attachment; filename=\"{}\"", &kfile.filename.as_str()),
             ),
         ];
         Ok((headers, body))

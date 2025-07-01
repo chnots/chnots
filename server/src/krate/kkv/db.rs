@@ -1,9 +1,9 @@
-use chin_sql::{time_type::TID, SqlBuilder, SqlDeleter, SqlInserter, Wheres};
+use chin_sql::{SqlBuilder, SqlDeleter, SqlInserter, Wheres, time_type::TID};
 use chin_tools::AResult;
 
 use crate::{
     mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier},
-    model::dto::KReq,
+    model::{dto::KReq, omit_tid::OmitTID},
 };
 
 use super::{
@@ -14,11 +14,10 @@ use super::{
 impl KKVDeserializeMapper for KDbRow {
     fn to_kkv(self) -> AResult<KKV> {
         let obj = KKV {
-            tid: self.try_get(KKV::TID)?,
+            omit_tid: self.try_get(KKV::OMIT_TID)?,
             key: self.try_get(KKV::KEY)?,
             value: self.try_get(KKV::VALUE)?,
             kind: self.try_get(KKV::KIND)?,
-            update_time: self.try_get(KKV::UPDATE_TIME)?,
             kspace: self.try_get(KKV::KSPACE)?,
         };
         Ok(obj)
@@ -27,14 +26,17 @@ impl KKVDeserializeMapper for KDbRow {
 
 impl KDbExecutor<'_> {
     pub async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
-        let inserter = SqlInserter::new(KKV::TABLE)
-            .field(KKV::KEY, &req.key)
-            .field(KKV::KIND, req.kind)
-            .field(KKV::VALUE, &req.value)
-            .field(KKV::KSPACE, &req.kspace)
-            .field(KKV::TID, TID::default())
+        let inserter = KKV {
+            key: req.key.clone(),
+            kind: req.kind,
+            kspace: req.kspace.clone(),
+            omit_tid: OmitTID::never(),
+            value: req.value.clone(),
+        };
+        let inserter = inserter
+            .to_sql_inserter()
             .on_conflict(chin_sql::OnConflict::Replace(
-                [KKV::KEY, KKV::KIND, KKV::KSPACE, KKV::TID].join(","),
+                [KKV::KEY, KKV::KIND, KKV::KSPACE, KKV::OMIT_TID].join(","),
             ));
         self.exec(inserter).await?;
 
@@ -45,7 +47,7 @@ impl KDbExecutor<'_> {
         let query = SqlBuilder::read_all(KKV::TABLE).r#where(Wheres::and([
             Wheres::equal(KKV::KEY, req.key.as_str()),
             Wheres::equal(KKV::KIND, req.kind),
-            Wheres::equal(KKV::KSPACE, &req.kspace),
+            Wheres::equal(KKV::KSPACE, req.kspace.clone()),
         ]));
 
         let kv = self.qry_opt(query, KDbRow::to_kkv).await?;
@@ -79,7 +81,7 @@ impl KKVMapper for KDb {
         let del = SqlDeleter::new(KKV::TABLE).r#where(Wheres::and([
             Wheres::equal(KKV::KEY, req.key.as_str()),
             Wheres::equal(KKV::KIND, &req.kind),
-            Wheres::equal(KKV::KSPACE, &req.kspace),
+            Wheres::equal(KKV::KSPACE, req.kspace.clone()),
         ]));
 
         self.conn().await?.exec(del).await?;

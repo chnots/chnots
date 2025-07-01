@@ -1,4 +1,5 @@
 use super::*;
+use chin_sql::str_type::{Text, Varchar};
 use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +18,7 @@ pub(crate) struct KKVQueryManyReq {
 
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct KKVQueryOneRsp {
-    pub(crate) value: Option<String>,
+    pub(crate) value: Option<Text>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -27,9 +28,9 @@ pub(crate) struct KKVQueryManyRsp {
 
 #[derive(Clone, Debug, Deserialize)]
 pub(crate) struct KKVOverwriteReq {
-    pub(crate) key: String,
+    pub(crate) key: Varchar<500>,
     pub(crate) kind: KKVType,
-    pub(crate) value: String,
+    pub(crate) value: Text,
 }
 
 #[derive(Clone, Debug, Serialize)]

@@ -1,6 +1,7 @@
 use super::*;
 use axum::body::Bytes;
 use axum_typed_multipart::{FieldData, TryFromMultipart};
+use chin_sql::str_type::Varchar;
 use serde::{Deserialize, Serialize};
 
 #[derive(TryFromMultipart)]
@@ -24,23 +25,23 @@ pub(crate) struct KFileUploadRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InsertInlineKFileReq {
-    pub(crate) meta_id: String,
+    pub(crate) meta_id: Varchar<100>,
     pub(crate) res: InlineKFile,
     /// archor interval second.
     pub(crate) archor_intervals: i64,
-    pub(crate) filename: Option<String>,
-    pub(crate) content_type: String,
+    pub(crate) filename: Option<Varchar<1024>>,
+    pub(crate) content_type: Varchar<200>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct InsertInlineKFileRsp {
-    pub(crate) true_sid: String,
+    pub(crate) true_sid: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct QueryInlineKFileReq {
     pub(crate) sid: Option<String>,
-    pub(crate) meta_id: Option<String>,
+    pub(crate) meta_id: Option<Varchar<100>>,
     pub(crate) with_omit: Option<bool>,
 }
 
@@ -51,7 +52,7 @@ pub(crate) struct QueryInlineKFileRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct QueryKFileReq {
-    pub(crate) meta_id: String,
+    pub(crate) meta_id: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

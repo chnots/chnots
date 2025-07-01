@@ -1,10 +1,10 @@
-use crate::mapper::db::{KDbRow, KDbRowBehavier};
+use crate::{mapper::db::{KDbRow, KDbRowBehavier}, model::omit_tid::OmitTID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use strum::{EnumString, IntoStaticStr};
 
-use chin_sql::{time_type::TID, ChinSqlCrud, GenerateTableSchema, SqlValue};
+use chin_sql::{str_type::{Text, Varchar}, GenerateTableSchema, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
 pub(crate) enum KKVType {
@@ -31,23 +31,18 @@ impl<'a> KDbRowBehavier<'a, KKVType> for KDbRow {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, ChinSqlCrud)]
-#[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct KKV {
     #[gts_primary]
-    #[gts_length = 500]
-    pub(crate) key: String,
+    pub(crate) key: Varchar<500>,
     #[gts_primary]
-    #[gts_length = 100]
-    #[gts_type = "String"]
+    #[gts_type = "Varchar<100>"]
     pub(crate) kind: KKVType,
     #[gts_primary]
-    #[gts_length = 100]
-    pub(crate) kspace: String,
+    pub(crate) kspace: Varchar<40>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub(crate) omit_tid: OmitTID,
 
-    pub(crate) value: String,
-    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub(crate) value: Text,
 }

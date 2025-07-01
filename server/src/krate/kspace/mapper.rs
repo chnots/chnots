@@ -22,7 +22,7 @@ pub(crate) trait KSpaceMapper {
     async fn kspace_ensure_data(&self) -> EResult {
         let kreq = KReq {
             body: KSpaceQueryAllReq {},
-            kspace: NO_KSPACE.to_owned(),
+            kspace: NO_KSPACE.try_into()?,
             mkspaces: vec![],
         };
         let all_kspaces = self.kspace_read_all(kreq.clone()).await?.kspaces;
@@ -60,7 +60,7 @@ impl KSpaceMapper for MapperType {
         let kspaces: Result<Vec<KSpace>, serde_json::Error> = kkvs
             .kkvs
             .into_iter()
-            .map(|kkv| serde_json::from_str(&kkv.value))
+            .map(|kkv| serde_json::from_str(kkv.value.as_str()))
             .collect();
 
         Ok(KSpaceQueryAllRsp { kspaces: kspaces? })
@@ -68,9 +68,9 @@ impl KSpaceMapper for MapperType {
 
     async fn kspace_overwrite(&self, req: KReq<KSpaceOverwriteReq>) -> AResult<KSpaceOverwriteRsp> {
         self.kkv_overwrite(req.frame(KKVOverwriteReq {
-            key: req.body.kspace.name.clone(),
+            key: req.body.kspace.name.clone().try_into()?,
             kind: KKVType::KSpaceInfo,
-            value: serde_json::to_string(&req.body.kspace)?,
+            value: serde_json::to_string(&req.body.kspace)?.into(),
         }))
         .await?;
 
