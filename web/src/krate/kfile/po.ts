@@ -1,20 +1,21 @@
 import { OmitTID, TID } from "@/lib/id_util";
+import { DbText, Varchar } from "@/lib/types";
 
 export type InlineKFile = {
-  sid: string;
+  sid: Varchar<100>;
   tid: TID;
-  content: string;
+  content: DbText;
 };
 
 export type KFileMeta = {
-  id: string;
+  id: Varchar<100>;
   omit_tid?: OmitTID;
   inline: boolean;
   archor: boolean;
   tid: TID;
-  filename: string;
-  content_type: string;
+  filename: Varchar<1024>;
+  content_type: Varchar<200>;
   last_modified: TID;
-  sid: string;
+  sid: Varchar<100>;
   filesize: number;
 };

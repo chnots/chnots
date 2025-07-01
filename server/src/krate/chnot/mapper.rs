@@ -46,17 +46,7 @@ pub(crate) trait ChnotMapper {
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>>;
 
-    async fn ensure_table_chnot_record(&self) -> EResult;
-    async fn ensure_table_chnot_metadata(&self) -> EResult;
-    async fn ensure_table_chnot_tag(&self) -> EResult;
-
-    async fn ensure_table_chnot(&self) -> EResult {
-        self.ensure_table_chnot_record().await?;
-        self.ensure_table_chnot_metadata().await?;
-        self.ensure_table_chnot_tag().await?;
-
-        Ok(())
-    }
+    async fn ensure_table_chnot(&self) -> EResult;
 }
 
 impl ChnotMapper for MapperType {
@@ -76,16 +66,8 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_update(req))
     }
 
-    async fn ensure_table_chnot_record(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_chnot_record())
-    }
-
-    async fn ensure_table_chnot_metadata(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_chnot_metadata())
-    }
-
-    async fn ensure_table_chnot_tag(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_chnot_tag())
+    async fn ensure_table_chnot(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_chnot())
     }
 
     async fn chnot_tag_query(

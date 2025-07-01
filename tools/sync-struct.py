@@ -16,6 +16,7 @@ TYPE_MAP = {
     "i64": "number",
     "i32": "number",
     "usize": "number",
+    "Text": "DbText",
 }
 
 

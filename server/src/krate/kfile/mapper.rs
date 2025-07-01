@@ -37,7 +37,6 @@ pub(crate) trait KFileMapper {
     ) -> anyhow::Result<QueryInlineKFileRsp>;
 
     async fn ensure_table_kfile(&self) -> EResult;
-    async fn ensure_table_inline_kfile(&self) -> EResult;
 }
 
 impl KFileMapper for MapperType {
@@ -61,10 +60,6 @@ impl KFileMapper for MapperType {
         req: KReq<QueryInlineKFileReq>,
     ) -> anyhow::Result<QueryInlineKFileRsp> {
         expand_mt_branch!(self.query_inline_kfile(req))
-    }
-
-    async fn ensure_table_inline_kfile(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_inline_kfile())
     }
 
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp> {

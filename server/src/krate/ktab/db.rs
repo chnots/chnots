@@ -7,8 +7,7 @@ use itertools::Itertools;
 
 use crate::{
     mapper::db::{
-        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier,
-        KDbTransactionBehaiver,
+        helper::create_tables, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier, KDbTransactionBehaiver
     },
     model::{dto::KReq, omit_tid::OmitTID},
 };
@@ -244,14 +243,15 @@ impl KTabMapper for KDb {
     }
 
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
-        self.conn().await?.exec(KTabCellDate::create_sql()).await?;
-        self.conn()
-            .await?
-            .exec(KTabCellDecimal::create_sql())
-            .await?;
-        self.conn().await?.exec(KTabCellText::create_sql()).await?;
-        self.conn().await?.exec(KTabMeta::create_sql()).await?;
-
-        Ok(())
+        create_tables(
+            vec![
+                KTabMeta::create_sql(),
+                KTabCellText::create_sql(),
+                KTabCellDecimal::create_sql(),
+                KTabCellDate::create_sql(),
+            ],
+            self,
+        )
+        .await
     }
 }

@@ -1,4 +1,5 @@
 import { OmitTID, TID } from "@/lib/id_util";
+import { DbText, Varchar } from "@/lib/types";
 
 export type KTabColumnStoreKind = "str" | "i64" | "f64" | "date" | "blob";
 
@@ -44,8 +45,8 @@ export type KTabMeta = {
   tid: TID;
   omit_tid?: OmitTID;
   columns: Record<string, KTabColumnMeta>;
-  table_name: string;
-  table_comment: string;
+  table_name: Varchar<300>;
+  table_comment: Varchar<1000>;
   update_time?: Date;
   real_table: boolean;
 };
@@ -66,7 +67,7 @@ export type KTabCellText = {
   row_tid: TID;
   omit_tid?: OmitTID;
   tid: TID;
-  cell_data: string;
+  cell_data: DbText;
 };
 
 export type KTabCellDecimal = {

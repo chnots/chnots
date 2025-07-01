@@ -44,21 +44,20 @@ impl KFileDeserializeMapper for KDbRow {
 
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
-        self.ensure_table_inline_kfile().await?;
-        self.conn().await?.exec(KFileMeta::create_sql()).await?;
-        self.conn()
-            .await?
-            .exec(KFileMeta::create_sql())
-            .await
-            .map(|_| ())
-    }
+        for sql in KFileMeta::create_sql()
+            .sqls(self.get_db_type())?
+            .into_iter()
+        {
+            self.conn().await?.exec(sql).await?;
+        }
+        for sql in InlineKFile::create_sql()
+            .sqls(self.get_db_type())?
+            .into_iter()
+        {
+            self.conn().await?.exec(sql).await?;
+        }
 
-    async fn ensure_table_inline_kfile(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(InlineKFile::create_sql())
-            .await
-            .map(|_| ())
+        Ok(())
     }
 
     async fn insert_kfile(&self, meta: KFileMeta) -> EResult {
@@ -96,7 +95,8 @@ impl KFileMapper for KDb {
             sid: sid.clone(),
             id: req.meta_id.clone(),
             filename: req
-                .filename.clone()
+                .filename
+                .clone()
                 .unwrap_or(format!("inline-kfile-{}", &TID::default().as_num()).try_into()?)
                 .try_into()?,
             content_type: req.content_type.clone(),
@@ -168,14 +168,16 @@ impl KFileMapper for KDb {
         Ok(QueryKFileMetaRsp { meta })
     }
 
-    async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>) -> anyhow::Result<QueryKFileMetaRsp> {
+    async fn query_kfile_meta_by_sid(
+        &self,
+        sid: Varchar<100>,
+    ) -> anyhow::Result<QueryKFileMetaRsp> {
         let meta = self
             .conn()
             .await?
-            .qry_opt(
-                KFileMeta::pkey_reader(sid, OmitTID::never()),
-                |e| e.to_kfile_meta(),
-            )
+            .qry_opt(KFileMeta::pkey_reader(sid, OmitTID::never()), |e| {
+                e.to_kfile_meta()
+            })
             .await?;
         Ok(QueryKFileMetaRsp { meta })
     }

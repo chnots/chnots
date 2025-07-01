@@ -95,19 +95,7 @@ pub(crate) trait LLMChatMapper {
         req: KReq<LLMChatDeleteSessionReq>,
     ) -> AResult<LLMChatDeleteSessionRsp>;
 
-    async fn ensure_table_llm_chat_bot(&self) -> EResult;
-    async fn ensure_table_llm_chat_template(&self) -> EResult;
-    async fn ensure_table_llm_chat_session(&self) -> EResult;
-    async fn ensure_table_llm_chat_record(&self) -> EResult;
-
-    async fn ensure_table_llm_chat(&self) -> EResult {
-        self.ensure_table_llm_chat_bot().await?;
-        self.ensure_table_llm_chat_template().await?;
-        self.ensure_table_llm_chat_session().await?;
-        self.ensure_table_llm_chat_record().await?;
-
-        Ok(())
-    }
+    async fn ensure_table_llm_chat(&self) -> EResult;
 }
 
 impl LLMChatMapper for MapperType {
@@ -205,20 +193,9 @@ impl LLMChatMapper for MapperType {
         expand_mt_branch!(self.llm_chat_delete_session(req))
     }
 
-    async fn ensure_table_llm_chat_record(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_record())
-    }
 
-    async fn ensure_table_llm_chat_template(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_template())
-    }
-
-    async fn ensure_table_llm_chat_session(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_session())
-    }
-
-    async fn ensure_table_llm_chat_bot(&self) -> EResult {
-        expand_mt_branch!(self.ensure_table_llm_chat_bot())
+    async fn ensure_table_llm_chat(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_llm_chat())
     }
 
     async fn llm_chat_truncate_session(

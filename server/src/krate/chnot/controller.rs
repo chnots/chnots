@@ -100,7 +100,7 @@ async fn chnot_tag_names(
 async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state
         .mapper
-        .chnot_tag_update_all(read_kspace_from_header(&headers).try_into().unwrap())
+        .chnot_tag_update_all(read_kspace_from_header(&headers))
         .await
         .into()
 }

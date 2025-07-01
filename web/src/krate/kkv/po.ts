@@ -1,11 +1,11 @@
-import { TID } from "@/lib/id_util";
+import { OmitTID, TID } from "@/lib/id_util";
 import { KKVType } from "./dto";
+import { DbText, Varchar } from "@/lib/types";
 
 export type KKV = {
-  key: string;
+  key: Varchar<500>;
   kind: KKVType;
-  kspace: string;
-  tid: TID;
-  value: string;
-  update_time?: Date;
+  kspace: Varchar<40>;
+  omit_tid?: OmitTID;
+  value: DbText;
 };

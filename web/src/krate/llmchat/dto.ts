@@ -5,6 +5,7 @@ import {
   LLMChatSession,
   LLMChatRecord,
 } from "./po";
+import { Varchar } from "@/lib/types";
 
 export type LLMChatListBotRsp = {
   bots: LLMChatBot[];
@@ -72,7 +73,7 @@ export type LLMChatListSessionReq = {
 };
 
 export type LLMChatUpdateSessionReq = {
-  title?: string;
+  title?: Varchar<200>;
   delete?: boolean;
   session_tid: TID;
 };

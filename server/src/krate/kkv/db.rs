@@ -2,7 +2,10 @@ use chin_sql::{SqlBuilder, SqlDeleter, Wheres};
 use chin_tools::AResult;
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier},
+    mapper::db::{
+        KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+        helper::create_tables,
+    },
     model::{dto::KReq, omit_tid::OmitTID},
 };
 
@@ -60,7 +63,7 @@ impl KDbExecutor<'_> {
 
 impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
-        self.conn().await?.exec(KKV::create_sql()).await.map(|_| ())
+        create_tables(vec![KKV::create_sql()], self).await
     }
 
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {

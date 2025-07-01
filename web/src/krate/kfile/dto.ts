@@ -1,5 +1,6 @@
 import { TID } from "@/lib/id_util";
 import { InlineKFile, KFileMeta } from "./po";
+import { Varchar } from "@/lib/types";
 
 export type KFileUploadReq = {
   upload_id: string;
@@ -19,20 +20,20 @@ export type KFileUploadRsp = {
 };
 
 export type InsertInlineKFileReq = {
-  meta_id: string;
+  meta_id: Varchar<100>;
   res: InlineKFile;
   archor_intervals: number;
-  filename?: string;
-  content_type: string;
+  filename?: Varchar<1024>;
+  content_type: Varchar<200>;
 };
 
 export type InsertInlineKFileRsp = {
-  true_sid: string;
+  true_sid: Varchar<100>;
 };
 
 export type QueryInlineKFileReq = {
   sid?: string;
-  meta_id?: string;
+  meta_id?: Varchar<100>;
   with_omit?: boolean;
 };
 
@@ -41,7 +42,7 @@ export type QueryInlineKFileRsp = {
 };
 
 export type QueryKFileReq = {
-  meta_id: string;
+  meta_id: Varchar<100>;
 };
 
 export type QueryKFileMetaRsp = {

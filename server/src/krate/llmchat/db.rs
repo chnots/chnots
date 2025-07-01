@@ -5,6 +5,7 @@ use chin_sql::time_type::TID;
 use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
 
+use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -275,30 +276,17 @@ impl LLMChatMapper for KDb {
         Ok(LLMChatDeleteSessionRsp {})
     }
 
-    async fn ensure_table_llm_chat_bot(&self) -> EResult {
-        self.conn().await?.exec(LLMChatBot::create_sql()).await?;
-        Ok(())
-    }
-
-    async fn ensure_table_llm_chat_template(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(LLMChatTemplate::create_sql())
-            .await?;
-        Ok(())
-    }
-
-    async fn ensure_table_llm_chat_session(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(LLMChatSession::create_sql())
-            .await?;
-        Ok(())
-    }
-
-    async fn ensure_table_llm_chat_record(&self) -> EResult {
-        self.conn().await?.exec(LLMChatRecord::create_sql()).await?;
-        Ok(())
+    async fn ensure_table_llm_chat(&self) -> EResult {
+        create_tables(
+            vec![
+                LLMChatBot::create_sql(),
+                LLMChatTemplate::create_sql(),
+                LLMChatSession::create_sql(),
+                LLMChatRecord::create_sql(),
+            ],
+            self,
+        )
+        .await
     }
 
     async fn llm_chat_update_session(
@@ -383,15 +371,6 @@ impl LLMChatMapper for KDb {
         let count = self.conn().await?.exec(updater).await?;
 
         Ok(LLMChatTruncateSessionRsp { count })
-    }
-
-    async fn ensure_table_llm_chat(&self) -> EResult {
-        self.ensure_table_llm_chat_bot().await?;
-        self.ensure_table_llm_chat_template().await?;
-        self.ensure_table_llm_chat_session().await?;
-        self.ensure_table_llm_chat_record().await?;
-
-        Ok(())
     }
 }
 

@@ -2,6 +2,7 @@ pub(crate) mod inner;
 
 use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
+use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -12,7 +13,7 @@ use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use anyhow::anyhow;
 use chin_sql::str_type::Varchar;
-use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
+use chin_sql::{ChinSqlError, ILikeType, SegOrVal, SqlBuilder};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
@@ -126,21 +127,17 @@ impl KDb {
 }
 
 impl ChnotMapper for KDb {
-    async fn ensure_table_chnot_record(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(ChnotRecord::create_sql())
-            .await
-            .map(|_| ())
-    }
-
-    async fn ensure_table_chnot_metadata(&self) -> EResult {
-        self.conn().await?.exec(ChnotMetadata::create_sql()).await?;
-        self.conn()
-            .await?
-            .exec(ChnotKindRel::create_sql())
-            .await
-            .map(|_| ())
+    async fn ensure_table_chnot(&self) -> EResult {
+        create_tables(
+            vec![
+                ChnotTag::create_sql(),
+                ChnotMetadata::create_sql(),
+                ChnotRecord::create_sql(),
+                ChnotKindRel::create_sql(),
+            ],
+            self,
+        )
+        .await
     }
 
     async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp> {
@@ -280,14 +277,6 @@ impl ChnotMapper for KDb {
         tx.cmt().await?;
 
         Ok(ChnotUpdateRsp {})
-    }
-
-    async fn ensure_table_chnot_tag(&self) -> EResult {
-        self.conn()
-            .await?
-            .exec(ChnotTag::create_sql())
-            .await
-            .map(|_| ())
     }
 
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {

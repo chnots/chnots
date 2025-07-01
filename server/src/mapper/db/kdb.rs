@@ -1,5 +1,5 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{IntoSqlSeg, SqlValue, SqlValueRow};
+use chin_sql::{DbType, IntoSqlSeg, SqlValue, SqlValueRow};
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 use postgres_types::FromSql;
@@ -84,7 +84,6 @@ where
     }
 }
 
-
 impl<'a, T, E> KDbRowBehavier<'a, T> for KDbRow
 where
     T: TryFrom<SqlValue<'a>, Error = E> + FromSql<'a>,
@@ -110,6 +109,15 @@ macro_rules! expand_kdb_branch {
             KDb::Sqlite(db) => db.$method($($arg),*).await,
         }
     };
+}
+
+impl KDb {
+    pub(crate) fn get_db_type(&self) -> DbType {
+        match self {
+            KDb::Sqlite(_) => DbType::Sqlite,
+            KDb::Postgres(_) => DbType::Postgres,
+        }
+    }
 }
 
 impl KDbBehaiver for KDb {
@@ -343,3 +351,4 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
         expand_KDbExecutor_branch!(self.qry_list(ssb, mapper))
     }
 }
+

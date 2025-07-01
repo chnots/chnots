@@ -1,5 +1,5 @@
 import { OmitTID, TID as TID } from "@/lib/id_util";
-import { object } from "zod";
+import { DbText, Varchar } from "@/lib/types";
 
 export enum ChnotKind {
   MarkdownWithToent = "mdwt",
@@ -16,13 +16,13 @@ export type ChnotRecord = {
   meta_tid: TID;
   omit_tid?: OmitTID;
   tid: TID;
-  content: string;
+  content: DbText;
   archor: boolean;
 };
 
 export type ChnotMetadata = {
   tid: TID;
-  kspace: string;
+  kspace: Varchar<40>;
   kind: ChnotKind;
   pin_time?: Date;
   omit_tid?: OmitTID;
@@ -30,10 +30,10 @@ export type ChnotMetadata = {
 };
 
 export type ChnotTag = {
-  tag: string;
+  tag: Varchar<800>;
   meta_tid: TID;
   omit_tid?: OmitTID;
-  kspace: string;
+  kspace: Varchar<40>;
   tid: TID;
 };
 
@@ -46,6 +46,6 @@ export type ChnotKindId = {
 export type ChnotKindRel = {
   meta_tid: TID;
   omit_tid?: OmitTID;
-  kind_id: string;
+  kind_id: Varchar<200>;
   tid: TID;
 };

@@ -1,5 +1,4 @@
 import { v4 as uuid } from "uuid";
-import { number } from "zod";
 
 export const genUID = () => {
   return uuid().replaceAll("-", "") + "-UID";

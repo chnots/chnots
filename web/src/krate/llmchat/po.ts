@@ -1,16 +1,14 @@
 import { OmitTID, TID } from "@/lib/id_util";
-
-// Date type definition for compatibility
-type DateTime = Date;
+import { DbText, Varchar } from "@/lib/types";
 
 // LLMChatBot structure
 
 export type LLMChatBot = {
   tid: TID;
   omit_tid?: OmitTID;
-  name: string;
-  body: string;
-  svg_logo?: string;
+  name: Varchar<500>;
+  body: DbText;
+  svg_logo?: DbText;
   update_time?: Date;
 };
 
@@ -26,9 +24,9 @@ export type LLMChatBotBodyOpenAIV1 = {
 export type LLMChatTemplate = {
   tid: TID;
   omit_tid?: OmitTID;
-  name: string;
-  prompt: string;
-  svg_logo?: string;
+  name: Varchar<200>;
+  prompt: DbText;
+  svg_logo?: DbText;
   update_time?: Date;
 };
 
@@ -38,7 +36,7 @@ export type LLMChatSession = {
   tid: TID;
   omit_tid?: OmitTID;
   template_tid: TID;
-  title: string;
+  title: Varchar<200>;
   update_time?: Date;
 };
 
@@ -49,8 +47,8 @@ export type LLMChatRecord = {
   omit_tid?: OmitTID;
   session_tid: TID;
   pre_record_tid?: TID;
-  content: string;
-  reasoning_content: string;
-  role: string;
+  content: DbText;
+  reasoning_content: DbText;
+  role: Varchar<40>;
   role_id?: TID;
 };

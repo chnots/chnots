@@ -1,4 +1,4 @@
-import { SharedStr } from "@/lib/types";
+import { DbText, SharedStr, Varchar } from "@/lib/types";
 import { KKV } from "./po";
 
 export type KKVType = object;
@@ -15,7 +15,7 @@ export type KKVQueryManyReq = {
 };
 
 export type KKVQueryOneRsp = {
-  value?: string;
+  value?: DbText;
 };
 
 export type KKVQueryManyRsp = {
@@ -23,9 +23,9 @@ export type KKVQueryManyRsp = {
 };
 
 export type KKVOverwriteReq = {
-  key: string;
+  key: Varchar<500>;
   kind: KKVType;
-  value: string;
+  value: DbText;
 };
 
 export type KKVOverwriteRsp = object;
