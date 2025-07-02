@@ -77,7 +77,10 @@ export const useLLMChatStore = create(
       return [...get().templates.values()];
     },
     unshiftSession: async (session: LLMChatSession) => {
-      await llmchatSessionOverwrite(session);
+      await llmchatSessionOverwrite({
+        ...session,
+        title: session.title.substring(0, 200),
+      });
       const sessions = get().sessions;
       set((state) => {
         return {
