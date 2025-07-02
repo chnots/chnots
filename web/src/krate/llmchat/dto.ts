@@ -73,7 +73,7 @@ export type LLMChatListSessionReq = {
 };
 
 export type LLMChatUpdateSessionReq = {
-  title?: Varchar<200>;
+  title?: string;
   delete?: boolean;
   session_tid: TID;
 };

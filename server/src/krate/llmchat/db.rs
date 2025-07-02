@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Ok;
+use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
@@ -307,7 +308,7 @@ impl LLMChatMapper for KDb {
 
         sess.omit_tid = OmitTID::never();
         if let Some(title) = req.body.title {
-            sess.title = title;
+            sess.title = Varchar::<200>::limit(title);
         }
         if let Some(true) = req.body.delete {
             return Ok(LLMChatUpdateSessionRsp {});

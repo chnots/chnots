@@ -6,7 +6,6 @@ use crate::krate::toent::logic::{
 use chrono::NaiveDateTime;
 use itertools::Itertools;
 use lazy_regex::Lazy;
-use log::info;
 use markdown::mdast::{Node, Paragraph};
 use regex::Regex;
 
