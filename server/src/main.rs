@@ -1,74 +1,18 @@
-use app::{AppState, ShareAppState};
-use arguments::Arguments;
-use chin_tools::{AResult, EResult};
+use chnots_core::config::Config;
 use clap::Parser;
-use config::Config;
-use mapper::{
-    dump::{
-        filedump::{BackupType, FileDumpWorker},
-        RecordCallbackType,
-    },
-    MapperType,
-};
-use tracing::{info, Level};
-use tracing_log::LogTracer;
 
-pub(crate) mod app;
+use crate::arguments::Arguments;
+
 pub(crate) mod arguments;
-pub(crate) mod config;
-pub(crate) mod controller;
-pub(crate) mod krate;
-pub(crate) mod magics;
-pub(crate) mod mapper;
-pub(crate) mod model;
-pub(crate) mod util;
 
 #[tokio::main]
-async fn main() -> EResult {
-    let subscriber = tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
-        .with_thread_ids(true)
-        .with_line_number(true)
-        .with_timer(tracing_subscriber::fmt::time::time());
-    LogTracer::init()?;
-
-    #[cfg(debug_assertions)]
-    let subscriber = subscriber.with_max_level(Level::DEBUG);
-
-    let subscriber = subscriber.finish();
-
-    tracing::subscriber::set_global_default(subscriber)?;
-
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Arguments::parse();
 
     let config_file = tokio::fs::read_to_string(args.config.as_str()).await?;
     let config: Config = toml::from_str(config_file.as_str())?;
-    let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
-    mapper.ensure_tables().await?;
-    let state = AppState {
-        config: config.clone(),
-        mapper,
-    };
-    let state: ShareAppState = state.into();
-    {
-        let state = state.clone();
-        std::thread::spawn(|| {
-            futures::executor::block_on(async move {
-                let worker = FileDumpWorker::new(&state, "chnots", BackupType::All)
-                    .await
-                    .unwrap();
-                info!("Begin to backup.");
-                state
-                    .mapper
-                    .dump_and_callback(&RecordCallbackType::File(worker))
-                    .await
-                    .unwrap();
-                info!("Finished to backup.");
-            });
-        });
-    }
 
-    controller::serve(state).await?;
+    chnots_core::start(config).await?;
 
     Ok(())
 }

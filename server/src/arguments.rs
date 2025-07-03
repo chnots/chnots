@@ -7,4 +7,16 @@ pub(crate) struct Arguments {
     pub(crate) config: String,
 }
 
-unsafe impl Sync for Arguments {}
+pub mod tests {
+    #[test]
+    fn test_db_deserialize() {
+        let toml_str = r#"
+        [db_config]
+        type = "sqlite"
+        filepath = "/home/123"
+    "#;
+
+/*         let config: Config = toml::from_str(toml_str).unwrap();
+        println!("{config:?}"); */
+    }
+}
