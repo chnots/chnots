@@ -2,12 +2,9 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Chnots",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "org.codeberg.wangzh.chnots",
   "build": {
-    "frontendDist": "../../../web-dist",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "pnpm run dev",
-    "beforeBuildCommand": "pnpm run build"
+    "frontendDist": "../../../web-dist"
   },
   "app": {
     "windows": [

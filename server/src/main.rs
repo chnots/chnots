@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_file = tokio::fs::read_to_string(args.config.as_str()).await?;
     let config: Config = toml::from_str(config_file.as_str())?;
 
-    chnots_core::start(config).await?;
+    chnots_core::run(config).await?;
 
     Ok(())
 }

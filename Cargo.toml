@@ -5,6 +5,9 @@ members = ["backend/core",  "server", "tauri/src-tauri"]
 [workspace.dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "rt"] }
 tokio-util = "0.7.10"
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = { version = "1.0.135" }
+log = "0.4.27"
 
 [profile.release]
 lto = true

@@ -27,7 +27,7 @@ pub(crate) mod util;
 pub async fn run(config: Config) -> EResult {
     #[cfg(not(feature = "tauri"))]
     let subscriber = tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
+        .with_max_level(tracing::Level::INFO)
         .with_thread_ids(true)
         .with_line_number(true)
         .with_timer(tracing_subscriber::fmt::time::time());
@@ -36,13 +36,13 @@ pub async fn run(config: Config) -> EResult {
 
     #[cfg(debug_assertions)]
     #[cfg(not(feature = "tauri"))]
-    let subscriber = subscriber.with_max_level(Level::DEBUG);
+    let subscriber = subscriber.with_max_level(tracing::Level::DEBUG);
 
     #[cfg(not(feature = "tauri"))]
     let subscriber = subscriber.finish();
 
     #[cfg(not(feature = "tauri"))]
-    log::subscriber::set_global_default(subscriber)?;
+    tracing::subscriber::set_global_default(subscriber)?;
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
