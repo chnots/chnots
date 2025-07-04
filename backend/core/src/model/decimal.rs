@@ -2,7 +2,6 @@ use std::convert::TryFrom;
 
 use anyhow::anyhow;
 use chin_sql::SqlValue;
-use postgres_types::FromSql;
 use serde::{
     de::{self},
     Deserialize, Serialize,
@@ -32,7 +31,7 @@ impl TryFrom<String> for Decimal {
             Ok(Decimal(original_string))
         } else {
             Err(anyhow!(format!(
-                "'{}' is not a valid number, scientific notation, or supported constant.",
+                "'{}' is not a valid number, scientific notation, or supported constant. ",
                 original_string
             )))
         }
@@ -67,19 +66,7 @@ impl From<i64> for Decimal {
     }
 }
 
-impl<'a> FromSql<'a> for Decimal {
-    fn from_sql(
-        ty: &postgres_types::Type,
-        raw: &'a [u8],
-    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        let s: String = String::from_sql(ty, raw)?;
-        Ok(Decimal::try_from(s)?)
-    }
 
-    fn accepts(ty: &postgres_types::Type) -> bool {
-        String::accepts(ty)
-    }
-}
 
 impl From<Decimal> for SqlValue<'_> {
     fn from(value: Decimal) -> Self {

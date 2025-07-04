@@ -1,6 +1,7 @@
 use app::{AppState, ShareAppState};
 use chin_tools::{AResult, EResult};
 use config::Config;
+use log::info;
 use mapper::{
     MapperType,
     dump::{
@@ -8,7 +9,10 @@ use mapper::{
         filedump::{BackupType, FileDumpWorker},
     },
 };
-use tracing::{Level, info};
+
+#[cfg(not(feature = "tauri"))]
+use log::{Level};
+#[cfg(not(feature = "tauri"))]
 use tracing_log::LogTracer;
 
 pub(crate) mod app;
@@ -20,20 +24,25 @@ pub(crate) mod mapper;
 pub(crate) mod model;
 pub(crate) mod util;
 
-pub async fn start(config: Config) -> EResult {
+pub async fn run(config: Config) -> EResult {
+    #[cfg(not(feature = "tauri"))]
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
         .with_thread_ids(true)
         .with_line_number(true)
         .with_timer(tracing_subscriber::fmt::time::time());
+    #[cfg(not(feature = "tauri"))]
     LogTracer::init()?;
 
     #[cfg(debug_assertions)]
+    #[cfg(not(feature = "tauri"))]
     let subscriber = subscriber.with_max_level(Level::DEBUG);
 
+    #[cfg(not(feature = "tauri"))]
     let subscriber = subscriber.finish();
 
-    tracing::subscriber::set_global_default(subscriber)?;
+    #[cfg(not(feature = "tauri"))]
+    log::subscriber::set_global_default(subscriber)?;
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;

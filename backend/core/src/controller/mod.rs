@@ -1,21 +1,20 @@
 use std::{net::SocketAddr, path::PathBuf};
 
-use axum_server::tls_rustls::RustlsConfig;
 use chin_tools::{AResult, EResult};
 use serde::Serialize;
 use serde_json::json;
 
 use axum::{
+    Json, Router,
     extract::DefaultBodyLimit,
     http::StatusCode,
     http::{
+        HeaderValue,
         header::{
             ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
         },
-        HeaderValue,
     },
     response::IntoResponse,
-    Json, Router,
 };
 
 use tower_http::{
@@ -24,7 +23,7 @@ use tower_http::{
     set_header::SetResponseHeaderLayer,
     trace::{self, TraceLayer},
 };
-use tracing::{info, Level};
+use log::{info};
 
 use crate::{
     app::ShareAppState,
@@ -50,7 +49,7 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
                 res
             }
             Err(err) => {
-                tracing::error!(
+                log::error!(
                     "Error Occured: {}, {}",
                     err.to_string(),
                     err.backtrace().to_string()
@@ -71,8 +70,8 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .allow_origin(Any);
 
     let trace_layer = TraceLayer::new_for_http()
-        .make_span_with(trace::DefaultMakeSpan::new().level(Level::DEBUG))
-        .on_response(trace::DefaultOnResponse::new().level(Level::DEBUG))
+        .make_span_with(trace::DefaultMakeSpan::new().level(tracing::Level::DEBUG))
+        .on_response(trace::DefaultOnResponse::new().level(tracing::Level::DEBUG))
         .on_request(|_req: &_, _: &_| {});
 
     let app = Router::new()
@@ -103,13 +102,16 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .layer(cors_layer)
         .layer(trace_layer);
 
-    if let Some(config) = &app_state.config.server {
+    #[cfg(feature = "tls")]
+    if let Some(Some(config)) = &app_state.config.server.as_ref().map(|s| &s.tls) {
+        use axum_server::tls_rustls::RustlsConfig;
+
         let tls_config = RustlsConfig::from_pem_file(
             PathBuf::from(config.tls_cert.clone()),
             PathBuf::from(config.tls_key.clone()),
         )
         .await?;
-
+        
         axum_server::bind_rustls(
             SocketAddr::new(
                 std::net::IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0)),
@@ -119,11 +121,13 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         )
         .serve(app.into_make_service())
         .await?;
-    } else {
+    }
+    #[cfg(not(feature = "tls"))]
+    {
         let server_url = format!("{}:{}", "0.0.0.0", port);
-        info!("begin to listen on {}", server_url);
+        info!("begin to listen on {server_url}");
         let listener = tokio::net::TcpListener::bind(&server_url).await?;
-        info!("server: {}", server_url);
+        info!("server: {server_url}");
 
         axum::serve(listener, app).await?;
     }

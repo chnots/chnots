@@ -22,7 +22,7 @@ use chin_tools::{AResult, EResult};
 use chrono::Local;
 use itertools::Itertools;
 use serde::Serialize;
-use tracing::info;
+use log::info;
 
 const UNTAGGED_TAG: &str = "<NON>";
 
@@ -70,7 +70,7 @@ impl ChnotTag {
 
 #[inline]
 fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
-    tracing::debug!("begin to build chnot");
+    log::debug!("begin to build chnot");
     let record = ChnotRecord {
         tid: row.try_get("rec_tid")?,
         meta_tid: row.try_get("meta_tid")?,

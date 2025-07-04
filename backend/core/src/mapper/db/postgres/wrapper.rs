@@ -18,7 +18,7 @@ macro_rules! impl_KDbExecutorBehaiver {
         impl $(<$($lt),+>)? KDbExecutorBehaiver for $ty $(<$($lt),+>)? {
             async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
-                tracing::info!("exec_and_check {:?} {:?}", seg, values);
+                log::info!("exec_and_check {:?} {:?}", seg, values);
                 let count = self.execute(&seg, to_pgsql_params!(values)).await?;
 
                 Ok(count as usize)
@@ -54,7 +54,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 F: FnOnce(KDbRow) -> AResult<E>,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
-                tracing::info!("query opt {:?}", seg);
+                log::info!("query opt {:?}", seg);
                 let result = self.query_opt(&seg, to_pgsql_params!(values)).await?;
                 result.map(|e| mapper(KDbRow::Postgres(e))).swap()
             }
@@ -70,7 +70,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 F: FnOnce(KDbRow) -> AResult<E>,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
-                tracing::info!("query one {:?}", seg);
+                log::info!("query one {:?}", seg);
                 if !only_one {
                     let result = self.query_one(&seg, to_pgsql_params!(values)).await?;
                     Ok(mapper(KDbRow::Postgres(result))?)
@@ -93,7 +93,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 F: Fn(KDbRow) -> AResult<E>,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Postgres)?;
-                tracing::info!("query list {:?}, values {:?}", seg, values);
+                log::info!("query list {:?}, values {:?}", seg, values);
                 let result = self.query(&seg, to_pgsql_params!(values)).await?;
                 result
                     .into_iter()

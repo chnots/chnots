@@ -1,4 +1,3 @@
-use super::decimal::Decimal;
 use std::collections::HashMap;
 
 use chin_sql::str_type::Text;
@@ -7,6 +6,7 @@ use chin_sql::{str_type::Varchar, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
+use crate::model::decimal::Decimal;
 use crate::model::omit_tid::OmitTID;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

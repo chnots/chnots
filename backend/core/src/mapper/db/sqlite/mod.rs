@@ -6,8 +6,8 @@ pub(crate) mod wrapper;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct SqliteConfig {
-    filepath: String,
-    pool_size: Option<u8>,
+    pub filepath: String,
+    pub pool_size: Option<u8>,
 }
 
 impl TryFrom<SqliteConfig> for ActorSqlitePool {

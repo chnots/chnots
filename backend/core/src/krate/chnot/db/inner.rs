@@ -117,7 +117,7 @@ impl<'a> KDbTx<'a> {
         &self,
         req: KReq<ChnotOverwriteReq>,
     ) -> AResult<ChnotOverwriteRsp> {
-        tracing::debug!("begin to overwrite chnot, {:?}", req.meta_tid);
+        log::debug!("begin to overwrite chnot, {:?}", req.meta_tid);
 
         let meta_tid = match req.meta_tid {
             Some(tid) => MetaId::Old(tid),

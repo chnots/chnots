@@ -1,3 +1,8 @@
+use chin_sql::time_type::TID;
+use postgres_types::{FromSql, Type, accepts};
+
+use crate::model::{decimal::Decimal, omit_tid::OmitTID};
+
 #[macro_export]
 macro_rules! to_pgsql_params {
     ($values:expr) => {
@@ -10,4 +15,29 @@ macro_rules! to_pgsql_params {
             .collect::<Vec<&(dyn postgres_types::ToSql + Sync)>>()
             .as_slice()
     };
+}
+
+impl<'a> FromSql<'a> for Decimal {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        let s: String = String::from_sql(ty, raw)?;
+        Ok(Decimal::try_from(s)?)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        String::accepts(ty)
+    }
+}
+
+impl<'a> FromSql<'a> for OmitTID {
+    fn from_sql(
+        ty: &Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        TID::from_sql(ty, raw).map(|e| OmitTID(e))
+    }
+
+    accepts! {INT8}
 }

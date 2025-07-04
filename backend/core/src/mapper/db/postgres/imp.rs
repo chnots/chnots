@@ -47,7 +47,7 @@ impl Postgres {
                             .await?;
                     }
                     Err(err) => {
-                        tracing::error!("{} -- unable to convert {}", table_name, err);
+                        log::error!("{} -- unable to convert {}", table_name, err);
                     }
                 }
             }

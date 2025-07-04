@@ -5,9 +5,10 @@ use chin_sql::SqlValue;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
+use crate::model::decimal::Decimal;
 use crate::model::omit_tid::OmitTID;
 
-use super::{decimal::Decimal, *};
+use super::{ *};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KTabMetaOverwriteReq {

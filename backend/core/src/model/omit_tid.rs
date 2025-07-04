@@ -3,10 +3,9 @@ use std::ops::Deref;
 use chin_sql::{time_type::TID, ChinSqlError, SqlUpdater, SqlValue};
 use serde::{Deserialize, Serialize, Serializer};
 
-use postgres_types::{accepts, FromSql, Type};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct OmitTID(TID);
+pub(crate) struct OmitTID(pub(crate) TID);
 
 impl OmitTID {
     #[inline]
@@ -83,13 +82,3 @@ impl<'a> TryFrom<SqlValue<'a>> for OmitTID {
     }
 }
 
-impl<'a> FromSql<'a> for OmitTID {
-    fn from_sql(
-        ty: &Type,
-        raw: &'a [u8],
-    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        TID::from_sql(ty, raw).map(OmitTID)
-    }
-
-    accepts! {INT8}
-}
