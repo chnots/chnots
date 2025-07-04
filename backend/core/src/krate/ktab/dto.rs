@@ -10,34 +10,34 @@ use crate::model::omit_tid::OmitTID;
 use super::{decimal::Decimal, *};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabMetaOverwriteReq {
-    pub(crate) meta: KTabMeta,
+pub struct KTabMetaOverwriteReq {
+    pub meta: KTabMeta,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabMetaOverwriteRsp {}
+pub struct KTabMetaOverwriteRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabMetaQueryReq {
-    pub(crate) table_id: TID,
+pub struct KTabMetaQueryReq {
+    pub table_id: TID,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabMetaQueryRsp {
-    pub(crate) meta: Option<KTabMeta>,
+pub struct KTabMetaQueryRsp {
+    pub meta: Option<KTabMeta>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabCellsOverwriteReq {
-    pub(crate) table_id: TID,
-    pub(crate) cells: Vec<KTabViewCell>,
+pub struct KTabCellsOverwriteReq {
+    pub table_id: TID,
+    pub cells: Vec<KTabViewCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabCellsOverwriteRsp {}
+pub struct KTabCellsOverwriteRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) enum KTabRowsQueryReqFilter {
+pub enum KTabRowsQueryReqFilter {
     OneRowByIdx {
         row_tid: usize,
     },
@@ -54,24 +54,24 @@ pub(crate) enum KTabRowsQueryReqFilter {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabRowsQueryReq {
-    pub(crate) table_id: TID,
-    pub(crate) filter: KTabRowsQueryReqFilter,
+pub struct KTabRowsQueryReq {
+    pub table_id: TID,
+    pub filter: KTabRowsQueryReqFilter,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabRowsQueryRspRow {
-    pub(crate) row_tid: TID,
-    pub(crate) cells: Vec<KTabViewCell>,
+pub struct KTabRowsQueryRspRow {
+    pub row_tid: TID,
+    pub cells: Vec<KTabViewCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabRowsQueryRsp {
-    pub(crate) rows: Vec<KTabRowsQueryRspRow>,
+pub struct KTabRowsQueryRsp {
+    pub rows: Vec<KTabRowsQueryRspRow>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) enum KTabStoreValue {
+pub enum KTabStoreValue {
     Decimal(Decimal),
     Text(Text),
     Date(DateTime<FixedOffset>),
@@ -89,20 +89,20 @@ impl<'a> From<KTabStoreValue> for SqlValue<'a> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabViewCell {
-    pub(crate) row_tid: TID,
-    pub(crate) column_name: String,
-    pub(crate) value: KTabStoreValue,
+pub struct KTabViewCell {
+    pub row_tid: TID,
+    pub column_name: String,
+    pub value: KTabStoreValue,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct KTabCell {
-    pub(crate) tid: TID,
-    pub(crate) table_id: TID,
-    pub(crate) col_tid: TID,
-    pub(crate) row_tid: TID,
-    pub(crate) omit_tid: OmitTID,
-    pub(crate) cell_data: KTabStoreValue,
+pub struct KTabCell {
+    pub tid: TID,
+    pub table_id: TID,
+    pub col_tid: TID,
+    pub row_tid: TID,
+    pub omit_tid: OmitTID,
+    pub cell_data: KTabStoreValue,
 }
 
 impl KTabCell {

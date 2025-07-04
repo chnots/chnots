@@ -4,112 +4,112 @@ use serde::{Deserialize, Serialize};
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatOverwriteBotReq {
-    pub(crate) bot: LLMChatBot,
+pub struct LLMChatOverwriteBotReq {
+    pub bot: LLMChatBot,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatOverwriteBotRsp {}
+pub struct LLMChatOverwriteBotRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatOverwriteTemplateReq {
-    pub(crate) template: LLMChatTemplate,
+pub struct LLMChatOverwriteTemplateReq {
+    pub template: LLMChatTemplate,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatOverwriteTemplateRsp {}
+pub struct LLMChatOverwriteTemplateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatInsertSessionReq {
-    pub(crate) session: LLMChatSession,
+pub struct LLMChatInsertSessionReq {
+    pub session: LLMChatSession,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatInsertSessionRsp {}
+pub struct LLMChatInsertSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatInsertRecordReq {
-    pub(crate) record: LLMChatRecord,
+pub struct LLMChatInsertRecordReq {
+    pub record: LLMChatRecord,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatInsertRecordRsp {}
+pub struct LLMChatInsertRecordRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatListBotReq {}
+pub struct LLMChatListBotReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatListBotRsp {
-    pub(crate) bots: Vec<LLMChatBot>,
+pub struct LLMChatListBotRsp {
+    pub bots: Vec<LLMChatBot>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatListTemplateReq {}
+pub struct LLMChatListTemplateReq {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatListTemplateRsp {
-    pub(crate) templates: Vec<LLMChatTemplate>,
+pub struct LLMChatListTemplateRsp {
+    pub templates: Vec<LLMChatTemplate>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatListSessionReq {
-    pub(crate) session_tid: Option<TID>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatListSessionRsp {
-    pub(crate) sessions: Vec<LLMChatSession>,
-}
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatUpdateSessionReq {
-    pub(crate) title: Option<String>,
-    pub(crate) delete: Option<bool>,
-    pub(crate) session_tid: TID,
+pub struct LLMChatListSessionReq {
+    pub session_tid: Option<TID>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatUpdateSessionRsp {}
-
+pub struct LLMChatListSessionRsp {
+    pub sessions: Vec<LLMChatSession>,
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatTruncateSessionReq {
-    pub(crate) remove_rid_included: TID,
-    pub(crate) session_tid: TID,
+pub struct LLMChatUpdateSessionReq {
+    pub title: Option<String>,
+    pub delete: Option<bool>,
+    pub session_tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatTruncateSessionRsp {
-    pub(crate) count: usize,
+pub struct LLMChatUpdateSessionRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatTruncateSessionReq {
+    pub remove_rid_included: TID,
+    pub session_tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatSessionDetialReq {
-    pub(crate) session_tid: TID,
-    pub(crate) with_omit: Option<bool>,
+pub struct LLMChatTruncateSessionRsp {
+    pub count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatSessionDetailRsp {
-    pub(crate) session: Option<LLMChatSession>,
-    pub(crate) records: Vec<LLMChatRecord>,
+pub struct LLMChatSessionDetialReq {
+    pub session_tid: TID,
+    pub with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatDeleteBotReq {
-    pub(crate) bot_tid: TID,
+pub struct LLMChatSessionDetailRsp {
+    pub session: Option<LLMChatSession>,
+    pub records: Vec<LLMChatRecord>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatDeleteBotRsp {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatDeleteTemplateReq {
-    pub(crate) template_tid: TID,
+pub struct LLMChatDeleteBotReq {
+    pub bot_tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatDeleteTemplateRsp {}
+pub struct LLMChatDeleteBotRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatDeleteSessionReq {
-    pub(crate) session_tid: TID,
+pub struct LLMChatDeleteTemplateReq {
+    pub template_tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LLMChatDeleteSessionRsp {}
+pub struct LLMChatDeleteTemplateRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatDeleteSessionReq {
+    pub session_tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LLMChatDeleteSessionRsp {}

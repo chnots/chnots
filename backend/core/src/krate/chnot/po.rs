@@ -22,21 +22,21 @@ use crate::mapper::db::KDbRowBehavier;
 use crate::model::omit_tid::OmitTID;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotRecord {
+pub struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) meta_tid: TID,
+    pub meta_tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
     #[gts_unique]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
     #[gts_type = "Varchar<20>"]
     #[gts_tosql = "opt_todo_tosql"]
-    pub(crate) todo_event: Option<TodoEvent>,
-    pub(crate) content: Text,
-    pub(crate) archor: bool,
+    pub todo_event: Option<TodoEvent>,
+    pub content: Text,
+    pub archor: bool,
 }
 
 fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
@@ -47,49 +47,49 @@ fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotMetadata {
+pub struct ChnotMetadata {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
-    pub(crate) kspace: Varchar<40>,
+    pub tid: TID,
+    pub kspace: Varchar<40>,
     #[gts_type = "Varchar<40>"]
-    pub(crate) kind: ChnotKind,
-    pub(crate) pin_time: Option<DateTime<FixedOffset>>,
+    pub kind: ChnotKind,
+    pub pin_time: Option<DateTime<FixedOffset>>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
-    pub(crate) archive_time: Option<DateTime<FixedOffset>>,
+    pub omit_tid: OmitTID,
+    pub archive_time: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotTag {
+pub struct ChnotTag {
     #[gts_primary]
-    pub(crate) tag: Varchar<800>,
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub(crate) meta_tid: TID,
+    pub tag: Varchar<800>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
-    pub(crate) kspace: Varchar<40>,
+    pub meta_tid: TID,
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub omit_tid: OmitTID,
+    pub kspace: Varchar<40>,
     #[gts_unique]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotKindRel {
+pub struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) meta_tid: TID,
+    pub meta_tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
     #[gts_key]
-    pub(crate) kind_id: Varchar<200>,
+    pub kind_id: Varchar<200>,
     #[gts_unique]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
 }
 
 impl AsRef<str> for ChnotTag {
@@ -99,7 +99,7 @@ impl AsRef<str> for ChnotTag {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display, AsRefStr, IntoStaticStr)]
-pub(crate) enum ChnotKind {
+pub enum ChnotKind {
     #[strum(serialize = "mdwt")]
     #[serde(rename = "mdwt")]
     MarkdownWithToent,
@@ -122,7 +122,7 @@ pub(crate) enum ChnotKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
-pub(crate) enum ChnotTagType {
+pub enum ChnotTagType {
     Dir = 99,
     ParentDir = 98,
     Common = 1,

@@ -31,7 +31,6 @@ async fn chnot_overwrite(
     Json(req): Json<ChnotOverwriteReq>,
 ) -> KResponse<ChnotOverwriteRsp> {
     state
-        .mapper
         .chnot_overwrite(kreq(headers, req))
         .await
         .into()

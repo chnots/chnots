@@ -32,7 +32,7 @@ pub(crate) trait LLMChatDumpMapper {
     }
 }
 
-pub(crate) trait LLMChatMapper {
+pub trait LLMChatMapper {
     async fn llm_chat_overwrite_bot(
         &self,
         req: KReq<LLMChatOverwriteBotReq>,

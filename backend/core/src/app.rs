@@ -2,13 +2,21 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::{config::Config, mapper::MapperType};
 
-pub(crate) struct AppState {
+pub struct AppState {
     pub(crate) mapper: MapperType,
     pub(crate) config: Config,
 }
 
+impl Deref for AppState {
+    type Target = MapperType;
+
+    fn deref(&self) -> &Self::Target {
+        &self.mapper
+    }
+}
+
 #[derive(Clone)]
-pub(crate) struct ShareAppState(Arc<AppState>);
+pub struct ShareAppState(Arc<AppState>);
 
 impl Deref for ShareAppState {
     type Target = AppState;

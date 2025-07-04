@@ -9,14 +9,14 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
-pub(crate) enum MapperConfig {
+pub enum MapperConfig {
     #[serde(rename = "postgres")]
     Postgres(PostgresConfig),
     #[serde(rename = "sqlite")]
     Sqlite(SqliteConfig),
 }
 
-pub(crate) enum MapperType {
+pub enum MapperType {
     KDb(KDb),
 }
 

@@ -5,59 +5,59 @@ use chin_sql::str_type::Varchar;
 use serde::{Deserialize, Serialize};
 
 #[derive(TryFromMultipart)]
-pub(crate) struct KFileUploadReq {
-    pub(crate) upload_id: String,
-    pub(crate) meta_id: String,
-    pub(crate) filename: String,
-    pub(crate) chunk_no: usize,
-    pub(crate) total_chunks: usize,
-    pub(crate) chunk: FieldData<Bytes>,
-    pub(crate) last_modified: i64,
-    pub(crate) filesize: i64,
-    pub(crate) content_type: String,
+pub struct KFileUploadReq {
+    pub upload_id: String,
+    pub meta_id: String,
+    pub filename: String,
+    pub chunk_no: usize,
+    pub total_chunks: usize,
+    pub chunk: FieldData<Bytes>,
+    pub last_modified: i64,
+    pub filesize: i64,
+    pub content_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct KFileUploadRsp {
-    pub(crate) kfile: Option<KFileMeta>,
-    pub(crate) finished: bool,
+pub struct KFileUploadRsp {
+    pub kfile: Option<KFileMeta>,
+    pub finished: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct InsertInlineKFileReq {
-    pub(crate) meta_id: Varchar<100>,
-    pub(crate) res: InlineKFile,
+pub struct InsertInlineKFileReq {
+    pub meta_id: Varchar<100>,
+    pub res: InlineKFile,
     /// archor interval second.
-    pub(crate) archor_intervals: i64,
-    pub(crate) filename: Option<Varchar<1024>>,
-    pub(crate) content_type: Varchar<200>,
+    pub archor_intervals: i64,
+    pub filename: Option<Varchar<1024>>,
+    pub content_type: Varchar<200>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct InsertInlineKFileRsp {
-    pub(crate) true_sid: Varchar<100>,
+pub struct InsertInlineKFileRsp {
+    pub true_sid: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct QueryInlineKFileReq {
-    pub(crate) sid: Option<String>,
-    pub(crate) meta_id: Option<Varchar<100>>,
-    pub(crate) with_omit: Option<bool>,
+pub struct QueryInlineKFileReq {
+    pub sid: Option<String>,
+    pub meta_id: Option<Varchar<100>>,
+    pub with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct QueryInlineKFileRsp {
-    pub(crate) res: Vec<InlineKFile>,
+pub struct QueryInlineKFileRsp {
+    pub res: Vec<InlineKFile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct QueryKFileReq {
-    pub(crate) meta_id: Varchar<100>,
+pub struct QueryKFileReq {
+    pub meta_id: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct QueryKFileMetaRsp {
-    pub(crate) meta: Option<KFileMeta>,
+pub struct QueryKFileMetaRsp {
+    pub meta: Option<KFileMeta>,
 }
 
 #[test]

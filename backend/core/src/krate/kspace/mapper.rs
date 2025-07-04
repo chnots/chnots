@@ -13,7 +13,7 @@ use super::{
     *,
 };
 
-pub(crate) trait KSpaceMapper {
+pub trait KSpaceMapper {
     async fn kspace_read_all(&self, kreq: KReq<KSpaceQueryAllReq>) -> AResult<KSpaceQueryAllRsp>;
     async fn kspace_overwrite(
         &self,

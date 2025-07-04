@@ -13,7 +13,7 @@ pub(crate) trait KFileDumpMapper {
     async fn dump_inline_kfile() -> EResult;
 }
 
-pub(crate) trait KFileMapper {
+pub trait KFileMapper {
     async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()>;
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp>;
     async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>)

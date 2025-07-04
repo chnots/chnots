@@ -6,7 +6,7 @@ use strum::{EnumString, IntoStaticStr};
 use chin_sql::{str_type::{Text, Varchar}, GenerateTableSchema, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
-pub(crate) enum KKVType {
+pub enum KKVType {
     #[strum(serialize = "k_space_info")]
     #[serde(rename = "k_space_info")]
     KSpaceInfo,
@@ -31,17 +31,18 @@ impl<'a> KDbRowBehavier<'a, KKVType> for KDbRow {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct KKV {
+#[allow(clippy::upper_case_acronyms)]
+pub struct KKV {
     #[gts_primary]
-    pub(crate) key: Varchar<500>,
+    pub key: Varchar<500>,
     #[gts_primary]
     #[gts_type = "Varchar<100>"]
-    pub(crate) kind: KKVType,
+    pub kind: KKVType,
     #[gts_primary]
-    pub(crate) kspace: Varchar<40>,
+    pub kspace: Varchar<40>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
 
-    pub(crate) value: Text,
+    pub value: Text,
 }

@@ -3,17 +3,17 @@ use serde::{Deserialize, Serialize};
 use super::KSpace;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct KSpaceQueryAllReq {}
+pub struct KSpaceQueryAllReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct KSpaceQueryAllRsp {
-    pub(crate) kspaces: Vec<KSpace>,
+pub struct KSpaceQueryAllRsp {
+    pub kspaces: Vec<KSpace>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct KSpaceOverwriteReq {
-    pub(crate) kspace: KSpace,
+pub struct KSpaceOverwriteReq {
+    pub kspace: KSpace,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct KSpaceOverwriteRsp {}
+pub struct KSpaceOverwriteRsp {}

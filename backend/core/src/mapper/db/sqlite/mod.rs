@@ -5,7 +5,7 @@ use serde::Deserialize;
 pub(crate) mod wrapper;
 
 #[derive(Debug, Deserialize, Clone)]
-pub(crate) struct SqliteConfig {
+pub struct SqliteConfig {
     filepath: String,
     pool_size: Option<u8>,
 }

@@ -4,7 +4,7 @@ use crate::{expand_mt_branch, model::dto::KReq, MapperType};
 
 use super::*;
 
-pub(crate) trait KKVMapper {
+pub trait KKVMapper {
     async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp>;
     async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp>;
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp>;

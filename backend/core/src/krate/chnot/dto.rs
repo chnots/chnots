@@ -6,112 +6,112 @@ use crate::krate::toent::logic::todoevent::TodoEvent;
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct Chnot {
-    pub(crate) record: ChnotRecord,
-    pub(crate) meta: ChnotMetadata,
+pub struct Chnot {
+    pub record: ChnotRecord,
+    pub meta: ChnotMetadata,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotUpdateReq {
-    pub(crate) meta_tid: TID,
-    pub(crate) kspace: Option<Varchar<40>>,
-    pub(crate) pinned: Option<bool>,
-    pub(crate) archive: Option<bool>,
+pub struct ChnotUpdateReq {
+    pub meta_tid: TID,
+    pub kspace: Option<Varchar<40>>,
+    pub pinned: Option<bool>,
+    pub archive: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotUpdateRsp {}
+pub struct ChnotUpdateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotOverwriteReq {
-    pub(crate) meta_tid: Option<TID>,
-    pub(crate) content: Text,
-    pub(crate) kind: ChnotKind,
-    pub(crate) kind_id: Option<String>,
+pub struct ChnotOverwriteReq {
+    pub meta_tid: Option<TID>,
+    pub content: Text,
+    pub kind: ChnotKind,
+    pub kind_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotOverwriteRsp {
-    pub(crate) meta_tid: TID,
-    pub(crate) rec_tid: TID,
-    pub(crate) kspace: Varchar<40>,
-    pub(crate) archor: bool,
-    pub(crate) todo_event: Option<TodoEvent>,
+pub struct ChnotOverwriteRsp {
+    pub meta_tid: TID,
+    pub rec_tid: TID,
+    pub kspace: Varchar<40>,
+    pub archor: bool,
+    pub todo_event: Option<TodoEvent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotArchiveReq {
-    pub(crate) meta_tid: TID,
+pub struct ChnotArchiveReq {
+    pub meta_tid: TID,
     /// logic or physical deletion
-    pub(crate) logic: bool,
+    pub logic: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotArchiveRsp {}
+pub struct ChnotArchiveRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum ChnotTagSearchType {
+pub enum ChnotTagSearchType {
     Inset(Vec<String>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotQueryReq {
-    pub(crate) query: Option<String>,
-    pub(crate) meta_tid: Option<TID>,
-    pub(crate) record_tid: Option<TID>,
+pub struct ChnotQueryReq {
+    pub query: Option<String>,
+    pub meta_tid: Option<TID>,
+    pub record_tid: Option<TID>,
 
-    pub(crate) tags: Option<ChnotTagSearchType>,
-    pub(crate) kinds: Vec<ChnotKind>,
+    pub tags: Option<ChnotTagSearchType>,
+    pub kinds: Vec<ChnotKind>,
 
-    pub(crate) with_omitted: Option<bool>,
-    pub(crate) with_archive: Option<bool>,
+    pub with_omitted: Option<bool>,
+    pub with_archive: Option<bool>,
 
     // Paging
-    pub(crate) start_index: usize,
-    pub(crate) page_size: usize,
+    pub start_index: usize,
+    pub page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotQueryRsp<T> {
-    pub(crate) data: Vec<T>,
-    pub(crate) has_next: bool,
-    pub(crate) next_start: usize,
+pub struct ChnotQueryRsp<T> {
+    pub data: Vec<T>,
+    pub has_next: bool,
+    pub next_start: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotTagQueryReq {
-    pub(crate) query: Option<String>,
-    pub(crate) tags: Option<ChnotTagSearchType>,
-    pub(crate) remove_params: Option<bool>,
+pub struct ChnotTagQueryReq {
+    pub query: Option<String>,
+    pub tags: Option<ChnotTagSearchType>,
+    pub remove_params: Option<bool>,
 
     // Paging
-    pub(crate) start_index: usize,
-    pub(crate) page_size: usize,
+    pub start_index: usize,
+    pub page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub(crate) struct ChnotTagQueryRsp<T>
+pub struct ChnotTagQueryRsp<T>
 where
     T: Serialize + Clone,
 {
-    pub(crate) data: Vec<T>,
+    pub data: Vec<T>,
 
-    pub(crate) start_index: usize,
+    pub start_index: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotTagUpdateReq {
-    pub(crate) content: Text,
-    pub(crate) meta_tid: TID,
-    pub(crate) kspace: Varchar<40>,
+pub struct ChnotTagUpdateReq {
+    pub content: Text,
+    pub meta_tid: TID,
+    pub kspace: Varchar<40>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotKindRelQueryReq {
-    pub(crate) meta_tid: TID,
+pub struct ChnotKindRelQueryReq {
+    pub meta_tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ChnotKindRelQueryRsp {
-    pub(crate) kind_rel: ChnotKindRel,
+pub struct ChnotKindRelQueryRsp {
+    pub kind_rel: ChnotKindRel,
 }

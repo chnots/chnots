@@ -7,7 +7,7 @@ use deadpool_postgres::{Client, Pool, PoolError};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
-pub(crate) struct PostgresConfig {
+pub struct PostgresConfig {
     user: String,
     pass: String,
     dbname: String,

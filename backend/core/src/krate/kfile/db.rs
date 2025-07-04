@@ -97,8 +97,7 @@ impl KFileMapper for KDb {
             filename: req
                 .filename
                 .clone()
-                .unwrap_or(format!("inline-kfile-{}", &TID::default().as_num()).try_into()?)
-                .try_into()?,
+                .unwrap_or(format!("inline-kfile-{}", &TID::default().as_num()).try_into()?),
             content_type: req.content_type.clone(),
             last_modified: TID::default(),
             filesize: bytes.len() as i64,

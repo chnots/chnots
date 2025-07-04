@@ -6,40 +6,40 @@ use serde::{Deserialize, Serialize};
 use crate::model::omit_tid::OmitTID;
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
-pub(crate) struct KFileMeta {
+pub struct KFileMeta {
     #[gts_primary]
-    pub(crate) id: Varchar<100>,
+    pub id: Varchar<100>,
 
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
 
-    pub(crate) inline: bool,
-    pub(crate) archor: bool,
+    pub inline: bool,
+    pub archor: bool,
 
     #[gts_unique]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
 
-    pub(crate) filename: Varchar<1024>,
-    pub(crate) content_type: Varchar<200>,
+    pub filename: Varchar<1024>,
+    pub content_type: Varchar<200>,
 
     #[gts_type = "i64"]
-    pub(crate) last_modified: TID,
+    pub last_modified: TID,
 
     #[gts_key]
-    pub(crate) sid: Varchar<100>,
-    pub(crate) filesize: i64,
+    pub sid: Varchar<100>,
+    pub filesize: i64,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
-pub(crate) struct InlineKFile {
+pub struct InlineKFile {
     #[gts_primary]
-    pub(crate) sid: Varchar<100>,
+    pub sid: Varchar<100>,
 
     #[gts_unique]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
 
-    pub(crate) content: Text,
+    pub content: Text,
 }

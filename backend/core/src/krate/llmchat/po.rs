@@ -7,62 +7,62 @@ use serde::{Deserialize, Serialize};
 use crate::model::omit_tid::OmitTID;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct LLMChatBot {
+pub struct LLMChatBot {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
 
-    pub(crate) name: Varchar<500>,
-    pub(crate) body: Text,
-    pub(crate) svg_logo: Option<Text>,
-    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub name: Varchar<500>,
+    pub body: Text,
+    pub svg_logo: Option<Text>,
+    pub update_time: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct LLMChatTemplate {
+pub struct LLMChatTemplate {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
-    pub(crate) name: Varchar<200>,
-    pub(crate) prompt: Text,
-    pub(crate) svg_logo: Option<Text>,
-    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub omit_tid: OmitTID,
+    pub name: Varchar<200>,
+    pub prompt: Text,
+    pub svg_logo: Option<Text>,
+    pub update_time: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct LLMChatSession {
+pub struct LLMChatSession {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
     #[gts_type = "i64"]
-    pub(crate) template_tid: TID,
-    pub(crate) title: Varchar<200>,
-    pub(crate) update_time: Option<DateTime<FixedOffset>>,
+    pub template_tid: TID,
+    pub title: Varchar<200>,
+    pub update_time: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct LLMChatRecord {
+pub struct LLMChatRecord {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub(crate) tid: TID,
+    pub tid: TID,
     #[gts_type = "i64"]
-    pub(crate) omit_tid: OmitTID,
+    pub omit_tid: OmitTID,
     #[gts_type = "i64"]
-    pub(crate) session_tid: TID,
+    pub session_tid: TID,
     #[gts_type = "i64"]
-    pub(crate) pre_record_tid: Option<TID>,
-    pub(crate) content: Text,
-    pub(crate) reasoning_content: Text,
-    pub(crate) role: Varchar<40>,
+    pub pre_record_tid: Option<TID>,
+    pub content: Text,
+    pub reasoning_content: Text,
+    pub role: Varchar<40>,
     #[gts_type = "i64"]
-    pub(crate) role_id: Option<TID>, // maybe bot tid
+    pub role_id: Option<TID>, // maybe bot tid
 }

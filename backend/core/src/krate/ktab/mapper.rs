@@ -4,7 +4,7 @@ use crate::{expand_mt_branch, model::dto::KReq, MapperType};
 
 use super::*;
 
-pub(crate) trait KTabMapper {
+pub trait KTabMapper {
     async fn ktab_overwrite_meta(
         &self,
         req: KReq<KTabMetaOverwriteReq>,
