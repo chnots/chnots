@@ -23,6 +23,6 @@ serde = { workspace = true }
 log = { workspace = true }
 tauri = { version = "2.6.2", features = [] }
 tauri-plugin-log = "2"
-chnots-core = { path = "../../backend/core", default-features = false, features = [
+chnots-core = { path = "../backend/core", default-features = false, features = [
     "tauri",
 ] }
