@@ -9,5 +9,12 @@ serde = { version = "1.0.217", features = ["derive"] }
 serde_json = { version = "1.0.135" }
 log = "0.4.27"
 
+[profile.dev]
+incremental = true # Compile your binary in smaller steps.
+
 [profile.release]
-lto = true
+codegen-units = 1 # Allows LLVM to perform better optimization.
+lto = true # Enables link-time-optimizations.
+opt-level = "s" # Prioritizes small binary size. Use `3` if you prefer speed.
+panic = "abort" # Higher performance by disabling panic handlers.
+strip = true # Ensures debug symbols are removed.
