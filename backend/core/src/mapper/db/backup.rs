@@ -21,7 +21,7 @@ impl KDb {
         F1: Fn(KDbRow) -> AResult<O>,
     {
         match self {
-            KDb::Sqlite(_) => todo!(),
+            KDb::Sqlite(_) => {},
             KDb::Postgres(postgres) => {
                 postgres
                     .read_iterator(sql_builder, convert_row_to_obj, callback)

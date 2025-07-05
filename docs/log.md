@@ -142,3 +142,18 @@ create table toent_inst (
 
 上面的是最后记录到当前文件中, 后面的内容都应该更新到应用内.
 
+# 2507-05
+- 使用 tauri 构建到 android
+  利用  andoroid-studio 安装 sdk
+    - Android SDK Platform
+    - Android SDK Platform-Tools
+    - NDK (Side by side)
+    - Android SDK Build-Tools
+    - Android SDK Command-line Tools
+
+```shell
+$ export ANDROID_HOME="$HOME/Android/Sdk"
+$ export NDK_HOME="$ANDROID_HOME/ndk/$(ls -1 $ANDROID_HOME/ndk)"
+$ export JAVA_HOME=/opt/android-studio/jbr
+$ rustup target add aarch64-linux-android
+```

@@ -11,7 +11,7 @@ use mapper::{
 };
 
 #[cfg(not(feature = "tauri"))]
-use log::{Level};
+use log::Level;
 #[cfg(not(feature = "tauri"))]
 use tracing_log::LogTracer;
 
@@ -55,9 +55,10 @@ pub async fn run(config: Config) -> EResult {
         let state = state.clone();
         std::thread::spawn(|| {
             futures::executor::block_on(async move {
-                let worker = FileDumpWorker::new(&state, "chnots", BackupType::All)
-                    .await
-                    .unwrap();
+                let Ok(worker) = FileDumpWorker::new(&state, "chnots", BackupType::All).await
+                else {
+                    return;
+                };
                 info!("Begin to backup.");
                 state
                     .mapper
