@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["backend/core",  "server", "tauri"]
+members = ["backend/core",  "server", "tauri/src-tauri"]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "rt"] }

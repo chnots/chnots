@@ -12,7 +12,7 @@ rust-version = "1.88.0"
 
 [lib]
 name = "app_lib"
-crate-type = ["staticlib", "rlib"]
+crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.3.0", features = [] }
@@ -23,6 +23,6 @@ serde = { workspace = true }
 log = { workspace = true }
 tauri = { version = "2.6.2", features = [] }
 tauri-plugin-log = "2"
-chnots-core = { path = "../backend/core", default-features = false, features = [
+chnots-core = { path = "../../backend/core", default-features = false, features = [
     "tauri",
 ] }
