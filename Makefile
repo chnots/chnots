@@ -27,6 +27,7 @@ build-server:
 	cd $(SERVER_DIR) && $(CARGO_BUILD)
 
 build-web-dir:
+	mkdir -p $(WEB_DIR)/public/static/favicon/ && cp data/icon/chnots.svg $(WEB_DIR)/public/static/favicon/
 	cd $(WEB_DIR) && $(PNPM_INSTALL) && $(PNPM_BUILD)
 
 build-web: build-web-dir
