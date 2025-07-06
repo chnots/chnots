@@ -26,3 +26,4 @@ tauri-plugin-log = "2"
 chnots-core = { path = "../../backend/core", default-features = false, features = [
     "tauri",
 ] }
+tauri-plugin-fs = "2"

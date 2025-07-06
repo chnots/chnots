@@ -33,8 +33,7 @@ open class BuildTask : DefaultTask() {
         val target = target ?: throw GradleException("target cannot be null")
         val release = release ?: throw GradleException("release cannot be null")
         val args = listOf("tauri", "android", "android-studio-script");
-      
-      println("asdasd")
+
         project.exec {
             workingDir(File(project.projectDir, rootDirRel))
             executable(executable)
