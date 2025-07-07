@@ -160,3 +160,16 @@ $ rustup target add aarch64-linux-android
 # 2507-08
 - 安装 apk 时报错：app not installed as package appears to be invalid
   https://github.com/tauri-apps/tauri/discussions/9872 提到因为 apk 没有签名。
+  - key.properties 例子
+  ```
+  password=<pass>
+  keyPassword=<pass>
+  storePassword=<pass>
+  keyAlias=upload
+  storeFile=<path/to/.jks>
+  ```
+
+# 2507-07
+- windows 使用 gnu 打包时报错
+  在 `build` -> `try_build` 第一行下添加 `println!("cargo::rustc-link-arg=-Wl,--exclude-libs=ALL");`
+  https://github.com/tauri-apps/tauri/issues/4794#issuecomment-2405076850
