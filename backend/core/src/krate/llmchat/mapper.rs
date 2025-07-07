@@ -157,9 +157,9 @@ impl LLMChatMapper for MapperType {
         sort_util::sort_by_prev(
             &mut raw_result.records,
             false,
-            |r| &r.tid,
-            |r| &r.pre_record_tid,
-            |e| &e.tid,
+            |r| &r.otid,
+            |r| &r.pre_record_otid,
+            |e| &e.otid,
         );
 
         Ok(raw_result)

@@ -37,9 +37,10 @@ const LLMChatTemplateList = ({
             className={clsx(className, "bg-blue-50 hover:cursor-pointer")}
             onClick={() =>
               onChangeEditTemplate({
-                tid: genTID(),
+                otid: genTID(),
                 name: "",
                 prompt: "",
+                tid: genTID(),
               })
             }
             asChild
@@ -52,7 +53,7 @@ const LLMChatTemplateList = ({
         </DialogTrigger>
         {items.map((item: LLMChatTemplate) => (
           <div
-            key={item.tid}
+            key={item.otid}
             className={clsx(className, "hover:cursor-pointer items-center")}
           >
             <DropdownMenu>
@@ -82,7 +83,7 @@ const LLMChatTemplateList = ({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.preventDefault();
-                    llmchatTemplateDelete({ template_tid: item.tid });
+                    llmchatTemplateDelete({ template_otid: item.otid });
                   }}
                 >
                   Delete

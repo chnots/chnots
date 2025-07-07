@@ -92,14 +92,14 @@ export function DataTable({
       console.log("row index: ", rowIndex);
       if (tableMeta) {
         await ktabCellsOverwrite({
-          table_id: tableMeta.tid,
+          table_id: tableMeta.otid,
           cells: [
             {
               row_tid: rowIndex,
               column_name: columnId,
               value: ktabToStoreValue(
                 tableMeta.columns[columnId].view_kind,
-                value,
+                value
               ),
             },
           ],
@@ -127,9 +127,9 @@ export function DataTable({
     try {
       if (tableMeta) {
         const newData = await fetchData(
-          tableMeta.tid,
+          tableMeta.otid,
           page * pageSize,
-          pageSize,
+          pageSize
         );
         setData((prev) => [...prev, ...newData]);
         setPage((prev) => prev + 1);

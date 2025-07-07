@@ -4,12 +4,13 @@ import { DbText, Varchar } from "@/lib/types";
 // LLMChatBot structure
 
 export type LLMChatBot = {
-  tid: TID;
+  otid: TID;
   omit_tid?: OmitTID;
   name: Varchar<500>;
   body: DbText;
   svg_logo?: DbText;
   update_time?: Date;
+  tid: TID;
 };
 
 // the body of LLMChatBot body.
@@ -22,33 +23,36 @@ export type LLMChatBotBodyOpenAIV1 = {
 // LLMChatTemplate structure
 
 export type LLMChatTemplate = {
-  tid: TID;
+  otid: TID;
   omit_tid?: OmitTID;
   name: Varchar<200>;
   prompt: DbText;
   svg_logo?: DbText;
   update_time?: Date;
+  tid: TID;
 };
 
 // LLMChatSession structure
 
 export type LLMChatSession = {
-  tid: TID;
+  otid: TID;
   omit_tid?: OmitTID;
-  template_tid: TID;
-  title: Varchar<200>;
+  template_otid: TID;
+  title: Varchar<500>;
   update_time?: Date;
+  tid: TID;
 };
 
 // LLMChatRecord structure
 
 export type LLMChatRecord = {
-  tid: TID;
+  otid: TID;
   omit_tid?: OmitTID;
-  session_tid: TID;
-  pre_record_tid?: TID;
+  session_otid: TID;
+  pre_record_otid?: TID;
   content: DbText;
   reasoning_content: DbText;
   role: Varchar<40>;
   role_id?: TID;
+  tid: TID;
 };

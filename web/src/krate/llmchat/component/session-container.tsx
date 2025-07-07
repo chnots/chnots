@@ -72,9 +72,9 @@ const SessionContainer = ({
         if (rsp.session) {
           const pids = persistedIds.current;
           rsp.records.forEach((r) => {
-            pids.add(r.tid);
+            pids.add(r.otid);
           });
-          pids.add(rsp.session.tid);
+          pids.add(rsp.session.otid);
           setSessionAndRecs({
             session: rsp.session,
             records: rsp.records,
@@ -87,25 +87,27 @@ const SessionContainer = ({
   const newTemplateSession = useCallback(
     async (template: LLMChatTemplate) => {
       const session: LLMChatSession = {
-        tid: genTID(),
-        template_tid: template.tid,
+        otid: genTID(),
+        template_otid: template.otid,
         title: "Untitled",
+        tid: genTID(),
       };
 
       const record: LLMChatRecord = {
-        tid: genTID(),
-        session_tid: session.tid,
+        otid: genTID(),
+        session_otid: session.otid,
         content: template.prompt,
         reasoning_content: "",
-        role_id: template.tid,
+        role_id: template.otid,
         role: "system",
+        tid: genTID(),
       };
       setSessionAndRecs({
         records: [record],
         session: session,
       });
     },
-    [setSessionAndRecs],
+    [setSessionAndRecs]
   );
 
   useEffect(() => {
@@ -119,21 +121,21 @@ const SessionContainer = ({
         const records = sessionAndRecs.records;
 
         const pids = persistedIds.current;
-        console.log("pids: ", pids, session.tid);
-        if (!pids.has(session.tid)) {
+        console.log("pids: ", pids, session.otid);
+        if (!pids.has(session.otid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
           await unshiftSession(session);
-          pids.add(session.tid);
+          pids.add(session.otid);
           if (onAfterSave) {
             onAfterSave(session);
           }
         }
         for (const record of records) {
-          if (!pids.has(record.tid)) {
+          if (!pids.has(record.otid)) {
             await llmchatRecordInsert(record);
             console.log("insert record", record);
-            pids.add(record.tid);
+            pids.add(record.otid);
           }
         }
       }
@@ -160,7 +162,7 @@ const SessionContainer = ({
       if (sessionAndRecs) {
         if (persistedIds.current.has(recordId)) {
           await llmchatSessionTruncate({
-            session_tid: sessionAndRecs.session.tid,
+            session_otid: sessionAndRecs.session.otid,
             remove_rid_included: recordId,
           });
         }
@@ -168,7 +170,7 @@ const SessionContainer = ({
           const newRecs: LLMChatRecord[] = [];
           if (prev?.records) {
             for (const rec of prev.records) {
-              if (rec.tid === recordId) {
+              if (rec.otid === recordId) {
                 break;
               }
               newRecs.push(rec);
@@ -180,19 +182,20 @@ const SessionContainer = ({
         setResponseId(genTID());
       }
     },
-    [sessionAndRecs],
+    [sessionAndRecs]
   );
 
   const appendUserMsg = useCallback(
     (content: string) => {
       if (sessionAndRecs && sessionAndRecs.records.length > 0) {
         const record: LLMChatRecord = {
-          tid: genTID(),
-          session_tid: sessionAndRecs.session.tid,
-          pre_record_tid: sessionAndRecs.records.at(-1)?.tid,
+          otid: genTID(),
+          session_otid: sessionAndRecs.session.otid,
+          pre_record_otid: sessionAndRecs.records.at(-1)?.otid,
           content,
           reasoning_content: "",
           role: "user",
+          tid: genTID(),
         };
         appendRecord(record);
         setTriggerAnswer(true);
@@ -201,7 +204,7 @@ const SessionContainer = ({
         return false;
       }
     },
-    [sessionAndRecs, setTriggerAnswer],
+    [sessionAndRecs, setTriggerAnswer]
   );
 
   const onScroll = useCallback(() => {
@@ -240,19 +243,19 @@ const SessionContainer = ({
               <>
                 {sessionAndRecs.records
                   .toSorted((a, b) => {
-                    return a.tid > b.tid ? 1 : -1;
+                    return a.otid > b.otid ? 1 : -1;
                   })
                   .map((record) => {
                     return record.role === "user" ? (
-                      <RecordUser record={record} key={record.tid} />
+                      <RecordUser record={record} key={record.otid} />
                     ) : (
                       <RecordAssistant
                         {...record}
-                        key={record.tid}
+                        key={record.otid}
                         onRegenerate={
                           record.role === "assistant"
                             ? async () => {
-                                truncateAndRegen(record.tid);
+                                truncateAndRegen(record.otid);
                               }
                             : undefined
                         }

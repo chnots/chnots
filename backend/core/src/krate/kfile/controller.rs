@@ -96,7 +96,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
         .route(
-            "/api/v1/kfile/{meta_tid}/{filename}",
+            "/api/v1/kfile/{meta_otid}/{filename}",
             get(transfer::download),
         )
         .route("/api/v1/kfile-info", get(query_kfile))

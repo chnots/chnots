@@ -6,7 +6,6 @@ import KListItem from "@/common/component/klistitem";
 import { LLMChatSession } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { llmchatSessionUpdate } from "@/krate/llmchat/service";
-import * as Separator from "@radix-ui/react-separator";
 import { Button as KButton } from "@/common/component/ui/button";
 
 const LLMChatSessionListItem = React.forwardRef(
@@ -20,25 +19,25 @@ const LLMChatSessionListItem = React.forwardRef(
       templates,
       deleteCacheSession,
     } = useLLMChatStore();
-    const template = templates.get(session.template_tid);
+    const template = templates.get(session.template_otid);
     const logo = template?.svg_logo;
     const tmplName = template?.name;
 
     const handleDelete = async () => {
       await llmchatSessionUpdate({
-        session_tid: session.tid,
+        session_otid: session.otid,
         delete: true,
       });
-      deleteCacheSession(session.tid);
+      deleteCacheSession(session.otid);
     };
 
     return (
       <KListItem
         onClick={() => {
-          return setCurrentSessionId(session.tid);
+          return setCurrentSessionId(session.otid);
         }}
-        focused={currentSessionId === session.tid}
-        key={session.tid}
+        focused={currentSessionId === session.otid}
+        key={session.otid}
         ref={ref}
         className="relative flex space-x-2 justify-center"
       >
@@ -54,7 +53,7 @@ const LLMChatSessionListItem = React.forwardRef(
             <span>{tmplName}</span>
 
             <div className="flex align-middle">
-              <RelativeTime date={new Date(session.tid / 1e3)} />
+              <RelativeTime date={new Date(session.otid / 1e3)} />
               <KButton onClick={handleDelete}>
                 <Icon.X className="h-4 opacity-0 group-hover:opacity-100" />
               </KButton>

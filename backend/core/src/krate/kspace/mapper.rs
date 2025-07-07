@@ -1,11 +1,12 @@
 use anyhow::Ok;
+use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult, SharedStr};
 
 use crate::{
-    krate::kkv::{mapper::KKVMapper, KKVOverwriteReq, KKVQueryManyReq, KKVType},
+    MapperType, expand_mt_branch,
+    krate::kkv::{KKVOverwriteReq, KKVQueryManyReq, KKVType, mapper::KKVMapper},
     magics::NO_KSPACE,
-    model::dto::KReq,
-    MapperType,
+    model::{dto::KReq, omit_tid::OmitTID},
 };
 
 use super::{
@@ -19,7 +20,10 @@ pub trait KSpaceMapper {
         &self,
         kspace: KReq<KSpaceOverwriteReq>,
     ) -> AResult<KSpaceOverwriteRsp>;
+
+    async fn kspace_ensure_table(&self) -> EResult;
     async fn kspace_ensure_data(&self) -> EResult {
+        self.kspace_ensure_table().await?;
         let kreq = KReq {
             body: KSpaceQueryAllReq {},
             kspace: NO_KSPACE.try_into()?,
@@ -31,12 +35,14 @@ pub trait KSpaceMapper {
             ("work", "#aa0000", vec!["public"]),
             ("public", "#aa0000", vec![]),
         ] {
-            if !all_kspaces.iter().any(|k| k.name == data.0) {
+            if !all_kspaces.iter().any(|k| k.name.as_str() == data.0) {
                 self.kspace_overwrite(kreq.frame(KSpaceOverwriteReq {
                     kspace: KSpace {
-                        name: data.0.to_owned(),
-                        color: data.1.to_owned(),
+                        name: data.0.try_into()?,
+                        color: data.1.try_into()?,
                         managers: data.2.iter().map(|s| s.to_string()).collect(),
+                        omit_tid: OmitTID::never(),
+                        tid: TID::default(),
                     },
                 }))
                 .await?;
@@ -48,32 +54,15 @@ pub trait KSpaceMapper {
 }
 
 impl KSpaceMapper for MapperType {
-    async fn kspace_read_all(&self, _: KReq<KSpaceQueryAllReq>) -> AResult<KSpaceQueryAllRsp> {
-        let kkvs = self
-            .kkv_query_many(KKVQueryManyReq {
-                key: None,
-                kind: Some(KKVType::KSpaceInfo),
-                kspace: Some(SharedStr::new(NO_KSPACE)),
-            })
-            .await?;
-
-        let kspaces: Result<Vec<KSpace>, serde_json::Error> = kkvs
-            .kkvs
-            .into_iter()
-            .map(|kkv| serde_json::from_str(kkv.value.as_str()))
-            .collect();
-
-        Ok(KSpaceQueryAllRsp { kspaces: kspaces? })
+    async fn kspace_read_all(&self, req: KReq<KSpaceQueryAllReq>) -> AResult<KSpaceQueryAllRsp> {
+        expand_mt_branch!(self.kspace_read_all(req))
     }
 
     async fn kspace_overwrite(&self, req: KReq<KSpaceOverwriteReq>) -> AResult<KSpaceOverwriteRsp> {
-        self.kkv_overwrite(req.frame(KKVOverwriteReq {
-            key: req.body.kspace.name.clone().try_into()?,
-            kind: KKVType::KSpaceInfo,
-            value: serde_json::to_string(&req.body.kspace)?.into(),
-        }))
-        .await?;
+        expand_mt_branch!(self.kspace_overwrite(req))
+    }
 
-        Ok(KSpaceOverwriteRsp {})
+    async fn kspace_ensure_table(&self) -> EResult {
+        expand_mt_branch!(self.kspace_ensure_table())
     }
 }

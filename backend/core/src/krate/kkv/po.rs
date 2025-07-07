@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use strum::{EnumString, IntoStaticStr};
 
-use chin_sql::{str_type::{Text, Varchar}, GenerateTableSchema, SqlValue};
+use chin_sql::{str_type::{Text, Varchar}, time_type::TID, GenerateTableSchema, SqlValue};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
 pub enum KKVType {
@@ -36,13 +36,18 @@ pub struct KKV {
     #[gts_primary]
     pub key: Varchar<500>,
     #[gts_primary]
-    #[gts_type = "Varchar<100>"]
-    pub kind: KKVType,
+    pub kind: Varchar<100>,
     #[gts_primary]
     pub kspace: Varchar<40>,
     #[gts_primary]
     #[gts_type = "i64"]
     pub omit_tid: OmitTID,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
+
+    pub archor: bool,
 
     pub value: Text,
 }

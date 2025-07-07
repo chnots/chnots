@@ -93,12 +93,14 @@ def parse_rust_file_structs(file_path: str) -> typing.List[RustStruct]:
         print(f"{file_path} is absent")
         return []
 
-    rmod = file_path.replace("server/src/", "").replace(".rs", "").replace("/", "::")
+    rmod = (
+        file_path.replace("backend/core/src/", "").replace(".rs", "").replace("/", "::")
+    )
     import subprocess
 
     content = subprocess.check_output(
         ["cargo", "expand", rmod],
-        cwd=WORK_DIR + "/server",
+        cwd=WORK_DIR + "/backend/core",
         encoding="utf8",
         stderr=subprocess.DEVNULL,
     )
@@ -193,7 +195,7 @@ def convert_rs_2_ts(rtype: RustStruct):
 
 
 def sync_one_file(serverfile: str):
-    webfile = serverfile.replace("server/src", "web/src").replace(".rs", ".ts")
+    webfile = serverfile.replace("backend/core/src", "web/src").replace(".rs", ".ts")
 
     print("=> work on:", serverfile, webfile)
     if not path.exists(webfile):
@@ -217,7 +219,7 @@ def sync_one_file(serverfile: str):
 
 
 def work_and_do():
-    for root, dirs, files in os.walk("server/src", topdown=False):
+    for root, dirs, files in os.walk("backend/core/src", topdown=False):
         for name in files:
             fullpath = os.path.join(root, name)
             if name == "dto.rs" or name == "po.rs":

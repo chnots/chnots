@@ -48,7 +48,7 @@ const LLMChatBotSelect = () => {
         <div
           className="flex flex-row space-x-2 items-center"
           onClick={() => {
-            handleSelect(bot.tid);
+            handleSelect(bot.otid);
           }}
         >
           {bot.svg_logo ? (
@@ -79,7 +79,7 @@ const LLMChatBotSelect = () => {
             <RadixDropmenu.Content className="kc-inactive p-2 rounded-xl space-y-2 shadow-lg border ">
               {[...bots.values()].map((bot) => {
                 return (
-                  <RadixDropmenu.Item key={bot.tid}>
+                  <RadixDropmenu.Item key={bot.otid}>
                     <BotComponent
                       bot={bot}
                       settings={() => {

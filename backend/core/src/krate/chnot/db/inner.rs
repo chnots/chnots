@@ -35,7 +35,7 @@ struct OldInfo {
 }
 fn to_old_info(row: KDbRow) -> AResult<OldInfo> {
     Ok(OldInfo {
-        tid: row.try_get("meta_tid")?,
+        tid: row.try_get("meta_otid")?,
         content: row.try_get("content")?,
     })
 }
@@ -65,7 +65,7 @@ impl<'a> KDbTx<'a> {
     ) -> EResult {
         let ChnotTagUpdateReq {
             content: _,
-            meta_tid,
+            meta_otid,
             kspace,
         } = req;
 
@@ -79,7 +79,7 @@ impl<'a> KDbTx<'a> {
             SqlUpdater::new(ChnotTag::TABLE)
                 .set(ChnotTag::OMIT_TID, OmitTID::now())
                 .r#where(Wheres::and([
-                    Wheres::equal(ChnotTag::META_TID, meta_tid),
+                    Wheres::equal(ChnotTag::META_OTID, meta_otid),
                     Wheres::equal(ChnotTag::OMIT_TID, OmitTID::never()),
                     if tags.is_empty() {
                         Wheres::None
@@ -101,7 +101,7 @@ impl<'a> KDbTx<'a> {
                         tid: TID::default(),
                         kspace: kspace.to_owned(),
                         tag: tag.to_owned(),
-                        meta_tid,
+                        meta_otid,
                         omit_tid: OmitTID::never(),
                     }
                     .to_sql_inserter()
@@ -117,9 +117,9 @@ impl<'a> KDbTx<'a> {
         &self,
         req: KReq<ChnotOverwriteReq>,
     ) -> AResult<ChnotOverwriteRsp> {
-        log::debug!("begin to overwrite chnot, {:?}", req.meta_tid);
+        log::debug!("begin to overwrite chnot, {:?}", req.meta_otid);
 
-        let meta_tid = match req.meta_tid {
+        let meta_otid = match req.meta_otid {
             Some(tid) => MetaId::Old(tid),
             None => MetaId::New(TID::default()),
         };
@@ -131,15 +131,16 @@ impl<'a> KDbTx<'a> {
         chnot_parser.parse();
         let todo_event = chnot_parser.get_outer_todo_event();
 
-        match meta_tid {
-            MetaId::Old(meta_tid) => {
+        let mut meta_tid = None;
+        match meta_otid {
+            MetaId::Old(meta_otid) => {
                 // Query for existing record
                 let query_old_rec = SqlBuilder::read(
                     ChnotRecord::TABLE,
-                    &[ChnotRecord::META_TID, ChnotRecord::CONTENT],
+                    &[ChnotRecord::META_OTID, ChnotRecord::CONTENT],
                 )
                 .r#where(Wheres::and([
-                    Wheres::equal(ChnotRecord::META_TID, meta_tid),
+                    Wheres::equal(ChnotRecord::META_OTID, meta_otid),
                     Wheres::equal(ChnotRecord::OMIT_TID, OmitTID::never()),
                 ]));
 
@@ -163,49 +164,52 @@ impl<'a> KDbTx<'a> {
 
                 let rec = ChnotRecord {
                     tid: rec_tid,
-                    meta_tid,
+                    meta_otid,
                     omit_tid: OmitTID::never(),
                     content: req.content.clone(),
                     archor,
                     todo_event,
                 };
 
-                let update_omit = ChnotRecord::pkey_updater(meta_tid, OmitTID::never())
+                let update_omit = ChnotRecord::pkey_updater(meta_otid, OmitTID::never())
                     .set(ChnotRecord::OMIT_TID, OmitTID::now());
                 self.exec(update_omit).await?;
                 self.as_executor().chnot_record_insert(rec).await?;
             }
-            MetaId::New(meta_tid) => {
+            MetaId::New(meta_otid) => {
                 archor = true;
                 let rec = ChnotRecord {
                     tid: rec_tid,
-                    meta_tid,
+                    meta_otid,
                     omit_tid: OmitTID::never(),
                     content: req.content.clone(),
                     archor: true,
                     todo_event,
                 };
                 self.as_executor().chnot_record_insert(rec).await?;
+                let tid = TID::default();
+                meta_tid.replace(tid);
                 let meta = ChnotMetadata {
-                    tid: meta_tid,
+                    otid: meta_otid,
                     kspace: req.kspace.clone(),
                     kind: req.kind.clone(),
                     pin_time: None,
                     omit_tid: OmitTID::never(),
                     archive_time: None,
+                    tid,
                 };
                 self.as_executor().chnot_meta_insert(meta).await?;
             }
         }
         if let Some(kid) = req.kind_id.clone() {
             self.exec(
-                ChnotKindRel::pkey_updater(*meta_tid, OmitTID::never())
+                ChnotKindRel::pkey_updater(*meta_otid, OmitTID::never())
                     .set(ChnotKindRel::OMIT_TID, OmitTID::now()),
             )
             .await?;
             self.exec(
                 ChnotKindRel {
-                    meta_tid: *meta_tid,
+                    meta_otid: *meta_otid,
                     omit_tid: OmitTID::never(),
                     kind_id: kid.try_into()?,
                     tid: TID::default(),
@@ -218,7 +222,7 @@ impl<'a> KDbTx<'a> {
         self.chnot_tag_update_single_chnot(
             ChnotTagUpdateReq {
                 content: req.content.clone(),
-                meta_tid: *meta_tid,
+                meta_otid: *meta_otid,
                 kspace: req.kspace.clone(),
             },
             &chnot_parser,
@@ -226,11 +230,12 @@ impl<'a> KDbTx<'a> {
         .await?;
 
         Ok(ChnotOverwriteRsp {
-            meta_tid: *meta_tid,
+            meta_otid: *meta_otid,
             rec_tid,
             kspace: req.kspace,
             archor,
             todo_event,
+            meta_tid,
         })
     }
 }

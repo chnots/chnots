@@ -90,8 +90,8 @@ impl ChnotMapper for MapperType {
 
     async fn chnot_query_kind_rel(
         &self,
-        chnot_meta_id: KReq<ChnotKindRelQueryReq>,
+        chnot_meta_otid: KReq<ChnotKindRelQueryReq>,
     ) -> AResult<ChnotKindRelQueryRsp> {
-        expand_mt_branch!(self.chnot_query_kind_rel(chnot_meta_id))
+        expand_mt_branch!(self.chnot_query_kind_rel(chnot_meta_otid))
     }
 }

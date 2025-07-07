@@ -88,7 +88,7 @@ const ChnotSidebarItem = React.forwardRef(
     );
 
     const onClick = (_: React.MouseEvent) => {
-      setCurrentChnotMetaId(chnot.meta.tid);
+      setCurrentChnotMetaId(chnot.meta.otid);
     };
 
     const currentChnot = getCurrentChnot();
@@ -103,16 +103,16 @@ const ChnotSidebarItem = React.forwardRef(
 
     const onArchive = async () => {
       await chnotUpdate({
-        meta_tid: chnot.meta.tid,
+        meta_otid: chnot.meta.otid,
         archive: true,
       });
-      validateChnotCache([chnot.meta.tid]);
+      validateChnotCache([chnot.meta.otid]);
     };
 
     const onTogglePin = async () => {
       const pin = chnot.meta.pin_time ? false : true;
       await chnotUpdate({
-        meta_tid: chnot.meta.tid,
+        meta_otid: chnot.meta.otid,
         pinned: pin,
       });
       chnot.meta.pin_time = pin ? new Date() : undefined;
@@ -122,8 +122,8 @@ const ChnotSidebarItem = React.forwardRef(
     return (
       <SidebarMenuItem key={chnot.record.tid}>
         <a
-          href={"#" + chnot.meta.tid}
-          key={chnot.meta.tid}
+          href={"#" + chnot.meta.otid}
+          key={chnot.meta.otid}
           onClick={onClick}
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
@@ -151,10 +151,10 @@ const ChnotSidebarItem = React.forwardRef(
           <div className="flex-1 min-w-0 space-y-0.5">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <time
-                dateTime={new Date(chnot.meta.tid / 1e3).toISOString()}
+                dateTime={new Date(chnot.meta.otid / 1e3).toISOString()}
                 className="text-[0.7rem]"
               >
-                {chnotShortDate(new Date(chnot.meta.tid / 1e3))}
+                {chnotShortDate(new Date(chnot.meta.otid / 1e3))}
               </time>
               {showKSpace && (
                 <KSpaceIcon
@@ -215,10 +215,10 @@ const ChnotSidebarItem = React.forwardRef(
                     kspace={chnot.meta.kspace}
                     onSelect={(e) => {
                       chnotUpdate({
-                        meta_tid: chnot.meta.tid,
+                        meta_otid: chnot.meta.otid,
                         kspace: e,
                       }).then(() => {
-                        validateChnotCache([chnot.meta.tid]);
+                        validateChnotCache([chnot.meta.otid]);
                       });
                     }}
                   />

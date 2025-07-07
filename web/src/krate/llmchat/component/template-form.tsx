@@ -42,13 +42,14 @@ const TemplateForm = ({
     }
 
     const toInsert: LLMChatTemplate = {
-      tid: template ? template.tid : genTID(),
+      otid: template ? template.otid : genTID(),
       name: formData.name!,
       prompt: formData.prompt!,
       svg_logo:
         formData.svg_logo && detectSVG(formData.svg_logo)
           ? formData.svg_logo
           : "",
+      tid: genTID(),
     };
 
     const submiResult = await onSubmit(toInsert);

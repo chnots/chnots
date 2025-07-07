@@ -41,7 +41,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          bots: new Map(bots.bots.map((e) => [e.tid, e])),
+          bots: new Map(bots.bots.map((e) => [e.otid, e])),
           currentBot: bots.bots.at(0),
         };
       });
@@ -51,7 +51,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          templates: new Map(templates.templates.map((e) => [e.tid, e])),
+          templates: new Map(templates.templates.map((e) => [e.otid, e])),
         };
       });
     },
@@ -60,7 +60,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          sessions: new Map(sessions.sessions.map((e) => [e.tid, e])),
+          sessions: new Map(sessions.sessions.map((e) => [e.otid, e])),
         };
       });
     },
@@ -85,7 +85,7 @@ export const useLLMChatStore = create(
       set((state) => {
         return {
           ...state,
-          sessions: insertMapAtIndex(0, session.tid, session, sessions),
+          sessions: insertMapAtIndex(0, session.otid, session, sessions),
         };
       });
     },

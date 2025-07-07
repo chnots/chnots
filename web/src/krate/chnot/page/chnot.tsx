@@ -49,18 +49,18 @@ const MonoChnot = () => {
       setComKey(genUID());
       const cc = getCurrentChnot();
       setEditorChnot(cc);
-      metaTidRef.current = cc?.meta.tid ?? null;
+      metaTidRef.current = cc?.meta.otid ?? null;
     }
   }, [curMetaId, editorChnot]);
 
   const updateEditorChnot = useCallback(
     async (chnot: Chnot) => {
-      if (curMetaId !== chnot.meta.tid) {
-        setCurrentChnotMetaId(chnot.meta.tid);
+      if (curMetaId !== chnot.meta.otid) {
+        setCurrentChnotMetaId(chnot.meta.otid);
       }
       appendChnot(chnot);
     },
-    [curMetaId],
+    [curMetaId]
   );
 
   const viewModeRef = useRef(false);
@@ -74,7 +74,7 @@ const MonoChnot = () => {
           (kinds && kinds.length == 1
             ? kinds.at(0)!
             : ChnotKind.MarkdownWithToent),
-        metaTid: editorChnot?.meta.tid,
+        metaTid: editorChnot?.meta.otid,
         readonly: viewModeRef.current,
         topleft: <SidebarTrigger />,
         onClickNewButton: () => {

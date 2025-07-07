@@ -50,8 +50,8 @@ const LLMChatPage = () => {
             setSessionIdOrTID(genTID());
           }}
           onAfterSave={(session) => {
-            setCurrentSessionId(session.tid);
-            setSessionIdOrTID(session.tid);
+            setCurrentSessionId(session.otid);
+            setSessionIdOrTID(session.otid);
           }}
         />
       </div>

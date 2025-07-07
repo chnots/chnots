@@ -13,7 +13,7 @@ pub struct Chnot {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotUpdateReq {
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     pub kspace: Option<Varchar<40>>,
     pub pinned: Option<bool>,
     pub archive: Option<bool>,
@@ -24,7 +24,7 @@ pub struct ChnotUpdateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteReq {
-    pub meta_tid: Option<TID>,
+    pub meta_otid: Option<TID>,
     pub content: Text,
     pub kind: ChnotKind,
     pub kind_id: Option<String>,
@@ -32,16 +32,17 @@ pub struct ChnotOverwriteReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteRsp {
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     pub rec_tid: TID,
     pub kspace: Varchar<40>,
     pub archor: bool,
+    pub meta_tid: Option<TID>,
     pub todo_event: Option<TodoEvent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotArchiveReq {
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     /// logic or physical deletion
     pub logic: bool,
 }
@@ -57,8 +58,8 @@ pub enum ChnotTagSearchType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotQueryReq {
     pub query: Option<String>,
-    pub meta_tid: Option<TID>,
-    pub record_tid: Option<TID>,
+    pub meta_otid: Option<TID>,
+    pub record_otid: Option<TID>,
 
     pub tags: Option<ChnotTagSearchType>,
     pub kinds: Vec<ChnotKind>,
@@ -102,13 +103,13 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotTagUpdateReq {
     pub content: Text,
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     pub kspace: Varchar<40>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotKindRelQueryReq {
-    pub meta_tid: TID,
+    pub meta_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

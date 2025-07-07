@@ -33,9 +33,9 @@ const emptyResponse = (detail: LLMChatSessionDetail, bot: LLMChatBot) => {
   return {
     tid: genTID(),
     step: ResponseStep.Initial,
-    prevRecordId: detail.session.tid,
-    sessionId: detail.session.tid,
-    roleId: bot.tid,
+    prevRecordId: detail.session.otid,
+    sessionId: detail.session.otid,
+    roleId: bot.otid,
     content: "",
     reasoningContent: "",
   };

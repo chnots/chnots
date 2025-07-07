@@ -20,8 +20,8 @@ export type ChnotTagSearchType = {
 
 export type ChnotQueryReq = {
   query?: string;
-  meta_tid?: TID;
-  record_tid?: TID;
+  meta_otid?: TID;
+  record_otid?: TID;
   tags?: ChnotTagSearchType;
   kinds: ChnotKind[];
   with_omitted?: boolean;
@@ -38,27 +38,28 @@ export type ChnotQueryRsp = {
 };
 
 export type ChnotOverwriteReq = {
-  meta_tid?: TID;
+  meta_otid?: TID;
   content: DbText;
   kind: ChnotKind;
   kind_id?: string;
 };
 
 export type ChnotOverwriteRsp = {
-  meta_tid: TID;
+  meta_otid: TID;
   rec_tid: TID;
   kspace: Varchar<40>;
   archor: boolean;
+  meta_tid?: TID;
   todo_event?: TodoEvent;
 };
 
 export type ChnotArchiveReq = {
-  meta_tid: TID;
+  meta_otid: TID;
   logic: boolean;
 };
 
 export type ChnotUpdateReq = {
-  meta_tid: TID;
+  meta_otid: TID;
   kspace?: Varchar<40>;
   pinned?: boolean;
   archive?: boolean;
@@ -67,7 +68,7 @@ export type ChnotUpdateReq = {
 export type ChnotCommentAddReq = {
   tid: TID;
 
-  chnot_meta_id: TID;
+  chnot_meta_otid: TID;
   content: string;
 };
 
@@ -80,7 +81,7 @@ export type ChnotTagQueryReq = {
 };
 
 export type ChnotKFileRelationInsert = {
-  chnot_meta_id: TID;
+  chnot_meta_otid: TID;
 };
 
 export type ChnotTagQueryRsp = {
@@ -115,7 +116,7 @@ export type ChnotArchiveRsp = object;
 
 export type ChnotTagUpdateReq = {
   content: DbText;
-  meta_tid: TID;
+  meta_otid: TID;
   kspace: Varchar<40>;
 };
 
@@ -123,5 +124,5 @@ export type ChnotKindRelQueryRsp = {
   kind_rel: ChnotKindRel;
 };
 export type ChnotKindRelQueryReq = {
-  meta_tid: TID;
+  meta_otid: TID;
 };

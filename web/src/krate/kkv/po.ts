@@ -4,8 +4,10 @@ import { DbText, Varchar } from "@/lib/types";
 
 export type KKV = {
   key: Varchar<500>;
-  kind: KKVType;
+  kind: Varchar<100>;
   kspace: Varchar<40>;
   omit_tid?: OmitTID;
+  tid: TID;
+  archor: boolean;
   value: DbText;
 };

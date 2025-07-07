@@ -21,49 +21,53 @@ use super::*;
 impl LLMChatDeserializeMapper for KDbRow {
     fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
         let obj = LLMChatBot {
-            tid: self.try_get(LLMChatBot::TID)?,
+            otid: self.try_get(LLMChatBot::OTID)?,
             omit_tid: self.try_get(LLMChatBot::OMIT_TID)?,
             name: self.try_get(LLMChatBot::NAME)?,
             body: self.try_get(LLMChatBot::BODY)?,
             update_time: self.try_get(LLMChatBot::UPDATE_TIME)?,
             svg_logo: self.try_get(LLMChatBot::SVG_LOGO)?,
+            tid: self.try_get(LLMChatBot::TID)?,
         };
         Ok(obj)
     }
 
     fn to_llmchat_template(self) -> AResult<LLMChatTemplate> {
         let obj = LLMChatTemplate {
-            tid: self.try_get(LLMChatTemplate::TID)?,
+            otid: self.try_get(LLMChatTemplate::OTID)?,
             omit_tid: self.try_get(LLMChatTemplate::OMIT_TID)?,
             update_time: self.try_get(LLMChatTemplate::UPDATE_TIME)?,
             name: self.try_get(LLMChatTemplate::NAME)?,
             prompt: self.try_get(LLMChatTemplate::PROMPT)?,
             svg_logo: self.try_get(LLMChatTemplate::SVG_LOGO)?,
+            tid: self.try_get(LLMChatBot::TID)?,
         };
         Ok(obj)
     }
 
     fn to_llmchat_session(self) -> AResult<LLMChatSession> {
         let obj = LLMChatSession {
-            tid: self.try_get(LLMChatSession::TID)?,
-            template_tid: self.try_get(LLMChatSession::TEMPLATE_TID)?,
+            otid: self.try_get(LLMChatSession::OTID)?,
+            template_otid: self.try_get(LLMChatSession::TEMPLATE_OTID)?,
             title: self.try_get(LLMChatSession::TITLE)?,
             omit_tid: self.try_get(LLMChatSession::OMIT_TID)?,
             update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
+            tid: self.try_get(LLMChatBot::TID)?,
         };
         Ok(obj)
     }
 
     fn to_llmchat_record(self) -> AResult<LLMChatRecord> {
         let obj = LLMChatRecord {
-            tid: self.try_get(LLMChatRecord::TID)?,
-            session_tid: self.try_get(LLMChatRecord::SESSION_TID)?,
-            pre_record_tid: self.try_get(LLMChatRecord::PRE_RECORD_TID)?,
+            otid: self.try_get(LLMChatRecord::OTID)?,
+            session_otid: self.try_get(LLMChatRecord::SESSION_OTID)?,
+            pre_record_otid: self.try_get(LLMChatRecord::PRE_RECORD_OTID)?,
             content: self.try_get(LLMChatRecord::CONTENT)?,
             role: self.try_get(LLMChatRecord::ROLE)?,
             role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
             omit_tid: self.try_get(LLMChatRecord::OMIT_TID)?,
             reasoning_content: self.try_get(LLMChatRecord::REASONING_CONTENT)?,
+            tid: self.try_get(LLMChatBot::TID)?,
         };
         Ok(obj)
     }
@@ -76,7 +80,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatOverwriteBotRsp> {
         let bot = req.body.bot;
 
-        let omit = LLMChatBot::pkey_updater(bot.tid, OmitTID::never())
+        let omit = LLMChatBot::pkey_updater(bot.otid, OmitTID::never())
             .set(LLMChatBot::OMIT_TID, OmitTID::now());
         let inserter = bot.to_sql_inserter();
         let mut conn = self.conn().await?;
@@ -93,7 +97,7 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatOverwriteTemplateReq>,
     ) -> AResult<LLMChatOverwriteTemplateRsp> {
         let tmpl = req.body.template;
-        let omit = LLMChatTemplate::pkey_updater(tmpl.tid, OmitTID::never())
+        let omit = LLMChatTemplate::pkey_updater(tmpl.otid, OmitTID::never())
             .set(LLMChatTemplate::OMIT_TID, OmitTID::now());
         let inserter = tmpl.to_owned().to_sql_inserter();
 
@@ -111,7 +115,7 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatInsertSessionReq>,
     ) -> AResult<LLMChatInsertSessionRsp> {
         let obj = req.body.session;
-        let omit = LLMChatSession::pkey_updater(obj.tid, OmitTID::never())
+        let omit = LLMChatSession::pkey_updater(obj.otid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());
         let inserter = obj.to_owned().to_sql_inserter();
 
@@ -130,7 +134,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatInsertRecordRsp> {
         let obj = req.body.record;
         let omit =
-            LLMChatRecord::pkey_updater(obj.tid).set(LLMChatRecord::OMIT_TID, OmitTID::now());
+            LLMChatRecord::pkey_updater(obj.otid).set(LLMChatRecord::OMIT_TID, OmitTID::now());
         let inserter = obj.to_owned().to_sql_inserter();
 
         let mut conn = self.conn().await?;
@@ -144,7 +148,7 @@ impl LLMChatMapper for KDb {
 
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
         let _ = req;
-        let sql = "select b.*, count(r.role_id) as bot_count from llm_chat_bot b left join llm_chat_record r on b.tid = r.role_id where b.omit_tid = ".to_string() + &format!("{}", OmitTID::never().as_num()) + " group by b.tid, b.omit_tid order by bot_count desc";
+        let sql = "select b.*, count(r.role_id) as bot_count from llm_chat_bot b left join llm_chat_record r on b.tid = r.role_id where b.omit_tid = ".to_string() + &format!("{}", OmitTID::never().as_num()) + " group by b.otid, b.omit_tid order by bot_count desc";
         let bots = self
             .conn()
             .await?
@@ -183,8 +187,8 @@ impl LLMChatMapper for KDb {
         let query = SqlBuilder::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([
                 Wheres::equal(LLMChatSession::OMIT_TID, OmitTID::never()),
-                Wheres::if_some(req.session_tid.as_ref(), |tid| {
-                    Wheres::equal(LLMChatSession::TID, *tid)
+                Wheres::if_some(req.session_otid.as_ref(), |tid| {
+                    Wheres::equal(LLMChatSession::OTID, *tid)
                 }),
             ]))
             .sov("order by tid desc");
@@ -205,7 +209,7 @@ impl LLMChatMapper for KDb {
         let session = self
             .llm_chat_list_sessions(KReq {
                 body: LLMChatListSessionReq {
-                    session_tid: Some(req.session_tid),
+                    session_otid: Some(req.session_otid),
                 },
                 kspace: req.kspace.clone(),
                 mkspaces: vec![],
@@ -217,7 +221,7 @@ impl LLMChatMapper for KDb {
 
         let query = SqlBuilder::read_all(LLMChatRecord::TABLE)
             .r#where(Wheres::and([
-                Wheres::equal(LLMChatRecord::SESSION_TID, req.session_tid),
+                Wheres::equal(LLMChatRecord::SESSION_OTID, req.session_otid),
                 Wheres::if_some(
                     {
                         match req.with_omit.as_ref() {
@@ -246,7 +250,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatDeleteBotReq>,
     ) -> AResult<LLMChatDeleteBotRsp> {
-        let updater = LLMChatBot::pkey_updater(req.bot_tid, OmitTID::never())
+        let updater = LLMChatBot::pkey_updater(req.bot_otid, OmitTID::never())
             .set(LLMChatBot::OMIT_TID, OmitTID::now());
 
         self.conn().await?.exec(updater).await?;
@@ -258,7 +262,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatDeleteTemplateReq>,
     ) -> AResult<LLMChatDeleteTemplateRsp> {
-        let updater = LLMChatTemplate::pkey_updater(req.template_tid, OmitTID::never())
+        let updater = LLMChatTemplate::pkey_updater(req.template_otid, OmitTID::never())
             .set(LLMChatTemplate::OMIT_TID, OmitTID::now());
 
         self.conn().await?.exec(updater).await?;
@@ -270,7 +274,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatDeleteSessionReq>,
     ) -> AResult<LLMChatDeleteSessionRsp> {
-        let updater = LLMChatSession::pkey_updater(req.session_tid, OmitTID::never())
+        let updater = LLMChatSession::pkey_updater(req.session_otid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());
         self.conn().await?.exec(updater).await?;
 
@@ -297,18 +301,18 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
 
-        let pk_read = LLMChatSession::pkey_reader(req.session_tid, OmitTID::never());
+        let pk_read = LLMChatSession::pkey_reader(req.session_otid, OmitTID::never());
         let mut sess = tx
             .qry_one(pk_read, KDbRow::to_llmchat_session, false)
             .await?;
 
-        let pk_update = LLMChatSession::pkey_updater(req.session_tid, OmitTID::never())
+        let pk_update = LLMChatSession::pkey_updater(req.session_otid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());
         tx.exec(pk_update).await?;
 
         sess.omit_tid = OmitTID::never();
         if let Some(title) = req.body.title {
-            sess.title = Varchar::<200>::limit(title);
+            sess.title = Varchar::<500>::limit(title);
         }
         if let Some(true) = req.body.delete {
             return Ok(LLMChatUpdateSessionRsp {});
@@ -327,7 +331,7 @@ impl LLMChatMapper for KDb {
         let records = self
             .llm_chat_session_detail(KReq {
                 body: LLMChatSessionDetialReq {
-                    session_tid: req.session_tid,
+                    session_otid: req.session_otid,
                     with_omit: Some(true),
                 },
                 kspace: req.kspace.clone(),
@@ -338,8 +342,8 @@ impl LLMChatMapper for KDb {
 
         let mut map: HashMap<TID, Vec<TID>> = HashMap::new();
         for record in &records {
-            if let Some(prev) = record.pre_record_tid {
-                map.entry(prev).or_default().push(record.tid);
+            if let Some(prev) = record.pre_record_otid {
+                map.entry(prev).or_default().push(record.otid);
             }
         }
 
@@ -365,7 +369,7 @@ impl LLMChatMapper for KDb {
         let updater = SqlUpdater::new(LLMChatRecord::TABLE)
             .set(LLMChatRecord::OMIT_TID, OmitTID::now())
             .r#where(Wheres::and([
-                Wheres::r#in(LLMChatRecord::TID, to_omit_ids),
+                Wheres::r#in(LLMChatRecord::OTID, to_omit_ids),
                 Wheres::equal(LLMChatRecord::OMIT_TID, OmitTID::never()),
             ]));
 

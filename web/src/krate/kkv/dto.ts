@@ -1,21 +1,23 @@
 import { DbText, SharedStr, Varchar } from "@/lib/types";
 import { KKV } from "./po";
+import { TID } from "@/lib/id_util";
 
 export type KKVType = object;
 
 export type KKVQueryOneReq = {
-  key: string;
-  kind: KKVType;
+  key: Varchar<500>;
+  kind: Varchar<100>;
 };
 
 export type KKVQueryManyReq = {
-  key?: string;
-  kind?: KKVType;
+  key?: Varchar<500>;
+  kind?: Varchar<100>;
   kspace?: SharedStr;
 };
 
 export type KKVQueryOneRsp = {
   value?: DbText;
+  tid?: TID;
 };
 
 export type KKVQueryManyRsp = {
@@ -24,7 +26,7 @@ export type KKVQueryManyRsp = {
 
 export type KKVOverwriteReq = {
   key: Varchar<500>;
-  kind: KKVType;
+  kind: Varchar<100>;
   value: DbText;
 };
 

@@ -69,13 +69,14 @@ export const RecordAnswering = ({
       if (savedStateRef.current) {
         const response = savedStateRef.current;
         const record: LLMChatRecord = {
-          tid: response.tid,
-          session_tid: response.sessionId,
+          otid: response.tid,
+          session_otid: response.sessionId,
           content: response.content,
           reasoning_content: response.reasoningContent,
           role: "assistant",
           role_id: response.roleId,
-          pre_record_tid: response.prevRecordId,
+          pre_record_otid: response.prevRecordId,
+          tid: genTID(),
         };
         llmchatRecordInsert(record);
       }
@@ -85,13 +86,14 @@ export const RecordAnswering = ({
   useEffect(() => {
     const buildRecord = (responseState: ResponseState) => {
       const record: LLMChatRecord = {
-        tid: responseState.tid,
-        session_tid: responseState.sessionId,
+        otid: responseState.tid,
+        session_otid: responseState.sessionId,
         content: responseState.content,
         reasoning_content: responseState.reasoningContent,
         role: "assistant",
         role_id: responseState.roleId,
-        pre_record_tid: responseState.prevRecordId,
+        pre_record_otid: responseState.prevRecordId,
+        tid: genTID(),
       };
 
       return record;
@@ -112,13 +114,14 @@ export const RecordAnswering = ({
     <>
       <RecordAssistant
         logo={bot.svg_logo}
-        role_id={bot.tid}
+        role_id={bot.otid}
         onRegenerate={onRegenerate}
-        tid={genTID()}
-        session_tid={response.sessionId}
+        otid={genTID()}
+        session_otid={response.sessionId}
         content={response.content}
         reasoning_content={response.reasoningContent}
         role={"response-assistant"}
+        tid={genTID()}
       />
       <div className="flex justify-center">
         <KButton

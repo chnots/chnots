@@ -89,12 +89,13 @@ const KTabChnot = ({
         >,
       ) => {
         const meta = {
-          tid: genTID(),
+          otid: genTID(),
           columns: {},
           table_name: values.name,
           table_comment: values.description ?? "",
           create_time: new Date(),
           real_table: false,
+          tid: genTID(),
         };
         await ktabMetaOverwrite({
           meta: meta,

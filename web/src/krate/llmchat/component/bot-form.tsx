@@ -103,7 +103,7 @@ const BotForm = ({
     svg_logo: bot?.svg_logo,
   });
 
-  const [botId, setBotId] = useState<TID>(bot?.tid ?? genTID());
+  const [botId, setBotId] = useState<TID>(bot?.otid ?? genTID());
 
   const body = bot?.body
     ? (JSON.parse(bot?.body) as LLMChatBotBodyOpenAIV1)
@@ -136,13 +136,14 @@ const BotForm = ({
       };
 
       const toInsert: LLMChatBot = {
-        tid: botId,
+        otid: botId,
         name: formData.name,
         svg_logo:
           formData.svg_logo && detectSVG(formData.svg_logo)
             ? formData.svg_logo
             : "",
         body: JSON.stringify(body),
+        tid: genTID(),
       };
 
       const submiResult = await onSubmit(toInsert);

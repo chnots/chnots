@@ -142,9 +142,9 @@ pub(super) async fn upload(
 // https://github.com/tokio-rs/axum/discussions/608
 pub(crate) async fn download(
     state: State<ShareAppState>,
-    axum::extract::Path((meta_tid, filename)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((meta_otid, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
-    info!("download sid: {meta_tid}, {filename}");
+    info!("download sid: {meta_otid}, {filename}");
 
     async fn inner(
         state: State<ShareAppState>,
@@ -176,7 +176,7 @@ pub(crate) async fn download(
         Ok((headers, body))
     }
 
-    let res = inner(state, &meta_tid).await;
+    let res = inner(state, &meta_otid).await;
 
     match res {
         Ok(res) => Ok(res),

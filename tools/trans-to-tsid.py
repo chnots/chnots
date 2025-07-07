@@ -5,7 +5,7 @@ tf = [
     ("chnot_record", "id"),
     ("chnot_record", "meta_id"),
     ("chnot_tag", "id"),
-    ("chnot_tag", "chnot_meta_id"),
+    ("chnot_tag", "chnot_meta_otid"),
     ("k_file", "id"),
     ("inline_k_file", "id"),
     ("llm_chat_bot", "id"),
@@ -13,7 +13,7 @@ tf = [
     ("llm_chat_session", "id"),
     ("llm_chat_session", "template_tid"),
     ("llm_chat_record", "id"),
-    ("llm_chat_record", "session_tid"),
+    ("llm_chat_record", "session_otid"),
     ("llm_chat_record", "pre_record_tid"),
     ("llm_chat_record", "role_id"),
 ]

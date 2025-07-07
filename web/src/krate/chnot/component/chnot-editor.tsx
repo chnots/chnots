@@ -182,28 +182,29 @@ const ChnotSaver = () => {
       onSetSaveState(SaveState.Saving);
       const rsp = await chnotOverwrite(req);
       if (!metaTidRef.current) {
-        onSetMetaTid(rsp.meta_tid);
-        metaTidRef.current = rsp.meta_tid;
+        onSetMetaTid(rsp.meta_otid);
+        metaTidRef.current = rsp.meta_otid;
       }
       onSetRecTid(rsp.rec_tid);
       onSetSaveState(SaveState.Saved);
       onChnotChange({
         record: {
           tid: rsp.rec_tid,
-          meta_tid: rsp.meta_tid,
+          meta_otid: rsp.meta_otid,
           content: req.content,
           archor: rsp.archor,
           todo_event: rsp.todo_event,
         },
         meta: {
-          tid: rsp.meta_tid,
+          otid: rsp.meta_otid,
           kspace: rsp.kspace,
           kind: kind,
+          tid: rsp.rec_tid,
         },
       });
     },
     1000,
-    true,
+    true
   );
   useEffect(() => {
     if (!content) {
@@ -213,7 +214,7 @@ const ChnotSaver = () => {
     const req: ChnotOverwriteReq = {
       content: content ?? "",
       kind: chnotKind!,
-      meta_tid: metaTidRef.current,
+      meta_otid: metaTidRef.current,
       kind_id: kindId,
     };
 
@@ -272,7 +273,7 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
         tags: store.tags,
         kinds: store.kinds,
       };
-    }),
+    })
   );
 
   return (
@@ -449,7 +450,7 @@ const ChnotEditor = ({ className }: { className?: string }) => {
         kinds: [],
         start_index: 0,
         page_size: 1,
-        meta_tid: metaTid,
+        meta_otid: metaTid,
       })
         .then((rsp) => {
           const chnot = rsp.data.at(0);
@@ -518,7 +519,7 @@ const RichChnot = ({
             onAfterSave={(tid) => {
               handleSaveRel(
                 `# Excalidraw ${new Date().toLocaleTimeString()}\n\n${commonText()}`,
-                tid.toString(),
+                tid.toString()
               );
             }}
             readOnly={readOnly}
@@ -541,7 +542,7 @@ const RichChnot = ({
                 `# Table ${meta.table_name}\n\n${
                   meta.table_comment
                 }\n\n ${commonText()}`,
-                meta.tid.toString(),
+                meta.otid.toString()
               );
             }}
             isEditing={!readOnly}
@@ -553,7 +554,7 @@ const RichChnot = ({
               onAfterSave={(session) => {
                 handleSaveRel(
                   `# LLM ${session.title}  \n\n ${commonText()}`,
-                  session.tid.toString(),
+                  session.otid.toString()
                 );
               }}
             />

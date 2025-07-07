@@ -39,7 +39,7 @@ fn map_to_sql(value: HashMap<String, KTabColumnMeta>) -> String {
 pub struct KTabMeta {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub tid: TID,
+    pub otid: TID,
 
     #[gts_primary]
     #[gts_type = "i64"]
@@ -52,6 +52,10 @@ pub struct KTabMeta {
     pub table_comment: Varchar<1000>,
     pub update_time: Option<DateTime<FixedOffset>>,
     pub real_table: bool,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
 }
 
 macro_rules! type_table {
@@ -60,20 +64,21 @@ macro_rules! type_table {
         pub struct $sname {
             #[gts_primary]
             #[gts_type = "i64"]
-            pub table_id: TID,
+            pub table_otid: TID,
 
             #[gts_primary]
             #[gts_type = "i64"]
-            pub col_tid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
+            pub col_otid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
 
             #[gts_primary]
             #[gts_type = "i64"]
-            pub row_tid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
+            pub row_otid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
 
             #[gts_primary]
             #[gts_type = "i64"]
             pub omit_tid: OmitTID,
 
+            #[gts_unique]
             #[gts_type = "i64"]
             pub tid: TID,
 

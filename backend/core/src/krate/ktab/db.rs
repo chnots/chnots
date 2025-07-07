@@ -7,7 +7,8 @@ use itertools::Itertools;
 
 use crate::{
     mapper::db::{
-        helper::create_tables, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier, KDbTransactionBehaiver
+        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier,
+        KDbTransactionBehaiver, helper::create_tables,
     },
     model::{dto::KReq, omit_tid::OmitTID},
 };
@@ -21,14 +22,14 @@ impl KDb {
                 let mut conn = self.conn().await?;
                 let tx = conn.tx().await?;
                 let csql = SqlInserter::new($table::TABLE)
-                    .field($table::TABLE_ID, $c.table_id)
-                    .field($table::COL_TID, $c.col_tid)
-                    .field($table::ROW_TID, $c.row_tid)
+                    .field($table::TABLE_OTID, $c.table_otid)
+                    .field($table::COL_OTID, $c.col_otid)
+                    .field($table::ROW_OTID, $c.row_otid)
                     .field($table::OMIT_TID, $c.omit_tid)
                     .field($table::CELL_DATA, $v)
                     .field($table::TID, $c.tid);
                 let omit_sql =
-                    $table::pkey_updater($c.table_id, $c.row_tid, $c.col_tid, OmitTID::never())
+                    $table::pkey_updater($c.table_otid, $c.row_otid, $c.col_otid, OmitTID::never())
                         .set($table::OMIT_TID, OmitTID::now());
                 tx.exec(omit_sql).await?;
                 tx.exec(csql).await?;
@@ -58,13 +59,14 @@ impl KTabMapper for KDb {
         req: KReq<KTabMetaOverwriteReq>,
     ) -> chin_tools::AResult<KTabMetaOverwriteRsp> {
         let KTabMeta {
-            tid,
+            otid,
             columns,
             table_name,
             table_comment,
             update_time: _,
             omit_tid,
             real_table,
+            tid: _,
         } = &req.meta;
         let full = columns.values().map(|e| e.idx).collect_vec();
         if full.iter().unique().count() < full.len() {
@@ -72,17 +74,18 @@ impl KTabMapper for KDb {
         }
 
         let omit_sql =
-            KTabMeta::pkey_updater(*tid, OmitTID::never()).set(KTabMeta::OMIT_TID, OmitTID::now());
+            KTabMeta::pkey_updater(*otid, OmitTID::never()).set(KTabMeta::OMIT_TID, OmitTID::now());
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
-            .field(KTabMeta::TID, *tid)
+            .field(KTabMeta::OTID, *otid)
+            .field(KTabMeta::TID, TID::default())
             .field(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
             .field(KTabMeta::TABLE_NAME, table_name.clone())
             .field(KTabMeta::TABLE_COMMENT, table_comment.clone())
             .field(KTabMeta::REAL_TABLE, *real_table)
             .field(KTabMeta::OMIT_TID, *omit_tid)
             .on_conflict(chin_sql::OnConflict::Replace(
-                [KTabMeta::TID, KTabMeta::OMIT_TID].join(", "),
+                [KTabMeta::OTID, KTabMeta::OMIT_TID].join(", "),
             ));
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
@@ -113,7 +116,7 @@ impl KTabMapper for KDb {
             .await?
             .meta
             .context("unable to get this table")?;
-        let table_id = table_meta.tid;
+        let table_otid = table_meta.otid;
 
         let columns = table_meta.columns;
 
@@ -124,9 +127,9 @@ impl KTabMapper for KDb {
                 .idx;
 
             self.ktab_overwrite_cell(KTabCell {
-                table_id,
-                col_tid: column_index,
-                row_tid: ele.row_tid,
+                table_otid,
+                col_otid: column_index,
+                row_otid: ele.row_tid,
                 omit_tid: OmitTID::never(),
                 cell_data: ele.value,
                 tid: TID::default(),
@@ -142,7 +145,7 @@ impl KTabMapper for KDb {
         req: KReq<KTabMetaQueryReq>,
     ) -> chin_tools::AResult<KTabMetaQueryRsp> {
         let ssb = SqlBuilder::read_all(KTabMeta::TABLE).r#where(Wheres::and([
-            Wheres::equal(KTabMeta::TID, req.table_id),
+            Wheres::equal(KTabMeta::OTID, req.table_id),
             Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
         ]));
         let meta = self
@@ -159,6 +162,7 @@ impl KTabMapper for KDb {
                     update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
                     omit_tid: row.try_get(KTabMeta::OMIT_TID)?,
                     real_table: row.try_get(KTabMeta::REAL_TABLE)?,
+                    otid: row.try_get(KTabMeta::OTID)?,
                     tid: row.try_get(KTabMeta::TID)?,
                 })
             })
@@ -189,7 +193,7 @@ impl KTabMapper for KDb {
         macro_rules! extend_cells {
             ($sub_table:tt) => {
                 let reader = SqlBuilder::read_all($sub_table::TABLE).r#where(Wheres::and([
-                    Wheres::equal($sub_table::TABLE_ID, table_id),
+                    Wheres::equal($sub_table::TABLE_OTID, table_id),
                     Wheres::equal($sub_table::OMIT_TID, OmitTID::never()),
                 ]));
 
@@ -198,9 +202,9 @@ impl KTabMapper for KDb {
                     .await?
                     .qry_list(reader, |row| {
                         Ok($sub_table {
-                            table_id: row.try_get($sub_table::TABLE_ID)?,
-                            col_tid: row.try_get($sub_table::COL_TID)?,
-                            row_tid: row.try_get($sub_table::ROW_TID)?,
+                            table_otid: row.try_get($sub_table::TABLE_OTID)?,
+                            col_otid: row.try_get($sub_table::COL_OTID)?,
+                            row_otid: row.try_get($sub_table::ROW_OTID)?,
                             cell_data: row.try_get($sub_table::CELL_DATA)?,
                             tid: row.try_get($sub_table::TID)?,
                             omit_tid: row.try_get($sub_table::OMIT_TID)?,

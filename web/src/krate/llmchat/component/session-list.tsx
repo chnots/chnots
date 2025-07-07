@@ -7,7 +7,7 @@ function LLMChatSessionList() {
   return (
     <ul className="w-full p-2 space-y-2">
       {[...sessions.values()].map((session) => (
-        <LLMChatSessionListItem session={session} key={session.tid} />
+        <LLMChatSessionListItem session={session} key={session.otid} />
       ))}
     </ul>
   );

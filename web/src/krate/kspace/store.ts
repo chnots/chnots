@@ -1,4 +1,5 @@
 import { KSpace } from "@/krate/kspace/po";
+import { genTID } from "@/lib/id_util";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 
@@ -15,6 +16,7 @@ const kspaces = new Map<string, KSpace>([
       name: "public",
       managers: ["work", "private"],
       color: "#282828",
+      tid: genTID(),
     },
   ],
   [
@@ -23,6 +25,7 @@ const kspaces = new Map<string, KSpace>([
       name: "work",
       managers: ["private"],
       color: "#0000aa",
+      tid: genTID(),
     },
   ],
   [
@@ -31,6 +34,7 @@ const kspaces = new Map<string, KSpace>([
       name: "private",
       managers: [],
       color: "#aa0000",
+      tid: genTID(),
     },
   ],
 ]);

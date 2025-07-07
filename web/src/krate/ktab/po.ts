@@ -42,13 +42,14 @@ export type KTabColumnMeta = {
 };
 
 export type KTabMeta = {
-  tid: TID;
+  otid: TID;
   omit_tid?: OmitTID;
   columns: Record<string, KTabColumnMeta>;
   table_name: Varchar<300>;
   table_comment: Varchar<1000>;
   update_time?: Date;
   real_table: boolean;
+  tid: TID;
 };
 
 export type KTabCell = {
@@ -62,27 +63,27 @@ export type KTabCell = {
 export type KTabCellData = { Date: Date } | { Text: string };
 
 export type KTabCellText = {
-  table_id: TID;
-  col_tid: TID;
-  row_tid: TID;
+  table_otid: TID;
+  col_otid: TID;
+  row_otid: TID;
   omit_tid?: OmitTID;
   tid: TID;
   cell_data: DbText;
 };
 
 export type KTabCellDecimal = {
-  table_id: TID;
-  col_tid: TID;
-  row_tid: TID;
+  table_otid: TID;
+  col_otid: TID;
+  row_otid: TID;
   omit_tid?: OmitTID;
   tid: TID;
   cell_data: Decimal;
 };
 
 export type KTabCellDate = {
-  table_id: TID;
-  col_tid: TID;
-  row_tid: TID;
+  table_otid: TID;
+  col_otid: TID;
+  row_otid: TID;
   omit_tid?: OmitTID;
   tid: TID;
   cell_data: Date;

@@ -99,9 +99,9 @@ pub struct KTabViewCell {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KTabCell {
     pub tid: TID,
-    pub table_id: TID,
-    pub col_tid: TID,
-    pub row_tid: TID,
+    pub table_otid: TID,
+    pub col_otid: TID,
+    pub row_otid: TID,
     pub omit_tid: OmitTID,
     pub cell_data: KTabStoreValue,
 }
@@ -109,8 +109,8 @@ pub struct KTabCell {
 impl KTabCell {
     pub(super) fn into_view(self, column_names: &HashMap<TID, String>) -> Option<KTabViewCell> {
         let cell = KTabViewCell {
-            row_tid: self.row_tid,
-            column_name: column_names.get(&self.col_tid)?.to_string(),
+            row_tid: self.row_otid,
+            column_name: column_names.get(&self.col_otid)?.to_string(),
             value: self.cell_data,
         };
 
@@ -123,9 +123,9 @@ macro_rules! impl_from_ktab_cell {
         impl From<$source> for KTabCell {
             fn from(value: $source) -> Self {
                 let $source {
-                    table_id,
-                    col_tid,
-                    row_tid,
+                    table_otid,
+                    col_otid,
+                    row_otid,
                     omit_tid,
                     cell_data,
                     tid,
@@ -133,9 +133,9 @@ macro_rules! impl_from_ktab_cell {
 
                 Self {
                     tid,
-                    table_id,
-                    col_tid,
-                    row_tid,
+                    table_otid,
+                    col_otid,
+                    row_otid,
                     omit_tid,
                     cell_data: KTabStoreValue::$variant(cell_data),
                 }

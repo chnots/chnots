@@ -48,10 +48,10 @@ export const llmchatBotAdd = async (bot: LLMChatBot) => {
 };
 
 export const llmchatSessionRecords = async (
-  session_tid: TID,
+  session_otid: TID
 ): Promise<LLMChatSessionDetailRsp> => {
   return await request.get(`api/v1/llmchat/session`, {
-    session_tid,
+    session_otid,
   });
 };
 

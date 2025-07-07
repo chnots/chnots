@@ -89,11 +89,9 @@ class Request {
   }
 }
 
-/* export const BASE_URL = import.meta.env.DEV
+export const BASE_URL = import.meta.env.DEV
   ? import.meta.env.PUBLIC_BACKEND_URL
-  : window.location.protocol + "//" + window.location.host; */
-
-export const BASE_URL = "http://127.0.0.1:3013";
+  : window.location.protocol + "//" + window.location.host;
 
 const request = new Request({
   timeout: 30 * 1000,

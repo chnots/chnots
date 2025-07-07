@@ -80,7 +80,7 @@ export const useChnotStore = create(
         const cm = cmm.dbCache;
 
         for (const c of cs.data) {
-          cm.set(c.meta.tid, c);
+          cm.set(c.meta.otid, c);
         }
 
         return {
@@ -112,10 +112,10 @@ export const useChnotStore = create(
       set((state) => {
         const cmm = state.chnotMapByMetaId;
         let cm = cmm.dbCache;
-        if (cm.has(chnot.meta.tid)) {
-          cm.set(chnot.meta.tid, chnot);
+        if (cm.has(chnot.meta.otid)) {
+          cm.set(chnot.meta.otid, chnot);
         } else {
-          cm = insertMapAtIndex(0, chnot.meta.tid, chnot, cm);
+          cm = insertMapAtIndex(0, chnot.meta.otid, chnot, cm);
         }
         cmm.dbCache = cm;
         return { ...state, chnotMapByMetaId: cmm };

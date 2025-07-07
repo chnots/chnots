@@ -115,9 +115,9 @@ export type KTabViewCell = {
 
 export type KTabCell = {
   tid: TID;
-  table_id: TID;
-  col_tid: TID;
-  row_tid: TID;
+  table_otid: TID;
+  col_otid: TID;
+  row_otid: TID;
   omit_tid?: OmitTID;
   cell_data: KTabStoreValue;
 };

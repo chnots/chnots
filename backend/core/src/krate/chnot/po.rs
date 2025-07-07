@@ -25,7 +25,7 @@ use crate::model::omit_tid::OmitTID;
 pub struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
     pub omit_tid: OmitTID,
@@ -50,7 +50,7 @@ fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
 pub struct ChnotMetadata {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub tid: TID,
+    pub otid: TID,
     pub kspace: Varchar<40>,
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
@@ -59,6 +59,9 @@ pub struct ChnotMetadata {
     #[gts_type = "i64"]
     pub omit_tid: OmitTID,
     pub archive_time: Option<DateTime<FixedOffset>>,
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
@@ -67,7 +70,7 @@ pub struct ChnotTag {
     pub tag: Varchar<800>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
     pub omit_tid: OmitTID,
@@ -81,7 +84,7 @@ pub struct ChnotTag {
 pub struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub meta_tid: TID,
+    pub meta_otid: TID,
     #[gts_primary]
     #[gts_type = "i64"]
     pub omit_tid: OmitTID,

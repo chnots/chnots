@@ -50,6 +50,6 @@ export const chnotQueryKindRel = async (
   chnotMetaTid: TID,
 ): Promise<ChnotKindRelQueryRsp> => {
   return await request.get(`/api/v1/chnot-query-kind-rel`, {
-    meta_tid: chnotMetaTid,
+    meta_otid: chnotMetaTid,
   });
 };

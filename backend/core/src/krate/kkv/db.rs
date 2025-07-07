@@ -1,5 +1,6 @@
-use chin_sql::{SqlBuilder, SqlDeleter, Wheres};
+use chin_sql::{SqlBuilder, SqlDeleter, Wheres, time_type::TID};
 use chin_tools::AResult;
+use chrono::TimeDelta;
 
 use crate::{
     mapper::db::{
@@ -22,6 +23,8 @@ impl KKVDeserializeMapper for KDbRow {
             value: self.try_get(KKV::VALUE)?,
             kind: self.try_get(KKV::KIND)?,
             kspace: self.try_get(KKV::KSPACE)?,
+            tid: self.try_get(KKV::TID)?,
+            archor: self.try_get(KKV::ARCHOR)?,
         };
         Ok(obj)
     }
@@ -29,12 +32,23 @@ impl KKVDeserializeMapper for KDbRow {
 
 impl KDbExecutor<'_> {
     pub async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
+        let old = self
+            .kkv_query(req.frame(KKVQueryOneReq {
+                key: req.key.clone(),
+                kind: req.kind.clone(),
+            }))
+            .await?;
+        let old_tid = old.tid.unwrap_or(0.into()).as_utc();
+        let now_tid = TID::default();
+        let archor = now_tid.as_utc().signed_duration_since(old_tid).abs() > TimeDelta::hours(1);
         let inserter = KKV {
             key: req.key.clone(),
-            kind: req.kind,
+            kind: req.kind.clone(),
             kspace: req.kspace.clone(),
             omit_tid: OmitTID::never(),
             value: req.value.clone(),
+            tid: now_tid,
+            archor,
         };
         let inserter = inserter
             .to_sql_inserter()
@@ -49,13 +63,15 @@ impl KDbExecutor<'_> {
     pub async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
         let query = SqlBuilder::read_all(KKV::TABLE).r#where(Wheres::and([
             Wheres::equal(KKV::KEY, req.key.as_str()),
-            Wheres::equal(KKV::KIND, req.kind),
+            Wheres::equal(KKV::KIND, req.kind.clone()),
             Wheres::equal(KKV::KSPACE, req.kspace.clone()),
+            Wheres::equal(KKV::OMIT_TID, OmitTID::never()),
         ]));
 
         let kv = self.qry_opt(query, KDbRow::to_kkv).await?;
 
         Ok(KKVQueryOneRsp {
+            tid: kv.as_ref().map(|kv| kv.tid),
             value: kv.map(|kv| kv.value),
         })
     }

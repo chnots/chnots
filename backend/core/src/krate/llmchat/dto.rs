@@ -50,7 +50,7 @@ pub struct LLMChatListTemplateRsp {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatListSessionReq {
-    pub session_tid: Option<TID>,
+    pub session_otid: Option<TID>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,7 +61,7 @@ pub struct LLMChatListSessionRsp {
 pub struct LLMChatUpdateSessionReq {
     pub title: Option<String>,
     pub delete: Option<bool>,
-    pub session_tid: TID,
+    pub session_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,7 +70,7 @@ pub struct LLMChatUpdateSessionRsp {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatTruncateSessionReq {
     pub remove_rid_included: TID,
-    pub session_tid: TID,
+    pub session_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,7 +80,7 @@ pub struct LLMChatTruncateSessionRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionDetialReq {
-    pub session_tid: TID,
+    pub session_otid: TID,
     pub with_omit: Option<bool>,
 }
 
@@ -92,7 +92,7 @@ pub struct LLMChatSessionDetailRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteBotReq {
-    pub bot_tid: TID,
+    pub bot_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,7 +100,7 @@ pub struct LLMChatDeleteBotRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteTemplateReq {
-    pub template_tid: TID,
+    pub template_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,7 +108,7 @@ pub struct LLMChatDeleteTemplateRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatDeleteSessionReq {
-    pub session_tid: TID,
+    pub session_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
