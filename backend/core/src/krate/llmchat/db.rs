@@ -148,7 +148,21 @@ impl LLMChatMapper for KDb {
 
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
         let _ = req;
-        let sql = "select b.*, count(r.role_id) as bot_count from llm_chat_bot b left join llm_chat_record r on b.tid = r.role_id where b.omit_tid = ".to_string() + &format!("{}", OmitTID::never().as_num()) + " group by b.otid, b.omit_tid order by bot_count desc";
+        let sql = format!(
+            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} and b.{} > {} group by b.{}, b.{} order by bot_count desc",
+            LLMChatRecord::ROLE_ID,
+            LLMChatBot::TABLE,
+            LLMChatRecord::TABLE,
+            LLMChatBot::OTID,
+            LLMChatRecord::ROLE_ID,
+            LLMChatBot::OMIT_TID,
+            OmitTID::never().as_num(),
+            LLMChatBot::TID,
+            TID::default().as_num() - 14 * 24 * 3600 * 1_000_000, // last 2 weeks
+            LLMChatBot::OTID,
+            LLMChatBot::OMIT_TID
+        );
+
         let bots = self
             .conn()
             .await?
@@ -164,17 +178,25 @@ impl LLMChatMapper for KDb {
         &self,
         _req: KReq<LLMChatListTemplateReq>,
     ) -> AResult<LLMChatListTemplateRsp> {
-        let query = SqlBuilder::read_all(LLMChatTemplate::TABLE)
-            .r#where(Wheres::and([Wheres::equal(
-                LLMChatTemplate::OMIT_TID,
-                OmitTID::never(),
-            )]))
-            .sov("order by tid desc");
+        let sql = format!(
+            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} and b.{} > {} group by b.{}, b.{} order by bot_count desc",
+            LLMChatRecord::ROLE_ID,
+            LLMChatTemplate::TABLE,
+            LLMChatRecord::TABLE,
+            LLMChatTemplate::OTID,
+            LLMChatRecord::ROLE_ID,
+            LLMChatTemplate::OMIT_TID,
+            OmitTID::never().as_num(),
+            LLMChatBot::TID,
+            TID::default().as_num() - 14 * 24 * 3600 * 1_000_000, // last 2 weeks
+            LLMChatTemplate::OTID,
+            LLMChatTemplate::OMIT_TID
+        );
 
         let templates: Vec<LLMChatTemplate> = self
             .conn()
             .await?
-            .qry_list(query, |e| e.to_llmchat_template())
+            .qry_list(sql, |e| e.to_llmchat_template())
             .await?;
 
         Ok(LLMChatListTemplateRsp { templates })

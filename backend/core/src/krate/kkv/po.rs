@@ -1,9 +1,16 @@
-use crate::{mapper::db::{KDbRow, KDbRowBehavier}, model::omit_tid::OmitTID};
+use crate::{
+    mapper::db::{KDbRow, KDbRowBehavier},
+    model::omit_tid::OmitTID,
+};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use strum::{EnumString, IntoStaticStr};
 
-use chin_sql::{str_type::{Text, Varchar}, time_type::TID, GenerateTableSchema, SqlValue};
+use chin_sql::{
+    GenerateTableSchema, SqlValue,
+    str_type::{Text, Varchar},
+    time_type::TID,
+};
 
 #[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
 pub enum KKVType {
@@ -50,4 +57,16 @@ pub struct KKV {
     pub archor: bool,
 
     pub value: Text,
+}
+
+/// only for cache, we do not sync this.
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+#[allow(clippy::upper_case_acronyms)]
+pub struct KKVTransient {
+    #[gts_primary]
+    pub key: Varchar<500>,
+    pub value: Text,
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
 }

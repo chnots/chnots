@@ -11,3 +11,9 @@ export type KKV = {
   archor: boolean;
   value: DbText;
 };
+
+export type KKVTransient = {
+  key: Varchar<500>;
+  value: DbText;
+  tid: TID;
+};

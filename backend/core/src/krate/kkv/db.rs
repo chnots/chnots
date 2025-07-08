@@ -1,6 +1,7 @@
-use chin_sql::{SqlBuilder, SqlDeleter, Wheres, time_type::TID};
-use chin_tools::AResult;
+use chin_sql::{SqlBuilder, SqlDeleter, Wheres, str_type::Varchar, time_type::TID};
+use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
+use serde::Serialize;
 
 use crate::{
     mapper::db::{
@@ -75,11 +76,38 @@ impl KDbExecutor<'_> {
             value: kv.map(|kv| kv.value),
         })
     }
+
+    pub async fn kkv_transisent_overwrite<T: Serialize>(&self, key: Varchar<500>, value: T) -> EResult {
+        self.exec(
+            KKVTransient {
+                key,
+                value: serde_json::to_string(&value)?.into(),
+                tid: TID::default(),
+            }
+            .to_sql_inserter(),
+        )
+        .await?;
+        Ok(())
+    }
+
+    pub async fn kkv_transient_query<F, T>(&self, key: &str, mapper: F) -> AResult<Option<T>>
+    where
+        F: Fn(String) -> AResult<T>,
+        T: Send,
+    {
+        let reader = KKVTransient::pkey_reader(key.to_owned().try_into()?);
+        let result = self.qry_opt(reader, Ok).await?;
+        if let Some(row) = result {
+            Ok(Some(mapper(row.try_get(KKVTransient::VALUE)?)?))
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
-        create_tables(vec![KKV::create_sql()], self).await
+        create_tables(vec![KKV::create_sql(), KKVTransient::create_sql()], self).await
     }
 
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {
