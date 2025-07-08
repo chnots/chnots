@@ -3,6 +3,7 @@ use std::ops::Deref;
 /// When there are some global data, use this.
 /// e.g. in table KKV.
 pub const NO_KSPACE: &str = "#NO_KSPACE#";
+pub const CLIENT_ID_KEY: &str = "#KLIENT_ID#";
 
 pub(crate) struct KImplWrapper<T: Send + Sync>(pub(crate) T);
 impl<T: Send + Sync> From<T> for KImplWrapper<T> {

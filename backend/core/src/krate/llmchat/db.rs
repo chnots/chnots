@@ -7,7 +7,6 @@ use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
 
 use crate::mapper::db::helper::create_tables;
-use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -15,7 +14,7 @@ use crate::mapper::db::{
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 
-use super::mapper::{LLMChatDeserializeMapper, LLMChatDumpMapper, LLMChatMapper};
+use super::mapper::{LLMChatDeserializeMapper, LLMChatMapper};
 use super::*;
 
 impl LLMChatDeserializeMapper for KDbRow {
@@ -149,7 +148,7 @@ impl LLMChatMapper for KDb {
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
         let _ = req;
         let sql = format!(
-            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} and b.{} > {} group by b.{}, b.{} order by bot_count desc",
+            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} group by b.{}, b.{} order by bot_count desc",
             LLMChatRecord::ROLE_ID,
             LLMChatBot::TABLE,
             LLMChatRecord::TABLE,
@@ -157,8 +156,6 @@ impl LLMChatMapper for KDb {
             LLMChatRecord::ROLE_ID,
             LLMChatBot::OMIT_TID,
             OmitTID::never().as_num(),
-            LLMChatBot::TID,
-            TID::default().as_num() - 14 * 24 * 3600 * 1_000_000, // last 2 weeks
             LLMChatBot::OTID,
             LLMChatBot::OMIT_TID
         );
@@ -179,7 +176,7 @@ impl LLMChatMapper for KDb {
         _req: KReq<LLMChatListTemplateReq>,
     ) -> AResult<LLMChatListTemplateRsp> {
         let sql = format!(
-            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} and b.{} > {} group by b.{}, b.{} order by bot_count desc",
+            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} group by b.{}, b.{} order by bot_count desc",
             LLMChatRecord::ROLE_ID,
             LLMChatTemplate::TABLE,
             LLMChatRecord::TABLE,
@@ -187,8 +184,6 @@ impl LLMChatMapper for KDb {
             LLMChatRecord::ROLE_ID,
             LLMChatTemplate::OMIT_TID,
             OmitTID::never().as_num(),
-            LLMChatBot::TID,
-            TID::default().as_num() - 14 * 24 * 3600 * 1_000_000, // last 2 weeks
             LLMChatTemplate::OTID,
             LLMChatTemplate::OMIT_TID
         );
@@ -398,63 +393,5 @@ impl LLMChatMapper for KDb {
         let count = self.conn().await?.exec(updater).await?;
 
         Ok(LLMChatTruncateSessionRsp { count })
-    }
-}
-
-impl LLMChatDumpMapper for KDb {
-    async fn dump_llmchat_bot(
-        &self,
-        callback: &crate::mapper::dump::RecordCallbackType,
-    ) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(LLMChatBot::TABLE),
-            KDbRow::to_llmchat_bot,
-            callback,
-        )
-        .await?;
-
-        Ok(())
-    }
-
-    async fn dump_llmchat_template(
-        &self,
-        callback: &crate::mapper::dump::RecordCallbackType,
-    ) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(LLMChatRecord::TABLE),
-            KDbRow::to_llmchat_record,
-            callback,
-        )
-        .await?;
-
-        Ok(())
-    }
-
-    async fn dump_llmchat_session(
-        &self,
-        callback: &crate::mapper::dump::RecordCallbackType,
-    ) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(LLMChatSession::TABLE),
-            KDbRow::to_llmchat_session,
-            callback,
-        )
-        .await?;
-
-        Ok(())
-    }
-
-    async fn dump_llmchat_record(
-        &self,
-        callback: &crate::mapper::dump::RecordCallbackType,
-    ) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(LLMChatTemplate::TABLE),
-            KDbRow::to_llmchat_template,
-            callback,
-        )
-        .await?;
-
-        Ok(())
     }
 }

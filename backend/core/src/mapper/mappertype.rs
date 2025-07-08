@@ -48,11 +48,3 @@ macro_rules! expand_mt_branch {
         }
     };
 }
-
-impl MapperType {
-    pub(crate) async fn dump_and_callback(&self, writer: &RecordCallbackType) -> EResult {
-        match self {
-            MapperType::KDb(kdb) => kdb.dump_and_callback(writer).await,
-        }
-    }
-}

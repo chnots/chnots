@@ -5,3 +5,4 @@ pub(crate) mod kspace;
 pub(crate) mod ktab;
 pub(crate) mod llmchat;
 pub(crate) mod toent;
+pub(crate) mod sync;

@@ -6,7 +6,6 @@ use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
 use super::*;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::helper::create_tables;
-use crate::mapper::db::tabledumpsql::TableDumpSqlBuilder;
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -450,40 +449,5 @@ impl ChnotDeserializeMapper for KDbRow {
             kind_id: self.try_get(ChnotKindRel::KIND_ID)?,
             tid: self.try_get(ChnotKindRel::TID)?,
         })
-    }
-}
-
-impl ChnotDumpMapper for KDb {
-    async fn dump_chnot_meta(&self, callback: &crate::RecordCallbackType) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(ChnotMetadata::TABLE),
-            KDbRow::to_chnot_meta,
-            callback,
-        )
-        .await?;
-
-        Ok(())
-    }
-
-    async fn dump_chnot_record(&self, callback: &crate::RecordCallbackType) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(ChnotRecord::TABLE),
-            KDbRow::to_chnot_record,
-            callback,
-        )
-        .await?;
-
-        Ok(())
-    }
-
-    async fn dump_chnot_tag(&self, callback: &crate::RecordCallbackType) -> EResult {
-        self.read_iterator(
-            TableDumpSqlBuilder::table(ChnotTag::TABLE),
-            KDbRow::to_chnot_tag,
-            callback,
-        )
-        .await?;
-
-        Ok(())
     }
 }

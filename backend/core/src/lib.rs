@@ -60,12 +60,6 @@ pub async fn run(config: Config) -> EResult {
                     return;
                 };
                 info!("Begin to backup.");
-                state
-                    .mapper
-                    .dump_and_callback(&RecordCallbackType::File(worker))
-                    .await
-                    .unwrap();
-                info!("Finished to backup.");
             });
         });
     }
