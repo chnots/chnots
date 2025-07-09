@@ -62,6 +62,7 @@ pub struct LLMChatRecord {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
+    #[gts_primary]
     #[gts_type = "i64"]
     pub omit_tid: OmitTID,
     #[gts_type = "i64"]

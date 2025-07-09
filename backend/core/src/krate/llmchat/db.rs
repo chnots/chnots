@@ -133,7 +133,7 @@ impl LLMChatMapper for KDb {
     ) -> AResult<LLMChatInsertRecordRsp> {
         let obj = req.body.record;
         let omit =
-            LLMChatRecord::pkey_updater(obj.otid).set(LLMChatRecord::OMIT_TID, OmitTID::now());
+            LLMChatRecord::pkey_updater(obj.otid, OmitTID::never()).set(LLMChatRecord::OMIT_TID, OmitTID::now());
         let inserter = obj.to_owned().to_sql_inserter();
 
         let mut conn = self.conn().await?;
