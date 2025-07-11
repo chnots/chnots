@@ -15,6 +15,7 @@ use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
 use anyhow::anyhow;
 use chin_sql::str_type::Varchar;
+use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
@@ -281,7 +282,8 @@ impl ChnotMapper for KDb {
                     None
                 },
             )
-            .set_if_some(ChnotMetadata::KSPACE, req.body.kspace);
+            .set_if_some(ChnotMetadata::KSPACE, req.body.kspace)
+            .set(ChnotMetadata::TID, TID::default());
 
         tx.exec(omit).await?;
         tx.cmt().await?;
