@@ -1,8 +1,7 @@
 use std::ops::Deref;
 
-use chin_sql::{time_type::TID, ChinSqlError, SqlUpdater, SqlValue};
+use chin_sql::{ChinSqlError, SqlUpdater, SqlValue, time_type::TID};
 use serde::{Deserialize, Serialize, Serializer};
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct OmitTID(pub(crate) TID);
@@ -37,11 +36,7 @@ impl Serialize for OmitTID {
     where
         S: Serializer,
     {
-        if self.omitted() {
-            serializer.serialize_none()
-        } else {
-            serializer.serialize_i64(self.0.as_num())
-        }
+        serializer.serialize_i64(self.0.as_num())
     }
 }
 
@@ -81,4 +76,3 @@ impl<'a> TryFrom<SqlValue<'a>> for OmitTID {
         Ok(Self(v.into()))
     }
 }
-

@@ -1,30 +1,9 @@
 use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
-use crate::{expand_mt_branch, model::dto::KReq, MapperType, RecordCallbackType};
+use crate::{expand_mt_branch, model::dto::KReq, MapperType};
 
 use super::*;
-
-pub(crate) trait ChnotDeserializeMapper {
-    fn to_chnot_meta(self) -> AResult<ChnotMetadata>;
-    fn to_chnot_record(self) -> AResult<ChnotRecord>;
-    fn to_chnot_tag(self) -> AResult<ChnotTag>;
-    fn to_chnot_kind_rel(self) -> AResult<ChnotKindRel>;
-}
-
-pub(crate) trait ChnotDumpMapper {
-    async fn dump_chnot_meta(&self, callback: &RecordCallbackType) -> EResult;
-    async fn dump_chnot_record(&self, callback: &RecordCallbackType) -> EResult;
-    async fn dump_chnot_tag(&self, callback: &RecordCallbackType) -> EResult;
-
-    async fn dump_chnot(&self, callback: &RecordCallbackType) -> EResult {
-        self.dump_chnot_meta(callback).await?;
-        self.dump_chnot_record(callback).await?;
-        self.dump_chnot_tag(callback).await?;
-
-        Ok(())
-    }
-}
 
 pub trait ChnotMapper {
     async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;

@@ -1,14 +1,12 @@
 use chin_tools::EResult;
 
-use crate::krate::{
+use crate::{krate::{
     chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
     kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper, llmchat::mapper::LLMChatMapper,
-};
+}, mapper::{MapperConfig, MapperType}};
 
 use super::{
     db::{postgres::Postgres, sqlite::Sqlite},
-    dump::RecordCallbackType,
-    DumpMapper, MapperConfig, MapperType,
 };
 
 impl TryFrom<MapperConfig> for MapperType {

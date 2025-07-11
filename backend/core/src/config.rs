@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
-pub use crate::mapper::{MapperConfig, dump::filedump::FileBackupConfig};
+use crate::krate::sync::filedumper::FileBackupConfig;
+pub use crate::mapper::{MapperConfig};
 pub use crate::mapper::db::sqlite::SqliteConfig;
 
 #[cfg(feature = "tls")]    

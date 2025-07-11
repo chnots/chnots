@@ -1,12 +1,20 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use crate::{
+    app::ShareAppState,
     krate::sync::mapper::Dumper,
     mapper::{MapperRowType, MapperType},
 };
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct FileBackupConfig {
+    pub(crate) backup_dir: String,
+}
 
 pub struct DumpFilenamePattern {
     table_name: String,
@@ -15,11 +23,11 @@ pub struct DumpFilenamePattern {
 }
 
 impl DumpFilenamePattern {
-    pub fn new(table_name: String, start: TID) -> Self {
+    pub fn new(table_name: String, start: TID, end: TID) -> Self {
         Self {
             table_name,
             start,
-            end: TID::default(),
+            end,
         }
     }
 
@@ -72,21 +80,92 @@ impl DumpFilenamePattern {
     }
 }
 
-pub struct FileDumper {
-    table_name: String,
+pub struct FileDumper<P: AsRef<Path>> {
+    pub(crate) table_name: String,
+    pub(crate) backup_dir: P,
+    pub(crate) end_in: TID,
+    pub(crate) start_type: StartType,
 }
 
-impl FileDumper {
-    pub async fn dump_one_table<P: AsRef<Path>, F, T>(
-        table_name: &str,
-        backup_dir: P,
-        mapper_type: &MapperType,
-        mapper: F,
-    ) -> EResult
+#[derive(Clone)]
+pub enum StartType {
+    All,
+    TID(TID),
+    Increase,
+}
+
+impl<P: AsRef<Path>> FileDumper<P> {
+    pub async fn dump_one_table<F, T>(&self, mapper_type: &MapperType, mapper: F) -> EResult
     where
-        F: Fn(MapperRowType) -> AResult<T>,
+        F: Fn(MapperRowType) -> AResult<T> + Send + Sync + Clone + 'static,
+        T: Serialize + Send + 'static,
     {
-        let start_tid = DumpFilenamePattern::get_start_time(backup_dir, table_name)?;
-        mapper_type.dump(table_name, start_tid, 1000, mapper).await?
+        const PAGE_SIZE: usize = 1000;
+        let start_ex = match self.start_type {
+            StartType::All => TID::from(0),
+            StartType::TID(tid) => tid,
+            StartType::Increase => {
+                DumpFilenamePattern::get_start_time(&self.backup_dir, &self.table_name)?
+            }
+        };
+
+        let table_name = self.table_name.to_ascii_lowercase();
+        let backup_file = DumpFilenamePattern::new(table_name.to_string(), start_ex, self.end_in);
+        let backup_file = PathBuf::new()
+            .join(&self.backup_dir)
+            .join(backup_file.to_file_name());
+
+        loop {
+            let recs = mapper_type
+                .dump(
+                    &table_name,
+                    super::dto::FetchDataType::RangePage {
+                        start_ex,
+                        end_in: self.end_in,
+                        page_size: PAGE_SIZE,
+                    },
+                    mapper.clone(),
+                )
+                .await?;
+
+            if !recs.is_empty() {
+                let rec_lines: Result<Vec<String>, serde_json::Error> =
+                    recs.iter().map(|e| serde_json::to_string(e)).collect();
+                let rec_lines = rec_lines?.iter().join("\n");
+                log::info!("write to file {backup_file:?}");
+                tokio::fs::write(&backup_file, rec_lines).await?;
+            }
+
+            if recs.len() < PAGE_SIZE {
+                break;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[macro_export]
+macro_rules! dump_table_to_file {
+    ($mapper:expr, $table_type:tt, $start_type:expr, $backup_dir:expr, $end_in:expr) => {
+        let fd = $crate::krate::sync::filedumper::FileDumper {
+            table_name: $table_type::TABLE.to_string(),
+            start_type: $start_type.clone(),
+            backup_dir: $backup_dir.to_path_buf(),
+            end_in: $end_in,
+        };
+
+        fd.dump_one_table($mapper, |e| match e {
+            $crate::mapper::MapperRowType::KDb(kdb_row) => $table_type::try_from(kdb_row),
+        })
+        .await?;
+    };
+}
+
+impl ShareAppState {
+    pub async fn dump_all(&self, start_type: StartType) -> EResult {
+        self.dump_chnot_to_file(start_type.clone()).await?;
+
+        Ok(())
     }
 }

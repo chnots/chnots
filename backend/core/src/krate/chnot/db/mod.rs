@@ -2,7 +2,7 @@ pub(crate) mod inner;
 
 use std::str::FromStr;
 
-use super::mapper::{ChnotDeserializeMapper, ChnotDumpMapper, ChnotMapper};
+use super::mapper::ChnotMapper;
 use super::*;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::helper::create_tables;
@@ -20,8 +20,8 @@ use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::Local;
 use itertools::Itertools;
-use serde::Serialize;
 use log::info;
+use serde::Serialize;
 
 const UNTAGGED_TAG: &str = "<NON>";
 
@@ -247,7 +247,7 @@ impl ChnotMapper for KDb {
 
         let tx = conn.tx().await?;
         let reader = ChnotMetadata::pkey_reader(req.meta_otid, OmitTID::never());
-        let meta = tx.qry_opt(reader, KDbRow::to_chnot_meta).await?;
+        let meta: Option<ChnotMetadata> = tx.qry_opt(reader, |e| e.try_into()).await?;
 
         let Some(mut meta) = meta else {
             return Err(anyhow!("unable to file this chnot meta, {:?}", req));
@@ -307,7 +307,7 @@ impl ChnotMapper for KDb {
         &self,
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
-        self.chnot_tag_query_inner(req, |e| e.to_chnot_tag(), false)
+        self.chnot_tag_query_inner(req, |e| e.try_into(), false)
             .await
     }
 
@@ -391,7 +391,7 @@ impl ChnotMapper for KDb {
             .await?
             .qry_one(
                 ChnotKindRel::pkey_reader(req.meta_otid, OmitTID::never()),
-                |e| e.to_chnot_kind_rel(),
+                |e| e.try_into(),
                 false,
             )
             .await
@@ -399,29 +399,35 @@ impl ChnotMapper for KDb {
     }
 }
 
-impl ChnotDeserializeMapper for KDbRow {
-    fn to_chnot_meta(self) -> AResult<ChnotMetadata> {
+impl TryFrom<KDbRow> for ChnotMetadata {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let chnot = ChnotMetadata {
-            otid: self.try_get(ChnotMetadata::OTID)?,
-            kspace: self.try_get(ChnotMetadata::KSPACE)?,
-            kind: self.try_get(ChnotMetadata::KIND)?,
-            pin_time: self.try_get(ChnotMetadata::PIN_TIME)?,
-            omit_tid: self.try_get(ChnotMetadata::OMIT_TID)?,
-            archive_time: self.try_get(ChnotMetadata::ARCHIVE_TIME)?,
-            tid: self.try_get(ChnotMetadata::TID)?,
+            otid: value.try_get(ChnotMetadata::OTID)?,
+            kspace: value.try_get(ChnotMetadata::KSPACE)?,
+            kind: value.try_get(ChnotMetadata::KIND)?,
+            pin_time: value.try_get(ChnotMetadata::PIN_TIME)?,
+            omit_tid: value.try_get(ChnotMetadata::OMIT_TID)?,
+            archive_time: value.try_get(ChnotMetadata::ARCHIVE_TIME)?,
+            tid: value.try_get(ChnotMetadata::TID)?,
         };
         Ok(chnot)
     }
+}
 
-    fn to_chnot_record(self) -> AResult<ChnotRecord> {
+impl TryFrom<KDbRow> for ChnotRecord {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let chnot = ChnotRecord {
-            meta_otid: self.try_get(ChnotRecord::META_OTID)?,
-            content: self.try_get(ChnotRecord::CONTENT)?,
-            omit_tid: self.try_get(ChnotRecord::OMIT_TID)?,
-            tid: self.try_get(ChnotRecord::TID)?,
-            archor: self.try_get(ChnotRecord::ARCHOR)?,
+            meta_otid: value.try_get(ChnotRecord::META_OTID)?,
+            content: value.try_get(ChnotRecord::CONTENT)?,
+            omit_tid: value.try_get(ChnotRecord::OMIT_TID)?,
+            tid: value.try_get(ChnotRecord::TID)?,
+            archor: value.try_get(ChnotRecord::ARCHOR)?,
             todo_event: {
-                let opt: Option<String> = self.try_get(ChnotRecord::TODO_EVENT)?;
+                let opt: Option<String> = value.try_get(ChnotRecord::TODO_EVENT)?;
                 match opt {
                     Some(opt) => Some(TodoEvent::from_str(opt.as_str())?),
                     None => None,
@@ -430,24 +436,32 @@ impl ChnotDeserializeMapper for KDbRow {
         };
         Ok(chnot)
     }
+}
 
-    fn to_chnot_tag(self) -> AResult<ChnotTag> {
+impl TryFrom<KDbRow> for ChnotTag {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let obj = ChnotTag {
-            tid: self.try_get(ChnotTag::TID)?,
-            kspace: self.try_get(ChnotTag::KSPACE)?,
-            tag: self.try_get(ChnotTag::TAG)?,
-            meta_otid: self.try_get(ChnotTag::META_OTID)?,
-            omit_tid: self.try_get(ChnotTag::OMIT_TID)?,
+            tid: value.try_get(ChnotTag::TID)?,
+            kspace: value.try_get(ChnotTag::KSPACE)?,
+            tag: value.try_get(ChnotTag::TAG)?,
+            meta_otid: value.try_get(ChnotTag::META_OTID)?,
+            omit_tid: value.try_get(ChnotTag::OMIT_TID)?,
         };
         Ok(obj)
     }
+}
 
-    fn to_chnot_kind_rel(self) -> AResult<ChnotKindRel> {
+impl TryFrom<KDbRow> for ChnotKindRel {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         Ok(ChnotKindRel {
-            meta_otid: self.try_get(ChnotKindRel::META_OTID)?,
-            omit_tid: self.try_get(ChnotKindRel::OMIT_TID)?,
-            kind_id: self.try_get(ChnotKindRel::KIND_ID)?,
-            tid: self.try_get(ChnotKindRel::TID)?,
+            meta_otid: value.try_get(ChnotKindRel::META_OTID)?,
+            omit_tid: value.try_get(ChnotKindRel::OMIT_TID)?,
+            kind_id: value.try_get(ChnotKindRel::KIND_ID)?,
+            tid: value.try_get(ChnotKindRel::TID)?,
         })
     }
 }

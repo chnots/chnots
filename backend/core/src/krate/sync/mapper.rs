@@ -1,13 +1,15 @@
 use chin_tools::AResult;
 
-use crate::mapper::{MapperRowType, MapperType};
+use crate::{
+    krate::sync::dto::FetchDataType,
+    mapper::{MapperRowType, MapperType},
+};
 
 pub trait Dumper<T> {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        start_tid: chin_sql::time_type::TID,
-        page_size: usize,
+        fetch_data: FetchDataType,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -19,8 +21,7 @@ impl Dumper<MapperRowType> for MapperType {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        start_tid: chin_sql::time_type::TID,
-        page_size: usize,
+        fetch_data: FetchDataType,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -29,7 +30,7 @@ impl Dumper<MapperRowType> for MapperType {
     {
         match self {
             MapperType::KDb(kdb) => {
-                kdb.dump(table_name, start_tid, page_size, move |row| {
+                kdb.dump(table_name, fetch_data, move |row| {
                     mapper(MapperRowType::KDb(row))
                 })
                 .await

@@ -2,18 +2,14 @@ use app::{AppState, ShareAppState};
 use chin_tools::{AResult, EResult};
 use config::Config;
 use log::info;
-use mapper::{
-    MapperType,
-    dump::{
-        RecordCallbackType,
-        filedump::{BackupType, FileDumpWorker},
-    },
-};
+use mapper::MapperType;
 
 #[cfg(not(feature = "tauri"))]
 use log::Level;
 #[cfg(not(feature = "tauri"))]
 use tracing_log::LogTracer;
+
+use crate::krate::sync::filedumper::StartType;
 
 pub(crate) mod app;
 pub mod config;
@@ -53,14 +49,15 @@ pub async fn run(config: Config) -> EResult {
     let state: ShareAppState = state.into();
     {
         let state = state.clone();
-        std::thread::spawn(|| {
-            futures::executor::block_on(async move {
-                let Ok(worker) = FileDumpWorker::new(&state, "chnots", BackupType::All).await
-                else {
-                    return;
-                };
-                info!("Begin to backup.");
-            });
+        tokio::spawn(async move {
+            info!("Begin to backup.");
+
+            match state.dump_all(StartType::Increase).await {
+                Ok(()) => {}
+                Err(err) => {
+                    log::error!("unable to backup to files {err}")
+                }
+            }
         });
     }
 

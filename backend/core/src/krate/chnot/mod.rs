@@ -1,4 +1,4 @@
-pub(crate) mod backup;
+pub(crate) mod sync;
 pub(crate) mod controller;
 pub(crate) mod db;
 pub(crate) mod dto;

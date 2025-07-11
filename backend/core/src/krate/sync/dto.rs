@@ -14,20 +14,30 @@ pub struct SyncShakeRsp {
     pub last_sync_time: Option<TID>,
 }
 
-pub struct SyncSendSameKeyReq {
+pub struct SyncFetchSameKeyReq {
     pub sync_id: String,
     pub table_name: String,
+    pub start_tid_ex: String,
+}
+
+pub struct SyncFetchSameKeyRsp {
     pub same_keys: Vec<TheSameKey>,
 }
 
-pub struct SyncSendSameKeyRsp {}
-
 pub struct SyncFetchAbsentReq {
-    pub sync_id: String,
     pub table_name: String,
-    pub page_size: usize,
+    pub tids: Vec<TID>,
 }
 
 pub struct SyncFetchAbsentRsp<T: Serialize> {
     pub records: Vec<T>,
+}
+
+pub(crate) enum FetchDataType {
+    RangePage {
+        start_ex: TID,
+        end_in: TID,
+        page_size: usize,
+    },
+    Tids (Vec<TID>)
 }

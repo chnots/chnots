@@ -3,7 +3,7 @@ use chin_tools::{utils::sort_util, AResult, EResult};
 
 use crate::{
     expand_mt_branch,
-    mapper::{dump::RecordCallbackType, MapperType},
+    mapper::{ MapperType},
     model::dto::KReq,
 };
 
@@ -14,22 +14,6 @@ pub(crate) trait LLMChatDeserializeMapper {
     fn to_llmchat_template(self) -> AResult<LLMChatTemplate>;
     fn to_llmchat_session(self) -> AResult<LLMChatSession>;
     fn to_llmchat_record(self) -> AResult<LLMChatRecord>;
-}
-
-pub(crate) trait LLMChatDumpMapper {
-    async fn dump_llmchat_bot(&self, callback: &RecordCallbackType) -> EResult;
-    async fn dump_llmchat_template(&self, callback: &RecordCallbackType) -> EResult;
-    async fn dump_llmchat_session(&self, callback: &RecordCallbackType) -> EResult;
-    async fn dump_llmchat_record(&self, callback: &RecordCallbackType) -> EResult;
-
-    async fn dump_llmchat(&self, callback: &RecordCallbackType) -> EResult {
-        self.dump_llmchat_bot(callback).await?;
-        self.dump_llmchat_template(callback).await?;
-        self.dump_llmchat_session(callback).await?;
-        self.dump_llmchat_record(callback).await?;
-
-        Ok(())
-    }
 }
 
 pub trait LLMChatMapper {
