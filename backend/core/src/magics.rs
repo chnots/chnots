@@ -4,6 +4,7 @@ use std::ops::Deref;
 /// e.g. in table KKV.
 pub const NO_KSPACE: &str = "#NO_KSPACE#";
 pub const CLIENT_ID_KEY: &str = "#KLIENT_ID#";
+pub const APP_VERSION: &str = include_str!("../../../data/app.version");
 
 pub(crate) struct KImplWrapper<T: Send + Sync>(pub(crate) T);
 impl<T: Send + Sync> From<T> for KImplWrapper<T> {
