@@ -17,56 +17,70 @@ use crate::model::omit_tid::OmitTID;
 use super::mapper::{LLMChatDeserializeMapper, LLMChatMapper};
 use super::*;
 
-impl LLMChatDeserializeMapper for KDbRow {
-    fn to_llmchat_bot(self) -> AResult<LLMChatBot> {
-        let obj = LLMChatBot {
-            otid: self.try_get(LLMChatBot::OTID)?,
-            omit_tid: self.try_get(LLMChatBot::OMIT_TID)?,
-            name: self.try_get(LLMChatBot::NAME)?,
-            body: self.try_get(LLMChatBot::BODY)?,
-            update_time: self.try_get(LLMChatBot::UPDATE_TIME)?,
-            svg_logo: self.try_get(LLMChatBot::SVG_LOGO)?,
-            tid: self.try_get(LLMChatBot::TID)?,
-        };
-        Ok(obj)
-    }
+impl TryFrom<KDbRow> for LLMChatRecord {
+    type Error = anyhow::Error;
 
-    fn to_llmchat_template(self) -> AResult<LLMChatTemplate> {
-        let obj = LLMChatTemplate {
-            otid: self.try_get(LLMChatTemplate::OTID)?,
-            omit_tid: self.try_get(LLMChatTemplate::OMIT_TID)?,
-            update_time: self.try_get(LLMChatTemplate::UPDATE_TIME)?,
-            name: self.try_get(LLMChatTemplate::NAME)?,
-            prompt: self.try_get(LLMChatTemplate::PROMPT)?,
-            svg_logo: self.try_get(LLMChatTemplate::SVG_LOGO)?,
-            tid: self.try_get(LLMChatBot::TID)?,
-        };
-        Ok(obj)
-    }
-
-    fn to_llmchat_session(self) -> AResult<LLMChatSession> {
-        let obj = LLMChatSession {
-            otid: self.try_get(LLMChatSession::OTID)?,
-            template_otid: self.try_get(LLMChatSession::TEMPLATE_OTID)?,
-            title: self.try_get(LLMChatSession::TITLE)?,
-            omit_tid: self.try_get(LLMChatSession::OMIT_TID)?,
-            update_time: self.try_get(LLMChatSession::UPDATE_TIME)?,
-            tid: self.try_get(LLMChatBot::TID)?,
-        };
-        Ok(obj)
-    }
-
-    fn to_llmchat_record(self) -> AResult<LLMChatRecord> {
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let obj = LLMChatRecord {
-            otid: self.try_get(LLMChatRecord::OTID)?,
-            session_otid: self.try_get(LLMChatRecord::SESSION_OTID)?,
-            pre_record_otid: self.try_get(LLMChatRecord::PRE_RECORD_OTID)?,
-            content: self.try_get(LLMChatRecord::CONTENT)?,
-            role: self.try_get(LLMChatRecord::ROLE)?,
-            role_id: self.try_get(LLMChatRecord::ROLE_ID)?,
-            omit_tid: self.try_get(LLMChatRecord::OMIT_TID)?,
-            reasoning_content: self.try_get(LLMChatRecord::REASONING_CONTENT)?,
-            tid: self.try_get(LLMChatBot::TID)?,
+            otid: value.try_get(LLMChatRecord::OTID)?,
+            session_otid: value.try_get(LLMChatRecord::SESSION_OTID)?,
+            pre_record_otid: value.try_get(LLMChatRecord::PRE_RECORD_OTID)?,
+            content: value.try_get(LLMChatRecord::CONTENT)?,
+            role: value.try_get(LLMChatRecord::ROLE)?,
+            role_id: value.try_get(LLMChatRecord::ROLE_ID)?,
+            omit_tid: value.try_get(LLMChatRecord::OMIT_TID)?,
+            reasoning_content: value.try_get(LLMChatRecord::REASONING_CONTENT)?,
+            tid: value.try_get(LLMChatBot::TID)?,
+        };
+        Ok(obj)
+    }
+}
+
+impl TryFrom<KDbRow> for LLMChatBot {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+        let obj = LLMChatBot {
+            otid: value.try_get(LLMChatBot::OTID)?,
+            omit_tid: value.try_get(LLMChatBot::OMIT_TID)?,
+            name: value.try_get(LLMChatBot::NAME)?,
+            body: value.try_get(LLMChatBot::BODY)?,
+            update_time: value.try_get(LLMChatBot::UPDATE_TIME)?,
+            svg_logo: value.try_get(LLMChatBot::SVG_LOGO)?,
+            tid: value.try_get(LLMChatBot::TID)?,
+        };
+        Ok(obj)
+    }
+}
+
+impl TryFrom<KDbRow> for LLMChatTemplate {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+        let obj = LLMChatTemplate {
+            otid: value.try_get(LLMChatTemplate::OTID)?,
+            omit_tid: value.try_get(LLMChatTemplate::OMIT_TID)?,
+            update_time: value.try_get(LLMChatTemplate::UPDATE_TIME)?,
+            name: value.try_get(LLMChatTemplate::NAME)?,
+            prompt: value.try_get(LLMChatTemplate::PROMPT)?,
+            svg_logo: value.try_get(LLMChatTemplate::SVG_LOGO)?,
+            tid: value.try_get(LLMChatBot::TID)?,
+        };
+        Ok(obj)
+    }
+}
+
+impl TryFrom<KDbRow> for LLMChatSession {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+        let obj = LLMChatSession {
+            otid: value.try_get(LLMChatSession::OTID)?,
+            template_otid: value.try_get(LLMChatSession::TEMPLATE_OTID)?,
+            title: value.try_get(LLMChatSession::TITLE)?,
+            omit_tid: value.try_get(LLMChatSession::OMIT_TID)?,
+            update_time: value.try_get(LLMChatSession::UPDATE_TIME)?,
+            tid: value.try_get(LLMChatBot::TID)?,
         };
         Ok(obj)
     }
@@ -132,8 +146,8 @@ impl LLMChatMapper for KDb {
         req: KReq<LLMChatInsertRecordReq>,
     ) -> AResult<LLMChatInsertRecordRsp> {
         let obj = req.body.record;
-        let omit =
-            LLMChatRecord::pkey_updater(obj.otid, OmitTID::never()).set(LLMChatRecord::OMIT_TID, OmitTID::now());
+        let omit = LLMChatRecord::pkey_updater(obj.otid, OmitTID::never())
+            .set(LLMChatRecord::OMIT_TID, OmitTID::now());
         let inserter = obj.to_owned().to_sql_inserter();
 
         let mut conn = self.conn().await?;
@@ -163,7 +177,7 @@ impl LLMChatMapper for KDb {
         let bots = self
             .conn()
             .await?
-            .qry_list(sql, KDbRow::to_llmchat_bot)
+            .qry_list(sql, LLMChatBot::try_from)
             .await?
             .into_iter()
             .collect();
@@ -191,7 +205,7 @@ impl LLMChatMapper for KDb {
         let templates: Vec<LLMChatTemplate> = self
             .conn()
             .await?
-            .qry_list(sql, |e| e.to_llmchat_template())
+            .qry_list(sql, LLMChatTemplate::try_from)
             .await?;
 
         Ok(LLMChatListTemplateRsp { templates })
@@ -213,7 +227,7 @@ impl LLMChatMapper for KDb {
         let sessions = self
             .conn()
             .await?
-            .qry_list(query, |e| e.to_llmchat_session())
+            .qry_list(query, LLMChatSession::try_from)
             .await?;
 
         Ok(LLMChatListSessionRsp { sessions })
@@ -257,7 +271,7 @@ impl LLMChatMapper for KDb {
         let records: Vec<LLMChatRecord> = self
             .conn()
             .await?
-            .qry_list(query, |e| e.to_llmchat_record())
+            .qry_list(query, LLMChatRecord::try_from)
             .await?;
 
         Ok(LLMChatSessionDetailRsp { session, records })
@@ -319,9 +333,7 @@ impl LLMChatMapper for KDb {
         let tx = conn.tx().await?;
 
         let pk_read = LLMChatSession::pkey_reader(req.session_otid, OmitTID::never());
-        let mut sess = tx
-            .qry_one(pk_read, KDbRow::to_llmchat_session, false)
-            .await?;
+        let mut sess = tx.qry_one(pk_read, LLMChatSession::try_from, false).await?;
 
         let pk_update = LLMChatSession::pkey_updater(req.session_otid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());

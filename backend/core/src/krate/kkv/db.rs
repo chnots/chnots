@@ -16,16 +16,18 @@ use super::{
     *,
 };
 
-impl KKVDeserializeMapper for KDbRow {
-    fn to_kkv(self) -> AResult<KKV> {
+impl TryFrom<KDbRow> for KKV {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let obj = KKV {
-            omit_tid: self.try_get(KKV::OMIT_TID)?,
-            key: self.try_get(KKV::KEY)?,
-            value: self.try_get(KKV::VALUE)?,
-            kind: self.try_get(KKV::KIND)?,
-            kspace: self.try_get(KKV::KSPACE)?,
-            tid: self.try_get(KKV::TID)?,
-            archor: self.try_get(KKV::ARCHOR)?,
+            omit_tid: value.try_get(KKV::OMIT_TID)?,
+            key: value.try_get(KKV::KEY)?,
+            value: value.try_get(KKV::VALUE)?,
+            kind: value.try_get(KKV::KIND)?,
+            kspace: value.try_get(KKV::KSPACE)?,
+            tid: value.try_get(KKV::TID)?,
+            archor: value.try_get(KKV::ARCHOR)?,
         };
         Ok(obj)
     }
@@ -69,7 +71,7 @@ impl KDbExecutor<'_> {
             Wheres::equal(KKV::OMIT_TID, OmitTID::never()),
         ]));
 
-        let kv = self.qry_opt(query, KDbRow::to_kkv).await?;
+        let kv: Option<KKV> = self.qry_opt(query, |e| e.try_into()).await?;
 
         Ok(KKVQueryOneRsp {
             tid: kv.as_ref().map(|kv| kv.tid),
@@ -77,7 +79,11 @@ impl KDbExecutor<'_> {
         })
     }
 
-    pub async fn kkv_transisent_overwrite<T: Serialize>(&self, key: Varchar<500>, value: T) -> EResult {
+    pub async fn kkv_transisent_overwrite<T: Serialize>(
+        &self,
+        key: Varchar<500>,
+        value: T,
+    ) -> EResult {
         self.exec(
             KKVTransient {
                 key,
@@ -119,7 +125,7 @@ impl KKVMapper for KDb {
             }),
         ]));
 
-        let kkvs = self.conn().await?.qry_list(query, KDbRow::to_kkv).await?;
+        let kkvs = self.conn().await?.qry_list(query, |e| e.try_into()).await?;
 
         Ok(KKVQueryManyRsp { kkvs })
     }

@@ -16,28 +16,32 @@ use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{LimitOffset, OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 
-impl KFileDeserializeMapper for KDbRow {
-    fn to_inline_kfile(self) -> AResult<InlineKFile> {
+impl TryFrom<KDbRow> for InlineKFile {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let obj = InlineKFile {
-            tid: self.try_get(InlineKFile::TID)?,
-            content: self.try_get(InlineKFile::CONTENT)?,
-            sid: self.try_get(InlineKFile::SID)?,
+            tid: value.try_get(InlineKFile::TID)?,
+            content: value.try_get(InlineKFile::CONTENT)?,
+            sid: value.try_get(InlineKFile::SID)?,
         };
         Ok(obj)
     }
-
-    fn to_kfile_meta(self) -> AResult<KFileMeta> {
+}
+impl TryFrom<KDbRow> for KFileMeta {
+    type Error = anyhow::Error;
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         Ok(KFileMeta {
-            filename: self.try_get(KFileMeta::FILENAME)?,
-            tid: self.try_get(KFileMeta::TID)?,
-            omit_tid: self.try_get(KFileMeta::OMIT_TID)?,
-            archor: self.try_get(KFileMeta::ARCHOR)?,
-            inline: self.try_get(KFileMeta::INLINE)?,
-            sid: self.try_get(KFileMeta::SID)?,
-            id: self.try_get(KFileMeta::ID)?,
-            content_type: self.try_get(KFileMeta::CONTENT_TYPE)?,
-            last_modified: self.try_get(KFileMeta::LAST_MODIFIED)?,
-            filesize: self.try_get(KFileMeta::FILESIZE)?,
+            filename: value.try_get(KFileMeta::FILENAME)?,
+            tid: value.try_get(KFileMeta::TID)?,
+            omit_tid: value.try_get(KFileMeta::OMIT_TID)?,
+            archor: value.try_get(KFileMeta::ARCHOR)?,
+            inline: value.try_get(KFileMeta::INLINE)?,
+            sid: value.try_get(KFileMeta::SID)?,
+            id: value.try_get(KFileMeta::ID)?,
+            content_type: value.try_get(KFileMeta::CONTENT_TYPE)?,
+            last_modified: value.try_get(KFileMeta::LAST_MODIFIED)?,
+            filesize: value.try_get(KFileMeta::FILESIZE)?,
         })
     }
 }
@@ -130,7 +134,8 @@ impl KFileMapper for KDb {
                 .await?
                 .as_executor()
                 .qry_opt(KFileMeta::pkey_reader(key.clone(), OmitTID::never()), |e| {
-                    e.to_kfile_meta()
+                    let c: InlineKFile = e.try_into()?;
+                    Ok(c)
                 })
                 .await?
                 .map(|e| e.sid);
@@ -147,11 +152,7 @@ impl KFileMapper for KDb {
             .sov("order by tid desc")
             .custom(LimitOffset::new(1));
 
-        let res = self
-            .conn()
-            .await?
-            .qry_list(query, |t| t.to_inline_kfile())
-            .await?;
+        let res = self.conn().await?.qry_list(query, |t| t.try_into()).await?;
 
         Ok(QueryInlineKFileRsp { res })
     }
@@ -161,7 +162,7 @@ impl KFileMapper for KDb {
             .conn()
             .await?
             .qry_opt(KFileMeta::pkey_reader(req.meta_id, OmitTID::never()), |e| {
-                e.to_kfile_meta()
+                e.try_into()
             })
             .await?;
         Ok(QueryKFileMetaRsp { meta })
@@ -175,7 +176,7 @@ impl KFileMapper for KDb {
             .conn()
             .await?
             .qry_opt(KFileMeta::pkey_reader(sid, OmitTID::never()), |e| {
-                e.to_kfile_meta()
+                e.try_into()
             })
             .await?;
         Ok(QueryKFileMetaRsp { meta })

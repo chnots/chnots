@@ -7,7 +7,7 @@ use itertools::Itertools;
 
 use crate::{
     mapper::db::{
-        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier,
+        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
         KDbTransactionBehaiver, helper::create_tables,
     },
     model::{dto::KReq, omit_tid::OmitTID},
@@ -151,21 +151,7 @@ impl KTabMapper for KDb {
         let meta = self
             .conn()
             .await?
-            .qry_opt(ssb, |row| {
-                Ok(KTabMeta {
-                    columns: {
-                        let columns: String = row.try_get(KTabMeta::COLUMNS)?;
-                        serde_json::from_str(&columns)?
-                    },
-                    table_name: row.try_get(KTabMeta::TABLE_NAME)?,
-                    table_comment: row.try_get(KTabMeta::TABLE_COMMENT)?,
-                    update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
-                    omit_tid: row.try_get(KTabMeta::OMIT_TID)?,
-                    real_table: row.try_get(KTabMeta::REAL_TABLE)?,
-                    otid: row.try_get(KTabMeta::OTID)?,
-                    tid: row.try_get(KTabMeta::TID)?,
-                })
-            })
+            .qry_opt(ssb, |row| row.try_into())
             .await?;
 
         Ok(KTabMetaQueryRsp { meta })
@@ -201,14 +187,8 @@ impl KTabMapper for KDb {
                     .conn()
                     .await?
                     .qry_list(reader, |row| {
-                        Ok($sub_table {
-                            table_otid: row.try_get($sub_table::TABLE_OTID)?,
-                            col_otid: row.try_get($sub_table::COL_OTID)?,
-                            row_otid: row.try_get($sub_table::ROW_OTID)?,
-                            cell_data: row.try_get($sub_table::CELL_DATA)?,
-                            tid: row.try_get($sub_table::TID)?,
-                            omit_tid: row.try_get($sub_table::OMIT_TID)?,
-                        })
+                        let t: $sub_table = row.try_into()?;
+                        Ok(t)
                     })
                     .await?
                     .into_iter()
@@ -259,3 +239,46 @@ impl KTabMapper for KDb {
         .await
     }
 }
+
+impl TryFrom<KDbRow> for KTabMeta {
+    type Error = anyhow::Error;
+
+    fn try_from(row: KDbRow) -> Result<Self, Self::Error> {
+        Ok(KTabMeta {
+            columns: {
+                let columns: String = row.try_get(KTabMeta::COLUMNS)?;
+                serde_json::from_str(&columns)?
+            },
+            table_name: row.try_get(KTabMeta::TABLE_NAME)?,
+            table_comment: row.try_get(KTabMeta::TABLE_COMMENT)?,
+            update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
+            omit_tid: row.try_get(KTabMeta::OMIT_TID)?,
+            real_table: row.try_get(KTabMeta::REAL_TABLE)?,
+            otid: row.try_get(KTabMeta::OTID)?,
+            tid: row.try_get(KTabMeta::TID)?,
+        })
+    }
+}
+
+macro_rules! row_into_ktab_cell {
+    ($sub_table:tt) => {
+        impl TryFrom<KDbRow> for $sub_table {
+            type Error = anyhow::Error;
+
+            fn try_from(row: KDbRow) -> Result<Self, Self::Error> {
+                Ok($sub_table {
+                    table_otid: row.try_get($sub_table::TABLE_OTID)?,
+                    col_otid: row.try_get($sub_table::COL_OTID)?,
+                    row_otid: row.try_get($sub_table::ROW_OTID)?,
+                    cell_data: row.try_get($sub_table::CELL_DATA)?,
+                    tid: row.try_get($sub_table::TID)?,
+                    omit_tid: row.try_get($sub_table::OMIT_TID)?,
+                })
+            }
+        }
+    };
+}
+
+row_into_ktab_cell!(KTabCellDate);
+row_into_ktab_cell!(KTabCellDecimal);
+row_into_ktab_cell!(KTabCellText);

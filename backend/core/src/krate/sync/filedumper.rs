@@ -165,6 +165,11 @@ macro_rules! dump_table_to_file {
 impl ShareAppState {
     pub async fn dump_all(&self, start_type: StartType) -> EResult {
         self.dump_chnot_to_file(start_type.clone()).await?;
+        self.dump_kfile_to_file(start_type.clone()).await?;
+        self.dump_kkv_to_file(start_type.clone()).await?;
+        self.dump_kspace_to_file(start_type.clone()).await?;
+        self.dump_ktab_to_file(start_type.clone()).await?;
+        self.dump_llmchat_to_file(start_type.clone()).await?;
 
         Ok(())
     }

@@ -65,3 +65,20 @@ impl KSpaceMapper for KDb {
         create_tables(vec![KSpace::create_sql()], self).await
     }
 }
+
+impl TryFrom<KDbRow> for KSpace {
+    type Error = anyhow::Error;
+
+    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            name: value.try_get(Self::NAME)?,
+            omit_tid: value.try_get(Self::OMIT_TID)?,
+            color: value.try_get(Self::COLOR)?,
+            managers: {
+                let s: String = value.try_get(Self::MANAGERS)?;
+                serde_json::from_str(s.as_str())?
+            },
+            tid: value.try_get(Self::TID)?,
+        })
+    }
+}
