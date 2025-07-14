@@ -6,14 +6,14 @@ use crate::{expand_mt_branch, model::dto::KReq, MapperType};
 use super::*;
 
 pub trait ChnotMapper {
-    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp>;
+    async fn chnot_overwrite_record(&self, req: KReq<ChnotOverwriteRecordReq>) -> AResult<ChnotOverwriteRecordRsp>;
     async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp>;
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>>;
     async fn chnot_query_kind_rel(
         &self,
         req: KReq<ChnotKindRelQueryReq>,
     ) -> AResult<ChnotKindRelQueryRsp>;
-    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp>;
+    async fn chnot_overwrite_meta(&self, req: KReq<ChnotOverwriteMetaReq>) -> AResult<ChnotOverwriteMetaRsp>;
 
     async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult;
     async fn chnot_tag_query(
@@ -29,8 +29,8 @@ pub trait ChnotMapper {
 }
 
 impl ChnotMapper for MapperType {
-    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
-        expand_mt_branch!(self.chnot_overwrite(req))
+    async fn chnot_overwrite_record(&self, req: KReq<ChnotOverwriteRecordReq>) -> AResult<ChnotOverwriteRecordRsp> {
+        expand_mt_branch!(self.chnot_overwrite_record(req))
     }
 
     async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp> {
@@ -41,8 +41,8 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_query(req))
     }
 
-    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
-        expand_mt_branch!(self.chnot_update(req))
+    async fn chnot_overwrite_meta(&self, req: KReq<ChnotOverwriteMetaReq>) -> AResult<ChnotOverwriteMetaRsp> {
+        expand_mt_branch!(self.chnot_overwrite_meta(req))
     }
 
     async fn ensure_table_chnot(&self) -> EResult {

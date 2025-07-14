@@ -11,7 +11,7 @@ import clsx from "clsx";
 import useResizeObserver from "@react-hook/resize-observer";
 import { useChnotStore } from "@/krate/chnot/store";
 import {
-  chnotOverwrite,
+  chnotOverwriteRecord,
   chnotQuery,
   chnotQueryKindRel,
 } from "@/krate/chnot/service";
@@ -37,7 +37,7 @@ import SessionContainer from "@/krate/llmchat/component/session-container";
 import { ChnotKindIcon } from "./chnot-kind-icon";
 import { createStore, StoreApi, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { Chnot, ChnotOverwriteReq } from "../dto";
+import { Chnot, ChnotOverwriteRecordReq } from "../dto";
 import useDebounce from "@/hooks/use-debounce";
 import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
@@ -117,7 +117,7 @@ function createChnotStore(props: ChnotEditorProps) {
 }
 
 const ChnotEditorContext = createContext<StoreApi<ChnotEditorState> | null>(
-  null,
+  null
 );
 
 function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
@@ -127,7 +127,7 @@ function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
     store!,
     useShallow((store) => {
       return selector(store);
-    }),
+    })
   );
 }
 
@@ -178,9 +178,9 @@ const ChnotSaver = () => {
   const metaTidRef = useRef(metaTid);
 
   const debounceSave = useDebounce(
-    async (req: ChnotOverwriteReq) => {
+    async (req: ChnotOverwriteRecordReq) => {
       onSetSaveState(SaveState.Saving);
-      const rsp = await chnotOverwrite(req);
+      const rsp = await chnotOverwriteRecord(req);
       if (!metaTidRef.current) {
         onSetMetaTid(rsp.meta_otid);
         metaTidRef.current = rsp.meta_otid;
@@ -211,7 +211,7 @@ const ChnotSaver = () => {
       return;
     }
     onSetSaveState(SaveState.Dirty);
-    const req: ChnotOverwriteReq = {
+    const req: ChnotOverwriteRecordReq = {
       content: content ?? "",
       kind: chnotKind!,
       meta_otid: metaTidRef.current,

@@ -3,7 +3,7 @@ import { chnotShortDate } from "@/lib/date-utils";
 import Icon from "@/common/component/icon";
 import { useChnotStore } from "@/krate/chnot/store";
 import { Chnot } from "@/krate/chnot/dto";
-import { chnotUpdate } from "@/krate/chnot/service";
+import { chnotOverwriteMeta } from "@/krate/chnot/service";
 import { ChnotKind } from "@/krate/chnot/po";
 import {
   SidebarMenuItem,
@@ -102,7 +102,7 @@ const ChnotSidebarItem = React.forwardRef(
       : chnot.record.content.substring(0, 500);
 
     const onArchive = async () => {
-      await chnotUpdate({
+      await chnotOverwriteMeta({
         meta_otid: chnot.meta.otid,
         archive: true,
       });
@@ -111,7 +111,7 @@ const ChnotSidebarItem = React.forwardRef(
 
     const onTogglePin = async () => {
       const pin = chnot.meta.pin_time ? false : true;
-      await chnotUpdate({
+      await chnotOverwriteMeta({
         meta_otid: chnot.meta.otid,
         pinned: pin,
       });
@@ -214,7 +214,7 @@ const ChnotSidebarItem = React.forwardRef(
                   <KSpaceSelectDropDownGroup
                     kspace={chnot.meta.kspace}
                     onSelect={(e) => {
-                      chnotUpdate({
+                      chnotOverwriteMeta({
                         meta_otid: chnot.meta.otid,
                         kspace: e,
                       }).then(() => {

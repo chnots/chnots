@@ -12,7 +12,7 @@ pub struct Chnot {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotUpdateReq {
+pub struct ChnotOverwriteMetaReq {
     pub meta_otid: TID,
     pub kspace: Option<Varchar<40>>,
     pub pinned: Option<bool>,
@@ -20,10 +20,10 @@ pub struct ChnotUpdateReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotUpdateRsp {}
+pub struct ChnotOverwriteMetaRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteReq {
+pub struct ChnotOverwriteRecordReq {
     pub meta_otid: Option<TID>,
     pub content: Text,
     pub kind: ChnotKind,
@@ -31,7 +31,7 @@ pub struct ChnotOverwriteReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteRsp {
+pub struct ChnotOverwriteRecordRsp {
     pub meta_otid: TID,
     pub rec_tid: TID,
     pub kspace: Varchar<40>,

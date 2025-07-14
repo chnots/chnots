@@ -37,14 +37,14 @@ export type ChnotQueryRsp = {
   has_next: boolean;
 };
 
-export type ChnotOverwriteReq = {
+export type ChnotOverwriteRecordReq = {
   meta_otid?: TID;
   content: DbText;
   kind: ChnotKind;
   kind_id?: string;
 };
 
-export type ChnotOverwriteRsp = {
+export type ChnotOverwriteRecordRsp = {
   meta_otid: TID;
   rec_tid: TID;
   kspace: Varchar<40>;
@@ -58,7 +58,7 @@ export type ChnotArchiveReq = {
   logic: boolean;
 };
 
-export type ChnotUpdateReq = {
+export type ChnotOverwriteMetaReq = {
   meta_otid: TID;
   kspace?: Varchar<40>;
   pinned?: boolean;
@@ -110,7 +110,7 @@ export type ToentGuessRsp = {
   toents: Toent[];
 };
 
-export type ChnotUpdateRsp = object;
+export type ChnotOverwriteMetaRsp = object;
 
 export type ChnotArchiveRsp = object;
 

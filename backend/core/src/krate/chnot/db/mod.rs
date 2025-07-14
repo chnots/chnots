@@ -13,7 +13,6 @@ use crate::mapper::db::{
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 use crate::util::result_util::UnwrapOr;
-use anyhow::anyhow;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, SegOrVal, SqlBuilder};
@@ -243,7 +242,7 @@ impl ChnotMapper for KDb {
         })
     }
 
-    async fn chnot_update(&self, req: KReq<ChnotUpdateReq>) -> AResult<ChnotUpdateRsp> {
+    async fn chnot_overwrite_meta(&self, req: KReq<ChnotOverwriteMetaReq>) -> AResult<ChnotOverwriteMetaRsp> {
         let mut conn = self.conn().await?;
 
         let tx = conn.tx().await?;
@@ -281,10 +280,10 @@ impl ChnotMapper for KDb {
 
         tx.cmt().await?;
 
-        Ok(ChnotUpdateRsp {})
+        Ok(ChnotOverwriteMetaRsp {})
     }
 
-    async fn chnot_overwrite(&self, req: KReq<ChnotOverwriteReq>) -> AResult<ChnotOverwriteRsp> {
+    async fn chnot_overwrite_record(&self, req: KReq<ChnotOverwriteRecordReq>) -> AResult<ChnotOverwriteRecordRsp> {
         let mut conn = self.conn().await?;
         let tx = conn.transaction().await?;
         let ans = tx.chnot_overwrite(req).await;

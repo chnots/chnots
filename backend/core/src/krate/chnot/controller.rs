@@ -15,23 +15,23 @@ use super::*;
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/chnot", put(chnot_overwrite))
+        .route("/api/v1/chnot-overwrite-record", put(chnot_overwrite_record))
+        .route("/api/v1/chnot-overwrite-meta", post(chnot_overwrite_meta))
         .route("/api/v1/chnot", delete(chnot_deletetion))
         .route("/api/v1/chnot-query", post(chnot_query))
-        .route("/api/v1/chnot-update", post(chnot_update))
         .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
         .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
         .route("/api/v1/chnot-tag-refresh-all", post(chnot_tag_refresh_all))
         .route("/api/v1/chnot-query-kind-rel", get(chnot_query_kind_rel))
 }
 
-async fn chnot_overwrite(
+async fn chnot_overwrite_record(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotOverwriteReq>,
-) -> KResponse<ChnotOverwriteRsp> {
+    Json(req): Json<ChnotOverwriteRecordReq>,
+) -> KResponse<ChnotOverwriteRecordRsp> {
     state
-        .chnot_overwrite(kreq(headers, req))
+        .chnot_overwrite_record(kreq(headers, req))
         .await
         .into()
 }
@@ -44,12 +44,12 @@ async fn chnot_deletetion(
     state.mapper.chnot_archive(kreq(headers, req)).await.into()
 }
 
-async fn chnot_update(
+async fn chnot_overwrite_meta(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotUpdateReq>,
-) -> KResponse<ChnotUpdateRsp> {
-    state.mapper.chnot_update(kreq(headers, req)).await.into()
+    Json(req): Json<ChnotOverwriteMetaReq>,
+) -> KResponse<ChnotOverwriteMetaRsp> {
+    state.mapper.chnot_overwrite_meta(kreq(headers, req)).await.into()
 }
 
 async fn chnot_query(

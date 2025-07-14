@@ -115,8 +115,8 @@ impl<'a> KDbTx<'a> {
 
     pub(super) async fn chnot_overwrite(
         &self,
-        req: KReq<ChnotOverwriteReq>,
-    ) -> AResult<ChnotOverwriteRsp> {
+        req: KReq<ChnotOverwriteRecordReq>,
+    ) -> AResult<ChnotOverwriteRecordRsp> {
         log::debug!("begin to overwrite chnot, {:?}", req.meta_otid);
 
         let meta_otid = match req.meta_otid {
@@ -229,7 +229,7 @@ impl<'a> KDbTx<'a> {
         )
         .await?;
 
-        Ok(ChnotOverwriteRsp {
+        Ok(ChnotOverwriteRecordRsp {
             meta_otid: *meta_otid,
             rec_tid,
             kspace: req.kspace,
