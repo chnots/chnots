@@ -5,6 +5,7 @@ use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{SqlBuilder, SqlUpdater, Wheres};
 use chin_tools::{AResult, EResult};
+use itertools::Itertools;
 
 use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::{
@@ -162,24 +163,30 @@ impl LLMChatMapper for KDb {
     async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
         let _ = req;
         let sql = format!(
-            "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} where b.{} = {} group by b.{}, b.{} order by bot_count desc",
-            LLMChatRecord::ROLE_ID,
+            "select * from {} bot left join (select {}, count({}) as bcount from {} where {} > {} group by {}) rc on bot.{} = rc.{} order by bcount desc",
             LLMChatBot::TABLE,
-            LLMChatRecord::TABLE,
-            LLMChatBot::OTID,
             LLMChatRecord::ROLE_ID,
-            LLMChatBot::OMIT_TID,
-            OmitTID::never().as_num(),
+            LLMChatRecord::ROLE_ID,
+            LLMChatRecord::TABLE,
+            LLMChatBot::TID,
+            TID::default().as_num() - 14 * 24 * 3600 * 1000000,
+            LLMChatRecord::ROLE_ID,
             LLMChatBot::OTID,
-            LLMChatBot::OMIT_TID
+            LLMChatRecord::ROLE_ID
         );
 
         let bots = self
             .conn()
             .await?
-            .qry_list(sql, LLMChatBot::try_from)
+            .qry_list(sql, |row| {
+                let c: Option<i64> = row.try_get("bcount")?;
+
+                Ok((c.unwrap_or(0), LLMChatBot::try_from(row)?))
+            })
             .await?
             .into_iter()
+            .sorted_by(|r1, r2| r2.0.cmp(&r1.0))
+            .map(|(_, bot)| bot)
             .collect();
 
         Ok(LLMChatListBotRsp { bots })
