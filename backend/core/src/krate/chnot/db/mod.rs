@@ -247,45 +247,38 @@ impl ChnotMapper for KDb {
         let mut conn = self.conn().await?;
 
         let tx = conn.tx().await?;
-        let reader = ChnotMetadata::pkey_reader(req.meta_otid, OmitTID::never());
-        let meta: Option<ChnotMetadata> = tx.qry_opt(reader, |e| e.try_into()).await?;
+        let tid = OmitTID::now();
+        let omiter = ChnotMetadata::pkey_updater(req.meta_otid, OmitTID::never())
+            .set(ChnotMetadata::OMIT_TID, tid);
+        tx.exec(omiter).await?;
 
-        let Some(mut meta) = meta else {
-            return Err(anyhow!("unable to file this chnot meta, {:?}", req));
-        };
-        meta.omit_tid = OmitTID::now();
+        let reader = ChnotMetadata::pkey_reader(req.meta_otid, tid);
+        let mut meta: ChnotMetadata = tx.qry_one(reader, |e| e.try_into(), false).await?;
+
+        meta.omit_tid = OmitTID::never();
+        meta.tid = TID::default();
+        if let Some(o) = req.pinned {
+            if o {
+                meta.pin_time = Some(Local::now().fixed_offset());
+            } else {
+                meta.pin_time = None;
+            }
+        }
+
+        if let Some(o) = req.archive {
+            if o {
+                meta.archive_time = Some(Local::now().fixed_offset());
+            } else {
+                meta.archive_time = None;
+            }
+        }
+
+        if let Some(ksapce) = req.body.kspace {
+            meta.kspace = ksapce;
+        }
 
         tx.exec(meta.to_sql_inserter()).await?;
 
-        let omit = ChnotMetadata::pkey_updater(req.meta_otid, OmitTID::never())
-            .set_if_some(
-                ChnotMetadata::PIN_TIME,
-                if let Some(o) = req.pinned {
-                    if o {
-                        Some(Some(Local::now().fixed_offset()))
-                    } else {
-                        Some(None)
-                    }
-                } else {
-                    None
-                },
-            )
-            .set_if_some(
-                ChnotMetadata::ARCHIVE_TIME,
-                if let Some(o) = req.archive {
-                    if o {
-                        Some(Some(Local::now().fixed_offset()))
-                    } else {
-                        Some(None)
-                    }
-                } else {
-                    None
-                },
-            )
-            .set_if_some(ChnotMetadata::KSPACE, req.body.kspace)
-            .set(ChnotMetadata::TID, TID::default());
-
-        tx.exec(omit).await?;
         tx.cmt().await?;
 
         Ok(ChnotUpdateRsp {})
