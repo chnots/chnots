@@ -23,7 +23,7 @@ const LLMChatTemplateList = ({
   onChangeEditTemplate: (template: LLMChatTemplate) => void;
 }) => {
   const isMobile = useIsMobile();
-  const { listTemplates } = useLLMChatStore();
+  const { listTemplates, refreshTemplates } = useLLMChatStore();
 
   const items = listTemplates();
   const className =
@@ -65,11 +65,11 @@ const LLMChatTemplateList = ({
                 )}
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-48 rounded-lg"
+                className="rounded-lg"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DialogTrigger>
+                <DialogTrigger className="w-full">
                   <DropdownMenuItem
                     onSelect={(e) => {
                       e.preventDefault();
@@ -84,6 +84,7 @@ const LLMChatTemplateList = ({
                   onClick={(e) => {
                     e.preventDefault();
                     llmchatTemplateDelete({ template_otid: item.otid });
+                    refreshTemplates();
                   }}
                 >
                   Delete

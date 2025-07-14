@@ -22,7 +22,23 @@ export async function fetchAndModifySvg(url: string) {
 }
 
 export const detectSVG = (s: string) => {
-  const regex =
-    /^\s*(?:<\?xml[^>]*>\s*)?(?:<!doctype svg[^>]*\s*(?:\[?(?:\s*<![^>]*>\s*)*\]?)*[^>]*>\s*)?(?:<svg[^>]*>[^]*<\/svg>|<svg[^/>]*\/\s*>)\s*$/i;
-  return regex.test(s);
+  if (typeof s !== "string" || !s.trim()) {
+    return false;
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(s, "image/svg+xml");
+
+    console.log("doc: ", doc);
+    const parserErrors = doc.getElementsByTagName("parsererror");
+    if (parserErrors.length > 0) {
+      return false;
+    }
+
+    const svgElement = doc.documentElement;
+    return svgElement.tagName.toLowerCase() === "svg";
+  } catch (error) {
+    return false;
+  }
 };
