@@ -1,10 +1,9 @@
 use anyhow::Ok;
 use chin_sql::time_type::TID;
-use chin_tools::{AResult, EResult, SharedStr};
+use chin_tools::{AResult, EResult};
 
 use crate::{
     MapperType, expand_mt_branch,
-    krate::kkv::{KKVOverwriteReq, KKVQueryManyReq, KKVType, mapper::KKVMapper},
     magics::NO_KSPACE,
     model::{dto::KReq, omit_tid::OmitTID},
 };

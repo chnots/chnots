@@ -7,7 +7,6 @@ use crate::{
     app::ShareAppState,
     dump_table_to_file,
     krate::{
-        kfile::{InlineKFile, KFileMeta},
         ktab::{KTabCellDate, KTabCellDecimal, KTabCellText, KTabMeta},
         sync::filedumper::StartType,
     },

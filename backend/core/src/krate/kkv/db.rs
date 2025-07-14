@@ -12,7 +12,7 @@ use crate::{
 };
 
 use super::{
-    mapper::{KKVDeserializeMapper, KKVMapper},
+    mapper::KKVMapper,
     *,
 };
 

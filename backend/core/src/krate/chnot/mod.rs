@@ -4,6 +4,8 @@ pub(crate) mod db;
 pub(crate) mod dto;
 pub(crate) mod mapper;
 pub(crate) mod po;
+// TODO remove this dead code
+#[allow(dead_code)]
 pub(crate) mod parser;
 
 pub(crate) use dto::*;

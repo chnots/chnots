@@ -172,10 +172,10 @@ impl<'a> ChnotParser<'a> {
                 for p in original[pos.start.offset..pos.end.offset].split("\n") {
                     let p = p.trim_start();
                     let prefix = "// ID: ";
-                    if p.starts_with(prefix) {
+                    if let Some(suffix) =  p.strip_prefix(prefix) {
                         chnot_block
                             .props
-                            .push(PropsType::ID(p[prefix.len()..].to_string()));
+                            .push(PropsType::ID(suffix.to_string()));
                     }
                 }
             }

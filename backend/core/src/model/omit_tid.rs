@@ -8,11 +8,6 @@ pub(crate) struct OmitTID(pub(crate) TID);
 
 impl OmitTID {
     #[inline]
-    pub fn omitted(&self) -> bool {
-        !self.0.is_never()
-    }
-
-    #[inline]
     pub fn never() -> Self {
         Self(TID::never())
     }

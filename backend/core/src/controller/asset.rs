@@ -6,7 +6,7 @@ use axum::{
     routing::{Router, get},
 };
 use rust_embed::RustEmbed;
-use log::{debug, warn};
+use log::warn;
 
 use crate::app::ShareAppState;
 

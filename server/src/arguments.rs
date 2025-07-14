@@ -8,8 +8,6 @@ pub(crate) struct Arguments {
 }
 
 pub mod tests {
-    use chnots_core::config::Config;
-
     #[test]
     fn test_db_deserialize() {
         let toml_str = r#"
@@ -18,7 +16,7 @@ pub mod tests {
         filepath = "/home/123"
     "#;
 
-        let config: Config = toml::from_str(toml_str).unwrap();
+        let config: chnots_core::config::Config = toml::from_str(toml_str).unwrap();
         println!("{config:?}");
     }
 }

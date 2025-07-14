@@ -14,7 +14,7 @@ use crate::mapper::db::{
 use crate::model::dto::KReq;
 use crate::model::omit_tid::OmitTID;
 
-use super::mapper::{LLMChatDeserializeMapper, LLMChatMapper};
+use super::mapper::LLMChatMapper;
 use super::*;
 
 impl TryFrom<KDbRow> for LLMChatRecord {

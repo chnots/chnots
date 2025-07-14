@@ -36,7 +36,7 @@ impl<'a> FromSql<'a> for OmitTID {
         ty: &Type,
         raw: &'a [u8],
     ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-        TID::from_sql(ty, raw).map(|e| OmitTID(e))
+        TID::from_sql(ty, raw).map(OmitTID)
     }
 
     accepts! {INT8}
