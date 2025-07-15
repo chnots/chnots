@@ -157,3 +157,6 @@ $ export NDK_HOME="$ANDROID_HOME/ndk/$(ls -1 $ANDROID_HOME/ndk)"
 $ export JAVA_HOME=/opt/android-studio/jbr
 $ rustup target add aarch64-linux-android
 ```
+
+# 2507-15
+先实现全量同步的逻辑，后面再考虑增量同步的逻辑。

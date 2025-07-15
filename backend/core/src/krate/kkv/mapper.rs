@@ -1,6 +1,8 @@
+use chin_sql::{OnConflict, str_type::Varchar};
 use chin_tools::{AResult, EResult};
+use serde::Serialize;
 
-use crate::{expand_mt_branch, model::dto::KReq, MapperType};
+use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 
 use super::*;
 
@@ -10,6 +12,18 @@ pub trait KKVMapper {
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp>;
     async fn kkv_delete(&self, req: KReq<KKVDeleteReq>) -> AResult<KKVDeleteRsp>;
     async fn ensure_table_kkv(&self) -> EResult;
+
+    async fn kkv_transient_query<F, T>(&self, key: &str, mapper: F) -> AResult<Option<T>>
+    where
+        F: Fn(String) -> AResult<T>,
+        T: Send;
+
+    async fn kkv_transisent_overwrite<T: Serialize>(
+        &self,
+        key: Varchar<500>,
+        value: T,
+        on_conflict: OnConflict,
+    ) -> EResult;
 }
 
 pub(crate) trait KKVDeserializeMapper {
@@ -35,5 +49,22 @@ impl KKVMapper for MapperType {
 
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {
         expand_mt_branch!(self.kkv_query_many(req))
+    }
+
+    async fn kkv_transient_query<F, T>(&self, key: &str, mapper: F) -> AResult<Option<T>>
+    where
+        F: Fn(String) -> AResult<T>,
+        T: Send,
+    {
+        expand_mt_branch!(self.kkv_transient_query(key, mapper))
+    }
+
+    async fn kkv_transisent_overwrite<T: Serialize>(
+        &self,
+        key: Varchar<500>,
+        value: T,
+        on_conflict: OnConflict,
+    ) -> EResult {
+        expand_mt_branch!(self.kkv_transisent_overwrite(key, value, on_conflict))
     }
 }

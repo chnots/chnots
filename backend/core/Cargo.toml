@@ -83,6 +83,7 @@ tracing-log = "0.2.0"
 enum-tag = "0.3.0"
 
 markdown = "*"
+reqwest = "0.12.22"
 
 [features]
 default = ["axum-server"]

@@ -52,11 +52,12 @@ pub async fn run(config: Config) -> EResult {
         tokio::spawn(async move {
             info!("Begin to backup.");
 
-            match state.dump_all(StartType::Increase).await {
-                Ok(()) => {}
-                Err(err) => {
-                    log::error!("unable to backup to files {err}")
-                }
+            if let Err(err) = state.init_instance_id().await {
+                info!("unable to create instace_id {}", err);
+            }
+
+            if let Err(err) = state.dump_all(StartType::Increase).await {
+                log::error!("unable to backup to files {err}")
             }
         });
     }

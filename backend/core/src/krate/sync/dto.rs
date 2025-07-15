@@ -1,5 +1,5 @@
 use chin_sql::time_type::TID;
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 
 use crate::mapper::TheSameKey;
 
@@ -18,7 +18,7 @@ pub enum SyncTableEnum {
     KTabDataDate,
     KTabDataDecimal,
     KTabDataText,
-    KFileMeta // inline k file is a specifal type file, so we sync it with kfilemeta
+    KFileMeta, // inline k file is a specifal type file, so we sync it with kfilemeta
 }
 
 impl TryFrom<&str> for SyncTableEnum {
@@ -40,7 +40,7 @@ impl TryFrom<&str> for SyncTableEnum {
             "k_tab_data_decimal" => SyncTableEnum::KTabDataDecimal,
             "k_tab_data_text" => SyncTableEnum::KTabDataText,
             "k_file_meta" => SyncTableEnum::KFileMeta,
-            _ => Err(anyhow::anyhow!("unable to deser from string {}", value))?
+            _ => Err(anyhow::anyhow!("unable to deser from string {}", value))?,
         };
 
         Ok(c)
@@ -50,48 +50,51 @@ impl TryFrom<&str> for SyncTableEnum {
 impl<'de> Deserialize<'de> for SyncTableEnum {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de> {
+        D: Deserializer<'de>,
+    {
         let s = String::deserialize(deserializer)?;
-        let c = SyncTableEnum::try_from(s.as_str()).map_err(|err| de::Error::custom(err.to_string()))?;
+        let c = SyncTableEnum::try_from(s.as_str())
+            .map_err(|err| de::Error::custom(err.to_string()))?;
         Ok(c)
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeReq {
     pub client_id: String,
     pub client_app_version: String,
-    pub server_id: String,
-}
-
-pub struct SyncShakeRsp {
-    pub stop: bool,
-    pub last_sync_time: Option<TID>,
-}
-
-pub struct SyncFetchSameKeyReq {
-    pub sync_id: String,
     pub table_name: SyncTableEnum,
-    pub start_tid_ex: String,
+    pub start_tid_ex: TID,
 }
 
-pub struct SyncFetchSameKeyRsp {
-    pub same_keys: Vec<TheSameKey>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SyncShakeRspEnum {
+    NotSameVersion(String, String),
+    BeginSync { sync_time: Option<TID>, id: String },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncShakeRsp {
+    pub data: SyncShakeRspEnum,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncFetchAbsentReq {
     pub table_name: SyncTableEnum,
     pub tids: Vec<TID>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncFetchAbsentRsp<T: Serialize> {
     pub records: Vec<T>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum FetchDataType {
     RangePage {
         start_ex: TID,
         end_in: TID,
         page_size: usize,
     },
-    Tids (Vec<TID>)
+    Tids(Vec<TID>),
 }

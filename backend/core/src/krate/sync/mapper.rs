@@ -1,7 +1,9 @@
-use chin_tools::AResult;
+use anyhow::Context;
+use chin_tools::{AResult, EResult, utils::id_util::generate_uuid};
 
 use crate::{
-    krate::sync::dto::FetchDataType,
+    krate::{kkv::mapper::KKVMapper, sync::dto::FetchDataType},
+    magics::CLIENT_ID_KEY,
     mapper::{MapperRowType, MapperType},
 };
 
@@ -36,5 +38,28 @@ impl Dumper<MapperRowType> for MapperType {
                 .await
             }
         }
+    }
+}
+
+impl MapperType {
+    pub async fn get_instance_id(&self) -> AResult<String> {
+        let instance_id = self
+            .kkv_transient_query(CLIENT_ID_KEY, Ok)
+            .await?
+            .context("there is not instance_id in the db")?;
+        Ok(instance_id)
+    }
+
+    pub async fn init_instance_id(&self) -> EResult {
+        let instance_id = self.kkv_transient_query(CLIENT_ID_KEY, Ok).await?;
+        if instance_id.is_none() {
+            self.kkv_transisent_overwrite(
+                CLIENT_ID_KEY.try_into()?,
+                generate_uuid(),
+                chin_sql::OnConflict::Default,
+            )
+            .await?;
+        }
+        Ok(())
     }
 }

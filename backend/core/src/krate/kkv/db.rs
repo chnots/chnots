@@ -1,4 +1,4 @@
-use chin_sql::{SqlBuilder, SqlDeleter, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{OnConflict, SqlBuilder, SqlDeleter, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
 use serde::Serialize;
@@ -11,10 +11,7 @@ use crate::{
     model::{dto::KReq, omit_tid::OmitTID},
 };
 
-use super::{
-    mapper::KKVMapper,
-    *,
-};
+use super::{mapper::KKVMapper, *};
 
 impl TryFrom<KDbRow> for KKV {
     type Error = anyhow::Error;
@@ -83,6 +80,7 @@ impl KDbExecutor<'_> {
         &self,
         key: Varchar<500>,
         value: T,
+        on_conflict: OnConflict,
     ) -> EResult {
         self.exec(
             KKVTransient {
@@ -148,5 +146,30 @@ impl KKVMapper for KDb {
 
     async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
         self.conn().await?.as_executor().kkv_query(req).await
+    }
+
+    async fn kkv_transient_query<F, T>(&self, key: &str, mapper: F) -> AResult<Option<T>>
+    where
+        F: Fn(String) -> AResult<T>,
+        T: Send,
+    {
+        self.conn()
+            .await?
+            .as_executor()
+            .kkv_transient_query(key, mapper)
+            .await
+    }
+
+    async fn kkv_transisent_overwrite<T: Serialize>(
+        &self,
+        key: Varchar<500>,
+        value: T,
+        on_conflict: OnConflict,
+    ) -> EResult {
+        self.conn()
+            .await?
+            .as_executor()
+            .kkv_transisent_overwrite(key, value, on_conflict)
+            .await
     }
 }
