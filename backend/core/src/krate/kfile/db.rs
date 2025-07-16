@@ -133,7 +133,7 @@ impl KFileMapper for KDb {
                 .await?
                 .as_executor()
                 .qry_opt(KFileMeta::pkey_reader(key.clone(), OmitTID::never()), |e| {
-                    let c: InlineKFile = e.try_into()?;
+                    let c: KFileMeta = e.try_into()?;
                     Ok(c)
                 })
                 .await?
