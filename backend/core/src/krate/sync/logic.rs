@@ -2,18 +2,35 @@ use chin_tools::AResult;
 
 use crate::{
     app::ShareAppState,
-    krate::sync::dto::{SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum},
+    krate::sync::{
+        dto::{SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum},
+        mapper::SyncMapper,
+    },
     magics::APP_VERSION,
 };
 
-async fn sync_shake(state: ShareAppState, req: SyncShakeReq) -> AResult<SyncShakeRsp> {
-    let server_id = state.get_instance_id().await?;
+impl ShareAppState {
+    pub(crate) async fn sync_shake(&self, req: SyncShakeReq) -> AResult<SyncShakeRsp> {
+        let instace_id = self.get_instance_id().await?;
 
-    if req.client_app_version != APP_VERSION {
-        return Ok(SyncShakeRsp {
-            data: SyncShakeRspEnum::NotSameVersion(req.client_app_version, APP_VERSION.to_string()),
-        });
+        if req.app_version.as_str() != APP_VERSION {
+            return Ok(SyncShakeRsp {
+                instance_id: instace_id,
+                data: SyncShakeRspEnum::NotSameVersion(APP_VERSION.to_owned()),
+            });
+        }
+
+        let sync_time = self
+            .mapper
+            .get_sync_time(
+                req.table_name.to_string().try_into()?,
+                req.client_id.try_into()?,
+            )
+            .await?;
+
+        Ok(SyncShakeRsp {
+            instance_id: instace_id,
+            data: SyncShakeRspEnum::BeginSync { sync_time },
+        })
     }
-
-    todo!()
 }

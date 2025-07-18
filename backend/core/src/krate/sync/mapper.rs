@@ -1,8 +1,13 @@
 use anyhow::Context;
+use chin_sql::{str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult, utils::id_util::generate_uuid};
 
 use crate::{
-    krate::{kkv::mapper::KKVMapper, sync::dto::FetchDataType},
+    expand_mt_branch,
+    krate::{
+        kkv::mapper::KKVMapper,
+        sync::{dto::FetchDataType, po::SyncLogTransient},
+    },
     magics::CLIENT_ID_KEY,
     mapper::{MapperRowType, MapperType},
 };
@@ -38,6 +43,34 @@ impl Dumper<MapperRowType> for MapperType {
                 .await
             }
         }
+    }
+}
+
+pub trait SyncMapper {
+    async fn ensure_sync_table(&self) -> EResult;
+    async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult;
+    async fn get_sync_time(
+        &self,
+        table_name: Varchar<100>,
+        remote_id: Varchar<100>,
+    ) -> AResult<TID>;
+}
+
+impl SyncMapper for MapperType {
+    async fn ensure_sync_table(&self) -> EResult {
+        expand_mt_branch!(self.ensure_sync_table())
+    }
+
+    async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult {
+        expand_mt_branch!(self.insert_sync_log(log))
+    }
+
+    async fn get_sync_time(
+        &self,
+        table_name: Varchar<100>,
+        remote_id: Varchar<100>,
+    ) -> AResult<TID> {
+        expand_mt_branch!(self.get_sync_time(table_name, remote_id))
     }
 }
 

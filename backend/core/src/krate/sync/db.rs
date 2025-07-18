@@ -2,7 +2,11 @@ use chin_sql::{SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 
 use crate::{
-    krate::sync::{dto::FetchDataType, mapper::Dumper, po::SyncLogTransient},
+    krate::sync::{
+        dto::FetchDataType,
+        mapper::{Dumper, SyncMapper},
+        po::SyncLogTransient,
+    },
     mapper::db::{
         KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, helper::create_tables,
     },
@@ -42,18 +46,18 @@ impl Dumper<KDbRow> for KDb {
     }
 }
 
-impl KDb {
-    pub(crate) async fn ensure_sync_table(&self) -> EResult {
+impl SyncMapper for KDb {
+    async fn ensure_sync_table(&self) -> EResult {
         create_tables(vec![SyncLogTransient::create_sql()], self).await?;
         Ok(())
     }
 
-    pub(crate) async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult {
+    async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult {
         self.conn().await?.exec(log.to_sql_inserter()).await?;
         Ok(())
     }
 
-    pub(crate) async fn get_sync_time(
+    async fn get_sync_time(
         &self,
         table_name: Varchar<100>,
         remote_id: Varchar<100>,

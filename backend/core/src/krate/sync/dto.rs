@@ -47,6 +47,27 @@ impl TryFrom<&str> for SyncTableEnum {
     }
 }
 
+impl ToString for SyncTableEnum {
+    fn to_string(&self) -> String {
+        match self {
+            SyncTableEnum::ChnotRecord => "chnot_record".to_string(),
+            SyncTableEnum::ChnotMetadata => todo!(),
+            SyncTableEnum::ChnotKindRel => todo!(),
+            SyncTableEnum::ChnotTag => todo!(),
+            SyncTableEnum::LLMChatBot => todo!(),
+            SyncTableEnum::LLMChatRecord => todo!(),
+            SyncTableEnum::LLMChatTemplate => todo!(),
+            SyncTableEnum::LLMChatSession => todo!(),
+            SyncTableEnum::KKV => todo!(),
+            SyncTableEnum::KTabMeta => todo!(),
+            SyncTableEnum::KTabDataDate => todo!(),
+            SyncTableEnum::KTabDataDecimal => todo!(),
+            SyncTableEnum::KTabDataText => todo!(),
+            SyncTableEnum::KFileMeta => todo!(),
+        }
+    }
+}
+
 impl<'de> Deserialize<'de> for SyncTableEnum {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -62,19 +83,20 @@ impl<'de> Deserialize<'de> for SyncTableEnum {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeReq {
     pub client_id: String,
-    pub client_app_version: String,
+    pub app_version: String,
     pub table_name: SyncTableEnum,
     pub start_tid_ex: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SyncShakeRspEnum {
-    NotSameVersion(String, String),
-    BeginSync { sync_time: Option<TID>, id: String },
+    NotSameVersion(String),
+    BeginSync { sync_time: TID },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeRsp {
+    pub instance_id: String,
     pub data: SyncShakeRspEnum,
 }
 
