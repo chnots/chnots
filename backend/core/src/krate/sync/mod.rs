@@ -4,4 +4,4 @@ pub(crate) mod mapper;
 pub(crate) mod db;
 pub mod dto;
 pub(crate) mod controller;
-pub(crate) mod logic;
+pub(crate) mod networksync;

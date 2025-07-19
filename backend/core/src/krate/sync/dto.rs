@@ -100,10 +100,11 @@ pub struct SyncShakeRsp {
     pub data: SyncShakeRspEnum,
 }
 
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncFetchAbsentReq {
+pub struct SyncFetchDataReq {
     pub table_name: SyncTableEnum,
-    pub tids: Vec<TID>,
+    pub tids: FetchDataType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

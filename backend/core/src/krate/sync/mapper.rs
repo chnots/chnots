@@ -74,25 +74,4 @@ impl SyncMapper for MapperType {
     }
 }
 
-impl MapperType {
-    pub async fn get_instance_id(&self) -> AResult<String> {
-        let instance_id = self
-            .kkv_transient_query(CLIENT_ID_KEY, Ok)
-            .await?
-            .context("there is not instance_id in the db")?;
-        Ok(instance_id)
-    }
 
-    pub async fn init_instance_id(&self) -> EResult {
-        let instance_id = self.kkv_transient_query(CLIENT_ID_KEY, Ok).await?;
-        if instance_id.is_none() {
-            self.kkv_transisent_overwrite(
-                CLIENT_ID_KEY.try_into()?,
-                generate_uuid(),
-                chin_sql::OnConflict::Default,
-            )
-            .await?;
-        }
-        Ok(())
-    }
-}

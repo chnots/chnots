@@ -1,13 +1,14 @@
-use chin_tools::EResult;
+use anyhow::Context as _;
+use chin_tools::{utils::id_util::generate_uuid, AResult, EResult};
 
-use crate::{krate::{
-    chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
-    kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper, llmchat::mapper::LLMChatMapper,
-}, mapper::{MapperConfig, MapperType}};
-
-use super::{
-    db::{postgres::Postgres, sqlite::Sqlite},
+use crate::{
+    krate::{
+        chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
+        kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper, llmchat::mapper::LLMChatMapper, sync::mapper::SyncMapper,
+    }, magics::CLIENT_ID_KEY, mapper::{MapperConfig, MapperType}
 };
+
+use super::db::{postgres::Postgres, sqlite::Sqlite};
 
 impl TryFrom<MapperConfig> for MapperType {
     type Error = anyhow::Error;
@@ -34,6 +35,30 @@ impl MapperType {
         self.ensure_table_llm_chat().await?;
         self.kspace_ensure_data().await?;
         self.ensure_ktab_tables().await?;
+        self.ensure_sync_table().await?;
+        self.init_instance_id().await?;
+        
+        Ok(())
+    }
+
+    pub async fn get_instance_id(&self) -> AResult<String> {
+        let instance_id = self
+            .kkv_transient_query(CLIENT_ID_KEY, Ok)
+            .await?
+            .context("there is not instance_id in the db")?;
+        Ok(instance_id)
+    }
+
+    pub async fn init_instance_id(&self) -> EResult {
+        let instance_id = self.kkv_transient_query(CLIENT_ID_KEY, Ok).await?;
+        if instance_id.is_none() {
+            self.kkv_transisent_overwrite(
+                CLIENT_ID_KEY.try_into()?,
+                generate_uuid(),
+                chin_sql::OnConflict::Default,
+            )
+            .await?;
+        }
         Ok(())
     }
 }

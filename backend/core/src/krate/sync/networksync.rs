@@ -3,10 +3,10 @@ use chin_tools::AResult;
 use crate::{
     app::ShareAppState,
     krate::sync::{
-        dto::{SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum},
-        mapper::SyncMapper,
+        dto::{SyncFetchAbsentRsp, SyncFetchDataReq, SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum},
+        mapper::{Dumper, SyncMapper},
     },
-    magics::APP_VERSION,
+    magics::APP_VERSION, mapper::TheSameKey,
 };
 
 impl ShareAppState {
