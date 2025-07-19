@@ -128,9 +128,11 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatInsertSessionReq>,
     ) -> AResult<LLMChatInsertSessionRsp> {
-        let obj = req.body.session;
+        let mut obj = req.body.session;
         let omit = LLMChatSession::pkey_updater(obj.otid, OmitTID::never())
             .set(LLMChatSession::OMIT_TID, OmitTID::now());
+        let s: String = obj.title.to_string().chars().into_iter().take(199).collect();
+        obj.title = s.try_into()?;
         let inserter = obj.to_owned().to_sql_inserter();
 
         let mut conn = self.conn().await?;
