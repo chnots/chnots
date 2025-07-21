@@ -2,7 +2,7 @@ use std::io::Write;
 
 use super::{mapper::KFileMapper, *};
 use crate::{
-    mapper::db::{KDbConnBehaiver, KDbRow, KDbTransactionBehaiver},
+    mapper::db::{KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables},
     model::{
         dto::KReq,
         omit_tid::{OmitNow, OmitTID},
@@ -47,18 +47,11 @@ impl TryFrom<KDbRow> for KFileMeta {
 
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
-        for sql in KFileMeta::create_sql()
-            .sqls(self.get_db_type())?
-            .into_iter()
-        {
-            self.conn().await?.exec(sql).await?;
-        }
-        for sql in InlineKFile::create_sql()
-            .sqls(self.get_db_type())?
-            .into_iter()
-        {
-            self.conn().await?.exec(sql).await?;
-        }
+        create_tables(
+            vec![InlineKFile::create_sql(), KFileMeta::create_sql()],
+            self,
+        )
+        .await?;
 
         Ok(())
     }

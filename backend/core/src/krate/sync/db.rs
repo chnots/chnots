@@ -1,4 +1,4 @@
-use chin_sql::{SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{str_type::Varchar, time_type::TID, SqlBuilder, SqlInserter, Wheres};
 use chin_tools::{AResult, EResult};
 
 use crate::{
@@ -123,5 +123,16 @@ impl TryFrom<KDbRow> for SyncLogTransient {
         };
 
         Ok(sl)
+    }
+}
+
+
+impl KDb {
+    pub async fn merge_into_table<'b, T>(&self, table_name: String, records: Vec<T>) -> EResult where T: Into<SqlInserter<'b>> {
+        for rec in records {
+            self.conn().await?.exec(rec.into()).await?;
+        }
+
+        Ok(())
     }
 }

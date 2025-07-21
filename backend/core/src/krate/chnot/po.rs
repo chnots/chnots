@@ -3,6 +3,7 @@ use chin_sql::SqlValue;
 use chin_sql::str_type::Text;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
+use chin_tools::EResult;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
