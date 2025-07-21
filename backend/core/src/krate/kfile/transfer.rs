@@ -23,7 +23,6 @@ use crate::{
         controller::asset_path_by_sid, mapper::KFileMapper, KFileMeta, KFileUploadReq,
         KFileUploadRsp, QueryKFileReq,
     },
-    model::omit_tid::OmitTID,
     ShareAppState,
 };
 
@@ -120,7 +119,6 @@ pub(super) async fn upload(
             filesize,
             sid: blake3_sum.to_string().try_into()?,
             id: meta_id.try_into()?,
-            omit_tid: OmitTID::never(),
             inline: false,
             archor: false,
             filename: filename.try_into()?,

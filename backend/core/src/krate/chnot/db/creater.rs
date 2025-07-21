@@ -4,10 +4,9 @@ use super::*;
 use crate::krate::chnot::parser::ChnotParser;
 use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
-use crate::model::omit_tid::OmitTID;
 use chin_sql::time_type::TID;
 use chin_sql::{ChinSqlError, Wheres};
-use chin_sql::{SqlBuilder, SqlUpdater};
+use chin_sql::SqlBuilder;
 use chin_tools::AResult;
 
 use chrono::TimeDelta;
@@ -75,21 +74,20 @@ impl<'a> KDbTx<'a> {
             .map(|t| t.to_string().try_into())
             .collect();
         let mut tags = tags?;
-        self.exec(
-            SqlUpdater::new(ChnotTag::TABLE)
-                .set(ChnotTag::OMIT_TID, OmitTID::now())
-                .r#where(Wheres::and([
+        self.as_executor()
+            .omit_rows(
+                ChnotTag::TABLE,
+                Wheres::and([
                     Wheres::equal(ChnotTag::META_OTID, meta_otid),
-                    Wheres::equal(ChnotTag::OMIT_TID, OmitTID::never()),
                     if tags.is_empty() {
                         Wheres::None
                     } else {
                         Wheres::not(Wheres::r#in(ChnotTag::TAG, tags.clone()))
                     },
-                ])),
-        )
-        .await?;
-        let executor = KDbExecutor::Tx(self);
+                ]),
+            )
+            .await?;
+        let executor = self.as_executor();
         if tags.is_empty() {
             tags.push(UNTAGGED_TAG.try_into()?);
         }
@@ -102,7 +100,6 @@ impl<'a> KDbTx<'a> {
                         kspace: kspace.to_owned(),
                         tag: tag.to_owned(),
                         meta_otid,
-                        omit_tid: OmitTID::never(),
                     }
                     .to_sql_inserter()
                     .on_conflict(chin_sql::OnConflict::Ignore),
@@ -139,10 +136,10 @@ impl<'a> KDbTx<'a> {
                     ChnotRecord::TABLE,
                     &[ChnotRecord::META_OTID, ChnotRecord::CONTENT],
                 )
-                .r#where(Wheres::and([
-                    Wheres::equal(ChnotRecord::META_OTID, meta_otid),
-                    Wheres::equal(ChnotRecord::OMIT_TID, OmitTID::never()),
-                ]));
+                .r#where(Wheres::and([Wheres::equal(
+                    ChnotRecord::META_OTID,
+                    meta_otid,
+                )]));
 
                 // Get old record info
                 let Some(OldInfo {
@@ -165,15 +162,14 @@ impl<'a> KDbTx<'a> {
                 let rec = ChnotRecord {
                     tid: rec_tid,
                     meta_otid,
-                    omit_tid: OmitTID::never(),
                     content: req.content.clone(),
                     archor,
                     todo_event,
                 };
 
-                let update_omit = ChnotRecord::pkey_updater(meta_otid, OmitTID::never())
-                    .set(ChnotRecord::OMIT_TID, OmitTID::now());
-                self.exec(update_omit).await?;
+                self.as_executor()
+                    .omit_rows(ChnotRecord::TABLE, ChnotRecord::pkey_cond(meta_otid))
+                    .await?;
                 self.as_executor().chnot_record_insert(rec).await?;
             }
             MetaId::New(meta_otid) => {
@@ -181,7 +177,6 @@ impl<'a> KDbTx<'a> {
                 let rec = ChnotRecord {
                     tid: rec_tid,
                     meta_otid,
-                    omit_tid: OmitTID::never(),
                     content: req.content.clone(),
                     archor: true,
                     todo_event,
@@ -194,7 +189,6 @@ impl<'a> KDbTx<'a> {
                     kspace: req.kspace.clone(),
                     kind: req.kind.clone(),
                     pin_time: None,
-                    omit_tid: OmitTID::never(),
                     archive_time: None,
                     tid,
                 };
@@ -202,15 +196,12 @@ impl<'a> KDbTx<'a> {
             }
         }
         if let Some(kid) = req.kind_id.clone() {
-            self.exec(
-                ChnotKindRel::pkey_updater(*meta_otid, OmitTID::never())
-                    .set(ChnotKindRel::OMIT_TID, OmitTID::now()),
-            )
-            .await?;
+            self.as_executor()
+                .omit_rows(ChnotKindRel::TABLE, ChnotKindRel::pkey_cond(*meta_otid))
+                .await?;
             self.exec(
                 ChnotKindRel {
                     meta_otid: *meta_otid,
-                    omit_tid: OmitTID::never(),
                     kind_id: kid.try_into()?,
                     tid: TID::default(),
                 }

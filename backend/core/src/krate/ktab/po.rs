@@ -7,7 +7,6 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 use crate::model::decimal::Decimal;
-use crate::model::omit_tid::OmitTID;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -41,10 +40,6 @@ pub struct KTabMeta {
     #[gts_type = "i64"]
     pub otid: TID,
 
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
-
     #[gts_type = "Text"]
     #[gts_tosql = "map_to_sql"]
     pub columns: HashMap<String, KTabColumnMeta>,
@@ -73,10 +68,6 @@ macro_rules! type_table {
             #[gts_primary]
             #[gts_type = "i64"]
             pub row_otid: TID, // actually is the insert time(unix timestamp), so it is easy for data merge
-
-            #[gts_primary]
-            #[gts_type = "i64"]
-            pub omit_tid: OmitTID,
 
             #[gts_unique]
             #[gts_type = "i64"]

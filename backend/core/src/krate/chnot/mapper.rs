@@ -7,7 +7,6 @@ use super::*;
 
 pub trait ChnotMapper {
     async fn chnot_overwrite_record(&self, req: KReq<ChnotOverwriteRecordReq>) -> AResult<ChnotOverwriteRecordRsp>;
-    async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp>;
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>>;
     async fn chnot_query_kind_rel(
         &self,
@@ -32,11 +31,7 @@ impl ChnotMapper for MapperType {
     async fn chnot_overwrite_record(&self, req: KReq<ChnotOverwriteRecordReq>) -> AResult<ChnotOverwriteRecordRsp> {
         expand_mt_branch!(self.chnot_overwrite_record(req))
     }
-
-    async fn chnot_archive(&self, req: KReq<ChnotArchiveReq>) -> AResult<ChnotArchiveRsp> {
-        expand_mt_branch!(self.chnot_archive(req))
-    }
-
+    
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>> {
         expand_mt_branch!(self.chnot_query(req))
     }

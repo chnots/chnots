@@ -3,16 +3,11 @@ use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use serde::{Deserialize, Serialize};
 
-use crate::model::omit_tid::OmitTID;
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct KFileMeta {
     #[gts_primary]
     pub id: Varchar<100>,
-
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
 
     pub inline: bool,
     pub archor: bool,

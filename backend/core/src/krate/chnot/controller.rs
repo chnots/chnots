@@ -4,10 +4,10 @@ use crate::model::dto::{kreq, read_kspace_from_header};
 use axum::extract::Query;
 use axum::routing::get;
 use axum::{
+    Json, Router,
     extract::State,
     http::HeaderMap,
     routing::{delete, post, put},
-    Json, Router,
 };
 
 use super::mapper::ChnotMapper;
@@ -15,7 +15,10 @@ use super::*;
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/chnot-overwrite-record", put(chnot_overwrite_record))
+        .route(
+            "/api/v1/chnot-overwrite-record",
+            put(chnot_overwrite_record),
+        )
         .route("/api/v1/chnot-overwrite-meta", post(chnot_overwrite_meta))
         .route("/api/v1/chnot", delete(chnot_deletetion))
         .route("/api/v1/chnot-query", post(chnot_query))
@@ -41,7 +44,20 @@ async fn chnot_deletetion(
     state: State<ShareAppState>,
     Json(req): Json<ChnotArchiveReq>,
 ) -> KResponse<ChnotArchiveRsp> {
-    state.mapper.chnot_archive(kreq(headers, req)).await.into()
+    state
+        .mapper
+        .chnot_overwrite_meta(kreq(
+            headers,
+            ChnotOverwriteMetaReq {
+                meta_otid: req.meta_otid,
+                kspace: None,
+                pinned: None,
+                archive: Some(true),
+            },
+        ))
+        .await
+        .map(|_| ChnotArchiveRsp {})
+        .into()
 }
 
 async fn chnot_overwrite_meta(
@@ -49,7 +65,11 @@ async fn chnot_overwrite_meta(
     state: State<ShareAppState>,
     Json(req): Json<ChnotOverwriteMetaReq>,
 ) -> KResponse<ChnotOverwriteMetaRsp> {
-    state.mapper.chnot_overwrite_meta(kreq(headers, req)).await.into()
+    state
+        .mapper
+        .chnot_overwrite_meta(kreq(headers, req))
+        .await
+        .into()
 }
 
 async fn chnot_query(

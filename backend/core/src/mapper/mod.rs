@@ -5,7 +5,7 @@ use chin_sql::time_type::TID;
 use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
 use serde::{Deserialize, Serialize};
 
-use crate::{mapper::db::KDbRow, model::omit_tid::OmitTID};
+use crate::{mapper::db::KDbRow};
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
@@ -27,6 +27,5 @@ pub enum MapperRowType {
 #[derive(Debug, Clone, Serialize,Deserialize)]
 pub struct TheSameKey {
     pub id: String,
-    pub omit_tid: OmitTID,
     pub tid: TID,
 }

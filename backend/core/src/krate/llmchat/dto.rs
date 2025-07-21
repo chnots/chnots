@@ -81,7 +81,6 @@ pub struct LLMChatTruncateSessionRsp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionDetialReq {
     pub session_otid: TID,
-    pub with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

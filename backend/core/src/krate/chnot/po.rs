@@ -3,7 +3,6 @@ use chin_sql::SqlValue;
 use chin_sql::str_type::Text;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_tools::EResult;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -20,16 +19,12 @@ use strum_macros::EnumString;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
-use crate::model::omit_tid::OmitTID;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub struct ChnotRecord {
     #[gts_primary]
     #[gts_type = "i64"]
     pub meta_otid: TID,
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
@@ -56,9 +51,6 @@ pub struct ChnotMetadata {
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
     pub pin_time: Option<DateTime<FixedOffset>>,
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
     pub archive_time: Option<DateTime<FixedOffset>>,
     #[gts_unique]
     #[gts_type = "i64"]
@@ -72,9 +64,6 @@ pub struct ChnotTag {
     #[gts_primary]
     #[gts_type = "i64"]
     pub meta_otid: TID,
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
     pub kspace: Varchar<40>,
     #[gts_unique]
     #[gts_type = "i64"]
@@ -86,9 +75,6 @@ pub struct ChnotKindRel {
     #[gts_primary]
     #[gts_type = "i64"]
     pub meta_otid: TID,
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
     #[gts_key]
     pub kind_id: Varchar<200>,
     #[gts_unique]

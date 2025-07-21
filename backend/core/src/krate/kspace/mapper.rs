@@ -5,7 +5,7 @@ use chin_tools::{AResult, EResult};
 use crate::{
     MapperType, expand_mt_branch,
     magics::NO_KSPACE,
-    model::{dto::KReq, omit_tid::OmitTID},
+    model::{dto::KReq, },
 };
 
 use super::{
@@ -40,7 +40,6 @@ pub trait KSpaceMapper {
                         name: data.0.try_into()?,
                         color: data.1.try_into()?,
                         managers: data.2.iter().map(|s| s.to_string()).collect(),
-                        omit_tid: OmitTID::never(),
                         tid: TID::default(),
                     },
                 }))

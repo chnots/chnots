@@ -10,7 +10,7 @@ use crate::{
         KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
         KDbTransactionBehaiver, helper::create_tables,
     },
-    model::{dto::KReq, omit_tid::OmitTID},
+    model::{dto::KReq,},
 };
 
 use super::{mapper::KTabMapper, *};
@@ -25,13 +25,9 @@ impl KDb {
                     .field($table::TABLE_OTID, $c.table_otid)
                     .field($table::COL_OTID, $c.col_otid)
                     .field($table::ROW_OTID, $c.row_otid)
-                    .field($table::OMIT_TID, $c.omit_tid)
                     .field($table::CELL_DATA, $v)
                     .field($table::TID, $c.tid);
-                let omit_sql =
-                    $table::pkey_updater($c.table_otid, $c.row_otid, $c.col_otid, OmitTID::never())
-                        .set($table::OMIT_TID, OmitTID::now());
-                tx.exec(omit_sql).await?;
+                tx.as_executor().omit_rows($table::TABLE, $table::pkey_cond($c.table_otid, $c.row_otid, $c.col_otid)).await?;
                 tx.exec(csql).await?;
                 tx.cmt().await?;
             };
@@ -64,7 +60,6 @@ impl KTabMapper for KDb {
             table_name,
             table_comment,
             update_time: _,
-            omit_tid,
             real_table,
             tid: _,
         } = &req.meta;
@@ -73,8 +68,7 @@ impl KTabMapper for KDb {
             anyhow::bail!("the column indexes are not unique.");
         }
 
-        let omit_sql =
-            KTabMeta::pkey_updater(*otid, OmitTID::never()).set(KTabMeta::OMIT_TID, OmitTID::now());
+
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
             .field(KTabMeta::OTID, *otid)
@@ -83,13 +77,12 @@ impl KTabMapper for KDb {
             .field(KTabMeta::TABLE_NAME, table_name.clone())
             .field(KTabMeta::TABLE_COMMENT, table_comment.clone())
             .field(KTabMeta::REAL_TABLE, *real_table)
-            .field(KTabMeta::OMIT_TID, *omit_tid)
             .on_conflict(chin_sql::OnConflict::Replace(
-                [KTabMeta::OTID, KTabMeta::OMIT_TID].join(", "),
+                [KTabMeta::OTID].join(", "),
             ));
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.exec(omit_sql).await?;
+        tx.as_executor().omit_rows(KTabMeta::TABLE, KTabMeta::pkey_cond(*otid));
         tx.exec(insert_sql).await?;
         tx.cmt().await?;
 
@@ -130,7 +123,6 @@ impl KTabMapper for KDb {
                 table_otid,
                 col_otid: column_index,
                 row_otid: ele.row_tid,
-                omit_tid: OmitTID::never(),
                 cell_data: ele.value,
                 tid: TID::default(),
             })
@@ -146,7 +138,6 @@ impl KTabMapper for KDb {
     ) -> chin_tools::AResult<KTabMetaQueryRsp> {
         let ssb = SqlBuilder::read_all(KTabMeta::TABLE).r#where(Wheres::and([
             Wheres::equal(KTabMeta::OTID, req.table_id),
-            Wheres::equal(KTabMeta::OMIT_TID, OmitTID::never()),
         ]));
         let meta = self
             .conn()
@@ -180,7 +171,6 @@ impl KTabMapper for KDb {
             ($sub_table:tt) => {
                 let reader = SqlBuilder::read_all($sub_table::TABLE).r#where(Wheres::and([
                     Wheres::equal($sub_table::TABLE_OTID, table_id),
-                    Wheres::equal($sub_table::OMIT_TID, OmitTID::never()),
                 ]));
 
                 let data: Vec<KTabCell> = self
@@ -252,7 +242,6 @@ impl TryFrom<KDbRow> for KTabMeta {
             table_name: row.try_get(KTabMeta::TABLE_NAME)?,
             table_comment: row.try_get(KTabMeta::TABLE_COMMENT)?,
             update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
-            omit_tid: row.try_get(KTabMeta::OMIT_TID)?,
             real_table: row.try_get(KTabMeta::REAL_TABLE)?,
             otid: row.try_get(KTabMeta::OTID)?,
             tid: row.try_get(KTabMeta::TID)?,
@@ -272,7 +261,6 @@ macro_rules! row_into_ktab_cell {
                     row_otid: row.try_get($sub_table::ROW_OTID)?,
                     cell_data: row.try_get($sub_table::CELL_DATA)?,
                     tid: row.try_get($sub_table::TID)?,
-                    omit_tid: row.try_get($sub_table::OMIT_TID)?,
                 })
             }
         }

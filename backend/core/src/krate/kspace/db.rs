@@ -1,5 +1,5 @@
 use anyhow::Ok;
-use chin_sql::{SqlBuilder, Wheres};
+use chin_sql::SqlBuilder;
 
 use crate::{
     krate::kspace::{
@@ -10,7 +10,6 @@ use crate::{
     mapper::db::{
         KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, helper::create_tables,
     },
-    model::omit_tid::OmitTID,
 };
 
 impl<'a> TryFrom<&'a KDbRow> for KSpace {
@@ -19,7 +18,6 @@ impl<'a> TryFrom<&'a KDbRow> for KSpace {
     fn try_from(value: &'a KDbRow) -> Result<Self, Self::Error> {
         let r = KSpace {
             name: value.try_get(KSpace::NAME)?,
-            omit_tid: value.try_get(KSpace::OMIT_TID)?,
             color: value.try_get(KSpace::COLOR)?,
             managers: {
                 let s: String = value.try_get(KSpace::MANAGERS)?;
@@ -40,11 +38,7 @@ impl KSpaceMapper for KDb {
         let kspaces = self
             .conn()
             .await?
-            .qry_list(
-                SqlBuilder::read_all(KSpace::TABLE)
-                    .r#where(Wheres::equal(KSpace::OMIT_TID, OmitTID::never())),
-                |r| (&r).try_into(),
-            )
+            .qry_list(SqlBuilder::read_all(KSpace::TABLE), |r| (&r).try_into())
             .await?;
         Ok(KSpaceQueryAllRsp { kspaces })
     }
@@ -72,7 +66,6 @@ impl TryFrom<KDbRow> for KSpace {
     fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         Ok(Self {
             name: value.try_get(Self::NAME)?,
-            omit_tid: value.try_get(Self::OMIT_TID)?,
             color: value.try_get(Self::COLOR)?,
             managers: {
                 let s: String = value.try_get(Self::MANAGERS)?;

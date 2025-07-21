@@ -1,6 +1,5 @@
 use crate::{
     mapper::db::{KDbRow, KDbRowBehavier},
-    model::omit_tid::OmitTID,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -46,9 +45,6 @@ pub struct KKV {
     pub kind: Varchar<100>,
     #[gts_primary]
     pub kspace: Varchar<40>,
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub omit_tid: OmitTID,
 
     #[gts_unique]
     #[gts_type = "i64"]

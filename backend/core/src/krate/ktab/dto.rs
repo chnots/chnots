@@ -6,7 +6,6 @@ use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 use crate::model::decimal::Decimal;
-use crate::model::omit_tid::OmitTID;
 
 use super::{ *};
 
@@ -102,7 +101,6 @@ pub struct KTabCell {
     pub table_otid: TID,
     pub col_otid: TID,
     pub row_otid: TID,
-    pub omit_tid: OmitTID,
     pub cell_data: KTabStoreValue,
 }
 
@@ -126,7 +124,6 @@ macro_rules! impl_from_ktab_cell {
                     table_otid,
                     col_otid,
                     row_otid,
-                    omit_tid,
                     cell_data,
                     tid,
                 } = value;
@@ -136,7 +133,6 @@ macro_rules! impl_from_ktab_cell {
                     table_otid,
                     col_otid,
                     row_otid,
-                    omit_tid,
                     cell_data: KTabStoreValue::$variant(cell_data),
                 }
             }

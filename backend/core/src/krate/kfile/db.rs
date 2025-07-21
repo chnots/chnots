@@ -3,10 +3,7 @@ use std::io::Write;
 use super::{mapper::KFileMapper, *};
 use crate::{
     mapper::db::{KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables},
-    model::{
-        dto::KReq,
-        omit_tid::{OmitNow, OmitTID},
-    },
+    model::dto::KReq,
 };
 use anyhow::Context;
 use chin_tools::EResult;
@@ -33,7 +30,6 @@ impl TryFrom<KDbRow> for KFileMeta {
         Ok(KFileMeta {
             filename: value.try_get(KFileMeta::FILENAME)?,
             tid: value.try_get(KFileMeta::TID)?,
-            omit_tid: value.try_get(KFileMeta::OMIT_TID)?,
             archor: value.try_get(KFileMeta::ARCHOR)?,
             inline: value.try_get(KFileMeta::INLINE)?,
             sid: value.try_get(KFileMeta::SID)?,
@@ -60,10 +56,9 @@ impl KFileMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
 
-        tx.exec(
-            KFileMeta::pkey_updater(meta.id.clone(), meta.omit_tid).omit_now(KFileMeta::OMIT_TID),
-        )
-        .await?;
+        tx.as_executor()
+            .omit_rows(KFileMeta::TABLE, KFileMeta::pkey_cond(meta.id.clone()))
+            .await?;
         tx.exec(meta.to_sql_inserter()).await?;
         tx.cmt().await?;
 
@@ -85,7 +80,6 @@ impl KFileMapper for KDb {
 
         let meta = KFileMeta {
             tid: TID::default(),
-            omit_tid: OmitTID::never(),
             archor: false,
             inline: true,
             sid: sid.clone(),
@@ -98,10 +92,9 @@ impl KFileMapper for KDb {
             last_modified: TID::default(),
             filesize: bytes.len() as i64,
         };
-        tx.exec(
-            KFileMeta::pkey_updater(meta.id.clone(), meta.omit_tid).omit_now(KFileMeta::OMIT_TID),
-        )
-        .await?;
+        tx.as_executor()
+            .omit_rows(KFileMeta::TABLE, KFileMeta::pkey_cond(meta.id.clone()))
+            .await?;
         tx.exec(meta.to_sql_inserter()).await?;
         tx.exec(
             req.body
@@ -125,7 +118,7 @@ impl KFileMapper for KDb {
                 .conn()
                 .await?
                 .as_executor()
-                .qry_opt(KFileMeta::pkey_reader(key.clone(), OmitTID::never()), |e| {
+                .qry_opt(KFileMeta::pkey_reader(key.clone()), |e| {
                     let c: KFileMeta = e.try_into()?;
                     Ok(c)
                 })
@@ -153,9 +146,7 @@ impl KFileMapper for KDb {
         let meta = self
             .conn()
             .await?
-            .qry_opt(KFileMeta::pkey_reader(req.meta_id, OmitTID::never()), |e| {
-                e.try_into()
-            })
+            .qry_opt(KFileMeta::pkey_reader(req.meta_id), |e| e.try_into())
             .await?;
         Ok(QueryKFileMetaRsp { meta })
     }
@@ -167,9 +158,7 @@ impl KFileMapper for KDb {
         let meta = self
             .conn()
             .await?
-            .qry_opt(KFileMeta::pkey_reader(sid, OmitTID::never()), |e| {
-                e.try_into()
-            })
+            .qry_opt(KFileMeta::pkey_reader(sid), |e| e.try_into())
             .await?;
         Ok(QueryKFileMetaRsp { meta })
     }

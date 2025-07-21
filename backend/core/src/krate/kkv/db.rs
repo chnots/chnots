@@ -8,7 +8,7 @@ use crate::{
         KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
         helper::create_tables,
     },
-    model::{dto::KReq, omit_tid::OmitTID},
+    model::dto::KReq,
 };
 
 use super::{mapper::KKVMapper, *};
@@ -18,7 +18,6 @@ impl TryFrom<KDbRow> for KKV {
 
     fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
         let obj = KKV {
-            omit_tid: value.try_get(KKV::OMIT_TID)?,
             key: value.try_get(KKV::KEY)?,
             value: value.try_get(KKV::VALUE)?,
             kind: value.try_get(KKV::KIND)?,
@@ -45,7 +44,6 @@ impl KDbExecutor<'_> {
             key: req.key.clone(),
             kind: req.kind.clone(),
             kspace: req.kspace.clone(),
-            omit_tid: OmitTID::never(),
             value: req.value.clone(),
             tid: now_tid,
             archor,
@@ -53,7 +51,7 @@ impl KDbExecutor<'_> {
         let inserter = inserter
             .to_sql_inserter()
             .on_conflict(chin_sql::OnConflict::Replace(
-                [KKV::KEY, KKV::KIND, KKV::KSPACE, KKV::OMIT_TID].join(","),
+                [KKV::KEY, KKV::KIND, KKV::KSPACE].join(","),
             ));
         self.exec(inserter).await?;
 
@@ -65,7 +63,6 @@ impl KDbExecutor<'_> {
             Wheres::equal(KKV::KEY, req.key.as_str()),
             Wheres::equal(KKV::KIND, req.kind.clone()),
             Wheres::equal(KKV::KSPACE, req.kspace.clone()),
-            Wheres::equal(KKV::OMIT_TID, OmitTID::never()),
         ]));
 
         let kv: Option<KKV> = self.qry_opt(query, |e| e.try_into()).await?;
