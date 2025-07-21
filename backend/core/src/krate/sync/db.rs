@@ -1,4 +1,4 @@
-use chin_sql::{str_type::Varchar, time_type::TID, SqlBuilder, SqlInserter, Wheres};
+use chin_sql::{SqlBuilder, SqlInserter, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 
 use crate::{
@@ -48,7 +48,7 @@ impl Dumper<KDbRow> for KDb {
 
 impl SyncMapper for KDb {
     async fn ensure_sync_table(&self) -> EResult {
-        create_tables(vec![SyncLogTransient::create_sql()], self).await?;
+        create_tables(vec![SyncLogTransient::create_sql().to_owned_sql()], self).await?;
         Ok(())
     }
 
@@ -126,9 +126,11 @@ impl TryFrom<KDbRow> for SyncLogTransient {
     }
 }
 
-
 impl KDb {
-    pub async fn merge_into_table<'b, T>(&self, table_name: String, records: Vec<T>) -> EResult where T: Into<SqlInserter<'b>> {
+    pub async fn merge_into_table<'b, T>(&self, table_name: String, records: Vec<T>) -> EResult
+    where
+        T: Into<SqlInserter<'b>>,
+    {
         for rec in records {
             self.conn().await?.exec(rec.into()).await?;
         }

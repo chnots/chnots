@@ -4,9 +4,9 @@ use super::*;
 use crate::krate::chnot::parser::ChnotParser;
 use crate::mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbTx};
 use crate::model::dto::KReq;
+use chin_sql::SqlBuilder;
 use chin_sql::time_type::TID;
 use chin_sql::{ChinSqlError, Wheres};
-use chin_sql::SqlBuilder;
 use chin_tools::AResult;
 
 use chrono::TimeDelta;
@@ -77,6 +77,7 @@ impl<'a> KDbTx<'a> {
         self.as_executor()
             .omit_rows(
                 ChnotTag::TABLE,
+                &ChnotTag::create_sql().all_fields(),
                 Wheres::and([
                     Wheres::equal(ChnotTag::META_OTID, meta_otid),
                     if tags.is_empty() {
@@ -168,7 +169,11 @@ impl<'a> KDbTx<'a> {
                 };
 
                 self.as_executor()
-                    .omit_rows(ChnotRecord::TABLE, ChnotRecord::pkey_cond(meta_otid))
+                    .omit_rows(
+                        ChnotRecord::TABLE,
+                        &ChnotRecord::create_sql().all_fields(),
+                        ChnotRecord::pkey_cond(meta_otid),
+                    )
                     .await?;
                 self.as_executor().chnot_record_insert(rec).await?;
             }
@@ -197,7 +202,11 @@ impl<'a> KDbTx<'a> {
         }
         if let Some(kid) = req.kind_id.clone() {
             self.as_executor()
-                .omit_rows(ChnotKindRel::TABLE, ChnotKindRel::pkey_cond(*meta_otid))
+                .omit_rows(
+                    ChnotKindRel::TABLE,
+                    &ChnotKindRel::create_sql().all_fields(),
+                    ChnotKindRel::pkey_cond(*meta_otid),
+                )
                 .await?;
             self.exec(
                 ChnotKindRel {

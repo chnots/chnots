@@ -8,9 +8,10 @@ use itertools::Itertools;
 use crate::{
     mapper::db::{
         KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        KDbTransactionBehaiver, helper::create_tables,
+        KDbTransactionBehaiver,
+        helper::{create_tables, to_ommitted_table},
     },
-    model::{dto::KReq,},
+    model::dto::KReq,
 };
 
 use super::{mapper::KTabMapper, *};
@@ -27,7 +28,13 @@ impl KDb {
                     .field($table::ROW_OTID, $c.row_otid)
                     .field($table::CELL_DATA, $v)
                     .field($table::TID, $c.tid);
-                tx.as_executor().omit_rows($table::TABLE, $table::pkey_cond($c.table_otid, $c.row_otid, $c.col_otid)).await?;
+                tx.as_executor()
+                    .omit_rows(
+                        $table::TABLE,
+                        &$table::create_sql().all_fields(),
+                        $table::pkey_cond($c.table_otid, $c.row_otid, $c.col_otid),
+                    )
+                    .await?;
                 tx.exec(csql).await?;
                 tx.cmt().await?;
             };
@@ -68,8 +75,6 @@ impl KTabMapper for KDb {
             anyhow::bail!("the column indexes are not unique.");
         }
 
-
-
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
             .field(KTabMeta::OTID, *otid)
             .field(KTabMeta::TID, TID::default())
@@ -77,12 +82,16 @@ impl KTabMapper for KDb {
             .field(KTabMeta::TABLE_NAME, table_name.clone())
             .field(KTabMeta::TABLE_COMMENT, table_comment.clone())
             .field(KTabMeta::REAL_TABLE, *real_table)
-            .on_conflict(chin_sql::OnConflict::Replace(
-                [KTabMeta::OTID].join(", "),
-            ));
+            .on_conflict(chin_sql::OnConflict::Replace([KTabMeta::OTID].join(", ")));
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor().omit_rows(KTabMeta::TABLE, KTabMeta::pkey_cond(*otid));
+        tx.as_executor()
+            .omit_rows(
+                KTabMeta::TABLE,
+                &KTabMeta::create_sql().all_fields(),
+                KTabMeta::pkey_cond(*otid),
+            )
+            .await?;
         tx.exec(insert_sql).await?;
         tx.cmt().await?;
 
@@ -136,9 +145,8 @@ impl KTabMapper for KDb {
         &self,
         req: KReq<KTabMetaQueryReq>,
     ) -> chin_tools::AResult<KTabMetaQueryRsp> {
-        let ssb = SqlBuilder::read_all(KTabMeta::TABLE).r#where(Wheres::and([
-            Wheres::equal(KTabMeta::OTID, req.table_id),
-        ]));
+        let ssb = SqlBuilder::read_all(KTabMeta::TABLE)
+            .r#where(Wheres::and([Wheres::equal(KTabMeta::OTID, req.table_id)]));
         let meta = self
             .conn()
             .await?
@@ -169,9 +177,11 @@ impl KTabMapper for KDb {
 
         macro_rules! extend_cells {
             ($sub_table:tt) => {
-                let reader = SqlBuilder::read_all($sub_table::TABLE).r#where(Wheres::and([
-                    Wheres::equal($sub_table::TABLE_OTID, table_id),
-                ]));
+                let reader =
+                    SqlBuilder::read_all($sub_table::TABLE).r#where(Wheres::and([Wheres::equal(
+                        $sub_table::TABLE_OTID,
+                        table_id,
+                    )]));
 
                 let data: Vec<KTabCell> = self
                     .conn()
@@ -219,10 +229,14 @@ impl KTabMapper for KDb {
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
         create_tables(
             vec![
-                KTabMeta::create_sql(),
-                KTabCellText::create_sql(),
-                KTabCellDecimal::create_sql(),
-                KTabCellDate::create_sql(),
+                KTabMeta::create_sql().to_owned_sql(),
+                to_ommitted_table(KTabMeta::create_sql().to_owned_sql()),
+                KTabCellText::create_sql().to_owned_sql(),
+                to_ommitted_table(KTabCellText::create_sql().to_owned_sql()),
+                KTabCellDecimal::create_sql().to_owned_sql(),
+                to_ommitted_table(KTabCellDecimal::create_sql().to_owned_sql()),
+                KTabCellDate::create_sql().to_owned_sql(),
+                to_ommitted_table(KTabCellDate::create_sql().to_owned_sql()),
             ],
             self,
         )

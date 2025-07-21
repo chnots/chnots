@@ -118,6 +118,5 @@ export type KTabCell = {
   table_otid: TID;
   col_otid: TID;
   row_otid: TID;
-  omit_tid?: OmitTID;
   cell_data: KTabStoreValue;
 };

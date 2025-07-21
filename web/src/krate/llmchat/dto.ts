@@ -91,7 +91,6 @@ export type LLMChatTruncateSessionRsp = {
 
 export type LLMChatSessionDetialReq = {
   session_otid: TID;
-  with_omit?: boolean;
 };
 
 export type LLMChatDeleteBotReq = {

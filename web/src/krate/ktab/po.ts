@@ -43,7 +43,6 @@ export type KTabColumnMeta = {
 
 export type KTabMeta = {
   otid: TID;
-  omit_tid?: OmitTID;
   columns: Record<string, KTabColumnMeta>;
   table_name: Varchar<300>;
   table_comment: Varchar<1000>;
@@ -56,7 +55,6 @@ export type KTabCell = {
   table_id: number;
   col_tid: number;
   row_tid: number;
-  omit_tid?: Date;
   cell_data: KTabCellData;
 };
 
@@ -66,7 +64,6 @@ export type KTabCellText = {
   table_otid: TID;
   col_otid: TID;
   row_otid: TID;
-  omit_tid?: OmitTID;
   tid: TID;
   cell_data: DbText;
 };
@@ -75,7 +72,6 @@ export type KTabCellDecimal = {
   table_otid: TID;
   col_otid: TID;
   row_otid: TID;
-  omit_tid?: OmitTID;
   tid: TID;
   cell_data: Decimal;
 };
@@ -84,7 +80,6 @@ export type KTabCellDate = {
   table_otid: TID;
   col_otid: TID;
   row_otid: TID;
-  omit_tid?: OmitTID;
   tid: TID;
   cell_data: Date;
 };

@@ -2,7 +2,10 @@ use std::io::Write;
 
 use super::{mapper::KFileMapper, *};
 use crate::{
-    mapper::db::{KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables},
+    mapper::db::{
+        KDbConnBehaiver, KDbRow, KDbTransactionBehaiver,
+        helper::{create_tables, to_ommitted_table},
+    },
     model::dto::KReq,
 };
 use anyhow::Context;
@@ -44,7 +47,11 @@ impl TryFrom<KDbRow> for KFileMeta {
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
         create_tables(
-            vec![InlineKFile::create_sql(), KFileMeta::create_sql()],
+            vec![
+                InlineKFile::create_sql().to_owned_sql(),
+                KFileMeta::create_sql().to_owned_sql(),
+                to_ommitted_table(KFileMeta::create_sql().to_owned_sql()),
+            ],
             self,
         )
         .await?;
@@ -57,7 +64,11 @@ impl KFileMapper for KDb {
         let tx = conn.tx().await?;
 
         tx.as_executor()
-            .omit_rows(KFileMeta::TABLE, KFileMeta::pkey_cond(meta.id.clone()))
+            .omit_rows(
+                KFileMeta::TABLE,
+                &KFileMeta::create_sql().all_fields(),
+                KFileMeta::pkey_cond(meta.id.clone()),
+            )
             .await?;
         tx.exec(meta.to_sql_inserter()).await?;
         tx.cmt().await?;
@@ -93,7 +104,11 @@ impl KFileMapper for KDb {
             filesize: bytes.len() as i64,
         };
         tx.as_executor()
-            .omit_rows(KFileMeta::TABLE, KFileMeta::pkey_cond(meta.id.clone()))
+            .omit_rows(
+                KFileMeta::TABLE,
+                &KFileMeta::create_sql().all_fields(),
+                KFileMeta::pkey_cond(meta.id.clone()),
+            )
             .await?;
         tx.exec(meta.to_sql_inserter()).await?;
         tx.exec(

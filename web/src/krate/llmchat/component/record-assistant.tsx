@@ -18,7 +18,7 @@ const RecordAssistant = ({
 }: {
   onRegenerate?: () => void;
   logo?: string;
-} & Omit<LLMChatRecord, "omit_tid">) => {
+} & LLMChatRecord) => {
   const { bots, templates } = useLLMChatStore();
 
   const [bt] = useState<LLMChatBot | LLMChatTemplate | undefined>(() => {

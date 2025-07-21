@@ -6,7 +6,6 @@ export type KKV = {
   key: Varchar<500>;
   kind: Varchar<100>;
   kspace: Varchar<40>;
-  omit_tid?: OmitTID;
   tid: TID;
   archor: boolean;
   value: DbText;

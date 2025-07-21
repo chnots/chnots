@@ -5,8 +5,7 @@ use serde::Serialize;
 
 use crate::{
     mapper::db::{
-        KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        helper::create_tables,
+        helper::{create_tables, to_ommitted_table}, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier
     },
     model::dto::KReq,
 };
@@ -108,7 +107,15 @@ impl KDbExecutor<'_> {
 
 impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
-        create_tables(vec![KKV::create_sql(), KKVTransient::create_sql()], self).await
+        create_tables(
+            vec![
+                KKV::create_sql().to_owned_sql(),
+                to_ommitted_table(KKV::create_sql().to_owned_sql()),
+                KKVTransient::create_sql().to_owned_sql(),
+            ],
+            self,
+        )
+        .await
     }
 
     async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {

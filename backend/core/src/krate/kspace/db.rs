@@ -8,7 +8,8 @@ use crate::{
         mapper::KSpaceMapper,
     },
     mapper::db::{
-        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, helper::create_tables,
+        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+        helper::{create_tables, to_ommitted_table},
     },
 };
 
@@ -56,7 +57,14 @@ impl KSpaceMapper for KDb {
     }
 
     async fn kspace_ensure_table(&self) -> chin_tools::EResult {
-        create_tables(vec![KSpace::create_sql()], self).await
+        create_tables(
+            vec![
+                KSpace::create_sql().to_owned_sql(),
+                to_ommitted_table(KSpace::create_sql().to_owned_sql()),
+            ],
+            self,
+        )
+        .await
     }
 }
 

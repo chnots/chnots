@@ -5,7 +5,7 @@ use std::str::FromStr;
 use super::mapper::ChnotMapper;
 use super::*;
 use crate::krate::toent::logic::todoevent::TodoEvent;
-use crate::mapper::db::helper::create_tables;
+use crate::mapper::db::helper::{create_tables, to_ommitted_table};
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -115,9 +115,10 @@ impl KDb {
                 SqlBuilder::read(ChnotTag::TABLE, &[field])
                     .sov("as t")
                     .sov("right join qualified_tids q on t.meta_otid = q.meta_otid")
-                    .r#where(Wheres::and([
-                        Wheres::r#in(ChnotTag::KSPACE, req.get_spaces()),
-                    ]))
+                    .r#where(Wheres::and([Wheres::r#in(
+                        ChnotTag::KSPACE,
+                        req.get_spaces(),
+                    )]))
                     .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index)),
             );
         let data = self.conn().await?.qry_list(sql, mapper).await?;
@@ -133,10 +134,14 @@ impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
         create_tables(
             vec![
-                ChnotTag::create_sql(),
-                ChnotMetadata::create_sql(),
-                ChnotRecord::create_sql(),
-                ChnotKindRel::create_sql(),
+                ChnotTag::create_sql().to_owned_sql(),
+                to_ommitted_table(ChnotTag::create_sql().to_owned_sql()),
+                ChnotMetadata::create_sql().to_owned_sql(),
+                to_ommitted_table(ChnotMetadata::create_sql().to_owned_sql()),
+                ChnotRecord::create_sql().to_owned_sql(),
+                to_ommitted_table(ChnotRecord::create_sql().to_owned_sql()),
+                ChnotKindRel::create_sql().to_owned_sql(),
+                to_ommitted_table(ChnotKindRel::create_sql().to_owned_sql()),
             ],
             self,
         )
@@ -154,10 +159,7 @@ impl ChnotMapper for KDb {
                 sr.sov("inner join")
                     .sub(
                         "ct",
-                        ChnotTag::with_those_tag_meta_otids(
-                            req.get_spaces(),
-                            Some(tag),
-                        ),
+                        ChnotTag::with_those_tag_meta_otids(req.get_spaces(), Some(tag)),
                     )
                     .sov("on t.meta_otid = ct.meta_otid")
             })
@@ -207,14 +209,25 @@ impl ChnotMapper for KDb {
         })
     }
 
-    async fn chnot_overwrite_meta(&self, req: KReq<ChnotOverwriteMetaReq>) -> AResult<ChnotOverwriteMetaRsp> {
+    async fn chnot_overwrite_meta(
+        &self,
+        req: KReq<ChnotOverwriteMetaReq>,
+    ) -> AResult<ChnotOverwriteMetaRsp> {
         let mut conn = self.conn().await?;
 
         let tx = conn.tx().await?;
-        tx.as_executor().omit_rows(ChnotMetadata::TABLE, ChnotMetadata::pkey_cond(req.meta_otid)).await?;
+
 
         let reader = ChnotMetadata::pkey_reader(req.meta_otid);
         let mut meta: ChnotMetadata = tx.qry_one(reader, |e| e.try_into(), false).await?;
+
+        tx.as_executor()
+            .omit_rows(
+                ChnotMetadata::TABLE,
+                &ChnotMetadata::create_sql().all_fields(),
+                ChnotMetadata::pkey_cond(req.meta_otid),
+            )
+            .await?;
 
         meta.tid = TID::default();
         if let Some(o) = req.pinned {
@@ -244,7 +257,10 @@ impl ChnotMapper for KDb {
         Ok(ChnotOverwriteMetaRsp {})
     }
 
-    async fn chnot_overwrite_record(&self, req: KReq<ChnotOverwriteRecordReq>) -> AResult<ChnotOverwriteRecordRsp> {
+    async fn chnot_overwrite_record(
+        &self,
+        req: KReq<ChnotOverwriteRecordReq>,
+    ) -> AResult<ChnotOverwriteRecordRsp> {
         let mut conn = self.conn().await?;
         let tx = conn.transaction().await?;
         let ans = tx.chnot_overwrite(req).await;
@@ -300,18 +316,16 @@ impl ChnotMapper for KDb {
             ChnotRecord::TABLE,
             &[ChnotRecord::CONTENT, ChnotRecord::META_OTID],
         )
-        .r#where(Wheres::and([
-            Wheres::compare_str(
-                ChnotRecord::META_OTID,
-                "in",
-                format!(
-                    "(select {} from {} where kspace = '{}')",
-                    ChnotMetadata::OTID,
-                    ChnotMetadata::TABLE,
-                    kspace.as_str().replace("'", "<quote>")
-                ),
+        .r#where(Wheres::and([Wheres::compare_str(
+            ChnotRecord::META_OTID,
+            "in",
+            format!(
+                "(select {} from {} where kspace = '{}')",
+                ChnotMetadata::OTID,
+                ChnotMetadata::TABLE,
+                kspace.as_str().replace("'", "<quote>")
             ),
-        ]));
+        )]));
 
         let kspace = kspace.to_owned();
         let mut conn = self.conn().await?;

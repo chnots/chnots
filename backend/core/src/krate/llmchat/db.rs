@@ -7,7 +7,7 @@ use chin_sql::{SqlBuilder, Wheres};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
-use crate::mapper::db::helper::create_tables;
+use crate::mapper::db::helper::{create_tables, to_ommitted_table};
 use crate::mapper::db::{
     KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -94,7 +94,11 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(LLMChatBot::TABLE, LLMChatBot::pkey_cond(otid))
+            .omit_rows(
+                LLMChatBot::TABLE,
+                &LLMChatBot::create_sql().all_fields(),
+                LLMChatBot::pkey_cond(otid),
+            )
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -114,6 +118,7 @@ impl LLMChatMapper for KDb {
         tx.as_executor()
             .omit_rows(
                 LLMChatTemplate::TABLE,
+                &LLMChatTemplate::create_sql().all_fields(),
                 LLMChatTemplate::pkey_cond(tmpl.otid),
             )
             .await?;
@@ -135,7 +140,11 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(LLMChatSession::TABLE, LLMChatSession::pkey_cond(obj.otid))
+            .omit_rows(
+                LLMChatSession::TABLE,
+                &LLMChatSession::create_sql().all_fields(),
+                LLMChatSession::pkey_cond(obj.otid),
+            )
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -154,7 +163,11 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(LLMChatRecord::TABLE, LLMChatRecord::pkey_cond(otid))
+            .omit_rows(
+                LLMChatRecord::TABLE,
+                &LLMChatRecord::create_sql().all_fields(),
+                LLMChatRecord::pkey_cond(otid),
+            )
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -277,7 +290,11 @@ impl LLMChatMapper for KDb {
         self.conn()
             .await?
             .as_executor()
-            .omit_rows(LLMChatBot::TABLE, LLMChatBot::pkey_cond(req.bot_otid))
+            .omit_rows(
+                LLMChatBot::TABLE,
+                &LLMChatBot::create_sql().all_fields(),
+                LLMChatBot::pkey_cond(req.bot_otid),
+            )
             .await?;
 
         Ok(LLMChatDeleteBotRsp {})
@@ -292,6 +309,7 @@ impl LLMChatMapper for KDb {
             .as_executor()
             .omit_rows(
                 LLMChatTemplate::TABLE,
+                &LLMChatTemplate::create_sql().all_fields(),
                 LLMChatTemplate::pkey_cond(req.template_otid),
             )
             .await?;
@@ -308,6 +326,7 @@ impl LLMChatMapper for KDb {
             .as_executor()
             .omit_rows(
                 LLMChatSession::TABLE,
+                &LLMChatSession::create_sql().all_fields(),
                 LLMChatSession::pkey_cond(req.session_otid),
             )
             .await?;
@@ -318,10 +337,14 @@ impl LLMChatMapper for KDb {
     async fn ensure_table_llm_chat(&self) -> EResult {
         create_tables(
             vec![
-                LLMChatBot::create_sql(),
-                LLMChatTemplate::create_sql(),
-                LLMChatSession::create_sql(),
-                LLMChatRecord::create_sql(),
+                LLMChatBot::create_sql().to_owned_sql(),
+                to_ommitted_table(LLMChatBot::create_sql().to_owned_sql()),
+                LLMChatTemplate::create_sql().to_owned_sql(),
+                to_ommitted_table(LLMChatTemplate::create_sql().to_owned_sql()),
+                LLMChatSession::create_sql().to_owned_sql(),
+                to_ommitted_table(LLMChatSession::create_sql().to_owned_sql()),
+                LLMChatRecord::create_sql().to_owned_sql(),
+                to_ommitted_table(LLMChatRecord::create_sql().to_owned_sql()),
             ],
             self,
         )
@@ -341,6 +364,7 @@ impl LLMChatMapper for KDb {
         tx.as_executor()
             .omit_rows(
                 LLMChatSession::TABLE,
+                &LLMChatSession::create_sql().all_fields(),
                 LLMChatSession::pkey_cond(req.session_otid),
             )
             .await?;
@@ -404,6 +428,7 @@ impl LLMChatMapper for KDb {
             .as_executor()
             .omit_rows(
                 LLMChatRecord::TABLE,
+                &LLMChatRecord::create_sql().all_fields(),
                 Wheres::and([Wheres::r#in(LLMChatRecord::OTID, to_omit_ids)]),
             )
             .await?;

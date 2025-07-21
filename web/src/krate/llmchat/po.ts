@@ -5,7 +5,6 @@ import { DbText, Varchar } from "@/lib/types";
 
 export type LLMChatBot = {
   otid: TID;
-  omit_tid?: OmitTID;
   name: Varchar<500>;
   body: DbText;
   svg_logo?: DbText;
@@ -24,7 +23,6 @@ export type LLMChatBotBodyOpenAIV1 = {
 
 export type LLMChatTemplate = {
   otid: TID;
-  omit_tid?: OmitTID;
   name: Varchar<200>;
   prompt: DbText;
   svg_logo?: DbText;
@@ -36,7 +34,6 @@ export type LLMChatTemplate = {
 
 export type LLMChatSession = {
   otid: TID;
-  omit_tid?: OmitTID;
   template_otid: TID;
   title: Varchar<500>;
   update_time?: Date;
@@ -47,7 +44,6 @@ export type LLMChatSession = {
 
 export type LLMChatRecord = {
   otid: TID;
-  omit_tid?: OmitTID;
   session_otid: TID;
   pre_record_otid?: TID;
   content: DbText;

@@ -9,7 +9,6 @@ export type InlineKFile = {
 
 export type KFileMeta = {
   id: Varchar<100>;
-  omit_tid?: OmitTID;
   inline: boolean;
   archor: boolean;
   tid: TID;

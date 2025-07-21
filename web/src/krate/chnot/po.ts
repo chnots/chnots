@@ -15,7 +15,6 @@ export type ChnotTagType = object;
 
 export type ChnotRecord = {
   meta_otid: TID;
-  omit_tid?: OmitTID;
   tid: TID;
   todo_event?: TodoEvent;
   content: DbText;
@@ -27,7 +26,6 @@ export type ChnotMetadata = {
   kspace: Varchar<40>;
   kind: ChnotKind;
   pin_time?: Date;
-  omit_tid?: OmitTID;
   archive_time?: Date;
   tid: TID;
 };
@@ -35,20 +33,17 @@ export type ChnotMetadata = {
 export type ChnotTag = {
   tag: Varchar<800>;
   meta_otid: TID;
-  omit_tid?: OmitTID;
   kspace: Varchar<40>;
   tid: TID;
 };
 
 export type ChnotKindId = {
   meta_otid: TID;
-  omit_tid?: OmitTID;
   kind_id: string;
 };
 
 export type ChnotKindRel = {
   meta_otid: TID;
-  omit_tid?: OmitTID;
   kind_id: Varchar<200>;
   tid: TID;
 };

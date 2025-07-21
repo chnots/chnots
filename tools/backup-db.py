@@ -5,9 +5,9 @@ from datetime import datetime
 # Example usage
 db_params = {
     "host": "localhost",
-    "database": "chnotsdev",
-    "user": "postgres",
-    "password": "chnotsdev",
+    "database": "chnotsprod",
+    "user": "chnots",
+    "password": "chnotsprod",
     "port": "5432",
 }
 
@@ -85,32 +85,18 @@ def bak_to_new_schema():
 
 
 def rename_to_bak():
+    import time
+
     def rename(cursor, table_name):
-        if "_bak" in table_name:
-            return
-        print(table_name)
-        try:
-            cursor.execute(
-                sql.SQL("""
-                drop table public.{} 
-            """).format(
-                    sql.Identifier(table_name + "_bak"),
-                )
+        if "bak" in table_name:
+            print(
+                f"alter table public.{table_name} rename to {table_name + '_' + str(int(time.time()))}; -- 1"
             )
-            cursor.execute(
-                sql.SQL("""
-                alter table public.{} 
-                rename to {}
-            """).format(
-                    sql.Identifier(table_name),
-                    sql.Identifier(table_name + "_bak"),
-                )
-            )
-        except Exception as ex:  # noqa: E722
-            print(ex)
+        if "bak" not in table_name:
+            t = table_name + "_bak"
+            print(f"alter table public.{table_name} rename to {t}; -- 2")
 
     for_all_tables(rename)
-
 
 def insert_to_from_bak():
     def rename(cursor, table_name):
@@ -131,4 +117,4 @@ def insert_to_from_bak():
 
     for_all_tables(rename)
 
-insert_to_from_bak()
+rename_to_bak()

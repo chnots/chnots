@@ -6,11 +6,12 @@ type SyncShakeRspEnum = Object;
 
 export type SyncShakeReq = {
   client_id: string;
-  client_app_version: string;
+  app_version: string;
   table_name: SyncTableEnum;
   start_tid_ex: TID;
 };
 export type SyncShakeRsp = {
+  instance_id: string;
   data: SyncShakeRspEnum;
 };
 export type SyncFetchSameKeyReq = {
@@ -24,4 +25,11 @@ export type SyncFetchSameKeyRsp = {
 export type SyncFetchAbsentReq = {
   table_name: SyncTableEnum;
   tids: TID[];
+};
+
+type FetchDataType = object;
+
+export type SyncFetchDataReq = {
+  table_name: SyncTableEnum;
+  tids: FetchDataType;
 };
