@@ -14,11 +14,10 @@ import {
 } from "@/common/component/ui/form";
 import { Input } from "@/common/component/ui/input";
 import { Textarea } from "@/common/component/ui/textarea";
-import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "表名至少需要2个字符",
+    message: "Table names must be at least 2 characters long",
   }),
   description: z.string().optional(),
 });
@@ -47,12 +46,12 @@ export function TableForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>表名</FormLabel>
+                <FormLabel>Table Name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="请输入表名"
+                    placeholder="Please input the table name."
                     {...field}
-                    aria-label="表名输入框"
+                    aria-label="Table Name input area"
                   />
                 </FormControl>
                 <FormMessage />
@@ -65,12 +64,12 @@ export function TableForm({
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>描述</FormLabel>
+                <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="请输入表描述"
+                    placeholder="Please input the table description"
                     {...field}
-                    aria-label="表描述输入框"
+                    aria-label="Table description input area"
                     rows={5}
                   />
                 </FormControl>
@@ -80,7 +79,7 @@ export function TableForm({
           />
 
           <Button type="submit" className="w-full">
-            保存
+            Save
           </Button>
         </form>
       </Form>

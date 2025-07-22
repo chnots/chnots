@@ -1,5 +1,5 @@
 use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres};
-use chin_tools::EResult;
+use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 use log::info;
 
@@ -73,12 +73,16 @@ impl KDbExecutor<'_> {
         table_name: &str,
         fields: &[&str],
         condition: Wheres<'_>,
-    ) -> EResult {
-        self.copy_into_omit_table(table_name, fields, condition.clone())
+    ) -> AResult<usize> {
+        let count = self
+            .copy_into_omit_table(table_name, fields, condition.clone())
             .await?;
-        let delete_sql = SqlDeleter::new(table_name).r#where(condition);
-        self.exec(delete_sql).await?;
-        Ok(())
+        if count > 0 {
+            let delete_sql = SqlDeleter::new(table_name).r#where(condition);
+            self.exec(delete_sql).await
+        } else {
+            Ok(0)
+        }
     }
 
     pub(crate) async fn copy_into_omit_table(
@@ -86,7 +90,7 @@ impl KDbExecutor<'_> {
         table_name: &str,
         fields: &[&str],
         condition: Wheres<'_>,
-    ) -> EResult {
+    ) -> AResult<usize> {
         let insert_sql = SqlBuilder::new()
             .sov(format!(
                 "insert into {}({}) select {} from {}",
@@ -96,7 +100,7 @@ impl KDbExecutor<'_> {
                 table_name
             ))
             .r#where(condition.clone());
-        self.exec(insert_sql).await?;
-        Ok(())
+        let count = self.exec(insert_sql).await?;
+        Ok(count)
     }
 }

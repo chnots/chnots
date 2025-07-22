@@ -4,6 +4,7 @@ use anyhow::{Context, Ok};
 use chin_sql::{SqlBuilder, SqlInserter, Wheres, time_type::TID};
 use chin_tools::AResult;
 use itertools::Itertools;
+use log::info;
 
 use crate::{
     mapper::db::{
@@ -20,19 +21,19 @@ impl KDb {
     async fn ktab_overwrite_cell(&self, cell: KTabCell) -> chin_tools::AResult<usize> {
         macro_rules! overwrite {
             ($table:tt, $c:expr, $v:expr) => {
-                let mut conn = self.conn().await?;
-                let tx = conn.tx().await?;
                 let csql = SqlInserter::new($table::TABLE)
                     .field($table::TABLE_OTID, $c.table_otid)
                     .field($table::COL_OTID, $c.col_otid)
                     .field($table::ROW_OTID, $c.row_otid)
                     .field($table::CELL_DATA, $v)
                     .field($table::TID, $c.tid);
+                let mut conn = self.conn().await?;
+                let tx = conn.tx().await?;                
                 tx.as_executor()
                     .omit_rows(
                         $table::TABLE,
                         &$table::create_sql().all_fields(),
-                        $table::pkey_cond($c.table_otid, $c.row_otid, $c.col_otid),
+                        $table::pkey_cond($c.table_otid, $c.col_otid, $c.row_otid),
                     )
                     .await?;
                 tx.exec(csql).await?;
@@ -102,6 +103,7 @@ impl KTabMapper for KDb {
         &self,
         req: KReq<KTabCellsOverwriteReq>,
     ) -> chin_tools::AResult<KTabCellsOverwriteRsp> {
+        info!("req -- {:?}", req);
         let empty_wrapper = req.frame(());
         let KReq {
             body,
@@ -110,7 +112,7 @@ impl KTabMapper for KDb {
         } = req;
 
         let KTabCellsOverwriteReq {
-            cells: row,
+            cells,
             table_id,
         } = body;
         let table_meta = self
@@ -122,7 +124,7 @@ impl KTabMapper for KDb {
 
         let columns = table_meta.columns;
 
-        for ele in row {
+        for ele in cells {
             let column_index = columns
                 .get(ele.column_name.as_str())
                 .context("the column is not existed")?
