@@ -25,7 +25,7 @@ const App = () => {
       const s = faviconSvg.replace("#282828", c.color);
       link.href = `data:image/svg+xml,${encodeURIComponent(s)}`;
     }
-  }, [getCurrentKSpace]);
+  }, [currentKSpace]);
 
   useEffect(() => {
     if (!currentKSpace) {
