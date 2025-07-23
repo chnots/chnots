@@ -63,6 +63,8 @@ pub trait MergableRec: for<'a> HistCreateSql<'a> {
     fn to_hist_inserter(&self) -> SqlInserter<'static>;
     fn pkey_wheres(&self) -> Wheres<'static>;
     fn get_tid(&self) -> TID;
+    fn hist_table_name(&self) -> &'static str;
+    fn table_name(&self) -> &'static str;
     fn all_fields() -> &'static [&'static str];
 }
 
@@ -144,6 +146,16 @@ macro_rules! impl_sync_operator {
 
             fn pkey_wheres(&self) -> chin_sql::Wheres<'static> {
                 Self::pkey_cond($(self.$field.clone()),+)
+            }
+
+            #[inline]
+            fn hist_table_name(&self) -> &'static str {
+                Self::HIST_TABLE
+            }
+
+            #[inline]
+            fn table_name(&self) -> &'static str {
+                Self::TABLE
             }
         }
 

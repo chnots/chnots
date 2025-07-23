@@ -7,7 +7,9 @@ use crate::{
     app::ShareAppState,
     dump_table_to_file, impl_sync_operator,
     krate::{
-        kfile::{mapper::KFileMapper, InlineKFile, KFileMeta, QueryInlineKFileReq, QueryInlineKFileRsp},
+        kfile::{
+            InlineKFile, KFileMeta, QueryInlineKFileReq, QueryInlineKFileRsp, mapper::KFileMapper,
+        },
         sync::{filedumper::StartType, po::SyncEndpoint},
     },
     sync_one,
@@ -32,13 +34,22 @@ impl ShareAppState {
         Ok(())
     }
 
-    async fn sync_assets(app: &ShareAppState, endpoint: &SyncEndpoint, list: &Vec<KFileMeta>) -> EResult {
+    async fn sync_assets(
+        app: &ShareAppState,
+        endpoint: &SyncEndpoint,
+        list: &Vec<KFileMeta>,
+    ) -> EResult {
         let client = reqwest::Client::builder().build()?;
         for kfm in list {
             if kfm.inline {
                 let rsp = client
-                    .post(format!("http://{}:{}{}", endpoint.ip, endpoint.port, ""))
-                    .json(&QueryInlineKFileReq {
+                    .get(format!(
+                        "http://{}:{}{}",
+                        endpoint.ip,
+                        endpoint.port,
+                        crate::krate::kfile::controller::INLINE_K_FILE_REQ
+                    ))
+                    .query(&QueryInlineKFileReq {
                         sid: Some(kfm.sid.to_string()),
                         meta_id: None,
                         with_omit: Some(true),

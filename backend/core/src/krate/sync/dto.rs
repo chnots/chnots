@@ -85,12 +85,13 @@ pub struct SyncShakeReq {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SyncShakeRspEnum {
     NotSameVersion(String),
+    SameClient,
     BeginSync { sync_time: TID },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeRsp {
-    pub instance_id: String,
+    pub instance_id: SharedStr,
     pub data: SyncShakeRspEnum,
 }
 

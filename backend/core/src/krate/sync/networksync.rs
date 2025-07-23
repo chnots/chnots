@@ -29,12 +29,19 @@ use super::po::SyncEndpoint;
 
 impl ShareAppState {
     pub(crate) async fn sync_shake_rx(&self, req: SyncShakeReq) -> AResult<SyncShakeRsp> {
-        let instace_id = self.get_instance_id().await?;
+        let instace_id = self.instance_id.clone();
 
         if req.db_version.as_str() != DB_VERSION {
             return Ok(SyncShakeRsp {
                 instance_id: instace_id,
                 data: SyncShakeRspEnum::NotSameVersion(DB_VERSION.to_owned()),
+            });
+        }
+
+        if req.client_id == instace_id {
+            return Ok(SyncShakeRsp {
+                instance_id: instace_id,
+                data: SyncShakeRspEnum::SameClient,
             });
         }
 
@@ -82,13 +89,19 @@ impl ShareAppState {
                 });
             }
             SyncShakeRspEnum::BeginSync { sync_time } => sync_time,
+            SyncShakeRspEnum::SameClient => {
+                return Ok(SyncShakeRsp {
+                    instance_id: rsp.instance_id,
+                    data: SyncShakeRspEnum::SameClient,
+                });
+            }
         };
 
         let stime = self
             .mapper
             .get_sync_time(
                 ste.to_string().try_into()?,
-                rsp.instance_id.clone().try_into()?,
+                rsp.instance_id.to_string().try_into()?,
             )
             .await?;
 
@@ -219,6 +232,9 @@ macro_rules! sync_one {
             $crate::krate::sync::dto::SyncShakeRspEnum::NotSameVersion(nsv) => {
                 anyhow::bail!("not same version {}", nsv);
             }
+            $crate::krate::sync::dto::SyncShakeRspEnum::SameClient => {
+                anyhow::bail!("Same Client");
+            }
             $crate::krate::sync::dto::SyncShakeRspEnum::BeginSync { sync_time } => sync_time,
         };
         let initial_start = sync_time;
@@ -238,12 +254,8 @@ macro_rules! sync_one {
                 )
                 .await?;
             let result_len = result.records.len();
-            let c_sync_time = result
-                .records
-                .iter()
-                .map(|rec| rec.tid)
-                .max();
-            if let Some(c_sync_time) = c_sync_time{
+            let c_sync_time = result.records.iter().map(|rec| rec.tid).max();
+            if let Some(c_sync_time) = c_sync_time {
                 sync_time = c_sync_time;
             }
             log::info!("max sync time: {}({})", sync_time, result_len);
@@ -253,7 +265,7 @@ macro_rules! sync_one {
             use $crate::krate::sync::mapper::SyncMapper as _;
             if result_len < page_size {
                 $app.insert_sync_log($crate::krate::sync::po::SyncLogTransient {
-                    remote_id: shake_rsp.instance_id.clone().try_into()?,
+                    remote_id: shake_rsp.instance_id.to_string().try_into()?,
                     table_name: $crate::krate::sync::dto::SyncTableEnum::$st
                         .to_string()
                         .try_into()?,

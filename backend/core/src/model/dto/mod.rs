@@ -32,9 +32,9 @@ pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> Varchar<40> {
     headers
         .get("K-kspace")
         .and_then(|v| v.to_str().ok().map(|e| e.to_string()))
-        .unwrap()
+        .unwrap_or("<absent>".to_string())
         .try_into()
-        .unwrap()
+        .unwrap_or(Varchar::try_from("<absent>").unwrap())
 }
 
 pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {

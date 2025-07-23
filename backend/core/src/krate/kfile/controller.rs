@@ -84,6 +84,8 @@ async fn query_svg(
     asset_to_response(res)
 }
 
+pub const INLINE_K_FILE_REQ: &str = "/api/v1/inline-kfile";
+
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
@@ -101,6 +103,6 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         )
         .route("/api/v1/kfile-info", get(query_kfile))
         .route("/api/v1/inline-kfile", put(insert_inline_kfile))
-        .route("/api/v1/inline-kfile", get(query_inline_kfile))
+        .route(INLINE_K_FILE_REQ, get(query_inline_kfile))
         .route("/api/v1/inline-svg/{tid}", get(query_svg))
 }

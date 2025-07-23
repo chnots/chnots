@@ -1,4 +1,4 @@
-use chin_sql::{SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 
 use crate::{
@@ -100,7 +100,7 @@ impl SyncMapper for KDb {
             .await?
             .qry_opt(sql, |r| r.try_get("min_sync"))
             .await?;
-        
+
         let st = if let Some(s) = s {
             s
         } else {
@@ -152,11 +152,33 @@ impl KDbTx<'_> {
             }
         } else {
             for rec in records {
-                let Err(_) = self.exec(rec.to_inserter()).await else {
-                    continue;
-                };
+                let hist_row = self
+                    .qry_opt(
+                        SqlBuilder::read(rec.hist_table_name(), &["1"])
+                            .r#where(Wheres::equal("TID", rec.get_tid())),
+                        Ok,
+                    )
+                    .await?;
 
-                let row = self.qry_one(rec.to_inserter(), Ok, false).await?;
+                // maybe this record is already in the hist table.
+                if hist_row.is_some() {
+                    continue;
+                }
+
+                let ic = self
+                    .exec(rec.to_inserter().on_conflict(OnConflict::Ignore))
+                    .await?;
+
+                if ic > 0 {
+                    continue;
+                }
+                let row = self
+                    .qry_one(
+                        SqlBuilder::read_all(rec.table_name()).r#where(rec.pkey_wheres()),
+                        Ok,
+                        false,
+                    )
+                    .await?;
 
                 let tid: TID = row.try_get("tid")?;
                 let import_tid = rec.get_tid();

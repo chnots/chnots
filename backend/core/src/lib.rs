@@ -64,7 +64,7 @@ pub async fn run(config: Config) -> EResult {
 
             log::info!("begin to sync via network");
             if let Err(err) = state.sync_via_network().await {
-                log::error!("unable to backup via networks {err}")
+                log::error!("unable to backup via networks {err}, {}", err.backtrace().to_string())
             }
         });
     }
