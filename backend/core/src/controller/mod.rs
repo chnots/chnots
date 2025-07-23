@@ -26,7 +26,7 @@ use log::{info};
 
 use crate::{
     app::ShareAppState,
-    krate::{chnot, kfile, kkv, kspace, ktab, llmchat, toent},
+    krate::{chnot, kfile, kkv, kspace, ktab, llmchat, sync, toent},
 };
 
 pub(crate) mod asset;
@@ -82,6 +82,7 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .merge(llmchat::controller::routes())
         .merge(kspace::controller::routes())
         .merge(ktab::controller::routes())
+        .merge(sync::controller::routes())
         .with_state(app_state.clone())
         .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(

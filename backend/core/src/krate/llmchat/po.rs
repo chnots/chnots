@@ -4,6 +4,7 @@ use chin_sql::time_type::TID;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
+use crate::impl_hist_create_sql;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub struct LLMChatBot {
@@ -65,3 +66,8 @@ pub struct LLMChatRecord {
     #[gts_type = "i64"]
     pub tid: TID,
 }
+
+impl_hist_create_sql! {LLMChatBot}
+impl_hist_create_sql! {LLMChatTemplate}
+impl_hist_create_sql! {LLMChatSession}
+impl_hist_create_sql! {LLMChatRecord}

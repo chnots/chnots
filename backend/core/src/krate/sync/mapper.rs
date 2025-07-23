@@ -1,15 +1,17 @@
-use anyhow::Context;
-use chin_sql::{str_type::Varchar, time_type::TID};
-use chin_tools::{AResult, EResult, utils::id_util::generate_uuid};
+use chin_sql::{SqlInserter, Wheres, str_type::Varchar, time_type::TID};
+use chin_tools::{AResult, EResult};
 
 use crate::{
     expand_mt_branch,
     krate::{
-        kkv::mapper::KKVMapper,
-        sync::{dto::FetchDataType, po::SyncLogTransient},
+        kkv::{KKVTransient, mapper::KKVMapper},
+        sync::{
+            dto::FetchDataType,
+            po::{SyncAllEndpoints, SyncLogTransient},
+        },
     },
-    magics::CLIENT_ID_KEY,
-    mapper::{MapperRowType, MapperType},
+    magics::ALL_ENDPOINTS,
+    mapper::{MapperRowType, MapperType, db::HistCreateSql},
 };
 
 pub trait Dumper<T> {
@@ -56,6 +58,27 @@ pub trait SyncMapper {
     ) -> AResult<TID>;
 }
 
+pub trait MergableRec: for<'a> HistCreateSql<'a> {
+    fn to_inserter(&self) -> SqlInserter<'static>;
+    fn to_hist_inserter(&self) -> SqlInserter<'static>;
+    fn pkey_wheres(&self) -> Wheres<'static>;
+    fn get_tid(&self) -> TID;
+    fn all_fields() -> &'static [&'static str];
+}
+
+pub trait SyncOperator<E: MergableRec + Send + 'static> {
+    async fn get<F>(
+        &self,
+        fetch_data: crate::krate::sync::dto::FetchDataType,
+        mapper: F,
+        hist: bool,
+    ) -> chin_tools::AResult<Vec<E>>
+    where
+        F: Fn(MapperRowType) -> AResult<E> + Send + Sync + 'static;
+
+    async fn put(&self, recs: Vec<E>, hist: bool) -> AResult<Vec<E>>;
+}
+
 impl SyncMapper for MapperType {
     async fn ensure_sync_table(&self) -> EResult {
         expand_mt_branch!(self.ensure_sync_table())
@@ -74,4 +97,91 @@ impl SyncMapper for MapperType {
     }
 }
 
+impl MapperType {
+    pub(crate) async fn get_all_endpoints(&self) -> AResult<SyncAllEndpoints> {
+        let kkv: Option<SyncAllEndpoints> = self
+            .kkv_transient_query(ALL_ENDPOINTS, |e| Ok(serde_json::from_str(e.as_str())?))
+            .await?;
+        match kkv {
+            Some(kkv) => Ok(kkv),
+            None => Ok(SyncAllEndpoints {
+                endpoints: Default::default(),
+            }),
+        }
+    }
 
+    pub(crate) async fn overwrite_endpoints(&self, req: SyncAllEndpoints) -> EResult {
+        self
+            .kkv_transisent_overwrite(
+                ALL_ENDPOINTS.to_string().try_into()?,
+                &req,
+                chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),
+            )
+            .await
+    }
+}
+
+#[macro_export]
+macro_rules! impl_sync_operator {
+    ($st:ty, $($field:ident),+) => {
+
+        impl $crate::krate::sync::mapper::MergableRec for $st {
+            fn to_inserter(&self) -> chin_sql::SqlInserter<'static> {
+                self.clone().to_sql_inserter()
+            }
+
+            fn to_hist_inserter(&self) -> chin_sql::SqlInserter<'static> {
+                self.clone().to_sql_inserter().table_name(Self::HIST_TABLE)
+            }
+
+            fn get_tid(&self) -> TID {
+                self.tid
+            }
+
+            fn all_fields() -> &'static [&'static str] {
+                Self::all_field_names()
+            }
+
+            fn pkey_wheres(&self) -> chin_sql::Wheres<'static> {
+                Self::pkey_cond($(self.$field.clone()),+)
+            }
+        }
+
+        impl $crate::krate::sync::mapper::SyncOperator<$st> for $crate::mapper::MapperType {
+            async fn get<F>(
+                &self,
+                fetch_data: $crate::krate::sync::dto::FetchDataType,
+                mapper: F,
+                hist: bool,
+            ) -> chin_tools::AResult<Vec<$st>>
+            where
+                F: Fn($crate::mapper::MapperRowType) -> chin_tools::AResult<$st>
+                    + Send
+                    + Sync
+                    + 'static,
+            {
+                use $crate::krate::sync::mapper::Dumper as _;
+                let table_name = if hist {
+                    <$st>::HIST_TABLE
+                } else {
+                    <$st>::TABLE
+                };
+                self.dump(table_name, fetch_data, mapper).await
+            }
+
+            async fn put(&self, recs: Vec<$st>, hist: bool) -> chin_tools::AResult<Vec<$st>> {
+                use $crate::mapper::db::kdb::KDbBehaiver as _;
+                use $crate::mapper::db::kdb::KDbConnBehaiver as _;
+                let result = match self {
+                    $crate::mapper::MapperType::KDb(kdb) => {
+                        let mut conn = kdb.conn().await?;
+                        let tx = conn.tx().await?;
+                        tx.merge_records(recs, hist).await?
+                    }
+                };
+
+                Ok(result)
+            }
+        }
+    };
+}

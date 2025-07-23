@@ -7,10 +7,9 @@ use chin_sql::{SqlBuilder, Wheres};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
-use crate::mapper::db::helper::{create_tables, to_ommitted_table};
+use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::{
-    KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-    KDbTransactionBehaiver,
+    HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver
 };
 use crate::model::dto::KReq;
 
@@ -338,13 +337,13 @@ impl LLMChatMapper for KDb {
         create_tables(
             vec![
                 LLMChatBot::create_sql().to_owned_sql(),
-                to_ommitted_table(LLMChatBot::create_sql().to_owned_sql()),
+                LLMChatBot::hist_table(),
                 LLMChatTemplate::create_sql().to_owned_sql(),
-                to_ommitted_table(LLMChatTemplate::create_sql().to_owned_sql()),
+                LLMChatTemplate::hist_table(),
                 LLMChatSession::create_sql().to_owned_sql(),
-                to_ommitted_table(LLMChatSession::create_sql().to_owned_sql()),
+                LLMChatSession::hist_table(),
                 LLMChatRecord::create_sql().to_owned_sql(),
-                to_ommitted_table(LLMChatRecord::create_sql().to_owned_sql()),
+                LLMChatRecord::hist_table(),
             ],
             self,
         )

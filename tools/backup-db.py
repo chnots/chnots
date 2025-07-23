@@ -117,4 +117,4 @@ def insert_to_from_bak():
 
     for_all_tables(rename)
 
-rename_to_bak()
+bak_to_new_schema()

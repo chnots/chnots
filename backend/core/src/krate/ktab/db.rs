@@ -8,9 +8,7 @@ use log::info;
 
 use crate::{
     mapper::db::{
-        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        KDbTransactionBehaiver,
-        helper::{create_tables, to_ommitted_table},
+        helper::create_tables, HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver
     },
     model::dto::KReq,
 };
@@ -232,13 +230,13 @@ impl KTabMapper for KDb {
         create_tables(
             vec![
                 KTabMeta::create_sql().to_owned_sql(),
-                to_ommitted_table(KTabMeta::create_sql().to_owned_sql()),
+                KTabMeta::hist_table(),
                 KTabCellText::create_sql().to_owned_sql(),
-                to_ommitted_table(KTabCellText::create_sql().to_owned_sql()),
+                KTabCellText::hist_table(),
                 KTabCellDecimal::create_sql().to_owned_sql(),
-                to_ommitted_table(KTabCellDecimal::create_sql().to_owned_sql()),
+                KTabCellDecimal::hist_table(),
                 KTabCellDate::create_sql().to_owned_sql(),
-                to_ommitted_table(KTabCellDate::create_sql().to_owned_sql()),
+                KTabCellDate::hist_table(),
             ],
             self,
         )

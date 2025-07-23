@@ -1,10 +1,13 @@
 use std::{ops::Deref, sync::Arc};
 
+use chin_tools::SharedStr;
+
 use crate::{config::Config, mapper::MapperType};
 
 pub struct AppState {
     pub(crate) mapper: MapperType,
     pub(crate) config: Config,
+    pub instance_id: SharedStr,
 }
 
 impl Deref for AppState {

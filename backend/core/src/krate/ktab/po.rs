@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use chin_sql::str_type::Text;
 use chin_sql::GenerateTableSchema;
+use chin_sql::str_type::Text;
 use chin_sql::{str_type::Varchar, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
+use crate::impl_hist_create_sql;
 use crate::model::decimal::Decimal;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -53,6 +54,8 @@ pub struct KTabMeta {
     pub tid: TID,
 }
 
+impl_hist_create_sql! {KTabMeta}
+
 macro_rules! type_table {
     ($sname:tt, $data_type:ty $(, #[$attr:meta])*) => {
         #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema)]
@@ -76,6 +79,8 @@ macro_rules! type_table {
             $(#[$attr])*
             pub cell_data: $data_type
         }
+        impl_hist_create_sql!{$sname}
+
     }
 }
 

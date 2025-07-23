@@ -5,10 +5,9 @@ use std::str::FromStr;
 use super::mapper::ChnotMapper;
 use super::*;
 use crate::krate::toent::logic::todoevent::TodoEvent;
-use crate::mapper::db::helper::{create_tables, to_ommitted_table};
+use crate::mapper::db::helper::{create_tables};
 use crate::mapper::db::{
-    KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-    KDbTransactionBehaiver,
+    HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver
 };
 use crate::model::dto::KReq;
 use crate::util::result_util::UnwrapOr;
@@ -135,13 +134,13 @@ impl ChnotMapper for KDb {
         create_tables(
             vec![
                 ChnotTag::create_sql().to_owned_sql(),
-                to_ommitted_table(ChnotTag::create_sql().to_owned_sql()),
+                ChnotTag::hist_table(),
                 ChnotMetadata::create_sql().to_owned_sql(),
-                to_ommitted_table(ChnotMetadata::create_sql().to_owned_sql()),
+                ChnotMetadata::hist_table(),
                 ChnotRecord::create_sql().to_owned_sql(),
-                to_ommitted_table(ChnotRecord::create_sql().to_owned_sql()),
+                ChnotRecord::hist_table(),
                 ChnotKindRel::create_sql().to_owned_sql(),
-                to_ommitted_table(ChnotKindRel::create_sql().to_owned_sql()),
+                ChnotKindRel::hist_table(),
             ],
             self,
         )

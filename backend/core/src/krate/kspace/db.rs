@@ -3,13 +3,10 @@ use chin_sql::SqlBuilder;
 
 use crate::{
     krate::kspace::{
-        KSpace,
-        dto::{KSpaceOverwriteRsp, KSpaceQueryAllRsp},
-        mapper::KSpaceMapper,
+        dto::{KSpaceOverwriteRsp, KSpaceQueryAllRsp}, mapper::KSpaceMapper, KSpace
     },
     mapper::db::{
-        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        helper::{create_tables, to_ommitted_table},
+        helper::create_tables, HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier
     },
 };
 
@@ -60,7 +57,7 @@ impl KSpaceMapper for KDb {
         create_tables(
             vec![
                 KSpace::create_sql().to_owned_sql(),
-                to_ommitted_table(KSpace::create_sql().to_owned_sql()),
+                KSpace::hist_table(),
             ],
             self,
         )

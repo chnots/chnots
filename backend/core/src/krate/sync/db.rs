@@ -1,14 +1,14 @@
-use chin_sql::{SqlBuilder, SqlInserter, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 
 use crate::{
     krate::sync::{
         dto::FetchDataType,
-        mapper::{Dumper, SyncMapper},
+        mapper::{Dumper, MergableRec, SyncMapper},
         po::SyncLogTransient,
     },
     mapper::db::{
-        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, helper::create_tables,
+        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTx, helper::create_tables,
     },
 };
 
@@ -100,6 +100,7 @@ impl SyncMapper for KDb {
             .await?
             .qry_opt(sql, |r| r.try_get("min_sync"))
             .await?;
+        
         let st = if let Some(s) = s {
             s
         } else {
@@ -126,15 +127,59 @@ impl TryFrom<KDbRow> for SyncLogTransient {
     }
 }
 
-impl KDb {
-    pub async fn merge_into_table<'b, T>(&self, table_name: String, records: Vec<T>) -> EResult
+/// Merge records.
+/// We have some rules before do the things,
+/// 1. all rows cannot to be changed after insertion.
+/// 2. the table has a column called `tid` which indicated the insert tid
+///    and it's an unique key.
+impl KDbTx<'_> {
+    pub async fn merge_records<T>(&self, records: Vec<T>, hist: bool) -> AResult<Vec<T>>
     where
-        T: Into<SqlInserter<'b>>,
+        T: Clone + Send + 'static + MergableRec,
     {
-        for rec in records {
-            self.conn().await?.exec(rec.into()).await?;
+        let mut not_same = vec![];
+        if hist {
+            for rec in records {
+                let c = self
+                    .exec(
+                        rec.to_hist_inserter()
+                            .on_conflict(chin_sql::OnConflict::Ignore),
+                    )
+                    .await?;
+                if c > 0 {
+                    not_same.push(rec);
+                }
+            }
+        } else {
+            for rec in records {
+                let Err(_) = self.exec(rec.to_inserter()).await else {
+                    continue;
+                };
+
+                let row = self.qry_one(rec.to_inserter(), Ok, false).await?;
+
+                let tid: TID = row.try_get("tid")?;
+                let import_tid = rec.get_tid();
+
+                if tid > import_tid {
+                    let c = self.exec(rec.to_hist_inserter()).await?;
+                    if c > 0 {
+                        not_same.push(rec);
+                    }
+                } else if tid == import_tid {
+                    // do nothing
+                } else {
+                    self.as_executor()
+                        .omit_rows(T::main_table_name(), T::all_fields(), rec.pkey_wheres())
+                        .await?;
+                    let c = self.exec(rec.to_inserter()).await?;
+                    if c > 0 {
+                        not_same.push(rec);
+                    }
+                }
+            }
         }
 
-        Ok(())
+        Ok(not_same)
     }
 }

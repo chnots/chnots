@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     app::ShareAppState,
-    krate::sync::mapper::Dumper,
+    krate::sync::{
+        mapper::Dumper,
+        po::{SyncAllEndpoints, SyncEndpoint},
+    },
     mapper::{MapperRowType, MapperType},
 };
 
@@ -163,13 +166,29 @@ macro_rules! dump_table_to_file {
 }
 
 impl ShareAppState {
-    pub async fn dump_all(&self, start_type: StartType) -> EResult {
+    pub async fn dump_all_to_files(&self, start_type: StartType) -> EResult {
         self.dump_chnot_to_file(start_type.clone()).await?;
         self.dump_kfile_to_file(start_type.clone()).await?;
         self.dump_kkv_to_file(start_type.clone()).await?;
         self.dump_kspace_to_file(start_type.clone()).await?;
         self.dump_ktab_to_file(start_type.clone()).await?;
         self.dump_llmchat_to_file(start_type.clone()).await?;
+
+        Ok(())
+    }
+
+    pub async fn sync_via_network(&self) -> EResult {
+        self.overwrite_endpoints(SyncAllEndpoints {
+            endpoints: vec![SyncEndpoint {
+                ip: "127.0.0.1".into(),
+                port: 3011,
+            }],
+        })
+        .await?;
+        for endpoint in &self.get_all_endpoints().await?.endpoints {
+            self.sync_chnots(endpoint).await?;
+            self.sync_kfile(endpoint).await?;
+        }
 
         Ok(())
     }

@@ -1,6 +1,8 @@
 use chin_sql::{str_type::Varchar, time_type::TID, GenerateTableSchema};
 use serde::{Deserialize, Serialize};
 
+use crate::impl_hist_create_sql;
+
 
 fn managers_to_sql(managers: Vec<String>) -> String {
     serde_json::to_string(&managers).unwrap()
@@ -18,3 +20,5 @@ pub struct KSpace {
     #[gts_type = "i64"]    
     pub tid: TID,
 }
+
+impl_hist_create_sql!{KSpace}

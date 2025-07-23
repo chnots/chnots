@@ -3,6 +3,8 @@ use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use serde::{Deserialize, Serialize};
 
+use crate::impl_hist_create_sql;
+
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct KFileMeta {
@@ -26,6 +28,8 @@ pub struct KFileMeta {
     pub sid: Varchar<100>,
     pub filesize: i64,
 }
+
+impl_hist_create_sql!{KFileMeta}
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct InlineKFile {

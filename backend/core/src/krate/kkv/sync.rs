@@ -4,9 +4,7 @@ use chin_sql::time_type::TID;
 use chin_tools::EResult;
 
 use crate::{
-    app::ShareAppState,
-    dump_table_to_file,
-    krate::{kkv::KKV, sync::filedumper::StartType},
+    app::ShareAppState, dump_table_to_file, impl_sync_operator, krate::{kkv::KKV, sync::filedumper::StartType}
 };
 
 impl ShareAppState {
@@ -27,3 +25,5 @@ impl ShareAppState {
         Ok(())
     }
 }
+
+impl_sync_operator! { KKV, key, kind, kspace }

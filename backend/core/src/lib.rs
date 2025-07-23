@@ -42,9 +42,11 @@ pub async fn run(config: Config) -> EResult {
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
+    let instance_id = mapper.get_instance_id().await?;
     let state = AppState {
         config: config.clone(),
         mapper,
+        instance_id: instance_id.into(),
     };
     let state: ShareAppState = state.into();
     {
@@ -56,8 +58,13 @@ pub async fn run(config: Config) -> EResult {
                 info!("unable to create instace_id {err}");
             }
 
-            if let Err(err) = state.dump_all(StartType::Increase).await {
+            if let Err(err) = state.dump_all_to_files(StartType::Increase).await {
                 log::error!("unable to backup to files {err}")
+            }
+
+            log::info!("begin to sync via network");
+            if let Err(err) = state.sync_via_network().await {
+                log::error!("unable to backup via networks {err}")
             }
         });
     }

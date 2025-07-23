@@ -1,7 +1,6 @@
 use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
-use log::info;
 
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver};
 
@@ -38,35 +37,6 @@ pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> E
     Ok(())
 }
 
-pub(crate) fn to_ommitted_table(mut create_table: CreateTableSqlOwned) -> CreateTableSqlOwned {
-    let pkey = create_table.pkey.clone();
-    create_table.pkey.clear();
-
-    for ele in pkey {
-        create_table.keys.push((ele.clone(), vec![ele]));
-    }
-
-    create_table.table_name = create_table.table_name.omitted_table_name();
-
-    create_table
-}
-
-pub(crate) trait OmittedTableName {
-    fn omitted_table_name(&self) -> String;
-}
-
-impl OmittedTableName for &'_ str {
-    fn omitted_table_name(&self) -> String {
-        format!("{self}_hist")
-    }
-}
-
-impl OmittedTableName for String {
-    fn omitted_table_name(&self) -> String {
-        format!("{self}_hist")
-    }
-}
-
 impl KDbExecutor<'_> {
     pub(crate) async fn omit_rows(
         &self,
@@ -93,8 +63,8 @@ impl KDbExecutor<'_> {
     ) -> AResult<usize> {
         let insert_sql = SqlBuilder::new()
             .sov(format!(
-                "insert into {}({}) select {} from {}",
-                table_name.omitted_table_name(),
+                "insert into {}_hist({}) select {} from {}",
+                table_name,
                 fields.join(","),
                 fields.join(","),
                 table_name

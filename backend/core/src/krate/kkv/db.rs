@@ -5,7 +5,8 @@ use serde::Serialize;
 
 use crate::{
     mapper::db::{
-        helper::{create_tables, to_ommitted_table}, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier
+        HistCreateSql, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+        helper::create_tables,
     },
     model::dto::KReq,
 };
@@ -84,7 +85,8 @@ impl KDbExecutor<'_> {
                 value: serde_json::to_string(&value)?.into(),
                 tid: TID::default(),
             }
-            .to_sql_inserter(),
+            .to_sql_inserter()
+            .on_conflict(on_conflict),
         )
         .await?;
         Ok(())
@@ -110,7 +112,7 @@ impl KKVMapper for KDb {
         create_tables(
             vec![
                 KKV::create_sql().to_owned_sql(),
-                to_ommitted_table(KKV::create_sql().to_owned_sql()),
+                KKV::hist_table(),
                 KKVTransient::create_sql().to_owned_sql(),
             ],
             self,

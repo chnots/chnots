@@ -31,6 +31,8 @@ pub trait KFileMapper {
         req: KReq<InsertInlineKFileReq>,
     ) -> anyhow::Result<InsertInlineKFileRsp>;
 
+    async fn insert_inline_kfile2(&self, req: InlineKFile) -> AResult<usize>;
+
     async fn query_inline_kfile(
         &self,
         req: KReq<QueryInlineKFileReq>,
@@ -71,5 +73,9 @@ impl KFileMapper for MapperType {
         sid: Varchar<100>,
     ) -> anyhow::Result<QueryKFileMetaRsp> {
         expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
+    }
+    
+    async fn insert_inline_kfile2(&self, req: InlineKFile) -> AResult<usize> {
+        expand_mt_branch!(self.insert_inline_kfile2(req))
     }
 }

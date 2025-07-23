@@ -3,8 +3,7 @@ use std::io::Write;
 use super::{mapper::KFileMapper, *};
 use crate::{
     mapper::db::{
-        KDbConnBehaiver, KDbRow, KDbTransactionBehaiver,
-        helper::{create_tables, to_ommitted_table},
+        helper::create_tables, HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver
     },
     model::dto::KReq,
 };
@@ -50,7 +49,7 @@ impl KFileMapper for KDb {
             vec![
                 InlineKFile::create_sql().to_owned_sql(),
                 KFileMeta::create_sql().to_owned_sql(),
-                to_ommitted_table(KFileMeta::create_sql().to_owned_sql()),
+                KFileMeta::hist_table()
             ],
             self,
         )
@@ -176,5 +175,9 @@ impl KFileMapper for KDb {
             .qry_opt(KFileMeta::pkey_reader(sid), |e| e.try_into())
             .await?;
         Ok(QueryKFileMetaRsp { meta })
+    }
+    
+    async fn insert_inline_kfile2(&self, req: InlineKFile) -> chin_tools::AResult<usize> {
+        self.conn().await?.exec(req.to_sql_inserter().on_conflict(OnConflict::Ignore)).await
     }
 }

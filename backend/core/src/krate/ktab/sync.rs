@@ -4,12 +4,10 @@ use chin_sql::time_type::TID;
 use chin_tools::EResult;
 
 use crate::{
-    app::ShareAppState,
-    dump_table_to_file,
-    krate::{
+    app::ShareAppState, dump_table_to_file, impl_sync_operator, krate::{
         ktab::{KTabCellDate, KTabCellDecimal, KTabCellText, KTabMeta},
         sync::filedumper::StartType,
-    },
+    }
 };
 
 impl ShareAppState {
@@ -33,3 +31,8 @@ impl ShareAppState {
         Ok(())
     }
 }
+
+impl_sync_operator! { KTabMeta, otid }
+impl_sync_operator! { KTabCellDate, table_otid, col_otid, row_otid }
+impl_sync_operator! { KTabCellText, table_otid, col_otid, row_otid }
+impl_sync_operator! { KTabCellDecimal, table_otid, col_otid, row_otid }

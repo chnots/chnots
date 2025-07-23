@@ -16,6 +16,7 @@ use strum::Display;
 use strum::IntoStaticStr;
 use strum_macros::EnumString;
 
+use crate::impl_hist_create_sql;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
@@ -34,6 +35,8 @@ pub struct ChnotRecord {
     pub content: Text,
     pub archor: bool,
 }
+
+impl_hist_create_sql! {ChnotRecord}
 
 fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
     match opt {
@@ -56,6 +59,7 @@ pub struct ChnotMetadata {
     #[gts_type = "i64"]
     pub tid: TID,
 }
+impl_hist_create_sql! {ChnotMetadata}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub struct ChnotTag {
@@ -70,6 +74,8 @@ pub struct ChnotTag {
     pub tid: TID,
 }
 
+impl_hist_create_sql! {ChnotTag}
+
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub struct ChnotKindRel {
     #[gts_primary]
@@ -81,6 +87,8 @@ pub struct ChnotKindRel {
     #[gts_type = "i64"]
     pub tid: TID,
 }
+
+impl_hist_create_sql! {ChnotKindRel}
 
 impl AsRef<str> for ChnotTag {
     fn as_ref(&self) -> &str {

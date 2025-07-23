@@ -12,3 +12,14 @@ pub struct SyncLogTransient {
     #[gts_type = "i64"]
     pub(crate) sync_finish_tid: TID,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SyncEndpoint {
+    pub(crate) ip: String,
+    pub(crate) port: u16,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SyncAllEndpoints {
+    pub(crate) endpoints: Vec<SyncEndpoint>
+}

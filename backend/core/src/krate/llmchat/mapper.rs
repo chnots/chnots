@@ -9,13 +9,6 @@ use crate::{
 
 use super::*;
 
-pub(crate) trait LLMChatDeserializeMapper {
-    fn to_llmchat_bot(self) -> AResult<LLMChatBot>;
-    fn to_llmchat_template(self) -> AResult<LLMChatTemplate>;
-    fn to_llmchat_session(self) -> AResult<LLMChatSession>;
-    fn to_llmchat_record(self) -> AResult<LLMChatRecord>;
-}
-
 pub trait LLMChatMapper {
     async fn llm_chat_overwrite_bot(
         &self,

@@ -352,3 +352,42 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
     }
 }
 
+
+pub(crate) trait HistCreateSql<'a> {
+    fn main_table_name() -> &'static str;
+    fn hist_table_name() -> &'static str;
+    fn hist_table() -> chin_sql::CreateTableSqlOwned;
+}
+
+#[macro_export]
+macro_rules! impl_hist_create_sql {
+    ($st:tt) => {
+        impl $st {
+            pub const HIST_TABLE: &str = const_format::formatcp!("{}_hist", $st::TABLE);
+        }
+
+        impl<'a> $crate::mapper::db::kdb::HistCreateSql<'a> for $st {
+            fn hist_table_name() -> &'static str {
+                Self::HIST_TABLE
+            }
+
+            fn main_table_name() -> &'static str {
+                Self::TABLE
+            }
+
+            fn hist_table() -> chin_sql::CreateTableSqlOwned {
+                let mut create_table = Self::create_sql().to_owned_sql();
+                let pkey = create_table.pkey.clone();
+                create_table.pkey.clear();
+
+                for ele in pkey {
+                    create_table.keys.push((ele.clone(), vec![ele]));
+                }
+
+                create_table.table_name = Self::HIST_TABLE.to_string();
+
+                create_table
+            }
+        }
+    };
+}
