@@ -172,11 +172,14 @@ macro_rules! impl_sync_operator {
             async fn put(&self, recs: Vec<$st>, hist: bool) -> chin_tools::AResult<Vec<$st>> {
                 use $crate::mapper::db::kdb::KDbBehaiver as _;
                 use $crate::mapper::db::kdb::KDbConnBehaiver as _;
+                use $crate::mapper::db::kdb::KDbTransactionBehaiver as _;
                 let result = match self {
                     $crate::mapper::MapperType::KDb(kdb) => {
                         let mut conn = kdb.conn().await?;
                         let tx = conn.tx().await?;
-                        tx.merge_records(recs, hist).await?
+                        let res = tx.merge_records(recs, hist).await?;
+                        tx.cmt().await?;
+                        res
                     }
                 };
 

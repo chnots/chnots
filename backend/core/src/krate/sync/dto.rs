@@ -78,7 +78,7 @@ impl ToString for SyncTableEnum {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeReq {
     pub client_id: SharedStr,
-    pub app_version: String,
+    pub db_version: String,
     pub table_name: SyncTableEnum,
 }
 

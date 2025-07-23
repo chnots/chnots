@@ -6,7 +6,7 @@ type SyncShakeRspEnum = Object;
 
 export type SyncShakeReq = {
   client_id: string;
-  app_version: string;
+  db_version: string;
   table_name: SyncTableEnum;
   start_tid_ex: TID;
 };

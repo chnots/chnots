@@ -18,7 +18,7 @@ use crate::{
             mapper::SyncMapper,
         },
     },
-    magics::APP_VERSION,
+    magics::DB_VERSION,
 };
 use chin_tools::AResult;
 use serde::Serialize;
@@ -31,10 +31,10 @@ impl ShareAppState {
     pub(crate) async fn sync_shake_rx(&self, req: SyncShakeReq) -> AResult<SyncShakeRsp> {
         let instace_id = self.get_instance_id().await?;
 
-        if req.app_version.as_str() != APP_VERSION {
+        if req.db_version.as_str() != DB_VERSION {
             return Ok(SyncShakeRsp {
                 instance_id: instace_id,
-                data: SyncShakeRspEnum::NotSameVersion(APP_VERSION.to_owned()),
+                data: SyncShakeRspEnum::NotSameVersion(DB_VERSION.to_owned()),
             });
         }
 
@@ -66,7 +66,7 @@ impl ShareAppState {
             ))
             .json(&SyncShakeReq {
                 client_id: self.instance_id.clone(),
-                app_version: APP_VERSION.to_string(),
+                db_version: DB_VERSION.to_string(),
                 table_name: ste,
             })
             .send()
