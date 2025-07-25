@@ -122,7 +122,7 @@ impl<P: AsRef<Path>> FileDumper<P> {
             let recs = mapper_type
                 .dump(
                     &table_name,
-                    super::dto::FetchDataType::RangePage {
+                    super::dto::FetchTIDReq {
                         start_ex,
                         end_in: self.end_in,
                         page_size: PAGE_SIZE,

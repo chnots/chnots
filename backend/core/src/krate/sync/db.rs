@@ -1,9 +1,10 @@
 use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
+use itertools::Itertools;
 
 use crate::{
     krate::sync::{
-        dto::FetchDataType,
+        dto::{FetchTIDReq, SyncFetchTIDReq, SyncFetchTIDRsp, SyncInfo},
         mapper::{Dumper, MergableRec, SyncMapper},
         po::SyncLogTransient,
     },
@@ -12,33 +13,31 @@ use crate::{
     },
 };
 
+use super::dto::SyncTableEnum;
+
 impl Dumper<KDbRow> for KDb {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: FetchDataType,
+        fetch_data: FetchTIDReq,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
         F: Fn(KDbRow) -> AResult<E> + Send + Sync + 'static,
         E: Send + 'static,
     {
-        let sql = SqlBuilder::read_all(table_name);
-        let sql = match fetch_data {
-            FetchDataType::RangePage {
-                start_ex,
-                end_in,
-                page_size,
-            } => {
-                sql.r#where(Wheres::and([
-                    // all table must have tid field
-                    Wheres::compare("tid", ">", start_ex),
-                    Wheres::compare("tid", "<=", end_in),
-                ]))
-                .limit(page_size)
-            }
-            FetchDataType::Tids(tids) => sql.r#where(Wheres::r#in("tid", tids)),
-        };
+        let FetchTIDReq {
+            start_ex,
+            end_in,
+            page_size,
+        } = fetch_data;
+        let sql = SqlBuilder::read_all(table_name)
+            .r#where(Wheres::and([
+                // all table must have tid field
+                Wheres::compare("tid", ">", start_ex),
+                Wheres::compare("tid", "<=", end_in),
+            ]))
+            .limit(page_size);
 
         let rows = self.conn().await?.qry_list(sql, mapper).await?;
 
@@ -52,12 +51,12 @@ impl SyncMapper for KDb {
         Ok(())
     }
 
-    async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult {
+    async fn sync_insert_sync_log(&self, log: SyncLogTransient) -> EResult {
         self.conn().await?.exec(log.to_sql_inserter()).await?;
         Ok(())
     }
 
-    async fn get_sync_time(
+    async fn sync_get_sync_time(
         &self,
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
@@ -109,6 +108,51 @@ impl SyncMapper for KDb {
 
         Ok(st)
     }
+
+    async fn sync_dump_tids(&self, req: SyncFetchTIDReq) -> AResult<SyncFetchTIDRsp> {
+        let start_ex = req.sync_info.start_ex;
+        let end_in = req.sync_info.end_in;
+        let page_size = req.page_size;
+        let table_name = req.sync_info.table;
+        let sql = format!(
+            "select tid from {} where tid > {} and tid < {} order by tid asc limit {}",
+            if req.hist {
+                table_name.to_hist_table_name()
+            } else {
+                table_name.to_table_name()
+            },
+            start_ex.as_num(),
+            end_in.as_num(),
+            page_size
+        );
+        let data = self
+            .conn()
+            .await?
+            .qry_list(sql, |c| c.try_get("tid"))
+            .await?;
+
+        Ok(SyncFetchTIDRsp { data })
+    }
+
+    async fn sync_merge_tids(
+        &self,
+        data: SyncFetchTIDRsp,
+        hist: bool,
+        sync_info: SyncInfo,
+    ) -> EResult {
+        let tn = sync_info.to_table_name();
+        let dtype = if hist { 2 } else { 1 };
+        self.conn()
+            .await?
+            .exec(format!(
+                "insert into {}(tid, ltype, rtype) values {} on conflict(tid) do update set rtype = {}",
+                tn,
+                data.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype)).join(","),
+                dtype
+            ))
+            .await?;
+        Ok(())
+    }
 }
 
 impl TryFrom<KDbRow> for SyncLogTransient {
@@ -124,6 +168,32 @@ impl TryFrom<KDbRow> for SyncLogTransient {
         };
 
         Ok(sl)
+    }
+}
+
+impl KDb {
+    pub(super) async fn create_tmp_table(&self, sync_info: &SyncInfo) -> EResult {
+        let table_name = sync_info.to_table_name();
+
+        let sql = format!(
+            "create table if not exists {table_name}(tid bigint, ltype int not null, rtype int not null, primary key (tid))"
+        );
+        self.conn().await?.exec(sql).await?;
+        let sql = format!(
+            "insert into {}
+            select tid, 1 as ltype, 0 as rtype from {} where tid > {} and tid <= {}
+            union
+            select tid, 2 as ltype, 0 as rtype from {}_hist where tid > {} and tid <= {}",
+            table_name,
+            sync_info.table.to_table_name(),
+            sync_info.start_ex.as_num(),
+            sync_info.end_in.as_num(),
+            sync_info.table.to_table_name(),
+            sync_info.start_ex.as_num(),
+            sync_info.end_in.as_num()
+        );
+        self.conn().await?.exec(sql).await?;
+        Ok(())
     }
 }
 

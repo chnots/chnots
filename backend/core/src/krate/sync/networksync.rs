@@ -1,29 +1,18 @@
-use crate::krate::sync::controller::SYNC_FETCH_DATA_PATH;
-use crate::krate::sync::dto::FetchDataType;
-use crate::krate::sync::mapper::SyncOperator;
+use crate::krate::sync::controller::SYNC_FETCH_TID_PATH;
+use crate::krate::sync::dto::{FetchTIDReq, SyncInfo};
 use crate::{
     app::ShareAppState,
-    krate::{
-        chnot::{ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
-        kfile::KFileMeta,
-        kkv::KKV,
-        ktab::{KTabCellDate, KTabCellDecimal, KTabCellText, KTabMeta},
-        llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        sync::{
-            controller::SYNC_SHAKE_PATH,
-            dto::{
-                SyncFetchDataReq, SyncFetchDataRsp, SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum,
-                SyncTableEnum,
-            },
-            mapper::SyncMapper,
+    krate::sync::{
+        controller::SYNC_SHAKE_PATH,
+        dto::{
+            SyncFetchTIDReq, SyncFetchTIDRsp, SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum,
+            SyncTableEnum,
         },
+        mapper::SyncMapper,
     },
     magics::DB_VERSION,
 };
-use chin_tools::AResult;
-use serde::Serialize;
-use serde::de::DeserializeOwned;
-use serde_json::Value;
+use chin_tools::{AResult, EResult, SharedStr};
 
 use super::po::SyncEndpoint;
 
@@ -38,7 +27,7 @@ impl ShareAppState {
             });
         }
 
-        if req.client_id == instace_id {
+        if req.instance_id == instace_id {
             return Ok(SyncShakeRsp {
                 instance_id: instace_id,
                 data: SyncShakeRspEnum::SameClient,
@@ -47,9 +36,9 @@ impl ShareAppState {
 
         let sync_time = self
             .mapper
-            .get_sync_time(
-                req.table_name.to_string().try_into()?,
-                req.client_id.to_string().try_into()?,
+            .sync_get_sync_time(
+                req.table_name.to_table_name().try_into()?,
+                req.instance_id.to_string().try_into()?,
             )
             .await?;
 
@@ -72,7 +61,7 @@ impl ShareAppState {
                 endpoint.ip, endpoint.port, SYNC_SHAKE_PATH
             ))
             .json(&SyncShakeReq {
-                client_id: self.instance_id.clone(),
+                instance_id: self.instance_id.clone(),
                 db_version: DB_VERSION.to_string(),
                 table_name: ste,
             })
@@ -99,8 +88,8 @@ impl ShareAppState {
 
         let stime = self
             .mapper
-            .get_sync_time(
-                ste.to_string().try_into()?,
+            .sync_get_sync_time(
+                ste.to_table_name().try_into()?,
                 rsp.instance_id.to_string().try_into()?,
             )
             .await?;
@@ -115,169 +104,184 @@ impl ShareAppState {
         })
     }
 
-    pub(crate) async fn sync_fetch_data_tx<E: DeserializeOwned + Serialize>(
+    pub(crate) async fn sync_fetch_tids_tx(
         &self,
         endpoint: &SyncEndpoint,
+        instance_id: SharedStr,
         ste: SyncTableEnum,
-        fetch_data: FetchDataType,
+        fetch_data: FetchTIDReq,
         hist: bool,
-    ) -> AResult<SyncFetchDataRsp<E>> {
+    ) -> AResult<SyncFetchTIDRsp> {
         let client = reqwest::Client::builder().build()?;
 
         let rsp = client
             .post(format!(
                 "http://{}:{}{}",
-                endpoint.ip, endpoint.port, SYNC_FETCH_DATA_PATH
+                endpoint.ip, endpoint.port, SYNC_FETCH_TID_PATH
             ))
-            .json(&SyncFetchDataReq {
-                table_name: ste,
-                fetch_data,
+            .json(&SyncFetchTIDReq {
+                sync_info: SyncInfo {
+                    instance_id,
+                    start_ex: fetch_data.start_ex,
+                    end_in: fetch_data.end_in,
+                    table: ste,
+                },
+                page_size: fetch_data.page_size,
                 hist,
             })
             .send()
             .await?
-            .json::<SyncFetchDataRsp<serde_json::Value>>()
+            .json::<SyncFetchTIDRsp>()
             .await?;
 
-        let records = rsp
-            .records
-            .into_iter()
-            .map(|value| serde_json::from_value::<E>(value))
-            .collect::<Result<Vec<_>, serde_json::Error>>()?;
-
-        Ok(SyncFetchDataRsp { records })
+        Ok(rsp)
     }
 
-    pub(crate) async fn sync_fetch_data_rx(
+    pub(crate) async fn sync_fetch_tids_rx(
         &self,
-        req: SyncFetchDataReq,
-    ) -> AResult<SyncFetchDataRsp<serde_json::Value>> {
-        macro_rules! get {
-            ($st:ty) => {
-                let c: Vec<$st> = self
-                    .mapper
-                    .get(
-                        req.fetch_data,
-                        |e| {
-                            let c: AResult<$st> = match e {
-                                crate::mapper::MapperRowType::KDb(kdb_row) => kdb_row.try_into(),
-                            };
-                            c
-                        },
-                        req.hist,
-                    )
-                    .await?;
-
-                c.into_iter()
-                    .map(|e| serde_json::to_value(e))
-                    .collect::<Result<Vec<serde_json::Value>, serde_json::Error>>()?
-            };
-        }
-
-        let records: Vec<Value> = match req.table_name {
-            super::dto::SyncTableEnum::ChnotRecord => {
-                get! {ChnotRecord}
-            }
-            super::dto::SyncTableEnum::ChnotMetadata => {
-                get! {ChnotMetadata}
-            }
-            super::dto::SyncTableEnum::ChnotKindRel => {
-                get! {ChnotKindRel}
-            }
-            super::dto::SyncTableEnum::ChnotTag => {
-                get! {ChnotTag}
-            }
-            super::dto::SyncTableEnum::LLMChatBot => {
-                get! {LLMChatBot}
-            }
-            super::dto::SyncTableEnum::LLMChatRecord => {
-                get! {LLMChatRecord}
-            }
-            super::dto::SyncTableEnum::LLMChatTemplate => {
-                get! {LLMChatTemplate}
-            }
-            super::dto::SyncTableEnum::LLMChatSession => {
-                get! {LLMChatSession}
-            }
-            super::dto::SyncTableEnum::KKV => {
-                get! {KKV}
-            }
-            super::dto::SyncTableEnum::KTabMeta => {
-                get! {KTabMeta}
-            }
-            super::dto::SyncTableEnum::KTabCellDate => {
-                get! {KTabCellDate}
-            }
-            super::dto::SyncTableEnum::KTabCellDecimal => {
-                get! {KTabCellDecimal}
-            }
-            super::dto::SyncTableEnum::KTabCellText => {
-                get! {KTabCellText}
-            }
-            super::dto::SyncTableEnum::KFileMeta => {
-                get! {KFileMeta}
-            }
-        };
-        Ok(SyncFetchDataRsp { records })
+        req: SyncFetchTIDReq,
+    ) -> AResult<SyncFetchTIDRsp> {
+        self.mapper.sync_dump_tids(req).await
     }
+
+    // pub(crate) async fn sync_fetch_data_rx(
+    //     &self,
+    //     req: SyncFetchTIDReq,
+    // ) -> AResult<SyncFetchTIDRsp> {
+    //     macro_rules! get {
+    //         ($st:ty) => {
+    //             let c: Vec<$st> = self
+    //                 .mapper
+    //                 .sync_get_records(
+    //                     req.fetch_data,
+    //                     |e| {
+    //                         let c: AResult<$st> = match e {
+    //                             crate::mapper::MapperRowType::KDb(kdb_row) => kdb_row.try_into(),
+    //                         };
+    //                         c
+    //                     },
+    //                 )
+    //                 .await?;
+
+    //             c.into_iter()
+    //                 .map(|e| serde_json::to_value(e))
+    //                 .collect::<Result<Vec<serde_json::Value>, serde_json::Error>>()?
+    //         };
+    //     }
+
+    //     let records: Vec<Value> = match req.table_name {
+    //         super::dto::SyncTableEnum::ChnotRecord => {
+    //             get! {ChnotRecord}
+    //         }
+    //         super::dto::SyncTableEnum::ChnotMetadata => {
+    //             get! {ChnotMetadata}
+    //         }
+    //         super::dto::SyncTableEnum::ChnotKindRel => {
+    //             get! {ChnotKindRel}
+    //         }
+    //         super::dto::SyncTableEnum::ChnotTag => {
+    //             get! {ChnotTag}
+    //         }
+    //         super::dto::SyncTableEnum::LLMChatBot => {
+    //             get! {LLMChatBot}
+    //         }
+    //         super::dto::SyncTableEnum::LLMChatRecord => {
+    //             get! {LLMChatRecord}
+    //         }
+    //         super::dto::SyncTableEnum::LLMChatTemplate => {
+    //             get! {LLMChatTemplate}
+    //         }
+    //         super::dto::SyncTableEnum::LLMChatSession => {
+    //             get! {LLMChatSession}
+    //         }
+    //         super::dto::SyncTableEnum::KKV => {
+    //             get! {KKV}
+    //         }
+    //         super::dto::SyncTableEnum::KTabMeta => {
+    //             get! {KTabMeta}
+    //         }
+    //         super::dto::SyncTableEnum::KTabCellDate => {
+    //             get! {KTabCellDate}
+    //         }
+    //         super::dto::SyncTableEnum::KTabCellDecimal => {
+    //             get! {KTabCellDecimal}
+    //         }
+    //         super::dto::SyncTableEnum::KTabCellText => {
+    //             get! {KTabCellText}
+    //         }
+    //         super::dto::SyncTableEnum::KFileMeta => {
+    //             get! {KFileMeta}
+    //         }
+    //     };
+    //     Ok(SyncFetchTIDRsp { hists: records })
+    // }
 }
+
+async fn sync_tids(
+    app: ShareAppState,
+    endpoint: SyncEndpoint,
+    hist: bool,
+    table: SyncTableEnum,
+) -> EResult {
+    use crate::krate::sync::dto::*;
+    use crate::krate::sync::mapper::SyncMapper as _;
+    use chin_sql::time_type::TID;
+
+    let shake_rsp = app
+        .sync_shake_tx(&endpoint, SyncTableEnum::ChnotRecord)
+        .await?;
+    let mut sync_time = match shake_rsp.data {
+        SyncShakeRspEnum::NotSameVersion(nsv) => {
+            anyhow::bail!("not same version {}", nsv);
+        }
+        SyncShakeRspEnum::SameClient => {
+            anyhow::bail!("Same Client");
+        }
+        SyncShakeRspEnum::BeginSync { sync_time } => sync_time,
+    };
+
+    let sync_info = SyncInfo {
+        instance_id: shake_rsp.instance_id.clone(),
+        start_ex: sync_time,
+        end_in: TID::default(),
+        table,
+    };
+
+    let page_size = 500;
+    loop {
+        let result: SyncFetchTIDRsp = app
+            .sync_fetch_tids_tx(
+                &endpoint,
+                shake_rsp.instance_id.clone(),
+                SyncTableEnum::ChnotRecord,
+                FetchTIDReq {
+                    start_ex: sync_time,
+                    end_in: TID::default(),
+                    page_size,
+                },
+                hist,
+            )
+            .await?;
+        let result_len = result.data.len();
+        let c_sync_time = result.data.iter().max();
+        if let Some(c_sync_time) = c_sync_time {
+            sync_time = *c_sync_time;
+        }
+        log::info!("max sync time: {sync_time}({result_len})");
+        app.sync_merge_tids(result, hist, sync_info.clone()).await?;
+        if result_len < page_size {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+async fn parse_tids(app: ShareAppState) -> AResult<()> {}
 
 #[macro_export]
 macro_rules! sync_one {
-    ($app:ident, $st:ident, $endpoint:ident, $hist:expr, $before_actions:expr) => {
-        let shake_rsp = $app
-            .sync_shake_tx(&$endpoint, $crate::krate::sync::dto::SyncTableEnum::$st)
-            .await?;
-        let mut sync_time = match shake_rsp.data {
-            $crate::krate::sync::dto::SyncShakeRspEnum::NotSameVersion(nsv) => {
-                anyhow::bail!("not same version {}", nsv);
-            }
-            $crate::krate::sync::dto::SyncShakeRspEnum::SameClient => {
-                anyhow::bail!("Same Client");
-            }
-            $crate::krate::sync::dto::SyncShakeRspEnum::BeginSync { sync_time } => sync_time,
-        };
-        let initial_start = sync_time;
-
-        let page_size = 500;
-        loop {
-            let result: $crate::krate::sync::dto::SyncFetchDataRsp<$st> = $app
-                .sync_fetch_data_tx(
-                    &$endpoint,
-                    $crate::krate::sync::dto::SyncTableEnum::$st,
-                    $crate::krate::sync::dto::FetchDataType::RangePage {
-                        start_ex: sync_time,
-                        end_in: TID::default(),
-                        page_size,
-                    },
-                    $hist,
-                )
-                .await?;
-            let result_len = result.records.len();
-            let c_sync_time = result.records.iter().map(|rec| rec.tid).max();
-            if let Some(c_sync_time) = c_sync_time {
-                sync_time = c_sync_time;
-            }
-            log::info!("max sync time: {}({})", sync_time, result_len);
-            $before_actions(&$app, &$endpoint, &result.records).await?;
-            use $crate::krate::sync::mapper::SyncOperator as _;
-            $app.put(result.records, $hist).await?;
-            use $crate::krate::sync::mapper::SyncMapper as _;
-            if result_len < page_size {
-                $app.insert_sync_log($crate::krate::sync::po::SyncLogTransient {
-                    remote_id: shake_rsp.instance_id.to_string().try_into()?,
-                    table_name: $crate::krate::sync::dto::SyncTableEnum::$st
-                        .to_string()
-                        .try_into()?,
-                    end_sync_in: sync_time,
-                    start_tid_ex: initial_start,
-                    sync_finish_tid: TID::default(),
-                })
-                .await?;
-                break;
-            }
-        }
-    };
+    ($app:ident, $st:ident, $endpoint:ident, $hist:expr, $before_actions:expr) => {};
     ($app:ident, $st:ident, $endpoint:ident, $hist:expr) => {
         sync_one!($app, $st, $endpoint, $hist, async |_, _, _| {
             Ok::<(), anyhow::Error>(())

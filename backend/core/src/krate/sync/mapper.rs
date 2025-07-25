@@ -6,7 +6,7 @@ use crate::{
     krate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
-            dto::FetchDataType,
+            dto::{FetchTIDReq, SyncFetchTIDReq, SyncFetchTIDRsp, SyncInfo, SyncTableEnum},
             po::{SyncAllEndpoints, SyncLogTransient},
         },
     },
@@ -18,7 +18,7 @@ pub trait Dumper<T> {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: FetchDataType,
+        fetch_data: FetchTIDReq,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -30,7 +30,7 @@ impl Dumper<MapperRowType> for MapperType {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: FetchDataType,
+        fetch_data: FetchTIDReq,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -50,12 +50,19 @@ impl Dumper<MapperRowType> for MapperType {
 
 pub trait SyncMapper {
     async fn ensure_sync_table(&self) -> EResult;
-    async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult;
-    async fn get_sync_time(
+    async fn sync_insert_sync_log(&self, log: SyncLogTransient) -> EResult;
+    async fn sync_get_sync_time(
         &self,
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
     ) -> AResult<TID>;
+    async fn sync_dump_tids(&self, req: SyncFetchTIDReq) -> AResult<SyncFetchTIDRsp>;
+    async fn sync_merge_tids(
+        &self,
+        data: SyncFetchTIDRsp,
+        hist: bool,
+        sync_info: SyncInfo,
+    ) -> EResult;
 }
 
 pub trait MergableRec: for<'a> HistCreateSql<'a> {
@@ -69,16 +76,16 @@ pub trait MergableRec: for<'a> HistCreateSql<'a> {
 }
 
 pub trait SyncOperator<E: MergableRec + Send + 'static> {
-    async fn get<F>(
+    async fn sync_get_records<F>(
         &self,
-        fetch_data: crate::krate::sync::dto::FetchDataType,
+        fetch_data: crate::krate::sync::dto::FetchTIDReq,
         mapper: F,
         hist: bool,
     ) -> chin_tools::AResult<Vec<E>>
     where
         F: Fn(MapperRowType) -> AResult<E> + Send + Sync + 'static;
 
-    async fn put(&self, recs: Vec<E>, hist: bool) -> AResult<Vec<E>>;
+    async fn sync_merge_records(&self, recs: Vec<E>, hist: bool) -> AResult<Vec<E>>;
 }
 
 impl SyncMapper for MapperType {
@@ -86,17 +93,32 @@ impl SyncMapper for MapperType {
         expand_mt_branch!(self.ensure_sync_table())
     }
 
-    async fn insert_sync_log(&self, log: SyncLogTransient) -> EResult {
-        expand_mt_branch!(self.insert_sync_log(log))
+    async fn sync_insert_sync_log(&self, log: SyncLogTransient) -> EResult {
+        expand_mt_branch!(self.sync_insert_sync_log(log))
     }
 
-    async fn get_sync_time(
+    async fn sync_get_sync_time(
         &self,
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
     ) -> AResult<TID> {
-        expand_mt_branch!(self.get_sync_time(table_name, remote_id))
+        expand_mt_branch!(self.sync_get_sync_time(table_name, remote_id))
     }
+
+    async fn sync_dump_tids(&self, req: SyncFetchTIDReq) -> AResult<SyncFetchTIDRsp> {
+        expand_mt_branch!(self.sync_dump_tids(req))
+    }
+
+    async fn sync_merge_tids(
+        &self,
+        data: SyncFetchTIDRsp,
+        hist: bool,
+        sync_info: SyncInfo,
+    ) -> EResult {
+        expand_mt_branch!(self.sync_merge_tids(data, hist, sync_info))
+    }
+
+
 }
 
 impl MapperType {
@@ -113,13 +135,12 @@ impl MapperType {
     }
 
     pub(crate) async fn overwrite_endpoints(&self, req: SyncAllEndpoints) -> EResult {
-        self
-            .kkv_transisent_overwrite(
-                ALL_ENDPOINTS.to_string().try_into()?,
-                &req,
-                chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),
-            )
-            .await
+        self.kkv_transisent_overwrite(
+            ALL_ENDPOINTS.to_string().try_into()?,
+            &req,
+            chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),
+        )
+        .await
     }
 }
 
@@ -160,9 +181,9 @@ macro_rules! impl_sync_operator {
         }
 
         impl $crate::krate::sync::mapper::SyncOperator<$st> for $crate::mapper::MapperType {
-            async fn get<F>(
+            async fn sync_get_records<F>(
                 &self,
-                fetch_data: $crate::krate::sync::dto::FetchDataType,
+                fetch_data: $crate::krate::sync::dto::FetchTIDReq,
                 mapper: F,
                 hist: bool,
             ) -> chin_tools::AResult<Vec<$st>>
@@ -181,7 +202,7 @@ macro_rules! impl_sync_operator {
                 self.dump(table_name, fetch_data, mapper).await
             }
 
-            async fn put(&self, recs: Vec<$st>, hist: bool) -> chin_tools::AResult<Vec<$st>> {
+            async fn sync_merge_records(&self, recs: Vec<$st>, hist: bool) -> chin_tools::AResult<Vec<$st>> {
                 use $crate::mapper::db::kdb::KDbBehaiver as _;
                 use $crate::mapper::db::kdb::KDbConnBehaiver as _;
                 use $crate::mapper::db::kdb::KDbTransactionBehaiver as _;

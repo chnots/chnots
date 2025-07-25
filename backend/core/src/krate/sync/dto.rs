@@ -1,6 +1,8 @@
+use std::fmt::Debug;
+
 use chin_sql::time_type::TID;
-use chin_tools::SharedStr;
-use serde::{Deserialize, Deserializer, Serialize, de};
+use chin_tools::{AResult, SharedStr};
+use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
 use crate::krate::{
@@ -28,10 +30,8 @@ pub enum SyncTableEnum {
     KFileMeta, // inline k file is a specifal type file, so we sync it with kfilemeta
 }
 
-impl TryFrom<&str> for SyncTableEnum {
-    type Error = anyhow::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+impl SyncTableEnum {
+    pub fn try_from_table_name(value: &str) -> AResult<Self> {
         let c = match value.to_lowercase().as_str() {
             ChnotRecord::TABLE => SyncTableEnum::ChnotRecord,
             ChnotMetadata::TABLE => SyncTableEnum::ChnotMetadata,
@@ -52,10 +52,8 @@ impl TryFrom<&str> for SyncTableEnum {
 
         Ok(c)
     }
-}
 
-impl ToString for SyncTableEnum {
-    fn to_string(&self) -> String {
+    pub fn to_table_name(&self) -> String {
         match self {
             SyncTableEnum::ChnotRecord => ChnotRecord::TABLE.to_string(),
             SyncTableEnum::ChnotMetadata => ChnotMetadata::TABLE.to_string(),
@@ -73,11 +71,35 @@ impl ToString for SyncTableEnum {
             SyncTableEnum::KFileMeta => crate::krate::kfile::KFileMeta::TABLE.to_string(),
         }
     }
+
+    pub fn to_hist_table_name(&self) -> String {
+        return self.to_table_name() + "_hist";
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncInfo {
+    pub instance_id: SharedStr,
+    pub start_ex: TID,
+    pub end_in: TID,
+    pub table: SyncTableEnum,
+}
+
+impl SyncInfo {
+    pub fn to_table_name(&self) -> String {
+        format!(
+            "{}_{}_{}_{}",
+            self.instance_id.as_str(),
+            self.table.to_table_name(),
+            self.start_ex,
+            self.end_in
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeReq {
-    pub client_id: SharedStr,
+    pub instance_id: SharedStr,
     pub db_version: String,
     pub table_name: SyncTableEnum,
 }
@@ -96,23 +118,45 @@ pub struct SyncShakeRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncFetchDataReq {
-    pub table_name: SyncTableEnum,
-    pub fetch_data: FetchDataType,
-    pub hist: bool
+pub struct SyncFetchTIDReq {
+    pub sync_info: SyncInfo,
+    pub page_size: usize,
+    pub hist: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncFetchDataRsp<T: Serialize> {
-    pub records: Vec<T>,
+pub(crate) struct FetchTIDReq {
+    pub start_ex: TID,
+    pub end_in: TID,
+    pub page_size: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum FetchDataType {
-    RangePage {
-        start_ex: TID,
-        end_in: TID,
-        page_size: usize,
-    },
-    Tids(Vec<TID>),
+pub struct SyncFetchTIDRsp {
+    pub data: Vec<TID>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncDataReq<E> {
+    cmds: Vec<SyncDataReqEnum<E>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SyncDataReqEnum<E> {
+    Omit(TID),
+    LeftCur(TID),
+    LeftHist(TID),
+    RightCur(E),
+    RightHist(E),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncDataRsp<E> {
+    cmds: Vec<SyncDataRspEnum<E>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SyncDataRspEnum<E> {
+    Cur(E),
+    Hist(E),
 }

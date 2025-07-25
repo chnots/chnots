@@ -21,5 +21,19 @@ pub struct SyncEndpoint {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SyncAllEndpoints {
-    pub(crate) endpoints: Vec<SyncEndpoint>
+    pub(crate) endpoints: Vec<SyncEndpoint>,
+}
+
+#[derive(Debug, Clone)]
+pub enum RecordState {
+    Absent = 0,
+    Cur = 1,
+    Hist = 2,
+}
+
+#[derive(Debug, Clone)]
+pub struct TidCompare {
+    pub(crate) tid: TID,
+    pub(crate) lstate: RecordState,
+    pub(crate) rstate: RecordState,
 }

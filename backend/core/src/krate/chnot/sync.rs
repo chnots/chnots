@@ -9,7 +9,7 @@ use crate::{
     krate::{
         chnot::{ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
         sync::{
-            dto::{FetchDataType, SyncFetchDataRsp, SyncShakeRspEnum, SyncTableEnum},
+            dto::{FetchTIDReq, SyncFetchTIDRsp, SyncShakeRspEnum, SyncTableEnum},
             filedumper::StartType,
             mapper::{SyncMapper, SyncOperator},
             po::{SyncEndpoint, SyncLogTransient},
