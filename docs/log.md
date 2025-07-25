@@ -157,5 +157,9 @@ $ export JAVA_HOME=/opt/android-studio/jbr
 $ rustup target add aarch64-linux-android
 ```
 
-# 2507-15
-先实现全量同步的逻辑，后面再考虑增量同步的逻辑。
+# 2507-24
+考虑实现增量同步的逻辑。
+
+
+LAN 的同步问题其实是一个 AP 问题，只需要保证最终一致性即可。
+在此我考虑为每个表引入了 TID 这个选项，这是一个 UNIQUE KEY，
