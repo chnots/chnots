@@ -11,6 +11,7 @@ pub(crate) trait KDbBehaiver {
     async fn conn(&self) -> AResult<KDbConn>;
 }
 
+#[allow(dead_code)]
 pub(crate) trait KDbExecutorBehaiver: Send + Sync {
     async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize>;
 

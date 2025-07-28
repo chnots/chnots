@@ -1,4 +1,3 @@
-use core::sync;
 use std::marker::PhantomData;
 
 use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_FETCH_TID_PATH};

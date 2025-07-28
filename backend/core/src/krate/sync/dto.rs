@@ -64,15 +64,6 @@ impl<E, T> Deref for OtidWithGer<E, T> {
     }
 }
 
-impl<E, T: KOtidSupport> OtidWithGer<E, T> {
-    pub fn into_enum(self) -> OtidWithEnum<E> {
-        OtidWithEnum {
-            table_type: T::get_otid_enum(),
-            dto: self.dto,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeDto {
     pub instance_id: SharedStr,

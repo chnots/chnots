@@ -1,5 +1,4 @@
-use chin_sql::time_type::TID;
-use postgres_types::{FromSql, Type, accepts};
+use postgres_types::FromSql;
 
 use crate::model::{decimal::Decimal};
 

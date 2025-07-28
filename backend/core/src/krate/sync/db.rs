@@ -157,6 +157,8 @@ impl SyncMapper for KDb {
         } else {
             RecordState::Cur
         };
+        self.sync_create_tmp_table(&sync_info).await?;
+
         self.conn()
             .await?
             .exec(format!(

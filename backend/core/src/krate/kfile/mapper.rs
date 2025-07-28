@@ -3,16 +3,6 @@ use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
-pub(crate) trait KFileDeserializeMapper {
-    fn to_inline_kfile(self) -> AResult<InlineKFile>;
-    fn to_kfile_meta(self) -> AResult<KFileMeta>;
-}
-
-pub(crate) trait KFileDumpMapper {
-    async fn dump_kfile() -> EResult;
-    async fn dump_inline_kfile() -> EResult;
-}
-
 pub trait KFileMapper {
     async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()>;
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp>;

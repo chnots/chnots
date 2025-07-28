@@ -94,7 +94,7 @@ impl KTabMapper for KDb {
         &self,
         req: KReq<KTabCellsOverwriteReq>,
     ) -> chin_tools::AResult<KTabCellsOverwriteRsp> {
-        info!("req -- {:?}", req);
+        info!("req -- {req:?}");
         let empty_wrapper = req.frame(());
         let KReq {
             body,

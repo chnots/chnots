@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     app::ShareAppState,
-    krate::sync::po::{SyncAllEndpoints, SyncEndpoint},
     mapper::{MapperRowType, MapperType},
 };
 
@@ -90,17 +89,18 @@ pub struct FileDumper<P: AsRef<Path>> {
 #[allow(dead_code)]
 pub enum StartType {
     All,
+    #[allow(clippy::upper_case_acronyms)]
     TID(TID),
     Increase,
 }
 
 impl<P: AsRef<Path>> FileDumper<P> {
+    // TODO: rewrite
     pub async fn dump_one_table<F, T>(&self, mapper_type: &MapperType, mapper: F) -> EResult
     where
         F: Fn(MapperRowType) -> AResult<T> + Send + Sync + Clone + 'static,
         T: Serialize + Send + 'static,
     {
-        const PAGE_SIZE: usize = 1000;
         let start_ex = match self.start_type {
             StartType::All => TID::from(0),
             StartType::TID(tid) => tid,
@@ -184,13 +184,6 @@ impl ShareAppState {
     }
 
     pub async fn sync_via_network(&self) -> EResult {
-        self.overwrite_endpoints(SyncAllEndpoints {
-            endpoints: vec![SyncEndpoint {
-                ip: "127.0.0.1".into(),
-                port: 3011,
-            }],
-        })
-        .await?;
         for endpoint in &self.get_all_endpoints().await?.endpoints {
             self.sync_chnots(endpoint).await?;
             self.sync_kfile(endpoint).await?;

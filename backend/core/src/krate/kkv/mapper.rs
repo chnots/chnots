@@ -26,10 +26,6 @@ pub trait KKVMapper {
     ) -> EResult;
 }
 
-pub(crate) trait KKVDeserializeMapper {
-    fn to_kkv(self) -> AResult<KKV>;
-}
-
 impl KKVMapper for MapperType {
     async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
         expand_mt_branch!(self.kkv_overwrite(req))

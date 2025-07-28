@@ -3,7 +3,7 @@ use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
 use crate::{
-    krate::chnot::ChnotRecord, mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver}, model::KOtidSupport
+    mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver}, model::KOtidSupport
 };
 
 pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> EResult {

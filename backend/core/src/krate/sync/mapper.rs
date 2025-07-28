@@ -7,8 +7,7 @@ use crate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
             dto::{
-                SyncAllEndpointsRsp, SyncDataArg, SyncFetchDataPageInfo, SyncFetchTIDArg,
-                SyncFetchTIDReq, SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
+                SyncAllEndpointsRsp, SyncDataArg, SyncFetchDataPageInfo, SyncFetchTIDArg, SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
             },
             po::{SyncAllEndpoints, SyncLogTransient},
         },
