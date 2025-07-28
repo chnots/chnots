@@ -28,6 +28,11 @@ pub trait KFileMapper {
         req: KReq<QueryInlineKFileReq>,
     ) -> anyhow::Result<QueryInlineKFileRsp>;
 
+    async fn query_inline_kfile_by_sid(
+        &self,
+        sid: Varchar<100>,
+    ) -> anyhow::Result<KFileInlineGetBySidRsp>;
+
     async fn ensure_table_kfile(&self) -> EResult;
 }
 
@@ -64,8 +69,15 @@ impl KFileMapper for MapperType {
     ) -> anyhow::Result<QueryKFileMetaRsp> {
         expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
     }
-    
+
     async fn insert_inline_kfile2(&self, req: InlineKFile) -> AResult<usize> {
         expand_mt_branch!(self.insert_inline_kfile2(req))
+    }
+    
+    async fn query_inline_kfile_by_sid(
+        &self,
+        sid: Varchar<100>,
+    ) -> anyhow::Result<KFileInlineGetBySidRsp> {
+        expand_mt_branch!(self.query_inline_kfile_by_sid(sid))
     }
 }

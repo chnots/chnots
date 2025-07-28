@@ -115,11 +115,31 @@ impl KFileMapper for KDb {
         Ok(InsertInlineKFileRsp { true_sid: sid })
     }
 
+    async fn query_inline_kfile_by_sid(
+        &self,
+        sid: Varchar<100>,
+    ) -> anyhow::Result<KFileInlineGetBySidRsp> {
+        let query = SqlBuilder::read_all(InlineKFile::TABLE)
+            .r#where(Wheres::equal(InlineKFile::SID, sid))
+            .sov("order by tid desc")
+            .custom(LimitOffset::new(1));
+
+        let res = self
+            .conn()
+            .await?
+            .qry_opt(query, |t| (&t).try_into())
+            .await?;
+
+        Ok(KFileInlineGetBySidRsp { file: res })
+    }
+
     async fn query_inline_kfile(
         &self,
         req: KReq<QueryInlineKFileReq>,
     ) -> anyhow::Result<QueryInlineKFileRsp> {
-        let sid = if let Some(key) = req.meta_id.clone() {
+        let sid: Varchar<100> = if let Some(sid) = &req.sid {
+            sid.clone()
+        } else if let Some(key) = req.meta_id.clone() {
             let sid = self
                 .conn()
                 .await?
@@ -130,26 +150,16 @@ impl KFileMapper for KDb {
                 })
                 .await?
                 .map(|e| e.sid);
-            Some(sid.context(format!("unable to find sid for {key}"))?)
+            sid.context(format!("unable to find sid for {key}"))?
         } else {
-            None
+            anyhow::bail!("there are no meta_id and sid")
         };
 
-        let query = SqlBuilder::read_all(InlineKFile::TABLE)
-            .r#where(Wheres::and([
-                Wheres::if_some(req.sid.to_owned(), |e| Wheres::equal(InlineKFile::SID, e)),
-                Wheres::if_some(sid, |e| Wheres::equal(InlineKFile::SID, e)),
-            ]))
-            .sov("order by tid desc")
-            .custom(LimitOffset::new(1));
+        let res = self.query_inline_kfile_by_sid(sid).await?.file;
 
-        let res = self
-            .conn()
-            .await?
-            .qry_list(query, |t| (&t).try_into())
-            .await?;
-
-        Ok(QueryInlineKFileRsp { res })
+        Ok(QueryInlineKFileRsp {
+            res: res.map(|e| vec![e]).unwrap_or(vec![]),
+        })
     }
 
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp> {

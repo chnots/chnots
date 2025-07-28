@@ -19,6 +19,12 @@ pub struct SyncEndpoint {
     pub(crate) port: u16,
 }
 
+impl SyncEndpoint {
+    pub fn to_url(&self, url: &str) -> String {
+        format!("http://{}:{}/{}", self.ip, self.port, url)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SyncAllEndpoints {
     pub(crate) endpoints: Vec<SyncEndpoint>,

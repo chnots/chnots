@@ -1,12 +1,13 @@
-use crate::controller::asset::{asset_to_response, ContentEnum};
+use crate::controller::asset::{ContentEnum, asset_to_response};
 use axum::{
+    Json, Router,
     extract::{DefaultBodyLimit, Query, State},
     http::{HeaderMap, HeaderValue},
     response::Response,
     routing::{get, post, put},
-    Json, Router,
 };
 
+use chin_sql::str_type::Varchar;
 use chin_tools::utils::path_util::split_uuid_to_file_name;
 use std::path::PathBuf;
 
@@ -19,7 +20,6 @@ use super::{mapper::KFileMapper, *};
 pub(crate) fn asset_path_by_sid(config: &AttachmentConfig, sid: &str) -> PathBuf {
     let filename_parts = split_uuid_to_file_name(sid);
 
-    
     std::path::Path::new(&config.base_dir)
         .join(filename_parts.0)
         .join(filename_parts.1)
@@ -60,7 +60,7 @@ async fn insert_inline_kfile(
 async fn query_svg(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    axum::extract::Path(tid): axum::extract::Path<String>,
+    axum::extract::Path(sid): axum::extract::Path<Varchar<100>>,
 ) -> Response {
     let mut headers = headers.clone();
     headers.append("K-kspace", HeaderValue::from_str("default").unwrap());
@@ -68,7 +68,7 @@ async fn query_svg(
         headers,
         state,
         Query(QueryInlineKFileReq {
-            sid: Some(tid),
+            sid: Some(sid),
             with_omit: Some(false),
             meta_id: None,
         }),
@@ -84,7 +84,26 @@ async fn query_svg(
     asset_to_response(res)
 }
 
-pub const INLINE_K_FILE_REQ: &str = "/api/v1/inline-kfile";
+async fn inline_kfile_insert_directly(
+    state: State<ShareAppState>,
+    Json(req): Json<KFileInlineInsert2Req>,
+) -> KResponse<KFileInlineInsert2Rsp> {
+    state
+        .insert_inline_kfile2(req.file)
+        .await
+        .map(|_| KFileInlineInsert2Rsp {})
+        .into()
+}
+
+async fn inline_kfile_get_by_sid(
+    state: State<ShareAppState>,
+    Query(req): Query<KFileInlineGetBySidReq>,
+) -> KResponse<KFileInlineGetBySidRsp> {
+    state.query_inline_kfile_by_sid(req.sid).await.into()
+}
+
+async fn directly_insert_big_kfile() {}
+async fn directly_get_big_kfile() {}
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
@@ -103,6 +122,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         )
         .route("/api/v1/kfile-info", get(query_kfile))
         .route("/api/v1/inline-kfile", put(insert_inline_kfile))
-        .route(INLINE_K_FILE_REQ, get(query_inline_kfile))
-        .route("/api/v1/inline-svg/{tid}", get(query_svg))
+        .route("/api/v1/inline-kfile", get(query_inline_kfile))
+        .route(KFILE_INLINE_GET_BY_SID, get(inline_kfile_get_by_sid))
+        .route(KFILE_INLINE_INSERT2, put(inline_kfile_insert_directly))
 }

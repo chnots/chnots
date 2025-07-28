@@ -40,7 +40,7 @@ pub struct InsertInlineKFileRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryInlineKFileReq {
-    pub sid: Option<String>,
+    pub sid: Option<Varchar<100>>,
     pub meta_id: Option<Varchar<100>>,
     pub with_omit: Option<bool>,
 }
@@ -59,6 +59,28 @@ pub struct QueryKFileReq {
 pub struct QueryKFileMetaRsp {
     pub meta: Option<KFileMeta>,
 }
+
+pub const KFILE_INLINE_INSERT2: &str = "/api/v1/inline-kfile2";
+pub const KFILE_INLINE_GET_BY_SID: &str = "/api/v1/inline-kfile-by-sid";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KFileInlineInsert2Req {
+    pub file: InlineKFile
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KFileInlineInsert2Rsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KFileInlineGetBySidReq {
+    pub sid: Varchar<100>
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KFileInlineGetBySidRsp {
+    pub file: Option<InlineKFile>
+}
+
 
 #[test]
 fn tst() {

@@ -149,19 +149,19 @@ impl ShareAppState {
         self.mapper.sync_merge_operations(req).await
     }
 
-    pub(crate) async fn sync_data_tx<T, F, Fut>(
+    pub(crate) async fn sync_data_tx<T, W>(
         &self,
         endpoint: &SyncEndpoint,
         sync_info: &SyncPageInfo<T>,
-        before_send_operations: F,
+        otid_related_worker: &W,
     ) -> AResult<SyncDataArg<T>>
     where
-        Fut: Future<Output = EResult>,
-        F: Fn(&SyncDataArg<T>) -> Fut,
+        W: OtidRelatedWorker<T>,
         T: KOtidSupport,
     {
         let dto: SyncDataArg<T> = self.mapper.sync_fetch_operations(sync_info).await?;
-        before_send_operations(&dto).await?;
+        otid_related_worker.before_send(endpoint, &dto).await?;
+
         let client = reqwest::Client::builder().build()?;
 
         let rsp = client
@@ -187,27 +187,20 @@ impl ShareAppState {
         &self,
         endpoint: &SyncEndpoint,
     ) -> EResult {
-        // TODO: why this function is not right.
-        /*        async fn empty_ok_fut<'a, T>(_: &'a SyncDataArg<T>) -> EResult {
-            Ok(())
-        } */
-        let empty_ok_fut = |_: &SyncDataArg<T>| async move { Ok(()) };
-        self.sync_one_otid_table(PhantomData::<T>, endpoint, empty_ok_fut, empty_ok_fut)
+        self.sync_one_otid_table(PhantomData::<T>, endpoint, &SimpleOtidRelatedWorker {})
             .await?;
         Ok(())
     }
 
-    pub(crate) async fn sync_one_otid_table<T, F, Fut>(
+    pub(crate) async fn sync_one_otid_table<T, W>(
         &self,
         _: PhantomData<T>,
         endpoint: &SyncEndpoint,
-        before_send_operations: F,
-        before_merge_operations: F,
+        otid_related_worker: &W,
     ) -> EResult
     where
         T: KOtidSupport,
-        Fut: Future<Output = EResult>,
-        F: Fn(&SyncDataArg<T>) -> Fut + Clone,
+        W: OtidRelatedWorker<T>,
     {
         use crate::krate::sync::dto::*;
         use crate::krate::sync::mapper::SyncMapper as _;
@@ -277,10 +270,11 @@ impl ShareAppState {
                 start_ex,
             };
             let rsp: SyncDataArg<T> = self
-                .sync_data_tx(endpoint, &sync_info, &before_send_operations)
+                .sync_data_tx(endpoint, &sync_info, otid_related_worker)
                 .await?;
             let nomore = rsp.nomore;
-            before_merge_operations(&rsp).await?;
+            otid_related_worker.before_merge(endpoint, &rsp).await?;
+
             start_ex = rsp.max_tid;
             self.sync_merge_operations(rsp).await?;
             if nomore {
@@ -288,6 +282,24 @@ impl ShareAppState {
             }
         }
 
+        Ok(())
+    }
+}
+
+pub(crate) trait OtidRelatedWorker<T: KOtidSupport> {
+    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataArg<T>) -> EResult;
+    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataArg<T>) -> EResult;
+}
+
+struct SimpleOtidRelatedWorker;
+impl<T: KOtidSupport> OtidRelatedWorker<T> for SimpleOtidRelatedWorker {
+    #[inline]
+    async fn before_send(&self, _: &SyncEndpoint, _: &SyncDataArg<T>) -> EResult {
+        Ok(())
+    }
+
+    #[inline]
+    async fn before_merge(&self, _: &SyncEndpoint, _: &SyncDataArg<T>) -> EResult {
         Ok(())
     }
 }
