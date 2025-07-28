@@ -1,43 +1,51 @@
+use anyhow::Ok;
 use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
 use crate::{
     krate::sync::{
-        dto::{FetchTIDReq, SyncFetchTIDReq, SyncFetchTIDRsp, SyncInfo},
-        mapper::{Dumper, MergableRec, SyncMapper},
+        dto::{
+            SyncDataArg, SyncDataOperation, SyncFetchDataPageInfo, SyncFetchTIDArg,
+            SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
+        },
+        mapper::{Dumper, SyncMapper},
         po::SyncLogTransient,
     },
     mapper::db::{
-        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTx, helper::create_tables,
+        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, helper::create_tables,
     },
+    model::KOtidSupport,
 };
 
-use super::dto::SyncTableEnum;
+use super::po::{RecordState, TidCompare};
 
 impl Dumper<KDbRow> for KDb {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: FetchTIDReq,
+        fetch_data: SyncFetchDataPageInfo,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
         F: Fn(KDbRow) -> AResult<E> + Send + Sync + 'static,
         E: Send + 'static,
     {
-        let FetchTIDReq {
-            start_ex,
-            end_in,
-            page_size,
-        } = fetch_data;
-        let sql = SqlBuilder::read_all(table_name)
-            .r#where(Wheres::and([
-                // all table must have tid field
-                Wheres::compare("tid", ">", start_ex),
-                Wheres::compare("tid", "<=", end_in),
-            ]))
-            .limit(page_size);
+        let sql = match fetch_data {
+            SyncFetchDataPageInfo::StartEnd {
+                start_ex,
+                end_in,
+                page_size,
+            } => {
+                SqlBuilder::read_all(table_name)
+                    .r#where(Wheres::and([
+                        // all table must have tid field
+                        Wheres::compare("tid", ">", start_ex),
+                        Wheres::compare("tid", "<=", end_in),
+                    ]))
+                    .limit(page_size)
+            }
+        };
 
         let rows = self.conn().await?.qry_list(sql, mapper).await?;
 
@@ -73,7 +81,7 @@ impl SyncMapper for KDb {
         let sync: Option<SyncLogTransient> = self
             .conn()
             .await?
-            .qry_opt(last_sync, SyncLogTransient::try_from)
+            .qry_opt(last_sync, |row| (&row).try_into())
             .await?;
 
         let Some(sync_log) = sync else {
@@ -109,22 +117,25 @@ impl SyncMapper for KDb {
         Ok(st)
     }
 
-    async fn sync_dump_tids(&self, req: SyncFetchTIDReq) -> AResult<SyncFetchTIDRsp> {
-        let start_ex = req.sync_info.start_ex;
-        let end_in = req.sync_info.end_in;
-        let page_size = req.page_size;
-        let table_name = req.sync_info.table;
-        let sql = format!(
-            "select tid from {} where tid > {} and tid < {} order by tid asc limit {}",
-            if req.hist {
-                table_name.to_hist_table_name()
-            } else {
-                table_name.to_table_name()
-            },
-            start_ex.as_num(),
-            end_in.as_num(),
-            page_size
-        );
+    async fn sync_fetch_tids<T: KOtidSupport>(
+        &self,
+        req: SyncFetchTIDArg<T>,
+    ) -> AResult<SyncFetchTIDRsp> {
+        let sql = match req.dto.page {
+            super::dto::SyncFetchDataPageInfo::StartEnd {
+                start_ex,
+                end_in,
+                page_size,
+            } => {
+                format!(
+                    "select tid from {} where tid > {} and tid < {} order by tid asc limit {}",
+                    T::table_name(req.dto.hist),
+                    start_ex.as_num(),
+                    end_in.as_num(),
+                    page_size
+                )
+            }
+        };
         let data = self
             .conn()
             .await?
@@ -134,31 +145,127 @@ impl SyncMapper for KDb {
         Ok(SyncFetchTIDRsp { data })
     }
 
-    async fn sync_merge_tids(
+    async fn sync_merge_tids<T: KOtidSupport>(
         &self,
         data: SyncFetchTIDRsp,
         hist: bool,
-        sync_info: SyncInfo,
+        sync_info: SyncInfo<T>,
     ) -> EResult {
         let tn = sync_info.to_table_name();
-        let dtype = if hist { 2 } else { 1 };
+        let dtype = if hist {
+            RecordState::Hist
+        } else {
+            RecordState::Cur
+        };
         self.conn()
             .await?
             .exec(format!(
-                "insert into {}(tid, ltype, rtype) values {} on conflict(tid) do update set rtype = {}",
+                "insert into {}(tid, lstate, rstate) values {} on conflict(tid) do update set rstate = {}",
                 tn,
-                data.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype)).join(","),
-                dtype
+                data.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype.as_num())).join(","),
+                dtype.as_num()
             ))
             .await?;
         Ok(())
     }
+
+    async fn sync_fetch_operations<T: KOtidSupport>(
+        &self,
+        sync_info: &SyncPageInfo<T>,
+    ) -> AResult<SyncDataArg<T>> {
+        let tids = self.sync_fetch_tid_compares(sync_info).await?;
+        let mut operations = vec![];
+        let mut max_tid = TID::from(0);
+        let nomore = tids.len() < sync_info.page_size;
+        for tc in tids.iter() {
+            let l = tc.lstate;
+            let r = tc.rstate;
+            let tid = tc.tid;
+            if tid > max_tid {
+                max_tid = tid;
+            }
+
+            if matches!(l, RecordState::Absent) && matches!(r, RecordState::Cur) {
+                operations.push(SyncDataOperation::Pull { tid, hist: false });
+            } else if matches!(l, RecordState::Absent) && matches!(r, RecordState::Hist) {
+                operations.push(SyncDataOperation::Pull { tid, hist: true });
+            } else if matches!(l, RecordState::Cur) && matches!(r, RecordState::Absent) {
+                let rec = self.sync_fetch_one_record(false, tid).await?;
+                if let Some(data) = rec {
+                    operations.push(SyncDataOperation::Push { data, hist: false });
+                }
+            } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Absent) {
+                let rec = self.sync_fetch_one_record(true, tid).await?;
+                if let Some(data) = rec {
+                    operations.push(SyncDataOperation::Push { data, hist: true });
+                }
+            } else if matches!(l, RecordState::Cur) && matches!(r, RecordState::Hist) {
+                self.conn()
+                    .await?
+                    .as_executor()
+                    .omit_rows::<T>(Wheres::compare("tid", "=", tid))
+                    .await?;
+            } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Cur) {
+                operations.push(SyncDataOperation::Omit(tid));
+            }
+        }
+        Ok(SyncDataArg {
+            cmds: operations,
+            max_tid,
+            nomore,
+        })
+    }
+
+    async fn sync_merge_operations<T: KOtidSupport>(
+        &self,
+        req: SyncDataArg<T>,
+    ) -> AResult<SyncDataArg<T>> {
+        let SyncDataArg {
+            cmds,
+            max_tid,
+            nomore,
+        } = req;
+        let mut rsp_cmds = vec![];
+        for ele in cmds {
+            match ele {
+                SyncDataOperation::Omit(tid) => {
+                    self.conn()
+                        .await?
+                        .as_executor()
+                        .omit_rows::<T>(Wheres::compare("tid", "=", tid))
+                        .await?;
+                }
+                SyncDataOperation::Pull { tid, hist } => {
+                    let c = self
+                        .conn()
+                        .await?
+                        .qry_opt(
+                            format!("select * from {} where tid = {}", T::table_name(hist), tid),
+                            move |c| T::try_from_kdb_row(&c),
+                        )
+                        .await?;
+                    if let Some(data) = c {
+                        rsp_cmds.push(SyncDataOperation::Push { data, hist });
+                    }
+                }
+                SyncDataOperation::Push { data, hist } => {
+                    self.sync_merge_one_record(data, hist).await?;
+                }
+            }
+        }
+
+        Ok(SyncDataArg {
+            cmds: rsp_cmds,
+            max_tid,
+            nomore,
+        })
+    }
 }
 
-impl TryFrom<KDbRow> for SyncLogTransient {
+impl TryFrom<&KDbRow> for SyncLogTransient {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let sl = SyncLogTransient {
             remote_id: value.try_get(SyncLogTransient::REMOTE_ID)?,
             table_name: value.try_get(SyncLogTransient::TABLE_NAME)?,
@@ -172,106 +279,93 @@ impl TryFrom<KDbRow> for SyncLogTransient {
 }
 
 impl KDb {
-    pub(super) async fn create_tmp_table(&self, sync_info: &SyncInfo) -> EResult {
+    pub(super) async fn sync_create_tmp_table<T: KOtidSupport>(
+        &self,
+        sync_info: &SyncInfo<T>,
+    ) -> EResult {
         let table_name = sync_info.to_table_name();
 
         let sql = format!(
-            "create table if not exists {table_name}(tid bigint, ltype int not null, rtype int not null, primary key (tid))"
+            "create table if not exists {table_name}(tid bigint, lstate int not null, rstate int not null, primary key (tid))"
         );
         self.conn().await?.exec(sql).await?;
         let sql = format!(
             "insert into {}
-            select tid, 1 as ltype, 0 as rtype from {} where tid > {} and tid <= {}
+            select tid, 1 as lstate, 0 as rstate from {} where tid > {} and tid <= {}
             union
-            select tid, 2 as ltype, 0 as rtype from {}_hist where tid > {} and tid <= {}",
+            select tid, 2 as lstate, 0 as rstate from {}_hist where tid > {} and tid <= {}",
             table_name,
-            sync_info.table.to_table_name(),
+            T::table_name(false),
             sync_info.start_ex.as_num(),
             sync_info.end_in.as_num(),
-            sync_info.table.to_table_name(),
+            T::table_name(false),
             sync_info.start_ex.as_num(),
             sync_info.end_in.as_num()
         );
         self.conn().await?.exec(sql).await?;
         Ok(())
     }
-}
 
-/// Merge records.
-/// We have some rules before do the things,
-/// 1. all rows cannot to be changed after insertion.
-/// 2. the table has a column called `tid` which indicated the insert tid
-///    and it's an unique key.
-impl KDbTx<'_> {
-    pub async fn merge_records<T>(&self, records: Vec<T>, hist: bool) -> AResult<Vec<T>>
-    where
-        T: Clone + Send + 'static + MergableRec,
-    {
-        let mut not_same = vec![];
-        if hist {
-            for rec in records {
-                let c = self
-                    .exec(
-                        rec.to_hist_inserter()
-                            .on_conflict(chin_sql::OnConflict::Ignore),
-                    )
-                    .await?;
-                if c > 0 {
-                    not_same.push(rec);
-                }
-            }
-        } else {
-            for rec in records {
-                let hist_row = self
-                    .qry_opt(
-                        SqlBuilder::read(rec.hist_table_name(), &["1"])
-                            .r#where(Wheres::equal("TID", rec.get_tid())),
-                        Ok,
-                    )
-                    .await?;
+    async fn sync_fetch_tid_compares<T: KOtidSupport>(
+        &self,
+        sync_info: &SyncPageInfo<T>,
+    ) -> AResult<Vec<TidCompare>> {
+        let tn = sync_info.to_table_name();
+        let reader = SqlBuilder::read_all(&tn)
+            .r#where(Wheres::and([
+                Wheres::compare("tid", ">", sync_info.start_ex),
+                Wheres::compare_str("lstate", "<>", "rstate"),
+            ]))
+            .sov("order by tid asc")
+            .limit(50);
 
-                // maybe this record is already in the hist table.
-                if hist_row.is_some() {
-                    continue;
-                }
+        let res = self
+            .conn()
+            .await?
+            .qry_list(reader, |r| {
+                Ok(TidCompare {
+                    tid: r.try_get("tid")?,
+                    lstate: {
+                        let c: i32 = r.try_get("lstate")?;
+                        c.try_into()?
+                    },
+                    rstate: {
+                        let c: i32 = r.try_get("rstate")?;
+                        c.try_into()?
+                    },
+                })
+            })
+            .await?;
+        Ok(res)
+    }
 
-                let ic = self
-                    .exec(rec.to_inserter().on_conflict(OnConflict::Ignore))
-                    .await?;
+    async fn sync_fetch_one_record<T: KOtidSupport>(
+        &self,
+        hist: bool,
+        tid: TID,
+    ) -> AResult<Option<T>> {
+        let res = self
+            .conn()
+            .await?
+            .qry_opt(
+                format!("select * from {} where tid = {}", T::table_name(hist), tid),
+                move |row| Ok(T::try_from_kdb_row(&row)?),
+            )
+            .await?;
 
-                if ic > 0 {
-                    continue;
-                }
-                let row = self
-                    .qry_one(
-                        SqlBuilder::read_all(rec.table_name()).r#where(rec.pkey_wheres()),
-                        Ok,
-                        false,
-                    )
-                    .await?;
+        Ok(res)
+    }
 
-                let tid: TID = row.try_get("tid")?;
-                let import_tid = rec.get_tid();
+    async fn sync_merge_one_record<T: KOtidSupport>(&self, data: T, hist: bool) -> EResult {
+        self.conn()
+            .await?
+            .exec(
+                data.sql_inserter()
+                    .table_name(T::table_name(hist))
+                    .on_conflict(OnConflict::Ignore),
+            )
+            .await?;
 
-                if tid > import_tid {
-                    let c = self.exec(rec.to_hist_inserter()).await?;
-                    if c > 0 {
-                        not_same.push(rec);
-                    }
-                } else if tid == import_tid {
-                    // do nothing
-                } else {
-                    self.as_executor()
-                        .omit_rows(T::main_table_name(), T::all_fields(), rec.pkey_wheres())
-                        .await?;
-                    let c = self.exec(rec.to_inserter()).await?;
-                    if c > 0 {
-                        not_same.push(rec);
-                    }
-                }
-            }
-        }
-
-        Ok(not_same)
+        Ok(())
     }
 }

@@ -4,7 +4,9 @@ use chin_sql::time_type::TID;
 use chin_tools::EResult;
 
 use crate::{
-    app::ShareAppState, dump_table_to_file, impl_sync_operator, krate::{kspace::KSpace, sync::filedumper::StartType}
+    app::ShareAppState,
+    dump_table_to_file,
+    krate::{kspace::KSpace, sync::filedumper::StartType},
 };
 
 impl ShareAppState {
@@ -24,6 +26,10 @@ impl ShareAppState {
         dump_table_to_file!(mapper, KSpace, start_type, backup_dir, end_in);
         Ok(())
     }
-}
 
-impl_sync_operator! { KSpace, name }
+    pub async fn sync_kspace(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
+        self.sync_one_otid_table1::<KSpace>(endpoint).await?;
+
+        Ok(())
+    }
+}

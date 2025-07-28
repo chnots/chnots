@@ -9,17 +9,18 @@ use itertools::Itertools;
 
 use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::{
-    HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver
+    HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+    KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
 
 use super::mapper::LLMChatMapper;
 use super::*;
 
-impl TryFrom<KDbRow> for LLMChatRecord {
+impl TryFrom<&KDbRow> for LLMChatRecord {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = LLMChatRecord {
             otid: value.try_get(LLMChatRecord::OTID)?,
             session_otid: value.try_get(LLMChatRecord::SESSION_OTID)?,
@@ -34,10 +35,10 @@ impl TryFrom<KDbRow> for LLMChatRecord {
     }
 }
 
-impl TryFrom<KDbRow> for LLMChatBot {
+impl TryFrom<&KDbRow> for LLMChatBot {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = LLMChatBot {
             otid: value.try_get(LLMChatBot::OTID)?,
             name: value.try_get(LLMChatBot::NAME)?,
@@ -50,10 +51,10 @@ impl TryFrom<KDbRow> for LLMChatBot {
     }
 }
 
-impl TryFrom<KDbRow> for LLMChatTemplate {
+impl TryFrom<&KDbRow> for LLMChatTemplate {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = LLMChatTemplate {
             otid: value.try_get(LLMChatTemplate::OTID)?,
             update_time: value.try_get(LLMChatTemplate::UPDATE_TIME)?,
@@ -66,10 +67,10 @@ impl TryFrom<KDbRow> for LLMChatTemplate {
     }
 }
 
-impl TryFrom<KDbRow> for LLMChatSession {
+impl TryFrom<&KDbRow> for LLMChatSession {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = LLMChatSession {
             otid: value.try_get(LLMChatSession::OTID)?,
             template_otid: value.try_get(LLMChatSession::TEMPLATE_OTID)?,
@@ -93,11 +94,7 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(
-                LLMChatBot::TABLE,
-                &LLMChatBot::create_sql().all_fields(),
-                LLMChatBot::pkey_cond(otid),
-            )
+            .omit_rows::<LLMChatBot>(LLMChatBot::pkey_cond(otid))
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -115,11 +112,7 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(
-                LLMChatTemplate::TABLE,
-                &LLMChatTemplate::create_sql().all_fields(),
-                LLMChatTemplate::pkey_cond(tmpl.otid),
-            )
+            .omit_rows::<LLMChatTemplate>(LLMChatTemplate::pkey_cond(tmpl.otid))
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -139,11 +132,7 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(
-                LLMChatSession::TABLE,
-                &LLMChatSession::create_sql().all_fields(),
-                LLMChatSession::pkey_cond(obj.otid),
-            )
+            .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(obj.otid))
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -162,11 +151,7 @@ impl LLMChatMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(
-                LLMChatRecord::TABLE,
-                &LLMChatRecord::create_sql().all_fields(),
-                LLMChatRecord::pkey_cond(otid),
-            )
+            .omit_rows::<LLMChatRecord>(LLMChatRecord::pkey_cond(otid))
             .await?;
         tx.exec(inserter).await?;
         tx.cmt().await?;
@@ -195,7 +180,7 @@ impl LLMChatMapper for KDb {
             .qry_list(sql, |row| {
                 let c: Option<i64> = row.try_get("bcount")?;
 
-                Ok((c.unwrap_or(0), LLMChatBot::try_from(row)?))
+                Ok((c.unwrap_or(0), (&row).try_into()?))
             })
             .await?
             .into_iter()
@@ -223,7 +208,7 @@ impl LLMChatMapper for KDb {
         let templates: Vec<LLMChatTemplate> = self
             .conn()
             .await?
-            .qry_list(sql, LLMChatTemplate::try_from)
+            .qry_list(sql, |r| LLMChatTemplate::try_from(&r))
             .await?;
 
         Ok(LLMChatListTemplateRsp { templates })
@@ -243,7 +228,7 @@ impl LLMChatMapper for KDb {
         let sessions = self
             .conn()
             .await?
-            .qry_list(query, LLMChatSession::try_from)
+            .qry_list(query, |r| LLMChatSession::try_from(&r))
             .await?;
 
         Ok(LLMChatListSessionRsp { sessions })
@@ -276,7 +261,7 @@ impl LLMChatMapper for KDb {
         let records: Vec<LLMChatRecord> = self
             .conn()
             .await?
-            .qry_list(query, LLMChatRecord::try_from)
+            .qry_list(query, |r| LLMChatRecord::try_from(&r))
             .await?;
 
         Ok(LLMChatSessionDetailRsp { session, records })
@@ -289,11 +274,7 @@ impl LLMChatMapper for KDb {
         self.conn()
             .await?
             .as_executor()
-            .omit_rows(
-                LLMChatBot::TABLE,
-                &LLMChatBot::create_sql().all_fields(),
-                LLMChatBot::pkey_cond(req.bot_otid),
-            )
+            .omit_rows::<LLMChatBot>(LLMChatBot::pkey_cond(req.bot_otid))
             .await?;
 
         Ok(LLMChatDeleteBotRsp {})
@@ -306,11 +287,7 @@ impl LLMChatMapper for KDb {
         self.conn()
             .await?
             .as_executor()
-            .omit_rows(
-                LLMChatTemplate::TABLE,
-                &LLMChatTemplate::create_sql().all_fields(),
-                LLMChatTemplate::pkey_cond(req.template_otid),
-            )
+            .omit_rows::<LLMChatTemplate>(LLMChatTemplate::pkey_cond(req.template_otid))
             .await?;
 
         Ok(LLMChatDeleteTemplateRsp {})
@@ -323,11 +300,7 @@ impl LLMChatMapper for KDb {
         self.conn()
             .await?
             .as_executor()
-            .omit_rows(
-                LLMChatSession::TABLE,
-                &LLMChatSession::create_sql().all_fields(),
-                LLMChatSession::pkey_cond(req.session_otid),
-            )
+            .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(req.session_otid))
             .await?;
 
         Ok(LLMChatDeleteSessionRsp {})
@@ -358,14 +331,12 @@ impl LLMChatMapper for KDb {
         let tx = conn.tx().await?;
 
         let pk_read = LLMChatSession::pkey_reader(req.session_otid);
-        let mut sess = tx.qry_one(pk_read, LLMChatSession::try_from, false).await?;
+        let mut sess = tx
+            .qry_one(pk_read, |r| LLMChatSession::try_from(&r), false)
+            .await?;
 
         tx.as_executor()
-            .omit_rows(
-                LLMChatSession::TABLE,
-                &LLMChatSession::create_sql().all_fields(),
-                LLMChatSession::pkey_cond(req.session_otid),
-            )
+            .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(req.session_otid))
             .await?;
 
         if let Some(title) = req.body.title {
@@ -425,11 +396,10 @@ impl LLMChatMapper for KDb {
         self.conn()
             .await?
             .as_executor()
-            .omit_rows(
-                LLMChatRecord::TABLE,
-                &LLMChatRecord::create_sql().all_fields(),
-                Wheres::and([Wheres::r#in(LLMChatRecord::OTID, to_omit_ids)]),
-            )
+            .omit_rows::<LLMChatRecord>(Wheres::and([Wheres::r#in(
+                LLMChatRecord::OTID,
+                to_omit_ids,
+            )]))
             .await?;
 
         Ok(LLMChatTruncateSessionRsp { count: 0 })

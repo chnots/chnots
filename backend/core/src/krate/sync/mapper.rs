@@ -1,4 +1,4 @@
-use chin_sql::{SqlInserter, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 
 use crate::{
@@ -6,19 +6,23 @@ use crate::{
     krate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
-            dto::{FetchTIDReq, SyncFetchTIDReq, SyncFetchTIDRsp, SyncInfo, SyncTableEnum},
+            dto::{
+                SyncAllEndpointsRsp, SyncDataArg, SyncFetchDataPageInfo, SyncFetchTIDArg,
+                SyncFetchTIDReq, SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
+            },
             po::{SyncAllEndpoints, SyncLogTransient},
         },
     },
     magics::ALL_ENDPOINTS,
-    mapper::{MapperRowType, MapperType, db::HistCreateSql},
+    mapper::{MapperRowType, MapperType},
+    model::KOtidSupport,
 };
 
 pub trait Dumper<T> {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: FetchTIDReq,
+        fetch_data: SyncFetchDataPageInfo,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -30,7 +34,7 @@ impl Dumper<MapperRowType> for MapperType {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: FetchTIDReq,
+        fetch_data: SyncFetchDataPageInfo,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -56,36 +60,24 @@ pub trait SyncMapper {
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
     ) -> AResult<TID>;
-    async fn sync_dump_tids(&self, req: SyncFetchTIDReq) -> AResult<SyncFetchTIDRsp>;
-    async fn sync_merge_tids(
+    async fn sync_fetch_tids<T: KOtidSupport>(
+        &self,
+        req: SyncFetchTIDArg<T>,
+    ) -> AResult<SyncFetchTIDRsp>;
+    async fn sync_merge_tids<T: KOtidSupport>(
         &self,
         data: SyncFetchTIDRsp,
         hist: bool,
-        sync_info: SyncInfo,
+        sync_info: SyncInfo<T>,
     ) -> EResult;
-}
-
-pub trait MergableRec: for<'a> HistCreateSql<'a> {
-    fn to_inserter(&self) -> SqlInserter<'static>;
-    fn to_hist_inserter(&self) -> SqlInserter<'static>;
-    fn pkey_wheres(&self) -> Wheres<'static>;
-    fn get_tid(&self) -> TID;
-    fn hist_table_name(&self) -> &'static str;
-    fn table_name(&self) -> &'static str;
-    fn all_fields() -> &'static [&'static str];
-}
-
-pub trait SyncOperator<E: MergableRec + Send + 'static> {
-    async fn sync_get_records<F>(
+    async fn sync_fetch_operations<T: KOtidSupport>(
         &self,
-        fetch_data: crate::krate::sync::dto::FetchTIDReq,
-        mapper: F,
-        hist: bool,
-    ) -> chin_tools::AResult<Vec<E>>
-    where
-        F: Fn(MapperRowType) -> AResult<E> + Send + Sync + 'static;
-
-    async fn sync_merge_records(&self, recs: Vec<E>, hist: bool) -> AResult<Vec<E>>;
+        sync_info: &SyncPageInfo<T>,
+    ) -> AResult<SyncDataArg<T>>;
+    async fn sync_merge_operations<T: KOtidSupport>(
+        &self,
+        req: SyncDataArg<T>,
+    ) -> AResult<SyncDataArg<T>>;
 }
 
 impl SyncMapper for MapperType {
@@ -105,20 +97,35 @@ impl SyncMapper for MapperType {
         expand_mt_branch!(self.sync_get_sync_time(table_name, remote_id))
     }
 
-    async fn sync_dump_tids(&self, req: SyncFetchTIDReq) -> AResult<SyncFetchTIDRsp> {
-        expand_mt_branch!(self.sync_dump_tids(req))
+    async fn sync_fetch_tids<T: KOtidSupport>(
+        &self,
+        req: SyncFetchTIDArg<T>,
+    ) -> AResult<SyncFetchTIDRsp> {
+        expand_mt_branch!(self.sync_fetch_tids(req))
     }
 
-    async fn sync_merge_tids(
+    async fn sync_merge_tids<T: KOtidSupport>(
         &self,
         data: SyncFetchTIDRsp,
         hist: bool,
-        sync_info: SyncInfo,
+        sync_info: SyncInfo<T>,
     ) -> EResult {
         expand_mt_branch!(self.sync_merge_tids(data, hist, sync_info))
     }
 
+    async fn sync_fetch_operations<T: KOtidSupport>(
+        &self,
+        sync_info: &SyncPageInfo<T>,
+    ) -> AResult<SyncDataArg<T>> {
+        expand_mt_branch!(self.sync_fetch_operations(sync_info))
+    }
 
+    async fn sync_merge_operations<T: KOtidSupport>(
+        &self,
+        req: SyncDataArg<T>,
+    ) -> AResult<SyncDataArg<T>> {
+        expand_mt_branch!(self.sync_merge_operations(req))
+    }
 }
 
 impl MapperType {
@@ -134,90 +141,16 @@ impl MapperType {
         }
     }
 
-    pub(crate) async fn overwrite_endpoints(&self, req: SyncAllEndpoints) -> EResult {
+    pub(crate) async fn overwrite_endpoints(
+        &self,
+        req: SyncAllEndpoints,
+    ) -> AResult<SyncAllEndpointsRsp> {
         self.kkv_transisent_overwrite(
             ALL_ENDPOINTS.to_string().try_into()?,
             &req,
             chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),
         )
-        .await
+        .await?;
+        Ok(SyncAllEndpointsRsp {})
     }
-}
-
-#[macro_export]
-macro_rules! impl_sync_operator {
-    ($st:ty, $($field:ident),+) => {
-
-        impl $crate::krate::sync::mapper::MergableRec for $st {
-            fn to_inserter(&self) -> chin_sql::SqlInserter<'static> {
-                self.clone().to_sql_inserter()
-            }
-
-            fn to_hist_inserter(&self) -> chin_sql::SqlInserter<'static> {
-                self.clone().to_sql_inserter().table_name(Self::HIST_TABLE)
-            }
-
-            fn get_tid(&self) -> TID {
-                self.tid
-            }
-
-            fn all_fields() -> &'static [&'static str] {
-                Self::all_field_names()
-            }
-
-            fn pkey_wheres(&self) -> chin_sql::Wheres<'static> {
-                Self::pkey_cond($(self.$field.clone()),+)
-            }
-
-            #[inline]
-            fn hist_table_name(&self) -> &'static str {
-                Self::HIST_TABLE
-            }
-
-            #[inline]
-            fn table_name(&self) -> &'static str {
-                Self::TABLE
-            }
-        }
-
-        impl $crate::krate::sync::mapper::SyncOperator<$st> for $crate::mapper::MapperType {
-            async fn sync_get_records<F>(
-                &self,
-                fetch_data: $crate::krate::sync::dto::FetchTIDReq,
-                mapper: F,
-                hist: bool,
-            ) -> chin_tools::AResult<Vec<$st>>
-            where
-                F: Fn($crate::mapper::MapperRowType) -> chin_tools::AResult<$st>
-                    + Send
-                    + Sync
-                    + 'static,
-            {
-                use $crate::krate::sync::mapper::Dumper as _;
-                let table_name = if hist {
-                    <$st>::HIST_TABLE
-                } else {
-                    <$st>::TABLE
-                };
-                self.dump(table_name, fetch_data, mapper).await
-            }
-
-            async fn sync_merge_records(&self, recs: Vec<$st>, hist: bool) -> chin_tools::AResult<Vec<$st>> {
-                use $crate::mapper::db::kdb::KDbBehaiver as _;
-                use $crate::mapper::db::kdb::KDbConnBehaiver as _;
-                use $crate::mapper::db::kdb::KDbTransactionBehaiver as _;
-                let result = match self {
-                    $crate::mapper::MapperType::KDb(kdb) => {
-                        let mut conn = kdb.conn().await?;
-                        let tx = conn.tx().await?;
-                        let res = tx.merge_records(recs, hist).await?;
-                        tx.cmt().await?;
-                        res
-                    }
-                };
-
-                Ok(result)
-            }
-        }
-    };
 }

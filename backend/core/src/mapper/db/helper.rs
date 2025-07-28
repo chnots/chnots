@@ -2,7 +2,9 @@ use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
-use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver};
+use crate::{
+    krate::chnot::ChnotRecord, mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver}, model::KOtidSupport
+};
 
 pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> EResult {
     for c in cts.iter() {
@@ -38,36 +40,28 @@ pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> E
 }
 
 impl KDbExecutor<'_> {
-    pub(crate) async fn omit_rows(
-        &self,
-        table_name: &str,
-        fields: &[&str],
-        condition: Wheres<'_>,
-    ) -> AResult<usize> {
-        let count = self
-            .copy_into_omit_table(table_name, fields, condition.clone())
-            .await?;
+    pub(crate) async fn omit_rows<T: KOtidSupport>(&self, condition: Wheres<'_>) -> AResult<usize> {
+        let count = self.copy_into_omit_table::<T>(condition.clone()).await?;
         if count > 0 {
-            let delete_sql = SqlDeleter::new(table_name).r#where(condition);
+            let delete_sql = SqlDeleter::new(T::table_name(false)).r#where(condition);
             self.exec(delete_sql).await
         } else {
             Ok(0)
         }
     }
 
-    pub(crate) async fn copy_into_omit_table(
+    pub(crate) async fn copy_into_omit_table<T: KOtidSupport>(
         &self,
-        table_name: &str,
-        fields: &[&str],
         condition: Wheres<'_>,
     ) -> AResult<usize> {
+        let fields_comma = T::all_columns().join(",");
         let insert_sql = SqlBuilder::new()
             .sov(format!(
-                "insert into {}_hist({}) select {} from {}",
-                table_name,
-                fields.join(","),
-                fields.join(","),
-                table_name
+                "insert into {}({}) select {} from {}",
+                T::table_name(true),
+                &fields_comma,
+                &fields_comma,
+                T::table_name(false)
             ))
             .r#where(condition.clone());
         let count = self.exec(insert_sql).await?;

@@ -353,29 +353,43 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
     }
 }
 
-
 pub(crate) trait HistCreateSql<'a> {
-    fn main_table_name() -> &'static str;
-    fn hist_table_name() -> &'static str;
     fn hist_table() -> chin_sql::CreateTableSqlOwned;
 }
 
 #[macro_export]
-macro_rules! impl_hist_create_sql {
+macro_rules! impl_otid_support {
     ($st:tt) => {
         impl $st {
             pub const HIST_TABLE: &str = const_format::formatcp!("{}_hist", $st::TABLE);
         }
 
+        impl $crate::model::KSerde for $st {
+            fn sql_inserter(&self) -> chin_sql::SqlInserter {
+                self.clone().to_sql_inserter()
+            }
+
+            fn try_from_kdb_row(row: &$crate::mapper::db::KDbRow) -> chin_tools::AResult<Self> {
+                Self::try_from(row)
+            }
+        }
+
+        impl $crate::model::KOtidSupport for $st {
+            fn get_otid_enum() -> $crate::model::otid_table::OtidTableEnum {
+                $crate::model::otid_table::OtidTableEnum::$st
+            }
+            fn table_name(hist: bool) -> &'static str {
+                match hist {
+                    true => Self::HIST_TABLE,
+                    false => Self::TABLE,
+                }
+            }
+            fn all_columns() -> &'static [&'static str] {
+                Self::all_field_names()
+            }
+        }
+
         impl<'a> $crate::mapper::db::kdb::HistCreateSql<'a> for $st {
-            fn hist_table_name() -> &'static str {
-                Self::HIST_TABLE
-            }
-
-            fn main_table_name() -> &'static str {
-                Self::TABLE
-            }
-
             fn hist_table() -> chin_sql::CreateTableSqlOwned {
                 let mut create_table = Self::create_sql().to_owned_sql();
                 let pkey = create_table.pkey.clone();

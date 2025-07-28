@@ -1,7 +1,7 @@
 use chin_sql::{str_type::Varchar, time_type::TID, GenerateTableSchema};
 use serde::{Deserialize, Serialize};
 
-use crate::impl_hist_create_sql;
+use crate::impl_otid_support;
 
 
 fn managers_to_sql(managers: Vec<String>) -> String {
@@ -21,4 +21,4 @@ pub struct KSpace {
     pub tid: TID,
 }
 
-impl_hist_create_sql!{KSpace}
+impl_otid_support!{KSpace}

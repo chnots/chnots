@@ -8,7 +8,8 @@ use log::info;
 
 use crate::{
     mapper::db::{
-        helper::create_tables, HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTransactionBehaiver
+        HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
+        KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
     },
     model::dto::KReq,
 };
@@ -26,13 +27,9 @@ impl KDb {
                     .field($table::CELL_DATA, $v)
                     .field($table::TID, $c.tid);
                 let mut conn = self.conn().await?;
-                let tx = conn.tx().await?;                
+                let tx = conn.tx().await?;
                 tx.as_executor()
-                    .omit_rows(
-                        $table::TABLE,
-                        &$table::create_sql().all_fields(),
-                        $table::pkey_cond($c.table_otid, $c.col_otid, $c.row_otid),
-                    )
+                    .omit_rows::<$table>($table::pkey_cond($c.table_otid, $c.col_otid, $c.row_otid))
                     .await?;
                 tx.exec(csql).await?;
                 tx.cmt().await?;
@@ -85,11 +82,7 @@ impl KTabMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows(
-                KTabMeta::TABLE,
-                &KTabMeta::create_sql().all_fields(),
-                KTabMeta::pkey_cond(*otid),
-            )
+            .omit_rows::<KTabMeta>(KTabMeta::pkey_cond(*otid))
             .await?;
         tx.exec(insert_sql).await?;
         tx.cmt().await?;
@@ -109,10 +102,7 @@ impl KTabMapper for KDb {
             mkspaces: _,
         } = req;
 
-        let KTabCellsOverwriteReq {
-            cells,
-            table_id,
-        } = body;
+        let KTabCellsOverwriteReq { cells, table_id } = body;
         let table_meta = self
             .ktab_query_table_meta(empty_wrapper.frame(KTabMetaQueryReq { table_id }))
             .await?
@@ -150,7 +140,7 @@ impl KTabMapper for KDb {
         let meta = self
             .conn()
             .await?
-            .qry_opt(ssb, |row| row.try_into())
+            .qry_opt(ssb, |row| (&row).try_into())
             .await?;
 
         Ok(KTabMetaQueryRsp { meta })
@@ -187,7 +177,7 @@ impl KTabMapper for KDb {
                     .conn()
                     .await?
                     .qry_list(reader, |row| {
-                        let t: $sub_table = row.try_into()?;
+                        let t: $sub_table = (&row).try_into()?;
                         Ok(t)
                     })
                     .await?
@@ -244,10 +234,10 @@ impl KTabMapper for KDb {
     }
 }
 
-impl TryFrom<KDbRow> for KTabMeta {
+impl TryFrom<&KDbRow> for KTabMeta {
     type Error = anyhow::Error;
 
-    fn try_from(row: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(row: &KDbRow) -> Result<Self, Self::Error> {
         Ok(KTabMeta {
             columns: {
                 let columns: String = row.try_get(KTabMeta::COLUMNS)?;
@@ -265,10 +255,10 @@ impl TryFrom<KDbRow> for KTabMeta {
 
 macro_rules! row_into_ktab_cell {
     ($sub_table:tt) => {
-        impl TryFrom<KDbRow> for $sub_table {
+        impl TryFrom<&KDbRow> for $sub_table {
             type Error = anyhow::Error;
 
-            fn try_from(row: KDbRow) -> Result<Self, Self::Error> {
+            fn try_from(row: &KDbRow) -> Result<Self, Self::Error> {
                 Ok($sub_table {
                     table_otid: row.try_get($sub_table::TABLE_OTID)?,
                     col_otid: row.try_get($sub_table::COL_OTID)?,

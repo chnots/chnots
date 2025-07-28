@@ -1,96 +1,28 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData, ops::Deref};
 
 use chin_sql::time_type::TID;
-use chin_tools::{AResult, SharedStr};
+use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
-use strum::EnumIter;
 
-use crate::krate::{
-    chnot::{ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
-    kkv::KKV,
-    ktab::{KTabCellDate, KTabCellDecimal, KTabCellText},
-    llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
+use crate::{
+    krate::sync::po::SyncAllEndpoints,
+    model::{KOtidSupport, otid_table::OtidTableEnum},
 };
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, EnumIter)]
-pub enum SyncTableEnum {
-    ChnotRecord,
-    ChnotMetadata,
-    ChnotKindRel,
-    ChnotTag,
-    LLMChatBot,
-    LLMChatRecord,
-    LLMChatTemplate,
-    LLMChatSession,
-    KKV,
-    KTabMeta,
-    KTabCellDate,
-    KTabCellDecimal,
-    KTabCellText,
-    KFileMeta, // inline k file is a specifal type file, so we sync it with kfilemeta
-}
-
-impl SyncTableEnum {
-    pub fn try_from_table_name(value: &str) -> AResult<Self> {
-        let c = match value.to_lowercase().as_str() {
-            ChnotRecord::TABLE => SyncTableEnum::ChnotRecord,
-            ChnotMetadata::TABLE => SyncTableEnum::ChnotMetadata,
-            ChnotKindRel::TABLE => SyncTableEnum::ChnotKindRel,
-            ChnotTag::TABLE => SyncTableEnum::ChnotTag,
-            LLMChatBot::TABLE => SyncTableEnum::LLMChatBot,
-            LLMChatRecord::TABLE => SyncTableEnum::LLMChatRecord,
-            LLMChatTemplate::TABLE => SyncTableEnum::LLMChatTemplate,
-            LLMChatSession::TABLE => SyncTableEnum::LLMChatSession,
-            KKV::TABLE => SyncTableEnum::KKV,
-            crate::krate::ktab::KTabMeta::TABLE => SyncTableEnum::KTabMeta,
-            KTabCellDate::TABLE => SyncTableEnum::KTabCellDate,
-            KTabCellDecimal::TABLE => SyncTableEnum::KTabCellDecimal,
-            KTabCellText::TABLE => SyncTableEnum::KTabCellText,
-            crate::krate::kfile::KFileMeta::TABLE => SyncTableEnum::KFileMeta,
-            _ => Err(anyhow::anyhow!("unable to deser from string {}", value))?,
-        };
-
-        Ok(c)
-    }
-
-    pub fn to_table_name(&self) -> String {
-        match self {
-            SyncTableEnum::ChnotRecord => ChnotRecord::TABLE.to_string(),
-            SyncTableEnum::ChnotMetadata => ChnotMetadata::TABLE.to_string(),
-            SyncTableEnum::ChnotKindRel => ChnotKindRel::TABLE.to_string(),
-            SyncTableEnum::ChnotTag => ChnotTag::TABLE.to_string(),
-            SyncTableEnum::LLMChatBot => LLMChatBot::TABLE.to_string(),
-            SyncTableEnum::LLMChatRecord => LLMChatRecord::TABLE.to_string(),
-            SyncTableEnum::LLMChatTemplate => LLMChatTemplate::TABLE.to_string(),
-            SyncTableEnum::LLMChatSession => LLMChatSession::TABLE.to_string(),
-            SyncTableEnum::KKV => KKV::TABLE.to_string(),
-            SyncTableEnum::KTabMeta => crate::krate::ktab::KTabMeta::TABLE.to_string(),
-            SyncTableEnum::KTabCellDate => KTabCellDate::TABLE.to_string(),
-            SyncTableEnum::KTabCellDecimal => KTabCellDecimal::TABLE.to_string(),
-            SyncTableEnum::KTabCellText => KTabCellText::TABLE.to_string(),
-            SyncTableEnum::KFileMeta => crate::krate::kfile::KFileMeta::TABLE.to_string(),
-        }
-    }
-
-    pub fn to_hist_table_name(&self) -> String {
-        return self.to_table_name() + "_hist";
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncInfo {
+pub struct SyncInfo<T> {
     pub instance_id: SharedStr,
     pub start_ex: TID,
     pub end_in: TID,
-    pub table: SyncTableEnum,
+    pub table_type: PhantomData<T>,
 }
 
-impl SyncInfo {
+impl<T: KOtidSupport> SyncInfo<T> {
     pub fn to_table_name(&self) -> String {
         format!(
             "{}_{}_{}_{}",
             self.instance_id.as_str(),
-            self.table.to_table_name(),
+            T::table_name(false),
             self.start_ex,
             self.end_in
         )
@@ -98,11 +30,57 @@ impl SyncInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncShakeReq {
+pub struct SyncPageInfo<T> {
+    pub sync_info: SyncInfo<T>,
+    pub page_size: usize,
+    pub start_ex: TID,
+}
+
+impl<T: KOtidSupport> Deref for SyncPageInfo<T> {
+    type Target = SyncInfo<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.sync_info
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct OtidWithEnum<E> {
+    pub(crate) table_type: OtidTableEnum,
+    pub(crate) dto: E,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct OtidWithGer<E, T> {
+    pub(crate) dto: E,
+    pub(crate) table_type: PhantomData<T>,
+}
+
+impl<E, T> Deref for OtidWithGer<E, T> {
+    type Target = E;
+
+    fn deref(&self) -> &Self::Target {
+        &self.dto
+    }
+}
+
+impl<E, T: KOtidSupport> OtidWithGer<E, T> {
+    pub fn into_enum(self) -> OtidWithEnum<E> {
+        OtidWithEnum {
+            table_type: T::get_otid_enum(),
+            dto: self.dto,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncShakeDto {
     pub instance_id: SharedStr,
     pub db_version: String,
-    pub table_name: SyncTableEnum,
 }
+
+pub type SyncShakeReq = OtidWithEnum<SyncShakeDto>;
+pub type SyncShakeArg<T> = OtidWithGer<SyncShakeDto, T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SyncShakeRspEnum {
@@ -118,18 +96,22 @@ pub struct SyncShakeRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncFetchTIDReq {
-    pub sync_info: SyncInfo,
-    pub page_size: usize,
-    pub hist: bool,
+pub(crate) enum SyncFetchDataPageInfo {
+    StartEnd {
+        start_ex: TID,
+        end_in: TID,
+        page_size: usize,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct FetchTIDReq {
-    pub start_ex: TID,
-    pub end_in: TID,
-    pub page_size: usize,
+pub(crate) struct SyncFetchTIDDto {
+    pub page: SyncFetchDataPageInfo,
+    pub hist: bool,
 }
+
+pub type SyncFetchTIDReq = OtidWithEnum<SyncFetchTIDDto>;
+pub type SyncFetchTIDArg<T> = OtidWithGer<SyncFetchTIDDto, T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncFetchTIDRsp {
@@ -137,26 +119,79 @@ pub struct SyncFetchTIDRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncDataReq<E> {
-    cmds: Vec<SyncDataReqEnum<E>>,
+pub struct SyncDataDto<T> {
+    pub(crate) cmds: Vec<SyncDataOperation<T>>,
+    pub(crate) max_tid: TID,
+    pub(crate) nomore: bool,
 }
 
+pub type SyncDataReq = OtidWithEnum<SyncDataDto<serde_json::Value>>;
+pub type SyncDataArg<T> = SyncDataDto<T>;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SyncDataReqEnum<E> {
+pub enum SyncDataOperation<T> {
     Omit(TID),
-    LeftCur(TID),
-    LeftHist(TID),
-    RightCur(E),
-    RightHist(E),
+    Pull { tid: TID, hist: bool },
+    Push { data: T, hist: bool },
+}
+
+#[macro_export]
+macro_rules! sync_cmds_json_to_st {
+    ($st:ty, $cmds:expr) => {{
+        use $crate::krate::sync::dto::SyncDataOperation;
+        let res: Result<Vec<SyncDataOperation<$st>>, serde_json::Error> = $cmds
+            .into_iter()
+            .map(|s| {
+                let c = match s {
+                    $crate::krate::sync::dto::SyncDataOperation::Omit(tid) => {
+                        SyncDataOperation::Omit(tid)
+                    }
+                    $crate::krate::sync::dto::SyncDataOperation::Pull { tid, hist } => {
+                        SyncDataOperation::Pull { tid, hist }
+                    }
+                    $crate::krate::sync::dto::SyncDataOperation::Push { data, hist } => {
+                        SyncDataOperation::Push {
+                            data: {
+                                let c: $st = serde_json::from_value(data)?;
+                                c
+                            },
+                            hist,
+                        }
+                    }
+                };
+                Ok(c)
+            })
+            .collect();
+        res
+    }};
+}
+
+#[macro_export]
+macro_rules! sync_cmds_st_to_json {
+    ($cmds:expr) => {{
+        use $crate::krate::sync::dto::SyncDataOperation;
+        let cmds: AResult<Vec<SyncDataOperation<serde_json::Value>>> = $cmds
+            .into_iter()
+            .map(|c| {
+                let d = match c {
+                    SyncDataOperation::Omit(tid) => SyncDataOperation::Omit(tid),
+                    SyncDataOperation::Pull { tid, hist } => SyncDataOperation::Pull { tid, hist },
+                    SyncDataOperation::Push { data, hist } => SyncDataOperation::Push {
+                        data: serde_json::to_value(&data)?,
+                        hist,
+                    },
+                };
+                Ok(d)
+            })
+            .collect();
+        cmds?
+    }};
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncDataRsp<E> {
-    cmds: Vec<SyncDataRspEnum<E>>,
+pub struct SyncAllEndpointsReq {
+    pub data: SyncAllEndpoints,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SyncDataRspEnum<E> {
-    Cur(E),
-    Hist(E),
-}
+pub struct SyncAllEndpointsRsp {}

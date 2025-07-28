@@ -2,15 +2,11 @@ use std::path::{Path, PathBuf};
 
 use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::ShareAppState,
-    krate::sync::{
-        mapper::Dumper,
-        po::{SyncAllEndpoints, SyncEndpoint},
-    },
+    krate::sync::po::{SyncAllEndpoints, SyncEndpoint},
     mapper::{MapperRowType, MapperType},
 };
 
@@ -91,6 +87,7 @@ pub struct FileDumper<P: AsRef<Path>> {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub enum StartType {
     All,
     TID(TID),
@@ -118,14 +115,20 @@ impl<P: AsRef<Path>> FileDumper<P> {
             .join(&self.backup_dir)
             .join(backup_file.to_file_name());
 
-        loop {
+        // TODO: rewrite
+        /*          loop {
             let recs = mapper_type
                 .dump(
                     &table_name,
-                    super::dto::FetchTIDReq {
-                        start_ex,
-                        end_in: self.end_in,
-                        page_size: PAGE_SIZE,
+                    super::dto::SyncFetchTIDReq {
+                        table_name: "asd",
+                        dto: SyncFetchTIDDTO {
+                            start_ex,
+                            end_in: todo!(),
+                            page_size: todo!(),
+                            type_table: std::marker::PhantomData,
+                            hist: todo!(),
+                        },
                     },
                     mapper.clone(),
                 )
@@ -142,7 +145,7 @@ impl<P: AsRef<Path>> FileDumper<P> {
             if recs.len() < PAGE_SIZE {
                 break;
             }
-        }
+        }  */
 
         Ok(())
     }
@@ -159,14 +162,17 @@ macro_rules! dump_table_to_file {
         };
 
         fd.dump_one_table($mapper, |e| match e {
-            $crate::mapper::MapperRowType::KDb(kdb_row) => $table_type::try_from(kdb_row),
+            $crate::mapper::MapperRowType::KDb(row) => {
+                let r: $table_type = (&row).try_into()?;
+                Ok(r)
+            }
         })
         .await?;
     };
 }
 
 impl ShareAppState {
-    pub async fn dump_all_to_files(&self, start_type: StartType) -> EResult {
+    pub async fn dump_to_files(&self, start_type: StartType) -> EResult {
         self.dump_chnot_to_file(start_type.clone()).await?;
         self.dump_kfile_to_file(start_type.clone()).await?;
         self.dump_kkv_to_file(start_type.clone()).await?;
@@ -188,6 +194,10 @@ impl ShareAppState {
         for endpoint in &self.get_all_endpoints().await?.endpoints {
             self.sync_chnots(endpoint).await?;
             self.sync_kfile(endpoint).await?;
+            self.sync_kkv(endpoint).await?;
+            self.sync_kspace(endpoint).await?;
+            self.sync_ktab(endpoint).await?;
+            self.sync_llmchat(endpoint).await?;
         }
 
         Ok(())

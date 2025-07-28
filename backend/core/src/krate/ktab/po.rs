@@ -6,7 +6,7 @@ use chin_sql::{str_type::Varchar, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
-use crate::impl_hist_create_sql;
+use crate::impl_otid_support;
 use crate::model::decimal::Decimal;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ pub struct KTabMeta {
     pub tid: TID,
 }
 
-impl_hist_create_sql! {KTabMeta}
+impl_otid_support! {KTabMeta}
 
 macro_rules! type_table {
     ($sname:tt, $data_type:ty $(, #[$attr:meta])*) => {
@@ -79,7 +79,7 @@ macro_rules! type_table {
             $(#[$attr])*
             pub cell_data: $data_type
         }
-        impl_hist_create_sql!{$sname}
+        impl_otid_support!{$sname}
 
     }
 }

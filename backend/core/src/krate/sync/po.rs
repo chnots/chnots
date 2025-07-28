@@ -24,11 +24,30 @@ pub struct SyncAllEndpoints {
     pub(crate) endpoints: Vec<SyncEndpoint>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum RecordState {
     Absent = 0,
     Cur = 1,
     Hist = 2,
+}
+
+impl RecordState {
+    pub fn as_num(&self) -> i8 {
+        *self as i8
+    }
+}
+
+impl TryFrom<i32> for RecordState {
+    type Error = anyhow::Error;
+
+    fn try_from(x: i32) -> Result<Self, Self::Error> {
+        match x {
+            x if x == RecordState::Absent as i32 => Ok(RecordState::Absent),
+            x if x == RecordState::Cur as i32 => Ok(RecordState::Cur),
+            x if x == RecordState::Hist as i32 => Ok(RecordState::Hist),
+            _ => anyhow::bail!("unable convert from i8 for RecordState"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

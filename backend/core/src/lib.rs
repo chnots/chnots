@@ -58,7 +58,7 @@ pub async fn run(config: Config) -> EResult {
                 info!("unable to create instace_id {err}");
             }
 
-            if let Err(err) = state.dump_all_to_files(StartType::Increase).await {
+            if let Err(err) = state.dump_to_files(StartType::Increase).await {
                 log::error!("unable to backup to files {err}")
             }
 

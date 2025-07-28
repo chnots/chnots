@@ -13,10 +13,10 @@ use crate::{
 
 use super::{mapper::KKVMapper, *};
 
-impl TryFrom<KDbRow> for KKV {
+impl TryFrom<&KDbRow> for KKV {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = KKV {
             key: value.try_get(KKV::KEY)?,
             value: value.try_get(KKV::VALUE)?,
@@ -65,7 +65,7 @@ impl KDbExecutor<'_> {
             Wheres::equal(KKV::KSPACE, req.kspace.clone()),
         ]));
 
-        let kv: Option<KKV> = self.qry_opt(query, |e| e.try_into()).await?;
+        let kv: Option<KKV> = self.qry_opt(query, |e| (&e).try_into()).await?;
 
         Ok(KKVQueryOneRsp {
             tid: kv.as_ref().map(|kv| kv.tid),
@@ -129,7 +129,7 @@ impl KKVMapper for KDb {
             }),
         ]));
 
-        let kkvs = self.conn().await?.qry_list(query, |e| e.try_into()).await?;
+        let kkvs = self.conn().await?.qry_list(query, |e| (&e).try_into()).await?;
 
         Ok(KKVQueryManyRsp { kkvs })
     }

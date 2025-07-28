@@ -4,10 +4,12 @@ use chin_sql::time_type::TID;
 use chin_tools::EResult;
 
 use crate::{
-    app::ShareAppState, dump_table_to_file, impl_sync_operator, krate::{
+    app::ShareAppState,
+    dump_table_to_file,
+    krate::{
         ktab::{KTabCellDate, KTabCellDecimal, KTabCellText, KTabMeta},
         sync::filedumper::StartType,
-    }
+    },
 };
 
 impl ShareAppState {
@@ -30,9 +32,14 @@ impl ShareAppState {
         dump_table_to_file!(mapper, KTabCellDecimal, start_type, backup_dir, end_in);
         Ok(())
     }
-}
 
-impl_sync_operator! { KTabMeta, otid }
-impl_sync_operator! { KTabCellDate, table_otid, col_otid, row_otid }
-impl_sync_operator! { KTabCellText, table_otid, col_otid, row_otid }
-impl_sync_operator! { KTabCellDecimal, table_otid, col_otid, row_otid }
+    pub async fn sync_ktab(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
+        self.sync_one_otid_table1::<KTabMeta>(endpoint).await?;
+        self.sync_one_otid_table1::<KTabCellDate>(endpoint).await?;
+        self.sync_one_otid_table1::<KTabCellDecimal>(endpoint)
+            .await?;
+        self.sync_one_otid_table1::<KTabCellText>(endpoint).await?;
+
+        Ok(())
+    }
+}

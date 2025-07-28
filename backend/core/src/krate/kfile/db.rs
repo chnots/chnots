@@ -3,7 +3,7 @@ use std::io::Write;
 use super::{mapper::KFileMapper, *};
 use crate::{
     mapper::db::{
-        helper::create_tables, HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver
+        HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables,
     },
     model::dto::KReq,
 };
@@ -14,10 +14,10 @@ use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{LimitOffset, OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 
-impl TryFrom<KDbRow> for InlineKFile {
+impl TryFrom<&KDbRow> for InlineKFile {
     type Error = anyhow::Error;
 
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = InlineKFile {
             tid: value.try_get(InlineKFile::TID)?,
             content: value.try_get(InlineKFile::CONTENT)?,
@@ -26,9 +26,9 @@ impl TryFrom<KDbRow> for InlineKFile {
         Ok(obj)
     }
 }
-impl TryFrom<KDbRow> for KFileMeta {
+impl TryFrom<&KDbRow> for KFileMeta {
     type Error = anyhow::Error;
-    fn try_from(value: KDbRow) -> Result<Self, Self::Error> {
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         Ok(KFileMeta {
             filename: value.try_get(KFileMeta::FILENAME)?,
             tid: value.try_get(KFileMeta::TID)?,
@@ -49,7 +49,7 @@ impl KFileMapper for KDb {
             vec![
                 InlineKFile::create_sql().to_owned_sql(),
                 KFileMeta::create_sql().to_owned_sql(),
-                KFileMeta::hist_table()
+                KFileMeta::hist_table(),
             ],
             self,
         )
@@ -63,11 +63,7 @@ impl KFileMapper for KDb {
         let tx = conn.tx().await?;
 
         tx.as_executor()
-            .omit_rows(
-                KFileMeta::TABLE,
-                &KFileMeta::create_sql().all_fields(),
-                KFileMeta::pkey_cond(meta.id.clone()),
-            )
+            .omit_rows::<KFileMeta>(KFileMeta::pkey_cond(meta.id.clone()))
             .await?;
         tx.exec(meta.to_sql_inserter()).await?;
         tx.cmt().await?;
@@ -103,11 +99,7 @@ impl KFileMapper for KDb {
             filesize: bytes.len() as i64,
         };
         tx.as_executor()
-            .omit_rows(
-                KFileMeta::TABLE,
-                &KFileMeta::create_sql().all_fields(),
-                KFileMeta::pkey_cond(meta.id.clone()),
-            )
+            .omit_rows::<KFileMeta>(KFileMeta::pkey_cond(meta.id.clone()))
             .await?;
         tx.exec(meta.to_sql_inserter()).await?;
         tx.exec(
@@ -133,7 +125,7 @@ impl KFileMapper for KDb {
                 .await?
                 .as_executor()
                 .qry_opt(KFileMeta::pkey_reader(key.clone()), |e| {
-                    let c: KFileMeta = e.try_into()?;
+                    let c: KFileMeta = (&e).try_into()?;
                     Ok(c)
                 })
                 .await?
@@ -151,7 +143,11 @@ impl KFileMapper for KDb {
             .sov("order by tid desc")
             .custom(LimitOffset::new(1));
 
-        let res = self.conn().await?.qry_list(query, |t| t.try_into()).await?;
+        let res = self
+            .conn()
+            .await?
+            .qry_list(query, |t| (&t).try_into())
+            .await?;
 
         Ok(QueryInlineKFileRsp { res })
     }
@@ -160,7 +156,7 @@ impl KFileMapper for KDb {
         let meta = self
             .conn()
             .await?
-            .qry_opt(KFileMeta::pkey_reader(req.meta_id), |e| e.try_into())
+            .qry_opt(KFileMeta::pkey_reader(req.meta_id), |e| (&e).try_into())
             .await?;
         Ok(QueryKFileMetaRsp { meta })
     }
@@ -172,12 +168,15 @@ impl KFileMapper for KDb {
         let meta = self
             .conn()
             .await?
-            .qry_opt(KFileMeta::pkey_reader(sid), |e| e.try_into())
+            .qry_opt(KFileMeta::pkey_reader(sid), |e| (&e).try_into())
             .await?;
         Ok(QueryKFileMetaRsp { meta })
     }
-    
+
     async fn insert_inline_kfile2(&self, req: InlineKFile) -> chin_tools::AResult<usize> {
-        self.conn().await?.exec(req.to_sql_inserter().on_conflict(OnConflict::Ignore)).await
+        self.conn()
+            .await?
+            .exec(req.to_sql_inserter().on_conflict(OnConflict::Ignore))
+            .await
     }
 }

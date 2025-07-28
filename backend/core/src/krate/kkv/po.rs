@@ -1,5 +1,5 @@
 use crate::{
-    impl_hist_create_sql, mapper::db::{KDbRow, KDbRowBehavier}
+    impl_otid_support, mapper::db::{KDbRow, KDbRowBehavier}
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -55,7 +55,7 @@ pub struct KKV {
     pub value: Text,
 }
 
-impl_hist_create_sql!{KKV}
+impl_otid_support!{KKV}
 
 /// only for cache, we do not sync this.
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]

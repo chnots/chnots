@@ -48,16 +48,17 @@ Chnots 的同步是 LAN 同步，不需要连接到中央服务器，多个实�
      数据库版本号应该兼容，格式 x.y.z，当 z 变化时，认为是兼容的。同时认为其他情况数据库结构已发生较大的变化，拒绝握手。
    - 最近同步版本
      通过 instance_id 判断需要开始同步的时间。
+     {TODO} 详细描述怎么判断需要开始同步的时间。
 2. 构建传输数据列表
    只考虑 OTID 表，SID 表由 OTID 表进行索引。
-   - 建立本地的同步临时表 A， TID， LTYPE， RTYPE
+   - 建立本地的同步临时表 A， TID， LSTATE， RSTATE
    - 将本地 instance 的数据插入进去
-   - 拉取远程 instance 中的数据， upsert 到 A 中，负责更新 RTYPE 字段
+   - 拉取远程 instance 中的数据， upsert 到 A 中，负责更新 RSTATE 字段
    - 整理数据类型
-     |LTYPE|RTYPE|动作|
+     |LSTATE|LSTATE|动作|
      |---|---|---|
      |x|x|无动作|
-     |0|1|拉取到本地 cur 表|
+     |0|1|拉取到本地 main 表|
      |0|2|拉取到本地 hist 表|
      |1|0|推送到远程 main 表|
      |1|2|omit 到本地 hist 表|

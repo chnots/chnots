@@ -4,10 +4,12 @@ use chin_sql::time_type::TID;
 use chin_tools::EResult;
 
 use crate::{
-    app::ShareAppState, dump_table_to_file, impl_sync_operator, krate::{
+    app::ShareAppState,
+    dump_table_to_file,
+    krate::{
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         sync::filedumper::StartType,
-    }
+    },
 };
 
 impl ShareAppState {
@@ -30,10 +32,13 @@ impl ShareAppState {
         dump_table_to_file!(mapper, LLMChatSession, start_type, backup_dir, end_in);
         Ok(())
     }
+
+    pub async fn sync_llmchat(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
+        self.sync_one_otid_table1::<LLMChatBot>(endpoint).await?;
+        self.sync_one_otid_table1::<LLMChatRecord>(endpoint).await?;
+        self.sync_one_otid_table1::<LLMChatSession>(endpoint).await?;
+        self.sync_one_otid_table1::<LLMChatTemplate>(endpoint).await?;
+
+        Ok(())
+    }
 }
-
-impl_sync_operator! { LLMChatBot, otid }
-impl_sync_operator! { LLMChatRecord, otid }
-impl_sync_operator! { LLMChatTemplate, otid }
-impl_sync_operator! { LLMChatSession, otid }
-

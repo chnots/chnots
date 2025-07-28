@@ -5,14 +5,13 @@ use chin_tools::EResult;
 
 use crate::{
     app::ShareAppState,
-    dump_table_to_file, impl_sync_operator,
+    dump_table_to_file,
     krate::{
         kfile::{
             InlineKFile, KFileMeta, QueryInlineKFileReq, QueryInlineKFileRsp, mapper::KFileMapper,
         },
         sync::{filedumper::StartType, po::SyncEndpoint},
     },
-    sync_one,
 };
 
 impl ShareAppState {
@@ -68,11 +67,8 @@ impl ShareAppState {
     }
 
     pub async fn sync_kfile(&self, endpoint: &SyncEndpoint) -> EResult {
-        sync_one!(self, KFileMeta, endpoint, false, Self::sync_assets);
-        sync_one!(self, KFileMeta, endpoint, true, Self::sync_assets);
+        self.sync_one_otid_table1::<KFileMeta>(endpoint).await?;
 
         Ok(())
     }
 }
-
-impl_sync_operator! { KFileMeta, id }

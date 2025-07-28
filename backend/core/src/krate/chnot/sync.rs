@@ -1,21 +1,16 @@
 use std::path::PathBuf;
 
+use anyhow::Ok;
 use chin_sql::time_type::TID;
 use chin_tools::EResult;
 
 use crate::{
     app::ShareAppState,
-    dump_table_to_file, impl_sync_operator,
+    dump_table_to_file,
     krate::{
         chnot::{ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
-        sync::{
-            dto::{FetchTIDReq, SyncFetchTIDRsp, SyncShakeRspEnum, SyncTableEnum},
-            filedumper::StartType,
-            mapper::{SyncMapper, SyncOperator},
-            po::{SyncEndpoint, SyncLogTransient},
-        },
+        sync::{filedumper::StartType, po::SyncEndpoint},
     },
-    sync_one,
 };
 
 impl ShareAppState {
@@ -41,20 +36,10 @@ impl ShareAppState {
     }
 
     pub async fn sync_chnots(&self, endpoint: &SyncEndpoint) -> EResult {
-        sync_one!(self, ChnotRecord, endpoint, false);
-        sync_one!(self, ChnotRecord, endpoint, true);
-        sync_one!(self, ChnotMetadata, endpoint, false);
-        sync_one!(self, ChnotMetadata, endpoint, true);
-        sync_one!(self, ChnotKindRel, endpoint, false);
-        sync_one!(self, ChnotKindRel, endpoint, true);
-        sync_one!(self, ChnotTag, endpoint, false);
-        sync_one!(self, ChnotTag, endpoint, true);
-
+        self.sync_one_otid_table1::<ChnotRecord>(endpoint).await?;
+        self.sync_one_otid_table1::<ChnotMetadata>(endpoint).await?;
+        self.sync_one_otid_table1::<ChnotTag>(endpoint).await?;
+        self.sync_one_otid_table1::<ChnotKindRel>(endpoint).await?;
         Ok(())
     }
 }
-
-impl_sync_operator! { ChnotMetadata, otid }
-impl_sync_operator! { ChnotKindRel, meta_otid }
-impl_sync_operator! { ChnotRecord, meta_otid }
-impl_sync_operator! { ChnotTag, tag, meta_otid }
