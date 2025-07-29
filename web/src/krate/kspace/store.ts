@@ -1,64 +1,55 @@
 import { KSpace } from "@/krate/kspace/po";
-import { genTID } from "@/lib/id_util";
-import { create } from "zustand";
+import { create, useStore } from "zustand";
 import { combine } from "zustand/middleware";
+import { allKSpaces } from "./service";
+import { useShallow } from "zustand/react/shallow";
 
-interface State {
+interface KSpaceState {
   kspaceMapByName: Map<string, KSpace>;
   currentKSpace: string;
   mkspaces: string[];
+  currentKSpaceObj: () => KSpace | undefined;
+  selectKSpace: (name: string) => void;
+  toggleMKSpace: (mkspace: string) => void;
+  refreshKSpaces: () => void;
+  allKSpaces: () => KSpace[];
 }
 
-const kspaces = new Map<string, KSpace>([
-  [
-    "public",
-    {
-      name: "public",
-      managers: ["work", "private"],
-      color: "#282828",
-      tid: genTID(),
-    },
-  ],
-  [
-    "work",
-    {
-      name: "work",
-      managers: ["private"],
-      color: "#0000aa",
-      tid: genTID(),
-    },
-  ],
-  [
-    "private",
-    {
-      name: "private",
-      managers: [],
-      color: "#aa0000",
-      tid: genTID(),
-    },
-  ],
-]);
-
-const getDefaultState = (): State => {
+const getDefaultState = (): KSpaceState => {
   return {
-    kspaceMapByName: kspaces,
+    kspaceMapByName: new Map(),
     currentKSpace: (() => {
       const searchParams = new URLSearchParams(window.location.search.slice(1));
       console.log("search params:", location.hash);
       return searchParams.get("ns") ?? "public";
     })(),
     mkspaces: [],
+    currentKSpaceObj: () => {
+      return undefined;
+    },
+    selectKSpace: () => {},
+    toggleMKSpace: () => {},
+    refreshKSpaces: () => {},
+    allKSpaces: () => {
+      return [];
+    },
   };
 };
 
-export const useKSpaceStore = create(
+export const kspaceStore = create(
   combine(getDefaultState(), (set, get) => ({
     getState: () => get(),
-    fetchKSpaces: async () => {
-      set({ kspaceMapByName: kspaces });
+    refreshKSpaces: async () => {
+      const kspaces = await allKSpaces({});
+      const kspaceMap = new Map();
+      kspaces.kspaces.forEach((k) => {
+        kspaceMap.set(k.name, k);
+      });
+
+      set({ kspaceMapByName: kspaceMap });
       return kspaces;
     },
-    setKSpace: async (kspace: string) => {
+    selectKSpace: async (kspace: string) => {
       set((prev) => {
         return {
           ...prev,
@@ -72,7 +63,7 @@ export const useKSpaceStore = create(
         return {
           ...prev,
           mkspaces: [...new Set(mkspaces)].filter(
-            (e) => e != prev.currentKSpace,
+            (e) => e != prev.currentKSpace
           ),
         };
       });
@@ -96,15 +87,24 @@ export const useKSpaceStore = create(
         };
       });
     },
-    getKSpace: (kspaceName: string) => {
-      return get().kspaceMapByName.get(kspaceName);
+    getKSpace: (name: string) => {
+      return get().kspaceMapByName.get(name);
     },
     allKSpaces: () => {
       return [...get().kspaceMapByName.values()];
     },
-    getCurrentKSpace: () => {
+    currentKSpaceObj: () => {
       const read = get();
       return read.kspaceMapByName.get(read.currentKSpace);
     },
-  })),
+  }))
 );
+
+export function useKSpaceStore<T>(selector: (state: KSpaceState) => T) {
+  return useStore(
+    kspaceStore!,
+    useShallow((store) => {
+      return selector(store);
+    })
+  );
+}

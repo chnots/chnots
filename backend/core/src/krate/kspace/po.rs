@@ -19,6 +19,7 @@ pub struct KSpace {
     #[gts_unique]
     #[gts_type = "i64"]    
     pub tid: TID,
+    pub public_access: bool,
 }
 
 impl_otid_support!{KSpace}

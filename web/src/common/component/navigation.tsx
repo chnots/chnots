@@ -23,7 +23,11 @@ const Navigation = ({
   orientation?: "vertical" | "horizontal";
 }) => {
   const t = useTranslate();
-  const { currentKSpace, setKSpace: changeKSpace } = useKSpaceStore();
+  const { currentKSpace, selectKSpace } = useKSpaceStore(e => {
+    return {
+      currentKSpace: e.currentKSpace, selectKSpace: e.selectKSpace
+    }
+  });
   const { toggleSidebar } = useCommonStore();
   const [, setKSpaceParam] = useParamState<string>("ns", "public");
 
@@ -84,7 +88,7 @@ const Navigation = ({
       </Button>
       <KSpaceSelect
         onSelect={(ns) => {
-          changeKSpace(ns);
+          selectKSpace(ns);
           setKSpaceParam(ns);
         }}
         currentKSpace={currentKSpace}

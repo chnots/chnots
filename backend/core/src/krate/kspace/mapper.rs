@@ -4,8 +4,9 @@ use chin_tools::{AResult, EResult};
 
 use crate::{
     MapperType, expand_mt_branch,
+    krate::kspace::dto::{KSpaceDeletionReq, KSpaceDeletionRsp},
     magics::NO_KSPACE,
-    model::{dto::KReq, },
+    model::dto::KReq,
 };
 
 use super::{
@@ -19,6 +20,8 @@ pub trait KSpaceMapper {
         &self,
         kspace: KReq<KSpaceOverwriteReq>,
     ) -> AResult<KSpaceOverwriteRsp>;
+
+    async fn kspace_delete(&self, kspace: KReq<KSpaceDeletionReq>) -> AResult<KSpaceDeletionRsp>;
 
     async fn kspace_ensure_table(&self) -> EResult;
     async fn kspace_ensure_data(&self) -> EResult {
@@ -41,6 +44,7 @@ pub trait KSpaceMapper {
                         color: data.1.try_into()?,
                         managers: data.2.iter().map(|s| s.to_string()).collect(),
                         tid: TID::default(),
+                        public_access: false,
                     },
                 }))
                 .await?;
@@ -62,5 +66,9 @@ impl KSpaceMapper for MapperType {
 
     async fn kspace_ensure_table(&self) -> EResult {
         expand_mt_branch!(self.kspace_ensure_table())
+    }
+
+    async fn kspace_delete(&self, kspace: KReq<KSpaceDeletionReq>) -> AResult<KSpaceDeletionRsp> {
+        expand_mt_branch!(self.kspace_delete(kspace))
     }
 }

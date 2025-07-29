@@ -4,12 +4,12 @@ use chin_sql::SqlBuilder;
 use crate::{
     krate::kspace::{
         KSpace,
-        dto::{KSpaceOverwriteRsp, KSpaceQueryAllRsp},
+        dto::{KSpaceDeletionRsp, KSpaceOverwriteRsp, KSpaceQueryAllRsp},
         mapper::KSpaceMapper,
     },
     mapper::db::{
-        HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        helper::create_tables,
+        HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
+        KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
     },
 };
 
@@ -30,10 +30,13 @@ impl KSpaceMapper for KDb {
         &self,
         kspace: crate::model::dto::KReq<super::dto::KSpaceOverwriteReq>,
     ) -> chin_tools::AResult<super::dto::KSpaceOverwriteRsp> {
-        self.conn()
-            .await?
-            .exec(kspace.body.kspace.to_sql_inserter())
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.as_executor()
+            .omit_rows::<KSpace>(KSpace::pkey_cond(kspace.body.kspace.name.clone()))
             .await?;
+        tx.exec(kspace.body.kspace.to_sql_inserter()).await?;
+        tx.cmt().await?;
 
         Ok(KSpaceOverwriteRsp {})
     }
@@ -44,6 +47,18 @@ impl KSpaceMapper for KDb {
             self,
         )
         .await
+    }
+
+    async fn kspace_delete(
+        &self,
+        kspace: crate::model::dto::KReq<super::dto::KSpaceDeletionReq>,
+    ) -> chin_tools::AResult<super::dto::KSpaceDeletionRsp> {
+        self.conn()
+            .await?
+            .as_executor()
+            .omit_rows::<KSpace>(KSpace::pkey_cond(kspace.body.kspace_name))
+            .await?;
+        Ok(KSpaceDeletionRsp {})
     }
 }
 
@@ -59,6 +74,7 @@ impl TryFrom<&KDbRow> for KSpace {
                 serde_json::from_str(s.as_str())?
             },
             tid: value.try_get(Self::TID)?,
+            public_access: value.try_get(Self::PUBLIC_ACCESS)?,
         })
     }
 }

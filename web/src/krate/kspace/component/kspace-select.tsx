@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import React from "react";
+import React, { useEffect } from "react";
 import { KSpace } from "../po";
 
 export const KSpaceIcon = ({
@@ -40,9 +40,16 @@ export const KSpaceSelectDropDownGroup = ({
   onSelect: (kspace: string) => void;
   extra?: (kspace: KSpace) => React.ReactNode;
 }) => {
-  const { allKSpaces } = useKSpaceStore();
+  const { allKSpaces, refreshKSpaces } = useKSpaceStore((store) => {
+    return {
+      allKSpaces: store.allKSpaces,
+      refreshKSpaces: store.refreshKSpaces,
+    };
+  });
   const [position, setPosition] = React.useState(kspace);
-
+  useEffect(() => {
+    refreshKSpaces();
+  });
   return (
     <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
       {allKSpaces().map((e) => (
@@ -76,7 +83,13 @@ export const KSpaceSelect = ({
   currentKSpace: string;
   showMKspaces?: boolean;
 }) => {
-  const { toggleMKSpace, mkspaces } = useKSpaceStore();
+  const { toggleMKSpace, mkspaces } = useKSpaceStore((store) => {
+    return {
+      toggleMKSpace: store.toggleMKSpace,
+      mkspaces: store.mkspaces,
+    };
+  });
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

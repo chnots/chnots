@@ -1,5 +1,7 @@
 import request from "@/lib/request";
 import {
+  KSpaceDeletionReq,
+  KSpaceDeletionRsp,
   KSpaceOverwriteReq,
   KSpaceOverwriteRsp,
   KSpaceQueryAllReq,
@@ -15,5 +17,11 @@ export const allKSpaces = async (
 export const overwriteKSpace = async (
   req: KSpaceOverwriteReq
 ): Promise<KSpaceOverwriteRsp> => {
-  return await request.put(`/api/v1/kspace`, req);
+  return await request.put(`/api/v1/kspace-overwrite`, req);
+};
+
+export const deleteKSpace = async (
+  req: KSpaceDeletionReq
+): Promise<KSpaceDeletionRsp> => {
+  return await request.put(`/api/v1/kspace-deletion`, req);
 };

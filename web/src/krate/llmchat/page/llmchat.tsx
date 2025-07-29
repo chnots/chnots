@@ -10,7 +10,11 @@ import { useCommonStore } from "@/common/store";
 const LLMChatPage = () => {
   const { refreshAll, currentSessionId, setCurrentSessionId } =
     useLLMChatStore();
-  const { currentKSpace } = useKSpaceStore();
+  const { currentKSpace } = useKSpaceStore((store) => {
+    return {
+      currentKSpace: store.currentKSpace,
+    };
+  });
   const { showSidebar } = useCommonStore();
 
   const [sessionIdOrTID, setSessionIdOrTID] = useState<TID>(genTID());

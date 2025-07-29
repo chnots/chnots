@@ -8,7 +8,12 @@ import faviconSvg from "../public/static/favicon/chnots.svg?raw";
 
 const App = () => {
   const location = useLocation();
-  const { getCurrentKSpace, currentKSpace } = useKSpaceStore();
+  const { currentKSpaceObj, currentKSpace } = useKSpaceStore((s) => {
+    return {
+      currentKSpaceObj: s.currentKSpaceObj,
+      currentKSpace: s.currentKSpace,
+    };
+  });
   const [lastVisited] = useLocalStorage<string>("lastVisited", "/home");
   const [initialized, setInitialized] = useState(false);
 
@@ -20,7 +25,7 @@ const App = () => {
       document.getElementsByTagName("head")[0].appendChild(link);
     }
 
-    const c = getCurrentKSpace();
+    const c = currentKSpaceObj();
     if (c) {
       const s = faviconSvg.replace("#282828", c.color);
       link.href = `data:image/svg+xml,${encodeURIComponent(s)}`;

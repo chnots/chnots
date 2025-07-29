@@ -1,3 +1,4 @@
+import { Varchar } from "@/lib/types";
 import { KSpace } from "./po";
 
 export type KSpaceQueryAllRsp = {
@@ -11,3 +12,8 @@ export type KSpaceOverwriteReq = {
 export type KSpaceOverwriteRsp = object;
 
 export type KSpaceQueryAllReq = object;
+
+export type KSpaceDeletionReq = {
+  kspace_name: Varchar<500>;
+};
+export type KSpaceDeletionRsp = object;

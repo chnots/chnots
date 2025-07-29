@@ -1,6 +1,6 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
-import { useKSpaceStore } from "@/krate/kspace/store";
+import { kspaceStore, useKSpaceStore } from "@/krate/kspace/store";
 import axios from "axios";
 import type {
   AxiosInstance,
@@ -22,7 +22,7 @@ class Request {
 
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const kspace = useKSpaceStore.getState();
+        const kspace = kspaceStore.getState();
         config.headers!["K-kspace"] = kspace.currentKSpace;
         config.headers!["K-mkspaces"] = kspace.mkspaces.join(",");
 

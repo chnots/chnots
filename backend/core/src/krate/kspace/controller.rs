@@ -5,12 +5,14 @@ use crate::controller::KResponse;
 use crate::model::dto::kreq;
 use axum::extract::Query;
 use axum::routing::get;
-use axum::{extract::State, http::HeaderMap, routing::put, Json, Router};
+use axum::routing::post;
+use axum::{Json, Router, extract::State, http::HeaderMap, routing::put};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/kspace-all", get(kspace_read_all))
-        .route("/api/v1/kspace", put(kspace_overwrite))
+        .route("/api/v1/kspace-overwrite", put(kspace_overwrite))
+        .route("/api/v1/kspace-deletion", post(kspace_delete))
 }
 
 async fn kspace_overwrite(
@@ -35,4 +37,12 @@ async fn kspace_read_all(
         .kspace_read_all(kreq(headers, req))
         .await
         .into()
+}
+
+async fn kspace_delete(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<KSpaceDeletionReq>,
+) -> KResponse<KSpaceDeletionRsp> {
+    state.mapper.kspace_delete(kreq(headers, req)).await.into()
 }

@@ -1,3 +1,4 @@
+use chin_sql::str_type::Varchar;
 use serde::{Deserialize, Serialize};
 
 use super::KSpace;
@@ -17,3 +18,11 @@ pub struct KSpaceOverwriteReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KSpaceOverwriteRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KSpaceDeletionReq {
+    pub kspace_name: Varchar<500>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KSpaceDeletionRsp {}

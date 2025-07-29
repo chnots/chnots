@@ -6,4 +6,5 @@ export type KSpace = {
   color: Varchar<100>;
   managers: string[];
   tid: TID;
+  public_access: boolean;
 };

@@ -32,7 +32,7 @@ export type InsertInlineKFileRsp = {
 };
 
 export type QueryInlineKFileReq = {
-  sid?: string;
+  sid?: Varchar<100>;
   meta_id?: Varchar<100>;
   with_omit?: boolean;
 };
@@ -47,4 +47,15 @@ export type QueryKFileReq = {
 
 export type QueryKFileMetaRsp = {
   meta?: KFileMeta;
+};
+
+export type KFileInlineInsert2Req = {
+  file: InlineKFile;
+};
+export type KFileInlineInsert2Rsp = object;
+export type KFileInlineGetBySidReq = {
+  sid: Varchar<100>;
+};
+export type KFileInlineGetBySidRsp = {
+  file?: InlineKFile;
 };

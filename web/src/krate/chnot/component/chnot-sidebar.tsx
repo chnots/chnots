@@ -23,6 +23,7 @@ import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import { ChnotKindSelect } from "./chnot-kind-select";
+import { useCommonStore } from "@/common/store";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotStore(
@@ -31,7 +32,7 @@ const TagsView = () => {
         setTagsInset: store.setTagsInset,
         tags: store.tags,
       };
-    }),
+    })
   );
 
   return (
@@ -56,7 +57,11 @@ const TagsView = () => {
   );
 };
 
-const ChnotSidebar = () => {
+const ChnotSidebar = ({
+  setShowSettings,
+}: {
+  setShowSettings: (showSettings: boolean) => void;
+}) => {
   const {
     fetchMoreChnots,
     refreshChnots,
@@ -72,11 +77,13 @@ const ChnotSidebar = () => {
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
 
-  const { currentKSpace, setKSpace, mkspaces } = useKSpaceStore();
-
-  useEffect(() => {
-    refreshChnots();
-  }, [currentKSpace]);
+  const { currentKSpace, selectKSpace, mkspaces } = useKSpaceStore((store) => {
+    return {
+      currentKSpace: store.currentKSpace,
+      selectKSpace: store.selectKSpace,
+      mkspaces: store.mkspaces,
+    };
+  });
 
   useEffect(() => {
     changeKeyword(keyword);
@@ -96,32 +103,43 @@ const ChnotSidebar = () => {
       setTagList(undefined);
     }
     refreshChnots();
-  }, [tags, keyword, mkspaces, currentKSpace, kinds]);
+  }, [tags, keyword, mkspaces, kinds]);
 
   return (
     <Sidebar>
       <SidebarHeader className="text-sm">
-        <div className="flex flex-row space-x-2">
-          <KSpaceSelect
-            onSelect={function (kspace: string): void {
-              setKSpace(kspace);
-            }}
-            currentKSpace={currentKSpace}
-            showMKspaces={true}
-          />
-          <ChnotKindSelect />
-          <Toggle
-            size={"sm"}
-            onClick={() => {
-              if (tags) {
-                setTags(undefined);
-              } else {
-                setTagsInset([]);
-              }
-            }}
-          >
-            <Icon.Hash />
-          </Toggle>
+        <div className="flex justify-between">
+          <div className="flex align-center">
+            <KSpaceSelect
+              onSelect={function (kspace: string): void {
+                selectKSpace(kspace);
+              }}
+              currentKSpace={currentKSpace}
+              showMKspaces={true}
+            />
+            <ChnotKindSelect />
+            <Toggle
+              size={"sm"}
+              onClick={() => {
+                if (tags) {
+                  setTags(undefined);
+                } else {
+                  setTagsInset([]);
+                }
+              }}
+            >
+              <Icon.Hash />
+            </Toggle>
+          </div>
+          <div>
+            <Button
+              onClick={() => {
+                setShowSettings(true);
+              }}
+            >
+              <Icon.Settings />
+            </Button>
+          </div>
         </div>
         <TagsView />
         <form>

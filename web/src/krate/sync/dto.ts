@@ -11,7 +11,7 @@ export type SyncShakeReq = {
   start_tid_ex: TID;
 };
 export type SyncShakeRsp = {
-  instance_id: string;
+  instance_id: SharedStr;
   data: SyncShakeRspEnum;
 };
 export type SyncFetchSameKeyReq = {
@@ -33,3 +33,19 @@ export type SyncFetchDataReq = {
   table_name: SyncTableEnum;
   tids: FetchDataType;
 };
+
+export type SyncShakeDto = {
+  instance_id: SharedStr;
+  db_version: string;
+};
+export type SyncFetchTIDDto = {
+  page: SyncFetchDataPageInfo;
+  hist: boolean;
+};
+export type SyncFetchTIDRsp = {
+  data: TID[];
+};
+export type SyncAllEndpointsReq = {
+  data: SyncAllEndpoints;
+};
+export type SyncAllEndpointsRsp = object;

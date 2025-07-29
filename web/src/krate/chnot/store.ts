@@ -5,7 +5,7 @@ import { Chnot, ChnotQueryRsp, ChnotTagSearchType } from "./dto";
 import { chnotQuery } from "./service";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
-import { useKSpaceStore } from "../kspace/store";
+import { kspaceStore, useKSpaceStore } from "../kspace/store";
 import { ChnotKind } from "./po";
 
 const newChnotMap = () => {
@@ -151,7 +151,7 @@ export const useChnotStore = create(
           .values()
           .filter((e) => {
             const result =
-              e.meta.kspace == useKSpaceStore.getState().currentKSpace;
+              e.meta.kspace == kspaceStore.getState().currentKSpace;
             return !result;
           })
           .map((e) => {
