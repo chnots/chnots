@@ -12,7 +12,7 @@ export type KKVQueryOneReq = {
 export type KKVQueryManyReq = {
   key?: Varchar<500>;
   kind?: Varchar<100>;
-  kspace?: SharedStr;
+  kspace?: string;
 };
 
 export type KKVQueryOneRsp = {

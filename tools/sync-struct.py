@@ -17,6 +17,9 @@ TYPE_MAP = {
     "i32": "number",
     "usize": "number",
     "Text": "DbText",
+    "SharedStr": "string",
+    "u16": "number",
+    "RecordState": "object",
 }
 
 

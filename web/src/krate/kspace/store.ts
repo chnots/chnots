@@ -40,14 +40,14 @@ export const kspaceStore = create(
   combine(getDefaultState(), (set, get) => ({
     getState: () => get(),
     refreshKSpaces: async () => {
-      const kspaces = await allKSpaces({});
+      const rsp = await allKSpaces({});
       const kspaceMap = new Map();
-      kspaces.kspaces.forEach((k) => {
+      rsp.kspaces.forEach((k) => {
         kspaceMap.set(k.name, k);
       });
 
       set({ kspaceMapByName: kspaceMap });
-      return kspaces;
+      console.log("refresh kspace, ", kspaceMap);
     },
     selectKSpace: async (kspace: string) => {
       set((prev) => {

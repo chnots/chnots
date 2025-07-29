@@ -13,13 +13,15 @@ export type SyncLogTransient = {
 
 export type SyncEndpoint = {
   ip: string;
-  port: u16;
+  port: number;
 };
+
 export type SyncAllEndpoints = {
   endpoints: SyncEndpoint[];
 };
+
 export type TidCompare = {
   tid: TID;
-  lstate: RecordState;
-  rstate: RecordState;
+  lstate: object;
+  rstate: object;
 };

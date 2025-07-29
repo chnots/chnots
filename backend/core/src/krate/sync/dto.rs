@@ -186,3 +186,11 @@ pub struct SyncAllEndpointsReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncAllEndpointsRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetSyncAllEndpointsReq {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetSyncAllEndpointsRsp {
+    pub data: SyncAllEndpoints,
+}

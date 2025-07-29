@@ -1,4 +1,5 @@
 import { TID } from "@/lib/id_util";
+import { SyncAllEndpoints } from "./po";
 
 type TheSameKey = Object;
 type SyncTableEnum = Object;
@@ -11,7 +12,7 @@ export type SyncShakeReq = {
   start_tid_ex: TID;
 };
 export type SyncShakeRsp = {
-  instance_id: SharedStr;
+  instance_id: string;
   data: SyncShakeRspEnum;
 };
 export type SyncFetchSameKeyReq = {
@@ -35,9 +36,12 @@ export type SyncFetchDataReq = {
 };
 
 export type SyncShakeDto = {
-  instance_id: SharedStr;
+  instance_id: string;
   db_version: string;
 };
+
+type SyncFetchDataPageInfo = object;
+
 export type SyncFetchTIDDto = {
   page: SyncFetchDataPageInfo;
   hist: boolean;
@@ -49,3 +53,8 @@ export type SyncAllEndpointsReq = {
   data: SyncAllEndpoints;
 };
 export type SyncAllEndpointsRsp = object;
+
+export type GetSyncAllEndpointsReq = object;
+export type GetSyncAllEndpointsRsp = {
+  data: SyncAllEndpoints;
+};

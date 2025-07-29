@@ -59,8 +59,10 @@ const TagsView = () => {
 
 const ChnotSidebar = ({
   setShowSettings,
+  showSettings,
 }: {
   setShowSettings: (showSettings: boolean) => void;
+  showSettings: boolean;
 }) => {
   const {
     fetchMoreChnots,
@@ -132,13 +134,14 @@ const ChnotSidebar = ({
             </Toggle>
           </div>
           <div>
-            <Button
+            <Toggle
               onClick={() => {
-                setShowSettings(true);
+                setShowSettings(!showSettings);
               }}
+              defaultPressed={showSettings}
             >
               <Icon.Settings />
-            </Button>
+            </Toggle>
           </div>
         </div>
         <TagsView />

@@ -121,7 +121,7 @@ const ChnotPage = () => {
           } as React.CSSProperties
         }
       >
-        <ChnotSidebar setShowSettings={setShowSettings} />
+        <ChnotSidebar setShowSettings={setShowSettings} showSettings={showSettings}/>
         <SidebarInset className="min-w-0">
           <MonoChnot showSettings={showSettings} />
         </SidebarInset>

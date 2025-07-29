@@ -30,6 +30,7 @@ import { KSpace } from "../po";
 import { genTID, TID } from "@/lib/id_util";
 import { allKSpaces, deleteKSpace, overwriteKSpace } from "../service";
 import { useKSpaceStore } from "../store";
+import { SHA1, SHA224 } from "crypto-js";
 
 // Form validation schema
 const kspaceSchema = z.object({
@@ -48,6 +49,16 @@ export default function KSpaceSettings() {
       kspaceMap: store.kspaceMapByName,
     };
   });
+  
+  useEffect(() => {
+    refreshKSpaces();
+  }, []);
+
+  const sortedKSpaces = kspaceMap.values().toArray();
+  sortedKSpaces.sort((s1, s2) => {
+    return s1.name.localeCompare(s2.name);
+  });
+
   const [editingKSpaceName, setEditingKSpace] = useState<string | undefined>(
     undefined
   );
@@ -275,7 +286,7 @@ export default function KSpaceSettings() {
           </TableHeader>
           <TableBody>
             {kspaceMap.size > 0 ? (
-              kspaceMap.values().map((kspace) => (
+              sortedKSpaces.map((kspace) => (
                 <TableRow key={kspace.tid}>
                   <TableCell className="font-medium">{kspace.name}</TableCell>
                   <TableCell>

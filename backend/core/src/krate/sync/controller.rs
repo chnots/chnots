@@ -1,4 +1,8 @@
-use axum::{Json, Router, extract::State, routing::post};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::post,
+};
 use chin_tools::AResult;
 
 use crate::{
@@ -12,8 +16,9 @@ use crate::{
         ktab::{KTabCellDate, KTabCellDecimal, KTabCellText, KTabMeta},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         sync::dto::{
-            SyncAllEndpointsReq, SyncAllEndpointsRsp, SyncDataReq, SyncFetchTIDReq,
-            SyncFetchTIDRsp, SyncShakeReq, SyncShakeRsp,
+            GetSyncAllEndpointsReq, GetSyncAllEndpointsRsp, SyncAllEndpointsReq,
+            SyncAllEndpointsRsp, SyncDataReq, SyncFetchTIDReq, SyncFetchTIDRsp, SyncShakeReq,
+            SyncShakeRsp,
         },
     },
     model::KOtidSupport,
@@ -35,6 +40,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/overwrite-all-sync-endpoints",
             post(overwrite_endpoints),
         )
+        .route("/api/v1/get-all-sync-endpoints", post(fetch_endpoints))
 }
 
 macro_rules! sync_invoke_enum2generic {
@@ -217,6 +223,17 @@ async fn overwrite_endpoints(
     Json(req): Json<SyncAllEndpointsReq>,
 ) -> KResponse<SyncAllEndpointsRsp> {
     state.overwrite_endpoints(req.data).await.into()
+}
+
+async fn fetch_endpoints(
+    state: State<ShareAppState>,
+    Query(_): Query<GetSyncAllEndpointsReq>,
+) -> KResponse<GetSyncAllEndpointsRsp> {
+    state
+        .get_all_endpoints()
+        .await
+        .map(|data| GetSyncAllEndpointsRsp { data })
+        .into()
 }
 
 async fn sync_data(
