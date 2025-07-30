@@ -36,25 +36,25 @@ export const kfileUpload = async ({
   data.append("meta_id", meta_id);
   data.append("upload_id", upload_id);
 
-  return await request.post("api/v1/kfile", data);
+  return await request.post("api/v1/kfile/upload-by-chunks", data);
 };
 
 export const kfileQueryInfo = async (
   req: QueryKFileReq
 ): Promise<QueryKFileMetaRsp> => {
-  return await request.get("api/v1/kfile-info", req);
+  return await request.get("api/v1/kfile/info", req);
 };
 
 export const insertInlineKFile = async (
   req: InsertInlineKFileReq
 ): Promise<InsertInlineKFileRsp> => {
-  return await request.put("api/v1/inline-kfile", req);
+  return await request.put("api/v1/kfile/inline-upload", req);
 };
 
 export const queryInlineKFile = async (
   req: QueryInlineKFileReq
 ): Promise<QueryInlineKFileRsp> => {
-  return await request.get("api/v1/inline-kfile", req);
+  return await request.get("api/v1/kfile/inline-download", req);
 };
 
 export const getResouceDownloadUrl = (kfile: KFileMeta): string => {

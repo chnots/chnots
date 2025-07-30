@@ -1,13 +1,13 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
     body,
     extract::State,
-    http::{header, HeaderMap, HeaderName, StatusCode},
+    http::{HeaderMap, HeaderName, StatusCode, header},
     response::IntoResponse,
 };
 use axum_typed_multipart::TypedMultipart;
 use chin_sql::time_type::TID;
-use chin_tools::{utils::id_util::generate_uuid, AResult};
+use chin_tools::{AResult, utils::id_util::generate_uuid};
 use log::info;
 use std::{
     fs::OpenOptions,
@@ -18,12 +18,12 @@ use tokio::{io::AsyncWriteExt, task::spawn_blocking};
 use tokio_util::io::ReaderStream;
 
 use crate::{
+    ShareAppState,
     config::AttachmentConfig,
     krate::kfile::{
-        controller::asset_path_by_sid, mapper::KFileMapper, KFileMeta, KFileUploadReq,
-        KFileUploadRsp, QueryKFileReq,
+        KFileMeta, KFileUploadReq, KFileUploadRsp, QueryKFileReq, controller::asset_path_by_sid,
+        mapper::KFileMapper,
     },
-    ShareAppState,
 };
 
 pub(crate) fn asset_tmp_path(config: &AttachmentConfig, sid: &str) -> PathBuf {
@@ -72,7 +72,7 @@ async fn assemble_file<P: AsRef<Path> + Send + 'static>(
     Ok(sid)
 }
 
-pub(super) async fn upload(
+pub(super) async fn upload_by_chunks(
     _: HeaderMap,
     state: State<ShareAppState>,
     TypedMultipart(KFileUploadReq {

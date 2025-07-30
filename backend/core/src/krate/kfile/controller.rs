@@ -78,10 +78,10 @@ async fn directly_get_big_kfile() {}
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
-            "/api/v1/kfile",
+            "/api/v1/kfile/upload-by-chunks",
             post(|headers, state, mp| async {
                 let rsp: KResponse<KFileUploadRsp> =
-                    transfer::upload(headers, state, mp).await.into();
+                    transfer::upload_by_chunks(headers, state, mp).await.into();
                 rsp
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
@@ -90,9 +90,9 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/kfile/{meta_otid}/{filename}",
             get(transfer::download),
         )
-        .route("/api/v1/kfile-info", get(query_kfile))
-        .route("/api/v1/inline-kfile", put(insert_inline_kfile))
-        .route("/api/v1/inline-kfile", get(query_inline_kfile))
+        .route("/api/v1/kfile/info", get(query_kfile))
+        .route("/api/v1/kfile/inline-upload", put(insert_inline_kfile))
+        .route("/api/v1/kfile/inline-download", get(query_inline_kfile))
         .route(KFILE_INLINE_GET_BY_SID, get(inline_kfile_get_by_sid))
         .route(KFILE_INLINE_INSERT2, put(inline_kfile_insert_directly))
 }
