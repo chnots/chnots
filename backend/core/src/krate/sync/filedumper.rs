@@ -2,10 +2,12 @@ use std::path::{Path, PathBuf};
 
 use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     app::ShareAppState,
+    krate::sync::po::SyncEndpoint,
     mapper::{MapperRowType, MapperType},
 };
 
@@ -183,14 +185,38 @@ impl ShareAppState {
         Ok(())
     }
 
-    pub async fn sync_via_network(&self) -> EResult {
+    async fn sync_to_endpoint_blocking(&self, endpoint: &SyncEndpoint) -> EResult {
+        info!("begin to sync with {endpoint:?}");
+        self.sync_chnots(endpoint).await?;
+        self.sync_kfile(endpoint).await?;
+        self.sync_kkv(endpoint).await?;
+        self.sync_kspace(endpoint).await?;
+        self.sync_ktab(endpoint).await?;
+        self.sync_llmchat(endpoint).await?;
+        info!("finished to sync with {endpoint:?}");
+
+        Ok(())
+    }
+
+    pub async fn sync_to_endpoint(&self, endpoint: &SyncEndpoint) -> EResult {
+        let app = self.clone();
+        let endpoint = endpoint.clone();
+        tokio::spawn(async move {
+            let sync_result = app.sync_to_endpoint_blocking(&endpoint).await;
+            info!("sync one endpoint result: {sync_result:?}");
+        })
+        .await?;
+        Ok(())
+    }
+
+    pub async fn sync_to_all_endpoints(&self) -> EResult {
         for endpoint in &self.get_all_endpoints().await?.endpoints {
-            self.sync_chnots(endpoint).await?;
-            self.sync_kfile(endpoint).await?;
-            self.sync_kkv(endpoint).await?;
-            self.sync_kspace(endpoint).await?;
-            self.sync_ktab(endpoint).await?;
-            self.sync_llmchat(endpoint).await?;
+            if let Err(err) = self.sync_to_endpoint_blocking(endpoint).await {
+                error!(
+                    "unable to sync {endpoint:?} -- {err:?}, {:?}",
+                    err.backtrace().to_string()
+                );
+            }
         }
 
         Ok(())

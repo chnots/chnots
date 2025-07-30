@@ -26,11 +26,9 @@ import { Switch } from "@/common/component/ui/switch";
 import { Checkbox } from "@/common/component/ui/checkbox";
 import { Badge } from "@/common/component/ui/badge";
 import { Trash2, PlusCircle, Pencil } from "lucide-react";
-import { KSpace } from "../po";
-import { genTID, TID } from "@/lib/id_util";
-import { allKSpaces, deleteKSpace, overwriteKSpace } from "../service";
+import { genTID } from "@/lib/id_util";
+import { deleteKSpace, overwriteKSpace } from "../service";
 import { useKSpaceStore } from "../store";
-import { SHA1, SHA224 } from "crypto-js";
 
 // Form validation schema
 const kspaceSchema = z.object({
@@ -49,7 +47,7 @@ export default function KSpaceSettings() {
       kspaceMap: store.kspaceMapByName,
     };
   });
-  
+
   useEffect(() => {
     refreshKSpaces();
   }, []);

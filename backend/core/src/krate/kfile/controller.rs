@@ -1,13 +1,10 @@
-use crate::controller::asset::{ContentEnum, asset_to_response};
 use axum::{
     Json, Router,
     extract::{DefaultBodyLimit, Query, State},
-    http::{HeaderMap, HeaderValue},
-    response::Response,
+    http::HeaderMap,
     routing::{get, post, put},
 };
 
-use chin_sql::str_type::Varchar;
 use chin_tools::utils::path_util::split_uuid_to_file_name;
 use std::path::PathBuf;
 
@@ -55,33 +52,6 @@ async fn insert_inline_kfile(
         .insert_inline_kfile(kreq(headers, req))
         .await
         .into()
-}
-
-async fn query_svg(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    axum::extract::Path(sid): axum::extract::Path<Varchar<100>>,
-) -> Response {
-    let mut headers = headers.clone();
-    headers.append("K-kspace", HeaderValue::from_str("default").unwrap());
-    let rsp = query_inline_kfile(
-        headers,
-        state,
-        Query(QueryInlineKFileReq {
-            sid: Some(sid),
-            with_omit: Some(false),
-            meta_id: None,
-        }),
-    )
-    .await
-    .0
-    .ok();
-
-    let res = rsp
-        .and_then(|e| e.res.first().cloned())
-        .map(|e| ("image/svg+xml", ContentEnum::String(e.content.to_string())));
-
-    asset_to_response(res)
 }
 
 async fn inline_kfile_insert_directly(

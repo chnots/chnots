@@ -1,5 +1,5 @@
 // components/EndpointSettings.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/common/component/ui/button";
 import { Input } from "@/common/component/ui/input";
 import {
@@ -13,38 +13,58 @@ import {
 import { Card } from "@/common/component/ui/card";
 import { Label } from "@/common/component/ui/label";
 import { SyncEndpoint } from "../po";
+import {
+  getSyncAllEndpoints,
+  overwriteSyncAllEndpoints,
+  syncToEndpoint,
+} from "../service";
 
 export const EndpointSettings = () => {
   const [endpoints, setEndpoints] = useState<SyncEndpoint[]>([]);
   const [newEndpoint, setNewEndpoint] = useState<SyncEndpoint>({
     ip: "",
-    port: -1,
+    port: 3011,
   });
+  useEffect(() => {
+    getSyncAllEndpoints({}).then((rsp) => {
+      setEndpoints(rsp.data.endpoints);
+    });
+  }, []);
 
-  const handleAddEndpoint = () => {
+  const handleAddEndpoint = async () => {
     if (!newEndpoint.ip || !newEndpoint.port) return;
-
-    setEndpoints([
+    const eps = [
       ...endpoints,
       {
         ...newEndpoint,
       },
-    ]);
-    setNewEndpoint({ ip: "", port: -1 });
+    ];
+    await overwriteSyncAllEndpoints({
+      data: {
+        endpoints: eps,
+      },
+    });
+    const backendEps = await getSyncAllEndpoints({});
+    setEndpoints(backendEps.data.endpoints);
+    setNewEndpoint({ ip: "", port: 3011 });
   };
 
-  const handleDeleteEndpoint = (ip: string, port: number) => {
-    setEndpoints(endpoints.filter((ep) => ep.ip !== ip || ep.port != port));
+  const handleDeleteEndpoint = async (ip: string, port: number) => {
+    const eps = endpoints.filter((ep) => ep.ip !== ip || ep.port != port);
+    await overwriteSyncAllEndpoints({
+      data: {
+        endpoints: eps,
+      },
+    });
+    const backendEps = await getSyncAllEndpoints({});
+    setEndpoints(backendEps.data.endpoints);
   };
 
   const handleSyncNow = (ip: string, port: number) => {
-    setEndpoints(
-      endpoints.map((ep) =>
-        ep.ip === ip && ep.port === port
-          ? { ...ep, lastSynced: new Date().toISOString().split("T")[0] }
-          : ep
-      )
-    );
+    const eps = endpoints.filter((ep) => ep.ip === ip && ep.port === port);
+    eps.forEach((e) => {
+      syncToEndpoint({ endpoint: e });
+    });
   };
 
   return (

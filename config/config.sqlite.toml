@@ -3,7 +3,7 @@ type = "sqlite"
 filepath = "/home/chin/chnots.db"
 
 [server]
-port = 3012
+port = 3014
 tls_key = "/home/chin/files/private/tls-keys/tls.key"
 tls_cert = "/home/chin/files/private/tls-keys/tls.crt"
 

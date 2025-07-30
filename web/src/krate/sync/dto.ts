@@ -1,5 +1,5 @@
 import { TID } from "@/lib/id_util";
-import { SyncAllEndpoints } from "./po";
+import { SyncAllEndpoints, SyncEndpoint } from "./po";
 
 type TheSameKey = Object;
 type SyncTableEnum = Object;
@@ -58,3 +58,8 @@ export type GetSyncAllEndpointsReq = object;
 export type GetSyncAllEndpointsRsp = {
   data: SyncAllEndpoints;
 };
+
+export type SyncToEndpointReq = {
+  endpoint: SyncEndpoint;
+};
+export type SyncToEndpointRsp = object;

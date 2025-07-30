@@ -5,7 +5,7 @@ use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    krate::sync::po::SyncAllEndpoints,
+    krate::sync::po::{SyncAllEndpoints, SyncEndpoint},
     model::{KOtidSupport, otid_table::OtidTableEnum},
 };
 
@@ -20,11 +20,9 @@ pub struct SyncInfo<T> {
 impl<T: KOtidSupport> SyncInfo<T> {
     pub fn to_table_name(&self) -> String {
         format!(
-            "{}_{}_{}_{}",
-            self.instance_id.as_str(),
+            "sync_{}_{}",
             T::table_name(false),
-            self.start_ex,
-            self.end_in
+            self.instance_id.as_str()
         )
     }
 }
@@ -116,7 +114,7 @@ pub struct SyncDataDto<T> {
     pub(crate) nomore: bool,
 }
 
-pub type SyncDataReq = OtidWithEnum<SyncDataDto<serde_json::Value>>;
+pub type SyncDataReqRsp = OtidWithEnum<SyncDataDto<String>>;
 pub type SyncDataArg<T> = SyncDataDto<T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,7 +141,7 @@ macro_rules! sync_cmds_json_to_st {
                     $crate::krate::sync::dto::SyncDataOperation::Push { data, hist } => {
                         SyncDataOperation::Push {
                             data: {
-                                let c: $st = serde_json::from_value(data)?;
+                                let c: $st = serde_json::from_str(&data)?;
                                 c
                             },
                             hist,
@@ -161,15 +159,18 @@ macro_rules! sync_cmds_json_to_st {
 macro_rules! sync_cmds_st_to_json {
     ($cmds:expr) => {{
         use $crate::krate::sync::dto::SyncDataOperation;
-        let cmds: AResult<Vec<SyncDataOperation<serde_json::Value>>> = $cmds
-            .into_iter()
+        let cmds: AResult<Vec<SyncDataOperation<String>>> = $cmds
+            .iter()
             .map(|c| {
                 let d = match c {
-                    SyncDataOperation::Omit(tid) => SyncDataOperation::Omit(tid),
-                    SyncDataOperation::Pull { tid, hist } => SyncDataOperation::Pull { tid, hist },
+                    SyncDataOperation::Omit(tid) => SyncDataOperation::Omit(tid.clone()),
+                    SyncDataOperation::Pull { tid, hist } => SyncDataOperation::Pull {
+                        tid: tid.to_owned(),
+                        hist: hist.to_owned(),
+                    },
                     SyncDataOperation::Push { data, hist } => SyncDataOperation::Push {
-                        data: serde_json::to_value(&data)?,
-                        hist,
+                        data: serde_json::to_string(&data)?,
+                        hist: hist.to_owned(),
                     },
                 };
                 Ok(d)
@@ -194,3 +195,11 @@ pub struct GetSyncAllEndpointsReq {}
 pub struct GetSyncAllEndpointsRsp {
     pub data: SyncAllEndpoints,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncToEndpointReq {
+    pub endpoint: SyncEndpoint,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncToEndpointRsp {}

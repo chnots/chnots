@@ -46,16 +46,12 @@ pub(crate) struct StaticFile<T>(pub(crate) T);
 
 pub(crate) enum ContentEnum {
     Cow(Cow<'static, [u8]>),
-    String(String),
 }
 
 pub(crate) fn asset_to_response<T: AsRef<str>>(data: Option<(T, ContentEnum)>) -> Response {
     match data {
         Some((mime, data)) => match data {
             ContentEnum::Cow(data) => {
-                ([(header::CONTENT_TYPE, mime.as_ref())], data).into_response()
-            }
-            ContentEnum::String(data) => {
                 ([(header::CONTENT_TYPE, mime.as_ref())], data).into_response()
             }
         },

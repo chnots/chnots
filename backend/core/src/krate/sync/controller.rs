@@ -1,9 +1,10 @@
 use axum::{
     Json, Router,
     extract::{Query, State},
-    routing::post,
+    routing::{get, post},
 };
 use chin_tools::AResult;
+use log::info;
 
 use crate::{
     app::ShareAppState,
@@ -17,8 +18,8 @@ use crate::{
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         sync::dto::{
             GetSyncAllEndpointsReq, GetSyncAllEndpointsRsp, SyncAllEndpointsReq,
-            SyncAllEndpointsRsp, SyncDataReq, SyncFetchTIDReq, SyncFetchTIDRsp, SyncShakeReq,
-            SyncShakeRsp,
+            SyncAllEndpointsRsp, SyncDataReqRsp, SyncFetchTIDReq, SyncFetchTIDRsp, SyncShakeReq,
+            SyncShakeRsp, SyncToEndpointReq, SyncToEndpointRsp,
         },
     },
     model::KOtidSupport,
@@ -27,9 +28,9 @@ use crate::{
 
 use super::dto::SyncDataDto;
 
-pub const SYNC_SHAKE_PATH: &str = "/api/v1/sync-shake";
-pub const SYNC_FETCH_TID_PATH: &str = "/api/v1/sync-fetch-tids";
-pub const SYNC_DATA_PATH: &str = "/api/v1/sync-data";
+pub const SYNC_SHAKE_PATH: &str = "/api/v1/b/sync-shake";
+pub const SYNC_FETCH_TID_PATH: &str = "/api/v1/b/sync-fetch-tids";
+pub const SYNC_DATA_PATH: &str = "/api/v1/b/sync-data";
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
@@ -40,7 +41,8 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/overwrite-all-sync-endpoints",
             post(overwrite_endpoints),
         )
-        .route("/api/v1/get-all-sync-endpoints", post(fetch_endpoints))
+        .route("/api/v1/get-all-sync-endpoints", get(fetch_endpoints))
+        .route("/api/v1/sync-end-endpoint", post(sync_to_endpoint))
 }
 
 macro_rules! sync_invoke_enum2generic {
@@ -175,7 +177,10 @@ async fn sync_fetch_tids(
     c.into()
 }
 
-async fn sync_data_inner(state: State<ShareAppState>, req: SyncDataReq) -> AResult<SyncDataReq> {
+async fn sync_data_inner(
+    state: State<ShareAppState>,
+    req: SyncDataReqRsp,
+) -> AResult<SyncDataReqRsp> {
     macro_rules! inner {
         ($st:ty) => {{
             let cmds = req.dto.cmds;
@@ -187,7 +192,7 @@ async fn sync_data_inner(state: State<ShareAppState>, req: SyncDataReq) -> AResu
                     nomore: req.dto.nomore,
                 })
                 .await?;
-            SyncDataReq {
+            SyncDataReqRsp {
                 table_type: <$st>::get_otid_enum(),
                 dto: SyncDataDto {
                     cmds: sync_cmds_st_to_json!(rsp.cmds),
@@ -215,6 +220,8 @@ async fn sync_data_inner(state: State<ShareAppState>, req: SyncDataReq) -> AResu
         crate::model::otid_table::OtidTableEnum::KSpace => inner! {KSpace},
     };
 
+    info!("{:?}", serde_json::to_string(&result));
+
     Ok(result)
 }
 
@@ -236,9 +243,26 @@ async fn fetch_endpoints(
         .into()
 }
 
+async fn sync_to_endpoint(
+    state: State<ShareAppState>,
+    Json(req): Json<SyncToEndpointReq>,
+) -> KResponse<SyncToEndpointRsp> {
+    state
+        .sync_to_endpoint(&req.endpoint)
+        .await
+        .map(|_| SyncToEndpointRsp {})
+        .into()
+}
+
 async fn sync_data(
     state: State<ShareAppState>,
-    Json(req): Json<SyncDataReq>,
-) -> KResponse<SyncDataReq> {
-    sync_data_inner(state, req).await.into()
+    Json(req): Json<SyncDataReqRsp>,
+) -> KResponse<SyncDataReqRsp> {
+    info!("sync_start: {req:?}");
+
+    let result: Result<super::dto::OtidWithEnum<SyncDataDto<String>>, anyhow::Error> =
+        sync_data_inner(state, req).await;
+    info!("sync_result: {result:?}");
+
+    result.into()
 }

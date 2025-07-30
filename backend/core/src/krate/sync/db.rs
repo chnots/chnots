@@ -13,7 +13,8 @@ use crate::{
         po::SyncLogTransient,
     },
     mapper::db::{
-        KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, helper::create_tables,
+        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+        KDbTransactionBehaiver, helper::create_tables,
     },
     model::KOtidSupport,
 };
@@ -147,7 +148,7 @@ impl SyncMapper for KDb {
 
     async fn sync_merge_tids<T: KOtidSupport>(
         &self,
-        data: SyncFetchTIDRsp,
+        rsp: SyncFetchTIDRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
@@ -158,13 +159,16 @@ impl SyncMapper for KDb {
             RecordState::Cur
         };
         self.sync_create_tmp_table(&sync_info).await?;
+        if rsp.data.is_empty() {
+            return Ok(());
+        }
 
         self.conn()
             .await?
             .exec(format!(
                 "insert into {}(tid, lstate, rstate) values {} on conflict(tid) do update set rstate = {}",
                 tn,
-                data.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype.as_num())).join(","),
+                rsp.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype.as_num())).join(","),
                 dtype.as_num()
             ))
             .await?;
@@ -262,6 +266,46 @@ impl SyncMapper for KDb {
             nomore,
         })
     }
+
+    async fn sync_create_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult {
+        let table_name = sync_info.to_table_name();
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+
+        tx.exec(format!("drop table if exists {}", table_name))
+            .await?;
+        let sql = format!(
+            "create table  {table_name}(tid bigint, lstate int not null, rstate int not null, primary key (tid))"
+        );
+        tx.exec(sql).await?;
+        let sql = format!(
+            "insert into {}
+            select tid, 1 as lstate, 0 as rstate from {} where tid > {} and tid <= {}
+            union
+            select tid, 2 as lstate, 0 as rstate from {}_hist where tid > {} and tid <= {}",
+            table_name,
+            T::table_name(false),
+            sync_info.start_ex.as_num(),
+            sync_info.end_in.as_num(),
+            T::table_name(false),
+            sync_info.start_ex.as_num(),
+            sync_info.end_in.as_num()
+        );
+        tx.exec(sql).await?;
+        tx.cmt().await?;
+        Ok(())
+    }
+
+    async fn sync_drop_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult {
+        let table_name = sync_info.to_table_name();
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+
+        tx.exec(format!("drop table if exists {table_name}"))
+            .await?;
+        tx.cmt().await?;
+        Ok(())
+    }
 }
 
 impl TryFrom<&KDbRow> for SyncLogTransient {
@@ -281,33 +325,6 @@ impl TryFrom<&KDbRow> for SyncLogTransient {
 }
 
 impl KDb {
-    pub(super) async fn sync_create_tmp_table<T: KOtidSupport>(
-        &self,
-        sync_info: &SyncInfo<T>,
-    ) -> EResult {
-        let table_name = sync_info.to_table_name();
-
-        let sql = format!(
-            "create table if not exists {table_name}(tid bigint, lstate int not null, rstate int not null, primary key (tid))"
-        );
-        self.conn().await?.exec(sql).await?;
-        let sql = format!(
-            "insert into {}
-            select tid, 1 as lstate, 0 as rstate from {} where tid > {} and tid <= {}
-            union
-            select tid, 2 as lstate, 0 as rstate from {}_hist where tid > {} and tid <= {}",
-            table_name,
-            T::table_name(false),
-            sync_info.start_ex.as_num(),
-            sync_info.end_in.as_num(),
-            T::table_name(false),
-            sync_info.start_ex.as_num(),
-            sync_info.end_in.as_num()
-        );
-        self.conn().await?.exec(sql).await?;
-        Ok(())
-    }
-
     async fn sync_fetch_tid_compares<T: KOtidSupport>(
         &self,
         sync_info: &SyncPageInfo<T>,

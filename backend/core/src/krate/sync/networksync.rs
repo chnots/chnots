@@ -1,11 +1,13 @@
 use std::marker::PhantomData;
+use std::time::Duration;
 
 use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_FETCH_TID_PATH};
 use crate::krate::sync::dto::{
-    SyncDataArg, SyncFetchTIDArg, SyncFetchTIDReq, SyncPageInfo, SyncShakeArg, SyncShakeDto,
+    SyncDataArg, SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncFetchTIDArg, SyncFetchTIDReq,
+    SyncPageInfo, SyncShakeArg, SyncShakeDto,
 };
 use crate::model::KOtidSupport;
-use crate::sync_cmds_json_to_st;
+use crate::sync_cmds_st_to_json;
 use crate::{
     app::ShareAppState,
     krate::sync::{
@@ -16,6 +18,7 @@ use crate::{
     magics::DB_VERSION,
 };
 use chin_tools::{AResult, EResult};
+use log::info;
 
 use super::po::SyncEndpoint;
 
@@ -61,10 +64,7 @@ impl ShareAppState {
         let client = reqwest::Client::builder().build()?;
 
         let rsp = client
-            .post(format!(
-                "http://{}:{}{}",
-                endpoint.ip, endpoint.port, SYNC_SHAKE_PATH
-            ))
+            .post(endpoint.to_url(SYNC_SHAKE_PATH))
             .json(&SyncShakeReq {
                 table_type: T::get_otid_enum(),
                 dto: SyncShakeDto {
@@ -72,6 +72,7 @@ impl ShareAppState {
                     db_version: DB_VERSION.to_string(),
                 },
             })
+            .timeout(Duration::from_secs(3))
             .send()
             .await?
             .json::<SyncShakeRsp>()
@@ -119,10 +120,7 @@ impl ShareAppState {
         let client = reqwest::Client::builder().build()?;
 
         let rsp = client
-            .post(format!(
-                "http://{}:{}{}",
-                endpoint.ip, endpoint.port, SYNC_FETCH_TID_PATH
-            ))
+            .post(endpoint.to_url(SYNC_FETCH_TID_PATH))
             .json(&SyncFetchTIDReq {
                 table_type: T::get_otid_enum(),
                 dto: fetch_data.dto,
@@ -163,23 +161,52 @@ impl ShareAppState {
         otid_related_worker.before_send(endpoint, &dto).await?;
 
         let client = reqwest::Client::builder().build()?;
+        info!("<|{}|>", serde_json::to_string(&dto)?);
 
         let rsp = client
-            .post(format!(
-                "http://{}:{}{}",
-                endpoint.ip, endpoint.port, SYNC_DATA_PATH
-            ))
-            .json(&dto)
+            .post(endpoint.to_url(SYNC_DATA_PATH))
+            .json(&SyncDataReqRsp {
+                table_type: T::get_otid_enum(),
+                dto: SyncDataDto {
+                    cmds: sync_cmds_st_to_json!(dto.cmds),
+                    max_tid: dto.max_tid,
+                    nomore: dto.nomore,
+                },
+            })
             .send()
             .await?
-            .json::<SyncDataArg<serde_json::Value>>()
+            .json::<SyncDataReqRsp>()
             .await?;
-        let cmds = sync_cmds_json_to_st!(T, rsp.cmds);
+        let res: Result<Vec<SyncDataOperation<T>>, serde_json::Error> = rsp
+            .dto
+            .cmds
+            .into_iter()
+            .map(|s| {
+                let c = match s {
+                    crate::krate::sync::dto::SyncDataOperation::Omit(tid) => {
+                        SyncDataOperation::Omit(tid)
+                    }
+                    crate::krate::sync::dto::SyncDataOperation::Pull { tid, hist } => {
+                        SyncDataOperation::Pull { tid, hist }
+                    }
+                    crate::krate::sync::dto::SyncDataOperation::Push { data, hist } => {
+                        SyncDataOperation::Push {
+                            data: {
+                                let c: T = serde_json::from_str(&data)?;
+                                c
+                            },
+                            hist,
+                        }
+                    }
+                };
+                Ok(c)
+            })
+            .collect();
 
         Ok(SyncDataArg {
-            cmds: cmds?,
-            max_tid: rsp.max_tid,
-            nomore: rsp.nomore,
+            cmds: res?,
+            max_tid: rsp.dto.max_tid,
+            nomore: rsp.dto.nomore,
         })
     }
 
@@ -206,6 +233,7 @@ impl ShareAppState {
         use crate::krate::sync::mapper::SyncMapper as _;
         use chin_sql::time_type::TID;
 
+        info!("sync one otid table: {:?}", T::get_otid_enum());
         let page_size = 100;
         let shake_rsp = self.sync_shake_tx::<T>(endpoint).await?;
         let sync_time = match shake_rsp.data {
@@ -224,6 +252,8 @@ impl ShareAppState {
             end_in: TID::default(),
             table_type: std::marker::PhantomData,
         };
+
+        self.sync_create_tmp_table(&initial_sync_info).await?;
 
         let mut start_ex = initial_sync_info.start_ex;
         let mut hist = false;
@@ -281,6 +311,8 @@ impl ShareAppState {
                 break;
             }
         }
+
+        self.sync_drop_tmp_table(&initial_sync_info).await?;
 
         Ok(())
     }

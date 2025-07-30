@@ -7,7 +7,8 @@ use crate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
             dto::{
-                SyncAllEndpointsRsp, SyncDataArg, SyncFetchDataPageInfo, SyncFetchTIDArg, SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
+                SyncAllEndpointsRsp, SyncDataArg, SyncFetchDataPageInfo, SyncFetchTIDArg,
+                SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
             },
             po::{SyncAllEndpoints, SyncLogTransient},
         },
@@ -77,6 +78,8 @@ pub trait SyncMapper {
         &self,
         req: SyncDataArg<T>,
     ) -> AResult<SyncDataArg<T>>;
+    async fn sync_create_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult;
+    async fn sync_drop_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult;
 }
 
 impl SyncMapper for MapperType {
@@ -125,12 +128,20 @@ impl SyncMapper for MapperType {
     ) -> AResult<SyncDataArg<T>> {
         expand_mt_branch!(self.sync_merge_operations(req))
     }
+
+    async fn sync_create_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult {
+        expand_mt_branch!(self.sync_create_tmp_table(sync_info))
+    }
+
+    async fn sync_drop_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult {
+        expand_mt_branch!(self.sync_drop_tmp_table(sync_info))
+    }
 }
 
 impl MapperType {
     pub(crate) async fn get_all_endpoints(&self) -> AResult<SyncAllEndpoints> {
         let kkv: Option<SyncAllEndpoints> = self
-            .kkv_transient_query(ALL_ENDPOINTS, |e| Ok(serde_json::from_str(e.as_str())?))
+            .kkv_transient_query::<SyncAllEndpoints>(ALL_ENDPOINTS)
             .await?;
         match kkv {
             Some(kkv) => Ok(kkv),

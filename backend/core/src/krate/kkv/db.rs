@@ -1,7 +1,7 @@
 use chin_sql::{OnConflict, SqlBuilder, SqlDeleter, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
-use serde::Serialize;
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
     mapper::db::{
@@ -92,15 +92,15 @@ impl KDbExecutor<'_> {
         Ok(())
     }
 
-    pub async fn kkv_transient_query<F, T>(&self, key: &str, mapper: F) -> AResult<Option<T>>
+    pub async fn kkv_transient_query<T>(&self, key: &str) -> AResult<Option<T>>
     where
-        F: Fn(String) -> AResult<T>,
-        T: Send,
+        T: Send + DeserializeOwned,
     {
         let reader = KKVTransient::pkey_reader(key.to_owned().try_into()?);
         let result = self.qry_opt(reader, Ok).await?;
         if let Some(row) = result {
-            Ok(Some(mapper(row.try_get(KKVTransient::VALUE)?)?))
+            let s: String = row.try_get(KKVTransient::VALUE)?;
+            Ok(Some(serde_json::from_str(&s)?))
         } else {
             Ok(None)
         }
@@ -129,7 +129,11 @@ impl KKVMapper for KDb {
             }),
         ]));
 
-        let kkvs = self.conn().await?.qry_list(query, |e| (&e).try_into()).await?;
+        let kkvs = self
+            .conn()
+            .await?
+            .qry_list(query, |e| (&e).try_into())
+            .await?;
 
         Ok(KKVQueryManyRsp { kkvs })
     }
@@ -154,15 +158,14 @@ impl KKVMapper for KDb {
         self.conn().await?.as_executor().kkv_query(req).await
     }
 
-    async fn kkv_transient_query<F, T>(&self, key: &str, mapper: F) -> AResult<Option<T>>
+    async fn kkv_transient_query<T>(&self, key: &str) -> AResult<Option<T>>
     where
-        F: Fn(String) -> AResult<T>,
-        T: Send,
+        T: Send + DeserializeOwned,
     {
         self.conn()
             .await?
             .as_executor()
-            .kkv_transient_query(key, mapper)
+            .kkv_transient_query(key)
             .await
     }
 
