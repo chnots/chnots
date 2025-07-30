@@ -2,6 +2,7 @@ use anyhow::Ok;
 use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
+use log::{debug, info};
 
 use crate::{
     krate::sync::{
@@ -79,11 +80,16 @@ impl SyncMapper for KDb {
             .sov(SyncLogTransient::SYNC_FINISH_TID)
             .sov("desc")
             .limit(1);
+        
+
         let sync: Option<SyncLogTransient> = self
             .conn()
             .await?
             .qry_opt(last_sync, |row| (&row).try_into())
             .await?;
+
+        debug!("last sync log for {} is {:?}", table_name, sync);
+
 
         let Some(sync_log) = sync else {
             return Ok(TID::from(0));
@@ -97,23 +103,28 @@ impl SyncMapper for KDb {
             Wheres::equal(SyncLogTransient::TABLE_NAME, table_name.clone()),
             Wheres::compare(
                 SyncLogTransient::SYNC_FINISH_TID,
-                ">=",
+                ">",
                 sync_log.sync_finish_tid.as_num(),
             ),
             Wheres::compare(SyncLogTransient::START_TID_EX, "<", sync_log.end_sync_in),
         ]));
 
-        let s: Option<TID> = self
+        let s: Option<Option<TID>> = self
             .conn()
             .await?
-            .qry_opt(sql, |r| r.try_get("min_sync"))
+            .qry_opt(sql, |r| {
+                let c: Option<TID> = r.try_get("min_sync")?;
+                Ok(c)
+            })
             .await?;
 
-        let st = if let Some(s) = s {
+        let st = if let Some(Some(s)) = s {
             s
         } else {
             sync_log.end_sync_in
         };
+
+        info!("sync time for {} is {}({})", table_name, st, st.as_utc());
 
         Ok(st)
     }
@@ -158,7 +169,6 @@ impl SyncMapper for KDb {
         } else {
             RecordState::Cur
         };
-        self.sync_create_tmp_table(&sync_info).await?;
         if rsp.data.is_empty() {
             return Ok(());
         }

@@ -16,10 +16,14 @@ use crate::{
         kspace::KSpace,
         ktab::{KTabCellDate, KTabCellDecimal, KTabCellText, KTabMeta},
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
-        sync::dto::{
-            GetSyncAllEndpointsReq, GetSyncAllEndpointsRsp, SyncAllEndpointsReq,
-            SyncAllEndpointsRsp, SyncDataReqRsp, SyncFetchTIDReq, SyncFetchTIDRsp, SyncShakeReq,
-            SyncShakeRsp, SyncToEndpointReq, SyncToEndpointRsp,
+        sync::{
+            dto::{
+                GetSyncAllEndpointsReq, GetSyncAllEndpointsRsp, SyncAllEndpointsReq,
+                SyncAllEndpointsRsp, SyncDataReqRsp, SyncFetchTIDReq, SyncFetchTIDRsp,
+                SyncShakeReq, SyncShakeRsp, SyncToEndpointReq, SyncToEndpointRsp,
+            },
+            mapper::SyncMapper,
+            po::SyncLogTransient,
         },
     },
     model::KOtidSupport,
@@ -31,6 +35,7 @@ use super::dto::SyncDataDto;
 pub const SYNC_SHAKE_PATH: &str = "/api/v1/b/sync-shake";
 pub const SYNC_FETCH_TID_PATH: &str = "/api/v1/b/sync-fetch-tids";
 pub const SYNC_DATA_PATH: &str = "/api/v1/b/sync-data";
+pub const SYNC_INSERT_SYNC_LOG: &str = "/api/v1/b/sync-insert-sync-log";
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
@@ -43,6 +48,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         )
         .route("/api/v1/get-all-sync-endpoints", get(fetch_endpoints))
         .route("/api/v1/sync-end-endpoint", post(sync_to_endpoint))
+        .route(SYNC_INSERT_SYNC_LOG, post(sync_insert_sync_log))
 }
 
 macro_rules! sync_invoke_enum2generic {
@@ -265,4 +271,11 @@ async fn sync_data(
     info!("sync_result: {result:?}");
 
     result.into()
+}
+
+async fn sync_insert_sync_log(
+    state: State<ShareAppState>,
+    Json(req): Json<SyncLogTransient>,
+) -> KResponse<()> {
+    state.sync_insert_sync_log(req).await.into()
 }

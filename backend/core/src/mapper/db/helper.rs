@@ -1,31 +1,11 @@
 use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres};
 use chin_tools::{AResult, EResult};
-use itertools::Itertools;
 
 use crate::{
     mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver}, model::KOtidSupport
 };
 
 pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> EResult {
-    for c in cts.iter() {
-        if c.table_name.contains("_hist") {
-            log::info!(
-                "example sql: insert into {}({}) select {} from {}_bak where omit_tid <> -404;",
-                c.table_name,
-                c.fields.iter().map(|f| f.name).join(", "),
-                c.fields.iter().map(|f| f.name).join(", "),
-                c.table_name.replace("_hist", "")
-            );
-        } else {
-            log::info!(
-                "example sql: insert into {}({}) select {} from {}_bak where omit_tid = -404;",
-                c.table_name,
-                c.fields.iter().map(|f| f.name).join(", "),
-                c.fields.iter().map(|f| f.name).join(", "),
-                c.table_name.replace("_hist", "")
-            );
-        }
-    }
     let sqls: Result<Vec<Vec<String>>, ChinSqlError> = cts
         .into_iter()
         .map(|cts| cts.sqls(kdb.get_db_type()))

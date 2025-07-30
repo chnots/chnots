@@ -1,11 +1,12 @@
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_FETCH_TID_PATH};
+use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_FETCH_TID_PATH, SYNC_INSERT_SYNC_LOG};
 use crate::krate::sync::dto::{
     SyncDataArg, SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncFetchTIDArg, SyncFetchTIDReq,
     SyncPageInfo, SyncShakeArg, SyncShakeDto,
 };
+use crate::krate::sync::po::SyncLogTransient;
 use crate::model::KOtidSupport;
 use crate::sync_cmds_st_to_json;
 use crate::{
@@ -147,6 +148,22 @@ impl ShareAppState {
         self.mapper.sync_merge_operations(req).await
     }
 
+    async fn sync_insert_sync_log_tx(
+        &self,
+        endpoint: &SyncEndpoint,
+        log: &SyncLogTransient,
+    ) -> EResult {
+        let client = reqwest::Client::builder().build()?;
+
+        client
+            .post(endpoint.to_url(SYNC_INSERT_SYNC_LOG))
+            .json(&log)
+            .send()
+            .await?;
+
+        Ok(())
+    }
+
     pub(crate) async fn sync_data_tx<T, W>(
         &self,
         endpoint: &SyncEndpoint,
@@ -161,7 +178,6 @@ impl ShareAppState {
         otid_related_worker.before_send(endpoint, &dto).await?;
 
         let client = reqwest::Client::builder().build()?;
-        info!("<|{}|>", serde_json::to_string(&dto)?);
 
         let rsp = client
             .post(endpoint.to_url(SYNC_DATA_PATH))
@@ -246,6 +262,7 @@ impl ShareAppState {
             SyncShakeRspEnum::BeginSync { sync_time } => sync_time,
         };
 
+        info!("start tid22: {}", sync_time.as_utc());
         let initial_sync_info = SyncInfo {
             instance_id: shake_rsp.instance_id.clone(),
             start_ex: sync_time,
@@ -313,6 +330,24 @@ impl ShareAppState {
         }
 
         self.sync_drop_tmp_table(&initial_sync_info).await?;
+
+        let remote_log = SyncLogTransient {
+            remote_id: self.instance_id.to_string().try_into()?,
+            table_name: T::table_name(false).try_into()?,
+            end_sync_in: initial_sync_info.end_in,
+            start_tid_ex: initial_sync_info.start_ex,
+            sync_finish_tid: TID::default(),
+        };
+        self.sync_insert_sync_log_tx(endpoint, &remote_log).await?;
+
+        let local_log = SyncLogTransient {
+            remote_id: initial_sync_info.instance_id.to_string().try_into()?,
+            table_name: T::table_name(false).try_into()?,
+            end_sync_in: initial_sync_info.end_in,
+            start_tid_ex: initial_sync_info.start_ex,
+            sync_finish_tid: TID::default(),
+        };
+        self.sync_insert_sync_log(local_log).await?;
 
         Ok(())
     }
