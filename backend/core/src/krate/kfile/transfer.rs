@@ -27,9 +27,9 @@ use crate::{
     config::AttachmentConfig,
     controller::KResponse,
     krate::kfile::{
-        KFileChunkUploadReq, KFileMeta, KFileUploadRsp, QueryKFileReq,
-        controller::asset_path_by_sid, mapper::KFileMapper,
+        KFileChunkUploadReq, KFileMeta, KFileUploadRsp, QueryKFileReq, mapper::KFileMapper,
     },
+    util::digestutil::file_blake3_sum,
 };
 
 pub(crate) fn asset_tmp_path(config: &AttachmentConfig, upload_id: &str) -> PathBuf {
@@ -49,17 +49,17 @@ fn assemble_file_sync<P: AsRef<Path> + Send>(
         .truncate(true)
         .write(true)
         .open(&output_filepath)?;
-    let mut bh = blake3::Hasher::new();
+    let mut hasher = blake3::Hasher::new();
 
     for chunk_number in 0..total_chunks {
         let chunk_path = temp_dir.as_ref().join(chunk_number.to_string());
         let chunk_data = std::fs::read(&chunk_path)?;
-        bh.write_all(&chunk_data)?;
+        hasher.write_all(&chunk_data)?;
         output_file.write_all(&chunk_data)?;
     }
 
-    let sid = bh.finalize().to_string();
-    let path = asset_path_by_sid(&config, sid.as_str());
+    let sid = hasher.finalize().to_string();
+    let path = config.get_sid_path(sid.as_str());
     std::fs::create_dir_all(path.parent().ok_or(anyhow!("unable to get parent"))?)?;
 
     std::fs::rename(output_filepath, path)?;
@@ -172,11 +172,11 @@ async fn upload_big_file_with_sid_inner(
             continue;
         };
 
-        let final_path = asset_path_by_sid(&state.config.attachment, sid.as_str());
-        let tmp_path = asset_path_by_sid(
-            &state.config.attachment,
-            (sid.clone() + "_kuploadwhole").as_str(),
-        );
+        let final_path = state.config.attachment.get_sid_path(sid.as_str());
+        let tmp_path = state
+            .config
+            .attachment
+            .get_sid_path((sid.clone() + "_kuploadwhole").as_str());
 
         try_mkdirp(final_path.parent().context("unable to get parent dir")?).await?;
 
@@ -212,10 +212,7 @@ where
         let mut file = BufWriter::new(File::create(&save_file).await?);
 
         tokio::io::copy(&mut body_reader, &mut file).await?;
-        let mut hasher = blake3::Hasher::new();
-        // TODO: use mmap method, `update_mmap_rayon`
-        let hasher = hasher.update_reader(std::fs::File::open(&save_file)?)?;
-        let hash = hasher.finalize().to_string();
+        let hash = file_blake3_sum(save_file)?;
 
         Ok(hash.into())
     }
@@ -242,7 +239,7 @@ pub(super) async fn download(
             .meta
             .context("unable to find kfile")?;
 
-        let save_filepath = asset_path_by_sid(&state.config.attachment, kfile.sid.as_str());
+        let save_filepath = state.config.attachment.get_sid_path(kfile.sid.as_str());
 
         let file = tokio::fs::File::open(&save_filepath).await?;
 

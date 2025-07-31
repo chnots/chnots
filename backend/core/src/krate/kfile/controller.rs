@@ -5,23 +5,9 @@ use axum::{
     routing::{get, post, put},
 };
 
-use chin_tools::utils::path_util::split_uuid_to_file_name;
-use std::path::PathBuf;
-
-use crate::{
-    app::ShareAppState, config::AttachmentConfig, controller::KResponse, model::dto::kreq,
-};
+use crate::{app::ShareAppState, controller::KResponse, model::dto::kreq};
 
 use super::{mapper::KFileMapper, *};
-
-pub(crate) fn asset_path_by_sid(config: &AttachmentConfig, sid: &str) -> PathBuf {
-    let filename_parts = split_uuid_to_file_name(sid);
-
-    std::path::Path::new(&config.base_dir)
-        .join(filename_parts.0)
-        .join(filename_parts.1)
-        .join(filename_parts.2)
-}
 
 pub(crate) async fn query_kfile(
     state: State<ShareAppState>,
@@ -71,8 +57,6 @@ async fn inline_kfile_get_by_sid(
 ) -> KResponse<KFileInlineGetBySidRsp> {
     state.query_inline_kfile_by_sid(req.sid).await.into()
 }
-
-async fn directly_get_big_kfile() {}
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()

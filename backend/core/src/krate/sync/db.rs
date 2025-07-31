@@ -88,7 +88,7 @@ impl SyncMapper for KDb {
             .qry_opt(last_sync, |row| (&row).try_into())
             .await?;
 
-        debug!("last sync log for {} is {:?}", table_name, sync);
+        debug!("last sync log for {table_name} is {sync:?}");
 
 
         let Some(sync_log) = sync else {
@@ -282,7 +282,7 @@ impl SyncMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
 
-        tx.exec(format!("drop table if exists {}", table_name))
+        tx.exec(format!("drop table if exists {table_name}"))
             .await?;
         let sql = format!(
             "create table  {table_name}(tid bigint, lstate int not null, rstate int not null, primary key (tid))"

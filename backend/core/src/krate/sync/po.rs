@@ -1,5 +1,4 @@
 use chin_sql::{GenerateTableSchema, str_type::Varchar, time_type::TID};
-use log::info;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, GenerateTableSchema)]
@@ -21,8 +20,13 @@ pub struct SyncEndpoint {
 }
 
 impl SyncEndpoint {
-    pub fn to_url(&self, url: &str) -> String {
-        let link = format!("http://{}:{}/{}", self.ip, self.port, url.strip_prefix("/").unwrap_or("unknown-point"));
+    pub fn to_url<S: AsRef<str>>(&self, url: S) -> String {
+        let link = format!(
+            "http://{}:{}/{}",
+            self.ip,
+            self.port,
+            url.as_ref().strip_prefix("/").unwrap_or("unknown-point")
+        );
         link
     }
 }
