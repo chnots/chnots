@@ -1,35 +1,41 @@
 use anyhow::{Context, anyhow};
 use axum::{
-    body,
-    extract::State,
+    body::{self, Bytes},
+    extract::{Multipart, Path as RestPath, State},
     http::{HeaderMap, HeaderName, StatusCode, header},
     response::IntoResponse,
 };
 use axum_typed_multipart::TypedMultipart;
 use chin_sql::time_type::TID;
-use chin_tools::{AResult, utils::id_util::generate_uuid};
+use chin_tools::{AResult, EResult, SharedStr, utils::id_util::generate_uuid};
+use futures::Stream;
 use log::info;
 use std::{
     fs::OpenOptions,
     io::Write,
     path::{Path, PathBuf},
 };
-use tokio::{io::AsyncWriteExt, task::spawn_blocking};
+use tokio::{
+    fs::File,
+    io::{AsyncWriteExt, BufWriter},
+    task::spawn_blocking,
+};
 use tokio_util::io::ReaderStream;
 
 use crate::{
     ShareAppState,
     config::AttachmentConfig,
+    controller::KResponse,
     krate::kfile::{
-        KFileMeta, KFileUploadReq, KFileUploadRsp, QueryKFileReq, controller::asset_path_by_sid,
-        mapper::KFileMapper,
+        KFileChunkUploadReq, KFileMeta, KFileUploadRsp, QueryKFileReq,
+        controller::asset_path_by_sid, mapper::KFileMapper,
     },
 };
 
-pub(crate) fn asset_tmp_path(config: &AttachmentConfig, sid: &str) -> PathBuf {
+pub(crate) fn asset_tmp_path(config: &AttachmentConfig, upload_id: &str) -> PathBuf {
     std::path::Path::new(&config.base_dir)
         .join("tmp-chunks")
-        .join(sid)
+        .join(upload_id)
 }
 
 fn assemble_file_sync<P: AsRef<Path> + Send>(
@@ -72,10 +78,18 @@ async fn assemble_file<P: AsRef<Path> + Send + 'static>(
     Ok(sid)
 }
 
+async fn try_mkdirp<P: AsRef<Path>>(path: P) -> EResult {
+    let dir = path.as_ref();
+    if tokio::fs::metadata(&dir).await.is_err() {
+        tokio::fs::create_dir_all(&dir).await?;
+    }
+    Ok(())
+}
+
 pub(super) async fn upload_by_chunks(
     _: HeaderMap,
     state: State<ShareAppState>,
-    TypedMultipart(KFileUploadReq {
+    TypedMultipart(KFileChunkUploadReq {
         filename,
         chunk_no,
         total_chunks,
@@ -85,15 +99,13 @@ pub(super) async fn upload_by_chunks(
         meta_id,
         content_type,
         upload_id,
-    }): TypedMultipart<KFileUploadReq>,
+    }): TypedMultipart<KFileChunkUploadReq>,
 ) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
 
     let tmp_dir = asset_tmp_path(&state.config.attachment, &upload_id);
 
-    if tokio::fs::metadata(&tmp_dir).await.is_err() {
-        tokio::fs::create_dir_all(&tmp_dir).await?;
-    }
+    try_mkdirp(&tmp_dir).await?;
 
     let chunk_path = tmp_dir.join(chunk_no.to_string());
     let mut file = tokio::fs::File::create(&chunk_path).await?;
@@ -137,8 +149,81 @@ pub(super) async fn upload_by_chunks(
     })
 }
 
+pub(super) async fn upload_big_file_with_sid(
+    state: State<ShareAppState>,
+    RestPath(sid): RestPath<String>,
+    multipart: Multipart,
+) -> KResponse<SharedStr> {
+    upload_big_file_with_sid_inner(state, sid, multipart)
+        .await
+        .into()
+}
+
+#[inline]
+async fn upload_big_file_with_sid_inner(
+    state: State<ShareAppState>,
+    sid: String,
+    mut multipart: Multipart,
+) -> AResult<SharedStr> {
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let _ = if let Some(filename) = field.file_name() {
+            filename.to_string()
+        } else {
+            continue;
+        };
+
+        let final_path = asset_path_by_sid(&state.config.attachment, sid.as_str());
+        let tmp_path = asset_path_by_sid(
+            &state.config.attachment,
+            (sid.clone() + "_kuploadwhole").as_str(),
+        );
+
+        try_mkdirp(final_path.parent().context("unable to get parent dir")?).await?;
+
+        if tmp_path.exists() {
+            tokio::fs::remove_file(&tmp_path).await?;
+        }
+
+        let hash = stream_to_file(field, &tmp_path).await?;
+        if hash.as_str() != sid.as_str() {
+            anyhow::bail!("the upload file sid {hash:?} is not same to request {sid}");
+        }
+        tokio::fs::rename(tmp_path, final_path).await?;
+
+        return Ok(hash);
+    }
+
+    Err(anyhow::anyhow!("Find no file."))
+}
+
+async fn stream_to_file<S, E, P: AsRef<Path>>(stream: S, save_file: P) -> AResult<SharedStr>
+where
+    S: Stream<Item = Result<Bytes, E>>,
+    E: Into<axum::BoxError>,
+{
+    use futures::TryStreamExt;
+    async {
+        info!("stream to file: {:?}", save_file.as_ref());
+
+        let body_with_io_error = stream.map_err(|err| std::io::Error::other(err));
+        let body_reader = tokio_util::io::StreamReader::new(body_with_io_error);
+        futures::pin_mut!(body_reader);
+
+        let mut file = BufWriter::new(File::create(&save_file).await?);
+
+        tokio::io::copy(&mut body_reader, &mut file).await?;
+        let mut hasher = blake3::Hasher::new();
+        // TODO: use mmap method, `update_mmap_rayon`
+        let hasher = hasher.update_reader(std::fs::File::open(&save_file)?)?;
+        let hash = hasher.finalize().to_string();
+
+        Ok(hash.into())
+    }
+    .await
+}
+
 // https://github.com/tokio-rs/axum/discussions/608
-pub(crate) async fn download(
+pub(super) async fn download(
     state: State<ShareAppState>,
     axum::extract::Path((meta_otid, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {

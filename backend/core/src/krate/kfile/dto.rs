@@ -5,7 +5,7 @@ use chin_sql::str_type::Varchar;
 use serde::{Deserialize, Serialize};
 
 #[derive(TryFromMultipart)]
-pub struct KFileUploadReq {
+pub struct KFileChunkUploadReq {
     pub upload_id: String,
     pub meta_id: String,
     pub filename: String,
@@ -62,6 +62,7 @@ pub struct QueryKFileMetaRsp {
 
 pub const KFILE_INLINE_INSERT2: &str = "/api/v1/inline-kfile2";
 pub const KFILE_INLINE_GET_BY_SID: &str = "/api/v1/inline-kfile-by-sid";
+pub const KFILE_BIG_UPLOAD_WITH_SID: &str = "/api/v1/kfile/upload-with-sid";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KFileInlineInsert2Req {

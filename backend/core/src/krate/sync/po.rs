@@ -23,7 +23,6 @@ pub struct SyncEndpoint {
 impl SyncEndpoint {
     pub fn to_url(&self, url: &str) -> String {
         let link = format!("http://{}:{}/{}", self.ip, self.port, url.strip_prefix("/").unwrap_or("unknown-point"));
-        info!("endpoint: {link}");
         link
     }
 }

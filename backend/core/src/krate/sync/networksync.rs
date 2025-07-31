@@ -296,7 +296,6 @@ impl ShareAppState {
             if let Some(cstart_ex) = c_sync_time {
                 start_ex = *cstart_ex;
             }
-            log::info!("max sync time: {sync_time}({result_len})");
             self.sync_merge_tids(result, hist, initial_sync_info.clone())
                 .await?;
             if result_len < page_size {

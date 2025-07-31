@@ -72,7 +72,6 @@ async fn inline_kfile_get_by_sid(
     state.query_inline_kfile_by_sid(req.sid).await.into()
 }
 
-async fn directly_insert_big_kfile() {}
 async fn directly_get_big_kfile() {}
 
 pub(crate) fn routes() -> Router<ShareAppState> {
@@ -95,4 +94,8 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         .route("/api/v1/kfile/inline-download", get(query_inline_kfile))
         .route(KFILE_INLINE_GET_BY_SID, get(inline_kfile_get_by_sid))
         .route(KFILE_INLINE_INSERT2, put(inline_kfile_insert_directly))
+        .route(
+            &format!("{KFILE_BIG_UPLOAD_WITH_SID}/{{sid}}"),
+            post(transfer::upload_big_file_with_sid),
+        )
 }
