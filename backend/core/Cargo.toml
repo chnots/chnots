@@ -82,9 +82,11 @@ blake3 = "1.8.2"
 tracing-log = "0.2.0"
 enum-tag = "0.3.0"
 
-markdown = "*"
+markdown = "1.0.0"
 reqwest = { version = "0.12.22", features = ["json", "stream", "multipart"] }
 const_format = "0.2.34"
+
+shellexpand = "3.1.1"
 
 [features]
 default = ["axum-server"]

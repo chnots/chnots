@@ -13,11 +13,11 @@
 ## Quick Start
 
 ```shell
+mkdir chnots
 git clone https://github.com/chnots/chnots.git
+git clone https://github.com/aeghn/chin-tools.git
 cd chnots
 
-cd web && pnpm install
-cd ..
 make build
 make run-server-sqlite
 ```

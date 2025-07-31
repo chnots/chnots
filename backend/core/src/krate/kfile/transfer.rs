@@ -33,7 +33,7 @@ use crate::{
 };
 
 pub(crate) fn asset_tmp_path(config: &AttachmentConfig, upload_id: &str) -> PathBuf {
-    std::path::Path::new(&config.base_dir)
+    std::path::Path::new(&config.base_dir.as_ref())
         .join("tmp-chunks")
         .join(upload_id)
 }

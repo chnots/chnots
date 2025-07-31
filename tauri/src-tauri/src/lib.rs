@@ -8,12 +8,12 @@ pub fn run() {
             port: 3013,
         }),
         mapper: MapperConfig::Sqlite(SqliteConfig {
-            filepath: format!("{workdir}chnots.db"),
+            filepath: format!("{workdir}chnots.db").into(),
             pool_size: 2.into(),
         }),
         file_backup: None,
         attachment: AttachmentConfig {
-            base_dir: workdir.to_string(),
+            base_dir: workdir.to_string().into(),
         },
     };
 

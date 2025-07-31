@@ -2,11 +2,13 @@ use actor_sqlite::{pool::ActorSqlitePool, pool_config::PoolConfig};
 use chin_tools::AResult;
 use serde::Deserialize;
 
+use crate::config::ShellExpandPath;
+
 pub(crate) mod wrapper;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct SqliteConfig {
-    pub filepath: String,
+    pub filepath: ShellExpandPath,
     pub pool_size: Option<u8>,
 }
 
@@ -16,7 +18,7 @@ impl TryFrom<SqliteConfig> for ActorSqlitePool {
     fn try_from(value: SqliteConfig) -> Result<Self, Self::Error> {
         Ok(ActorSqlitePool::try_from(
             PoolConfig::default()
-                .path(value.filepath)
+                .path(value.filepath.as_str())
                 .pool_size(value.pool_size.unwrap_or(4)),
         )?)
     }

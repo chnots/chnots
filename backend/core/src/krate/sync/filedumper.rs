@@ -6,14 +6,12 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    app::ShareAppState,
-    krate::sync::po::SyncEndpoint,
-    mapper::{MapperRowType, MapperType},
+    app::ShareAppState, config::ShellExpandPath, krate::sync::po::SyncEndpoint, mapper::{MapperRowType, MapperType}
 };
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct FileBackupConfig {
-    pub(crate) backup_dir: String,
+    pub(crate) backup_dir: ShellExpandPath,
 }
 
 pub struct DumpFilenamePattern {

@@ -59,3 +59,15 @@ export type KFileInlineGetBySidReq = {
 export type KFileInlineGetBySidRsp = {
   file?: InlineKFile;
 };
+
+export type KFileChunkUploadReq = {
+  upload_id: string;
+  meta_id: string;
+  filename: string;
+  chunk_no: number;
+  total_chunks: number;
+  chunk: Blob;
+  last_modified: number;
+  filesize: number;
+  content_type: string;
+};

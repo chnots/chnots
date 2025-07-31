@@ -5,8 +5,6 @@ use log::info;
 use mapper::MapperType;
 
 #[cfg(not(feature = "tauri"))]
-use log::Level;
-#[cfg(not(feature = "tauri"))]
 use tracing_log::LogTracer;
 
 use crate::krate::sync::filedumper::StartType;
@@ -39,6 +37,7 @@ pub async fn run(config: Config) -> EResult {
 
     #[cfg(not(feature = "tauri"))]
     tracing::subscriber::set_global_default(subscriber)?;
+    info!("config {config:?}");
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
@@ -48,6 +47,7 @@ pub async fn run(config: Config) -> EResult {
         mapper,
         instance_id: instance_id.into(),
     };
+
     let state: ShareAppState = state.into();
     {
         let state = state.clone();
