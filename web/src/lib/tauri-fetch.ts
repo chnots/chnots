@@ -1,6 +1,6 @@
 import { useCommonStore } from "@/common/store";
 import { recursiveDateConversion } from "./date-utils";
-import { useKSpaceStore } from "@/krate/kspace/store";
+import { kspaceStore, useKSpaceStore } from "@/krate/kspace/store";
 import { toast } from "sonner";
 
 const appendUrl = (base: string, suffix: string) => {
@@ -34,7 +34,7 @@ class FetchRequest {
     config: RequestInit & { url: string }
   ): Promise<RequestInit> {
     useCommonStore.getState().appendLog(this.baseURL);
-    const kspace = useKSpaceStore.getState();
+    const kspace = kspaceStore.getState();
 
     const controller = new AbortController();
     this.abortControllerMap.set(config.url, controller);

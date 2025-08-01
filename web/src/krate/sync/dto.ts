@@ -40,10 +40,10 @@ export type SyncShakeDto = {
   db_version: string;
 };
 
-type SyncFetchDataPageInfo = object;
+type SyncFetchTIDPage = object;
 
 export type SyncFetchTIDDto = {
-  page: SyncFetchDataPageInfo;
+  page: SyncFetchTIDPage;
   hist: boolean;
 };
 export type SyncFetchTIDRsp = {
