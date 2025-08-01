@@ -6,7 +6,7 @@ use axum::{
     routing::{Router, get},
 };
 use rust_embed::RustEmbed;
-use log::warn;
+use log::{info, warn};
 
 use crate::app::ShareAppState;
 
@@ -65,7 +65,7 @@ where
 {
     fn into_response(self) -> Response {
         let path = self.0.into();
-        warn!("asset {:?}", path.as_str());
+        info!("asset {:?}", path.as_str());
 
         let data = Asset::get(path.as_str()).map(|ef| {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
