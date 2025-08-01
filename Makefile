@@ -34,6 +34,8 @@ build-web: build-web-dir
 
 build: sync-struct build-web build-server
 
+build-tauri-android:
+	test -f web-dist/index.html && cd ./tauri && pnpm tauri android build --target aarch64
 
 full-build: sync-struct build
 

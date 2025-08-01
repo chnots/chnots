@@ -48,6 +48,7 @@
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/postcss": "^4.0.3",
     "@tanstack/react-table": "^8.21.3",
+    "@tauri-apps/plugin-http": "^2.5.0",
     "@uiw/react-codemirror": "^4.23.8",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",

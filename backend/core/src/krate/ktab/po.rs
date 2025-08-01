@@ -30,9 +30,9 @@ pub struct KTabColumnMeta {
     pub order_by: i32,
 }
 
-fn map_to_sql(value: HashMap<String, KTabColumnMeta>) -> String {
+fn map_to_sql(value0: HashMap<String, KTabColumnMeta>) -> String {
     // Only serde_json do not fail.
-    serde_json::to_string(&value).unwrap()
+    serde_json::to_string(&value0).unwrap()
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, GenerateTableSchema)]

@@ -21,9 +21,10 @@ tauri-build = { version = "2.3.0", features = [] }
 serde_json = { workspace = true }
 serde = { workspace = true }
 log = { workspace = true }
-tauri = { version = "2.6.2", features = [] }
+tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-log = "2"
 chnots-core = { path = "../../backend/core", default-features = false, features = [
     "tauri",
 ] }
 tauri-plugin-fs = "2"
+tauri-plugin-http = "2"

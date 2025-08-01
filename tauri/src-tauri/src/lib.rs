@@ -4,19 +4,21 @@ use tauri::Manager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             let dir = app
                 .path()
                 .app_data_dir()
                 .expect("couldn't resolve app data dir");
-            std::fs::create_dir_all(&dir).unwrap_or_else(|_| panic!("unable to create dir {dir:?}"));
+            std::fs::create_dir_all(&dir)
+                .unwrap_or_else(|_| panic!("unable to create dir {dir:?}"));
 
             let config = Config {
                 server: Some(ServerConfig { port: 3013 }),
                 mapper: MapperConfig::Sqlite(SqliteConfig {
                     filepath: dir.join("chnots.db"),
-                    pool_size: 2.into(),
+                    pool_size: 1.into(),
                 }),
                 file_backup: None,
                 attachment: AttachmentConfig {
@@ -33,7 +35,12 @@ pub fn run() {
             }
 
             tauri::async_runtime::spawn(async move {
-                chnots_core::run(config).await.unwrap();
+                match chnots_core::run(config).await {
+                    Ok(_) => {}
+                    Err(err) => {
+                        println!("unable to start {err:?}")
+                    }
+                }
             });
             Ok(())
         })

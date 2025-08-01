@@ -5,12 +5,14 @@ import { combine } from "zustand/middleware";
 interface State {
   onSearch: boolean;
   showSidebar: boolean;
+  globalLog: string;
 }
 
 const getDefaultState = (): State => {
   return {
     onSearch: false,
     showSidebar: true,
+    globalLog: "",
   };
 };
 
@@ -29,6 +31,19 @@ export const useCommonStore = create(
     },
     getNaviSearch: () => {
       return get().onSearch;
+    },
+    appendLog: (log: string) => {
+      set((prev) => {
+        return {
+          ...prev,
+          globalLog:
+            prev.globalLog +
+            "\n\n" +
+            new Date().toLocaleTimeString() +
+            ": " +
+            log,
+        };
+      });
     },
   }))
 );

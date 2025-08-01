@@ -110,7 +110,6 @@ const MonoChnot = ({ showSettings }: { showSettings: boolean }) => {
  */
 const ChnotPage = () => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
-
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <SidebarProvider
@@ -121,7 +120,10 @@ const ChnotPage = () => {
           } as React.CSSProperties
         }
       >
-        <ChnotSidebar setShowSettings={setShowSettings} showSettings={showSettings}/>
+        <ChnotSidebar
+          setShowSettings={setShowSettings}
+          showSettings={showSettings}
+        />
         <SidebarInset className="min-w-0">
           <MonoChnot showSettings={showSettings} />
         </SidebarInset>
