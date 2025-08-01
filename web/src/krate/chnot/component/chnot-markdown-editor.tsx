@@ -1,9 +1,6 @@
 import { CodeMirrorEditorMemo } from "@/common/component/codemirror/codemirror-md-editor";
 import { chnotTagNames, toentGuess } from "@/krate/chnot/service";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import request from "@/lib/request";
 
 const chnotCompletions = async (
   context: CompletionContext
@@ -54,22 +51,9 @@ const MarkdownEditor = ({
   height: number;
   foldGutter: boolean;
 }) => {
-  const [state, setState] = useState("");
-  useEffect(() => {
-    request
-      .get("chnots.svg")
-      .then((svgText) => {
-        toast.info("result" + svgText);
-        setState(`${svgText}`);
-      })
-      .catch((error) => {
-        console.error("Error fetching SVG:", error);
-        toast.error("Failed to fetch SVG");
-      });
-  });
   return (
     <CodeMirrorEditorMemo
-      content={state}
+      content={content}
       onContentChange={onContentChange}
       autoCompletion={chnotCompletions}
       height={height}
