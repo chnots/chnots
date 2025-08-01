@@ -1,6 +1,6 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
-import { kspaceStore, useKSpaceStore } from "@/krate/kspace/store";
+import { kspaceStore } from "@/krate/kspace/store";
 import axios from "axios";
 import type {
   AxiosInstance,
@@ -10,6 +10,7 @@ import type {
 } from "axios";
 import { recursiveDateConversion } from "./date-utils";
 import { useCommonStore } from "@/common/store";
+import { toast } from "sonner";
 
 class Request {
   private instance: AxiosInstance;
@@ -52,9 +53,9 @@ class Request {
           .getState()
           .appendLog(`${err.message} -- ${err.stack} -- ${err.name}`);
 
-        /*        toast.error(
+        toast.error(
           `Error! ${err.name}, ${err.message} ${err.stack} ${err.cause}`
-        ); */
+        );
 
         return Promise.reject(err);
       }
@@ -97,12 +98,9 @@ class Request {
   }
 }
 
-/* export const BASE_URL = import.meta.env.DEV
+export const BASE_URL = import.meta.env.DEV
   ? import.meta.env.PUBLIC_BACKEND_URL
   : window.location.protocol + "//" + window.location.host;
- */
-
-export const BASE_URL = "http://127.0.0.1:3013";
 
 const request = new Request({
   timeout: 30 * 1000,

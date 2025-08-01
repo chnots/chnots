@@ -17,12 +17,12 @@ pub fn run() {
             let config = Config {
                 server: Some(ServerConfig { port: 3013 }),
                 mapper: MapperConfig::Sqlite(SqliteConfig {
-                    filepath: dir.join("chnots.db"),
+                    filepath: dir.join("chnots.db").to_string_lossy().to_string().into(),
                     pool_size: 1.into(),
                 }),
                 file_backup: None,
                 attachment: AttachmentConfig {
-                    base_dir: dir.join("attach"),
+                    base_dir: dir.join("attach").to_string_lossy().to_string().into(),
                 },
             };
 
