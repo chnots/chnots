@@ -85,7 +85,7 @@ pub struct SyncShakeRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum SyncFetchDataPageInfo {
+pub(crate) enum SyncFetchTIDPage {
     StartEnd {
         start_ex: TID,
         end_in: TID,
@@ -95,7 +95,7 @@ pub(crate) enum SyncFetchDataPageInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct SyncFetchTIDDto {
-    pub page: SyncFetchDataPageInfo,
+    pub page: SyncFetchTIDPage,
     pub hist: bool,
 }
 

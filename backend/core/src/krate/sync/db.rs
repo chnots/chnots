@@ -7,8 +7,8 @@ use log::{debug, info};
 use crate::{
     krate::sync::{
         dto::{
-            SyncDataArg, SyncDataOperation, SyncFetchDataPageInfo, SyncFetchTIDArg,
-            SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
+            SyncDataArg, SyncDataOperation, SyncFetchTIDArg, SyncFetchTIDPage, SyncFetchTIDRsp,
+            SyncInfo, SyncPageInfo,
         },
         mapper::{Dumper, SyncMapper},
         po::SyncLogTransient,
@@ -26,7 +26,7 @@ impl Dumper<KDbRow> for KDb {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: SyncFetchDataPageInfo,
+        fetch_data: SyncFetchTIDPage,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -34,7 +34,7 @@ impl Dumper<KDbRow> for KDb {
         E: Send + 'static,
     {
         let sql = match fetch_data {
-            SyncFetchDataPageInfo::StartEnd {
+            SyncFetchTIDPage::StartEnd {
                 start_ex,
                 end_in,
                 page_size,
@@ -80,7 +80,6 @@ impl SyncMapper for KDb {
             .sov(SyncLogTransient::SYNC_FINISH_TID)
             .sov("desc")
             .limit(1);
-        
 
         let sync: Option<SyncLogTransient> = self
             .conn()
@@ -89,7 +88,6 @@ impl SyncMapper for KDb {
             .await?;
 
         debug!("last sync log for {table_name} is {sync:?}");
-
 
         let Some(sync_log) = sync else {
             return Ok(TID::from(0));
@@ -134,7 +132,7 @@ impl SyncMapper for KDb {
         req: SyncFetchTIDArg<T>,
     ) -> AResult<SyncFetchTIDRsp> {
         let sql = match req.dto.page {
-            super::dto::SyncFetchDataPageInfo::StartEnd {
+            super::dto::SyncFetchTIDPage::StartEnd {
                 start_ex,
                 end_in,
                 page_size,
@@ -187,12 +185,15 @@ impl SyncMapper for KDb {
 
     async fn sync_fetch_operations<T: KOtidSupport>(
         &self,
-        sync_info: &SyncPageInfo<T>,
+        sync_page: &SyncPageInfo<T>,
     ) -> AResult<SyncDataArg<T>> {
-        let tids = self.sync_fetch_tid_compares(sync_info).await?;
+        let tids = self.sync_fetch_tid_compares(sync_page).await?;
         let mut operations = vec![];
         let mut max_tid = TID::from(0);
-        let nomore = tids.len() < sync_info.page_size;
+
+        let nomore = tids.len() < sync_page.page_size;
+        info!("{} : {} -> {}", tids.len(), sync_page.page_size, nomore);
+
         for tc in tids.iter() {
             let l = tc.lstate;
             let r = tc.rstate;
@@ -238,8 +239,8 @@ impl SyncMapper for KDb {
     ) -> AResult<SyncDataArg<T>> {
         let SyncDataArg {
             cmds,
-            max_tid,
-            nomore,
+            max_tid: _,
+            nomore: _,
         } = req;
         let mut rsp_cmds = vec![];
         for ele in cmds {
@@ -272,8 +273,8 @@ impl SyncMapper for KDb {
 
         Ok(SyncDataArg {
             cmds: rsp_cmds,
-            max_tid,
-            nomore,
+            max_tid: TID::never(),
+            nomore: false,
         })
     }
 
@@ -337,16 +338,16 @@ impl TryFrom<&KDbRow> for SyncLogTransient {
 impl KDb {
     async fn sync_fetch_tid_compares<T: KOtidSupport>(
         &self,
-        sync_info: &SyncPageInfo<T>,
+        sync_page: &SyncPageInfo<T>,
     ) -> AResult<Vec<TidCompare>> {
-        let tn = sync_info.to_table_name();
+        let tn = sync_page.to_table_name();
         let reader = SqlBuilder::read_all(&tn)
             .r#where(Wheres::and([
-                Wheres::compare("tid", ">", sync_info.start_ex),
+                Wheres::compare("tid", ">", sync_page.start_ex),
                 Wheres::compare_str("lstate", "<>", "rstate"),
             ]))
             .sov("order by tid asc")
-            .limit(50);
+            .limit(sync_page.page_size);
 
         let res = self
             .conn()

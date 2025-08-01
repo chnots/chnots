@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::Context;
 use chin_sql::time_type::TID;
 use chin_tools::EResult;
-use log::info;
+use log::{error, info};
 use reqwest::{Body, multipart};
 use tokio::{fs::File, io::AsyncWriteExt};
 use tokio_util::codec::{BytesCodec, FramedRead};
@@ -57,14 +57,14 @@ impl KFileAssetWorker {
                 if tmp_path.exists() {
                     tokio::fs::remove_file(&tmp_path).await?;
                 }
-                let mut file =
-                    File::create(&tmp_path.parent().context("unable to get parent path")?).await?;
+                super::transfer::try_mkdirp(
+                    &tmp_path.parent().context("unable to get parent path")?,
+                )
+                .await?;
+                let mut file = File::create(&tmp_path).await?;
 
                 let mut stream = client
-                    .get(endpoint.to_url(KFILE_INLINE_GET_BY_SID))
-                    .query(&KFileInlineGetBySidReq {
-                        sid: kfm.sid.clone(),
-                    })
+                    .get(endpoint.to_url(format!("/api/v1/kfile/{}/{}", kfm.id, kfm.sid)))
                     .send()
                     .await?
                     .bytes_stream();
@@ -79,7 +79,8 @@ impl KFileAssetWorker {
                 let sum = file_blake3_sum(&tmp_path)?;
                 if sum != kfm.sid.as_str() {
                     anyhow::bail!(
-                        "the pulled file is not correct. db: {} -- file: {}",
+                        "the pulled file is not correct. filename {}, blake3sum db: {} -- file: {}",
+                        kfm.filename,
                         kfm.sid,
                         sum
                     );
@@ -109,7 +110,13 @@ impl KFileAssetWorker {
             } else {
                 let path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
                 // https://stackoverflow.com/questions/65814450/how-to-post-a-file-using-reqwest
-                let file = File::open(&path).await?;
+                let file = match File::open(&path).await {
+                    Ok(file) => file,
+                    Err(te) => {
+                        error!("open file error: {path:?} {te}");
+                        continue;
+                    }
+                };
 
                 // read file body stream
                 let stream = FramedRead::new(file, BytesCodec::new());

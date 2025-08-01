@@ -1,6 +1,6 @@
 [mapper]
 type = "sqlite"
-filepath = "./transient/chnots.db"
+filepath = "./transient/sqlite/chnots.db"
 
 [server]
 port = 3014
@@ -8,9 +8,9 @@ tls_key = "./transient/tls.key"
 tls_cert = "./transient/tls.crt"
 
 [file_backup]
-backup_dir = "./transient/backup"
+backup_dir = "./transient/sqlite-backup"
 period = 1800
 
 
 [attachment]
-base_dir = "./transient/attachments"
+base_dir = "./transient/sqlite-asset"

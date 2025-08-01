@@ -33,7 +33,7 @@ macro_rules! impl_KDbExecutorBehaiver {
         impl KDbExecutorBehaiver for $tt {
             async fn exec<'a, T: IntoSqlSeg<'a>>(&self, ssb: T) -> AResult<usize> {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
-                log::info!("exec {:?}", seg);
+                log::debug!("exec {:?}", seg);
                 let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
                 let count = self.execute(seg, values).await?;
                 Ok(count)
@@ -62,7 +62,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 E: Send + 'static,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
-                log::info!("qry one {:?}", seg);
+                log::debug!("qry one {:?}", seg);
                 let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 let rows = self.query(seg, values).await?;
@@ -89,7 +89,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 E: Send + 'static,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
-                log::info!("qry one {:?}", seg);
+                log::debug!("qry one {:?}", seg);
                 let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 let rows = self.query(seg, values).await?;
@@ -109,7 +109,7 @@ macro_rules! impl_KDbExecutorBehaiver {
                 E: Send + 'static,
             {
                 let SqlSeg { seg, values } = ssb.into_sql_seg(chin_sql::DbType::Sqlite)?;
-                log::info!("qry one {:?}", seg);
+                log::debug!("qry one {:?}", seg);
                 let values: Vec<RsValue> = values.into_iter().map(RsValue::from).collect();
 
                 self.query(seg, values)

@@ -202,8 +202,8 @@ async fn sync_data_inner(
                 table_type: <$st>::get_otid_enum(),
                 dto: SyncDataDto {
                     cmds: sync_cmds_st_to_json!(rsp.cmds),
-                    max_tid: req.dto.max_tid,
-                    nomore: req.dto.nomore,
+                    max_tid: rsp.max_tid,
+                    nomore: rsp.nomore,
                 },
             }
         }};

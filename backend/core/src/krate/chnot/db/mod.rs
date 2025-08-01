@@ -66,7 +66,6 @@ impl ChnotTag {
 
 #[inline]
 fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
-    log::debug!("begin to build chnot");
     let record = ChnotRecord {
         tid: row.try_get("rec_tid")?,
         meta_otid: row.try_get("meta_otid")?,

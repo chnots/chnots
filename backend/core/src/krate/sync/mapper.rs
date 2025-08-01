@@ -7,7 +7,7 @@ use crate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
             dto::{
-                SyncAllEndpointsRsp, SyncDataArg, SyncFetchDataPageInfo, SyncFetchTIDArg,
+                SyncAllEndpointsRsp, SyncDataArg, SyncFetchTIDPage, SyncFetchTIDArg,
                 SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
             },
             po::{SyncAllEndpoints, SyncLogTransient},
@@ -22,7 +22,7 @@ pub trait Dumper<T> {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: SyncFetchDataPageInfo,
+        fetch_data: SyncFetchTIDPage,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where
@@ -34,7 +34,7 @@ impl Dumper<MapperRowType> for MapperType {
     async fn dump<E, F>(
         &self,
         table_name: &str,
-        fetch_data: SyncFetchDataPageInfo,
+        fetch_data: SyncFetchTIDPage,
         mapper: F,
     ) -> chin_tools::AResult<Vec<E>>
     where

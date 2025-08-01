@@ -6,19 +6,15 @@ dbname = "chnotsdev"
 host = "localhost"
 port =  5432
 
-# [mapper]
-# type = "sqlite"
-# filepath = "/tmp/123.db"
-
 [server]
 port = 3012
 tls_key = "./transient/tls.key"
 tls_cert = "./transient/tls.crt"
 
 [file_backup]
-backup_dir = "./transient/backup"
+backup_dir = "./transient/pg-backup"
 period = 1800
 
 
 [attachment]
-base_dir = "./transient/attachments"
+base_dir = "./transient/pg-attachments"

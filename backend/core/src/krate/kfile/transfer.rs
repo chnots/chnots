@@ -78,7 +78,7 @@ async fn assemble_file<P: AsRef<Path> + Send + 'static>(
     Ok(sid)
 }
 
-async fn try_mkdirp<P: AsRef<Path>>(path: P) -> EResult {
+pub async fn try_mkdirp<P: AsRef<Path>>(path: P) -> EResult {
     let dir = path.as_ref();
     if tokio::fs::metadata(&dir).await.is_err() {
         tokio::fs::create_dir_all(&dir).await?;

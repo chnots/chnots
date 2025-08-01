@@ -221,8 +221,8 @@ impl ShareAppState {
 
         Ok(SyncDataArg {
             cmds: res?,
-            max_tid: rsp.dto.max_tid,
-            nomore: rsp.dto.nomore,
+            max_tid: dto.max_tid,
+            nomore: dto.nomore,
         })
     }
 
@@ -262,27 +262,37 @@ impl ShareAppState {
             SyncShakeRspEnum::BeginSync { sync_time } => sync_time,
         };
 
-        info!("start tid22: {}", sync_time.as_utc());
-        let initial_sync_info = SyncInfo {
+        info!(
+            "remote sync start time: {}|{}",
+            endpoint.ip,
+            sync_time.as_utc()
+        );
+        let sync_info = SyncInfo {
             instance_id: shake_rsp.instance_id.clone(),
             start_ex: sync_time,
             end_in: TID::default(),
             table_type: std::marker::PhantomData,
         };
 
-        self.sync_create_tmp_table(&initial_sync_info).await?;
+        self.sync_create_tmp_table(&sync_info).await?;
 
-        let mut start_ex = initial_sync_info.start_ex;
+        let mut start_ex = sync_info.start_ex;
         let mut hist = false;
         loop {
+            info!(
+                "sync page info: {:?}/{}({})",
+                T::get_otid_enum(),
+                start_ex,
+                start_ex.as_utc()
+            );
             let result: SyncFetchTIDRsp = self
                 .sync_fetch_tids_tx::<T>(
                     endpoint,
                     OtidWithGer {
                         dto: SyncFetchTIDDto {
-                            page: SyncFetchDataPageInfo::StartEnd {
+                            page: SyncFetchTIDPage::StartEnd {
                                 start_ex,
-                                end_in: initial_sync_info.end_in,
+                                end_in: sync_info.end_in,
                                 page_size,
                             },
                             hist,
@@ -296,54 +306,57 @@ impl ShareAppState {
             if let Some(cstart_ex) = c_sync_time {
                 start_ex = *cstart_ex;
             }
-            self.sync_merge_tids(result, hist, initial_sync_info.clone())
+            self.sync_merge_tids(result, hist, sync_info.clone())
                 .await?;
             if result_len < page_size {
                 if hist {
                     break;
                 } else {
                     hist = true;
-                    start_ex = initial_sync_info.start_ex;
+                    start_ex = sync_info.start_ex;
                 }
             }
         }
 
-        let mut start_ex = initial_sync_info.start_ex;
+        let mut start_ex = sync_info.start_ex;
         loop {
-            let sync_info = SyncPageInfo {
-                sync_info: initial_sync_info.clone(),
+            let sync_page = SyncPageInfo {
+                sync_info: sync_info.clone(),
                 page_size,
                 start_ex,
             };
+
             let rsp: SyncDataArg<T> = self
-                .sync_data_tx(endpoint, &sync_info, otid_related_worker)
+                .sync_data_tx(endpoint, &sync_page, otid_related_worker)
                 .await?;
             let nomore = rsp.nomore;
+
             otid_related_worker.before_merge(endpoint, &rsp).await?;
 
             start_ex = rsp.max_tid;
+
             self.sync_merge_operations(rsp).await?;
             if nomore {
                 break;
             }
         }
 
-        self.sync_drop_tmp_table(&initial_sync_info).await?;
+        self.sync_drop_tmp_table(&sync_info).await?;
 
         let remote_log = SyncLogTransient {
             remote_id: self.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
-            end_sync_in: initial_sync_info.end_in,
-            start_tid_ex: initial_sync_info.start_ex,
+            end_sync_in: sync_info.end_in,
+            start_tid_ex: sync_info.start_ex,
             sync_finish_tid: TID::default(),
         };
         self.sync_insert_sync_log_tx(endpoint, &remote_log).await?;
 
         let local_log = SyncLogTransient {
-            remote_id: initial_sync_info.instance_id.to_string().try_into()?,
+            remote_id: sync_info.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
-            end_sync_in: initial_sync_info.end_in,
-            start_tid_ex: initial_sync_info.start_ex,
+            end_sync_in: sync_info.end_in,
+            start_tid_ex: sync_info.start_ex,
             sync_finish_tid: TID::default(),
         };
         self.sync_insert_sync_log(local_log).await?;
