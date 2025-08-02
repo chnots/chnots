@@ -31,4 +31,4 @@ build-tauri-desktop:
 	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri build
 
 build-tauri-android:
-	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build --target aarch64
+	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build -v

@@ -43,12 +43,17 @@ jobs:
 
       - name: Install NDK
         if: matrix.platform == 'ubuntu-latest' # This must match the platform 
-        run: sdkmanager "ndk;27.0.11902837"
+        run: sdkmanager "ndk;29.0.13599879"
 
-      - name: install Rust stable
+      - name: install Rust stable(linux)
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android, x86_64-linux-android, stable-x86_64-unknown-linux-gnu
+          targets: aarch64-linux-android, x86_64-linux-android, x86_64-unknown-linux-gnu
+          
+      - name: install Rust stable(windows)
+        if: matrix.platform == 'windows-latest' # This must match the platform 
+        uses: dtolnay/rust-toolchain@stable
 
       - name: install ubuntu dependencies
         if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
@@ -64,19 +69,24 @@ jobs:
       - name: build web
         run: make build-web
 
-      - name: build-server
-        run: make build-server
+      #- name: build-server
+      #  run: make build-server
         
       # - name: tauri build
       #   run: make build-tauri-desktop 
+      - name: setup Android signing
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        run: |
+          cd ./tauri/src-tauri/gen/android
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > keystore.properties
+          echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+          base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
+          echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
+          echo "Keystore properties created."
+          cd ../../../.. # Go back to root
 
-      # - name: setup Android signing
-      #   if: matrix.platform == 'ubuntu-latest' # This must match the platform 
-      #   run: |
-      #     cd ./tauri/src-tauri/gen/android
-      #     echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > keystore.properties
-      #     echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
-      #     base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
-      #     echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
-      #     echo "Keystore properties created."
-      #     cd ../../../.. # Go back to root
+      - name: Build app bundle
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        run: make build-tauri-android
+        env:
+          NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
