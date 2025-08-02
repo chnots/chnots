@@ -78,11 +78,11 @@ jobs:
         if: matrix.platform == 'ubuntu-latest' # This must match the platform 
         run: |
           cd ./tauri/src-tauri/gen/android
-          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > keystore.properties
-          echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > key.properties
+          echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> key.properties
           base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
-          echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
-          echo "Keystore properties created."
+          echo "storeFile=$RUNNER_TEMP/keystore.jks" >> key.properties
+          echo "key.properties created."
           cd ../../../.. # Go back to root
 
       - name: Build app bundle
