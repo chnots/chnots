@@ -57,9 +57,7 @@ export default function KSpaceSettings() {
     return s1.name.localeCompare(s2.name);
   });
 
-  const [editingKSpaceName, setEditingKSpace] = useState<string | undefined>(
-    undefined
-  );
+  const [editingKSpaceName, setEditingKSpace] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const preservedNames = new Set(["private", "work", "public"]);
   const form = useForm<KSpaceFormValues>({
@@ -97,7 +95,6 @@ export default function KSpaceSettings() {
   }, [isDialogOpen, editingKSpaceName, form]);
 
   const handleOverwriteKSpace = async (values: KSpaceFormValues) => {
-    if (!editingKSpaceName) return;
     const kspace = { tid: genTID(), ...values };
     await overwriteKSpace({
       kspace: kspace,
@@ -118,7 +115,7 @@ export default function KSpaceSettings() {
   };
 
   const handleEditClick = (spaceName?: string) => {
-    setEditingKSpace(spaceName);
+    setEditingKSpace(spaceName ?? null);
     setIsDialogOpen(true);
   };
 
