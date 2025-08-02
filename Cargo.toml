@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
-members = ["backend/core",  "server", "tauri/src-tauri"]
+members = ["backend/core", "server", "tauri/src-tauri"]
+exclude = ["backend/chin-tools"]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "rt"] }
@@ -14,7 +15,7 @@ incremental = true # Compile your binary in smaller steps.
 
 [profile.release]
 codegen-units = 1 # Allows LLVM to perform better optimization.
-lto = true # Enables link-time-optimizations.
-opt-level = "s" # Prioritizes small binary size. Use `3` if you prefer speed.
-panic = "abort" # Higher performance by disabling panic handlers.
-strip = true # Ensures debug symbols are removed.
+lto = true        # Enables link-time-optimizations.
+opt-level = "s"   # Prioritizes small binary size. Use `3` if you prefer speed.
+panic = "abort"   # Higher performance by disabling panic handlers.
+strip = true      # Ensures debug symbols are removed.

@@ -56,9 +56,9 @@ uuid = "1.11.0"
 
 lazy-regex = "3.4.1"
 
-chin-tools = { path = "../../../chin-tools/crates/chin-tools" }
-chin-sql = { path = "../../../chin-tools/crates/chin-sql" }
-actor-sqlite = { path = "../../../chin-tools/crates/actor-sqlite" }
+chin-tools = { path = "../chin-tools/crates/chin-tools" }
+chin-sql = { path = "../chin-tools/crates/chin-sql" }
+actor-sqlite = { path = "../chin-tools/crates/actor-sqlite" }
 
 
 anyhow = { version = "1", features = ["backtrace"] }
