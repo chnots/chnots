@@ -20,20 +20,37 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10
+
+      - name: Setup Java
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+
+      - name: Setup Android SDK
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        run: sdkmanager "ndk;27.0.11902837"
+
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: aarch64-linux-android, x86_64-linux-android, stable-x86_64-unknown-linux-gnu
 
-      - name: install dependencies (ubuntu only)
+      - name: install ubuntu dependencies
         if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
         run: |
           sudo apt-get update
@@ -50,5 +67,16 @@ jobs:
       - name: build-server
         run: make build-server
         
-      - name: tauri build
-        run: make build-tauri-desktop 
+      # - name: tauri build
+      #   run: make build-tauri-desktop 
+
+      # - name: setup Android signing
+      #   if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+      #   run: |
+      #     cd ./tauri/src-tauri/gen/android
+      #     echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > keystore.properties
+      #     echo "password=${{ secrets.ANDROID_KEY_PASSWORD }}" >> keystore.properties
+      #     base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
+      #     echo "storeFile=$RUNNER_TEMP/keystore.jks" >> keystore.properties
+      #     echo "Keystore properties created."
+      #     cd ../../../.. # Go back to root
