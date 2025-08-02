@@ -90,3 +90,10 @@ jobs:
         run: make build-tauri-android
         env:
           NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
+        with:
+          name: chnot.apk
+          path: tauri/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+      
+      
