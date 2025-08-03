@@ -25,7 +25,7 @@ build-web:
 	cd $(WEB_DIR) && pnpm install && pnpm run build
 
 build-server:
-	test -f web-dist/index.html && cd $(SERVER_DIR) && cargo build 
+	test -f web-dist/index.html && cd $(SERVER_DIR) && cargo build --release
 
 build-tauri-desktop:
 	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri build
