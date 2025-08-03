@@ -75,40 +75,38 @@ jobs:
         run: |
           make build-server 
 
-      # - name: tauri build
-      #   run: make build-tauri-desktop 
-      # - name: setup Android signing
-      #   if: matrix.platform == 'ubuntu-latest' # This must match the platform 
-      #   run: |
-      #     cd ./tauri/src-tauri/gen/android
-      #     echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > key.properties
-      #     echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> key.properties
-      #     echo "storePassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> key.properties
-      #     base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
-      #     echo "storeFile=$RUNNER_TEMP/keystore.jks" >> key.properties
-      #     echo "key.properties created."
-      #     cd ../../../.. # Go back to root
+      - name: tauri build
+        run: make build-tauri-desktop 
+      - name: setup Android signing
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        run: |
+          cd ./tauri/src-tauri/gen/android
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> key.properties
+          echo "storePassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> key.properties
+          base64 -d <<< "${{ secrets.ANDROID_KEY_BASE64 }}" > $RUNNER_TEMP/keystore.jks
+          echo "storeFile=$RUNNER_TEMP/keystore.jks" >> key.properties
+          echo "key.properties created."
+          cd ../../../.. # Go back to root
 
-      # - name: Build tauri android
-      #   if: matrix.platform == 'ubuntu-latest' # This must match the platform 
-      #   run: make build-tauri-android
-      #   env:
-      #     NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
-      # - uses: actions/upload-artifact@v4
-      #   if: matrix.platform == 'ubuntu-latest' # This must match the platform
-      #   with:
-      #     name: chnot.apk
-      #     path: tauri/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+      - name: Build tauri android
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        run: make build-tauri-android
+        env:
+          NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
 
       - name: prepare for release(linux)
         if: matrix.platform == 'ubuntu-latest' # This must match the platform 
         run: |
-          mv target/release/chnots-server ./release/chnot-server-gnu_linux-${{ runner.arch }}-0.0.2
+          mv target/release/chnots-server ./release/chnot-server-0.0.2-gnu_linux-${{ runner.arch }}
+          mv tauri/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk ./release/Chnots-0.0.2-universal.apk
+          find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \; 
 
       - name: prepare for release(windows)
         if: matrix.platform == 'windows-latest' # This must match the platform 
         run: |
-          mv target/release/chnots-server.exe ./release/chnot-server-windows-${{ runner.arch }}-0.0.2.exe
+          mv target/release/chnots-server.exe ./release/chnot-server-0.0.2-windows-${{ runner.arch }}.exe
+          find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \; 
 
       - name: Upload scheduler binary
         uses: softprops/action-gh-release@v2
