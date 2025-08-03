@@ -118,4 +118,4 @@ jobs:
         if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
         uses: softprops/action-gh-release@v2
         with:
-          ./release/*
+          files: ./release/*
