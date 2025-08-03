@@ -118,4 +118,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ./release/*
-        tag_name: 0.0.1
+          tag_name: 0.0.1
