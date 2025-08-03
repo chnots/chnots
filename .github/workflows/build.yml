@@ -106,7 +106,8 @@ jobs:
         if: matrix.platform == 'windows-latest' # This must match the platform 
         run: |
           mv target/release/chnots-server.exe ./release/chnot-server-0.0.2-windows-${{ runner.arch }}.exe
-          find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \; 
+          find ./target -name '*.exe' -exec mv -t ./release {} \; 
+          find ./target -name '*.msi' -exec mv -t ./release {} \; 
 
       - name: Upload scheduler binary
         uses: softprops/action-gh-release@v2
