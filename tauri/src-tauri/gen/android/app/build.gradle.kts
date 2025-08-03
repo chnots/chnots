@@ -22,7 +22,7 @@ android {
     compileSdk = 34
     namespace = "org.codeberg.wangzh.chnots"
     defaultConfig {
-        manifestPlaceholders["usesCleartextTraffic"] = "false"
+        manifestPlaceholders["usesCleartextTraffic"] = "true"
         applicationId = "org.codeberg.wangzh.chnots"
         minSdk = 24
         targetSdk = 34
