@@ -111,7 +111,6 @@ jobs:
           mv target/release/chnots-server.exe ./release/chnot-server-windows-${{ runner.arch }}-0.0.2.exe
 
       - name: Upload scheduler binary
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
         uses: softprops/action-gh-release@v2
         with:
           files: ./release/*
