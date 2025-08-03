@@ -105,9 +105,9 @@ jobs:
       - name: prepare for release(windows)
         if: matrix.platform == 'windows-latest' # This must match the platform 
         run: |
-          mv target/release/chnots-server.exe ./release/chnot-server-0.0.2-windows-${{ runner.arch }}.exe
-          find ./target -name '*.exe' -exec mv -t ./release {} \; 
-          find ./target -name '*.msi' -exec mv -t ./release {} \; 
+          mv target/release/chnots-server.exe       ./release/chnot-server-0.0.2-windows-${{ runner.arch }}.exe
+          mv target/release/bundle/msi/Chnots*msi   ./release/
+          mv target/release/bundle/nsis/Chnots*exe  ./release/
 
       - name: Upload scheduler binary
         uses: softprops/action-gh-release@v2
