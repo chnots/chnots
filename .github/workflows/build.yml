@@ -20,19 +20,6 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set env on push
-        if: github.event_name == 'push'
-        run: |
-          echo "INPUT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-          # echo "INPUT_TAG=$(git tag --points-at HEAD)" >> $GITHUB_ENV
-          echo "INPUT_TAG=v0.0.1" >> $GITHUB_ENV
-
-      - name: Set env on trigger
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "INPUT_SHA=${{ github.event.inputs.sha }}" >> $GITHUB_ENV
-          echo "INPUT_TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
     
       - name: setup node
         uses: actions/setup-node@v4
@@ -87,7 +74,7 @@ jobs:
       - name: build-server
         run: |
           make build-server 
-          mv target/release/chnots-server ./release/chnot-server-0.0.1
+
       # - name: tauri build
       #   run: make build-tauri-desktop 
       # - name: setup Android signing
@@ -113,9 +100,19 @@ jobs:
       #     name: chnot.apk
       #     path: tauri/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
 
+      - name: prepare for release(linux)
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        run: |
+          mv target/release/chnots-server ./release/chnot-server-gnu_linux-${{ runner.arch }}-0.0.2
+
+      - name: prepare for release(windows)
+        if: matrix.platform == 'windows-latest' # This must match the platform 
+        run: |
+          mv target/release/chnots-server.exe ./release/chnot-server-windows-${{ runner.arch }}-0.0.2.exe
+
       - name: Upload scheduler binary
         if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
         uses: softprops/action-gh-release@v2
         with:
           files: ./release/*
-          tag_name: 0.0.1
+          tag_name: 0.0.2
