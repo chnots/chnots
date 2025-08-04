@@ -58,23 +58,23 @@ const RecordAssistant = ({
     >
       <div className="flex flex-col">
         {reasoning_content && (
-          <ReactMarkdown
+          <div
             className={
               "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"
             }
-            remarkPlugins={[remarkGfm]}
           >
-            {reasoning_content}
-          </ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {reasoning_content}
+            </ReactMarkdown>
+          </div>
         )}
-        <ReactMarkdown
+        <div
           className={
             "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
           }
-          remarkPlugins={[remarkGfm]}
         >
-          {content}
-        </ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        </div>
       </div>
     </RecordFrame>
   );
