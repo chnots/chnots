@@ -1,6 +1,7 @@
 WEB_DIST = web-dist
 WEB_DIR = web
 SERVER_DIR = server
+TOOLS_DIR = tools
 
 run-web:
 	cd $(WEB_DIR) && pnpm install && pnpm run dev
@@ -13,6 +14,10 @@ run-server-postgres:
 
 init:
 	git submodule update --init --recursive
+	echo $(TOOLS_DIR)/_impl/git-pre-commit >> .git/hooks/pre-commit
+	chmod a+x .git/hooks/pre-commit
+	echo $(TOOLS_DIR)/_impl/git-post-commit >> .git/hooks/post-commit
+	chmod a+x .git/hooks/post-commit
 
 sync-struct:  
 	cargo install cargo-expand
