@@ -1,30 +1,40 @@
 [package]
 name = "chnots-tauri"
-version = "0.1.0"
+version = "0.0.1"
 description = "Chnots"
-authors = ["org.codeberg.wangzh"]
+authors = [ "org.codeberg.wangzh",]
 license = ""
 repository = ""
 edition = "2021"
 rust-version = "1.88.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 name = "app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
-[build-dependencies]
-tauri-build = { version = "2.3.0", features = [] }
+crate-type = [ "staticlib", "cdylib", "rlib",]
 
 [dependencies]
-serde_json = { workspace = true }
-serde = { workspace = true }
-log = { workspace = true }
-tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-log = "2"
-chnots-core = { path = "../../backend/core", default-features = false, features = [
-    "tauri",
-] }
 tauri-plugin-fs = "2"
 tauri-plugin-http = "2"
+
+[build-dependencies.tauri-build]
+version = "2.3.0"
+features = []
+
+[dependencies.serde_json]
+workspace = true
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.log]
+workspace = true
+
+[dependencies.tauri]
+version = "2"
+features = [ "devtools",]
+
+[dependencies.chnots-core]
+path = "../../backend/core"
+default-features = false
+features = [ "tauri",]
