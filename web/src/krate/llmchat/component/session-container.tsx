@@ -107,7 +107,7 @@ const SessionContainer = ({
         session: session,
       });
     },
-    [setSessionAndRecs]
+    [setSessionAndRecs],
   );
 
   useEffect(() => {
@@ -182,7 +182,7 @@ const SessionContainer = ({
         setResponseId(genTID());
       }
     },
-    [sessionAndRecs]
+    [sessionAndRecs],
   );
 
   const appendUserMsg = useCallback(
@@ -204,7 +204,7 @@ const SessionContainer = ({
         return false;
       }
     },
-    [sessionAndRecs, setTriggerAnswer]
+    [sessionAndRecs, setTriggerAnswer],
   );
 
   const onScroll = useCallback(() => {
@@ -250,6 +250,7 @@ const SessionContainer = ({
                       <RecordUser record={record} key={record.otid} />
                     ) : (
                       <RecordAssistant
+                        timestamp={new Date(record.otid / 1e3).toISOString()}
                         {...record}
                         key={record.otid}
                         onRegenerate={

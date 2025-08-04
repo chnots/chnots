@@ -30,7 +30,7 @@ const RecordFrame = ({
   justifyEnd,
 }: {
   name?: string;
-  timestamp?: TID;
+  timestamp?: string;
   limitHeight?: boolean;
   justifyEnd?: boolean;
   onCopy?: () => void;
@@ -48,21 +48,21 @@ const RecordFrame = ({
   }, []);
 
   const [limitHeight, setLimitHeight] = useState<boolean | undefined>(
-    initLimitHeight
+    initLimitHeight,
   );
 
   return (
     <div
       className={clsx(
         "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-8",
-        justifyEnd && "justify-end"
+        justifyEnd && "justify-end",
       )}
     >
       {logo && <>{logo}</>}
       <div className={clsx("flex-col")}>
         <div className="text-gray-500 text-xs space-x-2">
           <span>{name}</span>
-          <span>{timestamp?.toLocaleString() ?? "Now"}</span>
+          <span>{timestamp ?? "Now"}</span>
         </div>
         {limitHeight != undefined && limitHeight ? (
           <div className={"max-h-160 overflow-hidden"}>{children}</div>

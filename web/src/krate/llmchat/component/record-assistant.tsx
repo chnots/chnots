@@ -14,10 +14,11 @@ const RecordAssistant = ({
   reasoning_content,
   content,
   logo,
-  otid,
+  timestamp,
 }: {
   onRegenerate?: () => void;
   logo?: string;
+  timestamp: string;
 } & LLMChatRecord) => {
   const { bots, templates } = useLLMChatStore();
 
@@ -49,7 +50,7 @@ const RecordAssistant = ({
   return (
     <RecordFrame
       name={bt?.name ?? "A Bot"}
-      timestamp={otid}
+      timestamp={timestamp}
       logo={svgLogo}
       limitHeight={role === "system" ? true : undefined}
       onRegenerate={onRegenerate}

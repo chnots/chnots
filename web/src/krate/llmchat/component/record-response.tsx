@@ -11,7 +11,7 @@ import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
-import { genTID, omit_tid_never } from "@/lib/id_util";
+import { genTID, omit_tid_never, TID } from "@/lib/id_util";
 
 export const RecordAnswering = ({
   containerSession,
@@ -31,6 +31,7 @@ export const RecordAnswering = ({
   onEnd: (record: LLMChatRecord) => void;
 }) => {
   const savedStateRef = useRef<ResponseState>(undefined);
+  const otid = useRef<TID>(genTID());
 
   if (containerSession.records.length <= 0) {
     return;
@@ -116,12 +117,13 @@ export const RecordAnswering = ({
         logo={bot.svg_logo}
         role_id={bot.otid}
         onRegenerate={onRegenerate}
-        otid={genTID()}
+        otid={otid.current}
         session_otid={response.sessionId}
         content={response.content}
         reasoning_content={response.reasoningContent}
         role={"response-assistant"}
         tid={genTID()}
+        timestamp={new Date(otid.current / 1e3).toISOString()}
       />
       <div className="flex justify-center">
         <KButton
