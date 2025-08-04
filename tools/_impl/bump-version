@@ -20,7 +20,7 @@ import os
 
 source_path = Path(__file__).resolve()
 # Project root dir
-os.chdir(source_path.parent.parent)
+os.chdir(source_path.parent.parent.parent)
 
 
 def change_json_value(fp: str, change_func):
