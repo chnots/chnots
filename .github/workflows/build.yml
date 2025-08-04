@@ -1,4 +1,4 @@
-name: 'publish'
+name: "publish"
 
 on: [push]
 
@@ -12,15 +12,15 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - platform: 'ubuntu-latest' # for Tauri v1 you could replace this with ubuntu-20.04.
-            args: ''
-          - platform: 'windows-latest'
-            args: ''
+          - platform: "ubuntu-latest" # for Tauri v1 you could replace this with ubuntu-20.04.
+            args: ""
+          - platform: "windows-latest"
+            args: ""
 
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
-    
+
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -31,28 +31,28 @@ jobs:
           version: 10
 
       - name: Setup Java
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         uses: actions/setup-java@v4
         with:
-            distribution: 'zulu'
-            java-version: '17'
+          distribution: "zulu"
+          java-version: "17"
 
       - name: Setup Android SDK
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         uses: android-actions/setup-android@v3
 
       - name: Install NDK
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: sdkmanager "ndk;29.0.13599879"
 
       - name: install Rust stable(linux)
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android, x86_64-linux-android, x86_64-unknown-linux-gnu
-          
+
       - name: install Rust stable(windows)
-        if: matrix.platform == 'windows-latest' # This must match the platform 
+        if: matrix.platform == 'windows-latest' # This must match the platform
         uses: dtolnay/rust-toolchain@stable
 
       - name: install ubuntu dependencies
@@ -63,7 +63,7 @@ jobs:
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
-      - name: initialize 
+      - name: initialize
         run: |
           make init
           mkdir ./release
@@ -73,12 +73,12 @@ jobs:
 
       - name: build-server
         run: |
-          make build-server 
+          make build-server
 
       - name: tauri build
-        run: make build-tauri-desktop 
+        run: make build-tauri-desktop
       - name: setup Android signing
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: |
           cd ./tauri/src-tauri/gen/android
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" > key.properties
@@ -90,20 +90,20 @@ jobs:
           cd ../../../.. # Go back to root
 
       - name: Build tauri android
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: make build-tauri-android
         env:
           NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
 
       - name: prepare for release(linux)
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform 
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: |
           mv target/release/chnots-server ./release/chnot-server-0.0.2-gnu_linux-${{ runner.arch }}
-          mv tauri/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk ./release/Chnots-0.0.2-universal.apk
-          find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \; 
+          find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \;
+          find ./tauri/src-tauri/gen/android/app/build/outputs/ -type f \( -name "*apk" -o -name "*aab" \) -exec sh -c 'mv {} "$(echo {} | awk -F / "{print \$NF}"|sed "s/^app/Chnots-${{ steps.get_version.outputs.version }}/g")"' \;
 
       - name: prepare for release(windows)
-        if: matrix.platform == 'windows-latest' # This must match the platform 
+        if: matrix.platform == 'windows-latest' # This must match the platform
         run: |
           mv target/release/chnots-server.exe       ./release/chnot-server-0.0.2-windows-${{ runner.arch }}.exe
           mv target/release/bundle/msi/Chnots*msi   ./release/
