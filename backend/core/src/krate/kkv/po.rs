@@ -1,29 +1,37 @@
 use crate::{
-    impl_otid_support, mapper::db::{KDbRow, KDbRowBehavier}
+    enum_common_funcs, impl_otid_support,
+    mapper::db::{KDbRow, KDbRowBehavier},
 };
+use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use strum::{EnumString, IntoStaticStr};
 
 use chin_sql::{
-    GenerateTableSchema, SqlValue,
     str_type::{Text, Varchar},
     time_type::TID,
+    GenerateTableSchema, SqlValue,
 };
 
-#[derive(Debug, Clone, Serialize, Copy, Deserialize, EnumString, IntoStaticStr)]
+#[derive(Debug, Clone, Copy, Sequence)]
 pub enum KKVType {
-    #[strum(serialize = "k_space_info")]
-    #[serde(rename = "k_space_info")]
     KSpaceInfo,
-    #[strum(serialize = "def")]
-    #[serde(rename = "def")]
     Default,
 }
 
+impl KKVType {
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            KKVType::KSpaceInfo => "k_space_info",
+            KKVType::Default => "def",
+        }
+    }
+}
+
+enum_common_funcs!(KKVType);
+
 impl<'a> From<KKVType> for SqlValue<'a> {
     fn from(val: KKVType) -> Self {
-        let s: &'static str = val.into();
+        let s: &'static str = val.as_static_str();
         SqlValue::Str(Cow::Borrowed(s))
     }
 }
@@ -55,7 +63,7 @@ pub struct KKV {
     pub value: Text,
 }
 
-impl_otid_support!{KKV}
+impl_otid_support! {KKV}
 
 /// only for cache, we do not sync this.
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]

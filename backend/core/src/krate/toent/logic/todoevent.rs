@@ -1,16 +1,17 @@
 use std::str::FromStr;
 
+use crate::enum_common_funcs;
+
 use super::PossibleScore;
+use anyhow::Context;
+use enum_iterator::{all, Sequence};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use serde::{Deserialize, Serialize, de};
+use serde::{de, Deserialize, Serialize};
 
 use super::{EventBuilder, RawInputSegs};
 
-use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
-
-#[derive(Clone, Copy, Debug, EnumString, AsRefStr, EnumIter, PartialEq)]
-#[strum(serialize_all = "UPPERCASE")]
+#[derive(Clone, Copy, Debug, PartialEq, Sequence)]
 pub(crate) enum TodoEvent {
     Todo,
     Doing,
@@ -19,30 +20,19 @@ pub(crate) enum TodoEvent {
     Cancel,
 }
 
-impl From<TodoEvent> for String {
-    fn from(val: TodoEvent) -> Self {
-        val.as_ref().to_string()
+impl TodoEvent {
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            TodoEvent::Todo => "TODO",
+            TodoEvent::Doing => "DOING",
+            TodoEvent::Wait => "WAIT",
+            TodoEvent::Done => "DONE",
+            TodoEvent::Cancel => "CANCEL",
+        }
     }
 }
 
-impl Serialize for TodoEvent {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.as_ref())
-    }
-}
-
-impl<'de> Deserialize<'de> for TodoEvent {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let o: String = String::deserialize(deserializer)?;
-        TodoEvent::from_str(o.to_ascii_uppercase().as_str()).map_err(serde::de::Error::custom)
-    }
-}
+enum_common_funcs!(TodoEvent);
 
 #[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
 pub(crate) enum TodoCreateType {
@@ -75,7 +65,7 @@ impl<'de> Deserialize<'de> for TodoCreateType {
 impl EventBuilder for TodoEvent {
     fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
         let mut result = vec![];
-        for ele in TodoEvent::iter() {
+        for ele in all::<TodoEvent>() {
             let enum_str = ele.as_ref();
             let enum_len = enum_str.len();
             let upper_input = gt.original.to_uppercase();
@@ -102,7 +92,7 @@ impl EventBuilder for TodoEvent {
 
     fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
         match gt.spans.first() {
-            Some(s) => Ok(Self::from_str(s.text.to_uppercase().as_str())?),
+            Some(s) => Ok(Self::try_from(s.text.to_uppercase().as_str())?),
             None => {
                 anyhow::bail!("There should at least one seg to deserialize TodoEnum")
             }

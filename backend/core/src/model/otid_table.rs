@@ -1,7 +1,7 @@
+use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
-use strum::EnumIter;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, EnumIter)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
 pub enum OtidTableEnum {
     ChnotRecord,
     ChnotMetadata,

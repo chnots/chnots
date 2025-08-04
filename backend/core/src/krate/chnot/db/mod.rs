@@ -74,7 +74,7 @@ fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
         todo_event: {
             let opt: Option<String> = row.try_get("todo_event")?;
             match opt {
-                Some(opt) => Some(TodoEvent::from_str(opt.as_str())?),
+                Some(opt) => Some(TodoEvent::try_from(opt.as_str())?),
                 None => None,
             }
         },
@@ -173,7 +173,7 @@ impl ChnotMapper for KDb {
                 }),
                 Wheres::transform(&req.kinds, |k| {
                     if !k.is_empty() {
-                        Wheres::r#in("t.kind", k.iter().map(|e| e.to_string()).collect())
+                        Wheres::r#in("t.kind", k.iter().map(|e| e.as_static_str()).collect())
                     } else {
                         Wheres::None
                     }
@@ -389,7 +389,7 @@ impl TryFrom<&KDbRow> for ChnotRecord {
             todo_event: {
                 let opt: Option<String> = value.try_get(ChnotRecord::TODO_EVENT)?;
                 match opt {
-                    Some(opt) => Some(TodoEvent::from_str(opt.as_str())?),
+                    Some(opt) => Some(TodoEvent::try_from(opt.as_str())?),
                     None => None,
                 }
             },

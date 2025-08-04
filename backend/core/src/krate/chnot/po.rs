@@ -1,8 +1,9 @@
-use chin_sql::GenerateTableSchema;
-use chin_sql::SqlValue;
+use anyhow::Context;
 use chin_sql::str_type::Text;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
+use chin_sql::GenerateTableSchema;
+use chin_sql::SqlValue;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -10,12 +11,11 @@ use chin_sql::time_type::TID;
 /// but the name "knot" is too repetitive, so I made a change.
 ///
 use chrono::{DateTime, FixedOffset};
+use enum_iterator::all;
+use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
-use strum::AsRefStr;
-use strum::Display;
-use strum::IntoStaticStr;
-use strum_macros::EnumString;
 
+use crate::enum_common_funcs;
 use crate::impl_otid_support;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::KDbRow;
@@ -35,8 +35,6 @@ pub struct ChnotRecord {
     pub content: Text,
     pub archor: bool,
 }
-
-
 
 impl_otid_support! {ChnotRecord}
 
@@ -98,30 +96,29 @@ impl AsRef<str> for ChnotTag {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display, AsRefStr, IntoStaticStr)]
+#[derive(Debug, Clone, Sequence)]
 pub enum ChnotKind {
-    #[strum(serialize = "mdwt")]
-    #[serde(rename = "mdwt")]
     MarkdownWithToent,
-
-    #[strum(serialize = "exdrv1")]
-    #[serde(rename = "exdrv1")]
     ExcalidrawV1,
-
-    #[strum(serialize = "resov1")]
-    #[serde(rename = "resov1")]
     KFileV1,
-
-    #[strum(serialize = "ktabv1")]
-    #[serde(rename = "ktabv1")]
     KTabV1,
-
-    #[strum(serialize = "llm_chat")]
-    #[serde(rename = "llm_chat")]
     LLMChat,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, EnumString, Display)]
+impl ChnotKind {
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            ChnotKind::MarkdownWithToent => "mdwt",
+            ChnotKind::ExcalidrawV1 => "exdrv1",
+            ChnotKind::KFileV1 => "resov1",
+            ChnotKind::KTabV1 => "ktabv1",
+            ChnotKind::LLMChat => "llm_chat",
+        }
+    }
+}
+enum_common_funcs!(ChnotKind);
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChnotTagType {
     Dir = 99,
     ParentDir = 98,
@@ -136,7 +133,7 @@ impl From<ChnotTagType> for SqlValue<'_> {
 
 impl From<ChnotKind> for SqlValue<'_> {
     fn from(value: ChnotKind) -> Self {
-        SqlValue::Str(std::borrow::Cow::Borrowed(value.into()))
+        SqlValue::Str(std::borrow::Cow::Borrowed(value.as_static_str()))
     }
 }
 

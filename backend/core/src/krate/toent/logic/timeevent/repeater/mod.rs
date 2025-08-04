@@ -1,5 +1,5 @@
 use chin_tools::AResult;
-use strum::AsRefStr;
+use enum_iterator::Sequence;
 
 pub(crate) mod endconditon;
 pub(crate) mod interval;
@@ -7,20 +7,32 @@ pub(crate) mod timers;
 
 use self::{endconditon::EndCondition, interval::TimeInterval};
 use super::PossibleScore;
-use crate::krate::toent::{EventBuilder, RawInputSegs};
+use crate::{
+    enum_common_funcs,
+    krate::toent::{EventBuilder, RawInputSegs},
+};
 
 use super::starts_any;
 
-#[derive(Clone, Debug, Default, AsRefStr, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Sequence)]
 pub(crate) enum RepeatType {
     #[default]
-    #[strum(serialize = ".")]
     Once,
-    #[strum(serialize = "*")]
     RepeatEvent,
-    #[strum(serialize = ".*")]
     RepeatTodo,
 }
+
+impl RepeatType {
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            RepeatType::Once => ".",
+            RepeatType::RepeatEvent => "*",
+            RepeatType::RepeatTodo => ".*",
+        }
+    }
+}
+
+enum_common_funcs!(RepeatType);
 
 impl TryFrom<Option<&str>> for RepeatType {
     type Error = anyhow::Error;
