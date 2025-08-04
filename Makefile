@@ -36,4 +36,4 @@ build-tauri-desktop:
 	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri build
 
 build-tauri-android:
-	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build -v
+	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build --split-per-abi
