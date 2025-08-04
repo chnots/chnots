@@ -1,34 +1,28 @@
 {
-    "productName": "Chnots",
-    "version": "0.1.0",
-    "identifier": "org.codeberg.wangzh.chnots",
-    "build": {
-        "frontendDist": "../../web-dist"
-    },
-    "app": {
-        "windows": [
-            {
-                "title": "Chnots",
-                "width": 800,
-                "height": 600,
-                "fullscreen": false,
-                "resizable": true,
-                "focus": true,
-                "titleBarStyle": "Overlay",
-                "decorations": false
-            }
-        ],
-        "security": {
-            "csp": null
-        }
-    },
-    "bundle": {
-        "active": true,
-        "targets": "all",
-        "icon": [
-            "icons/icon.png",
-            "icons/icon.icns",
-            "icons/icon.ico"
-        ]
+  "productName": "Chnots",
+  "version": "0.1.0",
+  "identifier": "org.codeberg.wangzh.chnots",
+  "build": {
+    "frontendDist": "../../web-dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Chnots",
+        "width": 800,
+        "height": 600,
+        "fullscreen": false,
+        "resizable": true,
+        "focus": true
+      }
+    ],
+    "security": {
+      "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"]
+  }
 }
