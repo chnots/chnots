@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+CSDIR="$(dirname "$(realpath "$0")")"
+PROJECT_DIR="$(git rev-parse --show-toplevel)"
+
+cd "$PROJECT_DIR"
+
+try_bump_version() {
+    local ver
+    echo "-> bump version"
+    ver="$(cat "$(git rev-parse --git-path COMMIT_EDITMSG)" | grep -v "^#" | grep -Eo 'bump to v?[0-9]*\.[0-9]*\.[0-9]*' | sed 's/bump to //g' | head -1)"
+    if [ -n "$ver" ]; then
+        git tag "v$ver"
+    fi
+}
+
+git update-index -g
+try_bump_version
