@@ -8,7 +8,7 @@ cd "$PROJECT_DIR"
 
 files=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
 
-[ -z "$files" ] && return 0
+[ -z "$files" ] && exit 0
 
 # Prettify all selected files
 if [ -f  "$PROJECT_DIR/web/node_modules/.bin/prettier" ]; then
