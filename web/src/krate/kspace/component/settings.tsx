@@ -127,7 +127,6 @@ export default function KSpaceSettings() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">KSpace Settings</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
@@ -206,7 +205,7 @@ export default function KSpaceSettings() {
                             const newManagers = checked
                               ? [...managers, manager.name]
                               : managers.filter(
-                                  (name) => name !== manager.name
+                                  (name) => name !== manager.name,
                                 );
 
                             form.setValue("managers", newManagers);

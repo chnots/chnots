@@ -6,6 +6,7 @@ interface State {
   onSearch: boolean;
   showSidebar: boolean;
   globalLog: string;
+  showSettings: boolean;
 }
 
 const getDefaultState = (): State => {
@@ -13,6 +14,7 @@ const getDefaultState = (): State => {
     onSearch: false,
     showSidebar: true,
     globalLog: "",
+    showSettings: false,
   };
 };
 
@@ -32,6 +34,11 @@ export const useCommonStore = create(
     getNaviSearch: () => {
       return get().onSearch;
     },
+    toggleSettings: () => {
+      set((prev) => {
+        return { ...prev, showSettings: !prev.showSettings };
+      });
+    },
     appendLog: (log: string) => {
       set((prev) => {
         return {
@@ -45,7 +52,7 @@ export const useCommonStore = create(
         };
       });
     },
-  }))
+  })),
 );
 
 export type DbCache<T> = {
@@ -57,4 +64,3 @@ export type DbCache<T> = {
   hasNextPage: boolean;
   dbCache: Map<TID, T>;
 };
-

@@ -21,9 +21,10 @@ import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
 import { useShallow } from "zustand/react/shallow";
-import { toast } from "sonner";
 import { ChnotKindSelect } from "./chnot-kind-select";
 import { useCommonStore } from "@/common/store";
+import { NavLink } from "react-router-dom";
+import { RoutePaths } from "@/router";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotStore(
@@ -32,7 +33,7 @@ const TagsView = () => {
         setTagsInset: store.setTagsInset,
         tags: store.tags,
       };
-    })
+    }),
   );
 
   return (
@@ -57,13 +58,7 @@ const TagsView = () => {
   );
 };
 
-const ChnotSidebar = ({
-  setShowSettings,
-  showSettings,
-}: {
-  setShowSettings: (showSettings: boolean) => void;
-  showSettings: boolean;
-}) => {
+const ChnotSidebar = () => {
   const {
     fetchMoreChnots,
     refreshChnots,
@@ -78,6 +73,7 @@ const ChnotSidebar = ({
 
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
+  const { toggleSettings, showSettings } = useCommonStore();
 
   const { currentKSpace, selectKSpace, mkspaces } = useKSpaceStore((store) => {
     return {
@@ -110,7 +106,7 @@ const ChnotSidebar = ({
   return (
     <Sidebar>
       <SidebarHeader className="text-sm">
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <div className="flex align-center">
             <KSpaceSelect
               onSelect={function (kspace: string): void {
@@ -134,14 +130,11 @@ const ChnotSidebar = ({
             </Toggle>
           </div>
           <div>
-            <Toggle
-              onClick={() => {
-                setShowSettings(!showSettings);
-              }}
-              defaultPressed={showSettings}
-            >
-              <Icon.Settings />
-            </Toggle>
+            <NavLink to={RoutePaths.Settings} id={"Settings"}>
+              <div>
+                <Icon.Settings className="w-4 h-4 mx-2" />
+              </div>
+            </NavLink>
           </div>
         </div>
         <TagsView />

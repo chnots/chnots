@@ -15,6 +15,7 @@ import { genUID, TID } from "@/lib/id_util";
 import { ChnotKind } from "../po";
 import { useShallow } from "zustand/react/shallow";
 import Settings from "@/common/pages/settings-page";
+import { useCommonStore } from "@/common/store";
 
 /**
  * This component is only to improve performance, that is to say, when
@@ -22,7 +23,7 @@ import Settings from "@/common/pages/settings-page";
  *
  * @returns Chnot Editor Container
  */
-const MonoChnot = ({ showSettings }: { showSettings: boolean }) => {
+const MonoChnot = () => {
   const {
     curMetaId,
     getCurrentChnot,
@@ -38,7 +39,7 @@ const MonoChnot = ({ showSettings }: { showSettings: boolean }) => {
         appendChnot: store.overwriteChnotCache,
         kinds: store.kinds,
       };
-    })
+    }),
   );
 
   const [comKey, setComKey] = useState<string>(genUID());
@@ -61,14 +62,12 @@ const MonoChnot = ({ showSettings }: { showSettings: boolean }) => {
       }
       appendChnot(chnot);
     },
-    [curMetaId]
+    [curMetaId],
   );
 
   const viewModeRef = useRef(false);
 
-  return showSettings ? (
-    <Settings />
-  ) : (
+  return (
     <ChnotEditorProvider
       key={comKey}
       props={{
@@ -109,7 +108,6 @@ const MonoChnot = ({ showSettings }: { showSettings: boolean }) => {
  * @returns Chnot Page
  */
 const ChnotPage = () => {
-  const [showSettings, setShowSettings] = useState<boolean>(false);
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <SidebarProvider
@@ -120,12 +118,9 @@ const ChnotPage = () => {
           } as React.CSSProperties
         }
       >
-        <ChnotSidebar
-          setShowSettings={setShowSettings}
-          showSettings={showSettings}
-        />
+        <ChnotSidebar />
         <SidebarInset className="min-w-0">
-          <MonoChnot showSettings={showSettings} />
+          <MonoChnot />
         </SidebarInset>
       </SidebarProvider>
     </div>
