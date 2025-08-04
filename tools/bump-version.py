@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+# https://stackoverflow.com/questions/65905017/how-to-edit-and-save-toml-content-in-python
+# https://stackoverflow.com/questions/21035762/python-read-json-file-and-modify
+
+import json
+import toml
+from pathlib import Path
+import argparse
+import os
+
+
+source_path = Path(__file__).resolve()
+source_dir = source_path.parent
+os.chdir(source_dir.parent)
+
+
+def change_json_value(fp: str, change_func):
+    with open(fp, 'r+') as f:
+        data = json.load(f)
+        change_func(data)
+        f.seek(0)        # <--- should reset file position to the beginning.
+        json.dump(data, f, indent=2)
+        f.truncate()     # remove remaining part
+
+
+def change_toml_value(fp: str, change_func):
+    # To use the dump function, you need to open the file in 'write' mode
+    # It did not work if I just specify file location like in load
+    with open(fp,'r+') as f:
+        data = toml.load(fp)
+        change_func(data)
+        f.seek(0)        # <--- should reset file position to the beginning.
+        toml.dump(data, f)
+        f.truncate()     # remove remaining part
+
+def change_cargo_version(fp, version):
+    def chgver(data):
+        data["package"]["version"] = version
+    change_toml_value(fp, chgver)
+
+def change_js_version(fp, version):
+    def chgver(data):
+        data["version"] = version
+    change_json_value(fp, chgver)
+
+
+def main(ver):
+    change_cargo_version("backend/core/Cargo.toml", ver)
+    change_cargo_version("server/Cargo.toml", ver)
+    change_cargo_version("tauri/src-tauri/Cargo.toml", ver)
+    change_js_version("tauri/package.json", ver)
+    change_js_version("web/package.json", ver)
+    change_js_version("tauri/src-tauri/tauri.conf.json", ver)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--set-version", help="set app version",
+                    type=str, required=True)
+
+args = parser.parse_args()
+
+main(args.set_version)
