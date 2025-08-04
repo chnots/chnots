@@ -20,6 +20,8 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+      - id: get_version
+        uses: battila7/get-version-action@v2
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -100,7 +102,7 @@ jobs:
         run: |
           mv target/release/chnots-server ./release/chnot-server-${{ steps.get_version.outputs.version }}-gnu_linux-${{ runner.arch }}
           find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \;
-          find ./tauri/src-tauri/gen/android/app/build/outputs/ -type f \( -name "*apk" -o -name "*aab" \) -exec sh -c 'mv {} "$(echo {} | awk -F / "{print \$NF}"|sed "s/^app/Chnots-${{ steps.get_version.outputs.version }}/g")"' \;
+          find ./tauri/src-tauri/gen/android/app/build/outputs/ -type f \( -name "*apk" -o -name "*aab" \) -exec sh -c 'mv {} "./release/$(echo {} | awk -F / "{print \$NF}"|sed "s/^app/Chnots-${{ steps.get_version.outputs.version }}/g")"' \;
 
       - name: prepare for release(windows)
         if: matrix.platform == 'windows-latest' # This must match the platform
