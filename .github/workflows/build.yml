@@ -98,14 +98,14 @@ jobs:
       - name: prepare for release(linux)
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: |
-          mv target/release/chnots-server ./release/chnot-server-0.0.2-gnu_linux-${{ runner.arch }}
+          mv target/release/chnots-server ./release/chnot-server-${{ steps.get_version.outputs.version }}-gnu_linux-${{ runner.arch }}
           find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \;
           find ./tauri/src-tauri/gen/android/app/build/outputs/ -type f \( -name "*apk" -o -name "*aab" \) -exec sh -c 'mv {} "$(echo {} | awk -F / "{print \$NF}"|sed "s/^app/Chnots-${{ steps.get_version.outputs.version }}/g")"' \;
 
       - name: prepare for release(windows)
         if: matrix.platform == 'windows-latest' # This must match the platform
         run: |
-          mv target/release/chnots-server.exe       ./release/chnot-server-0.0.2-windows-${{ runner.arch }}.exe
+          mv target/release/chnots-server.exe       ./release/chnot-server-${{ steps.get_version.outputs.version }}-windows-${{ runner.arch }}.exe
           mv target/release/bundle/msi/Chnots*msi   ./release/
           mv target/release/bundle/nsis/Chnots*exe  ./release/
 
@@ -113,4 +113,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ./release/*
-          tag_name: 0.0.2
+          tag_name: ${{ steps.get_version.outputs.version }}
