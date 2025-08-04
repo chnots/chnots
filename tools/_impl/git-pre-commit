@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
 
 CSDIR="$(dirname "$(realpath "$0")")"
 PROJECT_DIR="$(git rev-parse --show-toplevel)"
@@ -9,7 +8,9 @@ echo "=> Project Dir: $PROJECT_DIR"
 
 try_bump_version() {
     local ver
+    cat "$(git rev-parse --git-path COMMIT_EDITMSG)" | grep -v "^#"
     ver="$(cat "$(git rev-parse --git-path COMMIT_EDITMSG)" | grep -v "^#" | grep -Eo 'bump to v?[0-9]*\.[0-9]*\.[0-9]*' | sed 's/bump to //g' | head -1)"
+
     if [ -n "$ver" ]; then
         echo "-> Bump version(pre-hook): $ver"
         "$PROJECT_DIR/tools/bump-version" --set-version "$ver"

@@ -2,33 +2,21 @@
 
 PROJECT_DIR="$(git rev-parse --show-toplevel)"
 
-cargo_fmt() {
-    echo "-> Cargo format"
-    cd "$PROJECT_DIR"
-    cargo fmt
-}
+echo "-> Format code"
+cd "$PROJECT_DIR"
 
-prettier_fmt() {
-    local files
 
-    echo "-> Frontend format"
-    cd "$PROJECT_DIR"
-    if [ ! -f  "$PROJECT_DIR/web/node_modules/.bin/prettier" ]; then
-        return
-    fi
+files=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
 
-    files=$(git diff --cached --name-only --diff-filter=ACMR | grep -v "rs$" | sed 's| |\\ |g')
-    
-    [ -z "$files" ] && return 0
+[ -z "$files" ] && return 0
 
-    # Prettify all selected files
+# Prettify all selected files
+if [ -f  "$PROJECT_DIR/web/node_modules/.bin/prettier" ]; then
+    echo "$files" | grep -v ".rs$" | xargs "$PROJECT_DIR/web/node_modules/.bin/prettier" --ignore-unknown --write
+fi
+echo "$files" | grep ".rs$" | xargs rustfmt 
 
-    echo "$files" | xargs "$PROJECT_DIR/web/node_modules/.bin/prettier" --ignore-unknown --write
+# Add back the modified/prettified files to staging
+echo "$files" | xargs git add
 
-    # Add back the modified/prettified files to staging
-    echo "$files" | xargs git add
-}
-cargo_fmt
-prettier_fmt
-
-echo "-> Formating Finished"
+echo "-> Format code finished"
