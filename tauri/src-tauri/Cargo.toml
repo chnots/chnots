@@ -1,6 +1,6 @@
 [package]
 name = "chnots-tauri"
-version = "0.0.1"
+version = "0.0.2"
 description = "Chnots"
 authors = [ "org.codeberg.wangzh",]
 license = ""
@@ -17,10 +17,6 @@ tauri-plugin-log = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-http = "2"
 tauri-plugin-opener = "2"
-
-[build-dependencies.tauri-build]
-version = "2.3.0"
-features = []
 
 [dependencies.serde_json]
 workspace = true
@@ -39,3 +35,7 @@ features = [ "devtools",]
 path = "../../backend/core"
 default-features = false
 features = [ "tauri",]
+
+[build-dependencies.tauri-build]
+version = "2.3.0"
+features = []
