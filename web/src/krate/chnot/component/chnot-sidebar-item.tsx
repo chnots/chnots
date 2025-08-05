@@ -30,7 +30,6 @@ import {
 } from "@/krate/kspace/component/kspace-select";
 import { ChnotKindIcon } from "./chnot-kind-icon";
 import { useShallow } from "zustand/react/shallow";
-import { KSpace } from "@/krate/kspace/po";
 import TodoLabel from "@/krate/toent/component/todo-label";
 
 const ChnotSidebarTagItem = React.forwardRef(
@@ -40,7 +39,7 @@ const ChnotSidebarTagItem = React.forwardRef(
       focused,
       onClick,
     }: { tag: string; focused?: boolean; onClick: () => void },
-    ref: ForwardedRef<HTMLLIElement>
+    ref: ForwardedRef<HTMLLIElement>,
   ) => {
     return (
       <SidebarMenuItem onClick={onClick} ref={ref}>
@@ -61,7 +60,7 @@ const ChnotSidebarTagItem = React.forwardRef(
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
-  }
+  },
 );
 
 ChnotSidebarTagItem.displayName = "ChnotTagListItem";
@@ -69,7 +68,7 @@ ChnotSidebarTagItem.displayName = "ChnotTagListItem";
 const ChnotSidebarItem = React.forwardRef(
   (
     { chnot, showKSpace }: { chnot: Chnot; showKSpace: boolean },
-    ref: ForwardedRef<HTMLLIElement>
+    ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const {
       setCurrentChnotMetaId,
@@ -84,7 +83,7 @@ const ChnotSidebarItem = React.forwardRef(
           getCurrentChnot: store.getCurrentChnot,
           validateChnotCache: store.validateChnotCache,
         };
-      })
+      }),
     );
 
     const onClick = (_: React.MouseEvent) => {
@@ -128,7 +127,7 @@ const ChnotSidebarItem = React.forwardRef(
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
             "hover:shadow-xs border",
-            isSelected ? "bg-background" : "bg-transparent border-transparent"
+            isSelected ? "bg-background" : "bg-transparent border-transparent",
           )}
           tabIndex={0}
           aria-label={`Navigate to ${title}`}
@@ -139,7 +138,7 @@ const ChnotSidebarItem = React.forwardRef(
               "text-muted-foreground group-hover:text-sidebar-accent-foreground",
               isSelected
                 ? "text-sidebar-accent-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
             )}
           >
             <ChnotKindIcon
@@ -176,7 +175,7 @@ const ChnotSidebarItem = React.forwardRef(
                 "text-foreground group-hover:text-sidebar-accent-foreground",
                 isSelected
                   ? "text-sidebar-accent-foreground"
-                  : "text-foreground"
+                  : "text-foreground",
               )}
               title={title}
             >
@@ -229,7 +228,7 @@ const ChnotSidebarItem = React.forwardRef(
         </DropdownMenu>
       </SidebarMenuItem>
     );
-  }
+  },
 );
 
 ChnotSidebarItem.displayName = "ChnotListItem";

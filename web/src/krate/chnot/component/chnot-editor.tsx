@@ -41,6 +41,7 @@ import { Chnot, ChnotOverwriteRecordReq } from "../dto";
 import useDebounce from "@/hooks/use-debounce";
 import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
+import { useSidebar } from "@/common/component/ui/sidebar";
 
 interface ChnotEditorProps {
   metaTid?: TID;
@@ -117,7 +118,7 @@ function createChnotStore(props: ChnotEditorProps) {
 }
 
 const ChnotEditorContext = createContext<StoreApi<ChnotEditorState> | null>(
-  null
+  null,
 );
 
 function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
@@ -127,7 +128,7 @@ function useChnotComStore<T>(selector: (state: ChnotEditorState) => T) {
     store!,
     useShallow((store) => {
       return selector(store);
-    })
+    }),
   );
 }
 
@@ -204,7 +205,7 @@ const ChnotSaver = () => {
       });
     },
     1000,
-    true
+    true,
   );
   useEffect(() => {
     if (!content) {
@@ -240,7 +241,13 @@ const ChnotSaver = () => {
   );
 };
 
-const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
+const ChnotStatusbar = ({
+  initialContent,
+  isMobile,
+}: {
+  initialContent: string;
+  isMobile: boolean;
+}) => {
   const {
     content,
     lefttop,
@@ -273,86 +280,88 @@ const ChnotTopbar = ({ initialContent }: { initialContent: string }) => {
         tags: store.tags,
         kinds: store.kinds,
       };
-    })
+    }),
   );
 
   return (
     <div className="w-full flex items-center border-b kc-basic-with-bdr px-3 justify-between text-xs align-middle">
       <div className="text-xs flex space-x-2 p-1 items-center">
-        {lefttop}
-        {onClickNewButton &&
-          (metaTid ? (
+        {isMobile ? <ChnotSaver /> : lefttop}
+        {metaTid ? (
+          <>
             <Button size="sm" onClick={() => onClickNewButton()}>
               <Icon.BadgePlus className="w-4 h-4" />
               <span>New</span>
             </Button>
-          ) : (
-            <Tabs defaultValue={chnotKind}>
-              <TabsList>
-                {(kinds && kinds.length > 0
-                  ? kinds
-                  : Object.values(ChnotKind)
-                ).map((e) => (
-                  <TabsTrigger
-                    key={e}
-                    onClick={() => {
-                      onSetKind(e);
-                    }}
-                    value={e}
-                  >
-                    <ChnotKindIcon className="w-4 h-4" kind={e} />
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          ))}
-        {metaTid && (
-          <div className="flex space-x-2">
-            <Toggle
-              onClick={() => {
-                onSetReadonly(!readonly);
-              }}
-              defaultPressed={readonly}
-            >
-              <Icon.Eye className="w-4 h-4" />
-            </Toggle>
-            {chnotKind !== ChnotKind.MarkdownWithToent && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"ghost"}>
-                    <Icon.NotebookText className="w-4 h-4" size={4} />
-                  </Button>
-                </PopoverTrigger>
+            <div className="flex space-x-2">
+              <Toggle
+                onClick={() => {
+                  onSetReadonly(!readonly);
+                }}
+                defaultPressed={readonly}
+              >
+                <Icon.Eye className="w-4 h-4" />
+              </Toggle>
+              {chnotKind !== ChnotKind.MarkdownWithToent && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant={"ghost"}>
+                      <Icon.NotebookText className="w-4 h-4" size={4} />
+                    </Button>
+                  </PopoverTrigger>
 
-                <PopoverAnchor>
-                  <PopoverContent
-                    className="PopoverContent z-10 rounded-md p-2 max-w-240 w-120 border"
-                    sideOffset={5}
-                  >
-                    <MarkdownEditor
-                      onContentChange={(content) => {
-                        if (metaTid) {
-                          onSetContent(content);
-                        } else {
-                          onSetContent(content + "\n" + (tags ?? ""));
-                        }
-                      }}
-                      height={200}
-                      content={content ?? initialContent}
-                      foldGutter={false}
-                    />
-                  </PopoverContent>
-                </PopoverAnchor>
-              </Popover>
-            )}
-          </div>
+                  <PopoverAnchor>
+                    <PopoverContent
+                      className="PopoverContent z-10 rounded-md p-2 max-w-full w-3xl border"
+                      sideOffset={5}
+                    >
+                      <MarkdownEditor
+                        onContentChange={(content) => {
+                          if (metaTid) {
+                            onSetContent(content);
+                          } else {
+                            onSetContent(content + "\n" + (tags ?? ""));
+                          }
+                        }}
+                        height={200}
+                        content={content ?? initialContent}
+                        foldGutter={false}
+                      />
+                    </PopoverContent>
+                  </PopoverAnchor>
+                </Popover>
+              )}
+            </div>
+          </>
+        ) : (
+          <Tabs defaultValue={chnotKind}>
+            <TabsList>
+              {(kinds && kinds.length > 0
+                ? kinds
+                : Object.values(ChnotKind)
+              ).map((e) => (
+                <TabsTrigger
+                  key={e}
+                  onClick={() => {
+                    onSetKind(e);
+                  }}
+                  value={e}
+                >
+                  <ChnotKindIcon className="w-4 h-4" kind={e} />
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         )}
       </div>
 
-      <div className="flex space-x-2 items-center">
-        <div>{recTid && new Date(recTid / 1e3).toLocaleDateString()}</div>
-        <ChnotSaver />
-      </div>
+      {isMobile || (
+        <div className="flex space-x-2 items-center">
+          <div>{recTid && new Date(recTid / 1e3).toLocaleDateString()}</div>
+          <ChnotSaver />
+        </div>
+      )}
+      {isMobile && lefttop}
     </div>
   );
 };
@@ -459,16 +468,22 @@ const ChnotEditor = ({ className }: { className?: string }) => {
         .finally(() => {});
     }
   }, []);
+  const { isMobile } = useSidebar();
 
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
-      <ChnotTopbar initialContent={content ?? ""} />
+      {isMobile || (
+        <ChnotStatusbar initialContent={content ?? ""} isMobile={isMobile} />
+      )}
       <ChnotBodyMemo
         readonly={readonly}
         kind={kind}
         metaTid={metaTid}
         initialContent={content}
       />
+      {isMobile && (
+        <ChnotStatusbar initialContent={content ?? ""} isMobile={isMobile} />
+      )}
     </div>
   );
 };
@@ -519,7 +534,7 @@ const RichChnot = ({
             onAfterSave={(tid) => {
               handleSaveRel(
                 `# Excalidraw ${new Date().toLocaleTimeString()}\n\n${commonText()}`,
-                tid.toString()
+                tid.toString(),
               );
             }}
             readOnly={readOnly}
@@ -542,7 +557,7 @@ const RichChnot = ({
                 `# Table ${meta.table_name}\n\n${
                   meta.table_comment
                 }\n\n ${commonText()}`,
-                meta.otid.toString()
+                meta.otid.toString(),
               );
             }}
             isEditing={!readOnly}
@@ -554,7 +569,7 @@ const RichChnot = ({
               onAfterSave={(session) => {
                 handleSaveRel(
                   `# LLM ${session.title}  \n\n ${commonText()}`,
-                  session.otid.toString()
+                  session.otid.toString(),
                 );
               }}
             />
