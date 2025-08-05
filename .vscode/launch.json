@@ -7,34 +7,24 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "chnots server",
+      "name": "chnots server dev",
       "cwd": "${workspaceFolder}/server",
       "cargo": {
         "env": {
           "RUST_LOG": "DEBUG"
         },
         "cwd": "${workspaceFolder}/server",
-        "args": [
-          "build",
-        ]
+        "args": ["build"]
       },
-      "args": [
-        "--config",
-        "../config/config.postgres.toml"
-      ]
+      "args": ["--config", "../config/config.sqlite.toml"]
     },
     {
-      "name": "ntweb dev",
+      "name": "chnots web dev",
       "cwd": "${workspaceFolder}/web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
+      "runtimeArgs": ["run", "dev"],
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }
   ]
