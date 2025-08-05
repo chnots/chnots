@@ -54,7 +54,7 @@ export const KSpaceSelectDropDownGroup = ({
 
   return (
     <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
-      {kspaceMapByName.values().map((e) => (
+      {[...kspaceMapByName.values()].map((e) => (
         <DropdownMenuRadioItem value={e.name} key={e.name}>
           <div className="flex items-center justify-between w-full px-0 py-0">
             <div

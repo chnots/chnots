@@ -8,7 +8,5 @@ const getDefaultState = (): State => {
 };
 
 export const useAttachmentStore = create(
-  combine(getDefaultState(), (_set, get) => ({
-    getState: () => get(),
-  }))
+  combine(getDefaultState(), (_set, get) => ({})),
 );

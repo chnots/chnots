@@ -38,7 +38,6 @@ const getDefaultState = (): KSpaceState => {
 
 export const kspaceStore = create(
   combine(getDefaultState(), (set, get) => ({
-    getState: () => get(),
     refreshKSpaces: async () => {
       const rsp = await allKSpaces({});
       const kspaceMap = new Map();
@@ -63,7 +62,7 @@ export const kspaceStore = create(
         return {
           ...prev,
           mkspaces: [...new Set(mkspaces)].filter(
-            (e) => e != prev.currentKSpace
+            (e) => e != prev.currentKSpace,
           ),
         };
       });
@@ -97,7 +96,7 @@ export const kspaceStore = create(
       const read = get();
       return read.kspaceMapByName.get(read.currentKSpace);
     },
-  }))
+  })),
 );
 
 export function useKSpaceStore<T>(selector: (state: KSpaceState) => T) {
@@ -105,6 +104,6 @@ export function useKSpaceStore<T>(selector: (state: KSpaceState) => T) {
     kspaceStore!,
     useShallow((store) => {
       return selector(store);
-    })
+    }),
   );
 }

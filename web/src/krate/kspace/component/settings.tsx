@@ -52,7 +52,7 @@ export default function KSpaceSettings() {
     refreshKSpaces();
   }, []);
 
-  const sortedKSpaces = kspaceMap.values().toArray();
+  const sortedKSpaces = [...kspaceMap.values()];
   sortedKSpaces.sort((s1, s2) => {
     return s1.name.localeCompare(s2.name);
   });
@@ -119,11 +119,9 @@ export default function KSpaceSettings() {
     setIsDialogOpen(true);
   };
 
-  const availableManagers = kspaceMap
-    .values()
-    .filter((ws) => !editingKSpaceName || ws.name !== editingKSpaceName)
-    .toArray();
-
+  const availableManagers = [...kspaceMap.values()].filter(
+    (ws) => !editingKSpaceName || ws.name !== editingKSpaceName,
+  );
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">

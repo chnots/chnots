@@ -53,7 +53,6 @@ interface State {
 
 export const useChnotStore = create(
   combine(getDefaultState(), (set, get) => ({
-    getState: () => get(),
     fetchMoreChnots: async () => {
       if (get().isFetchingNextPage) {
         return;
@@ -147,8 +146,7 @@ export const useChnotStore = create(
       const map = cmm.dbCache;
 
       const toRemove2 = Array.from(
-        map
-          .values()
+        [...map.values()]
           .filter((e) => {
             const result =
               e.meta.kspace == kspaceStore.getState().currentKSpace;
@@ -156,7 +154,7 @@ export const useChnotStore = create(
           })
           .map((e) => {
             return e.record.tid;
-          })
+          }),
       );
 
       for (const key of toRemove2) {
@@ -194,5 +192,5 @@ export const useChnotStore = create(
         };
       });
     },
-  }))
+  })),
 );
