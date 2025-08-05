@@ -107,7 +107,7 @@ const ChnotSidebar = () => {
     <Sidebar>
       <SidebarHeader className="text-sm">
         <div className="flex justify-between items-center">
-          <div className="flex align-center">
+          <div className="flex align-center space-x-1">
             <KSpaceSelect
               onSelect={function (kspace: string): void {
                 selectKSpace(kspace);

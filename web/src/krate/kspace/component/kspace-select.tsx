@@ -40,19 +40,21 @@ export const KSpaceSelectDropDownGroup = ({
   onSelect: (kspace: string) => void;
   extra?: (kspace: KSpace) => React.ReactNode;
 }) => {
-  const { allKSpaces, refreshKSpaces } = useKSpaceStore((store) => {
+  const { kspaceMapByName, refreshKSpaces } = useKSpaceStore((store) => {
     return {
-      allKSpaces: store.allKSpaces,
+      kspaceMapByName: store.kspaceMapByName,
       refreshKSpaces: store.refreshKSpaces,
     };
   });
   const [position, setPosition] = React.useState(kspace);
+
   useEffect(() => {
     refreshKSpaces();
-  });
+  }, []);
+
   return (
     <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
-      {allKSpaces().map((e) => (
+      {kspaceMapByName.values().map((e) => (
         <DropdownMenuRadioItem value={e.name} key={e.name}>
           <div className="flex items-center justify-between w-full px-0 py-0">
             <div
