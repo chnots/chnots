@@ -2,13 +2,29 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "enables the default permissions",
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     "core:default",
     "fs:default",
     "http:default",
+    "opener:default",
+    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-url",
+      "description": "opens the default permissions for the core module",
+      "windows": ["*"],
+      "allow": [
+        {
+          "url": "https://*"
+        },
+        {
+          "url": "http://127.0.0.1:*"
+        },
+        {
+          "url": "http://0.0.0.0:*"
+        }
+      ]
+    },
     {
       "identifier": "http:default",
       "allow": [
@@ -19,13 +35,13 @@
           "url": "file://**"
         },
         {
-          "url": "http://**"
-        },
-        {
           "url": "asset://localhost/**"
         },
         {
-          "url": "https://api.github.com/**"
+          "url": "http://127.0.0.1:*"
+        },
+        {
+          "url": "http://0.0.0.0:*"
         }
       ]
     }

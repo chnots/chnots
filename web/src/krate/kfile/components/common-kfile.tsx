@@ -3,15 +3,16 @@ import {
   kfileQueryInfo,
   kfileUpload,
 } from "@/krate/kfile/service";
-import { genUID, genTID, TID } from "@/lib/id_util";
+import { genUID } from "@/lib/id_util";
 import { useCallback, useEffect, useState } from "react";
 
-import { Button as KButton } from "@/common/component/ui/button";
+import { Button, Button as KButton } from "@/common/component/ui/button";
 import RelativeTime from "@/common/component/relative-time";
 import { humanFileSize } from "@/lib/unit-utils";
 import FileNameToIcon from "./filename-to-icon";
-import { queryKKV } from "@/krate/kkv/service";
 import { KFileMeta } from "../po";
+import { isTauri } from "@/lib/request";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 type FileLike = {
   name: string;
@@ -147,7 +148,7 @@ export const CommonKFile = ({
         setProgress(0);
       }
     },
-    []
+    [],
   );
 
   const handleDragOver = useCallback(
@@ -155,7 +156,7 @@ export const CommonKFile = ({
       event.preventDefault();
       setIsDragging(true);
     },
-    []
+    [],
   );
 
   const handleDragLeave = useCallback(
@@ -163,7 +164,7 @@ export const CommonKFile = ({
       event.preventDefault();
       setIsDragging(false);
     },
-    []
+    [],
   );
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
@@ -195,12 +196,24 @@ export const CommonKFile = ({
               />
             </div>
           </div>
-          <a
-            className="flex w-full p-5 justify-center align-middle items-center"
-            href={getResouceDownloadUrl(kfile)}
-          >
-            Download
-          </a>
+          {isTauri ? (
+            <div className="flex w-full p-5 justify-center align-middle items-center">
+              <Button
+                onClick={() => {
+                  openUrl(getResouceDownloadUrl(kfile));
+                }}
+              >
+                Export
+              </Button>
+            </div>
+          ) : (
+            <a
+              className="flex w-full p-5 justify-center align-middle items-center"
+              href={getResouceDownloadUrl(kfile)}
+            >
+              Download
+            </a>
+          )}
         </div>
       )}
       {(uploadFile || !kfile) && (
