@@ -30,7 +30,7 @@ export const llmchatSessionList = async (): Promise<LLMChatListSessionRsp> => {
 };
 
 export const llmchatTemplateAdd = async (template: LLMChatTemplate) => {
-  return await request.put(`api/v1/llmchat/template`, {
+  return await request.putJson(`api/v1/llmchat/template`, {
     template,
   });
 };
@@ -38,17 +38,17 @@ export const llmchatTemplateAdd = async (template: LLMChatTemplate) => {
 export const llmchatTemplateDelete = async (
   template: LLMChatDeleteTemplateReq,
 ) => {
-  return await request.post(`api/v1/llmchat/template-delete`, template);
+  return await request.postJson(`api/v1/llmchat/template-delete`, template);
 };
 
 export const llmchatBotAdd = async (bot: LLMChatBot) => {
-  return await request.put(`api/v1/llmchat/bot`, {
+  return await request.putJson(`api/v1/llmchat/bot`, {
     bot,
   });
 };
 
 export const llmchatSessionRecords = async (
-  session_otid: TID
+  session_otid: TID,
 ): Promise<LLMChatSessionDetailRsp> => {
   return await request.get(`api/v1/llmchat/session`, {
     session_otid,
@@ -56,13 +56,13 @@ export const llmchatSessionRecords = async (
 };
 
 export const llmchatSessionOverwrite = async (session: LLMChatSession) => {
-  await request.put(`api/v1/llmchat/session`, {
+  await request.putJson(`api/v1/llmchat/session`, {
     session: session,
   });
 };
 
 export const llmchatSessionUpdate = async (req: LLMChatSessionUpdateReq) => {
-  await request.post(`api/v1/llmchat/session`, {
+  await request.postJson(`api/v1/llmchat/session`, {
     ...req,
   });
 };
@@ -70,13 +70,13 @@ export const llmchatSessionUpdate = async (req: LLMChatSessionUpdateReq) => {
 export const llmchatSessionTruncate = async (
   req: LLMChatSessionTruncateReq,
 ) => {
-  await request.post(`api/v1/llmchat/truncate-session`, {
+  await request.postJson(`api/v1/llmchat/truncate-session`, {
     ...req,
   });
 };
 
 export const llmchatRecordInsert = async (record: LLMChatRecord) => {
-  await request.put(`api/v1/llmchat/record`, {
+  await request.putJson(`api/v1/llmchat/record`, {
     record: record,
   });
 };

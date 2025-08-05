@@ -3,10 +3,10 @@ use std::borrow::Cow;
 use axum::{
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
-    routing::{Router, get},
+    routing::{Router, get, post},
 };
+use log::info;
 use rust_embed::RustEmbed;
-use log::{info, warn};
 
 use crate::app::ShareAppState;
 

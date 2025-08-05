@@ -2,6 +2,7 @@ WEB_DIST = web-dist
 WEB_DIR = web
 SERVER_DIR = server
 TOOLS_DIR = tools
+TAURI_DIR = tauri
 
 run-web:
 	cd $(WEB_DIR) && pnpm install && pnpm run dev
@@ -11,6 +12,9 @@ run-server-sqlite:
 
 run-server-postgres:
 	cd $(SERVER_DIR) && cargo run -- --config ../config/config.postgres.toml
+
+run-tauri-desktop:
+	cd $(TAURI_DIR) && pnpm tauri dev
 
 init:
 	git submodule update --init --recursive

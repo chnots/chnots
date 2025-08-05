@@ -36,7 +36,7 @@ class Request {
 
         return config;
       },
-      Promise.reject
+      Promise.reject,
     );
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => {
@@ -54,11 +54,11 @@ class Request {
           .appendLog(`${err.message} -- ${err.stack} -- ${err.name}`);
 
         toast.error(
-          `Error! ${err.name}, ${err.message} ${err.stack} ${err.cause}`
+          `Error! ${err.name}, ${err.message} ${err.stack} ${err.cause}`,
         );
 
         return Promise.reject(err);
-      }
+      },
     );
   }
 
@@ -85,15 +85,15 @@ class Request {
     ).data;
   }
 
-  async post<T, E>(url: string, data?: E): Promise<T> {
+  async postFormdata<T>(url: string, data: FormData): Promise<T> {
     return (await this.instance.post<T>(url, data)).data;
   }
 
-  async put<T, E>(
-    url: string,
-    data?: E,
-    headers?: Record<string, string>
-  ): Promise<T> {
+  async postJson<T, E>(url: string, data?: E): Promise<T> {
+    return (await this.instance.post<T>(url, data)).data;
+  }
+
+  async putJson<T, E>(url: string, data?: E): Promise<T> {
     return (await this.instance.put<T>(url, data)).data;
   }
 }

@@ -11,25 +11,25 @@ import {
 } from "./dto";
 
 export const ktabMetaRead = async (
-  req: KTabMetaQueryReq
+  req: KTabMetaQueryReq,
 ): Promise<KTabMetaQueryRsp> => {
-  return await request.post(`/api/v1/ktab-meta-read`, req);
+  return await request.postJson(`/api/v1/ktab-meta-read`, req);
 };
 
 export const ktabMetaOverwrite = async (
-  req: KTabMetaOverwriteReq
+  req: KTabMetaOverwriteReq,
 ): Promise<KTabMetaOverwriteRsp> => {
-  return await request.put(`/api/v1/ktab-meta-overwrite`, req);
+  return await request.putJson(`/api/v1/ktab-meta-overwrite`, req);
 };
 
 export const ktabCellsRead = async (
-  req: KTabRowsQueryReq
+  req: KTabRowsQueryReq,
 ): Promise<KTabRowsQueryRsp> => {
-  return await request.post(`/api/v1/ktab-cells-read`, req);
+  return await request.postJson(`/api/v1/ktab-cells-read`, req);
 };
 
 export const ktabCellsOverwrite = async (
-  req: KTabCellsOverwriteReq
+  req: KTabCellsOverwriteReq,
 ): Promise<KTabOverwriteCellsRsp> => {
-  return await request.put(`/api/v1/ktab-cells-overwrite`, req);
+  return await request.putJson(`/api/v1/ktab-cells-overwrite`, req);
 };

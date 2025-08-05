@@ -1,7 +1,5 @@
-import { useCommonStore } from "@/common/store";
 import { recursiveDateConversion } from "./date-utils";
-import { kspaceStore, useKSpaceStore } from "@/krate/kspace/store";
-import { toast } from "sonner";
+import { kspaceStore } from "@/krate/kspace/store";
 
 const appendUrl = (base: string, suffix: string) => {
   if (base.endsWith("/") && suffix.startsWith("/")) {
@@ -14,32 +12,24 @@ const appendUrl = (base: string, suffix: string) => {
 };
 
 class FetchRequest {
-  private abortControllerMap: Map<string, AbortController>;
   private baseConfig: RequestInit;
   private baseURL: string;
 
   constructor(config: { baseURL: string; timeout?: number }) {
-    this.abortControllerMap = new Map();
     this.baseURL = config.baseURL;
     this.baseConfig = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // Convert timeout to AbortSignal
       signal: AbortSignal.timeout(config.timeout || 30 * 1000),
     };
   }
 
   private async requestInterceptor(
-    config: RequestInit & { url: string }
+    config: RequestInit & { url: string },
   ): Promise<RequestInit> {
-    useCommonStore.getState().appendLog(this.baseURL);
     const kspace = kspaceStore.getState();
 
     const controller = new AbortController();
-    this.abortControllerMap.set(config.url, controller);
 
-    return {
+    const req = {
       ...this.baseConfig,
       ...config,
       headers: {
@@ -50,36 +40,18 @@ class FetchRequest {
       },
       signal: controller.signal,
     };
+    console.log("request, ", JSON.stringify(req));
+    return req;
   }
 
   private async responseInterceptor<T>(response: Response): Promise<T> {
-    const url = response.url.split(this.baseURL)[1] || "";
-    this.abortControllerMap.delete(url);
-
     if (!response.ok) {
       const error = new Error(`HTTP error! status: ${response.status}`);
-      useCommonStore.getState().appendLog(`${error.message}`);
       throw error;
     }
 
     const data = await response.json();
-    useCommonStore.getState().appendLog(JSON.stringify(data));
     return recursiveDateConversion(data);
-  }
-
-  cancelAllRequest() {
-    for (const [, controller] of this.abortControllerMap) {
-      controller.abort();
-    }
-    this.abortControllerMap.clear();
-  }
-
-  cancelRequest(url: string | string[]) {
-    const urlList = Array.isArray(url) ? url : [url];
-    for (const _url of urlList) {
-      this.abortControllerMap.get(_url)?.abort();
-      this.abortControllerMap.delete(_url);
-    }
   }
 
   async get<T, E>(url: string, params?: E): Promise<T> {
@@ -94,10 +66,26 @@ class FetchRequest {
     return this.responseInterceptor<T>(response);
   }
 
-  async post<T, E>(url: string, data?: E): Promise<T> {
+  async postFormdata<T>(url: string, data: FormData): Promise<T> {
+    const fullUrl = appendUrl(this.baseURL, url);
+    let body: BodyInit = data;
+    const config = await this.requestInterceptor({
+      url,
+      method: "POST",
+      body,
+    });
+
+    const response = await fetch(fullUrl, config);
+    return this.responseInterceptor<T>(response);
+  }
+
+  async postJson<T, E>(url: string, data?: E): Promise<T> {
     const fullUrl = appendUrl(this.baseURL, url);
     const config = await this.requestInterceptor({
       url,
+      headers: {
+        "Content-Type": "application/json",
+      },
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -106,17 +94,15 @@ class FetchRequest {
     return this.responseInterceptor<T>(response);
   }
 
-  async put<T, E>(
-    url: string,
-    data?: E,
-    headers?: Record<string, string>
-  ): Promise<T> {
+  async putJson<T, E>(url: string, data?: E): Promise<T> {
     const fullUrl = appendUrl(this.baseURL, url);
     const config = await this.requestInterceptor({
       url,
       method: "PUT",
       body: JSON.stringify(data),
-      headers: headers ? { ...headers } : undefined,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
 
     const response = await fetch(fullUrl, config);

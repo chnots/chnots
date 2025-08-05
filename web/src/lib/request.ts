@@ -19,7 +19,7 @@ console.log(
   "isTauri",
   isTauri,
   typeof window !== "undefined",
-  hasTauriProperty()
+  hasTauriProperty(),
 );
 
 // Select the appropriate implementation
@@ -27,4 +27,4 @@ const request = isTauri ? tauriRequest : axiosRequest;
 const BASE_URL = isTauri ? tauriBaseUrl : axiosBaseUrl;
 
 export default request;
-export { BASE_URL };
+export { BASE_URL, isTauri };

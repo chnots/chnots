@@ -15,35 +15,35 @@ import {
 import { TID } from "@/lib/id_util";
 
 export const chnotQuery = async (
-  req: ChnotQueryReq
+  req: ChnotQueryReq,
 ): Promise<ChnotQueryRsp> => {
-  return await request.post(`api/v1/chnot-query`, req);
+  return await request.postJson(`api/v1/chnot-query`, req);
 };
 
 export const chnotDelete = async (req: ChnotArchiveReq) => {
-  return await request.post(`api/v1/chnot-deletion`, req);
+  return await request.postJson(`api/v1/chnot-deletion`, req);
 };
 
 export const chnotOverwriteRecord = async (
-  req: ChnotOverwriteRecordReq
+  req: ChnotOverwriteRecordReq,
 ): Promise<ChnotOverwriteRecordRsp> => {
-  return await request.put(`api/v1/chnot-overwrite-record`, req);
+  return await request.putJson(`api/v1/chnot-overwrite-record`, req);
 };
 
 export const chnotOverwriteMeta = async (req: ChnotOverwriteMetaReq) => {
-  return await request.post(`api/v1/chnot-overwrite-meta`, req);
+  return await request.postJson(`api/v1/chnot-overwrite-meta`, req);
 };
 
 export const chnotTagNames = async (
   req: ChnotTagQueryReq,
 ): Promise<ChnotTagNamesRsp> => {
-  return await request.post(`api/v1/chnot-tag-names`, req);
+  return await request.postJson(`api/v1/chnot-tag-names`, req);
 };
 
 export const toentGuess = async (
   req: ToentGuessReq,
 ): Promise<ToentGuessRsp> => {
-  return await request.post(`api/v1/toent-guess`, req);
+  return await request.postJson(`api/v1/toent-guess`, req);
 };
 
 export const chnotQueryKindRel = async (

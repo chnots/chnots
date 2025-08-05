@@ -9,19 +9,19 @@ import {
 } from "./dto";
 
 export const getSyncAllEndpoints = async (
-  req: GetSyncAllEndpointsReq
+  req: GetSyncAllEndpointsReq,
 ): Promise<GetSyncAllEndpointsRsp> => {
   return await request.get(`/api/v1/get-all-sync-endpoints`, req);
 };
 
 export const overwriteSyncAllEndpoints = async (
-  req: SyncAllEndpointsReq
+  req: SyncAllEndpointsReq,
 ): Promise<SyncAllEndpointsRsp> => {
-  return await request.post(`/api/v1/overwrite-all-sync-endpoints`, req);
+  return await request.postJson(`/api/v1/overwrite-all-sync-endpoints`, req);
 };
 
 export const syncToEndpoint = async (
-  req: SyncToEndpointReq
+  req: SyncToEndpointReq,
 ): Promise<SyncToEndpointRsp> => {
-  return await request.post(`/api/v1/sync-end-endpoint`, req);
+  return await request.postJson(`/api/v1/sync-end-endpoint`, req);
 };

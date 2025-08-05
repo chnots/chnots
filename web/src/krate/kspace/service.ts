@@ -9,19 +9,19 @@ import {
 } from "./dto";
 
 export const allKSpaces = async (
-  req: KSpaceQueryAllReq
+  req: KSpaceQueryAllReq,
 ): Promise<KSpaceQueryAllRsp> => {
   return await request.get(`/api/v1/kspace-all`, req);
 };
 
 export const overwriteKSpace = async (
-  req: KSpaceOverwriteReq
+  req: KSpaceOverwriteReq,
 ): Promise<KSpaceOverwriteRsp> => {
-  return await request.put(`/api/v1/kspace-overwrite`, req);
+  return await request.putJson(`/api/v1/kspace-overwrite`, req);
 };
 
 export const deleteKSpace = async (
-  req: KSpaceDeletionReq
+  req: KSpaceDeletionReq,
 ): Promise<KSpaceDeletionRsp> => {
-  return await request.put(`/api/v1/kspace-deletion`, req);
+  return await request.putJson(`/api/v1/kspace-deletion`, req);
 };
