@@ -118,14 +118,16 @@ impl KTabMapper for KDb {
                 .context("the column is not existed")?
                 .idx;
 
-            self.ktab_overwrite_cell(KTabCell {
-                table_otid,
-                col_otid: column_index,
-                row_otid: ele.row_tid,
-                cell_data: ele.value,
-                tid: TID::default(),
-            })
-            .await?;
+            if let Some(v) = ele.value {
+                self.ktab_overwrite_cell(KTabCell {
+                    table_otid,
+                    col_otid: column_index,
+                    row_otid: ele.row_tid,
+                    cell_data: v,
+                    tid: TID::default(),
+                })
+                .await?;
+            }
         }
 
         Ok(KTabCellsOverwriteRsp {})

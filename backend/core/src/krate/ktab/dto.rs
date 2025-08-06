@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use chin_sql::{str_type::Text, time_type::TID};
 use chin_sql::SqlValue;
+use chin_sql::{str_type::Text, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 use crate::model::decimal::Decimal;
 
-use super::{ *};
+use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KTabMetaOverwriteReq {
@@ -92,7 +92,7 @@ impl<'a> From<KTabStoreValue> for SqlValue<'a> {
 pub struct KTabViewCell {
     pub row_tid: TID,
     pub column_name: String,
-    pub value: KTabStoreValue,
+    pub value: Option<KTabStoreValue>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -109,7 +109,7 @@ impl KTabCell {
         let cell = KTabViewCell {
             row_tid: self.row_otid,
             column_name: column_names.get(&self.col_otid)?.to_string(),
-            value: self.cell_data,
+            value: Some(self.cell_data),
         };
 
         Some(cell)
@@ -171,7 +171,7 @@ mod tests {
             cells: vec![KTabViewCell {
                 row_tid: 1.into(),
                 column_name: "int".into(),
-                value: KTabStoreValue::Decimal(123.into()),
+                value: Some(KTabStoreValue::Decimal(123.into())),
             }],
         };
 
