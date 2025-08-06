@@ -34,10 +34,13 @@ build-web:
 	cd $(WEB_DIR) && pnpm install && pnpm run build
 
 build-server:
+	make build-web
 	test -f web-dist/index.html && cd $(SERVER_DIR) && cargo build --release
 
 build-tauri-desktop:
+	make build-web
 	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri build
 
 build-tauri-android:
+	make build-web
 	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build --split-per-abi

@@ -9,7 +9,6 @@ import React from "react";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 
-import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
 import { createCodemirrorTheme } from "../../../vendor/jolpin/editor/codemirror/theme";

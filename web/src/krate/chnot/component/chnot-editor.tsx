@@ -41,7 +41,8 @@ import { Chnot, ChnotOverwriteRecordReq } from "../dto";
 import useDebounce from "@/hooks/use-debounce";
 import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
-import { useSidebar } from "@/common/component/ui/sidebar";
+import ErrorDisplay from "@/common/component/error-display";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChnotEditorProps {
   metaTid?: TID;
@@ -74,6 +75,7 @@ function createChnotStore(props: ChnotEditorProps) {
     isUploadingKFile: false,
     saveState: SaveState.Saved,
     isComposing: false,
+    isMobile: false,
     onSetKind: (kind: ChnotKind) => {
       set((prev) => {
         return { ...prev, kind: kind };
@@ -370,11 +372,13 @@ const ChnotBody = ({
   metaTid,
   initialContent,
   readonly,
+  isMobile,
 }: {
   metaTid?: TID;
   initialContent?: string;
   readonly: boolean;
   kind: ChnotKind;
+  isMobile: boolean;
 }) => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -392,51 +396,52 @@ const ChnotBody = ({
       };
     });
 
-  return (
+  return chnotKind === ChnotKind.MarkdownWithToent ? (
+    readonly && initialContent ? (
+      <div className="p-2 overflow-y-auto w-full">
+        <MarkdownViewer content={initialContent.replace("\n", "  \n") ?? ""} />
+      </div>
+    ) : (
+      <div
+        className="flex h-full overflow-auto bg-editor w-full items-center justify-center" // this part could resize when I add overflow-auto, magic?
+      >
+        <div
+          className="w-[90%] h-[90%] max-w-4xl border border-gray-200 p-2 m-2"
+          ref={bodyRef}
+        >
+          {height ? (
+            <MarkdownEditor
+              onContentChange={(content) => {
+                onSetContent(content);
+              }}
+              height={height}
+              content={initialContent}
+              foldGutter={false}
+            />
+          ) : (
+            <ErrorDisplay description={"Zero Height"}></ErrorDisplay>
+          )}
+        </div>
+      </div>
+    )
+  ) : (
     <div
-      className="h-full w-full flex justify-center overflow-auto content-centere"
+      className="h-full  flex justify-center overflow-auto content-centere"
       ref={bodyRef}
     >
-      {chnotKind === ChnotKind.MarkdownWithToent ? (
-        readonly && initialContent ? (
-          <div className="p-2 overflow-y-auto w-full">
-            <MarkdownViewer
-              content={initialContent.replace("\n", "  \n") ?? ""}
-            />
-          </div>
-        ) : (
-          <div
-            className="h-full p-4 x-0 overflow-auto bg-editor w-full" // this part could resize when I add overflow-auto, magic?
-          >
-            {height ? (
-              <MarkdownEditor
-                onContentChange={(content) => {
-                  onSetContent(content);
-                }}
-                height={height}
-                content={initialContent}
-                foldGutter={false}
-              />
-            ) : (
-              <div />
-            )}
-          </div>
-        )
-      ) : (
-        <RichChnot
-          readOnly={readonly ?? false}
-          metaTid={metaTid}
-          chnotKind={chnotKind}
-          commonText={() => ""}
-          onInitRel={function (content: string, kind_id: string): void {
-            if (!metaTid) {
-              onSetContent(content);
-            }
-            onSetKindId(kind_id);
-          }}
-          onSetSaveState={onSetSaveState}
-        />
-      )}
+      <RichChnot
+        readOnly={readonly ?? false}
+        metaTid={metaTid}
+        chnotKind={chnotKind}
+        commonText={() => ""}
+        onInitRel={function (content: string, kind_id: string): void {
+          if (!metaTid) {
+            onSetContent(content);
+          }
+          onSetKindId(kind_id);
+        }}
+        onSetSaveState={onSetSaveState}
+      />
     </div>
   );
 };
@@ -450,7 +455,7 @@ const ChnotEditor = ({ className }: { className?: string }) => {
       readonly: store.readonly,
     };
   });
-
+  const isMobile = useIsMobile();
   const [metaTid] = useState(metaTidStore);
   const [content, setContent] = useState<string | undefined>();
   useEffect(() => {
@@ -468,7 +473,6 @@ const ChnotEditor = ({ className }: { className?: string }) => {
         .finally(() => {});
     }
   }, []);
-  const { isMobile } = useSidebar();
 
   return (
     <div className={clsx(className, "flex flex-col h-full")}>
@@ -480,6 +484,7 @@ const ChnotEditor = ({ className }: { className?: string }) => {
         kind={kind}
         metaTid={metaTid}
         initialContent={content}
+        isMobile={isMobile}
       />
       {isMobile && (
         <ChnotStatusbar initialContent={content ?? ""} isMobile={isMobile} />

@@ -10,6 +10,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/common/component/ui/sidebar";
 import { genUID, TID } from "@/lib/id_util";
 import { ChnotKind } from "../po";
@@ -42,6 +43,7 @@ const MonoChnot = () => {
     }),
   );
 
+  const { isMobile } = useSidebar();
   const [comKey, setComKey] = useState<string>(genUID());
   const metaTidRef = useRef<TID>(null);
   const [editorChnot, setEditorChnot] = useState<Chnot | undefined>();
