@@ -1,13 +1,10 @@
-use std::str::FromStr;
-
 use crate::enum_common_funcs;
 
 use super::PossibleScore;
-use anyhow::Context;
-use enum_iterator::{all, Sequence};
+use enum_iterator::{Sequence, all};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de};
 
 use super::{EventBuilder, RawInputSegs};
 
@@ -100,7 +97,7 @@ impl EventBuilder for TodoEvent {
     }
 
     fn standard_str(&self) -> String {
-        self.as_ref().to_string()
+        self.as_static_str().to_string()
     }
 }
 

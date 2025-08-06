@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use axum::{
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
-    routing::{Router, get, post},
+    routing::{Router, get},
 };
 use log::info;
 use rust_embed::RustEmbed;

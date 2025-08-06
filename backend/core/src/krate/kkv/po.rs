@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use chin_sql::{
+    GenerateTableSchema, SqlValue,
     str_type::{Text, Varchar},
     time_type::TID,
-    GenerateTableSchema, SqlValue,
 };
 
 #[derive(Debug, Clone, Copy, Sequence)]
@@ -40,7 +40,7 @@ impl<'a> KDbRowBehavier<'a, KKVType> for KDbRow {
     fn try_get(&'a self, key: &str) -> chin_tools::AResult<KKVType> {
         let s: String = self.try_get(key)?;
 
-        Ok(KKVType::try_from(s.as_str())?)
+        KKVType::try_from(s.as_str())
     }
 }
 

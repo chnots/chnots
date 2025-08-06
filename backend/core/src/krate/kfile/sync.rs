@@ -13,9 +13,8 @@ use crate::{
     dump_table_to_file,
     krate::{
         kfile::{
-            InlineKFile, KFILE_BIG_UPLOAD_WITH_SID, KFILE_INLINE_GET_BY_SID, KFILE_INLINE_INSERT2,
-            KFileInlineGetBySidReq, KFileInlineInsert2Req, KFileMeta, QueryInlineKFileReq,
-            QueryInlineKFileRsp, mapper::KFileMapper,
+            InlineKFile, KFILE_BIG_UPLOAD_WITH_SID, KFILE_INLINE_INSERT2, KFileInlineInsert2Req,
+            KFileMeta, QueryInlineKFileReq, QueryInlineKFileRsp, mapper::KFileMapper,
         },
         sync::{
             dto::SyncDataArg, filedumper::StartType, networksync::OtidRelatedWorker,

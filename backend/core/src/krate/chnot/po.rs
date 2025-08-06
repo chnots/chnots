@@ -1,9 +1,8 @@
-use anyhow::Context;
+use chin_sql::GenerateTableSchema;
+use chin_sql::SqlValue;
 use chin_sql::str_type::Text;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::GenerateTableSchema;
-use chin_sql::SqlValue;
 /// Chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
@@ -11,7 +10,6 @@ use chin_sql::SqlValue;
 /// but the name "knot" is too repetitive, so I made a change.
 ///
 use chrono::{DateTime, FixedOffset};
-use enum_iterator::all;
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 
@@ -141,6 +139,6 @@ impl<'a> KDbRowBehavier<'a, ChnotKind> for KDbRow {
     fn try_get(&'a self, key: &str) -> chin_tools::AResult<ChnotKind> {
         let s: String = self.try_get(key)?;
 
-        Ok(ChnotKind::try_from(s.as_str())?)
+        ChnotKind::try_from(s.as_str())
     }
 }
