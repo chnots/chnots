@@ -1,6 +1,6 @@
 use postgres_types::FromSql;
 
-use crate::model::{decimal::Decimal};
+use crate::model::decimal::Decimal;
 
 #[macro_export]
 macro_rules! to_pgsql_params {

@@ -1,5 +1,5 @@
 use anyhow::Ok;
-use chin_sql::SqlBuilder;
+use chin_sql::{SqlBuilder, time_type::TID};
 
 use crate::{
     krate::kspace::{
@@ -7,9 +7,12 @@ use crate::{
         dto::{KSpaceDeletionRsp, KSpaceOverwriteRsp, KSpaceQueryAllRsp},
         mapper::KSpaceMapper,
     },
-    mapper::db::{
-        HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
-        KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
+    mapper::{
+        Curd,
+        db::{
+            HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
+            KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
+        },
     },
 };
 
@@ -76,5 +79,14 @@ impl TryFrom<&KDbRow> for KSpace {
             tid: value.try_get(Self::TID)?,
             public_access: value.try_get(Self::PUBLIC_ACCESS)?,
         })
+    }
+}
+
+impl Curd for KSpace {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.name.clone())
+    }
+    fn tid(&self) -> TID {
+        self.tid
     }
 }

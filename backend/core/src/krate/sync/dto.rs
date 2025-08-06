@@ -17,6 +17,12 @@ pub struct SyncInfo<T> {
     pub table_type: PhantomData<T>,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum SyncSingleStep {
+    Omit,
+    Data,
+}
+
 impl<T: KOtidSupport> SyncInfo<T> {
     pub fn to_table_name(&self) -> String {
         format!(
@@ -32,6 +38,7 @@ pub struct SyncPageInfo<T> {
     pub sync_info: SyncInfo<T>,
     pub page_size: usize,
     pub start_ex: TID,
+    pub sync_step: SyncSingleStep,
 }
 
 impl<T: KOtidSupport> Deref for SyncPageInfo<T> {

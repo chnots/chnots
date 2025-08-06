@@ -1,4 +1,4 @@
-use anyhow::Ok;
+use anyhow::Context;
 use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
@@ -22,6 +22,14 @@ use crate::{
 
 use super::po::{RecordState, TidCompare};
 
+const C_TID: &str = "tid";
+const C_LSTATE: &str = "lstate";
+const C_RSTATE: &str = "rstate";
+const C_STATE_CUR: i32 = 1;
+const C_STATE_HIST: i32 = 2;
+const C_STATE_ABSENT: i32 = 0;
+const C_MIN_SYNC: &str = "min_sync";
+
 impl Dumper<KDbRow> for KDb {
     async fn dump<E, F>(
         &self,
@@ -42,8 +50,8 @@ impl Dumper<KDbRow> for KDb {
                 SqlBuilder::read_all(table_name)
                     .r#where(Wheres::and([
                         // all table must have tid field
-                        Wheres::compare("tid", ">", start_ex),
-                        Wheres::compare("tid", "<=", end_in),
+                        Wheres::compare(C_TID, ">", start_ex),
+                        Wheres::compare(C_TID, "<=", end_in),
                     ]))
                     .limit(page_size)
             }
@@ -95,7 +103,7 @@ impl SyncMapper for KDb {
 
         let sql = SqlBuilder::read(
             SyncLogTransient::TABLE,
-            &[format!("min({}) as min_sync", SyncLogTransient::START_TID_EX).as_str()],
+            &[format!("min({}) as {C_MIN_SYNC}", SyncLogTransient::START_TID_EX).as_str()],
         )
         .r#where(Wheres::and([
             Wheres::equal(SyncLogTransient::TABLE_NAME, table_name.clone()),
@@ -111,7 +119,7 @@ impl SyncMapper for KDb {
             .conn()
             .await?
             .qry_opt(sql, |r| {
-                let c: Option<TID> = r.try_get("min_sync")?;
+                let c: Option<TID> = r.try_get(C_MIN_SYNC)?;
                 Ok(c)
             })
             .await?;
@@ -138,18 +146,17 @@ impl SyncMapper for KDb {
                 page_size,
             } => {
                 format!(
-                    "select tid from {} where tid > {} and tid < {} order by tid asc limit {}",
+                    "select {C_TID} from {} where {C_TID} > {} and {C_TID} < {} order by {C_TID} asc limit {page_size}",
                     T::table_name(req.dto.hist),
                     start_ex.as_num(),
-                    end_in.as_num(),
-                    page_size
+                    end_in.as_num()
                 )
             }
         };
         let data = self
             .conn()
             .await?
-            .qry_list(sql, |c| c.try_get("tid"))
+            .qry_list(sql, |c| c.try_get(C_TID))
             .await?;
 
         Ok(SyncFetchTIDRsp { data })
@@ -161,7 +168,7 @@ impl SyncMapper for KDb {
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
-        let tn = sync_info.to_table_name();
+        let table_name = sync_info.to_table_name();
         let dtype = if hist {
             RecordState::Hist
         } else {
@@ -174,8 +181,7 @@ impl SyncMapper for KDb {
         self.conn()
             .await?
             .exec(format!(
-                "insert into {}(tid, lstate, rstate) values {} on conflict(tid) do update set rstate = {}",
-                tn,
+                "insert into {table_name}({C_TID}, {C_LSTATE}, {C_RSTATE}) values {} on conflict({C_TID}) do update set {C_RSTATE} = {}",
                 rsp.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype.as_num())).join(","),
                 dtype.as_num()
             ))
@@ -192,7 +198,6 @@ impl SyncMapper for KDb {
         let mut max_tid = TID::from(0);
 
         let nomore = tids.len() < sync_page.page_size;
-        info!("{} : {} -> {}", tids.len(), sync_page.page_size, nomore);
 
         for tc in tids.iter() {
             let l = tc.lstate;
@@ -220,7 +225,7 @@ impl SyncMapper for KDb {
                 self.conn()
                     .await?
                     .as_executor()
-                    .omit_rows::<T>(Wheres::compare("tid", "=", tid))
+                    .omit_rows::<T>(Wheres::compare(C_TID, "=", tid))
                     .await?;
             } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Cur) {
                 operations.push(SyncDataOperation::Omit(tid));
@@ -249,7 +254,7 @@ impl SyncMapper for KDb {
                     self.conn()
                         .await?
                         .as_executor()
-                        .omit_rows::<T>(Wheres::compare("tid", "=", tid))
+                        .omit_rows::<T>(Wheres::compare(C_TID, "=", tid))
                         .await?;
                 }
                 SyncDataOperation::Pull { tid, hist } => {
@@ -257,7 +262,10 @@ impl SyncMapper for KDb {
                         .conn()
                         .await?
                         .qry_opt(
-                            format!("select * from {} where tid = {}", T::table_name(hist), tid),
+                            format!(
+                                "select * from {} where {C_TID} = {tid}",
+                                T::table_name(hist)
+                            ),
                             move |c| T::try_from_kdb_row(&c),
                         )
                         .await?;
@@ -286,19 +294,15 @@ impl SyncMapper for KDb {
         tx.exec(format!("drop table if exists {table_name}"))
             .await?;
         let sql = format!(
-            "create table  {table_name}(tid bigint, lstate int not null, rstate int not null, primary key (tid))"
+            "create table {table_name}({C_TID} bigint, {C_LSTATE} int not null, {C_RSTATE} int not null, primary key ({C_TID}))"
         );
         tx.exec(sql).await?;
         let sql = format!(
-            "insert into {}
-            select tid, 1 as lstate, 0 as rstate from {} where tid > {} and tid <= {}
-            union
-            select tid, 2 as lstate, 0 as rstate from {}_hist where tid > {} and tid <= {}",
-            table_name,
+            "insert into {table_name} select {C_TID}, 1 as {C_LSTATE}, 0 as {C_RSTATE} from {} where {C_TID} > {} and {C_TID} <= {} union select {C_TID}, 2 as {C_LSTATE}, 0 as {C_RSTATE} from {} where {C_TID} > {} and {C_TID} <= {}",
             T::table_name(false),
             sync_info.start_ex.as_num(),
             sync_info.end_in.as_num(),
-            T::table_name(false),
+            T::table_name(true),
             sync_info.start_ex.as_num(),
             sync_info.end_in.as_num()
         );
@@ -343,8 +347,19 @@ impl KDb {
         let tn = sync_page.to_table_name();
         let reader = SqlBuilder::read_all(&tn)
             .r#where(Wheres::and([
-                Wheres::compare("tid", ">", sync_page.start_ex),
-                Wheres::compare_str("lstate", "<>", "rstate"),
+                Wheres::compare(C_TID, ">", sync_page.start_ex),
+                Wheres::compare_str(C_LSTATE, "<>", C_RSTATE),
+                match sync_page.sync_step {
+                    super::dto::SyncSingleStep::Omit => Wheres::and([
+                        Wheres::compare_str(C_LSTATE, "<>", C_RSTATE),
+                        Wheres::r#in(C_LSTATE, [&C_STATE_CUR, &C_STATE_HIST].to_vec()),
+                        Wheres::r#in(C_RSTATE, [&C_STATE_CUR, &C_STATE_HIST].to_vec()),
+                    ]),
+                    super::dto::SyncSingleStep::Data => Wheres::or([
+                        Wheres::compare(C_LSTATE, "=", C_STATE_ABSENT),
+                        Wheres::compare(C_RSTATE, "=", C_STATE_ABSENT),
+                    ]),
+                },
             ]))
             .sov("order by tid asc")
             .limit(sync_page.page_size);
@@ -354,13 +369,13 @@ impl KDb {
             .await?
             .qry_list(reader, |r| {
                 Ok(TidCompare {
-                    tid: r.try_get("tid")?,
+                    tid: r.try_get(C_TID)?,
                     lstate: {
-                        let c: i32 = r.try_get("lstate")?;
+                        let c: i32 = r.try_get(C_LSTATE)?;
                         c.try_into()?
                     },
                     rstate: {
-                        let c: i32 = r.try_get("rstate")?;
+                        let c: i32 = r.try_get(C_RSTATE)?;
                         c.try_into()?
                     },
                 })
@@ -379,7 +394,7 @@ impl KDb {
             .await?
             .qry_opt(
                 format!("select * from {} where tid = {}", T::table_name(hist), tid),
-                move |row| Ok(T::try_from_kdb_row(&row)?),
+                move |row| T::try_from_kdb_row(&row),
             )
             .await?;
 
@@ -387,14 +402,50 @@ impl KDb {
     }
 
     async fn sync_merge_one_record<T: KOtidSupport>(&self, data: T, hist: bool) -> EResult {
-        self.conn()
-            .await?
-            .exec(
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+
+        // For history table, just ignore the error.
+        if hist {
+            tx.exec(
                 data.sql_inserter()
                     .table_name(T::table_name(hist))
                     .on_conflict(OnConflict::Ignore),
             )
             .await?;
+        } else {
+            let first_insert = tx
+                .exec(
+                    data.sql_inserter()
+                        .table_name(T::table_name(hist))
+                        .on_conflict(OnConflict::Ignore),
+                )
+                .await?;
+            if first_insert == 0 {
+                let db_tid: Option<TID> = tx
+                    .qry_opt(
+                        SqlBuilder::read(T::table_name(false), &[C_TID]).r#where(data.pkey()),
+                        |row| row.try_get(C_TID),
+                    )
+                    .await?;
+                let db_tid =
+                    db_tid.context(format!("it should be found, maybe some other error."))?;
+                if db_tid > data.tid() {
+                    tx.exec(
+                        data.sql_inserter()
+                            .table_name(T::table_name(hist))
+                            .on_conflict(OnConflict::Ignore),
+                    )
+                    .await?;
+                } else if db_tid < data.tid() {
+                    tx.as_executor().omit_rows::<T>(data.pkey()).await?;
+                    tx.exec(data.sql_inserter().table_name(T::table_name(false)))
+                        .await?;
+                }
+            }
+        }
+
+        tx.cmt().await?;
 
         Ok(())
     }

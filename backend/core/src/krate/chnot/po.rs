@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use crate::enum_common_funcs;
 use crate::impl_otid_support;
 use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::mapper::Curd;
 use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
 
@@ -32,6 +33,16 @@ pub struct ChnotRecord {
     pub todo_event: Option<TodoEvent>,
     pub content: Text,
     pub archor: bool,
+}
+
+impl Curd for ChnotRecord {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.meta_otid)
+    }
+
+    fn tid(&self) -> TID {
+        self.tid
+    }
 }
 
 impl_otid_support! {ChnotRecord}
@@ -57,6 +68,15 @@ pub struct ChnotMetadata {
     #[gts_type = "i64"]
     pub tid: TID,
 }
+
+impl Curd for ChnotMetadata {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
 impl_otid_support! {ChnotMetadata}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
@@ -72,6 +92,15 @@ pub struct ChnotTag {
     pub tid: TID,
 }
 
+impl Curd for ChnotTag {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.tag.clone(), self.meta_otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+
 impl_otid_support! {ChnotTag}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
@@ -84,6 +113,15 @@ pub struct ChnotKindRel {
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
+}
+
+impl Curd for ChnotKindRel {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.meta_otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
+    }
 }
 
 impl_otid_support! {ChnotKindRel}

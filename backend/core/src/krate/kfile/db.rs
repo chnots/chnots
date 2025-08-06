@@ -2,8 +2,11 @@ use std::io::Write;
 
 use super::{mapper::KFileMapper, *};
 use crate::{
-    mapper::db::{
-        HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables,
+    mapper::{
+        Curd,
+        db::{
+            HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables,
+        },
     },
     model::dto::KReq,
 };
@@ -188,5 +191,14 @@ impl KFileMapper for KDb {
             .await?
             .exec(req.to_sql_inserter().on_conflict(OnConflict::Ignore))
             .await
+    }
+}
+
+impl Curd for KFileMeta {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.id.clone())
+    }
+    fn tid(&self) -> TID {
+        self.tid
     }
 }

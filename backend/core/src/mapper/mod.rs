@@ -1,11 +1,11 @@
 pub(crate) mod db;
 pub(crate) mod mappertype;
 
-use chin_sql::time_type::TID;
-use db::{postgres::PostgresConfig, sqlite::SqliteConfig, KDb};
+use chin_sql::{Wheres, time_type::TID};
+use db::{KDb, postgres::PostgresConfig, sqlite::SqliteConfig};
 use serde::{Deserialize, Serialize};
 
-use crate::{mapper::db::KDbRow};
+use crate::mapper::db::KDbRow;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
@@ -21,11 +21,10 @@ pub enum MapperType {
 }
 
 pub enum MapperRowType {
-    KDb(KDbRow)
+    KDb(KDbRow),
 }
 
-#[derive(Debug, Clone, Serialize,Deserialize)]
-pub struct TheSameKey {
-    pub id: String,
-    pub tid: TID,
+pub(crate) trait Curd {
+    fn pkey(&self) -> Wheres<'_>;
+    fn tid(&self) -> TID;
 }

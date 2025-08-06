@@ -4,9 +4,12 @@ use chrono::TimeDelta;
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
-    mapper::db::{
-        HistCreateSql, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        helper::create_tables,
+    mapper::{
+        Curd,
+        db::{
+            HistCreateSql, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow,
+            KDbRowBehavier, helper::create_tables,
+        },
     },
     model::dto::KReq,
 };
@@ -180,5 +183,14 @@ impl KKVMapper for KDb {
             .as_executor()
             .kkv_transisent_overwrite(key, value, on_conflict)
             .await
+    }
+}
+
+impl Curd for KKV {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.key.clone(), self.kind.clone(), self.kspace.clone())
+    }
+    fn tid(&self) -> TID {
+        self.tid
     }
 }

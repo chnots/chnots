@@ -4,8 +4,8 @@ use deadpool_postgres::{Client, Transaction};
 
 use crate::{
     mapper::db::{
-        kdb::{KDbBehaiver, KDbExecutorBehaiver, KDbRow},
         KDbConnBehaiver, KDbTransactionBehaiver,
+        kdb::{KDbBehaiver, KDbExecutorBehaiver, KDbRow},
     },
     util::result_util::ROSwap,
 };

@@ -2,7 +2,8 @@ use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres
 use chin_tools::{AResult, EResult};
 
 use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver}, model::KOtidSupport
+    mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver},
+    model::KOtidSupport,
 };
 
 pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> EResult {

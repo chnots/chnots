@@ -119,6 +119,7 @@ impl ShareAppState {
         fetch_data: SyncFetchTIDArg<T>,
     ) -> AResult<SyncFetchTIDRsp> {
         let client = reqwest::Client::builder().build()?;
+        let page = fetch_data.dto.page.clone();
 
         let rsp = client
             .post(endpoint.to_url(SYNC_FETCH_TID_PATH))
@@ -130,6 +131,13 @@ impl ShareAppState {
             .await?
             .json::<SyncFetchTIDRsp>()
             .await?;
+
+        info!(
+            "fetch tid req, {}({:?}) rsp size: {}",
+            T::table_name(false),
+            page,
+            rsp.data.len()
+        );
 
         Ok(rsp)
     }
@@ -319,11 +327,13 @@ impl ShareAppState {
         }
 
         let mut start_ex = sync_info.start_ex;
+        let mut sync_step = SyncSingleStep::Omit;
         loop {
             let sync_page = SyncPageInfo {
                 sync_info: sync_info.clone(),
                 page_size,
                 start_ex,
+                sync_step,
             };
 
             let rsp: SyncDataArg<T> = self
@@ -337,11 +347,19 @@ impl ShareAppState {
 
             self.sync_merge_operations(rsp).await?;
             if nomore {
-                break;
+                match sync_step {
+                    SyncSingleStep::Omit => {
+                        sync_step = SyncSingleStep::Data;
+                        start_ex = sync_info.start_ex;
+                    }
+                    SyncSingleStep::Data => {
+                        break;
+                    }
+                }
             }
         }
 
-        self.sync_drop_tmp_table(&sync_info).await?;
+        // self.sync_drop_tmp_table(&sync_info).await?;
 
         let remote_log = SyncLogTransient {
             remote_id: self.instance_id.to_string().try_into()?,

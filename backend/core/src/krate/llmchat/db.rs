@@ -7,6 +7,7 @@ use chin_sql::{SqlBuilder, Wheres};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
+use crate::mapper::Curd;
 use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -403,5 +404,39 @@ impl LLMChatMapper for KDb {
             .await?;
 
         Ok(LLMChatTruncateSessionRsp { count: 0 })
+    }
+}
+
+impl Curd for LLMChatBot {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+
+impl Curd for LLMChatTemplate {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+impl Curd for LLMChatSession {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+impl Curd for LLMChatRecord {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+    fn tid(&self) -> TID {
+        self.tid
     }
 }

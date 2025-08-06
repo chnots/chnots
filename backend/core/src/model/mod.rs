@@ -2,7 +2,7 @@ use chin_sql::SqlInserter;
 use chin_tools::AResult;
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::mapper::db::KDbRow;
+use crate::mapper::{Curd, db::KDbRow};
 
 pub mod decimal;
 pub(crate) mod dto;
@@ -13,7 +13,7 @@ pub(crate) trait KSerde: Serialize + Send + Clone + DeserializeOwned + 'static {
     fn try_from_kdb_row(row: &KDbRow) -> AResult<Self>;
 }
 
-pub(crate) trait KOtidSupport: KSerde {
+pub(crate) trait KOtidSupport: KSerde + Curd {
     fn get_otid_enum() -> otid_table::OtidTableEnum;
     fn table_name(hist: bool) -> &'static str;
     fn all_columns() -> &'static [&'static str];

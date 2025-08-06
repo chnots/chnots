@@ -3,8 +3,8 @@ use std::convert::TryFrom;
 use anyhow::anyhow;
 use chin_sql::SqlValue;
 use serde::{
-    de::{self},
     Deserialize, Serialize,
+    de::{self},
 };
 
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
@@ -65,8 +65,6 @@ impl From<i64> for Decimal {
         Self(value.to_string())
     }
 }
-
-
 
 impl From<Decimal> for SqlValue<'_> {
     fn from(value: Decimal) -> Self {

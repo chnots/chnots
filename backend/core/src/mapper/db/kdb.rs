@@ -221,7 +221,6 @@ macro_rules! expand_kdbtx_branch {
 
 impl KDbTransactionBehaiver for KDbTx<'_> {
     async fn cmt(self) -> EResult {
-        log::info!("the tx has committed");
         match self {
             KDbTx::Sqlite(tx) => tx.commit().await?,
             KDbTx::Postgres(tx) => tx.commit().await?,

@@ -7,9 +7,12 @@ use itertools::Itertools;
 use log::info;
 
 use crate::{
-    mapper::db::{
-        HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
-        KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
+    mapper::{
+        Curd,
+        db::{
+            HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
+            KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
+        },
     },
     model::dto::KReq,
 };
@@ -270,9 +273,29 @@ macro_rules! row_into_ktab_cell {
                 })
             }
         }
+
+        impl Curd for $sub_table {
+            fn pkey(&self) -> chin_sql::Wheres<'_> {
+                Self::pkey_cond(self.table_otid, self.col_otid, self.row_otid)
+            }
+
+            fn tid(&self) -> TID {
+                self.tid
+            }
+        }
     };
 }
 
 row_into_ktab_cell!(KTabCellDate);
 row_into_ktab_cell!(KTabCellDecimal);
 row_into_ktab_cell!(KTabCellText);
+
+impl Curd for KTabMeta {
+    fn pkey(&self) -> Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
