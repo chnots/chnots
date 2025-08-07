@@ -4,8 +4,6 @@ version = "0.0.3"
 edition = "2024"
 
 [dependencies]
-tracing = "0.1"
-tracing-subscriber = "0.3"
 futures = "0.3.30"
 num-traits = "0.2"
 num-derive = "0.4"
@@ -16,13 +14,12 @@ arc-swap = "1.7.1"
 axum-macros = "0.5.0"
 env_logger = "0.11.6"
 once_cell = "1.20.2"
-textdistance = "*"
+textdistance = "1.1.1"
 base64 = "0.22.1"
-chinese-lunisolar-calendar = "*"
+chinese-lunisolar-calendar = "0.2.0"
 itertools = "0.14.0"
 axum_typed_multipart = "0.16.2"
 blake3 = "1.8.2"
-tracing-log = "0.2.0"
 enum-tag = "0.3.0"
 markdown = "1.0.0"
 const_format = "0.2.34"
@@ -30,8 +27,8 @@ shellexpand = "3.1.1"
 enum-iterator = "2.1.0"
 
 [features]
-default = [ "axum-server",]
-tls = [ "axum-server?/tls-rustls",]
+default = ["axum-server"]
+tls = ["axum-server?/tls-rustls"]
 tauri = []
 
 [dependencies.log]
@@ -39,18 +36,28 @@ workspace = true
 
 [dependencies.axum]
 version = "0.8"
-features = [ "multipart",]
+default-features = false
+features = [
+    "multipart",
+    "form",
+    "http1",
+    "json",
+    "matched-path",
+    "original-uri",
+    "query",
+    "tokio",
+]
 
 [dependencies.tower-http]
 version = "^0"
-features = [ "cors", "trace", "set-header", "compression-full",]
+features = ["cors", "trace", "set-header", "compression-full"]
 
 [dependencies.mime_guess]
 version = "2"
 
 [dependencies.rust-embed]
 version = "^8"
-features = [ "axum", "compression",]
+features = ["axum", "compression"]
 
 [dependencies.bytes]
 version = "^1"
@@ -73,7 +80,7 @@ version = "0.4.39"
 
 [dependencies.tokio-postgres]
 version = "0.7"
-features = [ "with-chrono-0_4",]
+features = ["with-chrono-0_4"]
 
 [dependencies.postgres-types]
 version = "0.2"
@@ -95,15 +102,15 @@ path = "../chin-tools/crates/actor-sqlite"
 
 [dependencies.anyhow]
 version = "1"
-features = [ "backtrace",]
+features = ["backtrace"]
 
 [dependencies.debug-ignore]
 version = "1.0.5"
-features = [ "serde",]
+features = ["serde"]
 
 [dependencies.smol_str]
 version = "0.3.2"
-features = [ "serde",]
+features = ["serde"]
 
 [dependencies.axum-server]
 version = "0.7.1"
@@ -112,4 +119,4 @@ optional = true
 [dependencies.reqwest]
 version = "0.12.22"
 default-features = false
-features = [ "json", "stream", "multipart", "rustls-tls",]
+features = ["json", "stream", "multipart", "rustls-tls"]

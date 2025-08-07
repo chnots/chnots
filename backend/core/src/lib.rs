@@ -4,9 +4,6 @@ use config::Config;
 use log::info;
 use mapper::MapperType;
 
-#[cfg(not(feature = "tauri"))]
-use tracing_log::LogTracer;
-
 use crate::krate::sync::filedumper::StartType;
 
 pub(crate) mod app;
@@ -19,24 +16,6 @@ pub(crate) mod model;
 pub(crate) mod util;
 
 pub async fn run(config: Config) -> EResult {
-    #[cfg(not(feature = "tauri"))]
-    let subscriber = tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .with_thread_ids(true)
-        .with_line_number(true)
-        .with_timer(tracing_subscriber::fmt::time::time());
-    #[cfg(not(feature = "tauri"))]
-    LogTracer::init()?;
-
-    #[cfg(debug_assertions)]
-    #[cfg(not(feature = "tauri"))]
-    let subscriber = subscriber.with_max_level(tracing::Level::DEBUG);
-
-    #[cfg(not(feature = "tauri"))]
-    let subscriber = subscriber.finish();
-
-    #[cfg(not(feature = "tauri"))]
-    tracing::subscriber::set_global_default(subscriber)?;
     info!("config {config:?}");
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;

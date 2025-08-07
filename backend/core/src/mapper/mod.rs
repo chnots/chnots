@@ -3,7 +3,7 @@ pub(crate) mod mappertype;
 
 use chin_sql::{Wheres, time_type::TID};
 use db::{KDb, postgres::PostgresConfig, sqlite::SqliteConfig};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::mapper::db::KDbRow;
 

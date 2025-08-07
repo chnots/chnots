@@ -4,11 +4,14 @@ version = "0.0.3"
 edition = "2024"
 
 [dependencies]
-toml = "0.8.10"
+toml = "0.9.5"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+tracing-log = "0.2.0"
 
 [dependencies.clap]
 version = "4.4.10"
-features = [ "derive",]
+features = ["derive"]
 
 [dependencies.tokio]
 workspace = true

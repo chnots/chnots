@@ -1,4 +1,3 @@
-
 use chin_tools::{AResult, EResult};
 use serde::Serialize;
 use serde_json::json;
@@ -16,13 +15,12 @@ use axum::{
     response::IntoResponse,
 };
 
+use log::info;
 use tower_http::{
     compression::CompressionLayer,
     cors::{Any, CorsLayer},
     set_header::SetResponseHeaderLayer,
-    trace::{self, TraceLayer},
 };
-use log::{info};
 
 use crate::{
     app::ShareAppState,
@@ -48,11 +46,7 @@ impl<E: Serialize> IntoResponse for KResponse<E> {
                 res
             }
             Err(err) => {
-                log::error!(
-                    "Error Occured: {}, {}",
-                    err,
-                    err.backtrace()
-                );
+                log::error!("Error Occured: {}, {}", err, err.backtrace());
                 let mut res = Json(json!({"msg": err.to_string()})).into_response();
                 *res.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
                 res
@@ -67,11 +61,6 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .allow_headers(Any)
         .allow_methods(Any)
         .allow_origin(Any);
-
-    let trace_layer = TraceLayer::new_for_http()
-        .make_span_with(trace::DefaultMakeSpan::new().level(tracing::Level::DEBUG))
-        .on_response(trace::DefaultOnResponse::new().level(tracing::Level::DEBUG))
-        .on_request(|_req: &_, _: &_| {});
 
     let app = Router::new()
         .merge(kfile::controller::routes())
@@ -99,8 +88,7 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         ))
         .layer(DefaultBodyLimit::disable())
         // https://stackoverflow.com/questions/73498537/axum-router-rejecting-cors-options-preflight-with-405-even-with-corslayer/
-        .layer(cors_layer)
-        .layer(trace_layer);
+        .layer(cors_layer);
 
     #[cfg(feature = "tls")]
     if let Some(Some(config)) = &app_state.config.server.as_ref().map(|s| &s.tls) {
@@ -111,7 +99,7 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
             PathBuf::from(config.tls_key.clone()),
         )
         .await?;
-        
+
         axum_server::bind_rustls(
             SocketAddr::new(
                 std::net::IpAddr::V4(std::net::Ipv4Addr::new(0, 0, 0, 0)),
