@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
 
 use crate::krate::toent::logic::{
     EventBuilder, RawInputSegs, eventenum::EventEnum, timeevent::TimeEvent, todoevent::TodoEvent,
@@ -11,33 +14,8 @@ use regex::Regex;
 
 #[derive(Debug, Clone)]
 enum ChnotBlockType {
-    Heading {
-        level: u8,
-        pos: usize,
-        row_num: usize,
-    },
-    ListItem {
-        level: usize,
-        pos: usize,
-        row_num: usize,
-    },
-}
-
-impl ChnotBlockType {
-    fn get_row_num(&self) -> usize {
-        match self {
-            ChnotBlockType::Heading {
-                level: _,
-                pos: _,
-                row_num,
-            } => *row_num,
-            ChnotBlockType::ListItem {
-                level: _,
-                pos: _,
-                row_num,
-            } => *row_num,
-        }
-    }
+    Heading,
+    ListItem,
 }
 
 #[derive(Debug, Clone)]
@@ -55,19 +33,44 @@ enum InsertType {
 }
 
 #[derive(Debug, Clone)]
+struct WithPos<E> {
+    start_in: usize,
+    end_ex: usize,
+    data: E,
+}
+
+impl<E> Deref for WithPos<E> {
+    type Target = E;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<E> DerefMut for WithPos<E> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ChnotBlock {
     title: String,
     block_type: ChnotBlockType,
-    todo_event: Option<TodoEvent>,
-    time_event: Vec<TimeEvent>,
-    backlinks: Vec<String>,
-    hashtags: Vec<String>,
-    props: Vec<PropsType>,
+    todo_event: Option<WithPos<TodoEvent>>,
+    time_event: Vec<WithPos<TimeEvent>>,
+    backlinks: Vec<WithPos<String>>,
+    hashtags: Vec<WithPos<String>>,
+    props: Vec<WithPos<PropsType>>,
+    level: usize,
+    end_ex: usize,
+    start_in: usize,
+    start_row: usize,
 }
 
 pub struct ChnotParser<'a> {
     original: &'a str,
-    new_map: HashMap<usize, InsertType>,
+    replace_map: HashMap<usize, InsertType>,
     chnot_map: HashMap<usize, ChnotBlock>,
     root: Node,
 }
@@ -82,7 +85,7 @@ impl<'a> ChnotParser<'a> {
 
         Self {
             original: text,
-            new_map: Default::default(),
+            replace_map: Default::default(),
             chnot_map: Default::default(),
             root: ast,
         }
@@ -101,10 +104,18 @@ impl<'a> ChnotParser<'a> {
                             {
                                 match event {
                                     EventEnum::Time(time_event) => {
-                                        chnot_block.time_event.push(*time_event);
+                                        chnot_block.time_event.push(WithPos {
+                                            start_in: 0,
+                                            end_ex: 0,
+                                            data: *time_event,
+                                        });
                                     }
                                     EventEnum::Todo(todo_event) => {
-                                        chnot_block.todo_event.replace(todo_event);
+                                        chnot_block.todo_event.replace(WithPos {
+                                            start_in: 0,
+                                            end_ex: 0,
+                                            data: todo_event,
+                                        });
                                     }
                                 }
                             }
@@ -139,14 +150,22 @@ impl<'a> ChnotParser<'a> {
                     for cps in HASHTAG_REGEX.captures_iter(&text.value) {
                         if let Some(cp) = cps.get(0) {
                             let result = cp.as_str();
-                            chnot_block.hashtags.push(result.to_string());
+                            chnot_block.hashtags.push(WithPos {
+                                start_in: 0,
+                                end_ex: 0,
+                                data: result.to_string(),
+                            });
                         }
                     }
 
                     for cps in BACKLINK_REGEX.captures_iter(&text.value) {
                         if let Some(cp) = cps.get(1) {
                             let result = cp.as_str();
-                            chnot_block.backlinks.push(result.to_string());
+                            chnot_block.backlinks.push(WithPos {
+                                start_in: 0,
+                                end_ex: 0,
+                                data: result.to_string(),
+                            });
                         }
                     }
                 }
@@ -172,10 +191,12 @@ impl<'a> ChnotParser<'a> {
                 for p in original[pos.start.offset..pos.end.offset].split("\n") {
                     let p = p.trim_start();
                     let prefix = "// ID: ";
-                    if let Some(suffix) =  p.strip_prefix(prefix) {
-                        chnot_block
-                            .props
-                            .push(PropsType::ID(suffix.to_string()));
+                    if let Some(suffix) = p.strip_prefix(prefix) {
+                        chnot_block.props.push(WithPos {
+                            start_in: 0,
+                            end_ex: 0,
+                            data: PropsType::ID(suffix.to_string()),
+                        });
                     }
                 }
             }
@@ -187,16 +208,16 @@ impl<'a> ChnotParser<'a> {
                     if let Some(pos) = &heading.position {
                         let mut cb = ChnotBlock {
                             title: this.original[pos.start.offset..pos.end.offset].to_string(),
-                            block_type: ChnotBlockType::Heading {
-                                level: heading.depth,
-                                pos: pos.start.offset,
-                                row_num: pos.start.line,
-                            },
+                            block_type: ChnotBlockType::Heading,
                             todo_event: None,
                             time_event: vec![],
                             backlinks: vec![],
                             props: vec![],
                             hashtags: vec![],
+                            level: heading.depth as usize,
+                            start_in: pos.start.offset,
+                            start_row: pos.start.line,
+                            end_ex: pos.end.offset,
                         };
 
                         // extract
@@ -218,16 +239,16 @@ impl<'a> ChnotParser<'a> {
 
                         let mut cb = ChnotBlock {
                             title: fline,
-                            block_type: ChnotBlockType::ListItem {
-                                level: pos.start.column,
-                                pos: pos.start.offset,
-                                row_num: pos.start.line,
-                            },
+                            block_type: ChnotBlockType::ListItem,
                             todo_event: None,
                             time_event: vec![],
                             backlinks: vec![],
                             props: vec![],
                             hashtags: vec![],
+                            level: pos.start.column,
+                            start_in: pos.start.offset,
+                            start_row: pos.start.line,
+                            end_ex: pos.end.offset,
                         };
 
                         // extract
@@ -269,7 +290,7 @@ impl<'a> ChnotParser<'a> {
                         if let Some((_, cb)) = this
                             .chnot_map
                             .iter_mut()
-                            .find(|(_, cb)| cb.block_type.get_row_num() == pos.start.line - 1)
+                            .find(|(_, cb)| cb.start_row == pos.start.line - 1)
                         {
                             extract_props_from_para(paragraph, cb, this.original);
                         }
@@ -283,7 +304,7 @@ impl<'a> ChnotParser<'a> {
                         if let Some((_, c)) = this
                             .chnot_map
                             .values_mut()
-                            .map(|cb| (pos.start.line - cb.block_type.get_row_num(), cb))
+                            .map(|cb| (pos.start.line - cb.start_row, cb))
                             .filter(|(diff, _)| *diff > 0)
                             .sorted_by(|c1, c2| c1.0.cmp(&c2.0))
                             .take(0)
@@ -318,7 +339,7 @@ impl<'a> ChnotParser<'a> {
         let te: Vec<TodoEvent> = self
             .chnot_map
             .values()
-            .filter_map(|c| c.todo_event)
+            .filter_map(|c| c.todo_event.as_ref().map(|te| te.data))
             .collect();
 
         if te.is_empty() {
