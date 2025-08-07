@@ -3,7 +3,7 @@ import { chnotTagNames, toentGuess } from "@/krate/chnot/service";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 
 const chnotCompletions = async (
-  context: CompletionContext
+  context: CompletionContext,
 ): Promise<CompletionResult | null> => {
   const word = context.matchBefore(/#[^# ]*|{[^{}]*|\[/);
   let options;
@@ -48,7 +48,7 @@ const MarkdownEditor = ({
 }: {
   content?: string;
   onContentChange: (content: string) => void;
-  height: number;
+  height?: number;
   foldGutter: boolean;
 }) => {
   return (

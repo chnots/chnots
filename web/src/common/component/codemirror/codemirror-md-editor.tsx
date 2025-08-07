@@ -104,7 +104,7 @@ const CodeMirrorEditor = ({
     context: CompletionContext,
   ) => Promise<CompletionResult | null>;
   foldGutter: boolean;
-  height: number;
+  height?: number;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
 
@@ -155,7 +155,7 @@ const CodeMirrorEditor = ({
 
   return (
     <CodeMirror
-      height={`${height}px`}
+      height={height ? `${height}px` : undefined}
       extensions={extensions}
       ref={codeMirror}
       style={{

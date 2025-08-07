@@ -397,38 +397,33 @@ const ChnotBody = ({
     });
 
   return chnotKind === ChnotKind.MarkdownWithToent ? (
-    readonly && initialContent ? (
-      <div className="p-2 overflow-y-auto w-full">
-        <MarkdownViewer content={initialContent.replace("\n", "  \n") ?? ""} />
-      </div>
-    ) : (
-      <div
-        className="flex h-full overflow-auto bg-editor w-full items-center justify-center" // this part could resize when I add overflow-auto, magic?
-      >
+    <div
+      className="flex h-full overflow-auto bg-editor w-full items-center justify-center p-2" // this part could resize when I add overflow-auto, magic?
+    >
+      {readonly && initialContent ? (
+        <div className="p-2 overflow-y-auto w-full">
+          <MarkdownViewer
+            content={initialContent.replace("\n", "  \n") ?? ""}
+          />
+        </div>
+      ) : (
         <div
-          className="w-[90%] h-[90%] max-w-4xl border border-gray-200 p-2 m-2"
+          className="w-[95%] h-[95%] max-w-4xl border border-gray-200 shadow-2xl p-2"
           ref={bodyRef}
         >
-          {height ? (
-            <MarkdownEditor
-              onContentChange={(content) => {
-                onSetContent(content);
-              }}
-              height={height}
-              content={initialContent}
-              foldGutter={false}
-            />
-          ) : (
-            <ErrorDisplay description={"Zero Height"}></ErrorDisplay>
-          )}
+          <MarkdownEditor
+            onContentChange={(content) => {
+              onSetContent(content);
+            }}
+            height={height}
+            content={initialContent}
+            foldGutter={false}
+          />
         </div>
-      </div>
-    )
+      )}
+    </div>
   ) : (
-    <div
-      className="h-full  flex justify-center overflow-auto content-centere"
-      ref={bodyRef}
-    >
+    <div className="h-full flex justify-center overflow-auto content-centere">
       <RichChnot
         readOnly={readonly ?? false}
         metaTid={metaTid}
