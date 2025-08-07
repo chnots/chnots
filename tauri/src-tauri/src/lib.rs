@@ -1,4 +1,5 @@
 use chnots_core::config::{AttachmentConfig, Config, MapperConfig, ServerConfig, SqliteConfig};
+use log::info;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -12,6 +13,7 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .expect("couldn't resolve app data dir");
+            info!("home dir: {dir:?}");
             std::fs::create_dir_all(&dir)
                 .unwrap_or_else(|_| panic!("unable to create dir {dir:?}"));
 

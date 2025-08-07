@@ -371,11 +371,13 @@ impl KDb {
                 Ok(TidCompare {
                     tid: r.try_get(C_TID)?,
                     lstate: {
-                        let c: i32 = r.try_get(C_LSTATE)?;
+                        let c: i64 = r.try_get(C_LSTATE)?;
+                        let c: i32 = c.clamp(0, 100).try_into()?;
                         c.try_into()?
                     },
                     rstate: {
-                        let c: i32 = r.try_get(C_RSTATE)?;
+                        let c: i64 = r.try_get(C_RSTATE)?;
+                        let c: i32 = c.clamp(0, 100).try_into()?;
                         c.try_into()?
                     },
                 })
@@ -429,7 +431,7 @@ impl KDb {
                     )
                     .await?;
                 let db_tid =
-                    db_tid.context(format!("it should be found, maybe some other error."))?;
+                    db_tid.context("it should be found, maybe some other error.".to_string())?;
                 if db_tid > data.tid() {
                     tx.exec(
                         data.sql_inserter()

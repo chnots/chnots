@@ -1,9 +1,9 @@
-use std::path::PathBuf;
+use std::{os::unix::fs::MetadataExt, path::PathBuf};
 
 use anyhow::Context;
 use chin_sql::time_type::TID;
 use chin_tools::EResult;
-use log::{error, info};
+use log::{error, info, warn};
 use reqwest::{Body, multipart};
 use tokio::{fs::File, io::AsyncWriteExt};
 use tokio_util::codec::{BytesCodec, FramedRead};
@@ -14,7 +14,7 @@ use crate::{
     krate::{
         kfile::{
             InlineKFile, KFILE_BIG_UPLOAD_WITH_SID, KFILE_INLINE_INSERT2, KFileInlineInsert2Req,
-            KFileMeta, QueryInlineKFileReq, QueryInlineKFileRsp, mapper::KFileMapper,
+            KFileMeta, mapper::KFileMapper,
         },
         sync::{
             dto::SyncDataArg, filedumper::StartType, networksync::OtidRelatedWorker,
@@ -23,6 +23,8 @@ use crate::{
     },
     util::digestutil::file_blake3_sum,
 };
+
+use super::{KFileInlineGetBySidReq, KFileInlineGetBySidRsp};
 
 struct KFileAssetWorker {
     app: ShareAppState,
@@ -35,16 +37,14 @@ impl KFileAssetWorker {
             if kfm.inline {
                 let rsp = client
                     .get(endpoint.to_url(crate::krate::kfile::dto::KFILE_INLINE_GET_BY_SID))
-                    .query(&QueryInlineKFileReq {
-                        sid: Some(kfm.sid.clone()),
-                        meta_id: None,
-                        with_omit: Some(true),
+                    .query(&KFileInlineGetBySidReq {
+                        sid: kfm.sid.clone(),
                     })
                     .send()
                     .await?
-                    .json::<QueryInlineKFileRsp>()
+                    .json::<KFileInlineGetBySidRsp>()
                     .await?;
-                for ele in rsp.res {
+                if let Some(ele) = rsp.file {
                     self.app.insert_inline_kfile2(ele).await?;
                 }
             } else {
@@ -62,11 +62,16 @@ impl KFileAssetWorker {
                 .await?;
                 let mut file = File::create(&tmp_path).await?;
 
-                let mut stream = client
+                let rsp = client
                     .get(endpoint.to_url(format!("/api/v1/kfile/{}/{}", kfm.id, kfm.sid)))
                     .send()
-                    .await?
-                    .bytes_stream();
+                    .await?;
+
+                if !rsp.status().is_success() {
+                    warn!("rsp status is not right, {:?}", rsp.text().await);
+                    return Ok(());
+                }
+                let mut stream = rsp.bytes_stream();
 
                 while let Some(chunk_result) = futures::StreamExt::next(&mut stream).await {
                     let chunk = chunk_result?;
@@ -76,17 +81,23 @@ impl KFileAssetWorker {
                 file.flush().await?;
 
                 let sum = file_blake3_sum(&tmp_path)?;
+                let final_path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
+
                 if sum != kfm.sid.as_str() {
-                    anyhow::bail!(
+                    warn!(
                         "the pulled file is not correct. filename {}, blake3sum db: {} -- file: {}",
-                        kfm.filename,
-                        kfm.sid,
-                        sum
+                        kfm.filename, kfm.sid, sum
                     );
-                } else {
-                    let final_path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
-                    tokio::fs::rename(tmp_path, final_path).await?;
+                    if file.metadata().await?.len() != (kfm.filesize as u64) {
+                        anyhow::bail!(
+                            "event the file size is not same: (file){} : (db){}, filepath {:?}",
+                            file.metadata().await?.len(),
+                            kfm.filesize,
+                            tmp_path
+                        );
+                    }
                 }
+                tokio::fs::rename(tmp_path, final_path).await?;
             }
         }
 
@@ -108,6 +119,7 @@ impl KFileAssetWorker {
                 }
             } else {
                 let path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
+                let file_size = path.metadata()?.size();
                 // https://stackoverflow.com/questions/65814450/how-to-post-a-file-using-reqwest
                 let file = match File::open(&path).await {
                     Ok(file) => file,
@@ -136,6 +148,7 @@ impl KFileAssetWorker {
                             .to_url(format!("{KFILE_BIG_UPLOAD_WITH_SID}/{}", kfm.sid.as_str())),
                     )
                     .multipart(form)
+                    .header("K-filesize", file_size)
                     .send()
                     .await?;
                 let result = response.text().await?;

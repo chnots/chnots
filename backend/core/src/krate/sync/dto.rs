@@ -15,6 +15,7 @@ pub struct SyncInfo<T> {
     pub start_ex: TID,
     pub end_in: TID,
     pub table_type: PhantomData<T>,
+    pub pantient: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]

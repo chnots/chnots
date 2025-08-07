@@ -1,15 +1,15 @@
-use anyhow::{Context, anyhow};
+use anyhow::{Context, anyhow, bail};
 use axum::{
     body::{self, Bytes},
     extract::{Multipart, Path as RestPath, State},
-    http::{HeaderMap, HeaderName, StatusCode, header},
+    http::{HeaderMap, HeaderName, HeaderValue, StatusCode, header},
     response::IntoResponse,
 };
 use axum_typed_multipart::TypedMultipart;
 use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult, SharedStr, utils::id_util::generate_uuid};
-use futures::Stream;
-use log::info;
+use futures::{Stream, task::waker};
+use log::{info, warn};
 use std::{
     fs::OpenOptions,
     io::Write,
@@ -150,11 +150,19 @@ pub(super) async fn upload_by_chunks(
 }
 
 pub(super) async fn upload_big_file_with_sid(
+    headers: HeaderMap,
     state: State<ShareAppState>,
     RestPath(sid): RestPath<String>,
     multipart: Multipart,
 ) -> KResponse<SharedStr> {
-    upload_big_file_with_sid_inner(state, sid, multipart)
+    let filesize = match headers.get("K-filesize") {
+        Some(sv) => sv
+            .to_str()
+            .map(|s| s.parse::<u64>().unwrap_or(0))
+            .unwrap_or(0),
+        None => 0,
+    };
+    upload_big_file_with_sid_inner(state, sid, multipart, filesize)
         .await
         .into()
 }
@@ -164,6 +172,7 @@ async fn upload_big_file_with_sid_inner(
     state: State<ShareAppState>,
     sid: String,
     mut multipart: Multipart,
+    filesize: u64,
 ) -> AResult<SharedStr> {
     while let Some(field) = multipart.next_field().await.unwrap() {
         let _ = if let Some(filename) = field.file_name() {
@@ -186,7 +195,16 @@ async fn upload_big_file_with_sid_inner(
 
         let hash = stream_to_file(field, &tmp_path).await?;
         if hash.as_str() != sid.as_str() {
-            anyhow::bail!("the upload file sid {hash:?} is not same to request {sid}");
+            warn!("the upload file sid {hash:?} is not same to request {sid}");
+        } else {
+            let true_size = final_path.metadata()?.len();
+            if filesize != true_size {
+                bail!(
+                    "even the file size is not equal: {} - {}",
+                    filesize,
+                    final_path.metadata()?.len()
+                )
+            }
         }
         tokio::fs::rename(tmp_path, final_path).await?;
 

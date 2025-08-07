@@ -280,6 +280,7 @@ impl ShareAppState {
             start_ex: sync_time,
             end_in: TID::default(),
             table_type: std::marker::PhantomData,
+            pantient: true,
         };
 
         self.sync_create_tmp_table(&sync_info).await?;
@@ -370,7 +371,7 @@ impl ShareAppState {
         };
         self.sync_insert_sync_log_tx(endpoint, &remote_log).await?;
 
-        let local_log = SyncLogTransient {
+        let local_log: SyncLogTransient = SyncLogTransient {
             remote_id: sync_info.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
