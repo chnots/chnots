@@ -7,9 +7,14 @@ fn managers_to_sql(managers: Vec<String>) -> String {
     serde_json::to_string(&managers).unwrap()
 }
 
+fn kspace_name_to_sql(managers: Varchar<500>) -> String {
+    managers.as_str().to_lowercase()
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, GenerateTableSchema)]
 pub struct KSpace {
     #[gts_primary]
+    #[gts_tosql = "kspace_name_to_sql"]
     pub name: Varchar<500>,
     pub color: Varchar<100>,
     #[gts_type = "Text"]

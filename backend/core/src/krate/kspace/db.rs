@@ -36,7 +36,9 @@ impl KSpaceMapper for KDb {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
-            .omit_rows::<KSpace>(KSpace::pkey_cond(kspace.body.kspace.name.clone()))
+            .omit_rows::<KSpace>(KSpace::pkey_cond(
+                kspace.body.kspace.name.as_str().to_lowercase().try_into()?,
+            ))
             .await?;
         tx.exec(kspace.body.kspace.to_sql_inserter()).await?;
         tx.cmt().await?;
@@ -59,7 +61,9 @@ impl KSpaceMapper for KDb {
         self.conn()
             .await?
             .as_executor()
-            .omit_rows::<KSpace>(KSpace::pkey_cond(kspace.body.kspace_name))
+            .omit_rows::<KSpace>(KSpace::pkey_cond(
+                kspace.body.kspace_name.as_str().to_lowercase().try_into()?,
+            ))
             .await?;
         Ok(KSpaceDeletionRsp {})
     }
