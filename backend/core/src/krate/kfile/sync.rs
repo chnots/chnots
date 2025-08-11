@@ -1,4 +1,4 @@
-use std::{os::unix::fs::MetadataExt, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::Context;
 use chin_tools::EResult;
@@ -117,7 +117,7 @@ impl KFileAssetWorker {
                 }
             } else {
                 let path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
-                let file_size = path.metadata()?.size();
+                let file_size = path.metadata()?.len();
                 // https://stackoverflow.com/questions/65814450/how-to-post-a-file-using-reqwest
                 let file = match File::open(&path).await {
                     Ok(file) => file,
