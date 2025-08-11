@@ -5,6 +5,7 @@ import LoadingPage from "@/common/pages/loading-page";
 import { RoutePaths } from "@/router";
 import { useKSpaceStore } from "./krate/kspace/store";
 import faviconSvg from "../public/static/favicon/chnots.svg?raw";
+import useParamState from "./hooks/use-param-state";
 
 const App = () => {
   const location = useLocation();
@@ -16,6 +17,11 @@ const App = () => {
   });
   const [lastVisited] = useLocalStorage<string>("lastVisited", "/home");
   const [initialized, setInitialized] = useState(false);
+
+  const [, setKSpaceParam] = useParamState<string>("ns", currentKSpace);
+  useEffect(() => {
+    setKSpaceParam(currentKSpace);
+  }, [currentKSpace]);
 
   useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
@@ -47,7 +53,7 @@ const App = () => {
         if (
           lastVisited &&
           ([RoutePaths.Chnots, RoutePaths.Toents] as string[]).includes(
-            lastVisited
+            lastVisited,
           )
         ) {
           window.location.href = lastVisited;
