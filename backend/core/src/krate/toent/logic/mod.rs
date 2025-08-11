@@ -40,10 +40,10 @@ impl<'a> RawInputSegs<'a> {
     pub(crate) fn remove_first_prefix(&self, key: &str) -> RawInputSegs<'a> {
         let mut other = self.clone();
         let first = other.spans.get_mut(0);
-        if let Some(f) = first {
-            if f.starts_with(key) {
-                f.text = &f.text[key.len()..]
-            }
+        if let Some(f) = first
+            && f.starts_with(key)
+        {
+            f.text = &f.text[key.len()..]
         }
         other
     }

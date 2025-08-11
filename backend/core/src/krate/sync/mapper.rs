@@ -7,47 +7,34 @@ use crate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
             dto::{
-                SyncAllEndpointsRsp, SyncDataArg, SyncFetchTIDPage, SyncFetchTIDArg,
+                SyncAllEndpointsRsp, SyncDataArg, SyncFetchTIDArg, SyncFetchTIDPage,
                 SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
             },
             po::{SyncAllEndpoints, SyncLogTransient},
         },
     },
     magics::ALL_ENDPOINTS,
-    mapper::{MapperRowType, MapperType},
+    mapper::MapperType,
     model::KOtidSupport,
 };
 
-pub trait Dumper<T> {
-    async fn dump<E, F>(
+pub trait Dumper {
+    async fn dump<E>(
         &self,
-        table_name: &str,
         fetch_data: SyncFetchTIDPage,
-        mapper: F,
+        hist: bool,
     ) -> chin_tools::AResult<Vec<E>>
     where
-        F: Fn(T) -> AResult<E> + Send + Sync + 'static,
-        E: Send + 'static;
+        E: KOtidSupport;
 }
 
-impl Dumper<MapperRowType> for MapperType {
-    async fn dump<E, F>(
-        &self,
-        table_name: &str,
-        fetch_data: SyncFetchTIDPage,
-        mapper: F,
-    ) -> chin_tools::AResult<Vec<E>>
+impl Dumper for MapperType {
+    async fn dump<E>(&self, fetch_data: SyncFetchTIDPage, hist: bool) -> chin_tools::AResult<Vec<E>>
     where
-        F: Fn(MapperRowType) -> AResult<E> + Send + Sync + 'static,
-        E: Send + 'static,
+        E: KOtidSupport,
     {
         match self {
-            MapperType::KDb(kdb) => {
-                kdb.dump(table_name, fetch_data, move |row| {
-                    mapper(MapperRowType::KDb(row))
-                })
-                .await
-            }
+            MapperType::KDb(kdb) => kdb.dump(fetch_data, hist).await,
         }
     }
 }
@@ -79,6 +66,8 @@ pub trait SyncMapper {
         req: SyncDataArg<T>,
     ) -> AResult<SyncDataArg<T>>;
     async fn sync_create_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult;
+
+    #[allow(dead_code)]
     async fn sync_drop_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult;
 }
 

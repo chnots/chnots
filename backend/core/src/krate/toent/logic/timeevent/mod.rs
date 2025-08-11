@@ -1,4 +1,4 @@
-use timeenum::{westen::WesTime, Timestamp};
+use timeenum::{Timestamp, westen::WesTime};
 
 use crate::krate::toent;
 

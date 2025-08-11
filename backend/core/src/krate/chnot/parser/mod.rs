@@ -1,7 +1,7 @@
 use std::{
     cell::RefCell,
     collections::HashMap,
-    ops::{Deref, DerefMut, Index},
+    ops::{Deref, DerefMut},
 };
 
 use crate::krate::toent::logic::{
@@ -420,10 +420,7 @@ impl<'a> ChnotParser<'a> {
 mod tests {
     use comrak::nodes::LineColumn;
 
-    use crate::krate::{
-        chnot::parser::{ChnotParser, TextLocater},
-        toent::logic::{EventBuilder, RawInputSegs, timeevent::TimeEvent, todoevent::TodoEvent},
-    };
+    use crate::krate::chnot::parser::{ChnotParser, TextLocater};
 
     #[test]
     fn text_locater_test() {

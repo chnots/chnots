@@ -1,6 +1,6 @@
 use chin_tools::{AResult, EResult};
 
-use crate::{expand_mt_branch, model::dto::KReq, MapperType};
+use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 
 use super::*;
 
@@ -16,10 +16,10 @@ pub trait KTabMapper {
     ) -> AResult<KTabCellsOverwriteRsp>;
 
     async fn ktab_query_table_meta(&self, req: KReq<KTabMetaQueryReq>)
-        -> AResult<KTabMetaQueryRsp>;
+    -> AResult<KTabMetaQueryRsp>;
 
     async fn ktab_query_table_data(&self, req: KReq<KTabRowsQueryReq>)
-        -> AResult<KTabRowsQueryRsp>;
+    -> AResult<KTabRowsQueryRsp>;
 
     async fn ensure_ktab_tables(&self) -> EResult;
 }

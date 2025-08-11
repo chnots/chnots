@@ -30,16 +30,10 @@ const C_STATE_HIST: i32 = 2;
 const C_STATE_ABSENT: i32 = 0;
 const C_MIN_SYNC: &str = "min_sync";
 
-impl Dumper<KDbRow> for KDb {
-    async fn dump<E, F>(
-        &self,
-        table_name: &str,
-        fetch_data: SyncFetchTIDPage,
-        mapper: F,
-    ) -> chin_tools::AResult<Vec<E>>
+impl Dumper for KDb {
+    async fn dump<E>(&self, fetch_data: SyncFetchTIDPage, hist: bool) -> chin_tools::AResult<Vec<E>>
     where
-        F: Fn(KDbRow) -> AResult<E> + Send + Sync + 'static,
-        E: Send + 'static,
+        E: KOtidSupport,
     {
         let sql = match fetch_data {
             SyncFetchTIDPage::StartEnd {
@@ -47,7 +41,7 @@ impl Dumper<KDbRow> for KDb {
                 end_in,
                 page_size,
             } => {
-                SqlBuilder::read_all(table_name)
+                SqlBuilder::read_all(E::table_name(hist))
                     .r#where(Wheres::and([
                         // all table must have tid field
                         Wheres::compare(C_TID, ">", start_ex),
@@ -57,7 +51,11 @@ impl Dumper<KDbRow> for KDb {
             }
         };
 
-        let rows = self.conn().await?.qry_list(sql, mapper).await?;
+        let rows = self
+            .conn()
+            .await?
+            .qry_list(sql, |row| E::try_from_kdb_row(&row))
+            .await?;
 
         Ok(rows)
     }

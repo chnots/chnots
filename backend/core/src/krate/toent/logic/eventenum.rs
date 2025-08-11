@@ -1,10 +1,10 @@
 use std::fmt;
 
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de};
 
-use super::todoevent::TodoEvent;
 use super::PossibleScore;
-use super::{timeevent::TimeEvent, EventBuilder, RawInputSegs};
+use super::todoevent::TodoEvent;
+use super::{EventBuilder, RawInputSegs, timeevent::TimeEvent};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum EventEnum {

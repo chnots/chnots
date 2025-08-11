@@ -5,10 +5,10 @@ use regex::Regex;
 
 use super::PossibleScore;
 use super::{
-    base::{convert_time_to_secs, BaseTime},
     Timestamp,
+    base::{BaseTime, convert_time_to_secs},
 };
-use crate::krate::toent::{timeevent::equals_any, EventBuilder, RawInputSegs};
+use crate::krate::toent::{EventBuilder, RawInputSegs, timeevent::equals_any};
 
 pub(crate) const CAL_TYPE: &str = "wes";
 

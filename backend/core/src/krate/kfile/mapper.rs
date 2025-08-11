@@ -6,6 +6,7 @@ use chin_tools::{AResult, EResult};
 pub trait KFileMapper {
     async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()>;
     async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp>;
+    #[allow(dead_code)]
     async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>)
     -> anyhow::Result<QueryKFileMetaRsp>;
 
@@ -73,7 +74,7 @@ impl KFileMapper for MapperType {
     async fn insert_inline_kfile2(&self, req: InlineKFile) -> AResult<usize> {
         expand_mt_branch!(self.insert_inline_kfile2(req))
     }
-    
+
     async fn query_inline_kfile_by_sid(
         &self,
         sid: Varchar<100>,

@@ -4,7 +4,7 @@ use crate::app::ShareAppState;
 use crate::controller::KResponse;
 use crate::model::dto::kreq;
 use axum::routing::post;
-use axum::{extract::State, http::HeaderMap, routing::put, Json, Router};
+use axum::{Json, Router, extract::State, http::HeaderMap, routing::put};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()

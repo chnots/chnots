@@ -3,8 +3,8 @@ use chrono::{DateTime, Local, Timelike};
 use num_traits::ToPrimitive;
 
 use super::PossibleScore;
-use super::{base::BaseTime, Timestamp};
-use crate::krate::toent::{timeevent::contains_any, EventBuilder, RawInputSegs};
+use super::{Timestamp, base::BaseTime};
+use crate::krate::toent::{EventBuilder, RawInputSegs, timeevent::contains_any};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub(crate) struct ChnTime {
@@ -130,7 +130,7 @@ impl EventBuilder for ChnTime {
 
 #[cfg(test)]
 mod test {
-    use crate::krate::toent::{timeevent::timeenum::chinese::ChnTime, EventBuilder};
+    use crate::krate::toent::{EventBuilder, timeevent::timeenum::chinese::ChnTime};
 
     #[test]
     fn test() {

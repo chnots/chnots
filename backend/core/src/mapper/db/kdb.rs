@@ -365,7 +365,7 @@ macro_rules! impl_otid_support {
         }
 
         impl $crate::model::KSerde for $st {
-            fn sql_inserter(&self) -> chin_sql::SqlInserter {
+            fn sql_inserter(&'_ self) -> chin_sql::SqlInserter<'_> {
                 self.clone().to_sql_inserter()
             }
 

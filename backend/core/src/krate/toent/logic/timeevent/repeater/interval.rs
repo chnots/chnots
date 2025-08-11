@@ -5,8 +5,8 @@ use std::{
 
 use super::PossibleScore;
 use crate::krate::toent::{
-    timeevent::timeenum::base::{BaseTime, NoneOrI32},
     EventBuilder, RawInputSegs,
+    timeevent::timeenum::base::{BaseTime, NoneOrI32},
 };
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct TimeInterval {

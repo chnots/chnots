@@ -9,7 +9,7 @@ pub(crate) mod dto;
 pub(crate) mod otid_table;
 
 pub(crate) trait KSerde: Serialize + Send + Clone + DeserializeOwned + 'static {
-    fn sql_inserter(&self) -> SqlInserter;
+    fn sql_inserter(&'_ self) -> SqlInserter<'_>;
     fn try_from_kdb_row(row: &KDbRow) -> AResult<Self>;
 }
 

@@ -287,7 +287,7 @@ pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Resul
 
 #[cfg(test)]
 mod test {
-    use crate::krate::toent::{timeevent::timeenum::base::BaseTime, EventBuilder};
+    use crate::krate::toent::{EventBuilder, timeevent::timeenum::base::BaseTime};
 
     #[test]
     fn test_all() {
@@ -297,8 +297,14 @@ mod test {
         println!("{:?}", BaseTime::try_from_standard(&"12-03".into()));
         println!("{:?}", BaseTime::try_from_standard(&"12-03-04".into()));
         println!("{:?}", BaseTime::try_from_standard(&"12-03-04 12".into()));
-        println!("{:?}", BaseTime::try_from_standard(&"12-03-04 12:12".into()));
-        println!("{:?}", BaseTime::try_from_standard(&"12-03-04 2:12:12".into()));
+        println!(
+            "{:?}",
+            BaseTime::try_from_standard(&"12-03-04 12:12".into())
+        );
+        println!(
+            "{:?}",
+            BaseTime::try_from_standard(&"12-03-04 2:12:12".into())
+        );
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e", "asdasd"]));
     }

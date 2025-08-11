@@ -1,10 +1,9 @@
-use chin_sql::{str_type::Text, GenerateTableSchema};
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
+use chin_sql::{GenerateTableSchema, str_type::Text};
 use serde::{Deserialize, Serialize};
 
 use crate::impl_otid_support;
-
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct KFileMeta {
@@ -29,7 +28,7 @@ pub struct KFileMeta {
     pub filesize: i64,
 }
 
-impl_otid_support!{KFileMeta}
+impl_otid_support! {KFileMeta}
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct InlineKFile {

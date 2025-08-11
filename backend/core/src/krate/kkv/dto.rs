@@ -1,5 +1,8 @@
 use super::*;
-use chin_sql::{str_type::{Text, Varchar}, time_type::TID};
+use chin_sql::{
+    str_type::{Text, Varchar},
+    time_type::TID,
+};
 use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 

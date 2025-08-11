@@ -1,11 +1,7 @@
 use anyhow::Ok;
-use chin_tools::{utils::sort_util, AResult, EResult};
+use chin_tools::{AResult, EResult, utils::sort_util};
 
-use crate::{
-    expand_mt_branch,
-    mapper::{ MapperType},
-    model::dto::KReq,
-};
+use crate::{expand_mt_branch, mapper::MapperType, model::dto::KReq};
 
 use super::*;
 
@@ -169,7 +165,6 @@ impl LLMChatMapper for MapperType {
     ) -> AResult<super::LLMChatDeleteSessionRsp> {
         expand_mt_branch!(self.llm_chat_delete_session(req))
     }
-
 
     async fn ensure_table_llm_chat(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_llm_chat())

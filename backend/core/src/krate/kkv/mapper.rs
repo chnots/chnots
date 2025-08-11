@@ -1,6 +1,6 @@
 use chin_sql::{OnConflict, str_type::Varchar};
 use chin_tools::{AResult, EResult};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 
@@ -48,7 +48,7 @@ impl KKVMapper for MapperType {
 
     async fn kkv_transient_query<T>(&self, key: &str) -> AResult<Option<T>>
     where
-        T: Send + DeserializeOwned
+        T: Send + DeserializeOwned,
     {
         expand_mt_branch!(self.kkv_transient_query(key))
     }

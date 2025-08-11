@@ -5,8 +5,6 @@ use chin_sql::{Wheres, time_type::TID};
 use db::{KDb, postgres::PostgresConfig, sqlite::SqliteConfig};
 use serde::Deserialize;
 
-use crate::mapper::db::KDbRow;
-
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum MapperConfig {
@@ -18,10 +16,6 @@ pub enum MapperConfig {
 
 pub enum MapperType {
     KDb(KDb),
-}
-
-pub enum MapperRowType {
-    KDb(KDbRow),
 }
 
 pub(crate) trait Curd {

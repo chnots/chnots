@@ -1,12 +1,19 @@
-use std::path::{Path, PathBuf};
+use std::{
+    marker::PhantomData,
+    path::{Path, PathBuf},
+};
 
 use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
 use log::{error, info};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
-    app::ShareAppState, config::ShellExpandPath, krate::sync::po::SyncEndpoint, mapper::{MapperRowType, MapperType}
+    app::ShareAppState,
+    config::ShellExpandPath,
+    krate::sync::{dto::SyncFetchTIDPage, mapper::Dumper, po::SyncEndpoint},
+    mapper::MapperType,
+    model::KOtidSupport,
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -65,12 +72,11 @@ impl DumpFilenamePattern {
             let entry = ele?;
             let f = entry.file_name();
             let filename = f.to_string_lossy();
-            if filename.starts_with(prefix) {
-                if let Ok(p) = Self::try_from_file_name(filename.as_ref()) {
-                    if p.end.as_num() > start {
-                        start = p.end.as_num();
-                    }
-                }
+            if filename.starts_with(prefix)
+                && let Ok(p) = Self::try_from_file_name(filename.as_ref())
+                && p.end.as_num() > start
+            {
+                start = p.end.as_num();
             }
         }
 
@@ -78,14 +84,14 @@ impl DumpFilenamePattern {
     }
 }
 
-pub struct FileDumper<P: AsRef<Path>> {
-    pub(crate) table_name: String,
+pub struct FileDumper<P: AsRef<Path>, E: KOtidSupport> {
     pub(crate) backup_dir: P,
     pub(crate) end_in: TID,
     pub(crate) start_type: StartType,
+    _table_type: PhantomData<E>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 #[allow(dead_code)]
 pub enum StartType {
     All,
@@ -94,91 +100,97 @@ pub enum StartType {
     Increase,
 }
 
-impl<P: AsRef<Path>> FileDumper<P> {
-    // TODO: rewrite
-    pub async fn dump_one_table<F, T>(&self, mapper_type: &MapperType, mapper: F) -> EResult
-    where
-        F: Fn(MapperRowType) -> AResult<T> + Send + Sync + Clone + 'static,
-        T: Serialize + Send + 'static,
-    {
-        let start_ex = match self.start_type {
-            StartType::All => TID::from(0),
-            StartType::TID(tid) => tid,
-            StartType::Increase => {
-                DumpFilenamePattern::get_start_time(&self.backup_dir, &self.table_name)?
-            }
+impl MapperType {
+    pub(crate) async fn dump_to_file<P: AsRef<Path>, E: KOtidSupport>(
+        &self,
+        backup_dir: P,
+        start_type: StartType,
+    ) -> EResult {
+        let fd = FileDumper {
+            backup_dir,
+            end_in: TID::default(),
+            start_type,
+            _table_type: PhantomData::<E>,
         };
 
-        let table_name = self.table_name.to_ascii_lowercase();
-        let backup_file = DumpFilenamePattern::new(table_name.to_string(), start_ex, self.end_in);
-        let backup_file = PathBuf::new()
-            .join(&self.backup_dir)
-            .join(backup_file.to_file_name());
-
-        // TODO: rewrite
-        /*          loop {
-            let recs = mapper_type
-                .dump(
-                    &table_name,
-                    super::dto::SyncFetchTIDReq {
-                        table_name: "asd",
-                        dto: SyncFetchTIDDTO {
-                            start_ex,
-                            end_in: todo!(),
-                            page_size: todo!(),
-                            type_table: std::marker::PhantomData,
-                            hist: todo!(),
-                        },
-                    },
-                    mapper.clone(),
-                )
-                .await?;
-
-            if !recs.is_empty() {
-                let rec_lines: Result<Vec<String>, serde_json::Error> =
-                    recs.iter().map(|e| serde_json::to_string(e)).collect();
-                let rec_lines = rec_lines?.iter().join("\n");
-                log::info!("write to file {backup_file:?}");
-                tokio::fs::write(&backup_file, rec_lines).await?;
-            }
-
-            if recs.len() < PAGE_SIZE {
-                break;
-            }
-        }  */
+        fd.dump_one_table(self, false).await?;
+        fd.dump_one_table(self, true).await?;
 
         Ok(())
     }
 }
 
-#[macro_export]
-macro_rules! dump_table_to_file {
-    ($mapper:expr, $table_type:tt, $start_type:expr, $backup_dir:expr, $end_in:expr) => {
-        let fd = $crate::krate::sync::filedumper::FileDumper {
-            table_name: $table_type::TABLE.to_string(),
-            start_type: $start_type.clone(),
-            backup_dir: $backup_dir.to_path_buf(),
-            end_in: $end_in,
+impl<P: AsRef<Path>, T: KOtidSupport> FileDumper<P, T> {
+    // TODO: rewrite
+    pub async fn dump_one_table(&self, mapper_type: &MapperType, hist: bool) -> EResult
+    where
+        T: KOtidSupport,
+    {
+        let start_ex = match self.start_type {
+            StartType::All => TID::from(0),
+            StartType::TID(tid) => tid,
+            StartType::Increase => {
+                DumpFilenamePattern::get_start_time(&self.backup_dir, T::table_name(hist))?
+            }
         };
 
-        fd.dump_one_table($mapper, |e| match e {
-            $crate::mapper::MapperRowType::KDb(row) => {
-                let r: $table_type = (&row).try_into()?;
-                Ok(r)
+        let table_name = T::table_name(hist);
+        let backup_file = DumpFilenamePattern::new(table_name.to_string(), start_ex, self.end_in);
+        let backup_file = PathBuf::new()
+            .join(&self.backup_dir)
+            .join(backup_file.to_file_name());
+
+        let mut last = start_ex;
+        let end = TID::default();
+        loop {
+            let c = mapper_type
+                .dump::<T>(
+                    SyncFetchTIDPage::StartEnd {
+                        start_ex: last,
+                        end_in: end,
+                        page_size: 500,
+                    },
+                    hist,
+                )
+                .await?;
+            let jsonl: Vec<String> = c
+                .iter()
+                .map(|e| serde_json::to_string(e))
+                .collect::<Result<Vec<String>, serde_json::Error>>()?;
+            tokio::fs::write(&backup_file, "\n").await?;
+            tokio::fs::write(&backup_file, jsonl.join("\n")).await?;
+
+            if c.len() < 500 {
+                break;
+            } else {
+                last = c.iter().map(|c| c.tid()).max().unwrap_or(last);
             }
-        })
-        .await?;
-    };
+        }
+
+        Ok(())
+    }
 }
 
 impl ShareAppState {
     pub async fn dump_to_files(&self, start_type: StartType) -> EResult {
-        self.dump_chnot_to_file(start_type.clone()).await?;
-        self.dump_kfile_to_file(start_type.clone()).await?;
-        self.dump_kkv_to_file(start_type.clone()).await?;
-        self.dump_kspace_to_file(start_type.clone()).await?;
-        self.dump_ktab_to_file(start_type.clone()).await?;
-        self.dump_llmchat_to_file(start_type.clone()).await?;
+        let Some(backup_dir) = self
+            .config
+            .file_backup
+            .as_ref()
+            .map(|c| c.backup_dir.clone())
+        else {
+            return Ok(());
+        };
+
+        let backup_dir: PathBuf = backup_dir.into();
+        tokio::fs::create_dir_all(&backup_dir).await?;
+
+        self.dump_chnot_to_file(start_type, &backup_dir).await?;
+        self.dump_kfile_to_file(start_type, &backup_dir).await?;
+        self.dump_kkv_to_file(start_type, &backup_dir).await?;
+        self.dump_kspace_to_file(start_type, &backup_dir).await?;
+        self.dump_ktab_to_file(start_type, &backup_dir).await?;
+        self.dump_llmchat_to_file(start_type, &backup_dir).await?;
 
         Ok(())
     }

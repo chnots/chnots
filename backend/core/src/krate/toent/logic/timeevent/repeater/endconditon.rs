@@ -1,7 +1,7 @@
+use super::PossibleScore;
 use super::interval::TimeInterval;
 pub(crate) use super::timers::Times;
-use super::PossibleScore;
-use crate::krate::toent::{timeevent::timeenum::TimeEnum, EventBuilder, RawInputSegs};
+use crate::krate::toent::{EventBuilder, RawInputSegs, timeevent::timeenum::TimeEnum};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum EndCondition {
@@ -90,11 +90,11 @@ impl EventBuilder for EndCondition {
 #[cfg(test)]
 mod tests {
     use crate::krate::toent::{
+        EventBuilder,
         timeevent::{
             repeater::{endconditon::Times, interval::TimeInterval},
             timeenum::TimeEnum,
         },
-        EventBuilder,
     };
 
     use super::EndCondition;

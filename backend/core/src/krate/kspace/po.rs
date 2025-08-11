@@ -1,8 +1,7 @@
-use chin_sql::{str_type::Varchar, time_type::TID, GenerateTableSchema};
+use chin_sql::{GenerateTableSchema, str_type::Varchar, time_type::TID};
 use serde::{Deserialize, Serialize};
 
 use crate::impl_otid_support;
-
 
 fn managers_to_sql(managers: Vec<String>) -> String {
     serde_json::to_string(&managers).unwrap()
@@ -17,9 +16,9 @@ pub struct KSpace {
     #[gts_tosql = "managers_to_sql"]
     pub managers: Vec<String>,
     #[gts_unique]
-    #[gts_type = "i64"]    
+    #[gts_type = "i64"]
     pub tid: TID,
     pub public_access: bool,
 }
 
-impl_otid_support!{KSpace}
+impl_otid_support! {KSpace}
