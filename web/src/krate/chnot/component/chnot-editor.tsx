@@ -351,7 +351,7 @@ const ChnotStatusbar = ({
 
                   <PopoverAnchor>
                     <PopoverContent
-                      className="PopoverContent z-10 rounded-md p-2 max-w-full w-3xl border"
+                      className="PopoverContent z-10 rounded-md p-2 max-w-full w-4xl border"
                       sideOffset={5}
                     >
                       <MarkdownEditor
@@ -407,12 +407,10 @@ const ChnotStatusbar = ({
 
 const ChnotBody = ({
   metaTid,
-  initialContent,
   readonly,
   isMobile,
 }: {
   metaTid?: TID;
-  initialContent?: string;
   readonly: boolean;
   kind: ChnotKind;
   isMobile: boolean;
@@ -423,10 +421,11 @@ const ChnotBody = ({
     setHeight(entry.contentRect.height);
   });
 
-  const { chnotKind, onSetKindId, onSetContent, onSetSaveState } =
+  const { chnotKind, onSetKindId, onSetContent, onSetSaveState, content } =
     useChnotComStore((store) => {
       return {
         chnotKind: store.kind,
+        content: store.content,
         onSetKindId: store.onSetKindId,
         onSetContent: store.onSetContent,
         onSetSaveState: store.onSetSaveState,
@@ -437,15 +436,13 @@ const ChnotBody = ({
     <div
       className="flex h-full overflow-auto bg-editor w-full items-center justify-center p-2" // this part could resize when I add overflow-auto, magic?
     >
-      {readonly && initialContent ? (
-        <div className="p-2 overflow-y-auto w-full">
-          <MarkdownViewer
-            content={initialContent.replace("\n", "  \n") ?? ""}
-          />
+      {readonly && content ? (
+        <div className="w-[95%] h-[95%] max-w-4xl border border-gray-200 shadow p-2">
+          <MarkdownViewer content={content.replace("\n", "  \n") ?? ""} />
         </div>
       ) : (
         <div
-          className="w-[95%] h-[95%] max-w-4xl border border-gray-200 shadow-2xl p-2"
+          className="w-[95%] h-[95%] max-w-4xl border border-gray-200 shadow p-2"
           ref={bodyRef}
         >
           <MarkdownEditor
@@ -453,7 +450,7 @@ const ChnotBody = ({
               onSetContent(content);
             }}
             height={height}
-            content={initialContent}
+            content={content}
             foldGutter={false}
           />
         </div>
@@ -480,16 +477,19 @@ const ChnotBody = ({
 const ChnotBodyMemo = React.memo(ChnotBody);
 
 const ChnotEditor = ({ className }: { className?: string }) => {
-  const { kind, readonly, metaTidStore } = useChnotComStore((store) => {
-    return {
-      metaTidStore: store.metaTid,
-      kind: store.kind,
-      readonly: store.readonly,
-    };
-  });
+  const { kind, readonly, metaTidStore, onSetContent, content } =
+    useChnotComStore((store) => {
+      return {
+        metaTidStore: store.metaTid,
+        kind: store.kind,
+        readonly: store.readonly,
+        onSetContent: store.onSetContent,
+        content: store.content,
+      };
+    });
   const isMobile = useIsMobile();
   const [metaTid] = useState(metaTidStore);
-  const [content, setContent] = useState<string | undefined>();
+  // const [content, setContent] = useState<string | undefined>();
   useEffect(() => {
     if (metaTid) {
       chnotQuery({
@@ -500,7 +500,9 @@ const ChnotEditor = ({ className }: { className?: string }) => {
       })
         .then((rsp) => {
           const chnot = rsp.data.at(0);
-          setContent(chnot?.record.content);
+          if (chnot) {
+            onSetContent(chnot.record.content);
+          }
         })
         .finally(() => {});
     }
@@ -515,7 +517,6 @@ const ChnotEditor = ({ className }: { className?: string }) => {
         readonly={readonly}
         kind={kind}
         metaTid={metaTid}
-        initialContent={content}
         isMobile={isMobile}
       />
       {isMobile && (
