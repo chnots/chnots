@@ -121,8 +121,7 @@ impl<'a> KDbTx<'a> {
 
         let rec_tid = TID::default();
 
-        let mut chnot_parser = ChnotParser::new(req.content.as_str());
-        chnot_parser.parse();
+        let chnot_parser = ChnotParser::new(req.content.as_str());
         let todo_event = chnot_parser.get_outer_todo_event();
 
         let mut meta_tid = None;

@@ -1,15 +1,19 @@
 use std::{
+    cell::RefCell,
     collections::HashMap,
-    ops::{Deref, DerefMut},
+    ops::{Deref, DerefMut, Index},
 };
 
 use crate::krate::toent::logic::{
     EventBuilder, RawInputSegs, eventenum::EventEnum, timeevent::TimeEvent, todoevent::TodoEvent,
 };
 use chrono::NaiveDateTime;
+use comrak::{
+    arena_tree::Node,
+    nodes::{Ast, LineColumn, NodeValue},
+};
 use itertools::Itertools;
 use lazy_regex::Lazy;
-use markdown::mdast::{Node, Paragraph};
 use regex::Regex;
 
 #[derive(Debug, Clone)]
@@ -32,10 +36,18 @@ enum InsertType {
     PropsType(PropsType),
 }
 
+#[derive(Clone, Debug, Copy)]
+struct Point {
+    column: usize,
+    line: usize,
+    offset: usize,
+}
+
 #[derive(Debug, Clone)]
 struct WithPos<E> {
-    start_in: usize,
-    end_ex: usize,
+    start_in: Point,
+    end_ex: Point,
+    original: String,
     data: E,
 }
 
@@ -61,18 +73,101 @@ pub struct ChnotBlock {
     time_event: Vec<WithPos<TimeEvent>>,
     backlinks: Vec<WithPos<String>>,
     hashtags: Vec<WithPos<String>>,
-    props: Vec<WithPos<PropsType>>,
-    level: usize,
+    id: Option<WithPos<String>>,
     end_ex: usize,
-    start_in: usize,
-    start_row: usize,
+    start: Point,
+}
+
+#[derive(Clone, Debug)]
+enum SpanType {
+    TimeEvent(Box<TimeEvent>),
+    TodoEvent(TodoEvent),
+    Backlink(String),
+    ID(String),
+    Hashtag(String),
+}
+
+#[derive(Clone, Debug)]
+struct Span {
+    start_ex: Point,
+    end_ex: Point,
+    span: SpanType,
 }
 
 pub struct ChnotParser<'a> {
     original: &'a str,
-    replace_map: HashMap<usize, InsertType>,
     chnot_map: HashMap<usize, ChnotBlock>,
-    root: Node,
+}
+
+#[derive(Clone, Debug)]
+struct TextLocater<'a> {
+    original: &'a str,
+    line_ends: Vec<usize>,
+}
+
+impl<'a> TextLocater<'a> {
+    fn new(text: &'a str) -> Self {
+        let mut start = 0;
+        let mut ends = vec![];
+
+        while start < text.len() {
+            let Some(count) = text[start..].find('\n') else {
+                ends.push(text.len());
+                break;
+            };
+            ends.push(start + count);
+            start = start + count + 1;
+        }
+
+        Self {
+            original: text,
+            line_ends: ends,
+        }
+    }
+
+    fn locate_by_linecol(&self, point: LineColumn) -> Point {
+        assert!(point.line > 0, "point line should 1-based");
+        assert!(point.column > 0, "point column should 1-based");
+
+        let row = point.line;
+        let offset = if row == 1 {
+            point.column - 1
+        } else {
+            self.line_ends[row - 2] + 1 // include the `\n` char
+            + point.column
+                - 1
+        };
+
+        Point {
+            line: point.line,
+            column: point.column,
+            offset,
+        }
+    }
+
+    fn locate_by_offset(&self, offset: usize) -> Option<Point> {
+        if offset > self.original.len() {
+            return None;
+        }
+
+        for (row, end_ex) in self.line_ends.iter().enumerate() {
+            let start_in = if row == 0 {
+                0
+            } else {
+                self.line_ends[row - 1] + 1
+            };
+            if offset > *end_ex || offset < start_in {
+                continue;
+            }
+            let col = offset - start_in;
+            return Some(Point {
+                line: row,
+                column: col,
+                offset,
+            });
+        }
+        None
+    }
 }
 
 static TOENT_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"\{([^}]+)}");
@@ -81,248 +176,201 @@ static BACKLINK_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"\[\[([0-9a-zA-Z]+
 
 impl<'a> ChnotParser<'a> {
     pub fn new(text: &'a str) -> Self {
-        let ast = markdown::to_mdast(text, &markdown::ParseOptions::gfm()).unwrap();
+        // The returned nodes are created in the supplied Arena, and are bound by its lifetime.
+        let arena = comrak::Arena::new();
 
-        Self {
+        // Parse the document into a root `AstNode`
+        let root = comrak::parse_document(&arena, text, &comrak::Options::default());
+        let mut res = Self {
             original: text,
-            replace_map: Default::default(),
             chnot_map: Default::default(),
-            root: ast,
-        }
+        };
+
+        res.parse(root);
+
+        res
     }
 
-    pub fn parse(&mut self) {
+    fn parse<'b>(&mut self, root: &'b Node<'b, RefCell<Ast>>) {
+        #[derive(Default)]
+        struct ChnotBlockGather {
+            todo_event: Vec<WithPos<TodoEvent>>,
+            time_event: Vec<WithPos<TimeEvent>>,
+            backlinks: Vec<WithPos<String>>,
+            hashtags: Vec<WithPos<String>>,
+            id: Vec<WithPos<String>>,
+        }
+
         /// extract toent only from the listitem first line and headline
-        fn extract_toent(node: &Node, chnot_block: &mut ChnotBlock) -> bool {
-            match node {
-                Node::Text(text) => {
-                    for cps in TOENT_REGEX.captures_iter(&text.value) {
-                        if let Some(cp) = cps.get(1) {
-                            let result = cp.as_str();
-                            if let Ok(event) =
-                                EventEnum::try_from_standard(&RawInputSegs::from(result))
-                            {
-                                match event {
-                                    EventEnum::Time(time_event) => {
-                                        chnot_block.time_event.push(WithPos {
-                                            start_in: 0,
-                                            end_ex: 0,
-                                            data: *time_event,
-                                        });
-                                    }
-                                    EventEnum::Todo(todo_event) => {
-                                        chnot_block.todo_event.replace(WithPos {
-                                            start_in: 0,
-                                            end_ex: 0,
-                                            data: todo_event,
-                                        });
-                                    }
-                                }
+        fn extract_spans(
+            text: &str,
+            start_point: &Point,
+            spans: &mut ChnotBlockGather,
+            locater: &TextLocater<'_>,
+        ) {
+            for cps in TOENT_REGEX.captures_iter(text) {
+                if let (Some(cp), Some(inner)) = (cps.get(0), cps.get(1)) {
+                    let result = inner.as_str();
+                    let start = start_point.offset + cp.start();
+                    let end = start_point.offset + cp.end();
+                    if let Ok(event) = EventEnum::try_from_standard(&RawInputSegs::from(result)) {
+                        match event {
+                            EventEnum::Time(time_event) => {
+                                spans.time_event.push(WithPos {
+                                    start_in: locater.locate_by_offset(start).unwrap(),
+                                    end_ex: locater.locate_by_offset(end).unwrap(),
+                                    data: *time_event,
+                                    original: cp.as_str().to_string(),
+                                });
                             }
-                        }
-                    }
-                    if text.value.contains("\n") {
-                        return true;
-                    }
-                }
-                Node::Paragraph(paragraph) => {
-                    for s in &paragraph.children {
-                        match s {
-                            Node::Break(_) => {
-                                break;
-                            }
-                            node => {
-                                if extract_toent(node, chnot_block) {
-                                    break;
-                                }
+                            EventEnum::Todo(todo_event) => {
+                                spans.todo_event.push(WithPos {
+                                    start_in: locater.locate_by_offset(start).unwrap(),
+                                    end_ex: locater.locate_by_offset(end).unwrap(),
+                                    data: todo_event,
+                                    original: cp.as_str().to_string(),
+                                });
                             }
                         }
                     }
                 }
-                _ => {}
             }
-            false
-        }
 
-        fn extract_backlink_and_hashtags(node: &Node, chnot_block: &mut ChnotBlock) {
-            match node {
-                Node::Text(text) => {
-                    for cps in HASHTAG_REGEX.captures_iter(&text.value) {
-                        if let Some(cp) = cps.get(0) {
-                            let result = cp.as_str();
-                            chnot_block.hashtags.push(WithPos {
-                                start_in: 0,
-                                end_ex: 0,
-                                data: result.to_string(),
-                            });
-                        }
-                    }
-
-                    for cps in BACKLINK_REGEX.captures_iter(&text.value) {
-                        if let Some(cp) = cps.get(1) {
-                            let result = cp.as_str();
-                            chnot_block.backlinks.push(WithPos {
-                                start_in: 0,
-                                end_ex: 0,
-                                data: result.to_string(),
-                            });
-                        }
-                    }
+            for cps in HASHTAG_REGEX.captures_iter(text) {
+                if let (Some(cp), Some(inner)) = (cps.get(0), cps.get(1)) {
+                    let result = inner.as_str();
+                    let start = start_point.offset + cp.start();
+                    let end = start_point.offset + cp.end();
+                    spans.hashtags.push(WithPos {
+                        start_in: locater.locate_by_offset(start).unwrap(),
+                        end_ex: locater.locate_by_offset(end).unwrap(),
+                        data: result.to_owned(),
+                        original: cp.as_str().to_string(),
+                    });
                 }
-                Node::Paragraph(paragraph) => {
-                    for s in &paragraph.children {
-                        match s {
-                            Node::Break(_) => {
-                                break;
-                            }
-                            node => {
-                                extract_backlink_and_hashtags(node, chnot_block);
-                            }
-                        }
-                    }
-                }
-                _ => {}
             }
-        }
 
-        // parse the first pargraph of headline or listitem
-        fn extract_props_from_para(para: &Paragraph, chnot_block: &mut ChnotBlock, original: &str) {
-            if let Some(pos) = &para.position {
-                for p in original[pos.start.offset..pos.end.offset].split("\n") {
-                    let p = p.trim_start();
-                    let prefix = "// ID: ";
-                    if let Some(suffix) = p.strip_prefix(prefix) {
-                        chnot_block.props.push(WithPos {
-                            start_in: 0,
-                            end_ex: 0,
-                            data: PropsType::ID(suffix.to_string()),
-                        });
-                    }
+            for cps in BACKLINK_REGEX.captures_iter(text) {
+                if let (Some(cp), Some(inner)) = (cps.get(0), cps.get(1)) {
+                    let result = inner.as_str();
+                    let start = start_point.offset + cp.start();
+                    let end = start_point.offset + cp.end();
+                    spans.backlinks.push(WithPos {
+                        start_in: locater.locate_by_offset(start).unwrap(),
+                        end_ex: locater.locate_by_offset(end).unwrap(),
+                        data: result.to_owned(),
+                        original: cp.as_str().to_string(),
+                    });
+                }
+            }
+
+            for (row, line) in text.split("\n").enumerate() {
+                let trimmed = line.trim();
+                let row = start_point.line + row;
+                if let Some(id) = trimmed.strip_prefix("// ID: ") {
+                    let line_end = start_point.column + line.len();
+                    spans.id.push(WithPos {
+                        start_in: locater.locate_by_linecol(LineColumn {
+                            column: line_end - trimmed.len(),
+                            line: row,
+                        }),
+                        end_ex: locater.locate_by_linecol(LineColumn {
+                            column: line_end,
+                            line: row,
+                        }),
+                        data: id.to_owned(),
+                        original: trimmed.to_string(),
+                    });
                 }
             }
         }
 
-        fn walk(this: &mut ChnotParser<'_>, node: &Node) {
-            match node {
-                Node::Heading(heading) => {
-                    if let Some(pos) = &heading.position {
-                        let mut cb = ChnotBlock {
-                            title: this.original[pos.start.offset..pos.end.offset].to_string(),
-                            block_type: ChnotBlockType::Heading,
-                            todo_event: None,
-                            time_event: vec![],
-                            backlinks: vec![],
-                            props: vec![],
-                            hashtags: vec![],
-                            level: heading.depth as usize,
-                            start_in: pos.start.offset,
-                            start_row: pos.start.line,
-                            end_ex: pos.end.offset,
-                        };
+        let locater: TextLocater<'_> = TextLocater::new(self.original);
 
-                        // extract
-                        for n in &heading.children {
-                            extract_toent(n, &mut cb);
-                            extract_backlink_and_hashtags(n, &mut cb);
-                        }
+        let mut starts: Vec<(ChnotBlockType, Point)> = vec![];
+        let mut spans: ChnotBlockGather = ChnotBlockGather::default();
 
-                        this.chnot_map.insert(pos.start.offset, cb);
-                    }
+        for node in root.descendants() {
+            let data = node.data.borrow();
+            let pos = data.sourcepos;
+            match &data.value {
+                NodeValue::Item(_) => {
+                    starts.push((
+                        ChnotBlockType::ListItem,
+                        locater.locate_by_linecol(pos.start),
+                    ));
                 }
-                Node::ListItem(list_item) => {
-                    if let Some(pos) = &list_item.position {
-                        let fline = &this.original[pos.start.offset..pos.end.offset];
-                        let fline = fline
-                            .split_once('\n')
-                            .map_or(fline, |(first, _)| first)
-                            .to_string();
-
-                        let mut cb = ChnotBlock {
-                            title: fline,
-                            block_type: ChnotBlockType::ListItem,
-                            todo_event: None,
-                            time_event: vec![],
-                            backlinks: vec![],
-                            props: vec![],
-                            hashtags: vec![],
-                            level: pos.start.column,
-                            start_in: pos.start.offset,
-                            start_row: pos.start.line,
-                            end_ex: pos.end.offset,
-                        };
-
-                        // extract
-                        if let Some(first) = list_item.children.first() {
-                            extract_toent(first, &mut cb);
-                            if let Node::Paragraph(para) = first {
-                                extract_props_from_para(para, &mut cb, this.original);
-                            }
-                        }
-                        for n in &list_item.children {
-                            extract_backlink_and_hashtags(n, &mut cb);
-                        }
-
-                        this.chnot_map.insert(pos.start.offset, cb);
-                    }
+                NodeValue::Heading(_) => {
+                    starts.push((
+                        ChnotBlockType::Heading,
+                        locater.locate_by_linecol(pos.start),
+                    ));
                 }
-                Node::Table(table) => {
-                    for li in &table.children {
-                        walk(this, li);
-                    }
-                }
-                Node::List(list) => {
-                    for li in &list.children {
-                        walk(this, li);
-                    }
-                }
-                Node::TableRow(table_row) => {
-                    for li in &table_row.children {
-                        walk(this, li);
-                    }
-                }
-                Node::TableCell(table_cell) => {
-                    for li in &table_cell.children {
-                        walk(this, li);
-                    }
-                }
-                Node::Paragraph(paragraph) => {
-                    if let Some(pos) = &paragraph.position {
-                        if let Some((_, cb)) = this
-                            .chnot_map
-                            .iter_mut()
-                            .find(|(_, cb)| cb.start_row == pos.start.line - 1)
-                        {
-                            extract_props_from_para(paragraph, cb, this.original);
-                        }
-                    }
-                    for ele in &paragraph.children {
-                        walk(this, ele);
-                    }
-                }
-                Node::Text(text) => {
-                    if let Some(pos) = &text.position {
-                        if let Some((_, c)) = this
-                            .chnot_map
-                            .values_mut()
-                            .map(|cb| (pos.start.line - cb.start_row, cb))
-                            .filter(|(diff, _)| *diff > 0)
-                            .sorted_by(|c1, c2| c1.0.cmp(&c2.0))
-                            .take(0)
-                            .last()
-                        {
-                            extract_backlink_and_hashtags(node, c);
-                        }
-                    }
+                NodeValue::Text(text) => {
+                    extract_spans(
+                        text,
+                        &locater.locate_by_linecol(pos.start),
+                        &mut spans,
+                        &locater,
+                    );
                 }
                 _ => {}
             }
         }
 
-        let root = self.root.clone();
-        if let Some(ns) = root.children() {
-            for node in ns {
-                walk(self, node);
-            }
+        starts.sort_by(|(_, s1), (_, s2)| s1.offset.cmp(&s2.offset));
+
+        let lines: Vec<&str> = self.original.split('\n').collect();
+
+        for (id, (bt, start)) in starts.iter().enumerate() {
+            let end_ex = if id == starts.len() - 1 {
+                self.original.len()
+            } else {
+                starts[id + 1].1.offset - 1
+            };
+
+            let title = lines[start.line - 1];
+            let todo_event = spans
+                .todo_event
+                .iter()
+                .find(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
+                .cloned();
+            let id = spans
+                .id
+                .iter()
+                .find(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
+                .cloned();
+            let timeevents = spans
+                .time_event
+                .iter()
+                .filter(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
+                .cloned()
+                .collect();
+            let backlinks = spans
+                .backlinks
+                .iter()
+                .filter(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
+                .cloned()
+                .collect();
+            let hashtags = spans
+                .hashtags
+                .iter()
+                .filter(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
+                .cloned()
+                .collect();
+
+            let chnot_block = ChnotBlock {
+                title: title.to_owned(),
+                block_type: bt.to_owned(),
+                todo_event,
+                time_event: timeevents,
+                backlinks,
+                hashtags,
+                end_ex,
+                start: *start,
+                id,
+            };
+            self.chnot_map.insert(chnot_block.start.offset, chnot_block);
         }
     }
 
@@ -370,35 +418,115 @@ impl<'a> ChnotParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use itertools::Itertools;
+    use comrak::nodes::LineColumn;
 
-    use crate::krate::chnot::parser::ChnotParser;
+    use crate::krate::{
+        chnot::parser::{ChnotParser, TextLocater},
+        toent::logic::{EventBuilder, RawInputSegs, timeevent::TimeEvent, todoevent::TodoEvent},
+    };
 
-    const TEST_MARKDOWN: &str = "# ID、Hashtag 和 Toent #tagtest
-// ID:a12cd
+    #[test]
+    fn text_locater_test() {
+        let text: &'static str = "123
+456
+789
+0";
+        let locater = TextLocater::new(text);
+        println!("{:?}", locater.line_ends);
+        let point5 = locater.locate_by_linecol(LineColumn { line: 2, column: 2 });
+        assert_eq!("5", &text[point5.offset..point5.offset + 1]);
+        let point6 = locater.locate_by_offset(6).unwrap();
+        assert_eq!("6", &text[point6.offset..point6.offset + 1]);
+    }
 
+    const TEST_MARKDOWN: &str = "
+# ID、Hashtag 和 Toent #tagtest
+// ID: file
+Example Text
 
-下面是一个例子
+## {TODO} Head [[asd]] {1920-12-20 12:00:00}
+// ID: head-foo
 
-## {TODO} Foo Title [[asd]] {1920-12-20 12:00:00}
-// ID: a12cd
-
-  - Paragraph 1 {DONE} 检查时间 {2025-06-26 11:19:26} [[123456789]] #haslll
+- List 1 {DONE} another {2025-06-26 11:19:26} [[123456789]] #hashtag1
     // ID: sdgdfgsdg
     // CLOSED: {2025-06-26 11:20:27}
+    #tag2 [[418192012]] *italic* **bold** common text after bold
+    what did you say? #tag3
 
-    Paragraph 2 {DONEasdfl} 检查时间 {2025-06-26} [[34567890]]
+    Paragraph 2 {DONE} 检查时间 {2025-06-26} [[34567890]]
     // ID: sdgdfgsdg1
     // CLOSED: {2025-06-26 11:20:27}
-    - SUBITEM
+    ```txt
+    {TODO} [[backlink-in-code]] #hashtagincode
+    ```
+
+    - {TODO} SUBITEM
+## last head
     ";
+
+    fn all_included_and_same_size<E: Eq>(a: &[E], b: &[E]) -> bool {
+        if a.len() != b.len() {
+            return false;
+        }
+
+        for ele in a {
+            if !b.contains(ele) {
+                return false;
+            }
+        }
+
+        true
+    }
 
     #[test]
     fn markdown_it() {
-        let mut v = ChnotParser::new(TEST_MARKDOWN);
-        v.parse();
-        for ele in v.chnot_map.iter().sorted_by(|e, v| e.0.cmp(v.0)) {
-            println!("{ele:?}")
+        let cp = ChnotParser::new(TEST_MARKDOWN);
+        for cb in cp.chnot_map.values() {
+            println!("> Source Begin ==========================");
+            println!("{}", &TEST_MARKDOWN[cb.start.offset..cb.end_ex]);
+            println!("> Source End ==========================");
+            println!("-> BACKLINS");
+            for ele in &cb.backlinks {
+                let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
+                println!("TEXT: {}", &src);
+                println!("PASR: {:?}", *ele);
+                assert!(src == ele.original);
+            }
+
+            println!("-> HASHTAG");
+            for ele in &cb.hashtags {
+                let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
+                println!("TEXT: {}", &src);
+                println!("PASR: {:?}", *ele);
+                assert!(src == ele.original);
+            }
+
+            println!("-> TIMEVENT");
+            for ele in &cb.time_event {
+                let src: &str = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
+                println!("TEXT: {}", &src);
+                println!("PASR: {:?}", *ele);
+
+                assert!(src == ele.original);
+            }
+
+            println!("-> TODOEVENT");
+            if let Some(ele) = &cb.todo_event {
+                let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
+                println!("TEXT: {}", &src);
+                println!("PASR: {:?}", *ele);
+
+                assert!(src == ele.original);
+            }
+
+            println!("-> ID");
+            if let Some(ele) = &cb.id {
+                let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
+                println!("TEXT: {}", &src);
+                println!("PASR: {:?}", *ele);
+
+                assert!(src == ele.original);
+            }
         }
     }
 }

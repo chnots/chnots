@@ -333,8 +333,7 @@ impl ChnotMapper for KDb {
 
         let tx = conn.transaction().await?;
         for one in chnots {
-            let mut chnot_parser = parser::ChnotParser::new(one.content.as_str());
-            chnot_parser.parse();
+            let chnot_parser = parser::ChnotParser::new(one.content.as_str());
             tx.chnot_tag_update_single_chnot(one.clone(), &chnot_parser)
                 .await?;
         }
