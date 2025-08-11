@@ -151,6 +151,10 @@ function ChnotEditorProvider({
     <LoadingPage />
   );
 }
+interface SaveIndicatorProps {
+  state: SaveState;
+  className?: string;
+}
 
 const ChnotSaver = () => {
   const {
@@ -182,29 +186,33 @@ const ChnotSaver = () => {
 
   const debounceSave = useDebounce(
     async (req: ChnotOverwriteRecordReq) => {
-      onSetSaveState(SaveState.Saving);
-      const rsp = await chnotOverwriteRecord(req);
-      if (!metaTidRef.current) {
-        onSetMetaTid(rsp.meta_otid);
-        metaTidRef.current = rsp.meta_otid;
+      try {
+        onSetSaveState(SaveState.Saving);
+        const rsp = await chnotOverwriteRecord(req);
+        if (!metaTidRef.current) {
+          onSetMetaTid(rsp.meta_otid);
+          metaTidRef.current = rsp.meta_otid;
+        }
+        onSetRecTid(rsp.rec_tid);
+        onSetSaveState(SaveState.Saved);
+        onChnotChange({
+          record: {
+            tid: rsp.rec_tid,
+            meta_otid: rsp.meta_otid,
+            content: req.content,
+            archor: rsp.archor,
+            todo_event: rsp.todo_event,
+          },
+          meta: {
+            otid: rsp.meta_otid,
+            kspace: rsp.kspace,
+            kind: kind,
+            tid: rsp.rec_tid,
+          },
+        });
+      } catch (ex) {
+        onSetSaveState(SaveState.Error);
       }
-      onSetRecTid(rsp.rec_tid);
-      onSetSaveState(SaveState.Saved);
-      onChnotChange({
-        record: {
-          tid: rsp.rec_tid,
-          meta_otid: rsp.meta_otid,
-          content: req.content,
-          archor: rsp.archor,
-          todo_event: rsp.todo_event,
-        },
-        meta: {
-          otid: rsp.meta_otid,
-          kspace: rsp.kspace,
-          kind: kind,
-          tid: rsp.rec_tid,
-        },
-      });
     },
     1000,
     true,
@@ -224,21 +232,50 @@ const ChnotSaver = () => {
     debounceSave(req);
   }, [content, chnotKind, kindId]);
 
-  return saveState === SaveState.Saving ? (
-    <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
-      <Icon.Loader2 className="animate-spin h-5 w-5" />
-    </div>
-  ) : saveState === SaveState.Saved ? (
-    <div className="flex items-center text-green-600 transition-opacity duration-300 ease-in-out opacity-100">
-      <Icon.Sun className="h-5 w-5" />
-    </div>
-  ) : saveState === SaveState.Dirty ? (
-    <div className="flex items-center transition-opacity duration-300 ease-in-out opacity-100">
-      <Icon.CloudOff className="h-5 w-5" />
-    </div>
-  ) : (
-    <div className="flex items-center text-red-600 transition-opacity duration-300 ease-in-out opacity-100">
-      <Icon.CloudAlert className="h-5 w-5" />
+  const getStateInfo = () => {
+    switch (saveState) {
+      case SaveState.Dirty:
+        return {
+          icon: <Icon.Square className="w-4 h-4" />,
+          text: "Modified",
+          color: "text-green-500",
+        };
+      case SaveState.Saved:
+        return {
+          icon: <Icon.Circle className="w-4 h-4" />,
+          text: "Saved",
+          color: "text-green-500",
+        };
+      case SaveState.Saving:
+        return {
+          icon: <Icon.Triangle className="w-4 h-4 animate-spin" />,
+          text: "Saving...",
+          color: "text-green-500",
+        };
+      case SaveState.Error:
+        return {
+          icon: <Icon.X className="w-4 h-4" />,
+          text: "Failed",
+          color: "text-red-500",
+        };
+      default:
+        return {
+          icon: <Icon.CircleQuestionMark />,
+          text: "Unknown",
+          color: "text-gray-500",
+        };
+    }
+  };
+
+  const stateInfo = getStateInfo();
+  return (
+    <div
+      className={`flex items-center gap-2 border rounded p-1`}
+      role="status"
+      aria-live="polite"
+      aria-label={`Save State: ${stateInfo.text}`}
+    >
+      <span className={stateInfo.color}>{stateInfo.icon}</span>
     </div>
   );
 };
