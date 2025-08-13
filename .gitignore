@@ -1,9 +1,9 @@
 /server/target
-/web/node_modules
-/node_modules
+node_modules
 /web-dist
 /*.code-workspace
 2409-19-nest-chnot-insertion.sql
 /target
 /transient
 /server/transient
+tsconfig.tsbuildinfo

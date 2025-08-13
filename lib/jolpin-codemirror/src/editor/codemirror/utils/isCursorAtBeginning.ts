@@ -1,4 +1,4 @@
-import { EditorState } from "@codemirror/state";
+import { EditorState } from '@codemirror/state';
 
 const isCursorAtBeginning = (state: EditorState) => {
   const selection = state.selection;

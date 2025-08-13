@@ -1,4 +1,4 @@
-import { Line } from "@codemirror/state";
+import { Line } from '@codemirror/state';
 
 const blockQuoteRegex = /^>(\s|$)/;
 

@@ -4,8 +4,8 @@ import {
   Line,
   SelectionRange,
   TransactionSpec,
-} from "@codemirror/state";
-import growSelectionToNode from "../growSelectionToNode";
+} from '@codemirror/state';
+import growSelectionToNode from '../growSelectionToNode';
 
 // Toggles whether all lines in the user's selection start with [regex].
 const toggleSelectedLinesStartWith = (
@@ -85,7 +85,7 @@ const toggleSelectedLinesStartWith = (
         changes.push({
           from: contentFrom,
           to: contentFrom + match[0].length,
-          insert: "",
+          insert: '',
         });
 
         const deletedSize = match[0].length;

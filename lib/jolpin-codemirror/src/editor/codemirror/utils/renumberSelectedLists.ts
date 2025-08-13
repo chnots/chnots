@@ -5,11 +5,11 @@ import {
   Line,
   SelectionRange,
   TransactionSpec,
-} from "@codemirror/state";
-import { syntaxTree } from "@codemirror/language";
-import { SyntaxNodeRef } from "@lezer/common";
-import tabsToSpaces from "../makrdown/utils/tabsToSpaces";
-import stripBlockquote from "./formatting/stripBlockquote";
+} from '@codemirror/state';
+import { syntaxTree } from '@codemirror/language';
+import { SyntaxNodeRef } from '@lezer/common';
+import tabsToSpaces from '../makrdown/utils/tabsToSpaces';
+import stripBlockquote from './formatting/stripBlockquote';
 
 // Ensures that ordered lists within [sel] are numbered in ascending order.
 const renumberSelectedLists = (state: EditorState): TransactionSpec => {
@@ -36,7 +36,7 @@ const renumberSelectedLists = (state: EditorState): TransactionSpec => {
       indentationLength: number;
     };
     const listNumberStack: ListItemRecord[] = [];
-    let currentGroupIndentation = "";
+    let currentGroupIndentation = '';
     let nextListNumber = firstListNumber;
     let prevLineNumber;
 
@@ -57,7 +57,7 @@ const renumberSelectedLists = (state: EditorState): TransactionSpec => {
       if (match) {
         indentation = match[1];
       } else {
-        indentation = filteredText.match(/^\s+/)?.[0] ?? "";
+        indentation = filteredText.match(/^\s+/)?.[0] ?? '';
       }
 
       const indentationLen = tabsToSpaces(state, indentation).length;
@@ -123,8 +123,8 @@ const renumberSelectedLists = (state: EditorState): TransactionSpec => {
       from: selection.from,
       to: selection.to,
       enter: (nodeRef: SyntaxNodeRef) => {
-        if (nodeRef.name === "ListItem" && nodeRef.node.parent) {
-          for (const node of nodeRef.node.parent.getChildren("ListItem")) {
+        if (nodeRef.name === 'ListItem' && nodeRef.node.parent) {
+          for (const node of nodeRef.node.parent.getChildren('ListItem')) {
             const line = doc.lineAt(node.from);
             const filteredText = stripBlockquote(line);
             const match = filteredText.match(listItemRegex);

@@ -1,9 +1,9 @@
-import { syntaxTree } from "@codemirror/language";
+import { syntaxTree } from '@codemirror/language';
 import {
   EditorSelection,
   EditorState,
   SelectionRange,
-} from "@codemirror/state";
+} from '@codemirror/state';
 
 // Expands and returns a copy of [sel] to the smallest container node with name in [nodeNames].
 const growSelectionToNode = (
@@ -16,7 +16,7 @@ const growSelectionToNode = (
   }
 
   const isAcceptableNode = (name: string): boolean => {
-    if (typeof nodeNames === "string") {
+    if (typeof nodeNames === 'string') {
       return name === nodeNames;
     }
 

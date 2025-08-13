@@ -1,7 +1,7 @@
-import { insertNewlineAndIndent } from "@codemirror/commands";
-import { EditorSelection, SelectionRange } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
-import insertNewlineContinueMarkup from "../makrdown/insertNewlineContinueMarkup";
+import { insertNewlineAndIndent } from '@codemirror/commands';
+import { EditorSelection, SelectionRange } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import insertNewlineContinueMarkup from '../makrdown/insertNewlineContinueMarkup';
 
 const insertLineAfter = (view: EditorView) => {
   const state = view.state;

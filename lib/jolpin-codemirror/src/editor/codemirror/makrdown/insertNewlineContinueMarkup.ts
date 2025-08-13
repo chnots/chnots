@@ -18,8 +18,8 @@
 // ! The above copyright notice and this permission notice shall be included in
 // ! all copies or substantial portions of the Software.
 
-import { markdownLanguage } from "@codemirror/lang-markdown";
-import { indentUnit, syntaxTree } from "@codemirror/language";
+import { markdownLanguage } from '@codemirror/lang-markdown';
+import { indentUnit, syntaxTree } from '@codemirror/language';
 import {
   ChangeSpec,
   countColumn,
@@ -27,8 +27,8 @@ import {
   EditorState,
   StateCommand,
   Text,
-} from "@codemirror/state";
-import { SyntaxNode } from "@lezer/common";
+} from '@codemirror/state';
+import { SyntaxNode } from '@lezer/common';
 
 class Context {
   public constructor(
@@ -43,9 +43,9 @@ class Context {
 
   public blank(maxWidth: number | null, trailing = true) {
     let result =
-      this.spaceBefore + (this.node.name === "Blockquote" ? ">" : "");
+      this.spaceBefore + (this.node.name === 'Blockquote' ? '>' : '');
     if (maxWidth !== null) {
-      while (result.length < maxWidth) result += " ";
+      while (result.length < maxWidth) result += ' ';
       return result;
     } else {
       for (
@@ -53,16 +53,16 @@ class Context {
         i > 0;
         i--
       )
-        result += " ";
-      return result + (trailing ? this.spaceAfter : "");
+        result += ' ';
+      return result + (trailing ? this.spaceAfter : '');
     }
   }
 
   public marker(doc: Text, add: number) {
     const number =
-      this.node.name === "OrderedList"
+      this.node.name === 'OrderedList'
         ? String(+itemNumber(this.item!, doc)[2] + add)
-        : "";
+        : '';
     return this.spaceBefore + number + this.type + this.spaceAfter;
   }
 }
@@ -71,13 +71,13 @@ function getContext(node: SyntaxNode, doc: Text) {
   const nodes = [];
   for (
     let cur: SyntaxNode | null = node;
-    cur && cur.name !== "Document";
+    cur && cur.name !== 'Document';
     cur = cur.parent
   ) {
     if (
-      cur.name === "ListItem" ||
-      cur.name === "Blockquote" ||
-      cur.name === "FencedCode"
+      cur.name === 'ListItem' ||
+      cur.name === 'Blockquote' ||
+      cur.name === 'FencedCode'
     ) {
       nodes.push(cur);
     }
@@ -88,10 +88,10 @@ function getContext(node: SyntaxNode, doc: Text) {
     let match;
     const line = doc.lineAt(node.from),
       startPos = node.from - line.from;
-    if (node.name === "FencedCode") {
-      context.push(new Context(node, startPos, startPos, "", "", "", null));
+    if (node.name === 'FencedCode') {
+      context.push(new Context(node, startPos, startPos, '', '', '', null));
     } else if (
-      node.name === "Blockquote" &&
+      node.name === 'Blockquote' &&
       (match = /^ *>( ?)/.exec(line.text.slice(startPos)))
     ) {
       context.push(
@@ -99,15 +99,15 @@ function getContext(node: SyntaxNode, doc: Text) {
           node,
           startPos,
           startPos + match[0].length,
-          "",
+          '',
           match[1],
-          ">",
+          '>',
           null,
         ),
       );
     } else if (
-      node.name === "ListItem" &&
-      node.parent!.name === "OrderedList" &&
+      node.name === 'ListItem' &&
+      node.parent!.name === 'OrderedList' &&
       (match = /^( *)\d+([.)])( *)/.exec(line.text.slice(startPos)))
     ) {
       let after = match[3],
@@ -128,8 +128,8 @@ function getContext(node: SyntaxNode, doc: Text) {
         ),
       );
     } else if (
-      node.name === "ListItem" &&
-      node.parent!.name === "BulletList" &&
+      node.name === 'ListItem' &&
+      node.parent!.name === 'BulletList' &&
       (match = /^( *)([-+*])( {1,4}\[[ xX]\])?( +)/.exec(
         line.text.slice(startPos),
       ))
@@ -141,7 +141,7 @@ function getContext(node: SyntaxNode, doc: Text) {
         len -= 4;
       }
       let type = match[2];
-      if (match[3]) type += match[3].replace(/[xX]/, " ");
+      if (match[3]) type += match[3].replace(/[xX]/, ' ');
       context.push(
         new Context(
           node.parent!,
@@ -166,15 +166,15 @@ function itemNumber(item: SyntaxNode, doc: Text) {
 
 function normalizeIndent(content: string, state: EditorState) {
   const blank = /^[ \t]*/.exec(content)![0].length;
-  if (!blank || state.facet(indentUnit) !== "\t") return content;
+  if (!blank || state.facet(indentUnit) !== '\t') return content;
   const col = countColumn(content, 4, blank);
-  let space = "";
+  let space = '';
   for (let i = col; i > 0; ) {
     if (i >= 4) {
-      space += "\t";
+      space += '\t';
       i -= 4;
     } else {
-      space += " ";
+      space += ' ';
       i--;
     }
   }
@@ -188,7 +188,7 @@ function renumberList(
   offset = 0,
 ) {
   for (let prev = -1, node = after; ; ) {
-    if (node.name === "ListItem") {
+    if (node.name === 'ListItem') {
       const m = itemNumber(node, doc);
       const number = +m[2];
       if (prev >= 0) {
@@ -236,7 +236,7 @@ const insertNewlineContinueMarkup: StateCommand = ({ state, dispatch }) => {
       ) {
         const next = context.length > 1 ? context[context.length - 2] : null;
         let delTo,
-          insert = "";
+          insert = '';
         if (next && next.item) {
           // Re-add marker for the list at the next level
           delTo = line.from + next.from;
@@ -245,9 +245,9 @@ const insertNewlineContinueMarkup: StateCommand = ({ state, dispatch }) => {
           delTo = line.from + (next ? next.to : 0);
         }
         const changes: ChangeSpec[] = [{ from: delTo, to: pos, insert }];
-        if (inner.node.name === "OrderedList")
+        if (inner.node.name === 'OrderedList')
           renumberList(inner.item!, doc, changes, -2);
-        if (next && next.node.name === "OrderedList")
+        if (next && next.node.name === 'OrderedList')
           renumberList(next.item!, doc, changes);
         return {
           range: EditorSelection.cursor(delTo + insert.length),
@@ -255,7 +255,7 @@ const insertNewlineContinueMarkup: StateCommand = ({ state, dispatch }) => {
         };
       } else {
         // Move this line down
-        let insert = "";
+        let insert = '';
         for (let i = 0, e = context.length - 2; i <= e; i++) {
           insert += context[i].blank(
             i < e
@@ -272,7 +272,7 @@ const insertNewlineContinueMarkup: StateCommand = ({ state, dispatch }) => {
       }
     }
 
-    if (inner.node.name === "Blockquote" && emptyLine && line.from) {
+    if (inner.node.name === 'Blockquote' && emptyLine && line.from) {
       const prevLine = doc.lineAt(line.from - 1),
         quoted = />\s*$/.exec(prevLine.text);
       // Two aligned empty quoted lines in a row
@@ -286,10 +286,10 @@ const insertNewlineContinueMarkup: StateCommand = ({ state, dispatch }) => {
     }
 
     const changes: ChangeSpec[] = [];
-    if (inner.node.name === "OrderedList")
+    if (inner.node.name === 'OrderedList')
       renumberList(inner.item!, doc, changes);
     const continued = inner.item && inner.item.from < line.from;
-    let insert = "";
+    let insert = '';
     // If not de-indented
     if (
       !continued ||
@@ -318,7 +318,7 @@ const insertNewlineContinueMarkup: StateCommand = ({ state, dispatch }) => {
     return { range: EditorSelection.cursor(from + insert.length + 1), changes };
   });
   if (dont) return false;
-  dispatch(state.update(changes, { scrollIntoView: true, userEvent: "input" }));
+  dispatch(state.update(changes, { scrollIntoView: true, userEvent: 'input' }));
   return true;
 };
 

@@ -5,111 +5,111 @@
 // For more about creating decorations, see https://codemirror.net/examples/zebra/
 //
 
-import { Decoration, EditorView } from "@codemirror/view";
-import { ViewPlugin, DecorationSet, ViewUpdate } from "@codemirror/view";
-import { ensureSyntaxTree } from "@codemirror/language";
-import { RangeSetBuilder } from "@codemirror/state";
+import { Decoration, EditorView } from '@codemirror/view';
+import { ViewPlugin, DecorationSet, ViewUpdate } from '@codemirror/view';
+import { ensureSyntaxTree } from '@codemirror/language';
+import { RangeSetBuilder } from '@codemirror/state';
 
 const regionStartDecoration = Decoration.line({
-  attributes: { class: "cm-regionFirstLine" },
+  attributes: { class: 'cm-regionFirstLine' },
 });
 
 const regionStopDecoration = Decoration.line({
-  attributes: { class: "cm-regionLastLine" },
+  attributes: { class: 'cm-regionLastLine' },
 });
 
-const noSpellCheckAttrs = { spellcheck: "false", autocorrect: "false" };
+const noSpellCheckAttrs = { spellcheck: 'false', autocorrect: 'false' };
 
 const codeBlockDecoration = Decoration.line({
-  attributes: { class: "cm-codeBlock", ...noSpellCheckAttrs },
+  attributes: { class: 'cm-codeBlock', ...noSpellCheckAttrs },
 });
 
 const inlineCodeDecoration = Decoration.mark({
-  attributes: { class: "cm-inlineCode", ...noSpellCheckAttrs },
+  attributes: { class: 'cm-inlineCode', ...noSpellCheckAttrs },
 });
 
 const mathBlockDecoration = Decoration.line({
-  attributes: { class: "cm-mathBlock", ...noSpellCheckAttrs },
+  attributes: { class: 'cm-mathBlock', ...noSpellCheckAttrs },
 });
 
 const inlineMathDecoration = Decoration.mark({
-  attributes: { class: "cm-inlineMath", ...noSpellCheckAttrs },
+  attributes: { class: 'cm-inlineMath', ...noSpellCheckAttrs },
 });
 
 const urlDecoration = Decoration.mark({
-  attributes: { class: "cm-url", ...noSpellCheckAttrs },
+  attributes: { class: 'cm-url', ...noSpellCheckAttrs },
 });
 
 const htmlTagNameDecoration = Decoration.mark({
-  attributes: { class: "cm-htmlTag", ...noSpellCheckAttrs },
+  attributes: { class: 'cm-htmlTag', ...noSpellCheckAttrs },
 });
 
 const markDecoration = Decoration.mark({
-  attributes: { class: "cm-highlighted" },
+  attributes: { class: 'cm-highlighted' },
 });
 
 const blockQuoteDecoration = Decoration.line({
-  attributes: { class: "cm-blockQuote" },
+  attributes: { class: 'cm-blockQuote' },
 });
 
 const header1LineDecoration = Decoration.line({
-  attributes: { class: "cm-h1 cm-headerLine cm-header" },
+  attributes: { class: 'cm-h1 cm-headerLine cm-header' },
 });
 
 const header2LineDecoration = Decoration.line({
-  attributes: { class: "cm-h2 cm-headerLine cm-header" },
+  attributes: { class: 'cm-h2 cm-headerLine cm-header' },
 });
 
 const header3LineDecoration = Decoration.line({
-  attributes: { class: "cm-h3 cm-headerLine cm-header" },
+  attributes: { class: 'cm-h3 cm-headerLine cm-header' },
 });
 
 const header4LineDecoration = Decoration.line({
-  attributes: { class: "cm-h4 cm-headerLine cm-header" },
+  attributes: { class: 'cm-h4 cm-headerLine cm-header' },
 });
 
 const header5LineDecoration = Decoration.line({
-  attributes: { class: "cm-h5 cm-headerLine cm-header" },
+  attributes: { class: 'cm-h5 cm-headerLine cm-header' },
 });
 
 const header6LineDecoration = Decoration.line({
-  attributes: { class: "cm-h6 cm-headerLine cm-header" },
+  attributes: { class: 'cm-h6 cm-headerLine cm-header' },
 });
 
 const tableHeaderDecoration = Decoration.line({
-  attributes: { class: "cm-tableHeader" },
+  attributes: { class: 'cm-tableHeader' },
 });
 
 const tableBodyDecoration = Decoration.line({
-  attributes: { class: "cm-tableRow" },
+  attributes: { class: 'cm-tableRow' },
 });
 
 const tableDelimiterDecoration = Decoration.line({
-  attributes: { class: "cm-tableDelimiter" },
+  attributes: { class: 'cm-tableDelimiter' },
 });
 
 const orderedListDecoration = Decoration.line({
-  attributes: { class: "cm-orderedList" },
+  attributes: { class: 'cm-orderedList' },
 });
 
 const unorderedListDecoration = Decoration.line({
-  attributes: { class: "cm-unorderedList" },
+  attributes: { class: 'cm-unorderedList' },
 });
 
 const listItemDecoration = Decoration.line({
-  attributes: { class: "cm-listItem" },
+  attributes: { class: 'cm-listItem' },
 });
 
 const horizontalRuleDecoration = Decoration.mark({
-  attributes: { class: "cm-hr" },
+  attributes: { class: 'cm-hr' },
 });
 
 const taskMarkerDecoration = Decoration.mark({
-  attributes: { class: "cm-taskMarker" },
+  attributes: { class: 'cm-taskMarker' },
 });
 
 const strikethroughDecoration = Decoration.mark({
-  attributes: { class: "cm-strike" },
+  attributes: { class: 'cm-strike' },
 });
 
 const nodeNameToLineDecoration: Record<string, Decoration> = {
