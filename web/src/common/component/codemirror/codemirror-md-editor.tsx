@@ -8,13 +8,19 @@ import { html2mdAsync } from "@/lib/markdown-utils";
 import React from "react";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
-
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
-import { createCodemirrorTheme } from "../../../vendor/jolpin/editor/codemirror/theme";
-import decoratorExtension from "../../../vendor/jolpin/editor/codemirror/decoratorExtension";
 import { indentOnInput } from "@codemirror/language";
 import { generateKeybinding } from "@/common/component/codemirror/keybinding";
+import { decoratorExtension } from "jolpin-codemirror";
+import { styleTags } from "@lezer/highlight";
+import {
+  hashtagLabelTag,
+  hashtagMarkTag,
+  hashtagTag,
+  mdwtHighlightExtension,
+} from "./mdwt-highlight";
+import { Backlink, Hashtag } from "./mdwt-extension";
+import { createCodemirrorTheme } from "./theme";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -108,31 +114,24 @@ const CodeMirrorEditor = ({
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
 
-  const mentionDeco = Decoration.mark({ class: "mention" });
-  const tagDeco = Decoration.mark({ class: "hashtag" });
-  const highlightDeco = Decoration.mark({ class: "highlight" });
-  const decorator = new MatchDecorator({
-    regexp: /(@\w+)|(::.*?::)|(#[^\s#[\]]+)/g,
-    decoration: (m) => (m[1] ? mentionDeco : m[2] ? highlightDeco : tagDeco),
-  });
-
-  const markPlugin = ViewPlugin.define(
-    (view) => ({
-      decorations: decorator.createDeco(view),
-      update(u) {
-        this.decorations = decorator.updateDeco(u, this.decorations);
-      },
-    }),
-    {
-      decorations: (v) => v.decorations,
-    },
-  );
-
   const markdownExtension = markdown({
     base: markdownLanguage,
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
+    extensions: [
+      {
+        ...Hashtag,
+        props: [
+          styleTags({
+            Hashtag: hashtagTag,
+            HashtagMark: hashtagMarkTag,
+            HashtagLabel: hashtagLabelTag,
+          }),
+        ],
+      },
+      Backlink,
+    ],
   });
 
   const extensions = [
@@ -141,6 +140,8 @@ const CodeMirrorEditor = ({
 
     EditorView.lineWrapping,
     wrappedLineIndent,
+
+    mdwtHighlightExtension,
     decoratorExtension,
     createCodemirrorTheme(),
 
@@ -150,7 +151,6 @@ const CodeMirrorEditor = ({
     autocompletion({
       override: [(context) => autoCompletion(context)],
     }),
-    markPlugin.extension,
   ];
 
   return (

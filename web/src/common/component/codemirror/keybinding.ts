@@ -1,16 +1,14 @@
 import { EditorSelection, Prec } from "@codemirror/state";
 import { Command, EditorView, KeyBinding, keymap } from "@codemirror/view";
 import { getIndentUnit, indentString } from "@codemirror/language";
+import { historyKeymap, standardKeymap } from "@codemirror/commands";
 import {
-  emacsStyleKeymap,
-  historyKeymap,
-  standardKeymap,
-} from "@codemirror/commands";
-import insertLineAfter from "../../../vendor/jolpin/editor/codemirror/editorCommands/insertLineAfter";
-import toggleSelectedLinesStartWith from "../../../vendor/jolpin/editor/codemirror/utils/formatting/toggleSelectedLinesStartWith";
-import isCursorAtBeginning from "../../../vendor/jolpin/editor/codemirror/utils/isCursorAtBeginning";
-import intersectsSyntaxNode from "../../../vendor/jolpin/editor/codemirror/utils/isInSyntaxNode";
-import renumberSelectedLists from "../../../vendor/jolpin/editor/codemirror/utils/renumberSelectedLists";
+  insertLineAfter,
+  isCursorAtBeginning,
+  renumberSelectedLists,
+  toggleSelectedLinesStartWith,
+  intersectsSyntaxNode,
+} from "jolpin-codemirror";
 
 // Prepends the given editor's indentUnit to all lines of the current selection
 // and re-numbers modified ordered lists (if any).
