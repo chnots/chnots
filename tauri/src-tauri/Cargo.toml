@@ -32,7 +32,7 @@ version = "2"
 features = [ "devtools",]
 
 [dependencies.chnots-core]
-path = "../../backend/core"
+path = "../../lib/backend"
 default-features = false
 features = [ "tauri",]
 

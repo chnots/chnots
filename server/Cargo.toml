@@ -20,4 +20,4 @@ workspace = true
 workspace = true
 
 [dependencies.chnots-core]
-path = "../backend/core"
+path = "../lib/backend"

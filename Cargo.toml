@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
-members = ["backend/core", "server", "tauri/src-tauri"]
-exclude = ["backend/chin-tools"]
+members = ["lib/backend", "server", "tauri/src-tauri"]
+exclude = ["lib/chin-tools"]
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "rt"] }

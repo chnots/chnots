@@ -1,3 +1,3 @@
-[submodule "backend/chin-tools"]
-	path = backend/chin-tools
+[submodule "lib/chin-tools"]
+	path = lib/chin-tools
 	url = https://github.com/aeghn/chin-tools
