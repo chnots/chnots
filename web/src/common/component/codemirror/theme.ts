@@ -56,12 +56,6 @@ export const createCodemirrorTheme = () => {
     ".cm-lineWrapping": {
       wordBreak: "break-all",
     },
-    ".hashtag": {
-      border: "1px solid #602533",
-      padding: "1px",
-      borderRadius: "0.2em",
-      color: "#682d4b",
-    },
     // Include &.CodeMirror to handle the case where additional CodeMirror 5 styles
     // need to be overridden.
     "&, &.CodeMirror": baseGlobalStyle,
@@ -221,6 +215,14 @@ export const createCodemirrorTheme = () => {
         fontSize: "1em",
         color: isDarkTheme ? "white" : "black",
       },
+    },
+
+    ".cm-hashtag-mark, .cm-hashtag-label": {
+      color: "#682d4b",
+    },
+
+    ".cm-backlink-mark, .cm-backlink-id": {
+      color: "#319090",
     },
   });
 };

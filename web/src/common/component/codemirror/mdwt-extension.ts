@@ -1,26 +1,51 @@
+import { styleTags } from "@lezer/highlight";
 import { InlineContext, MarkdownConfig } from "@lezer/markdown";
+import {
+  backlinkIDTag,
+  backlinkMarkTag,
+  backlinkTag,
+  hashtagLabelTag,
+  hashtagMarkTag,
+  hashtagTag,
+} from "./mdwt-highlight";
 
-const BacklinkDelim = { resolve: "Backlink", mark: "BacklinkMarker" };
+const backlinkRE = /[0-9a-zA-Z-]{6,}\]\]/;
 
 export const Backlink: MarkdownConfig = {
-  defineNodes: ["Backlink", "BacklinkMarker"],
+  defineNodes: ["Backlink", "BacklinkMarker", "BacklinkID"],
   parseInline: [
     {
-      name: "BacklinkInline",
+      name: "Backlink",
+      before: "Link",
       parse(cx: InlineContext, next: number, pos: number) {
-        if (next == 37 && cx.char(pos + 1) == 37) {
-          let canClose = true;
-          if (
-            cx.slice(cx.offset, pos).lastIndexOf("\n") >
-            cx.slice(cx.offset, pos).lastIndexOf("%%")
-          ) {
-            canClose = false;
-          }
-          return cx.addDelimiter(BacklinkDelim, pos, pos + 2, true, canClose);
+        console.log(pos);
+        if (cx.char(pos) != 91 /* [ */ || cx.char(pos + 1) != 91) {
+          return -1;
+        }
+
+        const start = pos;
+        pos += 1;
+        const match = backlinkRE.exec(cx.text.slice(pos - cx.offset));
+        if (match && /\D/.test(match[0])) {
+          pos += match[0].length + 1;
+          return cx.addElement(
+            cx.elt("Backlink", start, pos, [
+              cx.elt("BacklinkMarker", start, start + 2),
+              cx.elt("BacklinkID", start + 2, pos),
+              cx.elt("BacklinkMarker", pos - 2, pos),
+            ]),
+          );
         }
         return -1;
       },
     },
+  ],
+  props: [
+    styleTags({
+      Backlink: backlinkTag,
+      BacklinkMarker: backlinkMarkTag,
+      BacklinkID: backlinkIDTag,
+    }),
   ],
 };
 
@@ -41,7 +66,6 @@ export const Hashtag: MarkdownConfig = {
         const match = hashtagRE.exec(cx.text.slice(pos - cx.offset));
         if (match && /\D/.test(match[0])) {
           pos += match[0].length;
-          console.log("parse hashtag successfully");
 
           return cx.addElement(
             cx.elt("Hashtag", start, pos, [
@@ -53,5 +77,12 @@ export const Hashtag: MarkdownConfig = {
         return -1;
       },
     },
+  ],
+  props: [
+    styleTags({
+      Hashtag: hashtagTag,
+      HashtagMark: hashtagMarkTag,
+      HashtagLabel: hashtagLabelTag,
+    }),
   ],
 };

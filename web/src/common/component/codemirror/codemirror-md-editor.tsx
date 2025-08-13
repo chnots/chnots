@@ -12,13 +12,7 @@ import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { indentOnInput } from "@codemirror/language";
 import { generateKeybinding } from "@/common/component/codemirror/keybinding";
 import { decoratorExtension } from "jolpin-codemirror";
-import { styleTags } from "@lezer/highlight";
-import {
-  hashtagLabelTag,
-  hashtagMarkTag,
-  hashtagTag,
-  mdwtHighlightExtension,
-} from "./mdwt-highlight";
+import { mdwtHighlightExtension } from "./mdwt-highlight";
 import { Backlink, Hashtag } from "./mdwt-extension";
 import { createCodemirrorTheme } from "./theme";
 
@@ -119,19 +113,7 @@ const CodeMirrorEditor = ({
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
-    extensions: [
-      {
-        ...Hashtag,
-        props: [
-          styleTags({
-            Hashtag: hashtagTag,
-            HashtagMark: hashtagMarkTag,
-            HashtagLabel: hashtagLabelTag,
-          }),
-        ],
-      },
-      Backlink,
-    ],
+    extensions: [Backlink, Hashtag],
   });
 
   const extensions = [
