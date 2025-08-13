@@ -1,10 +1,11 @@
-import { defineConfig } from '@rsbuild/core';
+import { defineConfig } from "@rsbuild/core";
 import { pluginReact } from "@rsbuild/plugin-react";
-import { pluginSass } from '@rsbuild/plugin-sass';
+import { pluginSass } from "@rsbuild/plugin-sass";
+import { pluginSourceBuild } from "@rsbuild/plugin-source-build";
 import path from "path";
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginSass()],
+  plugins: [pluginReact(), pluginSass(), pluginSourceBuild({})],
   resolve: {
     alias: {
       // !! We need to install @types/node to avoid errors(cannot find papth or __dirname).

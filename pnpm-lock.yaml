@@ -262,7 +262,7 @@ importers:
         specifier: ^0.9.1
         version: 0.9.1
       jolpin-codemirror:
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../lib/jolpin-codemirror
       lucide-react:
         specifier: 0.539.0
@@ -352,6 +352,9 @@ importers:
       "@rsbuild/plugin-sass":
         specifier: ^1.3.5
         version: 1.3.5(@rsbuild/core@1.4.15)
+      "@rsbuild/plugin-source-build":
+        specifier: ^1.0.3
+        version: 1.0.3(@rsbuild/core@1.4.15)
       "@tailwindcss/typography":
         specifier: ^0.5.16
         version: 0.5.16(tailwindcss@4.0.0)
@@ -1218,6 +1221,27 @@ packages:
       {
         integrity: sha512-rZxtMsLwjdXkMUGC3WwsPwLNVqVqnTJT6MNIB6e+5fhMcSCPP0AOsNWuMQ5mdCq6HNjs/ZeWAEchpqeprqBD2Q==,
       }
+
+  "@nodelib/fs.scandir@2.1.5":
+    resolution:
+      {
+        integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==,
+      }
+    engines: { node: ">= 8" }
+
+  "@nodelib/fs.stat@2.0.5":
+    resolution:
+      {
+        integrity: sha512-RkhPPp2zrqDAQA/2jNhnztcPAlv64XdhIp7a7454A5ovI7Bukxgt7MX7udwAu3zg1DcpPU0rz3VV1SeaqvY4+A==,
+      }
+    engines: { node: ">= 8" }
+
+  "@nodelib/fs.walk@1.2.8":
+    resolution:
+      {
+        integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==,
+      }
+    engines: { node: ">= 8" }
 
   "@oxlint-tsgolint/darwin-arm64@0.0.1":
     resolution:
@@ -2479,6 +2503,17 @@ packages:
       }
     peerDependencies:
       "@rsbuild/core": 1.x
+
+  "@rsbuild/plugin-source-build@1.0.3":
+    resolution:
+      {
+        integrity: sha512-b+BWbx5eqSV3Ydq0gH265ov0LsVfV7ho0q4FT5zgxt+ZIPU5W5TB14tAt3enHXGOATMFBrjTL85XNpqQS6aExA==,
+      }
+    peerDependencies:
+      "@rsbuild/core": 1.x
+    peerDependenciesMeta:
+      "@rsbuild/core":
+        optional: true
 
   "@rslib/core@0.11.2":
     resolution:
@@ -3933,6 +3968,13 @@ packages:
         integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==,
       }
 
+  fast-glob@3.3.3:
+    resolution:
+      {
+        integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==,
+      }
+    engines: { node: ">=8.6.0" }
+
   fast-shallow-equal@1.0.0:
     resolution:
       {
@@ -3943,6 +3985,12 @@ packages:
     resolution:
       {
         integrity: sha512-bijHueCGd0LqqNK9b5oCMHc0MluJAx0cwqASgbWMvkO01lCYgIhacVRLcaDz3QnyYIRNJRDwMb41VuT6pHJ91Q==,
+      }
+
+  fastq@1.19.1:
+    resolution:
+      {
+        integrity: sha512-GwLTyxkCXjXbxqIhTsMI2Nui8huMPtnxg7krajPJAjnEG/iiOS7i+zCtWGZR9G0NBKbXKh6X9m9UIsYX/N6vvQ==,
       }
 
   fdir@6.4.6:
@@ -4727,6 +4775,13 @@ packages:
         integrity: sha512-dn6wd0uw5GsdswPFfsgMp5NSB0/aDe6fK94YJV/AJDYXL6HVLWBsxeq7js7Ad+mU2K9LAlwpk6kN2D5mwCPVow==,
       }
 
+  merge2@1.4.1:
+    resolution:
+      {
+        integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==,
+      }
+    engines: { node: ">= 8" }
+
   mermaid@10.9.3:
     resolution:
       {
@@ -5387,6 +5442,12 @@ packages:
         integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==,
       }
 
+  queue-microtask@1.2.3:
+    resolution:
+      {
+        integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==,
+      }
+
   react-datetime@3.3.1:
     resolution:
       {
@@ -5638,6 +5699,13 @@ packages:
     engines: { node: ">= 0.4" }
     hasBin: true
 
+  reusify@1.1.0:
+    resolution:
+      {
+        integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==,
+      }
+    engines: { iojs: ">=1.0.0", node: ">=0.10.0" }
+
   robust-predicates@3.0.2:
     resolution:
       {
@@ -5682,6 +5750,12 @@ packages:
     resolution:
       {
         integrity: sha512-lRQgou1mu19e+Ya0LsTvKrVJ5TYUbqCVPAiImX3UfLTenarvPUl1QFdvu5Z3PYmHT9RCcwIfbjRQBntExyj3Zg==,
+      }
+
+  run-parallel@1.2.0:
+    resolution:
+      {
+        integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==,
       }
 
   rw@1.3.3:
@@ -6504,6 +6578,14 @@ packages:
       }
     engines: { node: ">= 6" }
 
+  yaml@2.8.1:
+    resolution:
+      {
+        integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==,
+      }
+    engines: { node: ">= 14.6" }
+    hasBin: true
+
   zod@3.25.76:
     resolution:
       {
@@ -7281,6 +7363,18 @@ snapshots:
       "@emnapi/runtime": 1.4.5
       "@tybys/wasm-util": 0.10.0
     optional: true
+
+  "@nodelib/fs.scandir@2.1.5":
+    dependencies:
+      "@nodelib/fs.stat": 2.0.5
+      run-parallel: 1.2.0
+
+  "@nodelib/fs.stat@2.0.5": {}
+
+  "@nodelib/fs.walk@1.2.8":
+    dependencies:
+      "@nodelib/fs.scandir": 2.1.5
+      fastq: 1.19.1
 
   "@oxlint-tsgolint/darwin-arm64@0.0.1":
     optional: true
@@ -8170,6 +8264,14 @@ snapshots:
       reduce-configs: 1.1.1
       sass-embedded: 1.90.0
 
+  "@rsbuild/plugin-source-build@1.0.3(@rsbuild/core@1.4.15)":
+    dependencies:
+      fast-glob: 3.3.3
+      json5: 2.2.3
+      yaml: 2.8.1
+    optionalDependencies:
+      "@rsbuild/core": 1.4.15
+
   "@rslib/core@0.11.2(typescript@5.9.2)":
     dependencies:
       "@rsbuild/core": 1.4.15
@@ -8946,9 +9048,21 @@ snapshots:
 
   fast-deep-equal@3.1.3: {}
 
+  fast-glob@3.3.3:
+    dependencies:
+      "@nodelib/fs.stat": 2.0.5
+      "@nodelib/fs.walk": 1.2.8
+      glob-parent: 5.1.2
+      merge2: 1.4.1
+      micromatch: 4.0.8
+
   fast-shallow-equal@1.0.0: {}
 
   fastest-stable-stringify@2.0.2: {}
+
+  fastq@1.19.1:
+    dependencies:
+      reusify: 1.1.0
 
   fdir@6.4.6(picomatch@4.0.3):
     optionalDependencies:
@@ -9470,6 +9584,8 @@ snapshots:
 
   mdn-data@2.0.14: {}
 
+  merge2@1.4.1: {}
+
   mermaid@10.9.3:
     dependencies:
       "@braintree/sanitize-url": 6.0.2
@@ -9823,7 +9939,6 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
-    optional: true
 
   mime-db@1.52.0: {}
 
@@ -10015,6 +10130,8 @@ snapshots:
 
   querystringify@2.2.0: {}
 
+  queue-microtask@1.2.3: {}
+
   react-datetime@3.3.1(moment@2.30.1)(react@19.0.0):
     dependencies:
       moment: 2.30.1
@@ -10204,6 +10321,8 @@ snapshots:
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
+  reusify@1.1.0: {}
+
   robust-predicates@3.0.2: {}
 
   roughjs@4.6.4:
@@ -10231,6 +10350,10 @@ snapshots:
   rtl-css-js@1.16.1:
     dependencies:
       "@babel/runtime": 7.28.2
+
+  run-parallel@1.2.0:
+    dependencies:
+      queue-microtask: 1.2.3
 
   rw@1.3.3: {}
 
@@ -10647,6 +10770,8 @@ snapshots:
   yallist@5.0.0: {}
 
   yaml@1.10.2: {}
+
+  yaml@2.8.1: {}
 
   zod@3.25.76: {}
 

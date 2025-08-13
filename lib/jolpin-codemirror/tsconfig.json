@@ -1,15 +1,19 @@
 {
   "compilerOptions": {
-    "lib": ["ES2021"],
-    "module": "ESNext",
-    "noEmit": true,
+    "lib": ["ES2020"],
+    "module": "ES2020",
+    // https://stackoverflow.com/questions/71704754/typescript-yarn-workspaces-referenced-project-may-not-disable-emit
+    // We should use emitDeclarationOnly instead of noEmit
+    // "noEmit": true,
+    "emitDeclarationOnly": true,
     "strict": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "useDefineForClassFields": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "composite": true
   },
   "include": ["src"]
 }
