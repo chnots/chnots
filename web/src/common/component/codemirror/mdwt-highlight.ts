@@ -10,6 +10,11 @@ export const backlinkIDTag = Tag.define();
 export const backlinkMarkTag = Tag.define();
 export const backlinkTag = Tag.define();
 
+export const toentTag = Tag.define();
+export const toentMarkTag = Tag.define();
+export const toentTodoTag = Tag.define();
+export const toentEventTag = Tag.define();
+
 export const mdwtHighlight = HighlightStyle.define([
   {
     tag: hashtagTag,
@@ -34,6 +39,22 @@ export const mdwtHighlight = HighlightStyle.define([
   {
     tag: backlinkIDTag,
     class: "cm-backlink-id",
+  },
+  {
+    tag: toentTag,
+    class: "cm-toent",
+  },
+  {
+    tag: toentMarkTag,
+    class: "cm-toent-mark",
+  },
+  {
+    tag: toentTodoTag,
+    class: "cm-toent-todo",
+  },
+  {
+    tag: toentEventTag,
+    class: "cm-toent-event",
   },
 ]);
 

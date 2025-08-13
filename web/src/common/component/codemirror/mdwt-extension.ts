@@ -7,6 +7,10 @@ import {
   hashtagLabelTag,
   hashtagMarkTag,
   hashtagTag,
+  toentEventTag,
+  toentMarkTag,
+  toentTag,
+  toentTodoTag,
 } from "./mdwt-highlight";
 
 const backlinkRE = /[0-9a-zA-Z-]{6,}\]\]/;
@@ -18,7 +22,6 @@ export const Backlink: MarkdownConfig = {
       name: "Backlink",
       before: "Link",
       parse(cx: InlineContext, next: number, pos: number) {
-        console.log(pos);
         if (cx.char(pos) != 91 /* [ */ || cx.char(pos + 1) != 91) {
           return -1;
         }
@@ -83,6 +86,58 @@ export const Hashtag: MarkdownConfig = {
       Hashtag: hashtagTag,
       HashtagMark: hashtagMarkTag,
       HashtagLabel: hashtagLabelTag,
+    }),
+  ],
+};
+
+const toentRE =
+  /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]{3,}\}/;
+
+export const Toent: MarkdownConfig = {
+  defineNodes: ["Toent", "ToentMarker", "ToentTodo", "ToentEvent"],
+  parseInline: [
+    {
+      name: "Toent",
+      before: "Link",
+      parse(cx: InlineContext, next: number, pos: number) {
+        if (cx.char(pos) != 123 /* { */) {
+          return -1;
+        }
+
+        const start = pos;
+        pos += 1;
+        const match = toentRE.exec(cx.text.slice(pos - cx.offset));
+        if (match) {
+          if (/[a-zA-Z]+/.test(match[0])) {
+            pos += match[0].length;
+            return cx.addElement(
+              cx.elt("Toent", start, pos, [
+                cx.elt("ToentMarker", start, start + 1),
+                cx.elt("ToentTodo", start + 1, pos - 1),
+                cx.elt("ToentMarker", pos - 1, pos),
+              ]),
+            );
+          } else {
+            pos += match[0].length;
+            return cx.addElement(
+              cx.elt("Toent", start, pos, [
+                cx.elt("ToentMarker", start, start + 1),
+                cx.elt("ToentEvent", start + 1, pos - 1),
+                cx.elt("ToentMarker", pos - 1, pos),
+              ]),
+            );
+          }
+        }
+        return -1;
+      },
+    },
+  ],
+  props: [
+    styleTags({
+      Toent: toentTag,
+      ToentMarker: toentMarkTag,
+      ToentTodo: toentTodoTag,
+      ToentEvent: toentEventTag,
     }),
   ],
 };

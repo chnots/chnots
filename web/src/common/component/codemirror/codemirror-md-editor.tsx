@@ -13,7 +13,7 @@ import { indentOnInput } from "@codemirror/language";
 import { generateKeybinding } from "@/common/component/codemirror/keybinding";
 import { decoratorExtension } from "jolpin-codemirror";
 import { mdwtHighlightExtension } from "./mdwt-highlight";
-import { Backlink, Hashtag } from "./mdwt-extension";
+import { Backlink, Hashtag, Toent } from "./mdwt-extension";
 import { createCodemirrorTheme } from "./theme";
 
 const eventHandlers = EditorView.domEventHandlers({
@@ -113,7 +113,7 @@ const CodeMirrorEditor = ({
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
-    extensions: [Backlink, Hashtag],
+    extensions: [Backlink, Hashtag, Toent],
   });
 
   const extensions = [

@@ -224,5 +224,8 @@ export const createCodemirrorTheme = () => {
     ".cm-backlink-mark, .cm-backlink-id": {
       color: "#319090",
     },
+    ".cm-toent-mark": {
+      color: "#aa0000",
+    },
   });
 };
