@@ -1,4 +1,9 @@
-import { InlineContext, MarkdownConfig } from "@lezer/markdown";
+import {
+  BlockContext,
+  InlineContext,
+  Line,
+  MarkdownConfig,
+} from "@lezer/markdown";
 import { tags as t } from "@lezer/highlight";
 import {
   Decoration,
@@ -149,6 +154,40 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
   },
 );
 
+const chnotPropsRE = /^\s*(;)\s*([^:]+):(.*)$/;
+const parseChnotProps = (cx: BlockContext, line: Line) => {
+  const match = chnotPropsRE.exec(line.text);
+
+  console.log("match chnot props: ", match, line.text);
+  if (!match) return false;
+
+  const base = cx.lineStart + match.index;
+  const markerStart = base + match[0].indexOf(";");
+  const markerEnd = markerStart + 1;
+
+  const keyStart =
+    markerEnd +
+    (match[1].length - 1) +
+    (match[0].indexOf(match[2]) - match[0].indexOf(";") - 1);
+  const keyEnd = keyStart + match[2].length;
+
+  const colonPos = line.text.indexOf(":", keyStart - line.pos);
+  const valueStart = colonPos >= 0 ? line.pos + colonPos + 1 : keyEnd;
+  const valueEnd = base + line.text.length;
+
+  console.log(base, markerStart, keyStart, keyEnd, valueStart, valueEnd);
+  const root = cx.elt("ChnotProps", markerStart, valueEnd, [
+    cx.elt("ChnotPropsMarker", markerStart, markerEnd),
+    cx.elt("ChnotPropsKey", keyStart, keyEnd),
+    cx.elt("ChnotPropsMarker", keyEnd, keyEnd + 1),
+    cx.elt("ChnotPropsValue", valueStart, valueEnd),
+  ]);
+
+  cx.addElement(root);
+  cx.nextLine();
+  return true;
+};
+
 export const ChnotProps: MarkdownConfig = {
   defineNodes: [
     { name: "ChnotProps", block: true, style: t.meta },
@@ -160,35 +199,12 @@ export const ChnotProps: MarkdownConfig = {
   parseBlock: [
     {
       name: "ChnotProps",
-      parse(cx, line) {
-        const match = /^\s*(;)\s*([^:]+):(.*)$/.exec(line.text);
-        if (!match) return false;
-
-        const base = cx.lineStart + match.index;
-        const markerStart = base + match[0].indexOf(";");
-        const markerEnd = markerStart + 1;
-
-        const keyStart =
-          markerEnd +
-          (match[1].length - 1) +
-          (match[0].indexOf(match[2]) - match[0].indexOf(";") - 1);
-        const keyEnd = keyStart + match[2].length;
-
-        const colonPos = line.text.indexOf(":", keyStart - line.pos);
-        const valueStart = colonPos >= 0 ? line.pos + colonPos + 1 : keyEnd;
-        const valueEnd = base + line.text.length;
-
-        console.log(base, markerStart, keyStart, keyEnd, valueStart, valueEnd);
-        const root = cx.elt("ChnotProps", markerStart, valueEnd, [
-          cx.elt("ChnotPropsMarker", markerStart, markerEnd),
-          cx.elt("ChnotPropsKey", keyStart, keyEnd),
-          cx.elt("ChnotPropsMarker", keyEnd, keyEnd + 1),
-          cx.elt("ChnotPropsValue", valueStart, valueEnd),
-        ]);
-
-        cx.addElement(root);
-        cx.nextLine();
-        return true;
+      parse(cx: BlockContext, line: Line) {
+        return parseChnotProps(cx, line);
+      },
+      endLeaf(cx: BlockContext, line, leaf) {
+        // try break the cx
+        return chnotPropsRE.test(line.text);
       },
     },
   ],
