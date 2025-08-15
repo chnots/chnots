@@ -16,7 +16,6 @@ import {
 } from "@codemirror/language";
 import { generateKeybinding } from "@/common/component/codemirror/keybinding";
 import { decoratorExtension } from "jolpin-codemirror";
-import { mdwtHighlightExtension } from "./mdwt-highlight";
 import { Backlink, Hashtag, todoHighlightPlugin } from "./mdwt-extension";
 import { createCodemirrorTheme } from "./theme";
 import { GFM } from "@lezer/markdown";
@@ -128,7 +127,6 @@ const MdwtEditor = ({
     EditorView.lineWrapping,
     wrappedLineIndent,
 
-    mdwtHighlightExtension,
     todoHighlightPlugin,
 
     decoratorExtension,

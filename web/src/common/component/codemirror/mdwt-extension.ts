@@ -1,23 +1,4 @@
-import { styleTags } from "@lezer/highlight";
-import {
-  BlockContext,
-  InlineContext,
-  LeafBlock,
-  LeafBlockParser,
-  MarkdownConfig,
-} from "@lezer/markdown";
-import {
-  backlinkIDTag,
-  backlinkMarkTag,
-  backlinkTag,
-  hashtagLabelTag,
-  hashtagMarkTag,
-  hashtagTag,
-  toentEventTag,
-  toentMarkTag,
-  toentTag,
-  toentTodoTag,
-} from "./mdwt-highlight";
+import { InlineContext, MarkdownConfig } from "@lezer/markdown";
 import { tags as t } from "@lezer/highlight";
 import {
   Decoration,
@@ -75,7 +56,17 @@ const hashtagRE =
   /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]+/;
 
 export const Hashtag: MarkdownConfig = {
-  defineNodes: ["Hashtag", "HashtagMark", "HashtagLabel"],
+  defineNodes: [
+    "Hashtag",
+    {
+      name: "HashtagLabel",
+      style: t.tagName,
+    },
+    {
+      name: "HashtagMark",
+      style: t.escape,
+    },
+  ],
   parseInline: [
     {
       name: "Hashtag",
@@ -100,15 +91,13 @@ export const Hashtag: MarkdownConfig = {
       },
     },
   ],
-  props: [
-    styleTags({
-      Hashtag: hashtagTag,
-      HashtagMark: hashtagMarkTag,
-      HashtagLabel: hashtagLabelTag,
-    }),
-  ],
 };
 
+/**
+ * We should use MarkdownConfig instead of Decoration.
+ * Most of the parsing happens on the backend, so
+ * as long as the performance is good enough, we accept this approach.
+ */
 const toentTodoRE = /\[[a-zA-Z]+\]/;
 
 const todoHighlight = Decoration.mark({
