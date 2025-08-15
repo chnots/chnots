@@ -227,5 +227,8 @@ export const createCodemirrorTheme = () => {
     ".cm-toent-mark": {
       color: "#aa0000",
     },
+    ".cm-todo-highlight": {
+      color: "#aa0000",
+    },
   });
 };

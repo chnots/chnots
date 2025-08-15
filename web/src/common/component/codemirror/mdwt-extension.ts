@@ -1,5 +1,11 @@
 import { styleTags } from "@lezer/highlight";
-import { InlineContext, MarkdownConfig } from "@lezer/markdown";
+import {
+  BlockContext,
+  InlineContext,
+  LeafBlock,
+  LeafBlockParser,
+  MarkdownConfig,
+} from "@lezer/markdown";
 import {
   backlinkIDTag,
   backlinkMarkTag,
@@ -12,11 +18,31 @@ import {
   toentTag,
   toentTodoTag,
 } from "./mdwt-highlight";
+import { tags as t } from "@lezer/highlight";
+import {
+  Decoration,
+  DecorationSet,
+  EditorView,
+  ViewPlugin,
+  ViewUpdate,
+} from "@codemirror/view";
+import { EditorState, RangeSetBuilder } from "@codemirror/state";
+import { syntaxTree } from "@codemirror/language";
 
 const backlinkRE = /[0-9a-zA-Z-]{6,}\]\]/;
 
 export const Backlink: MarkdownConfig = {
-  defineNodes: ["Backlink", "BacklinkMarker", "BacklinkID"],
+  defineNodes: [
+    "Backlink",
+    {
+      name: "BacklinkMarker",
+      style: t.escape,
+    },
+    {
+      name: "BacklinkID",
+      style: t.blockComment,
+    },
+  ],
   parseInline: [
     {
       name: "Backlink",
@@ -34,7 +60,7 @@ export const Backlink: MarkdownConfig = {
           return cx.addElement(
             cx.elt("Backlink", start, pos, [
               cx.elt("BacklinkMarker", start, start + 2),
-              cx.elt("BacklinkID", start + 2, pos),
+              cx.elt("BacklinkID", start + 2, pos - 2),
               cx.elt("BacklinkMarker", pos - 2, pos),
             ]),
           );
@@ -42,13 +68,6 @@ export const Backlink: MarkdownConfig = {
         return -1;
       },
     },
-  ],
-  props: [
-    styleTags({
-      Backlink: backlinkTag,
-      BacklinkMarker: backlinkMarkTag,
-      BacklinkID: backlinkIDTag,
-    }),
   ],
 };
 
@@ -90,54 +109,52 @@ export const Hashtag: MarkdownConfig = {
   ],
 };
 
-const toentRE =
-  /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]{3,}\}/;
+const toentTodoRE = /\[[a-zA-Z]+\]/;
 
-export const Toent: MarkdownConfig = {
-  defineNodes: ["Toent", "ToentMarker", "ToentTodo", "ToentEvent"],
-  parseInline: [
-    {
-      name: "Toent",
-      before: "Link",
-      parse(cx: InlineContext, next: number, pos: number) {
-        if (cx.char(pos) != 123 /* { */) {
-          return -1;
-        }
+const todoHighlight = Decoration.mark({
+  class: "cm-todo-highlight",
+  attributes: { "aria-label": "TODO item" },
+});
 
-        const start = pos;
-        pos += 1;
-        const match = toentRE.exec(cx.text.slice(pos - cx.offset));
-        if (match) {
-          if (/[a-zA-Z]+/.test(match[0])) {
-            pos += match[0].length;
-            return cx.addElement(
-              cx.elt("Toent", start, pos, [
-                cx.elt("ToentMarker", start, start + 1),
-                cx.elt("ToentTodo", start + 1, pos - 1),
-                cx.elt("ToentMarker", pos - 1, pos),
-              ]),
-            );
-          } else {
-            pos += match[0].length;
-            return cx.addElement(
-              cx.elt("Toent", start, pos, [
-                cx.elt("ToentMarker", start, start + 1),
-                cx.elt("ToentEvent", start + 1, pos - 1),
-                cx.elt("ToentMarker", pos - 1, pos),
-              ]),
-            );
+export const todoHighlightPlugin = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+
+    constructor(view: EditorView) {
+      this.decorations = this.findTodos(view.state);
+    }
+
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = this.findTodos(update.state);
+      }
+    }
+
+    findTodos(state: EditorState): DecorationSet {
+      const builder = new RangeSetBuilder<Decoration>();
+
+      syntaxTree(state).iterate({
+        enter: (node) => {
+          if (node.name.startsWith("ATXHeading") || node.name === "ListItem") {
+            const text = state.sliceDoc(node.from, node.to);
+
+            let match;
+            if ((match = toentTodoRE.exec(text)) !== null) {
+              const start = node.from + match.index;
+              const end = start + match[0].length;
+
+              if (start !== end) {
+                builder.add(start, end, todoHighlight);
+              }
+            }
           }
-        }
-        return -1;
-      },
-    },
-  ],
-  props: [
-    styleTags({
-      Toent: toentTag,
-      ToentMarker: toentMarkTag,
-      ToentTodo: toentTodoTag,
-      ToentEvent: toentEventTag,
-    }),
-  ],
-};
+        },
+      });
+
+      return builder.finish();
+    }
+  },
+  {
+    decorations: (v) => v.decorations,
+  },
+);
