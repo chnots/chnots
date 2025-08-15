@@ -99,7 +99,7 @@ export const Hashtag: MarkdownConfig = {
  * Most of the parsing happens on the backend, so
  * as long as the performance is good enough, we accept this approach.
  */
-const toentTodoRE = /\[[a-zA-Z]+\]/;
+const toentTodoRE = /\[[A-Za-z]+( ![A-Z])?\]/;
 
 const todoHighlight = Decoration.mark({
   class: "cm-todo-highlight",
