@@ -21,7 +21,7 @@ export const Backlink: MarkdownConfig = {
     },
     {
       name: "BacklinkID",
-      style: t.blockComment,
+      style: t.heading1,
     },
   ],
   parseInline: [
@@ -35,8 +35,9 @@ export const Backlink: MarkdownConfig = {
 
         const start = pos;
         pos += 1;
-        const match = backlinkRE.exec(cx.text.slice(pos - cx.offset));
-        if (match && /\D/.test(match[0])) {
+        const match = backlinkRE.exec(cx.text.slice(pos + 1 - cx.offset));
+
+        if (match) {
           pos += match[0].length + 1;
           return cx.addElement(
             cx.elt("Backlink", start, pos, [
@@ -79,7 +80,7 @@ export const Hashtag: MarkdownConfig = {
         const match = hashtagRE.exec(cx.text.slice(pos - cx.offset));
         if (match && /\D/.test(match[0])) {
           pos += match[0].length;
-
+          console.log("...");
           return cx.addElement(
             cx.elt("Hashtag", start, pos, [
               cx.elt("HashtagMark", start, start + 1),
@@ -147,3 +148,48 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
     decorations: (v) => v.decorations,
   },
 );
+
+export const ChnotProps: MarkdownConfig = {
+  defineNodes: [
+    { name: "ChnotProps", block: true, style: t.meta },
+    { name: "ChnotPropsKey", style: t.atom },
+    { name: "ChnotPropsMarker", style: t.comment },
+    { name: "ChnotPropsValue", style: t.atom },
+  ],
+
+  parseBlock: [
+    {
+      name: "ChnotProps",
+      parse(cx, line) {
+        const match = /^\s*(;)\s*([^:]+):(.*)$/.exec(line.text);
+        if (!match) return false;
+
+        const base = cx.lineStart + match.index;
+        const markerStart = base + match[0].indexOf(";");
+        const markerEnd = markerStart + 1;
+
+        const keyStart =
+          markerEnd +
+          (match[1].length - 1) +
+          (match[0].indexOf(match[2]) - match[0].indexOf(";") - 1);
+        const keyEnd = keyStart + match[2].length;
+
+        const colonPos = line.text.indexOf(":", keyStart - line.pos);
+        const valueStart = colonPos >= 0 ? line.pos + colonPos + 1 : keyEnd;
+        const valueEnd = base + line.text.length;
+
+        console.log(base, markerStart, keyStart, keyEnd, valueStart, valueEnd);
+        const root = cx.elt("ChnotProps", markerStart, valueEnd, [
+          cx.elt("ChnotPropsMarker", markerStart, markerEnd),
+          cx.elt("ChnotPropsKey", keyStart, keyEnd),
+          cx.elt("ChnotPropsMarker", keyEnd, keyEnd + 1),
+          cx.elt("ChnotPropsValue", valueStart, valueEnd),
+        ]);
+
+        cx.addElement(root);
+        cx.nextLine();
+        return true;
+      },
+    },
+  ],
+};

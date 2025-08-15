@@ -9,14 +9,15 @@ import React from "react";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import {
-  defaultHighlightStyle,
-  indentOnInput,
-  syntaxHighlighting,
-} from "@codemirror/language";
+import { indentOnInput } from "@codemirror/language";
 import { generateKeybinding } from "@/common/component/codemirror/keybinding";
 import { decoratorExtension } from "jolpin-codemirror";
-import { Backlink, Hashtag, todoHighlightPlugin } from "./mdwt-extension";
+import {
+  Backlink,
+  ChnotProps,
+  Hashtag,
+  todoHighlightPlugin,
+} from "./mdwt-extension";
 import { createCodemirrorTheme } from "./theme";
 import { GFM } from "@lezer/markdown";
 
@@ -117,7 +118,7 @@ const MdwtEditor = ({
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
-    extensions: [Backlink, Hashtag, GFM],
+    extensions: [Backlink, Hashtag, ChnotProps, GFM],
   });
 
   const extensions = [
