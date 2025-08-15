@@ -1,4 +1,5 @@
 import { defineConfig } from '@rslib/core';
+import { pluginDts } from 'rsbuild-plugin-dts';
 
 export default defineConfig({
   lib: [
@@ -17,5 +18,11 @@ export default defineConfig({
       format: 'cjs',
       syntax: ['node 18'],
     },
+  ],
+  plugins: [
+    pluginDts({
+      bundle: true,
+      distPath: './dist',
+    }),
   ],
 });
