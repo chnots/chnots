@@ -154,7 +154,7 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
   },
 );
 
-const chnotPropsRE = /^\s*(;)\s*([^:]+):(.*)$/;
+const chnotPropsRE = /^\s*(;+)\s*([^:]+):(.*)$/;
 const parseChnotProps = (cx: BlockContext, line: Line) => {
   const match = chnotPropsRE.exec(line.text);
 
