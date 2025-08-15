@@ -21,10 +21,12 @@
 - Toent  
   Toent (**To**do and Ev**ent**) 特有标记内容，用来进行事件和任务的标记。由 org-mode 启发而来。
 
-  ```markdown
-  # {TODO} release plan {2025-08-13 08:00}
+  ```
+  # [TODO !A] release plan
+  ; event: 2025-08-13 08:00
 
-  - {TODO} release new version
+  - [TODO] release new version
+    ; event: 2025-09-13 08:00
   ```
 
 - Props  
@@ -34,16 +36,18 @@
   - 块 `id`: 用来供其他 chnot 进行索引
   - 任务状态转移：记录任务状态及变化时间
 
-  ```markdown
-  # {TODO} item
-
-  // ID: item-id
-  // STATE: TODO - 2025-05-05 12:00:00 +8:00
-  // DESC: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-  // STATE: DOING - 2025-05-05 12:00:00 +8:00
-  // STATE: DONE - 2025-05-05 15:00:00 +8:00
+  ```
+  # [TODO] item
+  ; ID: item-id
+  ; EVENT: 2025-12-02 12:00:00 ,12d **12d =2025-12-30
+  ; STATE: TODO @ 2025-05-05 12:00:00 +8:00
+  ;; NOTE: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+  ; STATE: DOING @ 2025-05-05 12:00:00 +8:00
+  ; STATE: DONE @ 2025-05-05 15:00:00 +8:00
   ```
 
 ## 前端实现
 
 本应用采用 Codemirror 作为 markdown 编辑器。如果需要实现上面的功能需要实现 `@lezer/markdown` 拓展，并将对应的标记进行渲染高亮。
+
+这部分参考了 https://github.com/erykwalder/lezer-markdown-obsidian 中的很多代码，在此鸣谢。
