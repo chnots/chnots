@@ -1,5 +1,9 @@
 // hashtag-highlight.ts
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import {
+  defaultHighlightStyle,
+  HighlightStyle,
+  syntaxHighlighting,
+} from "@codemirror/language";
 import { Tag } from "@lezer/highlight";
 
 export const hashtagTag = Tag.define();
@@ -16,6 +20,7 @@ export const toentTodoTag = Tag.define();
 export const toentEventTag = Tag.define();
 
 export const mdwtHighlight = HighlightStyle.define([
+  ...defaultHighlightStyle.specs,
   {
     tag: hashtagTag,
     class: "cm-hashtag",

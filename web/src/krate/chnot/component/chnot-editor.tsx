@@ -16,7 +16,7 @@ import {
   chnotQueryKindRel,
 } from "@/krate/chnot/service";
 import MarkdownViewer from "./chnot-markdown-viewer";
-import MarkdownEditor from "./chnot-markdown-editor";
+import MdwtEditor from "./chnot-markdown-editor";
 import { ChnotKind } from "@/krate/chnot/po";
 import ExcalidrawContainer from "@/krate/tool/excalidraw/component/excalidraw-container";
 
@@ -354,7 +354,7 @@ const ChnotStatusbar = ({
                       className="PopoverContent z-10 rounded-md p-2 max-w-full w-4xl border"
                       sideOffset={5}
                     >
-                      <MarkdownEditor
+                      <MdwtEditor
                         onContentChange={(content) => {
                           if (metaTid) {
                             onSetContent(content);
@@ -445,7 +445,7 @@ const ChnotBody = ({
           className="w-[95%] h-[95%] max-w-4xl border border-gray-200 shadow p-2"
           ref={bodyRef}
         >
-          <MarkdownEditor
+          <MdwtEditor
             onContentChange={(content) => {
               onSetContent(content);
             }}

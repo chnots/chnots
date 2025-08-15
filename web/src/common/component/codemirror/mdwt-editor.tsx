@@ -9,12 +9,17 @@ import React from "react";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import { indentOnInput } from "@codemirror/language";
+import {
+  defaultHighlightStyle,
+  indentOnInput,
+  syntaxHighlighting,
+} from "@codemirror/language";
 import { generateKeybinding } from "@/common/component/codemirror/keybinding";
 import { decoratorExtension } from "jolpin-codemirror";
 import { mdwtHighlightExtension } from "./mdwt-highlight";
-import { Backlink, Hashtag, Toent } from "./mdwt-extension";
+import { Backlink, Hashtag, ToentTodo } from "./mdwt-extension";
 import { createCodemirrorTheme } from "./theme";
+import { GFM } from "@lezer/markdown";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -91,7 +96,7 @@ const eventHandlers = EditorView.domEventHandlers({
   },
 });
 
-const CodeMirrorEditor = ({
+const MdwtEditor = ({
   content,
   onContentChange,
   autoCompletion,
@@ -113,7 +118,7 @@ const CodeMirrorEditor = ({
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
-    extensions: [Backlink, Hashtag, Toent],
+    extensions: [Backlink, Hashtag, ToentTodo, GFM],
   });
 
   const extensions = [
@@ -124,6 +129,7 @@ const CodeMirrorEditor = ({
     wrappedLineIndent,
 
     mdwtHighlightExtension,
+
     decoratorExtension,
     createCodemirrorTheme(),
 
@@ -141,7 +147,7 @@ const CodeMirrorEditor = ({
       extensions={extensions}
       ref={codeMirror}
       style={{
-        font: "serif",
+        font: "sans-serif",
       }}
       value={content}
       basicSetup={{
@@ -156,6 +162,6 @@ const CodeMirrorEditor = ({
   );
 };
 
-export const CodeMirrorEditorMemo = React.memo(CodeMirrorEditor);
+export const MdwtEditorMemo = React.memo(MdwtEditor);
 
-export default CodeMirrorEditor;
+export default MdwtEditor;

@@ -1,11 +1,11 @@
-import { CodeMirrorEditorMemo } from "@/common/component/codemirror/codemirror-md-editor";
+import { MdwtEditorMemo } from "@/common/component/codemirror/mdwt-editor";
 import { chnotTagNames, toentGuess } from "@/krate/chnot/service";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 
 const chnotCompletions = async (
   context: CompletionContext,
 ): Promise<CompletionResult | null> => {
-  const word = context.matchBefore(/#[^# ]*|{[^{}]*|\[/);
+  const word = context.matchBefore(/#[^# ]*|^#* \[|^[ ]*- \[|\[\[/);
   let options;
   if (!word || (word?.from == word?.to && !context.explicit)) {
     return null;
@@ -19,14 +19,14 @@ const chnotCompletions = async (
     ).data.map((name) => {
       return { label: name, type: "hashtag" };
     });
-  } else if (word.text.startsWith("{")) {
+  } else if (word.text.startsWith("[[")) {
+    options = [{ label: `[[backlink-ph]]`, type: "backlink" }];
+  } else if (word.text.includes("# [") || word.text.includes("- [")) {
     options = (
-      await toentGuess({ input: word.text.replace("{", "") })
+      await toentGuess({ input: word.text.replace(/.*\[/, "") })
     ).toents.map((toent) => {
       return { label: `{${toent.event}}`, type: "toent" };
     });
-  } else if (word.text.startsWith("[")) {
-    options = [{ label: `[](chnot://ed:)`, type: "excalidraw" }];
   } else {
     return null;
   }
@@ -40,7 +40,7 @@ const chnotCompletions = async (
   };
 };
 
-const MarkdownEditor = ({
+const MdwtEditor = ({
   content,
   onContentChange,
   height,
@@ -52,7 +52,7 @@ const MarkdownEditor = ({
   foldGutter: boolean;
 }) => {
   return (
-    <CodeMirrorEditorMemo
+    <MdwtEditorMemo
       content={content}
       onContentChange={onContentChange}
       autoCompletion={chnotCompletions}
@@ -62,4 +62,4 @@ const MarkdownEditor = ({
   );
 };
 
-export default MarkdownEditor;
+export default MdwtEditor;
