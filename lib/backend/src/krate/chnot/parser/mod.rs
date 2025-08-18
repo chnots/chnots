@@ -4,9 +4,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::krate::toent::logic::{
-    EventBuilder, RawInputSegs, eventenum::EventEnum, timeevent::TimeEvent, todoevent::TodoEvent,
-};
+use crate::krate::toent::logic::{EventBuilder, timeevent::TimeEvent, todoevent::TodoEvent};
 use chrono::NaiveDateTime;
 use comrak::{
     arena_tree::Node,
@@ -23,17 +21,14 @@ enum ChnotBlockType {
 }
 
 #[derive(Debug, Clone)]
-pub enum PropsType {
+pub enum PropsEnum {
     ID(String),
-    ToentTransform {
-        from_state: String,
-        to_state: String,
-        time: NaiveDateTime,
-    },
+    ToentEvent(TimeEvent),
+    ToentState { state: String, time: NaiveDateTime },
 }
 
 enum InsertType {
-    PropsType(PropsType),
+    PropsType(PropsEnum),
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -73,7 +68,7 @@ pub struct ChnotBlock {
     time_event: Vec<WithPos<TimeEvent>>,
     backlinks: Vec<WithPos<String>>,
     hashtags: Vec<WithPos<String>>,
-    id: Option<WithPos<String>>,
+    props: Vec<WithPos<Props>>,
     end_ex: usize,
     start: Point,
 }
@@ -170,9 +165,21 @@ impl<'a> TextLocater<'a> {
     }
 }
 
-static TOENT_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"\{([^}]+)}");
+static HEADING_TOENT_TODO_REGEX: Lazy<Regex> =
+    lazy_regex::lazy_regex!(r"^#+ +\[([A-Z]+( ![A-Z])?)\]");
+static LISTITEM_TOENT_TODO_REGEX: Lazy<Regex> =
+    lazy_regex::lazy_regex!(r"\s*- +\[([A-Z]+( ![A-Z])?)\]");
+
+static PROPS_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r";+ +([^ :]+): (.*)");
+
 static HASHTAG_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"#([^\s#\[\]]+)");
 static BACKLINK_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"\[\[([0-9a-zA-Z]+)]]");
+
+#[derive(Debug, Clone)]
+struct Props {
+    key: String,
+    value: String,
+}
 
 impl<'a> ChnotParser<'a> {
     pub fn new(text: &'a str) -> Self {
@@ -194,11 +201,10 @@ impl<'a> ChnotParser<'a> {
     fn parse<'b>(&mut self, root: &'b Node<'b, RefCell<Ast>>) {
         #[derive(Default)]
         struct ChnotBlockGather {
-            todo_event: Vec<WithPos<TodoEvent>>,
             time_event: Vec<WithPos<TimeEvent>>,
             backlinks: Vec<WithPos<String>>,
             hashtags: Vec<WithPos<String>>,
-            id: Vec<WithPos<String>>,
+            props: Vec<WithPos<Props>>,
         }
 
         /// extract toent only from the listitem first line and headline
@@ -208,34 +214,6 @@ impl<'a> ChnotParser<'a> {
             spans: &mut ChnotBlockGather,
             locater: &TextLocater<'_>,
         ) {
-            for cps in TOENT_REGEX.captures_iter(text) {
-                if let (Some(cp), Some(inner)) = (cps.get(0), cps.get(1)) {
-                    let result = inner.as_str();
-                    let start = start_point.offset + cp.start();
-                    let end = start_point.offset + cp.end();
-                    if let Ok(event) = EventEnum::try_from_standard(&RawInputSegs::from(result)) {
-                        match event {
-                            EventEnum::Time(time_event) => {
-                                spans.time_event.push(WithPos {
-                                    start_in: locater.locate_by_offset(start).unwrap(),
-                                    end_ex: locater.locate_by_offset(end).unwrap(),
-                                    data: *time_event,
-                                    original: cp.as_str().to_string(),
-                                });
-                            }
-                            EventEnum::Todo(todo_event) => {
-                                spans.todo_event.push(WithPos {
-                                    start_in: locater.locate_by_offset(start).unwrap(),
-                                    end_ex: locater.locate_by_offset(end).unwrap(),
-                                    data: todo_event,
-                                    original: cp.as_str().to_string(),
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
             for cps in HASHTAG_REGEX.captures_iter(text) {
                 if let (Some(cp), Some(inner)) = (cps.get(0), cps.get(1)) {
                     let result = inner.as_str();
@@ -265,21 +243,25 @@ impl<'a> ChnotParser<'a> {
             }
 
             for (row, line) in text.split("\n").enumerate() {
-                let trimmed = line.trim();
                 let row = start_point.line + row;
-                if let Some(id) = trimmed.strip_prefix("// ID: ") {
+                if let Some(prop) = PROPS_REGEX.captures(line)
+                    && let (Some(key), Some(value)) = (prop.get(1), prop.get(2))
+                {
                     let line_end = start_point.column + line.len();
-                    spans.id.push(WithPos {
+                    spans.props.push(WithPos {
                         start_in: locater.locate_by_linecol(LineColumn {
-                            column: line_end - trimmed.len(),
+                            column: start_point.column,
                             line: row,
                         }),
                         end_ex: locater.locate_by_linecol(LineColumn {
                             column: line_end,
                             line: row,
                         }),
-                        data: id.to_owned(),
-                        original: trimmed.to_string(),
+                        data: Props {
+                            key: key.as_str().to_string(),
+                            value: value.as_str().to_string(),
+                        },
+                        original: line.to_string(),
                     });
                 }
             }
@@ -330,16 +312,59 @@ impl<'a> ChnotParser<'a> {
             };
 
             let title = lines[start.line - 1];
-            let todo_event = spans
-                .todo_event
+            let todo_event = if let Some(todo) = LISTITEM_TOENT_TODO_REGEX.captures(title) {
+                let todo = todo.get(1);
+                match todo {
+                    Some(matched) => match TodoEvent::try_from_standrd_str(matched.as_str()) {
+                        Ok(te) => {
+                            println!("start, {:?} --{} -- {}", start, matched.as_str(), title);
+                            Some(WithPos {
+                                start_in: locater.locate_by_linecol(LineColumn {
+                                    line: start.line,
+                                    column: matched.start() + 1,
+                                }),
+                                end_ex: locater.locate_by_linecol(LineColumn {
+                                    line: start.line,
+                                    column: matched.end() + 1,
+                                }),
+                                original: matched.as_str().to_string(),
+                                data: te,
+                            })
+                        }
+                        Err(_) => None,
+                    },
+                    None => None,
+                }
+            } else if let Some(todo) = HEADING_TOENT_TODO_REGEX.captures(title) {
+                let todo = todo.get(1);
+                match todo {
+                    Some(matched) => match TodoEvent::try_from_standrd_str(matched.as_str()) {
+                        Ok(te) => Some(WithPos {
+                            start_in: locater.locate_by_linecol(LineColumn {
+                                line: start.line,
+                                column: matched.start() + 1,
+                            }),
+                            end_ex: locater.locate_by_linecol(LineColumn {
+                                line: start.line,
+                                column: matched.end() + 1,
+                            }),
+                            original: matched.as_str().to_string(),
+                            data: te,
+                        }),
+                        Err(_) => None,
+                    },
+                    None => None,
+                }
+            } else {
+                None
+            };
+
+            let props = spans
+                .props
                 .iter()
-                .find(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
-                .cloned();
-            let id = spans
-                .id
-                .iter()
-                .find(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
-                .cloned();
+                .filter(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
+                .cloned()
+                .collect();
             let timeevents = spans
                 .time_event
                 .iter()
@@ -361,14 +386,14 @@ impl<'a> ChnotParser<'a> {
 
             let chnot_block = ChnotBlock {
                 title: title.to_owned(),
-                block_type: bt.to_owned(),
                 todo_event,
+                block_type: bt.to_owned(),
                 time_event: timeevents,
                 backlinks,
                 hashtags,
                 end_ex,
                 start: *start,
-                id,
+                props,
             };
             self.chnot_map.insert(chnot_block.start.offset, chnot_block);
         }
@@ -392,24 +417,6 @@ impl<'a> ChnotParser<'a> {
 
         if te.is_empty() {
             return None;
-        }
-
-        if te.iter().any(|e| matches!(e, &TodoEvent::Doing)) {
-            return Some(TodoEvent::Doing);
-        }
-        if te.iter().any(|e| matches!(e, &TodoEvent::Todo)) {
-            return Some(TodoEvent::Todo);
-        }
-
-        if te.iter().any(|e| matches!(e, &TodoEvent::Wait)) {
-            return Some(TodoEvent::Wait);
-        }
-        if te.iter().any(|e| matches!(e, &TodoEvent::Done)) {
-            return Some(TodoEvent::Done);
-        }
-
-        if te.iter().any(|e| matches!(e, &TodoEvent::Cancel)) {
-            return Some(TodoEvent::Cancel);
         }
 
         None
@@ -437,27 +444,33 @@ mod tests {
     }
 
     const TEST_MARKDOWN: &str = "
-# ID、Hashtag 和 Toent #tagtest
-// ID: file
+# ID、Hashtag 和 Toent 测试
+; ID: head-1
+
 Example Text
 
-## {TODO} Head [[asd]] {1920-12-20 12:00:00}
-// ID: head-foo
+## [TODO] Head [[backlinkinhead]] #taginhead
+; ID: head-1.1
+; EVENT: 2025-12-02 12:00:00 ,12d **12d =2025-12-30
+; STATE: TODO @ 2025-05-05 12:00:00 +8:00
+;; NOTE: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+; STATE: DOING @ 2025-05-05 12:00:00 +8:00
+; STATE: DONE @ 2025-05-05 15:00:00 +8:00
 
-- List 1 {DONE} another {2025-06-26 11:19:26} [[123456789]] #hashtag1
-    // ID: sdgdfgsdg
-    // CLOSED: {2025-06-26 11:20:27}
-    #tag2 [[418192012]] *italic* **bold** common text after bold
-    what did you say? #tag3
+- [DONE !A] List Item 1 [[backlinkinlist]] #taginlist
+  ; ID: head-1.1-list-1
+  ; STATE: DONE 2025-06-26 11:20:27
+  #tag2 [[418192012]] *italic* *斜体* **bold** **加粗** common text after bold
+  what did you say? #tag3
 
-    Paragraph 2 {DONE} 检查时间 {2025-06-26} [[34567890]]
-    // ID: sdgdfgsdg1
-    // CLOSED: {2025-06-26 11:20:27}
-    ```txt
-    {TODO} [[backlink-in-code]] #hashtagincode
-    ```
+  Paragraph 2 {DONE} 检查时间 {2025-06-26} [[34567890]]
+      ID: sdgdfgsdg1
+  // CLOSED: {2025-06-26 11:20:27}
+  ```txt
+  [TODO] [[backlink-in-code]] #hashtagincode
+  ```
 
-    - {TODO} SUBITEM
+  - [TODO !B] List Item 2 [[backlinkinlist2]] #taginlist2
 ## last head
     ";
 
@@ -476,53 +489,33 @@ Example Text
     }
 
     #[test]
-    fn markdown_it() {
+    fn mdwt_it() {
         let cp = ChnotParser::new(TEST_MARKDOWN);
         for cb in cp.chnot_map.values() {
-            println!("> Source Begin ==========================");
-            println!("{}", &TEST_MARKDOWN[cb.start.offset..cb.end_ex]);
-            println!("> Source End ==========================");
-            println!("-> BACKLINS");
             for ele in &cb.backlinks {
                 let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
-                println!("TEXT: {}", &src);
-                println!("PASR: {:?}", *ele);
-                assert!(src == ele.original);
+                assert_eq!(src, ele.original);
             }
 
-            println!("-> HASHTAG");
             for ele in &cb.hashtags {
                 let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
-                println!("TEXT: {}", &src);
-                println!("PASR: {:?}", *ele);
-                assert!(src == ele.original);
+                assert_eq!(src, ele.original);
             }
 
-            println!("-> TIMEVENT");
             for ele in &cb.time_event {
                 let src: &str = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
-                println!("TEXT: {}", &src);
-                println!("PASR: {:?}", *ele);
 
-                assert!(src == ele.original);
+                assert_eq!(src, ele.original);
             }
 
-            println!("-> TODOEVENT");
             if let Some(ele) = &cb.todo_event {
                 let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
-                println!("TEXT: {}", &src);
-                println!("PASR: {:?}", *ele);
-
-                assert!(src == ele.original);
+                assert_eq!(src, ele.original);
             }
 
-            println!("-> ID");
-            if let Some(ele) = &cb.id {
+            for ele in &cb.props {
                 let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];
-                println!("TEXT: {}", &src);
-                println!("PASR: {:?}", *ele);
-
-                assert!(src == ele.original);
+                assert_eq!(src, ele.original);
             }
         }
     }

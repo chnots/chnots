@@ -2,6 +2,7 @@ pub(crate) mod creater;
 
 use super::mapper::ChnotMapper;
 use super::*;
+use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::{
@@ -72,7 +73,7 @@ fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
         todo_event: {
             let opt: Option<String> = row.try_get("todo_event")?;
             match opt {
-                Some(opt) => Some(TodoEvent::try_from(opt.as_str())?),
+                Some(opt) => Some(TodoEvent::try_from_standrd_str(opt.as_str())?),
                 None => None,
             }
         },
@@ -386,7 +387,7 @@ impl TryFrom<&KDbRow> for ChnotRecord {
             todo_event: {
                 let opt: Option<String> = value.try_get(ChnotRecord::TODO_EVENT)?;
                 match opt {
-                    Some(opt) => Some(TodoEvent::try_from(opt.as_str())?),
+                    Some(opt) => Some(TodoEvent::try_from_standrd_str(opt.as_str())?),
                     None => None,
                 }
             },

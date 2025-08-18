@@ -33,7 +33,7 @@ pub struct ChnotOverwriteRecordReq {
     pub kind_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ChnotOverwriteRecordRsp {
     pub meta_otid: TID,
     pub rec_tid: TID,
