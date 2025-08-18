@@ -1,10 +1,11 @@
+use chin_tools::AResult;
 use chinese_lunisolar_calendar::LunisolarDate;
 use chrono::{DateTime, Local, Timelike};
 use num_traits::ToPrimitive;
 
-use super::PossibleScore;
 use super::{Timestamp, base::BaseTime};
-use crate::krate::toent::{EventBuilder, RawInputSegs, timeevent::contains_any};
+use crate::krate::toent::dto::GuessElem;
+use crate::krate::toent::{EventBuilder, Words, timeevent::contains_any};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub(crate) struct ChnTime {
@@ -54,7 +55,7 @@ impl Timestamp for ChnTime {
 }
 
 impl EventBuilder for ChnTime {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         let mut base_score: u8 = 0;
         let mut leap_month = false;
         if gt.full_contains_ig_case(&["农", "nong", "ns"]) {
@@ -70,11 +71,16 @@ impl EventBuilder for ChnTime {
         let bases = BaseTime::guess(
             &gt.filter(|e| !contains_any(e, &["闰", "run", "ns", "农", "nong", "ns"])),
         );
+        println!(
+            "bases: {:?}, {:?}",
+            gt.filter(|e| !contains_any(e, &["闰", "run", "ns", "农", "nong", "ns"])),
+            bases.as_ref().map(|e| e.len())
+        );
 
         if let Some(bases) = bases {
             let v = bases
                 .into_iter()
-                .map(|(t, score)| {
+                .map(|GuessElem { toent: t, score }| {
                     (
                         ChnTime {
                             leap_month,
@@ -82,6 +88,7 @@ impl EventBuilder for ChnTime {
                         },
                         score.merge(base_score),
                     )
+                        .into()
                 })
                 .collect();
             Some(v)
@@ -94,8 +101,8 @@ impl EventBuilder for ChnTime {
         self.timestamp.is_valid()
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        let segs = &gt.spans;
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
+        let segs = &gt.words;
         let mut leap_month = false;
         if segs.len() < 2 {
             anyhow::bail!(
@@ -119,22 +126,33 @@ impl EventBuilder for ChnTime {
         }
     }
 
-    fn standard_str(&self) -> String {
+    fn standard_string(&self) -> String {
         format!(
             "农{} {}",
             if self.leap_month { " [闰]" } else { "" },
-            self.timestamp.standard_str()
+            self.timestamp.standard_string()
         )
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::krate::toent::{EventBuilder, timeevent::timeenum::chinese::ChnTime};
+    use crate::krate::toent::{
+        EventBuilder, logic::timeevent::timeenum::base::BaseTime,
+        timeevent::timeenum::chinese::ChnTime,
+    };
 
     #[test]
     fn test() {
-        let r = ChnTime::try_from_standard(&"农 2023-12-02".into());
-        println!("{r:?}");
+        let r = ChnTime::guess(&"农 2023-12-12".into()).unwrap();
+        let chn = ChnTime {
+            leap_month: false,
+            timestamp: BaseTime::default()
+                .with_year(2023)
+                .with_month(12)
+                .with_day(12),
+        };
+        println!("guessed: {:?}", r);
+        assert!(r.get(0).unwrap().toent == chn);
     }
 }

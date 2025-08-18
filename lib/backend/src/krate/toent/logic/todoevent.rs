@@ -1,15 +1,18 @@
-use crate::enum_common_funcs;
+use crate::{enum_common_funcs, krate::toent::dto::GuessElem};
 
 use super::PossibleScore;
+use anyhow::Context;
+use chin_tools::AResult;
 use enum_iterator::{Sequence, all};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 use serde::{Deserialize, Serialize, de};
 
-use super::{EventBuilder, RawInputSegs};
+use super::{EventBuilder, Words};
 
-#[derive(Clone, Copy, Debug, PartialEq, Sequence)]
-pub(crate) enum TodoEvent {
+#[derive(Clone, Copy, Debug, PartialEq, Sequence, Default)]
+pub(crate) enum TodoStateEnum {
+    #[default]
     Todo,
     Doing,
     Wait,
@@ -17,19 +20,126 @@ pub(crate) enum TodoEvent {
     Cancel,
 }
 
+impl PartialOrd for TodoStateEnum {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.as_priority().cmp(&other.as_priority()))
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Sequence, Default)]
+pub(crate) enum TodoPriorityEnum {
+    A,
+    B,
+    #[default]
+    C,
+    D,
+    E,
+}
+
+impl PartialOrd for TodoPriorityEnum {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.as_priority().cmp(&other.as_priority()))
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub(crate) struct TodoEvent {
+    pub state: TodoStateEnum,
+    pub priority: Option<TodoPriorityEnum>,
+}
+
+impl PartialOrd for TodoEvent {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self.state.partial_cmp(&other.state) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        self.priority
+            .unwrap_or_default()
+            .partial_cmp(&other.priority.unwrap_or_default())
+    }
+}
+
 impl TodoEvent {
-    pub fn as_static_str(&self) -> &'static str {
-        match self {
-            TodoEvent::Todo => "TODO",
-            TodoEvent::Doing => "DOING",
-            TodoEvent::Wait => "WAIT",
-            TodoEvent::Done => "DONE",
-            TodoEvent::Cancel => "CANCEL",
+    pub fn state(state: TodoStateEnum) -> Self {
+        Self {
+            state,
+            priority: None,
         }
     }
 }
 
-enum_common_funcs!(TodoEvent);
+impl TodoStateEnum {
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            TodoStateEnum::Todo => "TODO",
+            TodoStateEnum::Doing => "DOING",
+            TodoStateEnum::Wait => "WAIT",
+            TodoStateEnum::Done => "DONE",
+            TodoStateEnum::Cancel => "CANCEL",
+        }
+    }
+
+    pub fn as_priority(&self) -> i32 {
+        match self {
+            TodoStateEnum::Todo => 1,
+            TodoStateEnum::Doing => 0,
+            TodoStateEnum::Wait => 2,
+            TodoStateEnum::Done => 3,
+            TodoStateEnum::Cancel => 4,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for TodoEvent {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let o: String = String::deserialize(deserializer)?;
+        let segs: Vec<&str> = o.split(' ').collect();
+        let state_str = segs
+            .first()
+            .context("unable to extract state str")
+            .and_then(|s| TodoStateEnum::try_from(*s))
+            .map_err(|err| de::Error::custom(err.to_string()))?;
+        let priority = match segs.get(1) {
+            Some(s) => Some(
+                TodoPriorityEnum::try_from(*s).map_err(|err| de::Error::custom(err.to_string()))?,
+            ),
+            None => None,
+        };
+        Ok(TodoEvent {
+            state: state_str,
+            priority,
+        })
+    }
+}
+
+impl TodoPriorityEnum {
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            TodoPriorityEnum::A => "A",
+            TodoPriorityEnum::B => "B",
+            TodoPriorityEnum::C => "C",
+            TodoPriorityEnum::D => "D",
+            TodoPriorityEnum::E => "E",
+        }
+    }
+
+    pub fn as_priority(&self) -> i32 {
+        match self {
+            TodoPriorityEnum::A => 0,
+            TodoPriorityEnum::B => 1,
+            TodoPriorityEnum::C => 2,
+            TodoPriorityEnum::D => 3,
+            TodoPriorityEnum::E => 4,
+        }
+    }
+}
+
+enum_common_funcs!(TodoStateEnum);
+enum_common_funcs!(TodoPriorityEnum);
 
 #[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
 pub(crate) enum TodoCreateType {
@@ -60,10 +170,10 @@ impl<'de> Deserialize<'de> for TodoCreateType {
 }
 
 impl EventBuilder for TodoEvent {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         let mut result = vec![];
-        for ele in all::<TodoEvent>() {
-            let enum_str = ele.as_ref();
+        for ele in all::<TodoStateEnum>() {
+            let enum_str = ele.as_static_str();
             let enum_len = enum_str.len();
             let upper_input = gt.original.to_uppercase();
 
@@ -80,24 +190,61 @@ impl EventBuilder for TodoEvent {
             }
         }
 
-        Some(result)
+        Some(
+            result
+                .into_iter()
+                .map(|(te, score)| {
+                    (
+                        TodoEvent {
+                            state: te,
+                            priority: None,
+                        },
+                        score,
+                    )
+                        .into()
+                })
+                .collect(),
+        )
     }
 
     fn is_valid(&self) -> bool {
         true
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        match gt.spans.first() {
-            Some(s) => Ok(Self::try_from(s.text.to_uppercase().as_str())?),
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
+        let state = match gt.words.first() {
+            Some(s) => TodoStateEnum::try_from(s.text.to_uppercase().as_str())?,
             None => {
                 anyhow::bail!("There should at least one seg to deserialize TodoEnum")
             }
-        }
+        };
+        let priority = match gt.get(1) {
+            Some(word) => Some(TodoPriorityEnum::try_from(
+                word.text.to_uppercase().as_str(),
+            )?),
+            None => None,
+        };
+        Ok(Self { state, priority })
     }
 
-    fn standard_str(&self) -> String {
-        self.as_static_str().to_string()
+    fn standard_string(&self) -> String {
+        format!(
+            "{}{}",
+            self.state.as_static_str(),
+            match self.priority {
+                Some(p) => format!(" !{}", p.as_static_str()),
+                None => "".to_owned(),
+            }
+        )
+    }
+}
+
+impl Serialize for TodoEvent {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.standard_string().serialize(serializer)
     }
 }
 

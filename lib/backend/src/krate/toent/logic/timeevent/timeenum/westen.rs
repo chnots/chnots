@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use chin_tools::AResult;
 use chrono::{DateTime, Datelike, FixedOffset, Local, Timelike, Utc};
 use regex::Regex;
 
@@ -8,14 +9,15 @@ use super::{
     Timestamp,
     base::{BaseTime, convert_time_to_secs},
 };
-use crate::krate::toent::{EventBuilder, RawInputSegs, timeevent::equals_any};
+use crate::krate::toent::dto::GuessElem;
+use crate::krate::toent::{EventBuilder, Words, timeevent::equals_any};
 
 pub(crate) const CAL_TYPE: &str = "wes";
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct WesTime {
-    offset: Option<FixedOffset>,
-    timestamp: BaseTime,
+    pub(crate) offset: Option<FixedOffset>,
+    pub(crate) timestamp: BaseTime,
 }
 
 impl Deref for WesTime {
@@ -36,29 +38,29 @@ impl From<BaseTime> for WesTime {
 }
 
 impl EventBuilder for WesTime {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         let mut guessed = vec![];
         let trimmed = gt.original;
         if trimmed.is_empty() {
-            guessed.push((WesTime::now_date(), PossibleScore::Likely(100)));
+            guessed.push((WesTime::now_date(), PossibleScore::Likely(100)).into());
         }
 
         if equals_any(
             trimmed.to_ascii_lowercase().as_str(),
             &["t", "n", "no", "now", "time", "uijm", "shijian", "时间"],
         ) {
-            guessed.push((WesTime::now_time(), PossibleScore::Likely(100)));
+            guessed.push((WesTime::now_time(), PossibleScore::Likely(100)).into());
         }
 
         if let Ok(standard) = Self::try_from_standard(gt) {
-            guessed.push((standard, PossibleScore::Yes(100)));
+            guessed.push((standard, PossibleScore::Yes(100)).into());
         }
 
         Some(guessed)
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        let standard = &gt.spans;
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
+        let standard = &gt.words;
         if standard.len() != 2 && standard.len() != 1 && standard.len() != 3 {
             anyhow::bail!("unable to parse westen timestamp: {:?}", standard)
         } else {
@@ -85,9 +87,9 @@ impl EventBuilder for WesTime {
             } else {
                 None
             };
-            let sub = RawInputSegs {
+            let sub = Words {
                 original: gt.original,
-                spans: ts_segs,
+                words: ts_segs,
             };
             let timestamp = BaseTime::try_from_standard(&sub)?;
 
@@ -95,8 +97,8 @@ impl EventBuilder for WesTime {
         }
     }
 
-    fn standard_str(&self) -> String {
-        let mut base = self.timestamp.standard_str();
+    fn standard_string(&self) -> String {
+        let mut base = self.timestamp.standard_string();
 
         if let Some(offset) = self.offset {
             base.push(' ');
@@ -152,13 +154,41 @@ impl Timestamp for WesTime {
 #[cfg(test)]
 mod test {
 
-    use crate::krate::toent::EventBuilder;
+    use chrono::FixedOffset;
+
+    use crate::krate::toent::{EventBuilder, logic::timeevent::timeenum::base::BaseTime};
 
     use super::WesTime;
 
     #[test]
     fn from_test() {
-        let wes = WesTime::try_from_standard(&"2020-12-02 11:12:13 +1:00".into());
-        print!("{:?}", wes.unwrap().standard_str())
+        let ymdhms = BaseTime {
+            year: 2020.into(),
+            month: 12.into(),
+            day: 12.into(),
+            hour: 12.into(),
+            minute: 12.into(),
+            second: 12.into(),
+        };
+
+        let guesses = WesTime::guess(&"2020-12-12 12:12:12 +8:00".into()).unwrap();
+        let guessed = guesses.first().unwrap();
+        println!("{:?}", guessed);
+        assert!(
+            WesTime {
+                offset: FixedOffset::east_opt(8 * 3600),
+                timestamp: ymdhms.clone()
+            } == guessed.toent
+        );
+
+        let guesses = WesTime::guess(&"2020-12-12 12:12:12".into()).unwrap();
+        let guessed = guesses.first().unwrap();
+        println!("{:?}", guessed);
+        assert!(
+            WesTime {
+                offset: None,
+                timestamp: ymdhms.clone()
+            } == guessed.toent
+        );
     }
 }

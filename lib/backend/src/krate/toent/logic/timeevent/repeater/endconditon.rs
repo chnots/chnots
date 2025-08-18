@@ -1,7 +1,12 @@
-use super::PossibleScore;
+use chin_tools::AResult;
+
 use super::interval::TimeInterval;
 pub(crate) use super::timers::Times;
-use crate::krate::toent::{EventBuilder, RawInputSegs, timeevent::timeenum::TimeEnum};
+use crate::krate::toent::{
+    EventBuilder, Words,
+    dto::{GuessElem, toent2},
+    timeevent::timeenum::TimeEnum,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum EndCondition {
@@ -27,18 +32,21 @@ impl From<TimeEnum> for EndCondition {
 }
 
 impl EventBuilder for EndCondition {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         let input = gt.remove_first_prefix("=");
 
         let mut result = vec![];
         if let Some(v) = TimeEnum::guess(&input) {
-            result.extend(v.into_iter().map(|e| (e.0.into(), e.1)));
+            result.extend(v.into_iter().map(toent2));
         }
         if let Some(v) = TimeInterval::guess(&input) {
-            result.extend(v.into_iter().map(|e| (e.0.into(), e.1)));
+            result.extend(v.into_iter().map(toent2));
         }
         if let Some(v) = Times::guess(&input) {
-            result.extend(v.into_iter().map(|e| (e.0.into(), e.1)));
+            fn fun_name(e: GuessElem<Times>) -> GuessElem<EndCondition> {
+                toent2(e)
+            }
+            result.extend(v.into_iter().map(fun_name));
         }
         Some(result)
     }
@@ -51,7 +59,7 @@ impl EventBuilder for EndCondition {
         }
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
         if gt.is_empty() {
             anyhow::bail!("end condition should not be empty");
         }
@@ -72,13 +80,13 @@ impl EventBuilder for EndCondition {
         }
     }
 
-    fn standard_str(&self) -> String {
+    fn standard_string(&self) -> String {
         let mut res = String::new();
         res.push('=');
         let v = match self {
-            EndCondition::Times(v) => v.standard_str(),
-            EndCondition::Interval(v) => v.standard_str(),
-            EndCondition::Time(v) => v.standard_str(),
+            EndCondition::Times(v) => v.standard_string(),
+            EndCondition::Interval(v) => v.standard_string(),
+            EndCondition::Time(v) => v.standard_string(),
         };
 
         res.push_str(v.as_str());
@@ -91,6 +99,7 @@ impl EventBuilder for EndCondition {
 mod tests {
     use crate::krate::toent::{
         EventBuilder,
+        logic::timeevent::timeenum::westen::WesTime,
         timeevent::{
             repeater::{endconditon::Times, interval::TimeInterval},
             timeenum::TimeEnum,
@@ -103,49 +112,41 @@ mod tests {
     fn test_standard_str() {
         assert_eq!(
             EndCondition::Interval(TimeInterval::try_from_standard(&"3d".into()).unwrap())
-                .standard_str(),
+                .standard_string(),
             "=3d"
         );
         assert_eq!(
             EndCondition::Time(TimeEnum::try_from_standard(&"2025-12-25".into()).unwrap())
-                .standard_str(),
+                .standard_string(),
             "=2025-12-25"
         );
         assert_eq!(
-            EndCondition::Times(Times::try_from_standard(&"10t".into()).unwrap()).standard_str(),
+            EndCondition::Times(Times::try_from_standard(&"10t".into()).unwrap()).standard_string(),
             "=10t"
         );
     }
 
     #[test]
     fn test_interval() {
-        assert!(
-            EndCondition::guess(&"=10d".into())
-                .unwrap()
-                .first()
-                .unwrap()
-                .0
-                == EndCondition::Interval(TimeInterval::try_from_standard(&"10d".into()).unwrap())
+        assert_eq!(
+            EndCondition::try_from_standard(&"=10d".into()).unwrap(),
+            EndCondition::Interval(TimeInterval::try_from_standard(&"10d".into()).unwrap())
         );
     }
 
     #[test]
     fn test_time() {
         assert_eq!(
-            EndCondition::guess(&"=2025-12-12".into())
-                .unwrap()
-                .first()
-                .unwrap()
-                .0,
+            EndCondition::Time(TimeEnum::Wes(
+                WesTime::try_from_standrd_str("2025-12-12").unwrap()
+            )),
             EndCondition::try_from_standard(&"=2025-12-12".into()).unwrap()
         );
 
         assert_eq!(
-            EndCondition::guess(&"=2025-12-12 12:00:00".into())
-                .unwrap()
-                .first()
-                .unwrap()
-                .0,
+            EndCondition::Time(TimeEnum::Wes(
+                WesTime::try_from_standrd_str("2025-12-12 12:00:00").unwrap()
+            )),
             EndCondition::try_from_standard(&"=2025-12-12 12:00:00".into()).unwrap()
         );
     }

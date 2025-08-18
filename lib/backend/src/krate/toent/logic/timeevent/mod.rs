@@ -1,12 +1,14 @@
+use chin_tools::AResult;
+use serde::Serialize;
 use timeenum::{Timestamp, westen::WesTime};
 
-use crate::krate::toent;
+use crate::krate::toent::{self, dto::GuessElem};
 
 use super::PossibleScore;
 
 use self::{repeater::Repeater, timeenum::TimeEnum};
 
-use super::{EventBuilder, RawInputSegs};
+use super::{EventBuilder, Words};
 
 pub(crate) mod repeater;
 pub(crate) mod timeenum;
@@ -50,19 +52,28 @@ impl TimeEvent {
     }
 }
 
-#[derive(Default)]
-pub(crate) struct InputSegs<'a> {
-    pub(crate) base: RawInputSegs<'a>,
-    pub(crate) interval: Option<RawInputSegs<'a>>,
-    pub(crate) alert: Option<RawInputSegs<'a>>,
-    pub(crate) end: Option<RawInputSegs<'a>>,
+impl Serialize for TimeEvent {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.standard_string().serialize(serializer)
+    }
 }
 
-impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
+#[derive(Default, Debug)]
+pub(crate) struct TimeEventSegs<'a> {
+    pub(crate) base: Words<'a>,
+    pub(crate) interval: Option<Words<'a>>,
+    pub(crate) alert: Option<Words<'a>>,
+    pub(crate) end: Option<Words<'a>>,
+}
+
+impl<'a> TryFrom<&'a Words<'a>> for TimeEventSegs<'a> {
     type Error = anyhow::Error;
 
-    fn try_from(gt: &'a RawInputSegs<'a>) -> Result<Self, Self::Error> {
-        let mut input_segs = InputSegs::default();
+    fn try_from(gt: &'a Words<'a>) -> Result<Self, Self::Error> {
+        let mut input_segs = TimeEventSegs::default();
 
         enum ParseStep {
             Base,
@@ -71,13 +82,13 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
             End,
         }
         let mut parse_step = ParseStep::Base;
-        let mut temp: Vec<toent::Span<'_>> = vec![];
+        let mut temp: Vec<toent::Word<'_>> = vec![];
 
-        let convert_temp = |temp: Vec<toent::Span<'a>>| {
+        let convert_temp = |temp: Vec<toent::Word<'a>>| {
             if !temp.is_empty() {
-                let gt = RawInputSegs {
+                let gt = Words {
                     original: gt.original,
-                    spans: temp,
+                    words: temp,
                 };
                 Some(gt)
             } else {
@@ -85,17 +96,17 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
             }
         };
 
-        for span in &gt.spans {
+        for span in &gt.words {
             let seg = span.text;
             if Repeater::alter_start(seg) {
-                input_segs.alert.replace(RawInputSegs {
+                input_segs.alert.replace(Words {
                     original: seg,
-                    spans: vec![*span],
+                    words: vec![*span],
                 });
             } else if Repeater::interval_start(seg) {
-                input_segs.interval.replace(RawInputSegs {
+                input_segs.interval.replace(Words {
                     original: seg,
-                    spans: vec![*span],
+                    words: vec![*span],
                 });
             } else if Repeater::end_start(seg) {
                 parse_step = ParseStep::End;
@@ -123,8 +134,8 @@ impl<'a> TryFrom<&'a RawInputSegs<'a>> for InputSegs<'a> {
 }
 
 impl EventBuilder for TimeEvent {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
-        let Ok(input_segs) = InputSegs::try_from(gt) else {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
+        let Ok(input_segs) = TimeEventSegs::try_from(gt) else {
             return None;
         };
 
@@ -137,18 +148,24 @@ impl EventBuilder for TimeEvent {
         );
 
         if let Some(time_enums) = bases {
-            let guesses = time_enums
+            let mut guesses: Vec<GuessElem<TimeEvent>> = time_enums
                 .iter()
-                .map(|(base, score)| {
+                .map(|GuessElem { toent: base, score }| {
                     (
                         Self {
                             base: Some(base.clone()),
-                            reminder: repeaters.first().map(|(e, _)| e.clone()),
+                            reminder: repeaters.first().map(|guess_elem| guess_elem.toent.clone()),
                         },
                         *score,
                     )
+                        .into()
                 })
                 .collect();
+            guesses.sort_by(|g1, g2| {
+                g1.score
+                    .partial_cmp(&g2.score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
             Some(guesses)
         } else {
             None
@@ -160,8 +177,8 @@ impl EventBuilder for TimeEvent {
             && self.reminder.as_ref().is_none_or(|e| e.is_valid())
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        let input_segs = InputSegs::try_from(gt)?;
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
+        let input_segs = TimeEventSegs::try_from(gt)?;
 
         let base = Some(TimeEnum::try_from_standard(&input_segs.base)?);
 
@@ -174,11 +191,11 @@ impl EventBuilder for TimeEvent {
         Ok(TimeEvent { base, reminder })
     }
 
-    fn standard_str(&self) -> String {
+    fn standard_string(&self) -> String {
         let mut res = String::new();
 
         if let Some(base) = self.base.as_ref() {
-            res.push_str(base.standard_str().as_str());
+            res.push_str(base.standard_string().as_str());
         }
 
         if let Some(rep) = &self.reminder {
@@ -187,5 +204,27 @@ impl EventBuilder for TimeEvent {
         }
 
         res
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::krate::toent::logic::{EventBuilder, timeevent::TimeEvent};
+
+    fn guess_and_standard(guess: &str, standard: &str) {
+        let guesses = TimeEvent::guess(&guess.into()).unwrap();
+
+        let guess = guesses.first().cloned().map(|e| e.toent).unwrap();
+        let standard = TimeEvent::try_from_standard(&standard.into()).unwrap();
+        println!("===================");
+        assert_eq!(guess, standard)
+    }
+
+    #[test]
+    fn test() {
+        guess_and_standard(
+            "2025-12-26 12:00:00 +8:00 =2025-12-27 12:00:00",
+            "2025-12-26 12:00:00 +8:00 =2025-12-27 12:00:00",
+        );
     }
 }

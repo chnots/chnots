@@ -1,9 +1,10 @@
 use std::{fmt::Display, ops::Deref};
 
+use chin_tools::AResult;
 use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
-use crate::krate::toent::{EventBuilder, RawInputSegs};
+use crate::krate::toent::{EventBuilder, Words, dto::GuessElem};
 
 use super::PossibleScore;
 
@@ -117,6 +118,24 @@ impl BaseTime {
         self.second = second.into();
         self
     }
+
+    fn base_time(
+        year: Option<i32>,
+        month: Option<i32>,
+        day: Option<i32>,
+        hour: Option<i32>,
+        minute: Option<i32>,
+        second: Option<i32>,
+    ) -> BaseTime {
+        BaseTime {
+            year: year.into(),
+            month: month.into(),
+            day: day.into(),
+            hour: hour.into(),
+            minute: minute.into(),
+            second: second.into(),
+        }
+    }
 }
 
 macro_rules! all_some {
@@ -159,8 +178,8 @@ impl EventBuilder for BaseTime {
             ))
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        let standard = &gt.spans;
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
+        let standard = &gt.words;
         if standard.len() != 2 && standard.len() != 1 {
             anyhow::bail!(
                 "There should be like '2022-12-02' '20:00:00', found {:?}",
@@ -211,7 +230,7 @@ impl EventBuilder for BaseTime {
         }
     }
 
-    fn standard_str(&self) -> String {
+    fn standard_string(&self) -> String {
         if self.second.is_some() {
             format!(
                 "{}-{}-{} {}:{}:{}",
@@ -231,9 +250,9 @@ impl EventBuilder for BaseTime {
         }
     }
 
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         match Self::try_from_standard(gt) {
-            Ok(base) => Some(vec![(base, PossibleScore::Likely(100))]),
+            Ok(base) => Some(vec![(base, PossibleScore::Likely(100)).into()]),
             Err(_) => None,
         }
     }
@@ -274,7 +293,7 @@ impl From<NaiveTime> for BaseTime {
     }
 }
 
-pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Result<i32> {
+pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> AResult<i32> {
     match unit {
         TimeUnit::Minute => {
             let time: Vec<&str> = input.trim_start_matches(['+', '-']).split(":").collect();
@@ -287,25 +306,45 @@ pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Resul
 
 #[cfg(test)]
 mod test {
+    use chrono::{Datelike, NaiveDate};
+
     use crate::krate::toent::{EventBuilder, timeevent::timeenum::base::BaseTime};
+
+    fn n(n: i32) -> Option<i32> {
+        Some(n)
+    }
+
+    fn compare(guess: &str, time: BaseTime) {
+        println!("guess: {}", guess);
+        let c: Vec<crate::krate::toent::dto::GuessElem<BaseTime>> =
+            BaseTime::guess(&guess.into()).unwrap();
+        println!("guessed: {:?}", c);
+        assert!(c.first().unwrap().toent == time);
+    }
 
     #[test]
     fn test_all() {
-        // println!("{:?}", BaseTimestamp::from_standard(&["asdasd"]));
-        // println!("{:?}", BaseTimestamp::from_standard(&["12"]));
-        // println!("{:?}", BaseTimestamp::from_standard(&["12:03"]));
-        println!("{:?}", BaseTime::try_from_standard(&"12-03".into()));
-        println!("{:?}", BaseTime::try_from_standard(&"12-03-04".into()));
-        println!("{:?}", BaseTime::try_from_standard(&"12-03-04 12".into()));
-        println!(
-            "{:?}",
-            BaseTime::try_from_standard(&"12-03-04 12:12".into())
-        );
-        println!(
-            "{:?}",
-            BaseTime::try_from_standard(&"12-03-04 2:12:12".into())
-        );
-        // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e"]));
-        // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e", "asdasd"]));
+        let ymd = BaseTime::base_time(n(2020), n(12), n(3), None, None, None);
+        let ymdh = BaseTime {
+            hour: 12.into(),
+            ..ymd.clone()
+        };
+        let ymdhm = BaseTime {
+            minute: 12.into(),
+            ..ymdh.clone()
+        };
+        let ymdhms = BaseTime {
+            second: 12.into(),
+            ..ymdhm.clone()
+        };
+        compare("2020-12-03", ymd);
+        compare("2020-12-03 12", ymdh);
+        compare("2020-12-03 12:12", ymdhm);
+        compare("2020-12-03 12:12:12", ymdhms);
+
+        // TODO
+        // - mm-dd
+        // - hh:mm
+        // - hh:mm:ss
     }
 }

@@ -1,8 +1,8 @@
-use chin_tools::score::PossibleScore;
+use chin_tools::{AResult, score::PossibleScore};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::krate::toent::{EventBuilder, RawInputSegs};
+use crate::krate::toent::{EventBuilder, Words, dto::GuessElem};
 
 #[derive(Clone, Debug, PartialEq)]
 
@@ -13,9 +13,12 @@ pub(crate) struct Times {
 static TIMES_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\d+)t$");
 
 impl EventBuilder for Times {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         match Self::try_from_standard(gt) {
-            Ok(v) => Some(vec![(v, PossibleScore::Likely(100))]),
+            Ok(v) => Some(vec![GuessElem {
+                toent: v,
+                score: PossibleScore::Likely(100),
+            }]),
             Err(_) => None,
         }
     }
@@ -24,8 +27,8 @@ impl EventBuilder for Times {
         true
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
-        let segs = &gt.spans;
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
+        let segs = &gt.words;
         if segs.len() != 1 {
             anyhow::bail!("Times segs' count Should be 1: {:?}", segs);
         }
@@ -40,7 +43,7 @@ impl EventBuilder for Times {
         }
     }
 
-    fn standard_str(&self) -> String {
+    fn standard_string(&self) -> String {
         format!("{}t", self.count)
     }
 }

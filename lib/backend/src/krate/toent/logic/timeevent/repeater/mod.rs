@@ -9,7 +9,7 @@ use self::{endconditon::EndCondition, interval::TimeInterval};
 use super::PossibleScore;
 use crate::{
     enum_common_funcs,
-    krate::toent::{EventBuilder, RawInputSegs},
+    krate::toent::{EventBuilder, Words, dto::GuessElem},
 };
 
 use super::starts_any;
@@ -81,21 +81,21 @@ impl Repeater {
     }
 
     pub(crate) fn guess_from_segs(
-        interval: Option<&RawInputSegs>,
-        end: Option<&RawInputSegs>,
-        alert: Option<&RawInputSegs>,
-    ) -> Vec<(Self, PossibleScore)> {
+        interval: Option<&Words>,
+        end: Option<&Words>,
+        alert: Option<&Words>,
+    ) -> Vec<GuessElem<Self>> {
         if let Ok(segs) = Self::standard_from_segs(interval, end, alert) {
-            vec![(segs, PossibleScore::Likely(255))]
+            vec![(segs, PossibleScore::Likely(255)).into()]
         } else {
             vec![]
         }
     }
 
     pub(crate) fn standard_from_segs(
-        interval: Option<&RawInputSegs>,
-        end: Option<&RawInputSegs>,
-        alert: Option<&RawInputSegs>,
+        interval: Option<&Words>,
+        end: Option<&Words>,
+        alert: Option<&Words>,
     ) -> AResult<Self> {
         let interval = if let Some(e) = interval {
             let repeat_type = RepeatType::try_from(e.first().map(|e| e.text))?;
@@ -132,16 +132,16 @@ impl Repeater {
 
         if let Some((interval, rt)) = &self.interval {
             res.push_str(rt.as_ref());
-            res.push_str(interval.standard_str().as_str());
+            res.push_str(interval.standard_string().as_str());
         }
 
         if let Some(alert) = &self.alert {
             res.push_str(" ,");
-            res.push_str(alert.standard_str().as_str());
+            res.push_str(alert.standard_string().as_str());
         }
 
         if let Some(end_cond) = &self.end_cond {
-            res.push_str(end_cond.standard_str().as_str());
+            res.push_str(end_cond.standard_string().as_str());
         }
 
         res

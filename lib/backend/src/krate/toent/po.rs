@@ -9,7 +9,7 @@ use chin_sql::{SqlValue, time_type::TID};
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
-use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::krate::toent::logic::{EventBuilder, todoevent::TodoEvent};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) enum ToentDateType {
@@ -51,7 +51,7 @@ pub(crate) struct ToentInst {
 
 impl<'a> From<TodoEvent> for SqlValue<'a> {
     fn from(val: TodoEvent) -> Self {
-        let s = val.as_ref().to_string();
+        let s = val.standard_string().to_string();
         SqlValue::Str(s.into())
     }
 }

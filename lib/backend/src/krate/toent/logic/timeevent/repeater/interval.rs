@@ -3,9 +3,12 @@ use std::{
     vec,
 };
 
+use chin_tools::AResult;
+
 use super::PossibleScore;
 use crate::krate::toent::{
-    EventBuilder, RawInputSegs,
+    EventBuilder, Words,
+    dto::GuessElem,
     timeevent::timeenum::base::{BaseTime, NoneOrI32},
 };
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -29,9 +32,9 @@ impl DerefMut for TimeInterval {
 }
 
 impl EventBuilder for TimeInterval {
-    fn guess(gt: &RawInputSegs) -> Option<Vec<(Self, PossibleScore)>> {
+    fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         match Self::try_from_standard(gt) {
-            Ok(v) => Some(vec![(v, PossibleScore::Yes(10))]),
+            Ok(v) => Some(vec![(v, PossibleScore::Yes(10)).into()]),
             Err(_) => None,
         }
     }
@@ -40,10 +43,10 @@ impl EventBuilder for TimeInterval {
         true
     }
 
-    fn try_from_standard(gt: &RawInputSegs) -> anyhow::Result<Self> {
+    fn try_from_standard(gt: &Words) -> AResult<Self> {
         let mut num = String::new();
         let mut interval = TimeInterval::default();
-        for c in gt.spans[0].chars() {
+        for c in gt.words[0].chars() {
             match c {
                 '0'..='9' => num.push(c),
                 'y' => {
@@ -87,7 +90,7 @@ impl EventBuilder for TimeInterval {
         Ok(interval)
     }
 
-    fn standard_str(&self) -> String {
+    fn standard_string(&self) -> String {
         let mut result = String::new();
         let mut push_func = |v: &NoneOrI32, u: char| {
             if let Some(i) = v.as_ref() {
@@ -111,13 +114,13 @@ impl EventBuilder for TimeInterval {
 #[cfg(test)]
 mod test {
 
-    use crate::krate::toent::{EventBuilder, RawInputSegs};
+    use crate::krate::toent::{EventBuilder, Words};
 
     use super::TimeInterval;
 
     #[test]
     fn test() {
-        let ti = TimeInterval::try_from_standard(&RawInputSegs::from("1d2m444w")).unwrap();
-        println!("{}", ti.standard_str());
+        let ti = TimeInterval::try_from_standard(&Words::from("1d2m444w")).unwrap();
+        println!("{}", ti.standard_string());
     }
 }
