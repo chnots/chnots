@@ -25,7 +25,7 @@ init:
 
 sync-struct:  
 	cargo install cargo-expand
-	python tools/sync-struct.py
+	python tools/sync-struct
 	cd $(WEB_DIR) && pnpm install 
 	find -name 'dto.ts' -o -name 'po.ts' |  xargs ./web/node_modules/.bin/prettier --ignore-unknown --write
 

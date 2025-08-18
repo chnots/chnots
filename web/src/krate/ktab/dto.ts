@@ -42,9 +42,11 @@ export const ktabToStoreValue = (
 };
 
 export function ktabGetViewValue(
-  cellValue: KTabStoreValue,
-): string | number | Date {
-  if ("Text" in cellValue) {
+  cellValue?: KTabStoreValue,
+): string | number | Date | null {
+  if (!cellValue) {
+    return null;
+  } else if ("Text" in cellValue) {
     return cellValue.Text;
   } else if ("Decimal" in cellValue) {
     return cellValue.Decimal;
@@ -110,7 +112,7 @@ export type KTabRowsQueryRspRow = {
 export type KTabViewCell = {
   row_tid: TID;
   column_name: string;
-  value: KTabStoreValue;
+  value?: KTabStoreValue;
 };
 
 export type KTabCell = {
