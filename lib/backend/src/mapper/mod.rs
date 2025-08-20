@@ -14,6 +14,8 @@ pub enum MapperConfig {
     Sqlite(SqliteConfig),
 }
 
+// We decided to use `enum-dispatching` to avoid any `object-safe` questions
+// and improve some speed.
 pub enum MapperType {
     KDb(KDb),
 }
