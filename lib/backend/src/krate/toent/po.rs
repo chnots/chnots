@@ -1,4 +1,3 @@
-use chin_sql::{SqlValue, time_type::TID};
 /// Toent: todo and event
 ///
 /// The file mainly contains models related to todos and events.
@@ -6,47 +5,22 @@ use chin_sql::{SqlValue, time_type::TID};
 /// but I prefer treating them as one thing.
 ///
 /// I merged them into the word "toent."
-use chrono::{DateTime, FixedOffset};
+use chin_sql::{GenerateTableSchema, SqlValue, str_type::Varchar, time_type::TID};
+
 use serde::{Deserialize, Serialize};
 
 use crate::krate::toent::logic::{EventBuilder, todoevent::TodoEvent};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum ToentDateType {
-    Chinese,
-    Westen,
-}
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+pub(crate) struct ToentTimeEventInst {
+    chnot_block_id: Varchar<100>,
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum ToentType {
-    Todo,
-    Event,
-}
+    target_time_utc: i64,
+    alert_time_utc: i64,
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct Toent {
+    #[gts_unique]
+    #[gts_type = "i64"]
     tid: TID,
-    chnot_id: TID,
-    active_flag: bool,
-    original_str: String,
-    date_type: ToentDateType,
-    toent_type: ToentType,
-    toent_time: DateTime<FixedOffset>,
-    start_time: DateTime<FixedOffset>,
-    end_time: DateTime<FixedOffset>,
-    insert_time: DateTime<FixedOffset>,
-    update_time: DateTime<FixedOffset>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct ToentInst {
-    tid: TID,
-    toent_id: TID,
-    active_flag: bool,
-    alert_time: DateTime<FixedOffset>,
-    toent_time: DateTime<FixedOffset>,
-    insert_time: DateTime<FixedOffset>,
-    update_time: DateTime<FixedOffset>,
 }
 
 impl<'a> From<TodoEvent> for SqlValue<'a> {

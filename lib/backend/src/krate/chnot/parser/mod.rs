@@ -15,13 +15,13 @@ use lazy_regex::Lazy;
 use regex::Regex;
 
 #[derive(Debug, Clone)]
-enum ChnotBlockType {
+enum ChnotBlockEnum {
     Heading,
     ListItem,
 }
 
 #[derive(Debug, Clone)]
-pub enum PropsEnum {
+enum PropsEnum {
     ID(String),
     ToentEvent(TimeEvent),
     ToentState { state: String, time: NaiveDateTime },
@@ -61,9 +61,9 @@ impl<E> DerefMut for WithPos<E> {
 }
 
 #[derive(Debug, Clone)]
-pub struct ChnotBlock {
+struct ChnotBlock {
     title: String,
-    block_type: ChnotBlockType,
+    block_type: ChnotBlockEnum,
     todo_event: Option<WithPos<TodoEvent>>,
     time_event: Vec<WithPos<TimeEvent>>,
     backlinks: Vec<WithPos<String>>,
@@ -269,7 +269,7 @@ impl<'a> ChnotParser<'a> {
 
         let locater: TextLocater<'_> = TextLocater::new(self.original);
 
-        let mut starts: Vec<(ChnotBlockType, Point)> = vec![];
+        let mut starts: Vec<(ChnotBlockEnum, Point)> = vec![];
         let mut spans: ChnotBlockGather = ChnotBlockGather::default();
 
         for node in root.descendants() {
@@ -278,13 +278,13 @@ impl<'a> ChnotParser<'a> {
             match &data.value {
                 NodeValue::Item(_) => {
                     starts.push((
-                        ChnotBlockType::ListItem,
+                        ChnotBlockEnum::ListItem,
                         locater.locate_by_linecol(pos.start),
                     ));
                 }
                 NodeValue::Heading(_) => {
                     starts.push((
-                        ChnotBlockType::Heading,
+                        ChnotBlockEnum::Heading,
                         locater.locate_by_linecol(pos.start),
                     ));
                 }

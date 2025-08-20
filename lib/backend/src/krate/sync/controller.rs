@@ -10,7 +10,7 @@ use crate::{
     app::ShareAppState,
     controller::KResponse,
     krate::{
-        chnot::{ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
+        chnot::{ChnotBlock, ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
         kfile::KFileMeta,
         kkv::KKV,
         kspace::KSpace,
@@ -26,7 +26,7 @@ use crate::{
             po::SyncLogTransient,
         },
     },
-    model::KOtidSupport,
+    model::{KOtidSupport, otid_table::OtidTableEnum},
     sync_cmds_json_to_st, sync_cmds_st_to_json,
 };
 
@@ -83,6 +83,13 @@ macro_rules! sync_invoke_enum2generic {
                 let arg = OtidWithGer {
                     dto: $eobj.dto,
                     table_type: PhantomData::<crate::krate::chnot::ChnotTag>,
+                };
+                $worker.$invoke(arg).await
+            }
+            OtidTableEnum::ChnotBlock => {
+                let arg = OtidWithGer {
+                    dto: $eobj.dto,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotBlock>,
                 };
                 $worker.$invoke(arg).await
             }
@@ -209,21 +216,22 @@ async fn sync_data_inner(
         }};
     }
     let result = match req.table_type {
-        crate::model::otid_table::OtidTableEnum::ChnotRecord => inner! {ChnotRecord},
-        crate::model::otid_table::OtidTableEnum::ChnotMetadata => inner! {ChnotMetadata},
-        crate::model::otid_table::OtidTableEnum::ChnotKindRel => inner! {ChnotKindRel},
-        crate::model::otid_table::OtidTableEnum::ChnotTag => inner! {ChnotTag},
-        crate::model::otid_table::OtidTableEnum::LLMChatBot => inner! {LLMChatBot},
-        crate::model::otid_table::OtidTableEnum::LLMChatRecord => inner! {LLMChatRecord},
-        crate::model::otid_table::OtidTableEnum::LLMChatTemplate => inner! {LLMChatTemplate},
-        crate::model::otid_table::OtidTableEnum::LLMChatSession => inner! {LLMChatSession},
-        crate::model::otid_table::OtidTableEnum::KKV => inner! {KKV},
-        crate::model::otid_table::OtidTableEnum::KTabMeta => inner! {KTabMeta},
-        crate::model::otid_table::OtidTableEnum::KTabCellDate => inner! {KTabCellDate},
-        crate::model::otid_table::OtidTableEnum::KTabCellDecimal => inner! {KTabCellDecimal},
-        crate::model::otid_table::OtidTableEnum::KTabCellText => inner! {KTabCellText},
-        crate::model::otid_table::OtidTableEnum::KFileMeta => inner! {KFileMeta},
-        crate::model::otid_table::OtidTableEnum::KSpace => inner! {KSpace},
+        OtidTableEnum::ChnotRecord => inner! {ChnotRecord},
+        OtidTableEnum::ChnotMetadata => inner! {ChnotMetadata},
+        OtidTableEnum::ChnotKindRel => inner! {ChnotKindRel},
+        OtidTableEnum::ChnotTag => inner! {ChnotTag},
+        OtidTableEnum::LLMChatBot => inner! {LLMChatBot},
+        OtidTableEnum::LLMChatRecord => inner! {LLMChatRecord},
+        OtidTableEnum::LLMChatTemplate => inner! {LLMChatTemplate},
+        OtidTableEnum::LLMChatSession => inner! {LLMChatSession},
+        OtidTableEnum::KKV => inner! {KKV},
+        OtidTableEnum::KTabMeta => inner! {KTabMeta},
+        OtidTableEnum::KTabCellDate => inner! {KTabCellDate},
+        OtidTableEnum::KTabCellDecimal => inner! {KTabCellDecimal},
+        OtidTableEnum::KTabCellText => inner! {KTabCellText},
+        OtidTableEnum::KFileMeta => inner! {KFileMeta},
+        OtidTableEnum::KSpace => inner! {KSpace},
+        OtidTableEnum::ChnotBlock => inner! {ChnotBlock},
     };
 
     info!("{:?}", serde_json::to_string(&result));

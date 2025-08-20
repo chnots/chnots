@@ -19,4 +19,5 @@ pub enum OtidTableEnum {
     KTabCellDecimal,
     KTabCellText,
     KFileMeta, // inline k file is a specifal type file, so we sync it with kfilemeta
+    ChnotBlock,
 }

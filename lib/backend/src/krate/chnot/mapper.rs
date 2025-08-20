@@ -30,6 +30,8 @@ pub trait ChnotMapper {
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>>;
 
+    async fn chnot_overwrite_blocks(&self, blocks: Vec<ChnotBlock>) -> EResult;
+
     async fn ensure_table_chnot(&self) -> EResult;
 }
 
@@ -79,5 +81,9 @@ impl ChnotMapper for MapperType {
         chnot_meta_otid: KReq<ChnotKindRelQueryReq>,
     ) -> AResult<ChnotKindRelQueryRsp> {
         expand_mt_branch!(self.chnot_query_kind_rel(chnot_meta_otid))
+    }
+
+    async fn chnot_overwrite_blocks(&self, blocks: Vec<ChnotBlock>) -> EResult {
+        expand_mt_branch!(self.chnot_overwrite_blocks(blocks))
     }
 }

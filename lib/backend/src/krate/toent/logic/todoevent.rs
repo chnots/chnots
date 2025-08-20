@@ -42,6 +42,17 @@ impl PartialOrd for TodoPriorityEnum {
     }
 }
 
+impl TryFrom<i64> for TodoPriorityEnum {
+    type Error = anyhow::Error;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        all::<TodoPriorityEnum>()
+            .into_iter()
+            .find(|v| v.as_priority() as i64 == value)
+            .context(format!("unable to find value {}", value))
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub(crate) struct TodoEvent {
     pub state: TodoStateEnum,

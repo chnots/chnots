@@ -4,6 +4,7 @@ use super::mapper::ChnotMapper;
 use super::*;
 use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::mapper::Curd;
 use crate::mapper::db::helper::create_tables;
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -356,6 +357,17 @@ impl ChnotMapper for KDb {
             )
             .await
             .map(|e| ChnotKindRelQueryRsp { kind_rel: e })
+    }
+
+    async fn chnot_overwrite_blocks(&self, blocks: Vec<ChnotBlock>) -> EResult {
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        for cb in blocks {
+            tx.as_executor().omit_rows::<ChnotBlock>(cb.pkey()).await?;
+        }
+        tx.cmt().await?;
+
+        Ok(())
     }
 }
 

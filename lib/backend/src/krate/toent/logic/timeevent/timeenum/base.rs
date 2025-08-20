@@ -119,7 +119,7 @@ impl BaseTime {
         self
     }
 
-    fn base_time(
+    fn base_time2(
         year: Option<i32>,
         month: Option<i32>,
         day: Option<i32>,
@@ -306,8 +306,6 @@ pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> AResult<i32> 
 
 #[cfg(test)]
 mod test {
-    use chrono::{Datelike, NaiveDate};
-
     use crate::krate::toent::{EventBuilder, timeevent::timeenum::base::BaseTime};
 
     fn n(n: i32) -> Option<i32> {
@@ -324,7 +322,7 @@ mod test {
 
     #[test]
     fn test_all() {
-        let ymd = BaseTime::base_time(n(2020), n(12), n(3), None, None, None);
+        let ymd = BaseTime::base_time2(n(2020), n(12), n(3), None, None, None);
         let ymdh = BaseTime {
             hour: 12.into(),
             ..ymd.clone()

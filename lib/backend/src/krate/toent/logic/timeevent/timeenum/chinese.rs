@@ -153,6 +153,6 @@ mod test {
                 .with_day(12),
         };
         println!("guessed: {:?}", r);
-        assert!(r.get(0).unwrap().toent == chn);
+        assert!(r.first().unwrap().toent == chn);
     }
 }
