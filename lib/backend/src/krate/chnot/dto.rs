@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chin_sql::{
     str_type::{Text, Varchar},
     time_type::TID,
@@ -10,7 +12,7 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chnot {
-    pub record: ChnotRecord,
+    pub head_record: ChnotBlockRecord,
     pub meta: ChnotMetadata,
 }
 
@@ -26,20 +28,28 @@ pub struct ChnotOverwriteMetaReq {
 pub struct ChnotOverwriteMetaRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteRecordReq {
-    pub meta_otid: Option<TID>,
+pub struct ChnotOverwriteRecordReqRecord {
+    pub block_otid: TID,
     pub content: Text,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotOverwriteRecordReqMeta {
+    pub block_otid: TID,
+    pub korder: i64,
     pub kind: ChnotKind,
-    pub kind_id: Option<String>,
+    pub kind_id: Varchar<200>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotOverwriteRecordReq {
+    pub meta_otid: TID,
+    pub recs: Vec<ChnotOverwriteRecordReqRecord>,
+    pub metas: Vec<ChnotOverwriteRecordReqMeta>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ChnotOverwriteRecordRsp {
-    pub meta_otid: TID,
-    pub rec_tid: TID,
-    pub kspace: Varchar<40>,
-    pub archor: bool,
-    pub meta_tid: Option<TID>,
     pub todo_event: Option<TodoEvent>,
 }
 
@@ -83,6 +93,19 @@ pub struct ChnotQueryRsp<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotDetailReq {
+    pub chnot_meta_otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotDetailRsp {
+    pub chnot_meta: ChnotMetadata,
+    pub records: HashMap<TID, ChnotBlockRecord>,
+    pub block_meta_sorted: Vec<ChnotBlockMeta>,
+    pub toents: Vec<ChnotBlockToent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotTagQueryReq {
     pub query: Option<String>,
     pub tags: Option<ChnotTagSearchType>,
@@ -108,14 +131,4 @@ pub struct ChnotTagUpdateReq {
     pub content: Text,
     pub meta_otid: TID,
     pub kspace: Varchar<40>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotKindRelQueryReq {
-    pub meta_otid: TID,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotKindRelQueryRsp {
-    pub kind_rel: ChnotKindRel,
 }

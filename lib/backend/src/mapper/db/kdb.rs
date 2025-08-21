@@ -61,6 +61,66 @@ pub(crate) enum KDbRow {
     SqlValue(SqlValueRow),
 }
 
+#[allow(dead_code)]
+impl KDbRow {
+    pub(crate) fn via_str<T: for<'a> TryFrom<&'a str, Error = anyhow::Error>>(
+        &self,
+        key: &str,
+    ) -> AResult<T> {
+        let mid: String = self.try_get(key)?;
+        T::try_from(mid.as_str())
+    }
+
+    pub(crate) fn via_str_opt<T: for<'a> TryFrom<&'a str, Error = anyhow::Error>>(
+        &self,
+        key: &str,
+    ) -> AResult<Option<T>> {
+        let mid: Option<String> = self.try_get(key)?;
+        match mid {
+            Some(mid) => {
+                let s: &str = mid.as_str();
+                Ok(Some(s.try_into()?))
+            }
+            None => Ok(None),
+        }
+    }
+
+    pub(crate) fn via_string<T: TryFrom<String, Error = anyhow::Error>>(
+        &self,
+        key: &str,
+    ) -> AResult<T> {
+        let mid: String = self.try_get(key)?;
+        T::try_from(mid)
+    }
+
+    pub(crate) fn via_string_opt<T: TryFrom<String, Error = anyhow::Error>>(
+        &self,
+        key: &str,
+    ) -> AResult<Option<T>> {
+        let mid: Option<String> = self.try_get(key)?;
+        match mid {
+            Some(mid) => Ok(Some(mid.try_into()?)),
+            None => Ok(None),
+        }
+    }
+
+    pub(crate) fn via_i64<T: TryFrom<i64, Error = anyhow::Error>>(&self, key: &str) -> AResult<T> {
+        let mid: i64 = self.try_get(key)?;
+        T::try_from(mid)
+    }
+
+    pub(crate) fn via_i64_opt<T: TryFrom<i64, Error = anyhow::Error>>(
+        &self,
+        key: &str,
+    ) -> AResult<Option<T>> {
+        let mid: Option<i64> = self.try_get(key)?;
+        match mid {
+            Some(mid) => Ok(Some(mid.try_into()?)),
+            None => Ok(None),
+        }
+    }
+}
+
 impl<'a, T> KDbRowBehavier<'a, T> for Row
 where
     T: FromSql<'a>,

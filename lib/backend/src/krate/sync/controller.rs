@@ -10,7 +10,7 @@ use crate::{
     app::ShareAppState,
     controller::KResponse,
     krate::{
-        chnot::{ChnotBlock, ChnotKindRel, ChnotMetadata, ChnotRecord, ChnotTag},
+        chnot::{ChnotBlockMeta, ChnotBlockRecord, ChnotBlockToent, ChnotMetadata, ChnotTag},
         kfile::KFileMeta,
         kkv::KKV,
         kspace::KSpace,
@@ -58,10 +58,10 @@ macro_rules! sync_invoke_enum2generic {
         use $crate::model::otid_table::OtidTableEnum;
 
         match $eobj.table_type {
-            OtidTableEnum::ChnotRecord => {
+            OtidTableEnum::ChnotBlockRecord => {
                 let arg = OtidWithGer {
                     dto: $eobj.dto,
-                    table_type: PhantomData::<crate::krate::chnot::ChnotRecord>,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotBlockRecord>,
                 };
                 $worker.$invoke(arg).await
             }
@@ -72,24 +72,10 @@ macro_rules! sync_invoke_enum2generic {
                 };
                 $worker.$invoke(arg).await
             }
-            OtidTableEnum::ChnotKindRel => {
-                let arg = OtidWithGer {
-                    dto: $eobj.dto,
-                    table_type: PhantomData::<crate::krate::chnot::ChnotKindRel>,
-                };
-                $worker.$invoke(arg).await
-            }
             OtidTableEnum::ChnotTag => {
                 let arg = OtidWithGer {
                     dto: $eobj.dto,
                     table_type: PhantomData::<crate::krate::chnot::ChnotTag>,
-                };
-                $worker.$invoke(arg).await
-            }
-            OtidTableEnum::ChnotBlock => {
-                let arg = OtidWithGer {
-                    dto: $eobj.dto,
-                    table_type: PhantomData::<crate::krate::chnot::ChnotBlock>,
                 };
                 $worker.$invoke(arg).await
             }
@@ -170,6 +156,20 @@ macro_rules! sync_invoke_enum2generic {
                 };
                 $worker.$invoke(arg).await
             }
+            OtidTableEnum::ChnotBlockMeta => {
+                let arg = OtidWithGer {
+                    dto: $eobj.dto,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotBlockMeta>,
+                };
+                $worker.$invoke(arg).await
+            }
+            OtidTableEnum::ChnotBlockToent => {
+                let arg = OtidWithGer {
+                    dto: $eobj.dto,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotBlockToent>,
+                };
+                $worker.$invoke(arg).await
+            }
         }
     }};
 }
@@ -216,9 +216,8 @@ async fn sync_data_inner(
         }};
     }
     let result = match req.table_type {
-        OtidTableEnum::ChnotRecord => inner! {ChnotRecord},
+        OtidTableEnum::ChnotBlockRecord => inner! {ChnotBlockRecord},
         OtidTableEnum::ChnotMetadata => inner! {ChnotMetadata},
-        OtidTableEnum::ChnotKindRel => inner! {ChnotKindRel},
         OtidTableEnum::ChnotTag => inner! {ChnotTag},
         OtidTableEnum::LLMChatBot => inner! {LLMChatBot},
         OtidTableEnum::LLMChatRecord => inner! {LLMChatRecord},
@@ -231,7 +230,8 @@ async fn sync_data_inner(
         OtidTableEnum::KTabCellText => inner! {KTabCellText},
         OtidTableEnum::KFileMeta => inner! {KFileMeta},
         OtidTableEnum::KSpace => inner! {KSpace},
-        OtidTableEnum::ChnotBlock => inner! {ChnotBlock},
+        OtidTableEnum::ChnotBlockMeta => inner! {ChnotBlockMeta},
+        OtidTableEnum::ChnotBlockToent => inner! {ChnotBlockToent},
     };
 
     info!("{:?}", serde_json::to_string(&result));

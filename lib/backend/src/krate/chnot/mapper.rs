@@ -6,15 +6,11 @@ use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 use super::*;
 
 pub trait ChnotMapper {
-    async fn chnot_overwrite_record(
+    async fn chnot_overwrite_records(
         &self,
         req: KReq<ChnotOverwriteRecordReq>,
     ) -> AResult<ChnotOverwriteRecordRsp>;
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>>;
-    async fn chnot_query_kind_rel(
-        &self,
-        req: KReq<ChnotKindRelQueryReq>,
-    ) -> AResult<ChnotKindRelQueryRsp>;
     async fn chnot_overwrite_meta(
         &self,
         req: KReq<ChnotOverwriteMetaReq>,
@@ -30,17 +26,17 @@ pub trait ChnotMapper {
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>>;
 
-    async fn chnot_overwrite_blocks(&self, blocks: Vec<ChnotBlock>) -> EResult;
+    async fn chnot_detail(&self, req: KReq<ChnotDetailReq>) -> AResult<ChnotDetailRsp>;
 
     async fn ensure_table_chnot(&self) -> EResult;
 }
 
 impl ChnotMapper for MapperType {
-    async fn chnot_overwrite_record(
+    async fn chnot_overwrite_records(
         &self,
         req: KReq<ChnotOverwriteRecordReq>,
     ) -> AResult<ChnotOverwriteRecordRsp> {
-        expand_mt_branch!(self.chnot_overwrite_record(req))
+        expand_mt_branch!(self.chnot_overwrite_records(req))
     }
 
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>> {
@@ -76,14 +72,7 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_tag_update_all(kspace))
     }
 
-    async fn chnot_query_kind_rel(
-        &self,
-        chnot_meta_otid: KReq<ChnotKindRelQueryReq>,
-    ) -> AResult<ChnotKindRelQueryRsp> {
-        expand_mt_branch!(self.chnot_query_kind_rel(chnot_meta_otid))
-    }
-
-    async fn chnot_overwrite_blocks(&self, blocks: Vec<ChnotBlock>) -> EResult {
-        expand_mt_branch!(self.chnot_overwrite_blocks(blocks))
+    async fn chnot_detail(&self, req: KReq<ChnotDetailReq>) -> AResult<ChnotDetailRsp> {
+        expand_mt_branch!(self.chnot_detail(req))
     }
 }

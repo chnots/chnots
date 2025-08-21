@@ -23,8 +23,10 @@ use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotRecord {
+pub struct ChnotBlockRecord {
     #[gts_primary]
+    #[gts_type = "i64"]
+    pub block_otid: TID,
     #[gts_type = "i64"]
     pub meta_otid: TID,
     #[gts_unique]
@@ -37,9 +39,9 @@ pub struct ChnotRecord {
     pub archor: bool,
 }
 
-impl Curd for ChnotRecord {
+impl Curd for ChnotBlockRecord {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.meta_otid)
+        Self::pkey_cond(self.block_otid)
     }
 
     fn tid(&self) -> TID {
@@ -47,7 +49,7 @@ impl Curd for ChnotRecord {
     }
 }
 
-impl_otid_support! {ChnotRecord}
+impl_otid_support! {ChnotBlockRecord}
 
 fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
     match opt {
@@ -62,8 +64,6 @@ pub struct ChnotMetadata {
     #[gts_type = "i64"]
     pub otid: TID,
     pub kspace: Varchar<40>,
-    #[gts_type = "Varchar<40>"]
-    pub kind: ChnotKind,
     pub pin_time: Option<DateTime<FixedOffset>>,
     pub archive_time: Option<DateTime<FixedOffset>>,
     #[gts_unique]
@@ -104,29 +104,6 @@ impl Curd for ChnotTag {
 }
 
 impl_otid_support! {ChnotTag}
-
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotKindRel {
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub meta_otid: TID,
-    #[gts_key]
-    pub kind_id: Varchar<200>,
-    #[gts_unique]
-    #[gts_type = "i64"]
-    pub tid: TID,
-}
-
-impl Curd for ChnotKindRel {
-    fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.meta_otid)
-    }
-    fn tid(&self) -> TID {
-        self.tid
-    }
-}
-
-impl_otid_support! {ChnotKindRel}
 
 impl AsRef<str> for ChnotTag {
     fn as_ref(&self) -> &str {
@@ -183,80 +160,53 @@ impl<'a> KDbRowBehavier<'a, ChnotKind> for KDbRow {
     }
 }
 
-#[derive(Debug, Clone, Sequence, Copy)]
-pub(crate) enum ChnotBlockEnum {
-    Heading,
-    ListItem,
+fn todo_state_enum_to_sql(this: Option<TodoStateEnum>) -> Option<String> {
+    this.map(|e| e.as_static_str().into())
 }
 
-impl ChnotBlockEnum {
-    pub fn as_static_str(&self) -> &'static str {
-        match self {
-            ChnotBlockEnum::Heading => "HEADING",
-            ChnotBlockEnum::ListItem => "LISTITEM",
-        }
-    }
+fn todo_priority_enum_to_sql(this: Option<TodoPriorityEnum>) -> Option<i64> {
+    this.map(|e| e.as_priority().into())
 }
-
-fn chnot_block_enum_to_sql(this: ChnotBlockEnum) -> String {
-    this.as_static_str().to_string()
-}
-
-enum_common_funcs!(ChnotBlockEnum);
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotBlock {
+pub(crate) struct ChnotBlockMeta {
     #[gts_primary]
-    pub id: Varchar<100>,
+    #[gts_type = "i64"]
+    pub otid: TID,
+    #[gts_key]
     #[gts_type = "i64"]
     pub chnot_otid: TID,
-    pub title: Varchar<500>,
-    #[gts_type = "Varchar<30>"]
-    #[gts_tosql = "chnot_block_enum_to_sql"]
-    pub kind: ChnotBlockEnum,
-    #[gts_type = "Varchar<30>"]
-    #[gts_tosql = "todo_state_enum_to_sql"]
-    pub todo_state: TodoStateEnum,
-    #[gts_type = "i64"]
-    #[gts_tosql = "todo_priority_enum_to_sql"]
-    pub todo_priority: TodoPriorityEnum,
-    pub closed: bool,
+
+    #[gts_type = "Varchar<40>"]
+    pub kind: ChnotKind,
+    #[gts_key]
+    pub kind_id: Varchar<200>,
+
+    pub korder: i64,
+
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
 }
 
-impl TryFrom<&KDbRow> for ChnotBlock {
+impl TryFrom<&KDbRow> for ChnotBlockMeta {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
-        let cb = Self {
-            id: value.try_get(Self::ID)?,
+        Ok(Self {
+            otid: value.try_get(Self::OTID)?,
             chnot_otid: value.try_get(Self::CHNOT_OTID)?,
-            title: value.try_get(Self::TITLE)?,
-            kind: {
-                let s: String = value.try_get(Self::KIND)?;
-                ChnotBlockEnum::try_from(s.as_str())?
-            },
+            kind: value.try_get(Self::KIND)?,
+            kind_id: value.try_get(Self::KIND_ID)?,
+            korder: value.try_get(Self::KORDER)?,
             tid: value.try_get(Self::TID)?,
-            todo_state: {
-                let s: String = value.try_get(Self::TODO_STATE)?;
-                TodoStateEnum::try_from(s.as_str())?
-            },
-            todo_priority: {
-                let s: i64 = value.try_get(Self::TODO_PRIORITY)?;
-                TodoPriorityEnum::try_from(s)?
-            },
-            closed: value.try_get(Self::CLOSED)?,
-        };
-
-        Ok(cb)
+        })
     }
 }
 
-impl Curd for ChnotBlock {
+impl Curd for ChnotBlockMeta {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.id.clone())
+        Self::pkey_cond(self.otid)
     }
 
     fn tid(&self) -> TID {
@@ -264,12 +214,58 @@ impl Curd for ChnotBlock {
     }
 }
 
-impl_otid_support! {ChnotBlock}
+impl_otid_support! {ChnotBlockMeta}
 
-fn todo_state_enum_to_sql(this: TodoStateEnum) -> String {
-    this.as_static_str().to_string()
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+pub(crate) struct ChnotBlockToent {
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub block_otid: TID,
+    #[gts_key]
+    #[gts_type = "i64"]
+    pub chnot_otid: TID,
+
+    #[gts_type = "Varchar<30>"]
+    #[gts_tosql = "todo_state_enum_to_sql"]
+    pub todo_state: Option<TodoStateEnum>,
+
+    #[gts_type = "i64"]
+    #[gts_tosql = "todo_priority_enum_to_sql"]
+    pub todo_priority: Option<TodoPriorityEnum>,
+
+    pub todo_closed: bool,
+
+    pub note: Option<Text>,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
 }
 
-fn todo_priority_enum_to_sql(this: TodoPriorityEnum) -> i64 {
-    this.as_priority().into()
+impl TryFrom<&KDbRow> for ChnotBlockToent {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            block_otid: value.try_get(Self::BLOCK_OTID)?,
+            chnot_otid: value.try_get(Self::CHNOT_OTID)?,
+            tid: value.try_get(Self::TID)?,
+            todo_state: value.via_str_opt(Self::TODO_STATE)?,
+            todo_priority: value.via_i64_opt(Self::TODO_PRIORITY)?,
+            todo_closed: value.try_get(Self::TODO_CLOSED)?,
+            note: value.try_get(Self::NOTE)?,
+        })
+    }
 }
+
+impl Curd for ChnotBlockToent {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.block_otid)
+    }
+
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+
+impl_otid_support! {ChnotBlockToent}

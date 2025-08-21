@@ -1,6 +1,6 @@
 import { TID } from "@/lib/id_util";
 import {
-  ChnotRecord,
+  ChnotBlockRecord,
   ChnotMetadata,
   ChnotTag,
   ChnotKind,
@@ -10,7 +10,7 @@ import { DbText, Varchar } from "@/lib/types";
 import { TodoEvent } from "../toent/po";
 
 export type Chnot = {
-  record: ChnotRecord;
+  record: ChnotBlockRecord;
   meta: ChnotMetadata;
 };
 

@@ -1,14 +1,15 @@
 use crate::app::ShareAppState;
 use crate::controller::KResponse;
 use crate::model::dto::{kreq, read_kspace_from_header};
-use axum::extract::Query;
+use axum::extract::Path;
 use axum::routing::get;
 use axum::{
     Json, Router,
     extract::State,
     http::HeaderMap,
-    routing::{delete, post, put},
+    routing::{post, put},
 };
+use chin_sql::time_type::TID;
 
 use super::mapper::ChnotMapper;
 use super::*;
@@ -16,47 +17,25 @@ use super::*;
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(
-            "/api/v1/chnot-overwrite-record",
-            put(chnot_overwrite_record),
+            "/api/v1/chnot-overwrite-blocks",
+            put(chnot_overwrite_blocks),
         )
         .route("/api/v1/chnot-overwrite-meta", post(chnot_overwrite_meta))
-        .route("/api/v1/chnot", delete(chnot_deletetion))
+        .route("/api/v1/chnot/{chnot_otid}", get(chnot_detail))
         .route("/api/v1/chnot-query", post(chnot_query))
         .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
         .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
         .route("/api/v1/chnot-tag-refresh-all", post(chnot_tag_refresh_all))
-        .route("/api/v1/chnot-query-kind-rel", get(chnot_query_kind_rel))
 }
 
-async fn chnot_overwrite_record(
+async fn chnot_overwrite_blocks(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotOverwriteRecordReq>,
 ) -> KResponse<ChnotOverwriteRecordRsp> {
     state
-        .chnot_overwrite_record(kreq(headers, req))
+        .chnot_overwrite_records(kreq(headers, req))
         .await
-        .into()
-}
-
-async fn chnot_deletetion(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<ChnotArchiveReq>,
-) -> KResponse<ChnotArchiveRsp> {
-    state
-        .mapper
-        .chnot_overwrite_meta(kreq(
-            headers,
-            ChnotOverwriteMetaReq {
-                meta_otid: req.meta_otid,
-                kspace: None,
-                pinned: None,
-                archive: Some(true),
-            },
-        ))
-        .await
-        .map(|_| ChnotArchiveRsp {})
         .into()
 }
 
@@ -80,14 +59,19 @@ async fn chnot_query(
     state.mapper.chnot_query(kreq(headers, req)).await.into()
 }
 
-async fn chnot_query_kind_rel(
+async fn chnot_detail(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<ChnotKindRelQueryReq>,
-) -> KResponse<ChnotKindRelQueryRsp> {
+    Path(chnot_otid): Path<TID>,
+) -> KResponse<ChnotDetailRsp> {
     state
         .mapper
-        .chnot_query_kind_rel(kreq(headers, req))
+        .chnot_detail(kreq(
+            headers,
+            ChnotDetailReq {
+                chnot_meta_otid: chnot_otid,
+            },
+        ))
         .await
         .into()
 }

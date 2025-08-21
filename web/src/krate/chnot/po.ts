@@ -13,7 +13,7 @@ export enum ChnotKind {
 // TODO: true type
 export type ChnotTagType = object;
 
-export type ChnotRecord = {
+export type ChnotBlockRecord = {
   meta_otid: TID;
   tid: TID;
   todo_event?: TodoEvent;
