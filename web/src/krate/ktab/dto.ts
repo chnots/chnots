@@ -1,4 +1,4 @@
-import { OmitTID, TID } from "@/lib/id_util";
+import { TID } from "@/lib/id_util";
 import { KTabColumnStoreKind, KTabMeta } from "./po";
 
 export type KTabOverwriteCellsRsp = object;

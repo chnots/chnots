@@ -1,4 +1,4 @@
-import { OmitTID, TID } from "@/lib/id_util";
+import { TID } from "@/lib/id_util";
 import { DbText, Varchar } from "@/lib/types";
 
 export type KTabColumnStoreKind = "str" | "i64" | "f64" | "date" | "blob";

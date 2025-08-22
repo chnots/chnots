@@ -1,6 +1,6 @@
-import { OmitTID, TID as TID } from "@/lib/id_util";
+import { TID as TID } from "@/lib/id_util";
 import { DbText, Varchar } from "@/lib/types";
-import { TodoEvent } from "../toent/po";
+import { TodoEvent, TodoPriorityEnum, TodoStateEnum } from "../toent/po";
 
 export enum ChnotKind {
   MarkdownWithToent = "mdwt",
@@ -13,8 +13,8 @@ export enum ChnotKind {
 // TODO: true type
 export type ChnotTagType = object;
 
-export type ChnotBlockRecord = {
-  meta_otid: TID;
+export type MdwtRecord = {
+  otid: TID;
   tid: TID;
   todo_event?: TodoEvent;
   content: DbText;
@@ -24,7 +24,6 @@ export type ChnotBlockRecord = {
 export type ChnotMetadata = {
   otid: TID;
   kspace: Varchar<40>;
-  kind: ChnotKind;
   pin_time?: Date;
   archive_time?: Date;
   tid: TID;
@@ -37,13 +36,21 @@ export type ChnotTag = {
   tid: TID;
 };
 
-export type ChnotKindId = {
-  meta_otid: TID;
-  kind_id: string;
+export type ChnotBlockMeta = {
+  otid: TID;
+  chnot_otid: TID;
+  kind: ChnotKind;
+  kind_id: Varchar<200>;
+  korder: number;
+  tid: TID;
 };
 
-export type ChnotKindRel = {
-  meta_otid: TID;
-  kind_id: Varchar<200>;
+export type ChnotBlockToent = {
+  block_otid: TID;
+  chnot_otid: TID;
+  todo_state?: TodoStateEnum;
+  todo_priority?: TodoPriorityEnum;
+  todo_closed: boolean;
+  note?: DbText;
   tid: TID;
 };
