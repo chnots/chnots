@@ -8,7 +8,7 @@ use super::*;
 pub trait ChnotMapper {
     async fn chnot_overwrite_records(
         &self,
-        req: KReq<ChnotOverwriteRecordReq>,
+        req: KReq<ChnotOverwriteBlockReq>,
     ) -> AResult<ChnotOverwriteRecordRsp>;
     async fn chnot_query(&self, req: KReq<ChnotQueryReq>) -> AResult<ChnotQueryRsp<Chnot>>;
     async fn chnot_overwrite_meta(
@@ -26,7 +26,8 @@ pub trait ChnotMapper {
         req: KReq<ChnotTagQueryReq>,
     ) -> AResult<ChnotTagQueryRsp<String>>;
 
-    async fn chnot_detail(&self, req: KReq<ChnotDetailReq>) -> AResult<ChnotDetailRsp>;
+    async fn chnot_meta(&self, req: KReq<ChnotMetaReq>) -> AResult<ChnotMetaRsp>;
+    async fn mdwt_blocks(&self, req: KReq<MdwtBlocksReq>) -> AResult<MdwtBlocksRsp>;
 
     async fn ensure_table_chnot(&self) -> EResult;
 }
@@ -34,7 +35,7 @@ pub trait ChnotMapper {
 impl ChnotMapper for MapperType {
     async fn chnot_overwrite_records(
         &self,
-        req: KReq<ChnotOverwriteRecordReq>,
+        req: KReq<ChnotOverwriteBlockReq>,
     ) -> AResult<ChnotOverwriteRecordRsp> {
         expand_mt_branch!(self.chnot_overwrite_records(req))
     }
@@ -72,7 +73,11 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_tag_update_all(kspace))
     }
 
-    async fn chnot_detail(&self, req: KReq<ChnotDetailReq>) -> AResult<ChnotDetailRsp> {
-        expand_mt_branch!(self.chnot_detail(req))
+    async fn chnot_meta(&self, req: KReq<ChnotMetaReq>) -> AResult<ChnotMetaRsp> {
+        expand_mt_branch!(self.chnot_meta(req))
+    }
+
+    async fn mdwt_blocks(&self, req: KReq<MdwtBlocksReq>) -> AResult<MdwtBlocksRsp> {
+        expand_mt_branch!(self.mdwt_blocks(req))
     }
 }

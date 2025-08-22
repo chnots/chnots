@@ -62,7 +62,7 @@ impl<'a> KDbTx<'a> {
 
     async fn overwrite_block_metas(
         &self,
-        blocks: Vec<ChnotOverwriteRecordReqMeta>,
+        blocks: Vec<ChnotOverwriteBlockReqMeta>,
         chnot_meta_otid: TID,
     ) -> EResult {
         for b in blocks {
@@ -85,7 +85,7 @@ impl<'a> KDbTx<'a> {
 
     async fn overwrite_block_record(
         &self,
-        block: ChnotOverwriteRecordReqRecord,
+        block: ChnotOverwriteRecordReqMdwt,
         chnot_meta_otid: TID,
     ) -> EResult {
         struct OldInfo {
@@ -94,8 +94,8 @@ impl<'a> KDbTx<'a> {
         }
         fn to_old_info(row: KDbRow) -> AResult<OldInfo> {
             Ok(OldInfo {
-                tid: row.try_get(ChnotBlockRecord::BLOCK_OTID)?,
-                content: row.try_get(ChnotBlockRecord::CONTENT)?,
+                tid: row.try_get(MdwtRecord::OTID)?,
+                content: row.try_get(MdwtRecord::CONTENT)?,
             })
         }
 
@@ -104,14 +104,10 @@ impl<'a> KDbTx<'a> {
         let rec_tid: TID = TID::default();
 
         // Query for existing record
-        let query_old_rec = SqlBuilder::read(
-            ChnotBlockRecord::TABLE,
-            &[ChnotBlockRecord::BLOCK_OTID, ChnotBlockRecord::CONTENT],
-        )
-        .r#where(Wheres::and([Wheres::equal(
-            ChnotBlockRecord::BLOCK_OTID,
-            block.block_otid,
-        )]));
+        let query_old_rec =
+            SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::OTID, MdwtRecord::CONTENT]).r#where(
+                Wheres::and([Wheres::equal(MdwtRecord::OTID, block.block_otid)]),
+            );
 
         // Get old record info
         let Some(OldInfo {
@@ -136,9 +132,8 @@ impl<'a> KDbTx<'a> {
             && time_delta > TimeDelta::minutes(3))
             || time_delta > TimeDelta::hours(1);
 
-        let rec = ChnotBlockRecord {
-            block_otid: block.block_otid,
-            meta_otid: chnot_meta_otid,
+        let rec = MdwtRecord {
+            otid: block.block_otid,
             tid: rec_tid,
             todo_event: None,
             content: block.content,
@@ -146,7 +141,7 @@ impl<'a> KDbTx<'a> {
         };
 
         self.as_executor()
-            .omit_rows::<ChnotBlockRecord>(ChnotBlockRecord::pkey_cond(block.block_otid))
+            .omit_rows::<MdwtRecord>(MdwtRecord::pkey_cond(block.block_otid))
             .await?;
         self.exec(rec.to_sql_inserter()).await?;
 
@@ -155,11 +150,11 @@ impl<'a> KDbTx<'a> {
 
     pub(super) async fn chnot_overwrite_records(
         &self,
-        req: KReq<ChnotOverwriteRecordReq>,
+        req: KReq<ChnotOverwriteBlockReq>,
     ) -> AResult<ChnotOverwriteRecordRsp> {
-        let ChnotOverwriteRecordReq {
+        let ChnotOverwriteBlockReq {
             meta_otid,
-            recs,
+            mdwts: recs,
             metas,
         } = req.body;
 

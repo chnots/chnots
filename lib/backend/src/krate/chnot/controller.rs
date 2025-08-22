@@ -21,7 +21,8 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             put(chnot_overwrite_blocks),
         )
         .route("/api/v1/chnot-overwrite-meta", post(chnot_overwrite_meta))
-        .route("/api/v1/chnot/{chnot_otid}", get(chnot_detail))
+        .route("/api/v1/chnot-meta/{chnot_otid}", get(chnot_detail))
+        .route("/api/v1/mdwt-blocks", post(mdwt_blocks))
         .route("/api/v1/chnot-query", post(chnot_query))
         .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
         .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
@@ -31,12 +32,20 @@ pub(crate) fn routes() -> Router<ShareAppState> {
 async fn chnot_overwrite_blocks(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotOverwriteRecordReq>,
+    Json(req): Json<ChnotOverwriteBlockReq>,
 ) -> KResponse<ChnotOverwriteRecordRsp> {
     state
         .chnot_overwrite_records(kreq(headers, req))
         .await
         .into()
+}
+
+async fn mdwt_blocks(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<MdwtBlocksReq>,
+) -> KResponse<MdwtBlocksRsp> {
+    state.mdwt_blocks(kreq(headers, req)).await.into()
 }
 
 async fn chnot_overwrite_meta(
@@ -63,12 +72,12 @@ async fn chnot_detail(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Path(chnot_otid): Path<TID>,
-) -> KResponse<ChnotDetailRsp> {
+) -> KResponse<ChnotMetaRsp> {
     state
         .mapper
-        .chnot_detail(kreq(
+        .chnot_meta(kreq(
             headers,
-            ChnotDetailReq {
+            ChnotMetaReq {
                 chnot_meta_otid: chnot_otid,
             },
         ))

@@ -12,7 +12,7 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chnot {
-    pub head_record: ChnotBlockRecord,
+    pub head_record: MdwtRecord,
     pub meta: ChnotMetadata,
 }
 
@@ -28,13 +28,13 @@ pub struct ChnotOverwriteMetaReq {
 pub struct ChnotOverwriteMetaRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteRecordReqRecord {
+pub struct ChnotOverwriteRecordReqMdwt {
     pub block_otid: TID,
     pub content: Text,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteRecordReqMeta {
+pub struct ChnotOverwriteBlockReqMeta {
     pub block_otid: TID,
     pub korder: i64,
     pub kind: ChnotKind,
@@ -42,10 +42,10 @@ pub struct ChnotOverwriteRecordReqMeta {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteRecordReq {
+pub struct ChnotOverwriteBlockReq {
     pub meta_otid: TID,
-    pub recs: Vec<ChnotOverwriteRecordReqRecord>,
-    pub metas: Vec<ChnotOverwriteRecordReqMeta>,
+    pub mdwts: Vec<ChnotOverwriteRecordReqMdwt>,
+    pub metas: Vec<ChnotOverwriteBlockReqMeta>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -93,16 +93,29 @@ pub struct ChnotQueryRsp<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotDetailReq {
+pub struct ChnotMetaReq {
     pub chnot_meta_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotDetailRsp {
+pub struct ChnotMetaRsp {
     pub chnot_meta: ChnotMetadata,
-    pub records: HashMap<TID, ChnotBlockRecord>,
     pub block_meta_sorted: Vec<ChnotBlockMeta>,
-    pub toents: Vec<ChnotBlockToent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdwtBlocksReq {
+    pub mdwt_otids: Vec<TID>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdwtBlocksRsp {
+    pub mdwt_map: HashMap<TID, MdwtRecord>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Toents {
+    pub toent_inst_map: HashMap<TID, Vec<ChnotBlockToent>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,6 +123,7 @@ pub struct ChnotTagQueryReq {
     pub query: Option<String>,
     pub tags: Option<ChnotTagSearchType>,
     pub remove_params: Option<bool>,
+    pub mdwt_map: HashMap<TID, MdwtRecord>,
 
     // Paging
     pub start_index: usize,

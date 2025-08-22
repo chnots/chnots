@@ -23,12 +23,10 @@ use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotBlockRecord {
+pub struct MdwtRecord {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub block_otid: TID,
-    #[gts_type = "i64"]
-    pub meta_otid: TID,
+    pub otid: TID,
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
@@ -39,9 +37,9 @@ pub struct ChnotBlockRecord {
     pub archor: bool,
 }
 
-impl Curd for ChnotBlockRecord {
+impl Curd for MdwtRecord {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.block_otid)
+        Self::pkey_cond(self.otid)
     }
 
     fn tid(&self) -> TID {
@@ -49,7 +47,7 @@ impl Curd for ChnotBlockRecord {
     }
 }
 
-impl_otid_support! {ChnotBlockRecord}
+impl_otid_support! {MdwtRecord}
 
 fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
     match opt {
@@ -173,6 +171,7 @@ pub(crate) struct ChnotBlockMeta {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
+
     #[gts_key]
     #[gts_type = "i64"]
     pub chnot_otid: TID,

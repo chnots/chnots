@@ -66,9 +66,8 @@ impl ChnotTag {
 
 #[inline]
 fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
-    let record = ChnotBlockRecord {
+    let record = MdwtRecord {
         tid: row.try_get("rec_tid")?,
-        meta_otid: row.try_get("meta_otid")?,
         content: row.try_get("content")?,
         archor: row.try_get("archor")?,
         todo_event: {
@@ -78,7 +77,7 @@ fn chnot_query_mapper(row: KDbRow) -> AResult<Chnot> {
                 None => None,
             }
         },
-        block_otid: row.try_get(ChnotBlockRecord::BLOCK_OTID)?,
+        otid: row.try_get(MdwtRecord::OTID)?,
     };
     let meta = ChnotMetadata {
         otid: row.try_get("meta_otid")?,
@@ -140,8 +139,8 @@ impl ChnotMapper for KDb {
                 ChnotTag::hist_table(),
                 ChnotMetadata::create_sql().to_owned_sql(),
                 ChnotMetadata::hist_table(),
-                ChnotBlockRecord::create_sql().to_owned_sql(),
-                ChnotBlockRecord::hist_table(),
+                MdwtRecord::create_sql().to_owned_sql(),
+                MdwtRecord::hist_table(),
                 ChnotBlockMeta::create_sql().to_owned_sql(),
                 ChnotBlockMeta::hist_table(),
                 ChnotBlockToent::create_sql().to_owned_sql(),
@@ -258,7 +257,7 @@ impl ChnotMapper for KDb {
 
     async fn chnot_overwrite_records(
         &self,
-        req: KReq<ChnotOverwriteRecordReq>,
+        req: KReq<ChnotOverwriteBlockReq>,
     ) -> AResult<ChnotOverwriteRecordRsp> {
         let mut conn = self.conn().await?;
         let tx = conn.transaction().await?;
@@ -311,28 +310,25 @@ impl ChnotMapper for KDb {
     }
 
     async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult {
-        let get_all = SqlBuilder::read(
-            ChnotBlockRecord::TABLE,
-            &[ChnotBlockRecord::CONTENT, ChnotBlockRecord::META_OTID],
-        )
-        .r#where(Wheres::and([Wheres::compare_str(
-            ChnotBlockRecord::META_OTID,
-            "in",
-            format!(
-                "(select {} from {} where kspace = '{}')",
-                ChnotMetadata::OTID,
-                ChnotMetadata::TABLE,
-                kspace.as_str().replace("'", "<quote>")
-            ),
-        )]));
+        let get_all = SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT, MdwtRecord::OTID])
+            .r#where(Wheres::and([Wheres::compare_str(
+                MdwtRecord::OTID,
+                "in",
+                format!(
+                    "(select {} from {} where kspace = '{}')",
+                    ChnotMetadata::OTID,
+                    ChnotMetadata::TABLE,
+                    kspace.as_str().replace("'", "<quote>")
+                ),
+            )]));
 
         let kspace = kspace.to_owned();
         let mut conn = self.conn().await?;
         let chnots = conn
             .qry_list(get_all, move |e| {
                 Ok(ChnotTagUpdateReq {
-                    content: e.try_get(ChnotBlockRecord::CONTENT)?,
-                    meta_otid: e.try_get(ChnotBlockRecord::META_OTID)?,
+                    content: e.try_get(MdwtRecord::CONTENT)?,
+                    meta_otid: e.try_get(MdwtRecord::OTID)?,
                     kspace: kspace.to_owned(),
                 })
             })
@@ -349,7 +345,7 @@ impl ChnotMapper for KDb {
         Ok(())
     }
 
-    async fn chnot_detail(&self, req: KReq<ChnotDetailReq>) -> AResult<ChnotDetailRsp> {
+    async fn chnot_meta(&self, req: KReq<ChnotMetaReq>) -> AResult<ChnotMetaRsp> {
         let conn = self.conn().await?;
         let chnot_meta = conn
             .qry_one(
@@ -358,15 +354,7 @@ impl ChnotMapper for KDb {
                 false,
             )
             .await?;
-        let recs = conn
-            .qry_list(
-                SqlBuilder::read_all(ChnotBlockRecord::TABLE).r#where(Wheres::equal(
-                    ChnotBlockRecord::META_OTID,
-                    req.chnot_meta_otid,
-                )),
-                |row| ChnotBlockRecord::try_from(&row),
-            )
-            .await?;
+
         let block_metas = conn
             .qry_list(
                 SqlBuilder::read_all(ChnotBlockMeta::TABLE).r#where(Wheres::equal(
@@ -376,21 +364,37 @@ impl ChnotMapper for KDb {
                 |row| ChnotBlockMeta::try_from(&row),
             )
             .await?;
-        let toents = conn
+        /*         let toents = conn
+        .qry_list(
+            SqlBuilder::read_all(ChnotBlockToent::TABLE).r#where(Wheres::equal(
+                ChnotBlockToent::CHNOT_OTID,
+                req.chnot_meta_otid,
+            )),
+            |row| ChnotBlockToent::try_from(&row),
+        )
+        .await?; */
+
+        Ok(ChnotMetaRsp {
+            chnot_meta,
+            block_meta_sorted: block_metas,
+        })
+    }
+
+    async fn mdwt_blocks(&self, req: KReq<MdwtBlocksReq>) -> AResult<MdwtBlocksRsp> {
+        let recs = self
+            .conn()
+            .await?
             .qry_list(
-                SqlBuilder::read_all(ChnotBlockToent::TABLE).r#where(Wheres::equal(
-                    ChnotBlockToent::CHNOT_OTID,
-                    req.chnot_meta_otid,
-                )),
-                |row| ChnotBlockToent::try_from(&row),
+                SqlBuilder::read_all(MdwtRecord::TABLE).r#where(Wheres::or([Wheres::r#in(
+                    MdwtRecord::OTID,
+                    req.body.mdwt_otids,
+                )])),
+                |row| MdwtRecord::try_from(&row),
             )
             .await?;
 
-        Ok(ChnotDetailRsp {
-            chnot_meta,
-            records: recs.into_iter().map(|r| (r.block_otid, r)).collect(),
-            block_meta_sorted: block_metas,
-            toents,
+        Ok(MdwtBlocksRsp {
+            mdwt_map: recs.into_iter().map(|r| (r.otid, r)).collect(),
         })
     }
 }
@@ -410,23 +414,22 @@ impl TryFrom<&KDbRow> for ChnotMetadata {
     }
 }
 
-impl TryFrom<&KDbRow> for ChnotBlockRecord {
+impl TryFrom<&KDbRow> for MdwtRecord {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
-        let chnot = ChnotBlockRecord {
-            meta_otid: value.try_get(ChnotBlockRecord::META_OTID)?,
-            content: value.try_get(ChnotBlockRecord::CONTENT)?,
-            tid: value.try_get(ChnotBlockRecord::TID)?,
-            archor: value.try_get(ChnotBlockRecord::ARCHOR)?,
+        let chnot = Self {
+            content: value.try_get(Self::CONTENT)?,
+            tid: value.try_get(Self::TID)?,
+            archor: value.try_get(Self::ARCHOR)?,
             todo_event: {
-                let opt: Option<String> = value.try_get(ChnotBlockRecord::TODO_EVENT)?;
+                let opt: Option<String> = value.try_get(Self::TODO_EVENT)?;
                 match opt {
                     Some(opt) => Some(TodoEvent::try_from_standrd_str(opt.as_str())?),
                     None => None,
                 }
             },
-            block_otid: value.try_get(Self::BLOCK_OTID)?,
+            otid: value.try_get(Self::OTID)?,
         };
         Ok(chnot)
     }

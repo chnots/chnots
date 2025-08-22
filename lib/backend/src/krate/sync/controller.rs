@@ -10,7 +10,7 @@ use crate::{
     app::ShareAppState,
     controller::KResponse,
     krate::{
-        chnot::{ChnotBlockMeta, ChnotBlockRecord, ChnotBlockToent, ChnotMetadata, ChnotTag},
+        chnot::{ChnotBlockMeta, ChnotBlockToent, ChnotMetadata, ChnotTag, MdwtRecord},
         kfile::KFileMeta,
         kkv::KKV,
         kspace::KSpace,
@@ -58,10 +58,10 @@ macro_rules! sync_invoke_enum2generic {
         use $crate::model::otid_table::OtidTableEnum;
 
         match $eobj.table_type {
-            OtidTableEnum::ChnotBlockRecord => {
+            OtidTableEnum::MdwtRecord => {
                 let arg = OtidWithGer {
                     dto: $eobj.dto,
-                    table_type: PhantomData::<crate::krate::chnot::ChnotBlockRecord>,
+                    table_type: PhantomData::<crate::krate::chnot::MdwtRecord>,
                 };
                 $worker.$invoke(arg).await
             }
@@ -216,7 +216,7 @@ async fn sync_data_inner(
         }};
     }
     let result = match req.table_type {
-        OtidTableEnum::ChnotBlockRecord => inner! {ChnotBlockRecord},
+        OtidTableEnum::MdwtRecord => inner! {MdwtRecord},
         OtidTableEnum::ChnotMetadata => inner! {ChnotMetadata},
         OtidTableEnum::ChnotTag => inner! {ChnotTag},
         OtidTableEnum::LLMChatBot => inner! {LLMChatBot},
