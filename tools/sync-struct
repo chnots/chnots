@@ -12,7 +12,6 @@ os.chdir(WORK_DIR)
 TYPE_MAP = {
     "DateTime<FixedOffset>": "Date",
     "FieldData<Bytes>": "Blob",
-    "HashMap<String, KTabColumnMeta>": "Record<string, KTabColumnMeta>",
     "bool": "boolean",
     "String": "string",
     "i64": "number",
@@ -22,6 +21,7 @@ TYPE_MAP = {
     "SharedStr": "string",
     "u16": "number",
     "RecordState": "object",
+    "HashMap": "Map",
 }
 
 
@@ -45,7 +45,9 @@ def parse_rust_struct_block(struct_block_code: str) -> RustStruct:
     rust_struct = RustStruct()
     in_struct = False
 
-    struct_decl_pattern = re.compile(r"pub(?:\(crate\))?\s+struct\s+(\w+)\s*{")
+    struct_decl_pattern = re.compile(
+        r"pub(?:\(crate\))?\s+struct\s+([a-zA-Z_0-9<>,:]+)\s*{?"
+    )
 
     field_name_pattern = re.compile(
         r"pub(?:\(crate\))?\s+(\w+):\s*([a-zA-Z0-9_:<>, ]+),?"
@@ -120,9 +122,10 @@ def parse_rust_file_structs(file_path: str) -> typing.List[RustStruct]:
 
     for line_num, line in enumerate(lines):
         stripped_line = line.strip()
+        print("line", stripped_line)
 
         if not in_struct_block and re.match(
-            r"pub(?:\(crate\))?\s+struct\s+\w+\s*{", stripped_line
+            r"pub(?:\(crate\))?\s+struct\s+[a-zA-Z_0-9<>,:]+\s*{?", stripped_line
         ):
             in_struct_block = True
             brace_level = 0
@@ -134,6 +137,7 @@ def parse_rust_file_structs(file_path: str) -> typing.List[RustStruct]:
             brace_level -= stripped_line.count("}")
 
             if brace_level == 0 and "}" in stripped_line:
+                print(" => extract: \n    ", "\n    ".join(current_struct_lines))
                 struct_blocks.append("\n".join(current_struct_lines))
                 in_struct_block = False
                 current_struct_lines = []
@@ -148,8 +152,8 @@ def parse_rust_file_structs(file_path: str) -> typing.List[RustStruct]:
 
 def get_type_position(code: str, type_name: str):
     type_patterns = [
-        re.compile(r"export type\s+(\w+)\s*=\s*{([^}]+)};?", re.DOTALL),
-        re.compile(r"export type\s+(\w+)\s*=\s*object;?"),
+        re.compile(r"export type\s+([\w<,>]+)\s*=\s*{([^}]+)};?", re.DOTALL),
+        re.compile(r"export type\s+([\w<,>]+)\s*=\s*object;?"),
     ]
 
     for type_pattern in type_patterns:
@@ -161,38 +165,62 @@ def get_type_position(code: str, type_name: str):
             if name == type_name:
                 start_pos = match.start(0)
                 end_pos = match.end(0)
-                print("=> start and end", code[start_pos:end_pos])
                 return start_pos, end_pos
 
     return None
 
 
-def get_ts_type(rust_type: str, inner=True):
-    if rust_type.startswith("Option<"):
-        return ("" if inner else "?: ") + get_ts_type(rust_type.lstrip("Option<")[:-1])
-    elif rust_type == "OmitTID":
-        return ("" if inner else "?: ") + "OmitTID"
-    elif rust_type.startswith("Vec<"):
-        return (
-            ("" if inner else ": ") + get_ts_type(rust_type.lstrip("Vec<")[:-1]) + "[]"
-        )
+def get_ts_type(rust_type: str):
+    rust_type = rust_type.strip()
+    outer = None
+    inner = None
+
+    if rust_type in TYPE_MAP:
+        return TYPE_MAP[rust_type]
+
+    def mapt(rt):
+        return TYPE_MAP[rt] if rt in TYPE_MAP else rt
+
+    if (
+        (left_a := rust_type.find("<")) >= 0
+        and ((comma := rust_type.find(",")) <= 0 or left_a < comma)
+        and rust_type.endswith(">")
+    ):
+        start = left_a
+        outer = rust_type[:start]
+        inner = rust_type[start + 1 : -1]
     else:
-        return ("" if inner else ": ") + (
-            TYPE_MAP[rust_type] if rust_type in TYPE_MAP else rust_type
-        )
+        inner = rust_type
+
+    if outer == "Option":
+        return get_ts_type(inner) + "| undefined"
+    elif outer == "Vec":
+        return get_ts_type(inner) + "[]"
+    else:
+        if "(" in inner:
+            raise Exception(f"unsupported type {inner}")
+        if outer is not None:
+            return f"{mapt(outer)}<{get_ts_type(inner)}>"
+
+        if "," in inner:
+            segs = inner.split(",")
+            return ", ".join([get_ts_type(x) for x in segs])
+
+        return mapt(inner)
 
 
 def convert_rs_2_ts(rtype: RustStruct):
     fields = "object"
+
+    def type_wrapper(v):
+        mid = get_ts_type(v.strip().rstrip(","))
+        undef = mid.endswith("| undefined")
+        return ":" + mid if not undef else "?:" + mid.replace("| undefined", "")
+
     if len(rtype.fields) > 0:
         fields = (
             "{\n"
-            + "\n".join(
-                [
-                    f"  {k}{get_ts_type(v.strip().rstrip(','), False)};"
-                    for (k, v) in rtype.fields.items()
-                ]
-            )
+            + "\n".join([f"  {k}{type_wrapper(v)};" for (k, v) in rtype.fields.items()])
             + "\n}"
         )
 
@@ -210,10 +238,11 @@ def sync_one_file(serverfile: str):
     with open(webfile) as f:
         web_content = f.read()
     for rt in rtypes:
-        print("=> parse struct:", rt.struct_name)
+        print(" => parse struct:", rt.struct_name)
 
         pos = get_type_position(web_content, rt.struct_name)
         web_new = convert_rs_2_ts(rt)
+        print(" -> parsed: \n    ", web_new.replace("\n", "\n    "))
         if pos is not None:
             web_content = web_content[0 : pos[0]] + web_new + web_content[pos[1] :]
         else:
@@ -227,6 +256,8 @@ def work_and_do():
     for root, dirs, files in os.walk("lib/backend/src", topdown=False):
         for name in files:
             fullpath = os.path.join(root, name)
+            if "sync/dto" in fullpath:
+                continue
             if name == "dto.rs" or name == "po.rs":
                 sync_one_file(fullpath)
 
