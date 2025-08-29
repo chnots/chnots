@@ -139,6 +139,7 @@ export const ExcalidrawImage = ({
 
 const ExcalidrawPreview = ({
   state,
+  className: rootClassName,
 }: { state?: ExcalidrawChnotState } & Omit<Props, "imageContainerRef">) => {
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -148,6 +149,7 @@ const ExcalidrawPreview = ({
       elements={state?.elements ?? []}
       files={state?.files}
       imageContainerRef={imageContainerRef}
+      rootClassName={rootClassName}
     />
   );
 };

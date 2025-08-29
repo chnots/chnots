@@ -68,7 +68,9 @@ const ExcalidrawBlock = ({
 
   return (
     <div className="w-full flex flex-col">
-      <ExcalidrawPreview state={state} />
+      <div className="flex h-auto justify-center">
+        <ExcalidrawPreview state={state} className="w-8/12" />
+      </div>
       <Button onClick={() => setOpen((prev) => !prev)}>Edit</Button>
       {open && (
         <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0">
