@@ -12,12 +12,12 @@ use chrono::TimeDelta;
 impl<'a> KDbTx<'a> {
     pub(super) async fn chnot_tag_update_single_chnot(
         &self,
-        req: ChnotTagUpdateReq,
+        req: ChnotThreadTagUpdateReq,
         chnot_parser: &ChnotParser<'_>,
     ) -> EResult {
-        let ChnotTagUpdateReq {
+        let ChnotThreadTagUpdateReq {
             content: _,
-            meta_otid,
+            thread_otid: meta_otid,
             kspace,
         } = req;
 
@@ -28,12 +28,12 @@ impl<'a> KDbTx<'a> {
             .collect();
         let mut tags = tags?;
         self.as_executor()
-            .omit_rows::<ChnotTag>(Wheres::and([
-                Wheres::equal(ChnotTag::META_OTID, meta_otid),
+            .omit_rows::<ChnotThreadTag>(Wheres::and([
+                Wheres::equal(ChnotThreadTag::THREAD_OTID, meta_otid),
                 if tags.is_empty() {
                     Wheres::None
                 } else {
-                    Wheres::not(Wheres::r#in(ChnotTag::TAG, tags.clone()))
+                    Wheres::not(Wheres::r#in(ChnotThreadTag::TAG, tags.clone()))
                 },
             ]))
             .await?;
@@ -45,11 +45,11 @@ impl<'a> KDbTx<'a> {
         for tag in tags {
             executor
                 .exec(
-                    ChnotTag {
+                    ChnotThreadTag {
                         tid: TID::default(),
                         kspace: kspace.to_owned(),
                         tag: tag.to_owned(),
-                        meta_otid,
+                        thread_otid: meta_otid,
                     }
                     .to_sql_inserter()
                     .on_conflict(chin_sql::OnConflict::Ignore),
@@ -60,15 +60,15 @@ impl<'a> KDbTx<'a> {
         Ok(())
     }
 
-    async fn overwrite_block_metas(
+    pub(super) async fn overwrite_block_metas(
         &self,
-        blocks: Vec<ChnotOverwriteBlockReqMeta>,
+        blocks: Vec<ChnotOverwriteMetaReqData>,
         chnot_meta_otid: TID,
     ) -> EResult {
         for b in blocks {
-            let rec = ChnotBlockMeta {
-                otid: b.block_otid,
-                chnot_otid: chnot_meta_otid,
+            let rec = ChnotMeta {
+                otid: b.otid,
+                thread_otid: chnot_meta_otid,
                 kind: b.kind,
                 kind_id: b.kind_id,
                 korder: b.korder,
@@ -76,7 +76,7 @@ impl<'a> KDbTx<'a> {
             };
 
             self.as_executor()
-                .omit_rows::<ChnotBlockMeta>(rec.pkey())
+                .omit_rows::<ChnotMeta>(rec.pkey())
                 .await?;
             self.exec(rec.to_sql_inserter()).await?;
         }
@@ -85,7 +85,7 @@ impl<'a> KDbTx<'a> {
 
     async fn overwrite_block_record(
         &self,
-        block: ChnotOverwriteRecordReqMdwt,
+        block: ChnotOverwriteMdwtReqData,
         chnot_meta_otid: TID,
     ) -> EResult {
         struct OldInfo {
@@ -105,35 +105,34 @@ impl<'a> KDbTx<'a> {
 
         // Query for existing record
         let query_old_rec =
-            SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::OTID, MdwtRecord::CONTENT]).r#where(
-                Wheres::and([Wheres::equal(MdwtRecord::OTID, block.block_otid)]),
-            );
+            SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::OTID, MdwtRecord::CONTENT])
+                .r#where(Wheres::and([Wheres::equal(MdwtRecord::OTID, block.otid)]));
 
         // Get old record info
-        let Some(OldInfo {
+        let archor = if let Some(OldInfo {
             tid: old_id,
             content: old_cont,
         }) = self.qry_opt(query_old_rec, to_old_info).await?
-        else {
-            return Err(anyhow::anyhow!("Old Chnot is absent"));
+        {
+            let time_delta = rec_tid
+                .as_utc()
+                .signed_duration_since(old_id.as_utc())
+                .abs();
+
+            if old_cont.len() == block.content.as_str().len() && old_cont == block.content.as_str()
+            {
+                return Ok(());
+            }
+
+            (textdistance::str::sift4_simple(&old_cont, block.content.as_str()) >= 60
+                && time_delta > TimeDelta::minutes(3))
+                || time_delta > TimeDelta::hours(1)
+        } else {
+            false
         };
 
-        let time_delta = rec_tid
-            .as_utc()
-            .signed_duration_since(old_id.as_utc())
-            .abs();
-
-        if old_cont.len() == block.content.as_str().len() && old_cont == block.content.as_str() {
-            return Ok(());
-        }
-
-        let archor: bool = (textdistance::str::sift4_simple(&old_cont, block.content.as_str())
-            >= 60
-            && time_delta > TimeDelta::minutes(3))
-            || time_delta > TimeDelta::hours(1);
-
         let rec = MdwtRecord {
-            otid: block.block_otid,
+            otid: block.otid,
             tid: rec_tid,
             todo_event: None,
             content: block.content,
@@ -141,29 +140,26 @@ impl<'a> KDbTx<'a> {
         };
 
         self.as_executor()
-            .omit_rows::<MdwtRecord>(MdwtRecord::pkey_cond(block.block_otid))
+            .omit_rows::<MdwtRecord>(MdwtRecord::pkey_cond(block.otid))
             .await?;
         self.exec(rec.to_sql_inserter()).await?;
 
         Ok(())
     }
 
-    pub(super) async fn chnot_overwrite_records(
+    pub(super) async fn chnot_overwrite_mdwts(
         &self,
-        req: KReq<ChnotOverwriteBlockReq>,
-    ) -> AResult<ChnotOverwriteRecordRsp> {
-        let ChnotOverwriteBlockReq {
-            meta_otid,
+        req: KReq<ChnotOverwriteMdwtReq>,
+    ) -> AResult<ChnotOverwriteMdwtRsp> {
+        let ChnotOverwriteMdwtReq {
+            thread_otid: meta_otid,
             mdwts: recs,
-            metas,
         } = req.body;
 
         for block in recs {
             self.overwrite_block_record(block, meta_otid).await?;
         }
 
-        self.overwrite_block_metas(metas, meta_otid).await?;
-
-        Ok(ChnotOverwriteRecordRsp { todo_event: None })
+        Ok(ChnotOverwriteMdwtRsp { todo_event: None })
     }
 }

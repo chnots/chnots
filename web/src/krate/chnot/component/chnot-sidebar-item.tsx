@@ -2,7 +2,7 @@ import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/lib/date-utils";
 import Icon from "@/common/component/icon";
 import { useChnotStore } from "@/krate/chnot/store";
-import { Chnot } from "@/krate/chnot/dto";
+import { ChnotThread } from "@/krate/chnot/dto";
 import { chnotOverwriteMeta } from "@/krate/chnot/service";
 import { ChnotKind } from "@/krate/chnot/po";
 import {
@@ -11,13 +11,12 @@ import {
   SidebarMenuAction,
   useSidebar,
 } from "@/common/component/ui/sidebar";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuPortal,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -63,11 +62,11 @@ const ChnotSidebarTagItem = React.forwardRef(
   },
 );
 
-ChnotSidebarTagItem.displayName = "ChnotTagListItem";
+ChnotSidebarTagItem.displayName = "ChnotThreadTagListItem";
 
 const ChnotSidebarItem = React.forwardRef(
   (
-    { chnot, showKSpace }: { chnot: Chnot; showKSpace: boolean },
+    { chnot, showKSpace }: { chnot: ChnotThread; showKSpace: boolean },
     ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const {
@@ -94,11 +93,11 @@ const ChnotSidebarItem = React.forwardRef(
 
     const { isMobile } = useSidebar();
 
-    const isSelected = currentChnot?.record.tid === chnot.record.tid;
+    const isSelected = currentChnot?.head_record.tid === chnot.head_record.tid;
 
-    const title = chnot.record.content.startsWith("# ")
-      ? chnot.record.content.split("\n")[0].substring(2)
-      : chnot.record.content.substring(0, 500);
+    const title = chnot.head_record.content.startsWith("# ")
+      ? chnot.head_record.content.split("\n")[0].substring(2)
+      : chnot.head_record.content.substring(0, 500);
 
     const onArchive = async () => {
       await chnotOverwriteMeta({
@@ -119,7 +118,7 @@ const ChnotSidebarItem = React.forwardRef(
     };
 
     return (
-      <SidebarMenuItem key={chnot.record.tid}>
+      <SidebarMenuItem key={chnot.head_record.tid}>
         <a
           href={"#" + chnot.meta.otid}
           key={chnot.meta.otid}
@@ -132,56 +131,37 @@ const ChnotSidebarItem = React.forwardRef(
           tabIndex={0}
           aria-label={`Navigate to ${title}`}
         >
-          <div
-            className={cn(
-              "flex-shrink-0 p-1.5 rounded",
-              "text-muted-foreground group-hover:text-sidebar-accent-foreground",
-              isSelected
-                ? "text-sidebar-accent-foreground"
-                : "text-muted-foreground",
-            )}
-          >
-            <ChnotKindIcon
-              kind={chnot.meta.kind as ChnotKind}
-              className={"w-4 h-4"}
-            />
-          </div>
-
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <time
-                dateTime={new Date(chnot.meta.otid / 1e3).toISOString()}
-                className="text-[0.7rem]"
-              >
-                {chnotShortDate(new Date(chnot.meta.otid / 1e3))}
-              </time>
-              {showKSpace && (
-                <KSpaceIcon
-                  name={chnot.meta.kspace}
-                  className="h-3.5 w-3.5 text-muted-foreground/60"
-                />
-              )}
-              {chnot.meta.pin_time && (
-                <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
-              )}
-              {chnot.record.todo_event && (
-                <TodoLabel todoEvent={chnot.record.todo_event} />
-              )}
-            </div>
-
-            <h3
-              className={cn(
-                "text-xs font-medium line-clamp-2 leading-tight break-all",
-                "text-foreground group-hover:text-sidebar-accent-foreground",
-                isSelected
-                  ? "text-sidebar-accent-foreground"
-                  : "text-foreground",
-              )}
-              title={title}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <time
+              dateTime={new Date(chnot.meta.otid / 1e3).toISOString()}
+              className="text-[0.7rem]"
             >
-              {title}
-            </h3>
+              {chnotShortDate(new Date(chnot.meta.otid / 1e3))}
+            </time>
+            {showKSpace && (
+              <KSpaceIcon
+                name={chnot.meta.kspace}
+                className="h-3.5 w-3.5 text-muted-foreground/60"
+              />
+            )}
+            {chnot.meta.pin_time && (
+              <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
+            )}
+            {chnot.head_record.todo_event && (
+              <TodoLabel todoEvent={chnot.head_record.todo_event} />
+            )}
           </div>
+
+          <h3
+            className={cn(
+              "text-xs font-medium line-clamp-2 leading-tight break-all",
+              "text-foreground group-hover:text-sidebar-accent-foreground",
+              isSelected ? "text-sidebar-accent-foreground" : "text-foreground",
+            )}
+            title={title}
+          >
+            {title}
+          </h3>
         </a>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

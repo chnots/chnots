@@ -11,7 +11,7 @@ export enum ChnotKind {
 }
 
 // TODO: true type
-export type ChnotTagType = object;
+export type ChnotThreadTagType = object;
 
 export type MdwtRecord = {
   otid: TID;
@@ -21,7 +21,7 @@ export type MdwtRecord = {
   archor: boolean;
 };
 
-export type ChnotMetadata = {
+export type ChnotThreadMeta = {
   otid: TID;
   kspace: Varchar<40>;
   pin_time?: Date;
@@ -29,25 +29,25 @@ export type ChnotMetadata = {
   tid: TID;
 };
 
-export type ChnotTag = {
+export type ChnotThreadTag = {
   tag: Varchar<800>;
-  meta_otid: TID;
+  thread_otid: TID;
   kspace: Varchar<40>;
   tid: TID;
 };
 
-export type ChnotBlockMeta = {
+export type ChnotMeta = {
   otid: TID;
-  chnot_otid: TID;
+  thread_otid: TID;
   kind: ChnotKind;
   kind_id: Varchar<200>;
   korder: number;
   tid: TID;
 };
 
-export type ChnotBlockToent = {
-  block_otid: TID;
+export type ChnotToent = {
   chnot_otid: TID;
+  thread_otid: TID;
   todo_state?: TodoStateEnum;
   todo_priority?: TodoPriorityEnum;
   todo_closed: boolean;

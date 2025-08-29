@@ -1,11 +1,8 @@
 import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
-import {
-  ChnotEditor,
-  ChnotEditorProvider,
-} from "@/krate/chnot/component/chnot-editor";
+import ChnotEditor from "@/krate/chnot/component/chnot-thread";
 import { useChnotStore } from "@/krate/chnot/store";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Chnot } from "@/krate/chnot/dto";
+import { ChnotThread } from "@/krate/chnot/dto";
 import {
   SidebarInset,
   SidebarProvider,
@@ -17,12 +14,14 @@ import { ChnotKind } from "../po";
 import { useShallow } from "zustand/react/shallow";
 import Settings from "@/common/pages/settings-page";
 import { useCommonStore } from "@/common/store";
+import ChnotBlocks from "../component/chnot-thread/thread";
+import UnderConstructionPage from "@/common/pages/under-construction-page";
 
 /**
  * This component is only to improve performance, that is to say, when
  * editor changes, the list should not be rerendered.
  *
- * @returns Chnot Editor Container
+ * @returns ChnotThread Editor Container
  */
 const MonoChnot = () => {
   const {
@@ -45,20 +44,20 @@ const MonoChnot = () => {
 
   const { isMobile } = useSidebar();
   const [comKey, setComKey] = useState<string>(genUID());
-  const metaTidRef = useRef<TID>(null);
-  const [editorChnot, setEditorChnot] = useState<Chnot | undefined>();
+  const metaOtidRef = useRef<TID>(null);
+  const [editorChnot, setEditorChnot] = useState<ChnotThread | undefined>();
 
   useEffect(() => {
-    if (curMetaId !== metaTidRef.current) {
+    if (curMetaId !== metaOtidRef.current) {
       setComKey(genUID());
       const cc = getCurrentChnot();
       setEditorChnot(cc);
-      metaTidRef.current = cc?.meta.otid ?? null;
+      metaOtidRef.current = cc?.meta.otid ?? null;
     }
   }, [curMetaId, editorChnot]);
 
   const updateEditorChnot = useCallback(
-    async (chnot: Chnot) => {
+    async (chnot: ChnotThread) => {
       if (curMetaId !== chnot.meta.otid) {
         setCurrentChnotMetaId(chnot.meta.otid);
       }
@@ -69,37 +68,10 @@ const MonoChnot = () => {
 
   const viewModeRef = useRef(false);
 
-  return (
-    <ChnotEditorProvider
-      key={comKey}
-      props={{
-        kind:
-          editorChnot?.meta.kind ??
-          (kinds && kinds.length == 1
-            ? kinds.at(0)!
-            : ChnotKind.MarkdownWithToent),
-        metaTid: editorChnot?.meta.otid,
-        readonly: viewModeRef.current,
-        topleft: <SidebarTrigger />,
-        onClickNewButton: () => {
-          setComKey(genUID());
-          metaTidRef.current = null;
-          setCurrentChnotMetaId(undefined);
-        },
-        onSetReadonly: (readonly: boolean) => {
-          viewModeRef.current = readonly;
-        },
-        onChnotChange: (chnot) => {
-          updateEditorChnot(chnot);
-        },
-        onSetMetaTid: (tid) => {
-          console.log("onSetMetaTid", tid);
-          metaTidRef.current = tid;
-        },
-      }}
-    >
-      <ChnotEditor className="w-full h-full" />
-    </ChnotEditorProvider>
+  return editorChnot?.meta ? (
+    <ChnotEditor key={comKey} meta={editorChnot.meta} />
+  ) : (
+    <UnderConstructionPage />
   );
 };
 
@@ -107,7 +79,7 @@ const MonoChnot = () => {
  * Page for chnots, which is left and right layouted.
  *
  * Current there is only one chnot editor in the page, use multi webpages.
- * @returns Chnot Page
+ * @returns ChnotThread Page
  */
 const ChnotPage = () => {
   return (

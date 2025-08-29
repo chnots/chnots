@@ -1,98 +1,103 @@
 import { TID } from "@/lib/id_util";
 import {
   MdwtRecord,
-  ChnotMetadata,
-  ChnotTag,
+  ChnotThreadMeta,
   ChnotKind,
-  ChnotBlockToent,
-  ChnotBlockMeta,
+  ChnotToent,
+  ChnotMeta,
 } from "./po";
 import { DbText, Varchar } from "@/lib/types";
 import { TodoEvent } from "../toent/po";
 
-export type ChnotTagSearchType = {
+export type ChnotThreadTagSearchType = {
   Inset: string[];
 };
 
-export type Chnot = {
+export type ChnotThread = {
   head_record: MdwtRecord;
-  meta: ChnotMetadata;
+  meta: ChnotThreadMeta;
 };
-export type ChnotOverwriteMetaReq = {
+export type ChnotOverwriteThreadMetaReq = {
   meta_otid: TID;
   kspace?: Varchar<40>;
   pinned?: boolean;
   archive?: boolean;
 };
-export type ChnotOverwriteMetaRsp = object;
-export type ChnotOverwriteRecordReqMdwt = {
-  block_otid: TID;
+export type ChnotOverwriteThreadMetaRsp = object;
+export type ChnotOverwriteMdwtReqData = {
+  otid: TID;
   content: DbText;
 };
-export type ChnotOverwriteBlockReqMeta = {
-  block_otid: TID;
+export type ChnotOverwriteMetaReqData = {
+  otid: TID;
   korder: number;
   kind: ChnotKind;
   kind_id: Varchar<200>;
 };
-export type ChnotOverwriteBlockReq = {
-  meta_otid: TID;
-  mdwts: ChnotOverwriteRecordReqMdwt[];
-  metas: ChnotOverwriteBlockReqMeta[];
-};
-export type ChnotOverwriteRecordRsp = {
-  todo_event?: TodoEvent;
-};
-export type ChnotArchiveReq = {
-  meta_otid: TID;
+export type ChnotThreadArchiveReq = {
+  thread_otid: TID;
   logic: boolean;
 };
-export type ChnotArchiveRsp = object;
-export type ChnotQueryReq = {
+export type ChnotThreadArchiveRsp = object;
+export type ChnotThreadQueryReq = {
   query?: string;
-  meta_otid?: TID;
-  tags?: ChnotTagSearchType;
+  thread_otid?: TID;
+  tags?: ChnotThreadTagSearchType;
   kinds: ChnotKind[];
   with_omitted?: boolean;
   with_archive?: boolean;
   start_index: number;
   page_size: number;
 };
-export type ChnotMetaReq = {
-  chnot_meta_otid: TID;
+export type ChnotThreadMetaReq = {
+  thread_otid: TID;
 };
-export type ChnotMetaRsp = {
-  chnot_meta: ChnotMetadata;
-  block_meta_sorted: ChnotBlockMeta[];
+export type ChnotThreadMetaRsp = {
+  thread_meta: ChnotThreadMeta;
+  chnot_meta_sorted: ChnotMeta[];
 };
-export type MdwtBlocksReq = {
+export type MdwtRecordsReq = {
   mdwt_otids: TID[];
 };
-export type MdwtBlocksRsp = {
+export type MdwtRecordsRsp = {
   mdwt_map: Record<TID, MdwtRecord>;
 };
 export type Toents = {
-  toent_inst_map: Record<TID, ChnotBlockToent[]>;
+  toent_inst_map: Record<TID, ChnotToent[]>;
 };
-export type ChnotTagQueryReq = {
+export type ChnotThreadTagQueryReq = {
   query?: string;
-  tags?: ChnotTagSearchType;
+  tags?: ChnotThreadTagSearchType;
   remove_params?: boolean;
   start_index: number;
   page_size: number;
 };
-export type ChnotTagUpdateReq = {
+export type ChnotThreadTagUpdateReq = {
   content: DbText;
-  meta_otid: TID;
+  thread_otid: TID;
   kspace: Varchar<40>;
 };
 
-export type ChnotQueryRsp<T> = {
-  data: T[];
-  has_next: boolean;
-  next_start: number;
-};
-export type ChnotTagQueryRsp<T> = {
+export type ChnotThreadTagQueryRsp<T> = {
   data: T[];
   start_index: number;
+};
+
+export type ChnotOverwriteMdwtReq = {
+  thread_otid: TID;
+  mdwts: ChnotOverwriteMdwtReqData[];
+};
+export type ChnotOverwriteMetaReq = {
+  thread_otid: TID;
+  metas: ChnotOverwriteMetaReqData[];
+};
+export type ChnotOverwriteMetaRsp = object;
+export type ChnotOverwriteMdwtRsp = {
+  todo_event?: TodoEvent;
+};
+
+export type ChnotThreadQueryRsp = {
+  data: ChnotThread[];
+  has_next: boolean;
+  next_start: number;
 };

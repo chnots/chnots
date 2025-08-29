@@ -69,7 +69,7 @@ export const createCodemirrorTheme = () => {
     "& .cm-content": {
       fontFamily: theme.fontFamily,
       ...baseContentStyle,
-      paddingBottom: theme.isDesktop ? "400px" : null,
+      paddingBottom: theme.isDesktop ? "5px" : null,
       marginLeft: `${theme.marginLeft}px`,
       marginRight: `${theme.marginRight}px`,
     },

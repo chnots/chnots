@@ -1,7 +1,7 @@
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { SaveState } from "@/common/types";
-import { ChnotBlockMetaKind } from "../../vo";
+import { ChnotMetaKind } from "../../vo";
 import { genUID, TID } from "@/lib/id_util";
 import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
 import { ChnotKind } from "@/krate/chnot/po";
@@ -23,7 +23,7 @@ const ExcalidrawBlock = ({
   kindId?: string;
   isFocused?: boolean;
   setSaveState: (saveState: SaveState) => void;
-  blockKindsRef: RefObject<Map<TID, ChnotBlockMetaKind>>;
+  blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
 }) => {
   const [kindId] = useState(initialKindId ?? genUID());
   const [open, setOpen] = useState(false);

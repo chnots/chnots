@@ -1,7 +1,11 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { Chnot, ChnotQueryRsp, ChnotTagSearchType } from "./dto";
+import {
+  ChnotThread,
+  ChnotThreadQueryRsp,
+  ChnotThreadTagSearchType,
+} from "./dto";
 import { chnotQuery } from "./service";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
@@ -33,12 +37,12 @@ interface State {
   fetchMoreChnots(): unknown;
 
   /**
-   * Chnot Map by Chnot Meta Id
+   * ChnotThread Map by ChnotThread Meta Id
    */
-  chnotMapByMetaId: DbCache<Chnot>;
+  chnotMapByMetaId: DbCache<ChnotThread>;
 
   /**
-   * Current Chnot Meta Id
+   * Current ChnotThread Meta Id
    */
   curMetaId?: TID;
 
@@ -46,7 +50,7 @@ interface State {
    * Current Query Input
    */
   query?: string;
-  tags?: ChnotTagSearchType;
+  tags?: ChnotThreadTagSearchType;
   kinds?: ChnotKind[];
   isFetchingNextPage: boolean;
 }
@@ -66,7 +70,7 @@ export const useChnotStore = create(
       });
 
       const { chnotMapByMetaId, query, tags, kinds } = get();
-      const cs: ChnotQueryRsp = await chnotQuery({
+      const cs: ChnotThreadQueryRsp = await chnotQuery({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
@@ -107,7 +111,7 @@ export const useChnotStore = create(
 
       await get().fetchMoreChnots();
     },
-    overwriteChnotCache: (chnot: Chnot) => {
+    overwriteChnotCache: (chnot: ChnotThread) => {
       set((state) => {
         const cmm = state.chnotMapByMetaId;
         let cm = cmm.dbCache;
@@ -153,7 +157,7 @@ export const useChnotStore = create(
             return !result;
           })
           .map((e) => {
-            return e.record.tid;
+            return e.head_record.tid;
           }),
       );
 
@@ -184,7 +188,7 @@ export const useChnotStore = create(
         };
       });
     },
-    setTags: (newTags?: ChnotTagSearchType) => {
+    setTags: (newTags?: ChnotThreadTagSearchType) => {
       set((prev) => {
         return {
           ...prev,

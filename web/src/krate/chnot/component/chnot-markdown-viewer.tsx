@@ -1,11 +1,20 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-const MarkdownViewer = ({ content }: { content: string }) => {
+const MarkdownViewer = ({
+  content: initialContent,
+  keepBreak,
+}: {
+  content: string;
+  keepBreak?: boolean;
+}) => {
+  const content = keepBreak
+    ? initialContent.replaceAll("\n", "  \n")
+    : initialContent;
   return (
     <div
       className={
-        "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 min-w-full"
+        "prose prose-sm max-w-none prose-code:text-wrap prose-code:break-all prose-code:!p-2 min-w-full break-all"
       }
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>

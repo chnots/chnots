@@ -1,55 +1,75 @@
 import request from "@/lib/request";
 import {
-  ChnotArchiveReq,
-  ChnotKindRelQueryRsp,
-  ChnotOverwriteRecordReq,
-  ChnotOverwriteRecordRsp,
-  ChnotQueryReq,
-  ChnotQueryRsp,
-  ChnotTagNamesRsp,
-  ChnotTagQueryReq,
+  ChnotThreadArchiveReq,
+  ChnotThreadQueryReq,
+  ChnotThreadQueryRsp,
+  ChnotThreadTagQueryReq,
+  ChnotOverwriteThreadMetaReq,
+  MdwtRecordsReq,
+  MdwtRecordsRsp,
+  ChnotThreadMetaRsp,
+  ChnotThreadTagQueryRsp,
   ChnotOverwriteMetaReq,
-  ToentGuessReq,
-  ToentGuessRsp,
+  ChnotOverwriteMetaRsp,
+  ChnotOverwriteMdwtReq,
+  ChnotOverwriteMdwtRsp,
 } from "./dto";
 import { TID } from "@/lib/id_util";
+import { ToentGuessReq, ToentGuessRsp } from "../toent/dto";
+import { TodoEvent, ToentTimeEvent } from "../toent/po";
 
 export const chnotQuery = async (
-  req: ChnotQueryReq,
-): Promise<ChnotQueryRsp> => {
+  req: ChnotThreadQueryReq,
+): Promise<ChnotThreadQueryRsp> => {
   return await request.postJson(`api/v1/chnot-query`, req);
 };
 
-export const chnotDelete = async (req: ChnotArchiveReq) => {
+export const chnotDelete = async (req: ChnotThreadArchiveReq) => {
   return await request.postJson(`api/v1/chnot-deletion`, req);
 };
 
-export const chnotOverwriteRecord = async (
-  req: ChnotOverwriteRecordReq,
-): Promise<ChnotOverwriteRecordRsp> => {
-  return await request.putJson(`api/v1/chnot-overwrite-record`, req);
+export const chnotOverwriteMdwts = async (
+  req: ChnotOverwriteMdwtReq,
+): Promise<ChnotOverwriteMdwtRsp> => {
+  return await request.putJson(`api/v1/chnot-overwrite-mdwts`, req);
 };
 
-export const chnotOverwriteMeta = async (req: ChnotOverwriteMetaReq) => {
+export const chnotOverwriteBlockMetas = async (
+  req: ChnotOverwriteMetaReq,
+): Promise<ChnotOverwriteMetaRsp> => {
+  return await request.putJson(`api/v1/chnot-overwrite-block-metas`, req);
+};
+
+export const MdwtRecords = async (
+  req: MdwtRecordsReq,
+): Promise<MdwtRecordsRsp> => {
+  return await request.postJson(`api/v1/mdwt-blocks`, req);
+};
+
+export const chnotMeta = async (
+  chnot_otid: TID,
+): Promise<ChnotThreadMetaRsp> => {
+  return await request.get(`api/v1/chnot-meta/${chnot_otid}`);
+};
+
+export const chnotOverwriteMeta = async (req: ChnotOverwriteThreadMetaReq) => {
   return await request.postJson(`api/v1/chnot-overwrite-meta`, req);
 };
 
 export const chnotTagNames = async (
-  req: ChnotTagQueryReq,
-): Promise<ChnotTagNamesRsp> => {
+  req: ChnotThreadTagQueryReq,
+): Promise<ChnotThreadTagQueryRsp<string>> => {
   return await request.postJson(`api/v1/chnot-tag-names`, req);
 };
 
-export const toentGuess = async (
+export const toentTimeEventGuess = async (
   req: ToentGuessReq,
-): Promise<ToentGuessRsp> => {
-  return await request.postJson(`api/v1/toent-guess`, req);
+): Promise<ToentGuessRsp<ToentTimeEvent>> => {
+  return await request.postJson(`api/v1/toent-timeevent-guess`, req);
 };
 
-export const chnotQueryKindRel = async (
-  chnotMetaTid: TID,
-): Promise<ChnotKindRelQueryRsp> => {
-  return await request.get(`/api/v1/chnot-query-kind-rel`, {
-    meta_otid: chnotMetaTid,
-  });
+export const toentTodoEventGuess = async (
+  req: ToentGuessReq,
+): Promise<ToentGuessRsp<TodoEvent>> => {
+  return await request.postJson(`api/v1/toent-todoevent-guess`, req);
 };

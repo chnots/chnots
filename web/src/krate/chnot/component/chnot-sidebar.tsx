@@ -181,7 +181,7 @@ const ChnotSidebar = () => {
             {[...chnotMapByMetaId.dbCache.values()].map((chnot) => (
               <ChnotSidebarItem
                 chnot={chnot}
-                key={chnot.record.tid}
+                key={chnot.head_record.tid}
                 showKSpace={mkspaces.length > 0}
               />
             ))}

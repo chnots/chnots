@@ -16,43 +16,67 @@ use super::*;
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
+        .route("/api/v1/chnot-overwrite-mdwts", put(chnot_overwrite_mdwts))
+        .route("/api/v1/chnot-overwrite-metas", put(chnot_overwrite_metas))
         .route(
-            "/api/v1/chnot-overwrite-blocks",
-            put(chnot_overwrite_blocks),
+            "/api/v1/chnot-thread-overwrite-meta",
+            post(chnot_thread_overwrite_meta),
         )
-        .route("/api/v1/chnot-overwrite-meta", post(chnot_overwrite_meta))
-        .route("/api/v1/chnot-meta/{chnot_otid}", get(chnot_detail))
-        .route("/api/v1/mdwt-blocks", post(mdwt_blocks))
-        .route("/api/v1/chnot-query", post(chnot_query))
-        .route("/api/v1/chnot-tag-query", post(chnot_tag_query))
-        .route("/api/v1/chnot-tag-names", post(chnot_tag_names))
-        .route("/api/v1/chnot-tag-refresh-all", post(chnot_tag_refresh_all))
+        .route(
+            "/api/v1/chnot-thread-meta/{chnot_otid}",
+            get(chnot_thread_meta),
+        )
+        .route("/api/v1/mdwt-records", post(mdwt_records))
+        .route("/api/v1/chnot-thread-query", post(chnot_thread_query))
+        .route(
+            "/api/v1/chnot-thread-tag-query",
+            post(chnot_thread_tag_query),
+        )
+        .route(
+            "/api/v1/chnot-thread-tag-names",
+            post(chnot_thread_tag_names),
+        )
+        .route(
+            "/api/v1/chnot-thread-tag-refresh-all",
+            post(chnot_thread_tag_refresh_all),
+        )
 }
 
-async fn chnot_overwrite_blocks(
+async fn chnot_overwrite_mdwts(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotOverwriteBlockReq>,
-) -> KResponse<ChnotOverwriteRecordRsp> {
+    Json(req): Json<ChnotOverwriteMdwtReq>,
+) -> KResponse<ChnotOverwriteMdwtRsp> {
     state
-        .chnot_overwrite_records(kreq(headers, req))
+        .chnot_overwrite_block_mdwts(kreq(headers, req))
         .await
         .into()
 }
 
-async fn mdwt_blocks(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<MdwtBlocksReq>,
-) -> KResponse<MdwtBlocksRsp> {
-    state.mdwt_blocks(kreq(headers, req)).await.into()
-}
-
-async fn chnot_overwrite_meta(
+async fn chnot_overwrite_metas(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotOverwriteMetaReq>,
 ) -> KResponse<ChnotOverwriteMetaRsp> {
+    state
+        .chnot_overwrite_block_metas(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn mdwt_records(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<MdwtRecordsReq>,
+) -> KResponse<MdwtRecordsRsp> {
+    state.mdwt_blocks(kreq(headers, req)).await.into()
+}
+
+async fn chnot_thread_overwrite_meta(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotOverwriteThreadMetaReq>,
+) -> KResponse<ChnotOverwriteThreadMetaRsp> {
     state
         .mapper
         .chnot_overwrite_meta(kreq(headers, req))
@@ -60,36 +84,36 @@ async fn chnot_overwrite_meta(
         .into()
 }
 
-async fn chnot_query(
+async fn chnot_thread_query(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotQueryReq>,
-) -> KResponse<ChnotQueryRsp<Chnot>> {
+    Json(req): Json<ChnotThreadQueryReq>,
+) -> KResponse<ChnotThreadQueryRsp> {
     state.mapper.chnot_query(kreq(headers, req)).await.into()
 }
 
-async fn chnot_detail(
+async fn chnot_thread_meta(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Path(chnot_otid): Path<TID>,
-) -> KResponse<ChnotMetaRsp> {
+) -> KResponse<ChnotThreadMetaRsp> {
     state
         .mapper
         .chnot_meta(kreq(
             headers,
-            ChnotMetaReq {
-                chnot_meta_otid: chnot_otid,
+            ChnotThreadMetaReq {
+                thread_otid: chnot_otid,
             },
         ))
         .await
         .into()
 }
 
-async fn chnot_tag_query(
+async fn chnot_thread_tag_query(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotTagQueryReq>,
-) -> KResponse<ChnotTagQueryRsp<ChnotTag>> {
+    Json(req): Json<ChnotThreadTagQueryReq>,
+) -> KResponse<ChnotThreadTagQueryRsp<ChnotThreadTag>> {
     state
         .mapper
         .chnot_tag_query(kreq(headers, req))
@@ -97,11 +121,11 @@ async fn chnot_tag_query(
         .into()
 }
 
-async fn chnot_tag_names(
+async fn chnot_thread_tag_names(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotTagQueryReq>,
-) -> KResponse<ChnotTagQueryRsp<String>> {
+    Json(req): Json<ChnotThreadTagQueryReq>,
+) -> KResponse<ChnotThreadTagQueryRsp<String>> {
     state
         .mapper
         .chnot_tag_names(kreq(headers, req))
@@ -109,7 +133,10 @@ async fn chnot_tag_names(
         .into()
 }
 
-async fn chnot_tag_refresh_all(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
+async fn chnot_thread_tag_refresh_all(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+) -> KResponse<()> {
     state
         .mapper
         .chnot_tag_update_all(read_kspace_from_header(&headers))

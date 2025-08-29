@@ -4,9 +4,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
 pub enum OtidTableEnum {
     MdwtRecord,
-    ChnotMetadata,
-
-    ChnotTag,
+    ChnotThreadMeta,
+    ChnotThreadTag,
+    ChnotMeta,
+    ChnotToent,
     LLMChatBot,
     LLMChatRecord,
     LLMChatTemplate,
@@ -19,6 +20,4 @@ pub enum OtidTableEnum {
     KTabCellDecimal,
     KTabCellText,
     KFileMeta, // inline k file is a specifal type file, so we sync it with kfilemeta
-    ChnotBlockMeta,
-    ChnotBlockToent,
 }

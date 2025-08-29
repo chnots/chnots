@@ -3,7 +3,7 @@ use chin_sql::SqlValue;
 use chin_sql::str_type::Text;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-/// Chnot: knot, which stands for the note.
+/// ChnotThread: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
 /// so I use "knot" as the basic unit for my notebook,
@@ -57,7 +57,7 @@ fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotMetadata {
+pub struct ChnotThreadMeta {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
@@ -69,7 +69,7 @@ pub struct ChnotMetadata {
     pub tid: TID,
 }
 
-impl Curd for ChnotMetadata {
+impl Curd for ChnotThreadMeta {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
         Self::pkey_cond(self.otid)
     }
@@ -77,33 +77,33 @@ impl Curd for ChnotMetadata {
         self.tid
     }
 }
-impl_otid_support! {ChnotMetadata}
+impl_otid_support! {ChnotThreadMeta}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotTag {
+pub struct ChnotThreadTag {
     #[gts_primary]
     pub tag: Varchar<800>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub meta_otid: TID,
+    pub thread_otid: TID,
     pub kspace: Varchar<40>,
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
 }
 
-impl Curd for ChnotTag {
+impl Curd for ChnotThreadTag {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.tag.clone(), self.meta_otid)
+        Self::pkey_cond(self.tag.clone(), self.thread_otid)
     }
     fn tid(&self) -> TID {
         self.tid
     }
 }
 
-impl_otid_support! {ChnotTag}
+impl_otid_support! {ChnotThreadTag}
 
-impl AsRef<str> for ChnotTag {
+impl AsRef<str> for ChnotThreadTag {
     fn as_ref(&self) -> &str {
         self.tag.as_str()
     }
@@ -167,14 +167,14 @@ fn todo_priority_enum_to_sql(this: Option<TodoPriorityEnum>) -> Option<i64> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotBlockMeta {
+pub(crate) struct ChnotMeta {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
 
     #[gts_key]
     #[gts_type = "i64"]
-    pub chnot_otid: TID,
+    pub thread_otid: TID,
 
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
@@ -188,13 +188,13 @@ pub(crate) struct ChnotBlockMeta {
     pub tid: TID,
 }
 
-impl TryFrom<&KDbRow> for ChnotBlockMeta {
+impl TryFrom<&KDbRow> for ChnotMeta {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         Ok(Self {
             otid: value.try_get(Self::OTID)?,
-            chnot_otid: value.try_get(Self::CHNOT_OTID)?,
+            thread_otid: value.try_get(Self::THREAD_OTID)?,
             kind: value.try_get(Self::KIND)?,
             kind_id: value.try_get(Self::KIND_ID)?,
             korder: value.try_get(Self::KORDER)?,
@@ -203,7 +203,7 @@ impl TryFrom<&KDbRow> for ChnotBlockMeta {
     }
 }
 
-impl Curd for ChnotBlockMeta {
+impl Curd for ChnotMeta {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
         Self::pkey_cond(self.otid)
     }
@@ -213,16 +213,16 @@ impl Curd for ChnotBlockMeta {
     }
 }
 
-impl_otid_support! {ChnotBlockMeta}
+impl_otid_support! {ChnotMeta}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ChnotBlockToent {
+pub(crate) struct ChnotToent {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub block_otid: TID,
+    pub chnot_otid: TID,
     #[gts_key]
     #[gts_type = "i64"]
-    pub chnot_otid: TID,
+    pub thread_otid: TID,
 
     #[gts_type = "Varchar<30>"]
     #[gts_tosql = "todo_state_enum_to_sql"]
@@ -241,13 +241,13 @@ pub(crate) struct ChnotBlockToent {
     pub tid: TID,
 }
 
-impl TryFrom<&KDbRow> for ChnotBlockToent {
+impl TryFrom<&KDbRow> for ChnotToent {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         Ok(Self {
-            block_otid: value.try_get(Self::BLOCK_OTID)?,
             chnot_otid: value.try_get(Self::CHNOT_OTID)?,
+            thread_otid: value.try_get(Self::THREAD_OTID)?,
             tid: value.try_get(Self::TID)?,
             todo_state: value.via_str_opt(Self::TODO_STATE)?,
             todo_priority: value.via_i64_opt(Self::TODO_PRIORITY)?,
@@ -257,9 +257,9 @@ impl TryFrom<&KDbRow> for ChnotBlockToent {
     }
 }
 
-impl Curd for ChnotBlockToent {
+impl Curd for ChnotToent {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.block_otid)
+        Self::pkey_cond(self.chnot_otid)
     }
 
     fn tid(&self) -> TID {
@@ -267,4 +267,4 @@ impl Curd for ChnotBlockToent {
     }
 }
 
-impl_otid_support! {ChnotBlockToent}
+impl_otid_support! {ChnotToent}
