@@ -1,0 +1,90 @@
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+
+import { SaveState } from "@/common/types";
+import { ChnotBlockMetaKind } from "../../vo";
+import { genUID, TID } from "@/lib/id_util";
+import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
+import { ChnotKind } from "@/krate/chnot/po";
+import { Button } from "@/common/component/ui/button";
+import ExcalidrawPreview from "@/krate/tool/excalidraw/component/excalidraw-preview";
+import {
+  ExcalidrawChnotState,
+  fetchExcalidraw,
+  saveExcalidraw,
+} from "@/krate/tool/excalidraw/service";
+
+const ExcalidrawBlock = ({
+  otid,
+  kindId: initialKindId,
+  setSaveState,
+  blockKindsRef,
+}: {
+  otid: TID;
+  kindId?: string;
+  isFocused?: boolean;
+  setSaveState: (saveState: SaveState) => void;
+  blockKindsRef: RefObject<Map<TID, ChnotBlockMetaKind>>;
+}) => {
+  const [kindId] = useState(initialKindId ?? genUID());
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<ExcalidrawChnotState>();
+  const savedFilesRef = useRef(new Map<string, string>());
+
+  useEffect(() => {
+    fetchExcalidraw(kindId).then((state) => {
+      if (state) {
+        setState({
+          excalidrawId: kindId,
+          elements: state.elements,
+          appState: state.appState,
+          files: state.files,
+        });
+      }
+    });
+  }, []);
+
+  const directlySave = useCallback(
+    (state: ExcalidrawChnotState, contentType: string) => {
+      saveExcalidraw({
+        savedFilesRef,
+        state,
+        contentType: contentType,
+        onSuccess: () => {
+          setState(state);
+          blockKindsRef.current.set(otid, {
+            otid: otid,
+            kind: ChnotKind.ExcalidrawV1,
+            kind_id: kindId,
+          });
+          setSaveState(SaveState.Saved);
+        },
+        onFail: () => {
+          setSaveState(SaveState.Error);
+        },
+      });
+    },
+    [kindId, otid],
+  );
+
+  return (
+    <div className="w-full flex flex-col">
+      <ExcalidrawPreview state={state} />
+      <Button onClick={() => setOpen((prev) => !prev)}>Edit</Button>
+      {open && (
+        <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0">
+          <Button onClick={() => setOpen(false)}>Close</Button>
+          <ExcalidrawEditor
+            excalidrawId={kindId}
+            state={state}
+            readOnly={false}
+            onSave={(state, contentType) => {
+              directlySave(state, contentType);
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ExcalidrawBlock;
