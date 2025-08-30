@@ -21,7 +21,7 @@ TYPE_MAP = {
     "SharedStr": "string",
     "u16": "number",
     "RecordState": "object",
-    "HashMap": "Map",
+    "HashMap": "Record",
 }
 
 
