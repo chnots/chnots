@@ -6,7 +6,7 @@ import {
   ChnotThreadQueryRsp,
   ChnotThreadTagSearchType,
 } from "./dto";
-import { chnotQuery } from "./service";
+import { chnotThreadQuery } from "./service";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
 import { kspaceStore, useKSpaceStore } from "../kspace/store";
@@ -70,7 +70,7 @@ export const useChnotStore = create(
       });
 
       const { chnotMapByMetaId, query, tags, kinds } = get();
-      const cs: ChnotThreadQueryRsp = await chnotQuery({
+      const cs: ChnotThreadQueryRsp = await chnotThreadQuery({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
@@ -157,7 +157,7 @@ export const useChnotStore = create(
             return !result;
           })
           .map((e) => {
-            return e.head_record.tid;
+            return e.head_chnot.tid;
           }),
       );
 

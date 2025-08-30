@@ -87,7 +87,7 @@ fn chnot_query_mapper(row: KDbRow) -> AResult<ChnotThread> {
         tid: row.try_get("meta_tid")?,
     };
     Ok(ChnotThread {
-        head_record: record,
+        head_chnot: record,
         meta,
     })
 }

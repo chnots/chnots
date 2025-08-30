@@ -14,7 +14,7 @@ export type ChnotThreadTagSearchType = {
 };
 
 export type ChnotThread = {
-  head_record: MdwtRecord;
+  head_chnot: MdwtRecord;
   meta: ChnotThreadMeta;
 };
 export type ChnotOverwriteThreadMetaReq = {

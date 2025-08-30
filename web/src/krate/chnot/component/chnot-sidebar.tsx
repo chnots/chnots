@@ -4,7 +4,6 @@ import { useChnotStore } from "@/krate/chnot/store";
 import KPageList from "@/common/component/kpagelist";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
-import { chnotTagNames } from "@/krate/chnot/service";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +24,7 @@ import { ChnotKindSelect } from "./chnot-kind-select";
 import { useCommonStore } from "@/common/store";
 import { NavLink } from "react-router-dom";
 import { RoutePaths } from "@/router";
+import { chnotThreadTagNames } from "../service";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotStore(
@@ -89,7 +89,7 @@ const ChnotSidebar = () => {
 
   useEffect(() => {
     if (tags) {
-      chnotTagNames({
+      chnotThreadTagNames({
         start_index: 0,
         page_size: 9999,
         tags,
@@ -180,8 +180,8 @@ const ChnotSidebar = () => {
           >
             {[...chnotMapByMetaId.dbCache.values()].map((chnot) => (
               <ChnotSidebarItem
-                chnot={chnot}
-                key={chnot.head_record.tid}
+                chnotThread={chnot}
+                key={chnot.head_chnot.tid}
                 showKSpace={mkspaces.length > 0}
               />
             ))}

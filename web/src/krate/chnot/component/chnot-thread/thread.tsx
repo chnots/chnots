@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ChnotBlockChrome from "./chnot/chrome";
 import { genTID, TID } from "@/lib/id_util";
-import { chnotMeta, chnotOverwriteBlockMetas } from "../../service";
+import { chnotOverwriteMetas, chnotThreadMeta } from "../../service";
 import { ChnotMetaKind } from "../vo";
 import { ChnotMeta } from "../../po";
 import { ChnotOverwriteMetaReqData } from "../../dto";
@@ -12,7 +12,7 @@ const ChnotBlocks = ({ threadOtid }: { threadOtid: TID }) => {
   const savedOrders = useRef<ChnotMeta[]>([]);
 
   useEffect(() => {
-    chnotMeta(threadOtid).then((rsp) => {
+    chnotThreadMeta(threadOtid).then((rsp) => {
       rsp.chnot_meta_sorted.forEach((meta) => {
         blockKinds.current.set(meta.otid, meta);
       });
@@ -55,7 +55,7 @@ const ChnotBlocks = ({ threadOtid }: { threadOtid: TID }) => {
       })
       .filter((e) => e !== null);
 
-    chnotOverwriteBlockMetas({
+    chnotOverwriteMetas({
       thread_otid: threadOtid,
       metas: toSave,
     });

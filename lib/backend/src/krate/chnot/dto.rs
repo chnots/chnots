@@ -12,7 +12,7 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThread {
-    pub head_record: MdwtRecord,
+    pub head_chnot: MdwtRecord,
     pub meta: ChnotThreadMeta,
 }
 

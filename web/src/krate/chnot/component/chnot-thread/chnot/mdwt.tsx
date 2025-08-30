@@ -1,11 +1,11 @@
 import useResizeObserver from "@react-hook/resize-observer";
 import { RefObject, useEffect, useRef, useState } from "react";
 import MarkdownViewer from "../../chnot-markdown-viewer";
-import { ChnotMeta, ChnotKind } from "../../../po";
+import { ChnotKind } from "../../../po";
 
 import {
   chnotOverwriteMdwts,
-  chnotTagNames,
+  chnotThreadTagNames,
   MdwtRecords,
   toentTodoEventGuess,
 } from "@/krate/chnot/service";
@@ -27,7 +27,7 @@ const chnotCompletions = async (
     return null;
   } else if (word.text.startsWith("#")) {
     options = (
-      await chnotTagNames({
+      await chnotThreadTagNames({
         query: word.text,
         start_index: 0,
         page_size: 20,
