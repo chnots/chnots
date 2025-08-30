@@ -9,7 +9,6 @@ import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
 import LLMChatPage from "./krate/llmchat/page/llmchat";
 import FullScreenTimer from "./krate/timer/timer";
-import ExcalidrawPage from "./krate/tool/excalidraw/page/excalidraw";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -57,16 +56,12 @@ const routes: RouteObject[] = [
         path: RoutePaths.Timer,
         element: <FullScreenTimer />,
       },
-      {
-        path: RoutePaths.ToolExcalidraw,
-        element: <ExcalidrawPage />,
-      },
     ],
   },
 ];
 
 const browserRoute = createBrowserRouter(routes, {
-    basename: "/",
+  basename: "/",
 });
 
 export default browserRoute;
