@@ -5,7 +5,6 @@ export const genUID = () => {
 };
 
 export type TID = number;
-export type OmitTID = TID;
 let counter = 0;
 
 export const genTID = () => {
