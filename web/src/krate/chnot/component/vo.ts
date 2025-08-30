@@ -1,5 +1,5 @@
 import { Varchar } from "@/lib/types";
-import { ChnotMeta, ChnotKind } from "../po";
+import { ChnotKind } from "../po";
 import { TID } from "@/lib/id_util";
 
 export type ChnotMetaKind = {

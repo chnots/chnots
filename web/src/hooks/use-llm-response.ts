@@ -1,6 +1,6 @@
 import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/po";
 import { LLMChatSessionDetail } from "@/krate/llmchat/dto";
-import { genUID, genTID, TID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -49,10 +49,10 @@ export const useLLMResponse = ({
   bot: LLMChatBot;
 }) => {
   const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(
-    undefined
+    undefined,
   );
   const [responseState, setResponseState] = useState<ResponseState>(
-    emptyResponse(detail, bot)
+    emptyResponse(detail, bot),
   );
   const abortSignal = useRef<AbortController>(null);
 

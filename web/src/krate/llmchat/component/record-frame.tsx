@@ -2,22 +2,6 @@ import clsx from "clsx";
 import Icon from "@/common/component/icon";
 import React, { useCallback, useRef, useState } from "react";
 import { Button as KButton } from "@/common/component/ui/button";
-import { TID } from "@/lib/id_util";
-
-const getAvatar = (role: string) => {
-  switch (role) {
-    case "user":
-      return <Icon.User className="h-8 w-8 mr-4" />;
-    case "assistant":
-      return <Icon.Bot className="h-8 w-8 mr-4" />;
-    case "assistant-response":
-      return <Icon.Bot className="h-8 w-8 mr-4" />;
-    case "system":
-      return <Icon.Contact className="h-8 w-8 mr-4" />;
-    default:
-      return <></>;
-  }
-};
 
 const RecordFrame = ({
   name,

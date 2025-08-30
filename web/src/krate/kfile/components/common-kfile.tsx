@@ -13,7 +13,6 @@ import FileNameToIcon from "./filename-to-icon";
 import { KFileMeta } from "../po";
 import { isTauri } from "@/lib/request";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Separator } from "@/common/component/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type FileLike = {

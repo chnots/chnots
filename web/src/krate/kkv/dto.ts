@@ -1,4 +1,4 @@
-import { DbText, SharedStr, Varchar } from "@/lib/types";
+import { DbText, Varchar } from "@/lib/types";
 import { KKV } from "./po";
 import { TID } from "@/lib/id_util";
 

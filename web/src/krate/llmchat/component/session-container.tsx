@@ -12,10 +12,7 @@ import {
   LLMChatSession,
   LLMChatTemplate,
 } from "@/krate/llmchat/po";
-import {
-  LLMChatSessionDetail,
-  LLMChatSessionDetailRsp,
-} from "@/krate/llmchat/dto";
+import { LLMChatSessionDetail } from "@/krate/llmchat/dto";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import {
   llmchatRecordInsert,
@@ -26,11 +23,7 @@ import {
 import RecordUser from "./record-user";
 import RecordAssistant from "./record-assistant";
 import LLMChatSessionInput from "./session-input";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-} from "@/common/component/ui/dialog";
+import { Dialog, DialogContent } from "@/common/component/ui/dialog";
 import TemplateForm from "./template-form";
 import { genTID, TID } from "@/lib/id_util";
 import { DialogTitle } from "@radix-ui/react-dialog";
@@ -322,7 +315,6 @@ const SessionContainer = ({
         onAppendRecord={(content) => {
           return appendUserMsg(content);
         }}
-        onNewButton={onNewButton}
       />
     </div>
   );

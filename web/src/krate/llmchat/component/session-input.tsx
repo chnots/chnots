@@ -6,11 +6,9 @@ import LLMChatBotSelect from "./bot-select";
 const LLMChatSessionInput = ({
   disabled,
   onAppendRecord,
-  onNewButton,
 }: {
   disabled: boolean;
   onAppendRecord: (content: string) => boolean;
-  onNewButton?: () => void;
 }) => {
   const [message, setMessage] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);

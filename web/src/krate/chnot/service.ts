@@ -1,6 +1,5 @@
 import request from "@/lib/request";
 import {
-  ChnotThreadArchiveReq,
   ChnotThreadQueryReq,
   ChnotThreadQueryRsp,
   ChnotThreadTagQueryReq,

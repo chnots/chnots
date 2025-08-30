@@ -25,7 +25,6 @@ import {
   KSpaceIcon,
   KSpaceSelectDropDownGroup,
 } from "@/krate/kspace/component/kspace-select";
-import { ChnotKindIcon } from "./chnot-kind-icon";
 import { useShallow } from "zustand/react/shallow";
 import TodoLabel from "@/krate/toent/component/todo-label";
 import { chnotThreadOverwriteMeta } from "../service";
@@ -66,7 +65,7 @@ ChnotSidebarTagItem.displayName = "ChnotThreadTagListItem";
 const ChnotSidebarItem = React.forwardRef(
   (
     {
-      chnotThread: chnotThread,
+      chnotThread,
       showKSpace,
     }: { chnotThread: ChnotThread; showKSpace: boolean },
     ref: ForwardedRef<HTMLLIElement>,

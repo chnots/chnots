@@ -5,7 +5,6 @@ import {
   LLMChatSession,
   LLMChatRecord,
 } from "./po";
-import { Varchar } from "@/lib/types";
 
 export type LLMChatListBotRsp = {
   bots: LLMChatBot[];

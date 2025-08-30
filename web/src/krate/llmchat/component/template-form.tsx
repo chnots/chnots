@@ -5,7 +5,7 @@ import { Input } from "@/common/component/ui/input";
 import { Label } from "@/common/component/ui/label";
 import { Textarea } from "@/common/component/ui/textarea";
 import { LLMChatTemplate } from "@/krate/llmchat/po";
-import { genTID, omit_tid_never } from "@/lib/id_util";
+import { genTID } from "@/lib/id_util";
 import { detectSVG } from "@/lib/svg-utils";
 import React, { useState } from "react";
 import { useLLMChatStore } from "../store";
@@ -29,7 +29,7 @@ const TemplateForm = ({
   const { refreshTemplates } = useLLMChatStore();
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };

@@ -9,13 +9,11 @@ import { CommonKFile } from "@/krate/kfile/components/common-kfile";
 const KFileBlock = ({
   otid,
   kindId,
-  readonly,
   setSaveState,
   blockKindsRef,
 }: {
   otid: TID;
   kindId?: string;
-  readonly?: boolean;
   setSaveState: (saveState: SaveState) => void;
   blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
 }) => {

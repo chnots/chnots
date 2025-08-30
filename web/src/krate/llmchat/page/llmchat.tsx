@@ -4,7 +4,7 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { useEffect, useState } from "react";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { v4 as uuid } from "uuid";
-import { genUID, genTID, TID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
 import { useCommonStore } from "@/common/store";
 
 const LLMChatPage = () => {

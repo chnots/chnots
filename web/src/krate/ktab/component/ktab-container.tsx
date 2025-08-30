@@ -3,7 +3,7 @@ import { KTabMeta } from "../po";
 import { DataTable } from "./data-table";
 import { ktabGetViewValue } from "../dto";
 import { KTabRowData } from "./editable-cell";
-import { genTID, omit_tid_never, TID } from "@/lib/id_util";
+import { genTID } from "@/lib/id_util";
 import { useEffect, useState } from "react";
 import { TableForm } from "./table-meta";
 import { TypeOf, ZodObject, ZodString, ZodOptional, ZodTypeAny } from "zod";
@@ -45,7 +45,6 @@ const KTabChnot = ({
           table_id: number,
           start: number,
           size: number,
-          column_name?: string,
         ): Promise<KTabRowData[]> => {
           const data = await ktabCellsRead({
             table_id,

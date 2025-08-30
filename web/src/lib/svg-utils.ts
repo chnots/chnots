@@ -38,7 +38,7 @@ export const detectSVG = (s: string) => {
 
     const svgElement = doc.documentElement;
     return svgElement.tagName.toLowerCase() === "svg";
-  } catch (error) {
+  } catch (_e) {
     return false;
   }
 };

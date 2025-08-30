@@ -1,9 +1,9 @@
 import { TID } from "@/lib/id_util";
 import { SyncAllEndpoints, SyncEndpoint } from "./po";
 
-type TheSameKey = Object;
-type SyncTableEnum = Object;
-type SyncShakeRspEnum = Object;
+type TheSameKey = object;
+type SyncTableEnum = object;
+type SyncShakeRspEnum = object;
 
 export type SyncShakeReq = {
   client_id: string;

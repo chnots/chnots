@@ -59,7 +59,7 @@ export const Backlink: MarkdownConfig = {
 };
 
 const hashtagRE =
-  /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~\[\]\\\s]+/;
+  /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~[\]\\\s]+/;
 
 export const Hashtag: MarkdownConfig = {
   defineNodes: [
@@ -202,7 +202,7 @@ export const ChnotProps: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         return parseChnotProps(cx, line);
       },
-      endLeaf(cx: BlockContext, line, leaf) {
+      endLeaf(cx: BlockContext, line, _leaf) {
         // try break the cx
         return chnotPropsRE.test(line.text);
       },

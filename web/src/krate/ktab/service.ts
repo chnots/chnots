@@ -2,8 +2,8 @@ import request from "@/lib/request";
 import {
   KTabCellsOverwriteReq,
   KTabOverwriteCellsRsp,
-  KTabOverwriteMetaReq as KTabMetaOverwriteReq,
-  KTabMetaOverwriteRsp as KTabMetaOverwriteRsp,
+  KTabOverwriteMetaReq,
+  KTabMetaOverwriteRsp,
   KTabRowsQueryReq,
   KTabRowsQueryRsp,
   KTabMetaQueryReq as KTabMetaQueryReq,
@@ -17,7 +17,7 @@ export const ktabMetaRead = async (
 };
 
 export const ktabMetaOverwrite = async (
-  req: KTabMetaOverwriteReq,
+  req: KTabOverwriteMetaReq,
 ): Promise<KTabMetaOverwriteRsp> => {
   return await request.putJson(`/api/v1/ktab-meta-overwrite`, req);
 };

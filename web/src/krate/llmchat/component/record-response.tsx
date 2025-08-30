@@ -11,7 +11,7 @@ import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
-import { genTID, omit_tid_never, TID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
 
 export const RecordAnswering = ({
   containerSession,

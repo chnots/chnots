@@ -71,7 +71,7 @@ function taskList(turndownService: TurndownService) {
     },
     replacement: function (content: any, node: HTMLInputElement) {
       const checkbox = node.querySelector(
-        'input[type="checkbox"]'
+        'input[type="checkbox"]',
       ) as HTMLInputElement;
       const isChecked = checkbox.checked;
 
@@ -92,7 +92,7 @@ function preserveDetail(turndownService: TurndownService) {
 
       if (summary) {
         detailSummary = `<summary>${turndownService.turndown(
-          summary.innerHTML
+          summary.innerHTML,
         )}</summary>`;
         summary.remove();
       }
@@ -111,7 +111,7 @@ function mathInline(turndownService: TurndownService) {
         node.getAttribute("data-type") === "mathInline"
       );
     },
-    replacement: function (content: any, node: HTMLInputElement) {
+    replacement: function (content: any, _node: HTMLInputElement) {
       return `$${content}$`;
     },
   });
@@ -125,7 +125,7 @@ function mathBlock(turndownService: TurndownService) {
         node.getAttribute("data-type") === "mathBlock"
       );
     },
-    replacement: function (content: any, node: HTMLInputElement) {
+    replacement: function (content: any, _node: HTMLInputElement) {
       return `\n$$${content}$$\n`;
     },
   });

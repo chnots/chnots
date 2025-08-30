@@ -43,9 +43,7 @@ const TagsView = () => {
           <Button
             key={tag}
             onClick={() => {
-              setTagsInset([
-                ...new Set([...tags.Inset.filter((e) => e != tag)]),
-              ]);
+              setTagsInset([...new Set(tags.Inset.filter((e) => e != tag))]);
             }}
           >
             {tag}
@@ -73,7 +71,6 @@ const ChnotSidebar = () => {
 
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
-  const { toggleSettings, showSettings } = useCommonStore();
 
   const { currentKSpace, selectKSpace, mkspaces } = useKSpaceStore((store) => {
     return {

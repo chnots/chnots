@@ -9,7 +9,7 @@ import {
 import { chnotThreadQuery } from "./service";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
-import { kspaceStore, useKSpaceStore } from "../kspace/store";
+import { kspaceStore } from "../kspace/store";
 import { ChnotKind } from "./po";
 
 const newChnotMap = () => {

@@ -96,14 +96,14 @@ const MdwtRecord = ({
     async (req: ChnotOverwriteMdwtReq) => {
       try {
         setSaveState(SaveState.Saving);
-        const rsp = await chnotOverwriteMdwts(req);
+        await chnotOverwriteMdwts(req);
         blockKindsRef.current.set(otid, {
           otid: otid,
           kind: ChnotKind.MarkdownWithToent,
           kind_id: otid.toString(),
         });
         setSaveState(SaveState.Saved);
-      } catch (ex) {
+      } catch (_ex) {
         setSaveState(SaveState.Error);
       }
     },
