@@ -12,7 +12,6 @@ const useDebounce = (
     return () => {
       if (argsRef.current && executeOnExit) {
         window.clearTimeout(timeoutRef.current);
-        console.log("execute on exit", argsRef);
         fn(...argsRef.current);
         argsRef.current = undefined;
       }
@@ -24,7 +23,6 @@ const useDebounce = (
       argsRef.current = args;
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(() => {
-        console.log("execute", args);
         fn(...args);
         // do nothing when exited if we invoke it.
         argsRef.current = undefined;
