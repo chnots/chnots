@@ -176,7 +176,7 @@ async fn record_insertion(
 ) -> KResponse<LLMChatInsertRecordRsp> {
     state
         .mapper
-        .llm_chat_insert_record(kreq(headers, req))
+        .llm_chat_overwrite_record(kreq(headers, req))
         .await
         .into()
 }

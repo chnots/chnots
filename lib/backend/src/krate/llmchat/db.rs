@@ -141,7 +141,7 @@ impl LLMChatMapper for KDb {
         Ok(LLMChatInsertSessionRsp {})
     }
 
-    async fn llm_chat_insert_record(
+    async fn llm_chat_overwrite_record(
         &self,
         req: KReq<LLMChatInsertRecordReq>,
     ) -> AResult<LLMChatInsertRecordRsp> {

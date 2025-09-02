@@ -6,7 +6,13 @@ import {
   LLMChatTemplate,
 } from "../po";
 import LoadingPage from "@/common/pages/loading-page";
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  createRef,
+  RefObject,
+  useContext,
+  useState,
+} from "react";
 import { createStore, StoreApi, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
@@ -39,20 +45,23 @@ export type LLMChatContextState = {
   template?: LLMChatTemplate;
   session?: LLMChatSession;
   records?: LLMChatRecord[];
-  persistedIds: Set<TID>;
+  persistedIds: RefObject<Set<TID> | null>;
   responsing: boolean;
   setSession: (session: LLMChatSession) => void;
   setRecords: (records: LLMChatRecord[]) => void;
   pushPersisted: (recordOtid: TID) => void;
   appendRecord: (record: LLMChatRecord) => void;
+  updateRecord: (record: LLMChatRecord) => void;
   regenrate: (recordOtid: TID) => Promise<void>;
   setResponsing: (flag: boolean) => void;
 } & LLMChatContextProps;
 
 function createLLMChatStore(props: LLMChatContextProps) {
+  const refObj = createRef<Set<TID>>();
+  refObj.current = new Set();
   return createStore<LLMChatContextState>()((set) => ({
     ...props,
-    persistedIds: new Set(),
+    persistedIds: refObj,
     responsing: false,
     setSession: (session: LLMChatSession) => {
       set((prev) => {
@@ -72,20 +81,35 @@ function createLLMChatStore(props: LLMChatContextProps) {
     pushPersisted(recordOtid) {
       set((prev) => {
         const ids = prev.persistedIds;
-        ids.add(recordOtid);
+        ids.current!.add(recordOtid);
         return { ...prev, persistedIds: ids };
       });
     },
-
     appendRecord(record) {
       set((prev) => {
         return { ...prev, records: [...(prev.records ?? []), record] };
       });
     },
+    updateRecord(record) {
+      set((prev) => {
+        console.log("prev", prev.persistedIds);
+        prev.persistedIds.current!.delete(record.otid);
+        return {
+          ...prev,
+          records: prev.records?.map((e) => {
+            if (e.otid === record.otid) {
+              return record;
+            } else {
+              return e;
+            }
+          }),
+        };
+      });
+    },
     async regenrate(recordOtid) {
       const session = this.session;
       if (session && this.records) {
-        if (this.persistedIds.has(recordOtid)) {
+        if (this.persistedIds.current!.has(recordOtid)) {
           await llmchatSessionTruncate({
             session_otid: session.otid,
             remove_rid_included: recordOtid,
@@ -160,6 +184,7 @@ const SessionContainer = ({
     appendRecord,
     setSession,
     setResponsing,
+    persistedIds,
   } = useLLMChatComStore((store) => {
     return {
       session: store.session,
@@ -169,6 +194,7 @@ const SessionContainer = ({
       appendRecord: store.appendRecord,
       setResponsing: store.setResponsing,
       responsing: store.responsing,
+      persistedIds: store.persistedIds,
     };
   });
   const { refreshTemplates, refreshBots } = useLLMChatStore();
@@ -176,8 +202,6 @@ const SessionContainer = ({
     refreshTemplates();
     refreshBots();
   }, []);
-
-  const persistedIds = useRef<Set<TID>>(new Set());
 
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef<boolean>(false);
@@ -190,7 +214,7 @@ const SessionContainer = ({
         const rsp = await llmchatSessionRecords(parseInt(kindId, 10));
 
         if (rsp.session) {
-          const pids = persistedIds.current;
+          const pids = persistedIds.current!;
           rsp.records.forEach((r) => {
             pids.add(r.otid);
           });
@@ -228,7 +252,7 @@ const SessionContainer = ({
         // At least one user message is inserted
         records?.some((e) => e.role === "user")
       ) {
-        const pids = persistedIds.current;
+        const pids = persistedIds.current!;
         console.log("pids: ", pids, session.otid);
         if (!pids.has(session.otid)) {
           // As the first record is always system template.

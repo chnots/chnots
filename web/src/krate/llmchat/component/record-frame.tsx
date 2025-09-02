@@ -9,6 +9,8 @@ const RecordFrame = ({
   limitHeight: initLimitHeight,
   onRegenerate,
   onCopy,
+  onEdit,
+  onOk,
   logo,
   children,
   justifyEnd,
@@ -19,6 +21,8 @@ const RecordFrame = ({
   justifyEnd?: boolean;
   onCopy?: () => void;
   onRegenerate?: () => void;
+  onEdit?: () => void;
+  onOk?: () => void;
   logo?: React.ReactElement;
   children: React.ReactNode;
 }) => {
@@ -64,6 +68,28 @@ const RecordFrame = ({
               title="Regenerate"
             >
               <Icon.RotateCcw className="h-4 w-4 text-gray-700" />
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
+              aria-label="Regenerate"
+              tabIndex={0}
+              title="Regenerate"
+            >
+              <Icon.Edit3 className="h-4 w-4 text-gray-700" />
+            </button>
+          )}
+          {onOk && (
+            <button
+              onClick={onOk}
+              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
+              aria-label="Regenerate"
+              tabIndex={0}
+              title="Regenerate"
+            >
+              <Icon.Save className="h-4 w-4 text-gray-700" />
             </button>
           )}
           {limitHeight !== undefined && (

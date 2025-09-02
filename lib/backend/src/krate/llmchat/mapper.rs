@@ -21,7 +21,7 @@ pub trait LLMChatMapper {
         req: KReq<LLMChatInsertSessionReq>,
     ) -> AResult<LLMChatInsertSessionRsp>;
 
-    async fn llm_chat_insert_record(
+    async fn llm_chat_overwrite_record(
         &self,
         req: KReq<LLMChatInsertRecordReq>,
     ) -> AResult<LLMChatInsertRecordRsp>;
@@ -93,11 +93,11 @@ impl LLMChatMapper for MapperType {
         expand_mt_branch!(self.llm_chat_insert_session(req))
     }
 
-    async fn llm_chat_insert_record(
+    async fn llm_chat_overwrite_record(
         &self,
         req: KReq<super::LLMChatInsertRecordReq>,
     ) -> AResult<super::LLMChatInsertRecordRsp> {
-        expand_mt_branch!(self.llm_chat_insert_record(req))
+        expand_mt_branch!(self.llm_chat_overwrite_record(req))
     }
 
     async fn llm_chat_list_bots(
