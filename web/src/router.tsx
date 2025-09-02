@@ -2,7 +2,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import ToentPage from "@/common/pages/toent-page";
-import ChnotPage from "@/krate/chnot/page/chnot";
+import ChnotPage from "@/krate/chnot/page/chnot-page";
 import SettingsPage from "@/common/pages/settings-page";
 import App from "@/app";
 import { Toaster } from "sonner";

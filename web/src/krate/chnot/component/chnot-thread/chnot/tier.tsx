@@ -13,7 +13,7 @@ const Tier = ({
 }) => {
   return (
     hidden || (
-      <div>
+      <div className="flex pt-0.5 mb-3q space-x-2 align-middle items-center">
         {Object.values(ChnotKind).map((e) => (
           <Toggle
             key={e}

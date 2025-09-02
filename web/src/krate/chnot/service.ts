@@ -12,6 +12,7 @@ import {
   ChnotOverwriteMetaRsp,
   ChnotOverwriteMdwtReq,
   ChnotOverwriteMdwtRsp,
+  ChnotOverwriteThreadMetaRsp,
 } from "./dto";
 import { TID } from "@/lib/id_util";
 import { ToentGuessReq, ToentGuessRsp } from "../toent/dto";
@@ -49,7 +50,7 @@ export const chnotThreadMeta = async (
 
 export const chnotThreadOverwriteMeta = async (
   req: ChnotOverwriteThreadMetaReq,
-) => {
+): Promise<ChnotOverwriteThreadMetaRsp> => {
   return await request.postJson(`api/v1/chnot-thread-overwrite-meta`, req);
 };
 

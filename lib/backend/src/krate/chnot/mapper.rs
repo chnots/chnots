@@ -6,16 +6,19 @@ use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 use super::*;
 
 pub trait ChnotMapper {
-    async fn chnot_overwrite_block_mdwts(
+    async fn chnot_overwrite_mdwt(
         &self,
         req: KReq<ChnotOverwriteMdwtReq>,
     ) -> AResult<ChnotOverwriteMdwtRsp>;
-    async fn chnot_overwrite_block_metas(
+    async fn chnot_overwrite_metas(
         &self,
         req: KReq<ChnotOverwriteMetaReq>,
     ) -> AResult<ChnotOverwriteMetaRsp>;
-    async fn chnot_query(&self, req: KReq<ChnotThreadQueryReq>) -> AResult<ChnotThreadQueryRsp>;
-    async fn chnot_overwrite_meta(
+    async fn chnot_thread_query(
+        &self,
+        req: KReq<ChnotThreadQueryReq>,
+    ) -> AResult<ChnotThreadQueryRsp>;
+    async fn chnot_overwrite_thread_meta(
         &self,
         req: KReq<ChnotOverwriteThreadMetaReq>,
     ) -> AResult<ChnotOverwriteThreadMetaRsp>;
@@ -30,29 +33,33 @@ pub trait ChnotMapper {
         req: KReq<ChnotThreadTagQueryReq>,
     ) -> AResult<ChnotThreadTagQueryRsp<String>>;
 
-    async fn chnot_meta(&self, req: KReq<ChnotThreadMetaReq>) -> AResult<ChnotThreadMetaRsp>;
+    async fn chnot_thread_meta(&self, req: KReq<ChnotThreadMetaReq>)
+    -> AResult<ChnotThreadMetaRsp>;
     async fn mdwt_blocks(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp>;
 
     async fn ensure_table_chnot(&self) -> EResult;
 }
 
 impl ChnotMapper for MapperType {
-    async fn chnot_overwrite_block_mdwts(
+    async fn chnot_overwrite_mdwt(
         &self,
         req: KReq<ChnotOverwriteMdwtReq>,
     ) -> AResult<ChnotOverwriteMdwtRsp> {
-        expand_mt_branch!(self.chnot_overwrite_block_mdwts(req))
+        expand_mt_branch!(self.chnot_overwrite_mdwt(req))
     }
 
-    async fn chnot_query(&self, req: KReq<ChnotThreadQueryReq>) -> AResult<ChnotThreadQueryRsp> {
-        expand_mt_branch!(self.chnot_query(req))
+    async fn chnot_thread_query(
+        &self,
+        req: KReq<ChnotThreadQueryReq>,
+    ) -> AResult<ChnotThreadQueryRsp> {
+        expand_mt_branch!(self.chnot_thread_query(req))
     }
 
-    async fn chnot_overwrite_meta(
+    async fn chnot_overwrite_thread_meta(
         &self,
         req: KReq<ChnotOverwriteThreadMetaReq>,
     ) -> AResult<ChnotOverwriteThreadMetaRsp> {
-        expand_mt_branch!(self.chnot_overwrite_meta(req))
+        expand_mt_branch!(self.chnot_overwrite_thread_meta(req))
     }
 
     async fn ensure_table_chnot(&self) -> EResult {
@@ -77,18 +84,21 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_tag_update_all(kspace))
     }
 
-    async fn chnot_meta(&self, req: KReq<ChnotThreadMetaReq>) -> AResult<ChnotThreadMetaRsp> {
-        expand_mt_branch!(self.chnot_meta(req))
+    async fn chnot_thread_meta(
+        &self,
+        req: KReq<ChnotThreadMetaReq>,
+    ) -> AResult<ChnotThreadMetaRsp> {
+        expand_mt_branch!(self.chnot_thread_meta(req))
     }
 
     async fn mdwt_blocks(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp> {
         expand_mt_branch!(self.mdwt_blocks(req))
     }
 
-    async fn chnot_overwrite_block_metas(
+    async fn chnot_overwrite_metas(
         &self,
         req: KReq<ChnotOverwriteMetaReq>,
     ) -> AResult<ChnotOverwriteMetaRsp> {
-        expand_mt_branch!(self.chnot_overwrite_block_metas(req))
+        expand_mt_branch!(self.chnot_overwrite_metas(req))
     }
 }

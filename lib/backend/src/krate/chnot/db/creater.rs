@@ -64,7 +64,8 @@ impl<'a> KDbTx<'a> {
         &self,
         blocks: Vec<ChnotOverwriteMetaReqData>,
         chnot_meta_otid: TID,
-    ) -> EResult {
+    ) -> AResult<Vec<ChnotMeta>> {
+        let mut metas = vec![];
         for b in blocks {
             let rec = ChnotMeta {
                 otid: b.otid,
@@ -75,19 +76,17 @@ impl<'a> KDbTx<'a> {
                 tid: TID::default(),
             };
 
+            metas.push(rec.clone());
+
             self.as_executor()
                 .omit_rows::<ChnotMeta>(rec.pkey())
                 .await?;
             self.exec(rec.to_sql_inserter()).await?;
         }
-        Ok(())
+        Ok(metas)
     }
 
-    async fn overwrite_block_record(
-        &self,
-        block: ChnotOverwriteMdwtReqData,
-        chnot_meta_otid: TID,
-    ) -> EResult {
+    async fn overwrite_mdwt_record(&self, block: ChnotOverwriteMdwtReqData) -> EResult {
         struct OldInfo {
             tid: TID,
             content: String,
@@ -147,18 +146,13 @@ impl<'a> KDbTx<'a> {
         Ok(())
     }
 
-    pub(super) async fn chnot_overwrite_mdwts(
+    pub(super) async fn chnot_overwrite_mdwt(
         &self,
         req: KReq<ChnotOverwriteMdwtReq>,
     ) -> AResult<ChnotOverwriteMdwtRsp> {
-        let ChnotOverwriteMdwtReq {
-            thread_otid: meta_otid,
-            mdwts: recs,
-        } = req.body;
+        let ChnotOverwriteMdwtReq { mdwt } = req.body;
 
-        for block in recs {
-            self.overwrite_block_record(block, meta_otid).await?;
-        }
+        self.overwrite_mdwt_record(mdwt).await?;
 
         Ok(ChnotOverwriteMdwtRsp { todo_event: None })
     }

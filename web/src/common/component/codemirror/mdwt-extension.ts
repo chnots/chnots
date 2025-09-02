@@ -158,7 +158,6 @@ const chnotPropsRE = /^\s*(;+)\s*([^:]+):(.*)$/;
 const parseChnotProps = (cx: BlockContext, line: Line) => {
   const match = chnotPropsRE.exec(line.text);
 
-  console.log("match chnot props: ", match, line.text);
   if (!match) return false;
 
   const base = cx.lineStart + match.index;

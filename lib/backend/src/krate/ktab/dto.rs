@@ -152,7 +152,7 @@ mod tests {
     #[test]
     fn test_key() {
         let req = KTabRowsQueryReq {
-            table_id: 100.into(),
+            table_id: 100.try_into().unwrap(),
             filter: super::KTabRowsQueryReqFilter::FieldSortPage {
                 field_name: "fn".to_owned(),
                 field_kind: crate::krate::ktab::KTabColumnStoreKind::Date,
@@ -167,9 +167,9 @@ mod tests {
     #[test]
     fn test_ktab_overwrite_cells_req() {
         let req = KTabCellsOverwriteReq {
-            table_id: 123.into(),
+            table_id: 123.try_into().unwrap(),
             cells: vec![KTabViewCell {
-                row_tid: 1.into(),
+                row_tid: 1.try_into().unwrap(),
                 column_name: "int".into(),
                 value: Some(KTabStoreValue::Decimal(123.into())),
             }],

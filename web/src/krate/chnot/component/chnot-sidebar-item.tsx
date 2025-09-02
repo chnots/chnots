@@ -79,8 +79,8 @@ const ChnotSidebarItem = React.forwardRef(
       useShallow((store) => {
         return {
           overwriteChnotCache: store.overwriteChnotCache,
-          setCurrentChnotMetaId: store.setCurrentChnotMetaId,
-          getCurrentChnot: store.getCurrentChnot,
+          setCurrentChnotMetaId: store.setCurrentThreadOtid,
+          getCurrentChnot: store.getCurrentThread,
           validateChnotCache: store.validateChnotCache,
         };
       }),
@@ -94,12 +94,11 @@ const ChnotSidebarItem = React.forwardRef(
 
     const { isMobile } = useSidebar();
 
-    const isSelected =
-      currentChnot?.head_chnot.tid === chnotThread.head_chnot.tid;
+    const isSelected = currentChnot?.meta.otid === chnotThread.meta.otid;
 
-    const title = chnotThread.head_chnot.content.startsWith("# ")
-      ? chnotThread.head_chnot.content.split("\n")[0].substring(2)
-      : chnotThread.head_chnot.content.substring(0, 500);
+    const title = chnotThread.head_content?.startsWith("# ")
+      ? chnotThread.head_content.split("\n")[0].substring(2)
+      : (chnotThread.head_content?.substring(0, 500) ?? "<unknown>");
 
     const onArchive = async () => {
       await chnotThreadOverwriteMeta({
@@ -120,7 +119,7 @@ const ChnotSidebarItem = React.forwardRef(
     };
 
     return (
-      <SidebarMenuItem key={chnotThread.head_chnot.tid}>
+      <SidebarMenuItem key={chnotThread.meta.otid}>
         <a
           href={"#" + chnotThread.meta.otid}
           key={chnotThread.meta.otid}
@@ -149,8 +148,8 @@ const ChnotSidebarItem = React.forwardRef(
             {chnotThread.meta.pin_time && (
               <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
             )}
-            {chnotThread.head_chnot.todo_event && (
-              <TodoLabel todoEvent={chnotThread.head_chnot.todo_event} />
+            {chnotThread.todo_event && (
+              <TodoLabel todoEvent={chnotThread.todo_event} />
             )}
           </div>
 

@@ -47,10 +47,7 @@ async fn chnot_overwrite_mdwts(
     state: State<ShareAppState>,
     Json(req): Json<ChnotOverwriteMdwtReq>,
 ) -> KResponse<ChnotOverwriteMdwtRsp> {
-    state
-        .chnot_overwrite_block_mdwts(kreq(headers, req))
-        .await
-        .into()
+    state.chnot_overwrite_mdwt(kreq(headers, req)).await.into()
 }
 
 async fn chnot_overwrite_metas(
@@ -58,10 +55,7 @@ async fn chnot_overwrite_metas(
     state: State<ShareAppState>,
     Json(req): Json<ChnotOverwriteMetaReq>,
 ) -> KResponse<ChnotOverwriteMetaRsp> {
-    state
-        .chnot_overwrite_block_metas(kreq(headers, req))
-        .await
-        .into()
+    state.chnot_overwrite_metas(kreq(headers, req)).await.into()
 }
 
 async fn mdwt_records(
@@ -79,7 +73,7 @@ async fn chnot_thread_overwrite_meta(
 ) -> KResponse<ChnotOverwriteThreadMetaRsp> {
     state
         .mapper
-        .chnot_overwrite_meta(kreq(headers, req))
+        .chnot_overwrite_thread_meta(kreq(headers, req))
         .await
         .into()
 }
@@ -89,7 +83,11 @@ async fn chnot_thread_query(
     state: State<ShareAppState>,
     Json(req): Json<ChnotThreadQueryReq>,
 ) -> KResponse<ChnotThreadQueryRsp> {
-    state.mapper.chnot_query(kreq(headers, req)).await.into()
+    state
+        .mapper
+        .chnot_thread_query(kreq(headers, req))
+        .await
+        .into()
 }
 
 async fn chnot_thread_meta(
@@ -99,7 +97,7 @@ async fn chnot_thread_meta(
 ) -> KResponse<ChnotThreadMetaRsp> {
     state
         .mapper
-        .chnot_meta(kreq(
+        .chnot_thread_meta(kreq(
             headers,
             ChnotThreadMetaReq {
                 thread_otid: chnot_otid,

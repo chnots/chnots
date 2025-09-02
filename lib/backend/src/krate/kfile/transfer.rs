@@ -134,7 +134,7 @@ pub(super) async fn upload_by_chunks(
             inline: false,
             archor: false,
             filename: filename.try_into()?,
-            last_modified: last_modified.into(),
+            last_modified: last_modified.try_into()?,
         };
 
         mapper.insert_kfile(kfile.clone()).await?;

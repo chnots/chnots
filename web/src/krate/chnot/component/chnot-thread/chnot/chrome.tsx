@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useState } from "react";
+import React, { RefObject, useCallback, useEffect, useState } from "react";
 import { ChnotKind } from "../../../po";
 import { SaveState } from "@/common/types";
 import BlockState from "../chnot-save-state";
@@ -10,12 +10,23 @@ import ExcalidrawBlock from "./excalidraw";
 import { ChnotKindIcon } from "../../chnot-kind-icon";
 import KFileBlock from "./kfile";
 
+export type PostSaveArg =
+  | {
+      kind: ChnotKind.MDWT;
+      otid: TID;
+      content: string;
+      saveState: SaveState;
+    }
+  | {
+      saveState: SaveState;
+    };
+
 const Chrome = ({
   otid,
   onMoveUp,
   onMoveDown,
   onDelete,
-  onSaved,
+  onPostSave,
   isFirst,
   isLast,
   blockKindsRef,
@@ -23,7 +34,7 @@ const Chrome = ({
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDelete: () => void;
-  onSaved: () => void;
+  onPostSave: (arg: PostSaveArg) => void;
   isFirst: boolean;
   isLast: boolean;
   otid: TID;
@@ -51,11 +62,10 @@ const Chrome = ({
     }
   };
 
-  useEffect(() => {
-    if (saveState === SaveState.Saved) {
-      onSaved();
-    }
-  }, [saveState]);
+  const handlePostSave = useCallback((arg: PostSaveArg) => {
+    setSaveState(arg.saveState);
+    onPostSave(arg);
+  }, []);
 
   return (
     <div className="flex items-start space-x-2 px-2 py-0 my-1 rounded-lg bg-white">
@@ -68,27 +78,19 @@ const Chrome = ({
       </div>
 
       <div
-        className="flex-1 rounded focus:outline-none h-full"
+        className="flex-1 rounded focus:outline-none h-full space-y-2"
         tabIndex={0}
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         aria-label="Text block, click to edit"
       >
-        {saveState === SaveState.Initial && (
-          <Tier
-            setKind={function (kind?: ChnotKind): void {
-              setKind(kind);
-            }}
-            hidden={false}
-          />
-        )}
-        {kind === ChnotKind.MarkdownWithToent ? (
+        {kind === ChnotKind.MDWT ? (
           <MdwtRecord
             otid={otid}
             isFocused={isFocused}
-            setSaveState={function (saveState: SaveState): void {
-              setSaveState(saveState);
+            onPostSave={(arg: PostSaveArg) => {
+              handlePostSave(arg);
             }}
             blockKindsRef={blockKindsRef}
           />
@@ -97,21 +99,29 @@ const Chrome = ({
             otid={otid}
             isFocused={isFocused}
             kindId={meta?.kind_id}
-            setSaveState={function (saveState: SaveState): void {
-              setSaveState(saveState);
+            onPostSave={(arg: PostSaveArg) => {
+              handlePostSave(arg);
             }}
             blockKindsRef={blockKindsRef}
           />
         ) : kind === ChnotKind.KFileV1 ? (
           <KFileBlock
             otid={otid}
-            setSaveState={function (saveState: SaveState): void {
-              setSaveState(saveState);
+            onPostSave={(arg: PostSaveArg) => {
+              handlePostSave(arg);
             }}
             blockKindsRef={blockKindsRef}
           />
         ) : (
           <></>
+        )}
+        {saveState === SaveState.Initial && (
+          <Tier
+            setKind={function (kind?: ChnotKind): void {
+              setKind(kind);
+            }}
+            hidden={false}
+          />
         )}
       </div>
     </div>

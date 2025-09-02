@@ -12,17 +12,18 @@ import {
   fetchExcalidraw,
   saveExcalidraw,
 } from "@/krate/tool/excalidraw/service";
+import { PostSaveArg } from "./chrome";
 
 const ExcalidrawBlock = ({
   otid,
   kindId: initialKindId,
-  setSaveState,
+  onPostSave,
   blockKindsRef,
 }: {
   otid: TID;
   kindId?: string;
   isFocused?: boolean;
-  setSaveState: (saveState: SaveState) => void;
+  onPostSave: (arg: PostSaveArg) => void;
   blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
 }) => {
   const [kindId] = useState(initialKindId ?? genUID());
@@ -56,10 +57,10 @@ const ExcalidrawBlock = ({
             kind: ChnotKind.ExcalidrawV1,
             kind_id: kindId,
           });
-          setSaveState(SaveState.Saved);
+          onPostSave({ saveState: SaveState.Saved });
         },
         onFail: () => {
-          setSaveState(SaveState.Error);
+          onPostSave({ saveState: SaveState.Error });
         },
       });
     },

@@ -12,7 +12,8 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThread {
-    pub head_chnot: MdwtRecord,
+    pub head_content: Option<Text>,
+    pub todo_event: Option<TodoEvent>,
     pub meta: ChnotThreadMeta,
 }
 
@@ -25,7 +26,9 @@ pub struct ChnotOverwriteThreadMetaReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteThreadMetaRsp {}
+pub struct ChnotOverwriteThreadMetaRsp {
+    pub meta: ChnotThreadMeta,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteMdwtReqData {
@@ -35,8 +38,7 @@ pub struct ChnotOverwriteMdwtReqData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteMdwtReq {
-    pub thread_otid: TID,
-    pub mdwts: Vec<ChnotOverwriteMdwtReqData>,
+    pub mdwt: ChnotOverwriteMdwtReqData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,7 +56,9 @@ pub struct ChnotOverwriteMetaReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteMetaRsp {}
+pub struct ChnotOverwriteMetaRsp {
+    pub metas: Vec<ChnotMeta>,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ChnotOverwriteMdwtRsp {

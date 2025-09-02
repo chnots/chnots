@@ -58,10 +58,10 @@ const TagsView = () => {
 
 const ChnotSidebar = () => {
   const {
-    fetchMoreChnots,
-    refreshChnots,
+    fetchMoreChnotThreads: fetchMoreChnots,
+    refreshChnotThreads: refreshChnots,
     isFetchingNextPage,
-    chnotMapByMetaId,
+    threadMapByThreadId: chnotMapByMetaId,
     changeKeyword,
     tags,
     setTagsInset,
@@ -178,7 +178,7 @@ const ChnotSidebar = () => {
             {[...chnotMapByMetaId.dbCache.values()].map((chnot) => (
               <ChnotSidebarItem
                 chnotThread={chnot}
-                key={chnot.head_chnot.tid}
+                key={chnot.meta.otid}
                 showKSpace={mkspaces.length > 0}
               />
             ))}

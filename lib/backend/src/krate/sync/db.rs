@@ -96,7 +96,7 @@ impl SyncMapper for KDb {
         debug!("last sync log for {table_name} is {sync:?}");
 
         let Some(sync_log) = sync else {
-            return Ok(TID::from(0));
+            return Ok(TID::try_from(0)?);
         };
 
         let sql = SqlBuilder::read(
@@ -193,7 +193,7 @@ impl SyncMapper for KDb {
     ) -> AResult<SyncDataArg<T>> {
         let tids = self.sync_fetch_tid_compares(sync_page).await?;
         let mut operations = vec![];
-        let mut max_tid = TID::from(0);
+        let mut max_tid = TID::try_from(0).unwrap();
 
         let nomore = tids.len() < sync_page.page_size;
 

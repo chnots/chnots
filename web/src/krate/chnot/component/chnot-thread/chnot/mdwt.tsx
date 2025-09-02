@@ -12,11 +12,11 @@ import {
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/common/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
-import { useChnotRopeStore } from "..";
 import { SaveState } from "@/common/types";
 import { ChnotMetaKind } from "../../vo";
 import { TID } from "@/lib/id_util";
 import { ChnotOverwriteMdwtReq } from "@/krate/chnot/dto";
+import { PostSaveArg } from "./chrome";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -59,21 +59,23 @@ const chnotCompletions = async (
 const MdwtRecord = ({
   otid,
   isFocused,
-  setSaveState,
+  onPostSave,
   blockKindsRef,
 }: {
   otid: TID;
   isFocused?: boolean;
-  setSaveState: (saveState: SaveState) => void;
+  onPostSave: (arg: PostSaveArg) => void;
   blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
 }) => {
+  console.log("rerender mdwt ", otid);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
     setHeight(entry.contentRect.height);
   });
-  const [content, setContent] = useState<string>();
-  const savedContentRef = useRef<string>(null);
+  const [content, setContent] = useState<string>("");
+  const cachedContentRef = useRef<string>("");
+  const saveStateRef = useRef<SaveState>(SaveState.Dirty);
 
   useEffect(() => {
     const mdwt_otid = otid;
@@ -81,61 +83,61 @@ const MdwtRecord = ({
       mdwt_otids: [mdwt_otid],
     }).then((rsp) => {
       const mdwt = rsp.mdwt_map[mdwt_otid];
-      savedContentRef.current = mdwt?.content;
-      setContent(mdwt?.content);
+      cachedContentRef.current = mdwt?.content ?? "";
+      setContent(mdwt.content);
     });
   }, []);
-
-  const { chnotMetaOtid } = useChnotRopeStore((state) => {
-    return {
-      chnotMetaOtid: state.chnotMetaOtid,
-    };
-  });
 
   const debounceSave = useDebounce(
     async (req: ChnotOverwriteMdwtReq) => {
       try {
-        setSaveState(SaveState.Saving);
+        onPostSave({ saveState: SaveState.Saving });
         await chnotOverwriteMdwts(req);
         blockKindsRef.current.set(otid, {
           otid: otid,
-          kind: ChnotKind.MarkdownWithToent,
+          kind: ChnotKind.MDWT,
           kind_id: otid.toString(),
         });
-        setSaveState(SaveState.Saved);
+        let first = req.mdwt;
+        onPostSave({
+          otid: first.otid,
+          kind: ChnotKind.MDWT,
+          content: first.content,
+          saveState: SaveState.Saved,
+        });
       } catch (_ex) {
-        setSaveState(SaveState.Error);
+        onPostSave({ saveState: SaveState.Error });
       }
     },
     1000,
     true,
   );
-  useEffect(() => {
-    if (!content || savedContentRef.current === content) {
-      return;
-    }
-    setSaveState(SaveState.Dirty);
-    const req: ChnotOverwriteMdwtReq = {
-      thread_otid: chnotMetaOtid,
-      mdwts: [
-        {
-          otid: otid,
-          content: content,
-        },
-      ],
-    };
 
-    debounceSave(req);
-  }, [content]);
-
-  return !isFocused && content ? (
+  return !isFocused ? (
     <MarkdownViewer content={content ?? ""} keepBreak={true} />
   ) : (
-    <div className="w-full break-all">
+    <div
+      className="w-full break-all"
+      onBlur={() => {
+        setContent(cachedContentRef.current);
+      }}
+    >
       <MdwtEditorMemo
         content={content}
         onContentChange={(content) => {
-          setContent(content);
+          cachedContentRef.current = content;
+          if (saveStateRef.current != SaveState.Dirty) {
+            onPostSave({ saveState: SaveState.Dirty });
+          }
+
+          const req: ChnotOverwriteMdwtReq = {
+            mdwt: {
+              otid: otid,
+              content: content,
+            },
+          };
+
+          debounceSave(req);
         }}
         autoCompletion={chnotCompletions}
         height={height}

@@ -3,7 +3,7 @@ import { DbText, Varchar } from "@/lib/types";
 import { TodoEvent, TodoPriorityEnum, TodoStateEnum } from "../toent/po";
 
 export enum ChnotKind {
-  MarkdownWithToent = "mdwt",
+  MDWT = "mdwt",
   ExcalidrawV1 = "exdrv1",
   KFileV1 = "resov1",
   KTab = "ktabv1",

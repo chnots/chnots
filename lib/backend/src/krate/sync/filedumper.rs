@@ -51,8 +51,8 @@ impl DumpFilenamePattern {
 
         Ok(Self {
             table_name: table_name.to_string(),
-            start: start.parse::<i64>()?.into(),
-            end: end.parse::<i64>()?.into(),
+            start: start.parse::<i64>()?.try_into()?,
+            end: end.parse::<i64>()?.try_into()?,
         })
     }
 
@@ -80,7 +80,7 @@ impl DumpFilenamePattern {
             }
         }
 
-        Ok(start.into())
+        Ok(start.try_into()?)
     }
 }
 
@@ -127,7 +127,7 @@ impl<P: AsRef<Path>, T: KOtidSupport> FileDumper<P, T> {
         T: KOtidSupport,
     {
         let start_ex = match self.start_type {
-            StartType::All => TID::from(0),
+            StartType::All => TID::try_from(0)?,
             StartType::TID(tid) => tid,
             StartType::Increase => {
                 DumpFilenamePattern::get_start_time(&self.backup_dir, T::table_name(hist))?

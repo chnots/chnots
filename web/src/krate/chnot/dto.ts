@@ -14,7 +14,8 @@ export type ChnotThreadTagSearchType = {
 };
 
 export type ChnotThread = {
-  head_chnot: MdwtRecord;
+  head_content?: string;
+  todo_event?: TodoEvent;
   meta: ChnotThreadMeta;
 };
 export type ChnotOverwriteThreadMetaReq = {
@@ -23,7 +24,9 @@ export type ChnotOverwriteThreadMetaReq = {
   pinned?: boolean;
   archive?: boolean;
 };
-export type ChnotOverwriteThreadMetaRsp = object;
+export type ChnotOverwriteThreadMetaRsp = {
+  meta: ChnotThreadMeta;
+};
 export type ChnotOverwriteMdwtReqData = {
   otid: TID;
   content: DbText;
@@ -84,14 +87,15 @@ export type ChnotThreadTagQueryRsp<T> = {
 };
 
 export type ChnotOverwriteMdwtReq = {
-  thread_otid: TID;
-  mdwts: ChnotOverwriteMdwtReqData[];
+  mdwt: ChnotOverwriteMdwtReqData;
 };
 export type ChnotOverwriteMetaReq = {
   thread_otid: TID;
   metas: ChnotOverwriteMetaReqData[];
 };
-export type ChnotOverwriteMetaRsp = object;
+export type ChnotOverwriteMetaRsp = {
+  metas: ChnotMeta[];
+};
 export type ChnotOverwriteMdwtRsp = {
   todo_event?: TodoEvent;
 };
