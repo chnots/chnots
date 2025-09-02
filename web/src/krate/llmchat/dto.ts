@@ -34,11 +34,6 @@ export type LLMChatSessionTruncateReq = {
   remove_rid_included: TID;
 };
 
-export type LLMChatSessionDetail = {
-  session: LLMChatSession;
-  records: LLMChatRecord[];
-};
-
 export type LLMChatOverwriteBotReq = {
   bot: LLMChatBot;
 };

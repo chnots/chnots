@@ -6,9 +6,10 @@ import Icon from "@/common/component/icon";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useLLMChatComStore } from "./llm-chat-session";
 
 const RecordAssistant = ({
-  onRegenerate,
+  otid,
   role,
   role_id,
   reasoning_content,
@@ -16,11 +17,16 @@ const RecordAssistant = ({
   logo,
   timestamp,
 }: {
-  onRegenerate?: () => void;
   logo?: string;
   timestamp: string;
 } & LLMChatRecord) => {
   const { bots, templates } = useLLMChatStore();
+  const { onRegenrate, viweMode: viewMode } = useLLMChatComStore((store) => {
+    return {
+      onRegenrate: store.regenrate,
+      viweMode: store.viewMode,
+    };
+  });
 
   const [bt] = useState<LLMChatBot | LLMChatTemplate | undefined>(() => {
     if (!role_id) {
@@ -53,11 +59,13 @@ const RecordAssistant = ({
       timestamp={timestamp}
       logo={svgLogo}
       limitHeight={role === "system" ? true : undefined}
-      onRegenerate={onRegenerate}
+      onRegenerate={() => {
+        onRegenrate(otid);
+      }}
       onCopy={onCopy}
     >
       <div className="flex flex-col">
-        {reasoning_content && (
+        {reasoning_content && !viewMode && (
           <div
             className={
               "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"

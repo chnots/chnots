@@ -1,5 +1,9 @@
-import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/po";
-import { LLMChatSessionDetail } from "@/krate/llmchat/dto";
+import {
+  LLMChatBot,
+  LLMChatBotBodyOpenAIV1,
+  LLMChatRecord,
+  LLMChatSession,
+} from "@/krate/llmchat/po";
 import { genTID, TID } from "@/lib/id_util";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,12 +33,12 @@ export type ResponseState = {
   content: string;
 };
 
-const emptyResponse = (detail: LLMChatSessionDetail, bot: LLMChatBot) => {
+const emptyResponse = (session: LLMChatSession, bot: LLMChatBot) => {
   return {
     tid: genTID(),
     step: ResponseStep.Initial,
-    prevRecordId: detail.session.otid,
-    sessionId: detail.session.otid,
+    prevRecordId: session.otid,
+    sessionId: session.otid,
     roleId: bot.otid,
     content: "",
     reasoningContent: "",
@@ -42,17 +46,19 @@ const emptyResponse = (detail: LLMChatSessionDetail, bot: LLMChatBot) => {
 };
 
 export const useLLMResponse = ({
-  detail,
+  session,
+  records,
   bot,
 }: {
-  detail: LLMChatSessionDetail;
+  session: LLMChatSession;
+  records: LLMChatRecord[];
   bot: LLMChatBot;
 }) => {
   const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(
     undefined,
   );
   const [responseState, setResponseState] = useState<ResponseState>(
-    emptyResponse(detail, bot),
+    emptyResponse(session, bot),
   );
   const abortSignal = useRef<AbortController>(null);
 
@@ -127,7 +133,7 @@ export const useLLMResponse = ({
     const config = JSON.parse(bot.body) as LLMChatBotBodyOpenAIV1;
     const body = {
       model: config.model_name,
-      messages: detail.records.map((r) => {
+      messages: records.map((r) => {
         return { role: r.role, content: r.content };
       }),
       stream: true,
@@ -207,12 +213,12 @@ export const useLLMResponse = ({
       answerCtl === ResponseCtl.Trigger &&
       responseState.step !== ResponseStep.Answering
     ) {
-      setResponseState(emptyResponse(detail, bot));
+      setResponseState(emptyResponse(session, bot));
       doResponse();
     }
     setAnswerCtl(undefined);
   }, [
-    detail,
+    session,
     bot,
     answerCtl,
     responseState,

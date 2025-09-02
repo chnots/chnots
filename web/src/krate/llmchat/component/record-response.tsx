@@ -5,41 +5,42 @@ import {
   useLLMResponse,
 } from "@/hooks/use-llm-response";
 import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/po";
-import { LLMChatSessionDetail } from "@/krate/llmchat/dto";
 import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";
 import { llmchatRecordInsert } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
 import { genTID, TID } from "@/lib/id_util";
+import { useLLMChatComStore } from "./llm-chat-session";
 
 export const RecordAnswering = ({
-  containerSession,
-  triggerAnswer,
   bot,
   onScrollToEnd,
-  onRegenerate,
-  onEnd,
-  onSetResponsing,
 }: {
-  containerSession: LLMChatSessionDetail;
   bot: LLMChatBot;
-  triggerAnswer: boolean;
   onScrollToEnd?: () => void;
-  onRegenerate?: () => void;
-  onSetResponsing?: (flag: boolean) => void;
-  onEnd: (record: LLMChatRecord) => void;
 }) => {
-  const savedStateRef = useRef<ResponseState>(undefined);
+  const { records, session, setResponsing, appendRecord, answering } =
+    useLLMChatComStore((store) => {
+      return {
+        records: store.records,
+        session: store.session,
+        setResponsing: store.setResponsing,
+        appendRecord: store.appendRecord,
+        answering: store.responsing,
+      };
+    });
+  const responseStateRef = useRef<ResponseState>(undefined);
   const otid = useRef<TID>(genTID());
 
-  if (containerSession.records.length <= 0) {
+  if (!session || !records || records.length <= 0) {
     return;
   }
 
   const { response, setAnswerCtl } = useLLMResponse({
     bot,
-    detail: containerSession,
+    session,
+    records,
   });
 
   const onAbort =
@@ -48,27 +49,25 @@ export const RecordAnswering = ({
       : undefined;
 
   useEffect(() => {
-    if (onSetResponsing) {
-      onSetResponsing(
-        (response && response.step !== ResponseStep.End) ?? false,
-      );
+    if (setResponsing) {
+      setResponsing((response && response.step !== ResponseStep.End) ?? false);
     }
-  }, [onSetResponsing, response]);
+  }, [response]);
 
   useEffect(() => {
-    if (triggerAnswer) {
+    if (answering) {
       setAnswerCtl(ResponseCtl.Trigger);
     }
 
     return () => {
       setAnswerCtl(ResponseCtl.Abort);
     };
-  }, [setAnswerCtl, triggerAnswer]);
+  }, [answering]);
 
   useEffect(() => {
     return () => {
-      if (savedStateRef.current) {
-        const response = savedStateRef.current;
+      if (responseStateRef.current) {
+        const response = responseStateRef.current;
         const record: LLMChatRecord = {
           otid: response.tid,
           session_otid: response.sessionId,
@@ -101,22 +100,21 @@ export const RecordAnswering = ({
     };
 
     if (response && response.step == ResponseStep.End) {
-      onEnd(buildRecord(response));
-      savedStateRef.current = undefined;
+      appendRecord(buildRecord(response));
+      responseStateRef.current = undefined;
     } else {
-      savedStateRef.current = response;
+      responseStateRef.current = response;
     }
     if (onScrollToEnd) {
       onScrollToEnd();
     }
-  }, [response, savedStateRef, onScrollToEnd]);
+  }, [response, responseStateRef, onScrollToEnd]);
 
   return (
     <>
       <RecordAssistant
         logo={bot.svg_logo}
         role_id={bot.otid}
-        onRegenerate={onRegenerate}
         otid={otid.current}
         session_otid={response.sessionId}
         content={response.content}
