@@ -1,32 +1,20 @@
-import { RefObject } from "react";
-
 import { SaveState } from "@/common/types";
-import { ChnotMetaKind } from "../../vo";
-import { TID } from "@/lib/id_util";
 import { ChnotKind } from "@/krate/chnot/po";
 import { CommonKFile } from "@/krate/kfile/components/common-kfile";
-import { PostSaveArg } from "./chrome";
+import { ChnotChromeProps } from "./chrome";
 
-const KFileBlock = ({
-  otid,
-  kindId,
-  onPostSave,
-  blockKindsRef,
-}: {
-  otid: TID;
-  kindId?: string;
-  onPostSave: (arg: PostSaveArg) => void;
-  blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
-}) => {
+const KFileBlock = ({ otid, kindId, onPostSave }: ChnotChromeProps) => {
   return (
     <CommonKFile
-      kindId={kindId}
+      kid={kindId}
       onPostSave={(r) => {
-        onPostSave({ saveState: SaveState.Saved });
-        blockKindsRef.current.set(otid, {
-          otid: otid,
-          kind: ChnotKind.KFileV1,
-          kind_id: r.id,
+        onPostSave({
+          saveState: SaveState.Saved,
+          data: {
+            otid: otid,
+            kind: ChnotKind.KFileV1,
+            kind_id: r.id,
+          },
         });
       }}
     />

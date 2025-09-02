@@ -99,7 +99,7 @@ export function DataTable({
               column_name: columnId,
               value: ktabToStoreValue(
                 tableMeta.columns[columnId].view_kind,
-                value
+                value,
               ),
             },
           ],
@@ -129,7 +129,7 @@ export function DataTable({
         const newData = await fetchData(
           tableMeta.otid,
           page * pageSize,
-          pageSize
+          pageSize,
         );
         setData((prev) => [...prev, ...newData]);
         setPage((prev) => prev + 1);
@@ -144,24 +144,6 @@ export function DataTable({
     loadMoreData();
   }, []);
 
-  /*     useEffect(() => {
-      const container = tableContainerRef.current;
-      if (!container) return;
-
-      const handleScroll = () => {
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        if (
-          scrollHeight - (scrollTop + clientHeight) < 100 &&
-          !loading &&
-          hasMore
-        ) {
-          loadMoreData();
-        }
-      };
-
-      container.addEventListener("scroll", handleScroll);
-      return () => container.removeEventListener("scroll", handleScroll);
-    }, [loading, hasMore]); */
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const [newColumnName, setNewColumnName] = React.useState("");

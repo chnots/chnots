@@ -57,6 +57,7 @@ pub enum KTabRowsQueryReqFilter {
 pub struct KTabRowsQueryReq {
     pub table_id: TID,
     pub filter: KTabRowsQueryReqFilter,
+    pub must_existed: Option<bool>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -159,6 +160,7 @@ mod tests {
                 start_included: 0,
                 page_size: 100,
             },
+            must_existed: Some(false),
         };
 
         println!("{:#?}", serde_json::to_string(&req).unwrap());

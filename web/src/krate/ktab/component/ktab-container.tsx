@@ -10,11 +10,11 @@ import { TypeOf, ZodObject, ZodString, ZodOptional, ZodTypeAny } from "zod";
 
 const KTabChnot = ({
   kindId,
-  onAfterSave,
+  onPostSave: onAfterSave,
   isEditing,
 }: {
   kindId?: string;
-  onAfterSave: (meta: KTabMeta) => Promise<void>;
+  onPostSave: (meta: KTabMeta) => void;
   isEditing: boolean;
 }) => {
   const [meta, setMeta] = useState<KTabMeta>();
@@ -99,7 +99,7 @@ const KTabChnot = ({
         await ktabMetaOverwrite({
           meta: meta,
         });
-        await onAfterSave(meta);
+        onAfterSave(meta);
         setMeta(meta);
       }}
     />

@@ -40,10 +40,10 @@ const FileInfo = ({ file }: { file: FileLike }) => {
 
 // inspired by https://github.com/AarambhDevHub/frontend-file-Chunks/blob/main/app/page.tsx
 export const CommonKFile = ({
-  kindId,
+  kid,
   onPostSave,
 }: {
-  kindId?: string;
+  kid?: string;
   onPostSave?: (r: KFileMeta) => void;
 }) => {
   const [progress, setProgress] = useState(0);
@@ -52,13 +52,14 @@ export const CommonKFile = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
 
+  console.log("kid: ", kid);
   useEffect(() => {
-    if (kindId) {
-      kfileQueryInfo({ meta_id: kindId.toString() }).then(({ meta }) => {
+    if (kid) {
+      kfileQueryInfo({ meta_id: kid.toString() }).then(({ meta }) => {
         setKFile(meta);
       });
     }
-  }, [kindId]);
+  }, [kid]);
   const uploadFileInChunks = async () => {
     if (!uploadFile) {
       alert("Please select a file to upload");

@@ -18,6 +18,8 @@ import LoadingPage from "@/common/pages/loading-page";
 import { useChnotStore } from "../../store";
 import { SaveState } from "@/common/types";
 import { useShallow } from "zustand/react/shallow";
+import { ar } from "date-fns/locale";
+import { ChnotMetaKind } from "../vo";
 
 /**
  * This is the main component for the `Chnots` app.
@@ -38,7 +40,7 @@ const ChnotThread = ({
   cachedThreadMetaRef: RefObject<ChnotThreadMeta | null>;
   globalBar: React.ReactNode;
 }) => {
-  const cachedChnotDataMapRef = useRef<Map<TID, ChnotMeta>>(new Map());
+  const cachedChnotDataMapRef = useRef<Map<TID, ChnotMetaKind>>(new Map());
   const savedChnotMetaMapRef = useRef<Map<TID, ChnotMeta>>(new Map());
   const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
 
@@ -75,7 +77,6 @@ const ChnotThread = ({
     chnotOrders.length === 0 ||
     cachedChnotDataMapRef.current.has(chnotOrders[chnotOrders.length - 1])
   ) {
-    console.log("chnotOrders2: ", chnotOrders);
     setChnotOrders((prev) => {
       return [...prev, genTID()];
     });
@@ -103,6 +104,9 @@ const ChnotThread = ({
           meta: rsp.meta,
         });
       }
+      if (arg.data) {
+        cachedChnotDataMapRef.current.set(arg.data.otid, arg.data);
+      }
 
       const metas: ChnotOverwriteMetaReqData[] = chnotOrders
         .map((otid, index) => {
@@ -122,7 +126,6 @@ const ChnotThread = ({
               korder: index,
               kind: persistedChnot.kind,
               kind_id: persistedChnot.kind_id,
-              tid: genTID(),
             };
           }
           return null;
@@ -142,7 +145,7 @@ const ChnotThread = ({
         if (
           "kind" in arg &&
           arg.kind === ChnotKind.MDWT &&
-          chnotOrders.at(0) === arg.otid
+          chnotOrders.at(0) === arg.data?.otid
         ) {
           overwriteChnotCache({
             meta: cachedThreadOtidRef.current,
@@ -152,13 +155,9 @@ const ChnotThread = ({
         }
       }
 
-      console.log("chnotMapRef", chnotOrders);
-      console.log("saved orders ref", savedChnotMetaMapRef.current);
-
       if (
         savedChnotMetaMapRef.current.has(chnotOrders[chnotOrders.length - 1])
       ) {
-        console.log("chnotOrders3:", chnotOrders);
         setChnotOrders([...chnotOrders, genTID()]);
       }
     },
@@ -183,13 +182,13 @@ const ChnotThread = ({
                   onDelete={() => {}}
                   isFirst={index === 0}
                   isLast={index === chnotOrders.length - 1}
-                  blockKindsRef={cachedChnotDataMapRef}
                   otid={otid}
                   onPostSave={(arg: PostSaveArg) => {
                     if (arg.saveState === SaveState.Saved) {
                       saveMetas(arg);
                     }
                   }}
+                  meta={cachedChnotDataMapRef.current.get(otid)}
                 />
               );
             })}

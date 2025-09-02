@@ -9,17 +9,20 @@ import { TID } from "@/lib/id_util";
 import ExcalidrawBlock from "./excalidraw";
 import { ChnotKindIcon } from "../../chnot-kind-icon";
 import KFileBlock from "./kfile";
+import TableChnot from "./table";
 
-export type PostSaveArg =
-  | {
-      kind: ChnotKind.MDWT;
-      otid: TID;
-      content: string;
-      saveState: SaveState;
-    }
-  | {
-      saveState: SaveState;
-    };
+export type PostSaveArg = {
+  saveState: SaveState;
+  content?: string;
+  data?: ChnotMetaKind;
+};
+
+export type ChnotChromeProps = {
+  otid: TID;
+  kindId?: string;
+  isFocused?: boolean;
+  onPostSave: (arg: PostSaveArg) => void;
+};
 
 const Chrome = ({
   otid,
@@ -29,7 +32,7 @@ const Chrome = ({
   onPostSave,
   isFirst,
   isLast,
-  blockKindsRef,
+  meta,
 }: {
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -38,10 +41,9 @@ const Chrome = ({
   isFirst: boolean;
   isLast: boolean;
   otid: TID;
-  blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
+  meta?: ChnotMetaKind;
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const meta = blockKindsRef.current.get(otid);
   const [saveState, setSaveState] = useState(
     meta?.kind_id ? SaveState.Saved : SaveState.Initial,
   );
@@ -92,7 +94,6 @@ const Chrome = ({
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
-            blockKindsRef={blockKindsRef}
           />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
           <ExcalidrawBlock
@@ -102,15 +103,22 @@ const Chrome = ({
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
-            blockKindsRef={blockKindsRef}
           />
         ) : kind === ChnotKind.KFileV1 ? (
           <KFileBlock
             otid={otid}
+            kindId={meta?.kind_id}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
-            blockKindsRef={blockKindsRef}
+          />
+        ) : kind == ChnotKind.KTab ? (
+          <TableChnot
+            otid={otid}
+            kindId={meta?.kind_id}
+            onPostSave={function (arg: PostSaveArg): void {
+              handlePostSave(arg);
+            }}
           />
         ) : (
           <></>

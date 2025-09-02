@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, vec};
 
 use super::{mapper::KFileMapper, *};
 use crate::{
@@ -10,7 +10,6 @@ use crate::{
     },
     model::dto::KReq,
 };
-use anyhow::Context;
 use chin_tools::EResult;
 
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
@@ -153,7 +152,10 @@ impl KFileMapper for KDb {
                 })
                 .await?
                 .map(|e| e.sid);
-            sid.context(format!("unable to find sid for {key}"))?
+            match sid {
+                Some(sid) => sid,
+                None => return Ok(QueryInlineKFileRsp { res: vec![] }),
+            }
         } else {
             anyhow::bail!("there are no meta_id and sid")
         };

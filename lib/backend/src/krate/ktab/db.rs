@@ -162,8 +162,13 @@ impl KTabMapper for KDb {
                 table_id: req.table_id,
             }))
             .await?
-            .meta
-            .context("cannot find table")?;
+            .meta;
+        let config = if req.must_existed.unwrap_or_default() {
+            config.context("cannot find table")?
+        } else {
+            return Ok(KTabRowsQueryRsp { rows: vec![] });
+        };
+
         let col_names: HashMap<TID, String> = config
             .columns
             .into_values()

@@ -1,5 +1,5 @@
 import useResizeObserver from "@react-hook/resize-observer";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MarkdownViewer from "../../chnot-markdown-viewer";
 import { ChnotKind } from "../../../po";
 
@@ -13,10 +13,9 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/common/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { SaveState } from "@/common/types";
-import { ChnotMetaKind } from "../../vo";
-import { TID } from "@/lib/id_util";
 import { ChnotOverwriteMdwtReq } from "@/krate/chnot/dto";
-import { PostSaveArg } from "./chrome";
+import { ChnotChromeProps } from "./chrome";
+import { genTID, TID } from "@/lib/id_util";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -60,14 +59,8 @@ const MdwtRecord = ({
   otid,
   isFocused,
   onPostSave,
-  blockKindsRef,
-}: {
-  otid: TID;
-  isFocused?: boolean;
-  onPostSave: (arg: PostSaveArg) => void;
-  blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
-}) => {
-  console.log("rerender mdwt ", otid);
+  kindId,
+}: ChnotChromeProps) => {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
@@ -75,10 +68,11 @@ const MdwtRecord = ({
   });
   const [content, setContent] = useState<string>("");
   const cachedContentRef = useRef<string>("");
+  const cachedKindId = useRef<TID>(kindId ? parseInt(kindId) : genTID());
   const saveStateRef = useRef<SaveState>(SaveState.Dirty);
 
   useEffect(() => {
-    const mdwt_otid = otid;
+    const mdwt_otid = cachedKindId.current;
     MdwtRecords({
       mdwt_otids: [mdwt_otid],
     }).then((rsp) => {
@@ -86,24 +80,22 @@ const MdwtRecord = ({
       cachedContentRef.current = mdwt?.content ?? "";
       setContent(mdwt.content);
     });
-  }, []);
+  }, [kindId]);
 
   const debounceSave = useDebounce(
     async (req: ChnotOverwriteMdwtReq) => {
       try {
         onPostSave({ saveState: SaveState.Saving });
         await chnotOverwriteMdwts(req);
-        blockKindsRef.current.set(otid, {
-          otid: otid,
-          kind: ChnotKind.MDWT,
-          kind_id: otid.toString(),
-        });
         let first = req.mdwt;
         onPostSave({
-          otid: first.otid,
-          kind: ChnotKind.MDWT,
           content: first.content,
           saveState: SaveState.Saved,
+          data: {
+            otid: otid,
+            kind: ChnotKind.MDWT,
+            kind_id: cachedKindId.current.toString(),
+          },
         });
       } catch (_ex) {
         onPostSave({ saveState: SaveState.Error });

@@ -20,7 +20,7 @@ import { ChnotThreadMeta } from "../po";
  *
  * @returns ChnotThread Editor Container
  */
-const MonoChnot = () => {
+const MonoChnot = ({ onNew }: { onNew: () => void }) => {
   const { curMetaId, getCurrentThread } = useChnotStore(
     useShallow((store) => {
       return {
@@ -48,15 +48,7 @@ const MonoChnot = () => {
       key={componentKey}
       threadMeta={editorThread?.meta}
       cachedThreadMetaRef={threadOtidRef}
-      globalBar={
-        <StateBar
-          onNew={() => {
-            setComponentKey(genUID());
-            setEditorThread(undefined);
-            threadOtidRef.current = null;
-          }}
-        />
-      }
+      globalBar={<StateBar onNew={onNew} />}
     />
   );
 };
@@ -79,6 +71,14 @@ const StateBar = ({ onNew }: { onNew: () => void }) => {
  * @returns ChnotThread Page
  */
 const ChnotPage = () => {
+  const [monoComponentKey, setMonoComponentKey] = useState(genUID());
+  const { setCurrentThreadOtid } = useChnotStore(
+    useShallow((store) => {
+      return {
+        setCurrentThreadOtid: store.setCurrentThreadOtid,
+      };
+    }),
+  );
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <SidebarProvider
@@ -91,7 +91,13 @@ const ChnotPage = () => {
       >
         <ChnotSidebar />
         <SidebarInset className="min-w-0">
-          <MonoChnot />
+          <MonoChnot
+            onNew={() => {
+              setCurrentThreadOtid(undefined);
+              setMonoComponentKey(genUID());
+            }}
+            key={monoComponentKey}
+          />
         </SidebarInset>
       </SidebarProvider>
     </div>

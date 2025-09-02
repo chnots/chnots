@@ -1,8 +1,7 @@
-import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SaveState } from "@/common/types";
-import { ChnotMetaKind } from "../../vo";
-import { genUID, TID } from "@/lib/id_util";
+import { genUID } from "@/lib/id_util";
 import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
 import { ChnotKind } from "@/krate/chnot/po";
 import { Button } from "@/common/component/ui/button";
@@ -12,36 +11,33 @@ import {
   fetchExcalidraw,
   saveExcalidraw,
 } from "@/krate/tool/excalidraw/service";
-import { PostSaveArg } from "./chrome";
+import { ChnotChromeProps } from "./chrome";
 
 const ExcalidrawBlock = ({
   otid,
   kindId: initialKindId,
   onPostSave,
-  blockKindsRef,
-}: {
-  otid: TID;
-  kindId?: string;
-  isFocused?: boolean;
-  onPostSave: (arg: PostSaveArg) => void;
-  blockKindsRef: RefObject<Map<TID, ChnotMetaKind>>;
-}) => {
+}: ChnotChromeProps) => {
   const [kindId] = useState(initialKindId ?? genUID());
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ExcalidrawChnotState>();
   const savedFilesRef = useRef(new Map<string, string>());
 
   useEffect(() => {
-    fetchExcalidraw(kindId).then((state) => {
-      if (state) {
-        setState({
-          excalidrawId: kindId,
-          elements: state.elements,
-          appState: state.appState,
-          files: state.files,
-        });
-      }
-    });
+    fetchExcalidraw(kindId)
+      .then((state) => {
+        if (state) {
+          setState({
+            excalidrawId: kindId,
+            elements: state.elements,
+            appState: state.appState,
+            files: state.files,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("unable to load excalidraw", err);
+      });
   }, []);
 
   const directlySave = useCallback(
@@ -52,12 +48,14 @@ const ExcalidrawBlock = ({
         contentType: contentType,
         onSuccess: () => {
           setState(state);
-          blockKindsRef.current.set(otid, {
-            otid: otid,
-            kind: ChnotKind.ExcalidrawV1,
-            kind_id: kindId,
+          onPostSave({
+            saveState: SaveState.Saved,
+            data: {
+              otid: otid,
+              kind: ChnotKind.ExcalidrawV1,
+              kind_id: kindId,
+            },
           });
-          onPostSave({ saveState: SaveState.Saved });
         },
         onFail: () => {
           onPostSave({ saveState: SaveState.Error });
