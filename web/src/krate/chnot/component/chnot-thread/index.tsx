@@ -18,7 +18,6 @@ import LoadingPage from "@/common/pages/loading-page";
 import { useChnotStore } from "../../store";
 import { SaveState } from "@/common/types";
 import { useShallow } from "zustand/react/shallow";
-import { ar } from "date-fns/locale";
 import { ChnotMetaKind } from "../vo";
 
 /**

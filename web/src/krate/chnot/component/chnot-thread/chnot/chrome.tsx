@@ -90,6 +90,7 @@ const Chrome = ({
         {kind === ChnotKind.MDWT ? (
           <MdwtRecord
             otid={otid}
+            kindId={meta?.kind_id}
             isFocused={isFocused}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);

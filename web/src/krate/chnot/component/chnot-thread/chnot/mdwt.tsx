@@ -56,66 +56,71 @@ const chnotCompletions = async (
 };
 
 const MdwtRecord = ({
-  otid,
+  otid: chnotOtid,
   isFocused,
   onPostSave,
   kindId,
 }: ChnotChromeProps) => {
+  const [mdwtOtid] = useState<TID>(kindId ? parseInt(kindId) : genTID());
+
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
     setHeight(entry.contentRect.height);
   });
-  const [content, setContent] = useState<string>("");
+
+  // use RefObject to avoid
   const cachedContentRef = useRef<string>("");
-  const cachedKindId = useRef<TID>(kindId ? parseInt(kindId) : genTID());
   const saveStateRef = useRef<SaveState>(SaveState.Dirty);
+  const toSaveArg = useRef<ChnotOverwriteMdwtReq>(null);
+  const [refreshFlag, setRefreshFlag] = useState<boolean>();
 
   useEffect(() => {
-    const mdwt_otid = cachedKindId.current;
     MdwtRecords({
-      mdwt_otids: [mdwt_otid],
+      mdwt_otids: [mdwtOtid],
     }).then((rsp) => {
-      const mdwt = rsp.mdwt_map[mdwt_otid];
+      const mdwt = rsp.mdwt_map[mdwtOtid];
       cachedContentRef.current = mdwt?.content ?? "";
-      setContent(mdwt.content);
+      setRefreshFlag((prev) => !prev);
     });
-  }, [kindId]);
+  }, [mdwtOtid]);
 
-  const debounceSave = useDebounce(
-    async (req: ChnotOverwriteMdwtReq) => {
+  const directlySave = async () => {
+    if (toSaveArg.current) {
       try {
         onPostSave({ saveState: SaveState.Saving });
-        await chnotOverwriteMdwts(req);
-        let first = req.mdwt;
+        await chnotOverwriteMdwts(toSaveArg.current);
+        let first = toSaveArg.current.mdwt;
         onPostSave({
           content: first.content,
           saveState: SaveState.Saved,
           data: {
-            otid: otid,
+            otid: chnotOtid,
             kind: ChnotKind.MDWT,
-            kind_id: cachedKindId.current.toString(),
+            kind_id: mdwtOtid.toString(),
           },
         });
+        toSaveArg.current = null;
       } catch (_ex) {
         onPostSave({ saveState: SaveState.Error });
       }
+    }
+  };
+
+  const debounceSave = useDebounce(
+    async () => {
+      directlySave();
     },
-    1000,
+    5000,
     true,
   );
 
   return !isFocused ? (
-    <MarkdownViewer content={content ?? ""} keepBreak={true} />
+    <MarkdownViewer content={cachedContentRef.current ?? ""} keepBreak={true} />
   ) : (
-    <div
-      className="w-full break-all"
-      onBlur={() => {
-        setContent(cachedContentRef.current);
-      }}
-    >
+    <div className="w-full break-all" onBlur={() => directlySave()}>
       <MdwtEditorMemo
-        content={content}
+        content={cachedContentRef.current}
         onContentChange={(content) => {
           cachedContentRef.current = content;
           if (saveStateRef.current != SaveState.Dirty) {
@@ -124,12 +129,13 @@ const MdwtRecord = ({
 
           const req: ChnotOverwriteMdwtReq = {
             mdwt: {
-              otid: otid,
+              otid: mdwtOtid,
               content: content,
             },
           };
+          toSaveArg.current = req;
 
-          debounceSave(req);
+          debounceSave();
         }}
         autoCompletion={chnotCompletions}
         height={height}
