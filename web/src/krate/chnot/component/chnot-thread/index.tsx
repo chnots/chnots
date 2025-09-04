@@ -104,7 +104,7 @@ const ChnotThread = ({
         });
       }
       if (arg.data) {
-        cachedChnotDataMapRef.current.set(arg.data.otid, arg.data);
+        cachedChnotDataMapRef.current.set(arg.data.chnotOtid, arg.data);
       }
 
       const metas: ChnotOverwriteMetaReqData[] = chnotOrders
@@ -115,7 +115,7 @@ const ChnotThread = ({
             const saved = savedChnotMetaMapRef.current.get(otid);
             if (
               saved?.kind === persistedChnot.kind &&
-              saved?.kind_id === persistedChnot.kind_id &&
+              saved?.kind_id === persistedChnot.kindId &&
               saved?.korder === index
             ) {
               return null;
@@ -124,7 +124,7 @@ const ChnotThread = ({
               otid: otid,
               korder: index,
               kind: persistedChnot.kind,
-              kind_id: persistedChnot.kind_id,
+              kind_id: persistedChnot.kindId,
             };
           }
           return null;
@@ -144,7 +144,7 @@ const ChnotThread = ({
         if (
           "kind" in arg &&
           arg.kind === ChnotKind.MDWT &&
-          chnotOrders.at(0) === arg.data?.otid
+          chnotOrders.at(0) === arg.data?.chnotOtid
         ) {
           overwriteChnotCache({
             meta: cachedThreadOtidRef.current,

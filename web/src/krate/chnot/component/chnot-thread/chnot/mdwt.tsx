@@ -56,7 +56,7 @@ const chnotCompletions = async (
 };
 
 const MdwtRecord = ({
-  otid: chnotOtid,
+  chnotOtid,
   isFocused,
   onPostSave,
   kindId,
@@ -95,9 +95,9 @@ const MdwtRecord = ({
           content: first.content,
           saveState: SaveState.Saved,
           data: {
-            otid: chnotOtid,
+            chnotOtid: chnotOtid,
             kind: ChnotKind.MDWT,
-            kind_id: mdwtOtid.toString(),
+            kindId: mdwtOtid.toString(),
           },
         });
         toSaveArg.current = null;

@@ -10,6 +10,7 @@ import ExcalidrawBlock from "./excalidraw";
 import { ChnotKindIcon } from "../../chnot-kind-icon";
 import KFileBlock from "./kfile";
 import TableChnot from "./table";
+import LLMChatChnot from "./llmchat";
 
 export type PostSaveArg = {
   saveState: SaveState;
@@ -18,7 +19,7 @@ export type PostSaveArg = {
 };
 
 export type ChnotChromeProps = {
-  otid: TID;
+  chnotOtid: TID;
   kindId?: string;
   isFocused?: boolean;
   onPostSave: (arg: PostSaveArg) => void;
@@ -45,7 +46,7 @@ const Chrome = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [saveState, setSaveState] = useState(
-    meta?.kind_id ? SaveState.Saved : SaveState.Initial,
+    meta?.kindId ? SaveState.Saved : SaveState.Initial,
   );
   const [kind, setKind] = useState<ChnotKind | undefined>(meta?.kind);
 
@@ -70,7 +71,7 @@ const Chrome = ({
   }, []);
 
   return (
-    <div className="flex items-start space-x-2 px-2 py-0 my-1 rounded-lg bg-white">
+    <div className="flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white hover:bg-accent">
       <div className="flex flex-col space-y-1">
         {saveState !== SaveState.Saved || !kind ? (
           <BlockState saveState={saveState} />
@@ -80,7 +81,7 @@ const Chrome = ({
       </div>
 
       <div
-        className="flex-1 rounded focus:outline-none h-full space-y-2"
+        className="flex-1 rounded focus:outline-none h-full space-y-2 "
         tabIndex={0}
         onFocus={handleFocus}
         onBlur={handleBlur}
@@ -89,8 +90,8 @@ const Chrome = ({
       >
         {kind === ChnotKind.MDWT ? (
           <MdwtRecord
-            otid={otid}
-            kindId={meta?.kind_id}
+            chnotOtid={otid}
+            kindId={meta?.kindId}
             isFocused={isFocused}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
@@ -98,25 +99,32 @@ const Chrome = ({
           />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
           <ExcalidrawBlock
-            otid={otid}
+            chnotOtid={otid}
             isFocused={isFocused}
-            kindId={meta?.kind_id}
+            kindId={meta?.kindId}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
           />
         ) : kind === ChnotKind.KFileV1 ? (
           <KFileBlock
-            otid={otid}
-            kindId={meta?.kind_id}
+            chnotOtid={otid}
+            kindId={meta?.kindId}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
           />
         ) : kind == ChnotKind.KTab ? (
           <TableChnot
-            otid={otid}
-            kindId={meta?.kind_id}
+            chnotOtid={otid}
+            kindId={meta?.kindId}
+            onPostSave={function (arg: PostSaveArg): void {
+              handlePostSave(arg);
+            }}
+          />
+        ) : kind === ChnotKind.LLMChat ? (
+          <LLMChatChnot
+            chnotOtid={otid}
             onPostSave={function (arg: PostSaveArg): void {
               handlePostSave(arg);
             }}

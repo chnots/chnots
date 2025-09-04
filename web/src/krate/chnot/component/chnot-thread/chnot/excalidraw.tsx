@@ -14,7 +14,7 @@ import {
 import { ChnotChromeProps } from "./chrome";
 
 const ExcalidrawBlock = ({
-  otid,
+  chnotOtid,
   kindId: initialKindId,
   onPostSave,
 }: ChnotChromeProps) => {
@@ -51,9 +51,9 @@ const ExcalidrawBlock = ({
           onPostSave({
             saveState: SaveState.Saved,
             data: {
-              otid: otid,
+              chnotOtid: chnotOtid,
               kind: ChnotKind.ExcalidrawV1,
-              kind_id: kindId,
+              kindId: kindId,
             },
           });
         },
@@ -62,7 +62,7 @@ const ExcalidrawBlock = ({
         },
       });
     },
-    [kindId, otid],
+    [kindId, chnotOtid],
   );
 
   return (

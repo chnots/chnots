@@ -13,10 +13,9 @@ import {
 import { ktabGetViewValue } from "@/krate/ktab/dto";
 import { genTID, genUID, TID } from "@/lib/id_util";
 import { useEffect, useRef, useState } from "react";
-import { set } from "date-fns";
 
 const TableChnot = ({
-  otid,
+  chnotOtid,
   kindId,
   onPostSave,
   isFocused,
@@ -82,9 +81,9 @@ const TableChnot = ({
           onPostSave({
             saveState: SaveState.Saved,
             data: {
-              otid: otid,
+              chnotOtid,
               kind: ChnotKind.KTab,
-              kind_id: meta.otid.toString(),
+              kindId: meta.otid.toString(),
             },
           });
         }}
