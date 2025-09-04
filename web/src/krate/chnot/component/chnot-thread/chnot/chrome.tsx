@@ -125,6 +125,7 @@ const Chrome = ({
         ) : kind === ChnotKind.LLMChat ? (
           <LLMChatChnot
             chnotOtid={otid}
+            kindId={meta?.kindId}
             onPostSave={function (arg: PostSaveArg): void {
               handlePostSave(arg);
             }}

@@ -32,7 +32,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
   }, [formData, bodyRef]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -112,7 +112,7 @@ const BotForm = ({
   const bodyRef = useRef<LLMChatBotBodyOpenAIV1>(body);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -178,7 +178,7 @@ const BotForm = ({
               Svg Logo
             </label>
             <div className="flex flex-row space-x-2 items-center">
-              {formData.svg_logo && <KSVG inner={formData.svg_logo} />}
+              {formData.svg_logo && <KSVG src={formData.svg_logo} />}
               <Textarea
                 id="svg_logo"
                 name="svg_logo"

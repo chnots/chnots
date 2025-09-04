@@ -1,30 +1,50 @@
 import clsx from "clsx";
 import Icon from "@/common/component/icon";
 import React, { useCallback, useRef, useState } from "react";
-import { Button as KButton } from "@/common/component/ui/button";
+import { Button } from "@/common/component/ui/button";
+
+export const RecordButton = ({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+}) => {
+  return (
+    <Button
+      onClick={() => {
+        onClick();
+      }}
+      className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
+      aria-label="show-full"
+      tabIndex={0}
+      variant={"ghost"}
+    >
+      {children}
+    </Button>
+  );
+};
 
 const RecordFrame = ({
   name,
   timestamp,
   limitHeight: initLimitHeight,
-  onRegenerate,
   onCopy,
-  onEdit,
-  onOk,
   logo,
   children,
   justifyEnd,
+  buttons,
+  viewMode,
 }: {
   name?: string;
   timestamp?: string;
   limitHeight?: boolean;
   justifyEnd?: boolean;
   onCopy?: () => void;
-  onRegenerate?: () => void;
-  onEdit?: () => void;
-  onOk?: () => void;
   logo?: React.ReactElement;
   children: React.ReactNode;
+  buttons?: React.ReactNode;
+  viewMode: boolean;
 }) => {
   const contentRef = useRef<string>("");
   const handleCopy = useCallback(() => {
@@ -42,7 +62,7 @@ const RecordFrame = ({
   return (
     <div
       className={clsx(
-        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4 my-8",
+        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4",
         justifyEnd && "justify-end",
       )}
     >
@@ -58,64 +78,28 @@ const RecordFrame = ({
           <>{children}</>
         )}
 
-        <div className="space-x-2 mt-1 flex">
-          {onRegenerate && (
-            <button
-              onClick={onRegenerate}
-              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-              aria-label="Regenerate"
-              tabIndex={0}
-              title="Regenerate"
-            >
-              <Icon.RotateCcw className="h-4 w-4 text-gray-700" />
-            </button>
-          )}
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-              aria-label="Regenerate"
-              tabIndex={0}
-              title="Regenerate"
-            >
-              <Icon.Edit3 className="h-4 w-4 text-gray-700" />
-            </button>
-          )}
-          {onOk && (
-            <button
-              onClick={onOk}
-              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-              aria-label="Regenerate"
-              tabIndex={0}
-              title="Regenerate"
-            >
-              <Icon.Save className="h-4 w-4 text-gray-700" />
-            </button>
-          )}
-          {limitHeight !== undefined && (
-            <KButton
-              onClick={() => {
-                setLimitHeight((prev) => {
-                  return !prev;
-                });
+        {viewMode || (
+          <div className="space-x-2 flex">
+            {buttons && buttons}
+            {limitHeight !== undefined && (
+              <RecordButton
+                onClick={() => {
+                  setLimitHeight((prev) => {
+                    return !prev;
+                  });
+                }}
+              >
+                <Icon.Ellipsis className="h-4 w-4 text-gray-700" />
+              </RecordButton>
+            )}
+            <RecordButton
+              onClick={function (): void {
+                handleCopy();
               }}
-              className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-              aria-label="show-full"
-              tabIndex={0}
-            >
-              <Icon.Ellipsis className="h-4 w-4 text-gray-700" />
-            </KButton>
-          )}
-          <button
-            onClick={handleCopy}
-            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors"
-            aria-label="Copy"
-            tabIndex={0}
-            title="Copy"
-          >
-            <Icon.Copy className="h-4 w-4 text-gray-700" />
-          </button>
-        </div>
+              children={<Icon.Copy />}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

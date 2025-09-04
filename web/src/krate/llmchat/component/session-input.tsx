@@ -55,7 +55,6 @@ const LLMChatSessionInput = ({
         />
         <div className="flex justify-between">
           <LLMChatBotSelect />
-
           <Button
             onClick={() => {
               if (message) {

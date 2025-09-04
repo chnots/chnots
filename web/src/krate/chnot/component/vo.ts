@@ -3,7 +3,7 @@ import { ChnotKind } from "../po";
 import { TID } from "@/lib/id_util";
 
 export type ChnotMetaKind = {
-  otid: TID;
+  chnotOtid: TID;
   kind: ChnotKind;
-  kind_id: Varchar<200>;
+  kindId: Varchar<200>;
 };

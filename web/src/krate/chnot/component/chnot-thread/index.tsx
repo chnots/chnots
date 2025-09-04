@@ -55,7 +55,11 @@ const ChnotThread = ({
     if (threadMeta) {
       chnotThreadMeta(threadMeta.otid).then((rsp) => {
         rsp.chnot_meta_sorted.forEach((meta) => {
-          cachedChnotDataMapRef.current.set(meta.otid, meta);
+          cachedChnotDataMapRef.current.set(meta.otid, {
+            chnotOtid: meta.otid,
+            kind: meta.kind,
+            kindId: meta.kind_id,
+          });
         });
         savedChnotMetaMapRef.current = rsp.chnot_meta_sorted.reduce(function (
           map: Map<TID, ChnotMeta>,

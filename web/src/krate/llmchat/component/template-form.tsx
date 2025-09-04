@@ -82,7 +82,7 @@ const TemplateForm = ({
         </Label>
         <div className="flex flex-row space-x-2 items-center">
           <div className="border rounded-md">
-            <KSVG inner={formData.svg_logo ?? ""} />
+            <KSVG src={formData.svg_logo ?? ""} />
           </div>
 
           <Textarea

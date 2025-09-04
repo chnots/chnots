@@ -1,22 +1,40 @@
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LLMChatBot } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import { llmchatBotAdd } from "@/krate/llmchat/service";
 import BotForm from "./bot-form";
 import { TID } from "@/lib/id_util";
+import { useLLMChatComStore } from "./llm-chat-session";
 
 const LLMChatBotSelect = () => {
   const [showBotForm, setShowBotForm] = useState(false);
   const selectedBotRef = useRef<LLMChatBot>(undefined);
 
-  const { bots, currentBot, setCurrentBot, refreshBots } = useLLMChatStore();
+  const { bots, refreshBots } = useLLMChatStore();
+  const { bot, setBot } = useLLMChatComStore((store) => {
+    return {
+      bot: store.bot,
+      setBot: store.setBot,
+    };
+  });
 
   const handleSelect = (tid: TID) => {
-    setCurrentBot(bots.get(tid));
+    const bot = bots.get(tid);
+    if (bot) {
+      setBot(bot);
+    }
   };
+
+  useEffect(() => {
+    if (!bot) {
+      if (bots.size > 0) {
+        setBot([...bots.values()][0]);
+      }
+    }
+  }, [bots]);
 
   const AddButton = () => {
     return (
@@ -43,15 +61,15 @@ const LLMChatBotSelect = () => {
     settings?: () => void;
   }) => {
     return (
-      <div className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md">
-        <div
-          className="flex flex-row space-x-2 items-center"
-          onClick={() => {
-            handleSelect(bot.otid);
-          }}
-        >
+      <div
+        className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md hover:cursor-pointer"
+        onClick={() => {
+          handleSelect(bot.otid);
+        }}
+      >
+        <div className="flex flex-row space-x-2 items-center">
           {bot.svg_logo ? (
-            <KSVG inner={bot.svg_logo} className="w-4 h-4" />
+            <KSVG src={bot.svg_logo} className="w-4 h-4" />
           ) : (
             <Icon.Bot className="w-4 h-4" />
           )}
@@ -67,15 +85,16 @@ const LLMChatBotSelect = () => {
     );
   };
 
+  console.log("bot", bot?.otid);
   return (
     <>
-      {currentBot ? (
+      {bot ? (
         <RadixDropmenu.Root>
           <RadixDropmenu.Trigger>
-            <BotComponent bot={currentBot} />
+            <BotComponent bot={bot} />
           </RadixDropmenu.Trigger>
           <RadixDropmenu.Portal>
-            <RadixDropmenu.Content className="kc-inactive p-2 rounded-xl space-y-2 shadow-lg border ">
+            <RadixDropmenu.Content className="kc-inactive p-2 rounded-xl space-y-2 shadow-lg border z-51">
               {[...bots.values()].map((bot) => {
                 return (
                   <RadixDropmenu.Item key={bot.otid}>

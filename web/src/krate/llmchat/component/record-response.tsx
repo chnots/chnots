@@ -122,6 +122,7 @@ export const RecordAnswering = ({
         role={"response-assistant"}
         tid={genTID()}
         timestamp={new Date(otid.current / 1e3).toISOString()}
+        viewMode={false}
       />
       <div className="flex justify-center">
         <KButton

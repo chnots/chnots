@@ -11,19 +11,28 @@ use crate::{app::ShareAppState, controller::KResponse, model::dto::kreq};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/llmchat/bot", put(bot_overwrite))
+        .route("/api/v1/llmchat/overwrite-bot", put(bot_overwrite))
         .route("/api/v1/llmchat/bot", delete(bot_deletetion))
-        .route("/api/v1/llmchat/bots", get(bot_list))
-        .route("/api/v1/llmchat/template-delete", post(template_deletetion))
-        .route("/api/v1/llmchat/template", put(template_overwrite))
-        .route("/api/v1/llmchat/templates", get(template_list))
-        .route("/api/v1/llmchat/session", put(session_insertion))
+        .route("/api/v1/llmchat/list-bots", get(bot_list))
+        .route("/api/v1/llmchat/delete-template", post(template_deletetion))
+        .route(
+            "/api/v1/llmchat/overwrite-template",
+            put(template_overwrite),
+        )
+        .route("/api/v1/llmchat/list-templates", get(template_list))
+        .route(
+            "/api/v1/llmchat/session-overwrition",
+            put(session_insertion),
+        )
         .route("/api/v1/llmchat/session", delete(session_deletetion))
-        .route("/api/v1/llmchat/session", get(session_detail))
-        .route("/api/v1/llmchat/session", post(session_updation))
-        .route("/api/v1/llmchat/sessions", get(session_list))
+        .route(
+            "/api/v1/llmchat/get-session-and-records",
+            get(session_detail),
+        )
+        .route("/api/v1/llmchat/session-updation", post(session_updation))
+        .route("/api/v1/llmchat/list-sessions", get(session_list))
         .route("/api/v1/llmchat/truncate-session", post(session_truncation))
-        .route("/api/v1/llmchat/record", put(record_insertion))
+        .route("/api/v1/llmchat/record-overwrition", put(record_insertion))
 }
 
 async fn bot_overwrite(
