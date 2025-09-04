@@ -1,10 +1,7 @@
-const KSVG = ({ inner, className }: { inner: string; className?: string }) => {
-  return (
-    <svg
-      dangerouslySetInnerHTML={{ __html: inner }}
-      className={className ?? "size-8"}
-    ></svg>
-  );
+import SVG, { Props as SVGProps } from "react-inlinesvg";
+
+const KSVG = ({ className, ...rest }: SVGProps) => {
+  return <SVG className={className ?? "w-4 h-4"} {...rest}></SVG>;
 };
 
 export default KSVG;
