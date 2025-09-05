@@ -15,9 +15,9 @@ import {
 } from "../component/ui/sidebar";
 import React, { useState } from "react";
 import Icon from "../component/icon";
-import { Button } from "../component/ui/button";
 import { NavLink } from "react-router-dom";
 import { RoutePaths } from "@/router";
+import clsx from "clsx";
 
 enum SettingsEnum {
   Endpoint = "Endpoint Settings",
@@ -26,18 +26,21 @@ enum SettingsEnum {
 
 const SettingsItem = ({
   children,
+  focused,
   ...props
 }: {
   children: React.ReactNode;
+  focused: boolean;
 } & React.ComponentProps<"li">) => {
   return (
     <SidebarMenuItem
-      className="p-2 m-2 list-none flex align-middle items-center space-x-2 h-4 w-full"
+      className={clsx(
+        "list-none flex items-center space-x-2 w-full text-sm hover:cursor-pointer hover:bg-background border rounded-lg px-2 py-1",
+        focused ? "bg-background" : "border-transparent",
+      )}
       {...props}
     >
-      <Button variant={"link"} className="w-full">
-        {children}
-      </Button>
+      {children}
     </SidebarMenuItem>
   );
 };
@@ -50,7 +53,7 @@ const Settings = () => {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="w-full justify-between items-center flex flex-row p-4">
-          <h1 className="text-2xl">Settings</h1>
+          <div></div>
           <NavLink to={RoutePaths.Chnots} id={"chnot"}>
             <Icon.Brain className="w-4 h-4" />
           </NavLink>
@@ -62,8 +65,9 @@ const Settings = () => {
               <SidebarMenu>
                 <SettingsItem
                   onClick={() => setSettingsEnum(SettingsEnum.KSpace)}
+                  focused={settingsEnum === SettingsEnum.KSpace}
                 >
-                  <Icon.Earth />
+                  <Icon.Earth className="w-4 h-4" />
                   <span>KSpace</span>
                 </SettingsItem>
               </SidebarMenu>
@@ -75,8 +79,9 @@ const Settings = () => {
               <SidebarMenu>
                 <SettingsItem
                   onClick={() => setSettingsEnum(SettingsEnum.Endpoint)}
+                  focused={settingsEnum === SettingsEnum.Endpoint}
                 >
-                  <Icon.Network />
+                  <Icon.Network className="w-4 h-4" />
                   <span>Endpoints</span>
                 </SettingsItem>
               </SidebarMenu>
@@ -84,12 +89,12 @@ const Settings = () => {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <SidebarInset className="w-full ">
-        <div className="w-full m-4 items-center flex flex-row">
+      <SidebarInset className="flex flex-col w-full items-center">
+        <div className="w-full m-4 items-center flex pl-10">
           <SidebarTrigger />
           <h2 className="text-xl">{settingsEnum}</h2>
         </div>
-        <div className="m-8">
+        <div className="m-8 max-w-4xl">
           {settingsEnum === SettingsEnum.KSpace ? (
             <KSpaceSettings />
           ) : settingsEnum === SettingsEnum.Endpoint ? (
