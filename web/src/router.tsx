@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
 import LLMChatPage from "./krate/llmchat/page/llmchat";
 import FullScreenTimer from "./krate/timer/timer";
+import Pad from "./krate/pad/page";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -19,6 +20,7 @@ export enum RoutePaths {
   Timer = "/timer",
   ToolExcalidraw = "/tool/excalidraw",
   KFiles = "/kfiles",
+  Pad = "/pad",
 }
 
 const routes: RouteObject[] = [
@@ -55,6 +57,10 @@ const routes: RouteObject[] = [
       {
         path: RoutePaths.Timer,
         element: <FullScreenTimer />,
+      },
+      {
+        path: RoutePaths.Pad,
+        element: <Pad />,
       },
     ],
   },

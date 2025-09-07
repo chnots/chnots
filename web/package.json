@@ -12,6 +12,9 @@
   "dependencies": {
     "@codemirror/autocomplete": "catalog:",
     "@codemirror/commands": "catalog:",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.4",
     "@codemirror/lang-markdown": "catalog:",
     "@codemirror/language": "catalog:",
     "@codemirror/language-data": "catalog:",
@@ -55,6 +58,7 @@
     "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "codemirror-wrapped-line-indent": "^1.0.9",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
