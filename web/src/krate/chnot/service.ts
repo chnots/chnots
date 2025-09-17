@@ -2,14 +2,14 @@ import request from "@/lib/request";
 import {
   ChnotThreadQueryReq,
   ChnotThreadQueryRsp,
-  ChnotThreadTagQueryReq,
+  ChnotTagQueryReq,
   ChnotOverwriteThreadMetaReq,
   MdwtRecordsReq,
   MdwtRecordsRsp,
   ChnotThreadMetaRsp,
-  ChnotThreadTagQueryRsp,
-  ChnotOverwriteMetaReq,
-  ChnotOverwriteMetaRsp,
+  ChnotTagQueryRsp,
+  ChnotOverwriteThreadOrderReq,
+  ChnotOverwriteThreadOrderRsp,
   ChnotOverwriteMdwtReq,
   ChnotOverwriteMdwtRsp,
   ChnotOverwriteThreadMetaRsp,
@@ -31,8 +31,8 @@ export const chnotOverwriteMdwts = async (
 };
 
 export async function chnotOverwriteMetas(
-  req: ChnotOverwriteMetaReq,
-): Promise<ChnotOverwriteMetaRsp> {
+  req: ChnotOverwriteThreadOrderReq,
+): Promise<ChnotOverwriteThreadOrderRsp> {
   return await request.putJson(`api/v1/chnot-overwrite-metas`, req);
 }
 
@@ -55,8 +55,8 @@ export const chnotThreadOverwriteMeta = async (
 };
 
 export const chnotThreadTagNames = async (
-  req: ChnotThreadTagQueryReq,
-): Promise<ChnotThreadTagQueryRsp<string>> => {
+  req: ChnotTagQueryReq,
+): Promise<ChnotTagQueryRsp<string>> => {
   return await request.postJson(`api/v1/chnot-thread-tag-names`, req);
 };
 

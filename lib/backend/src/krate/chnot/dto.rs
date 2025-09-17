@@ -41,28 +41,41 @@ pub struct ChnotOverwriteMdwtReq {
     pub mdwt: ChnotOverwriteMdwtReqData,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct ChnotOverwriteMdwtRsp {
+    pub todo_event: Option<TodoEvent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotOverwriteThreadOrderReqData {
+    pub otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotOverwriteThreadOrderReq {
+    pub thread_otid: TID,
+    pub orders: Vec<ChnotOverwriteThreadOrderReqData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotOverwriteThreadOrderRsp {}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteMetaReqData {
     pub otid: TID,
-    pub korder: i64,
     pub kind: ChnotKind,
     pub kind_id: Varchar<200>,
+    pub kspace: Varchar<200>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteMetaReq {
-    pub thread_otid: TID,
     pub metas: Vec<ChnotOverwriteMetaReqData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotOverwriteMetaRsp {
     pub metas: Vec<ChnotMeta>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ChnotOverwriteMdwtRsp {
-    pub todo_event: Option<TodoEvent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -76,7 +89,7 @@ pub struct ChnotThreadArchiveReq {
 pub struct ChnotThreadArchiveRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChnotThreadTagSearchType {
+pub enum ChnotTagSearchType {
     Inset(Vec<String>),
 }
 
@@ -85,7 +98,7 @@ pub struct ChnotThreadQueryReq {
     pub query: Option<String>,
     pub thread_otid: Option<TID>,
 
-    pub tags: Option<ChnotThreadTagSearchType>,
+    pub tags: Option<ChnotTagSearchType>,
     pub kinds: Vec<ChnotKind>,
 
     pub with_omitted: Option<bool>,
@@ -130,9 +143,9 @@ pub struct Toents {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadTagQueryReq {
+pub struct ChnotTagQueryReq {
     pub query: Option<String>,
-    pub tags: Option<ChnotThreadTagSearchType>,
+    pub tags: Option<ChnotTagSearchType>,
     pub remove_params: Option<bool>,
 
     // Paging
@@ -141,7 +154,7 @@ pub struct ChnotThreadTagQueryReq {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ChnotThreadTagQueryRsp<T>
+pub struct ChnotTagQueryRsp<T>
 where
     T: Serialize + Clone,
 {
@@ -150,7 +163,7 @@ where
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadTagUpdateReq {
+pub struct ChnotTagUpdateReq {
     pub content: Text,
     pub thread_otid: TID,
     pub kspace: Varchar<40>,

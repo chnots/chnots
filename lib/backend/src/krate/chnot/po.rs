@@ -80,7 +80,7 @@ impl Curd for ChnotThreadMeta {
 impl_otid_support! {ChnotThreadMeta}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotThreadTag {
+pub struct ChnotTag {
     #[gts_primary]
     pub tag: Varchar<800>,
     #[gts_primary]
@@ -92,7 +92,7 @@ pub struct ChnotThreadTag {
     pub tid: TID,
 }
 
-impl Curd for ChnotThreadTag {
+impl Curd for ChnotTag {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
         Self::pkey_cond(self.tag.clone(), self.thread_otid)
     }
@@ -101,9 +101,9 @@ impl Curd for ChnotThreadTag {
     }
 }
 
-impl_otid_support! {ChnotThreadTag}
+impl_otid_support! {ChnotTag}
 
-impl AsRef<str> for ChnotThreadTag {
+impl AsRef<str> for ChnotTag {
     fn as_ref(&self) -> &str {
         self.tag.as_str()
     }
@@ -130,19 +130,6 @@ impl ChnotKind {
     }
 }
 enum_common_funcs!(ChnotKind);
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChnotTagType {
-    Dir = 99,
-    ParentDir = 98,
-    Common = 1,
-}
-
-impl From<ChnotTagType> for SqlValue<'_> {
-    fn from(value: ChnotTagType) -> Self {
-        SqlValue::I32(value as i32)
-    }
-}
 
 impl From<ChnotKind> for SqlValue<'_> {
     fn from(value: ChnotKind) -> Self {
@@ -172,16 +159,12 @@ pub(crate) struct ChnotMeta {
     #[gts_type = "i64"]
     pub otid: TID,
 
-    #[gts_key]
-    #[gts_type = "i64"]
-    pub thread_otid: TID,
-
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
     #[gts_key]
     pub kind_id: Varchar<200>,
 
-    pub korder: i64,
+    pub kspace: Varchar<200>,
 
     #[gts_unique]
     #[gts_type = "i64"]
@@ -194,11 +177,10 @@ impl TryFrom<&KDbRow> for ChnotMeta {
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         Ok(Self {
             otid: value.try_get(Self::OTID)?,
-            thread_otid: value.try_get(Self::THREAD_OTID)?,
             kind: value.try_get(Self::KIND)?,
             kind_id: value.try_get(Self::KIND_ID)?,
-            korder: value.try_get(Self::KORDER)?,
             tid: value.try_get(Self::TID)?,
+            kspace: value.try_get(Self::KSPACE)?,
         })
     }
 }
@@ -214,6 +196,48 @@ impl Curd for ChnotMeta {
 }
 
 impl_otid_support! {ChnotMeta}
+
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+pub(crate) struct ChnotThreadOrder {
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub otid: TID,
+
+    #[gts_key]
+    #[gts_type = "i64"]
+    pub thread_otid: TID,
+
+    pub korder: i64,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
+}
+
+impl TryFrom<&KDbRow> for ChnotThreadOrder {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            otid: value.try_get(Self::OTID)?,
+            thread_otid: value.try_get(Self::THREAD_OTID)?,
+            korder: value.try_get(Self::KORDER)?,
+            tid: value.try_get(Self::TID)?,
+        })
+    }
+}
+
+impl Curd for ChnotThreadOrder {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+
+impl_otid_support! {ChnotThreadOrder}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotToent {

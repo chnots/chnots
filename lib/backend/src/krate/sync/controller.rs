@@ -10,7 +10,7 @@ use crate::{
     app::ShareAppState,
     controller::KResponse,
     krate::{
-        chnot::{ChnotMeta, ChnotThreadMeta, ChnotThreadTag, ChnotToent, MdwtRecord},
+        chnot::{ChnotMeta, ChnotTag, ChnotThreadMeta, ChnotToent, MdwtRecord},
         kfile::KFileMeta,
         kkv::KKV,
         kspace::KSpace,
@@ -72,10 +72,10 @@ macro_rules! sync_invoke_enum2generic {
                 };
                 $worker.$invoke(arg).await
             }
-            OtidTableEnum::ChnotThreadTag => {
+            OtidTableEnum::ChnotTag => {
                 let arg = OtidWithGer {
                     dto: $eobj.dto,
-                    table_type: PhantomData::<crate::krate::chnot::ChnotThreadTag>,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotTag>,
                 };
                 $worker.$invoke(arg).await
             }
@@ -170,6 +170,13 @@ macro_rules! sync_invoke_enum2generic {
                 };
                 $worker.$invoke(arg).await
             }
+            OtidTableEnum::ChnotThreadOrder => {
+                let arg = OtidWithGer {
+                    dto: $eobj.dto,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotThreadOrder>,
+                };
+                $worker.$invoke(arg).await
+            }
         }
     }};
 }
@@ -218,7 +225,7 @@ async fn sync_data_inner(
     let result = match req.table_type {
         OtidTableEnum::MdwtRecord => inner! {MdwtRecord},
         OtidTableEnum::ChnotThreadMeta => inner! {ChnotThreadMeta},
-        OtidTableEnum::ChnotThreadTag => inner! {ChnotThreadTag},
+        OtidTableEnum::ChnotTag => inner! {ChnotTag},
         OtidTableEnum::LLMChatBot => inner! {LLMChatBot},
         OtidTableEnum::LLMChatRecord => inner! {LLMChatRecord},
         OtidTableEnum::LLMChatTemplate => inner! {LLMChatTemplate},
@@ -232,6 +239,7 @@ async fn sync_data_inner(
         OtidTableEnum::KSpace => inner! {KSpace},
         OtidTableEnum::ChnotMeta => inner! {ChnotMeta},
         OtidTableEnum::ChnotToent => inner! {ChnotToent},
+        OtidTableEnum::ChnotThreadOrder => inner! {ChnotThreadMeta},
     };
 
     info!("{:?}", serde_json::to_string(&result));

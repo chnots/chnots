@@ -10,9 +10,6 @@ export enum ChnotKind {
   LLMChat = "llm_chat",
 }
 
-// TODO: true type
-export type ChnotThreadTagType = object;
-
 export type MdwtRecord = {
   otid: TID;
   tid: TID;
@@ -29,7 +26,7 @@ export type ChnotThreadMeta = {
   tid: TID;
 };
 
-export type ChnotThreadTag = {
+export type ChnotTag = {
   tag: Varchar<800>;
   thread_otid: TID;
   kspace: Varchar<40>;

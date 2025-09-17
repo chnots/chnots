@@ -10,10 +10,16 @@ pub trait ChnotMapper {
         &self,
         req: KReq<ChnotOverwriteMdwtReq>,
     ) -> AResult<ChnotOverwriteMdwtRsp>;
+
     async fn chnot_overwrite_metas(
         &self,
         req: KReq<ChnotOverwriteMetaReq>,
     ) -> AResult<ChnotOverwriteMetaRsp>;
+    async fn chnot_overwrite_thread_orders(
+        &self,
+        req: KReq<ChnotOverwriteThreadOrderReq>,
+    ) -> AResult<ChnotOverwriteThreadOrderRsp>;
+
     async fn chnot_thread_query(
         &self,
         req: KReq<ChnotThreadQueryReq>,
@@ -26,12 +32,12 @@ pub trait ChnotMapper {
     async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult;
     async fn chnot_tag_query(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
-    ) -> AResult<ChnotThreadTagQueryRsp<ChnotThreadTag>>;
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<ChnotTag>>;
     async fn chnot_tag_names(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
-    ) -> AResult<ChnotThreadTagQueryRsp<String>>;
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<String>>;
 
     async fn chnot_thread_meta(&self, req: KReq<ChnotThreadMetaReq>)
     -> AResult<ChnotThreadMetaRsp>;
@@ -68,15 +74,15 @@ impl ChnotMapper for MapperType {
 
     async fn chnot_tag_query(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
-    ) -> AResult<ChnotThreadTagQueryRsp<ChnotThreadTag>> {
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
         expand_mt_branch!(self.chnot_tag_query(req))
     }
 
     async fn chnot_tag_names(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
-    ) -> AResult<ChnotThreadTagQueryRsp<String>> {
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<String>> {
         expand_mt_branch!(self.chnot_tag_names(req))
     }
 
@@ -93,6 +99,13 @@ impl ChnotMapper for MapperType {
 
     async fn mdwt_blocks(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp> {
         expand_mt_branch!(self.mdwt_blocks(req))
+    }
+
+    async fn chnot_overwrite_thread_orders(
+        &self,
+        req: KReq<ChnotOverwriteThreadOrderReq>,
+    ) -> AResult<ChnotOverwriteThreadOrderRsp> {
+        expand_mt_branch!(self.chnot_overwrite_thread_orders(req))
     }
 
     async fn chnot_overwrite_metas(

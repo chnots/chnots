@@ -60,7 +60,7 @@ const ChnotSidebarTagItem = React.forwardRef(
   },
 );
 
-ChnotSidebarTagItem.displayName = "ChnotThreadTagListItem";
+ChnotSidebarTagItem.displayName = "ChnotTagListItem";
 
 const ChnotSidebarItem = React.forwardRef(
   (

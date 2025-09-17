@@ -9,7 +9,7 @@ import {
 import { DbText, Varchar } from "@/lib/types";
 import { TodoEvent } from "../toent/po";
 
-export type ChnotThreadTagSearchType = {
+export type ChnotTagSearchType = {
   Inset: string[];
 };
 
@@ -31,7 +31,7 @@ export type ChnotOverwriteMdwtReqData = {
   otid: TID;
   content: DbText;
 };
-export type ChnotOverwriteMetaReqData = {
+export type ChnotOverwriteThreadOrderReqData = {
   otid: TID;
   korder: number;
   kind: ChnotKind;
@@ -45,7 +45,7 @@ export type ChnotThreadArchiveRsp = object;
 export type ChnotThreadQueryReq = {
   query?: string;
   thread_otid?: TID;
-  tags?: ChnotThreadTagSearchType;
+  tags?: ChnotTagSearchType;
   kinds: ChnotKind[];
   with_omitted?: boolean;
   with_archive?: boolean;
@@ -68,20 +68,20 @@ export type MdwtRecordsRsp = {
 export type Toents = {
   toent_inst_map: Record<TID, ChnotToent[]>;
 };
-export type ChnotThreadTagQueryReq = {
+export type ChnotTagQueryReq = {
   query?: string;
-  tags?: ChnotThreadTagSearchType;
+  tags?: ChnotTagSearchType;
   remove_params?: boolean;
   start_index: number;
   page_size: number;
 };
-export type ChnotThreadTagUpdateReq = {
+export type ChnotTagUpdateReq = {
   content: DbText;
   thread_otid: TID;
   kspace: Varchar<40>;
 };
 
-export type ChnotThreadTagQueryRsp<T> = {
+export type ChnotTagQueryRsp<T> = {
   data: T[];
   start_index: number;
 };
@@ -89,11 +89,11 @@ export type ChnotThreadTagQueryRsp<T> = {
 export type ChnotOverwriteMdwtReq = {
   mdwt: ChnotOverwriteMdwtReqData;
 };
-export type ChnotOverwriteMetaReq = {
+export type ChnotOverwriteThreadOrderReq = {
   thread_otid: TID;
-  metas: ChnotOverwriteMetaReqData[];
+  metas: ChnotOverwriteThreadOrderReqData[];
 };
-export type ChnotOverwriteMetaRsp = {
+export type ChnotOverwriteThreadOrderRsp = {
   metas: ChnotMeta[];
 };
 export type ChnotOverwriteMdwtRsp = {

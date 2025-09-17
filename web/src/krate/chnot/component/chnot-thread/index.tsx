@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { ChnotKind, ChnotMeta, ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import { ChnotOverwriteMetaReqData } from "../../dto";
+import { ChnotOverwriteThreadOrderReqData } from "../../dto";
 import {
   chnotThreadMeta,
   chnotOverwriteMetas,
@@ -111,7 +111,7 @@ const ChnotThread = ({
         cachedChnotDataMapRef.current.set(arg.data.chnotOtid, arg.data);
       }
 
-      const metas: ChnotOverwriteMetaReqData[] = chnotOrders
+      const metas: ChnotOverwriteThreadOrderReqData[] = chnotOrders
         .map((otid, index) => {
           const persistedChnot = cachedChnotDataMapRef.current.get(otid);
 

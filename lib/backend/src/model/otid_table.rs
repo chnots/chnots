@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 pub enum OtidTableEnum {
     MdwtRecord,
     ChnotThreadMeta,
-    ChnotThreadTag,
+    ChnotThreadOrder,
+    ChnotTag,
     ChnotMeta,
     ChnotToent,
     LLMChatBot,

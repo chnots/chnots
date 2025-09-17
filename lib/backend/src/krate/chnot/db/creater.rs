@@ -12,10 +12,10 @@ use chrono::TimeDelta;
 impl<'a> KDbTx<'a> {
     pub(super) async fn chnot_tag_update_single_chnot(
         &self,
-        req: ChnotThreadTagUpdateReq,
+        req: ChnotTagUpdateReq,
         chnot_parser: &ChnotParser<'_>,
     ) -> EResult {
-        let ChnotThreadTagUpdateReq {
+        let ChnotTagUpdateReq {
             content: _,
             thread_otid: meta_otid,
             kspace,
@@ -28,12 +28,12 @@ impl<'a> KDbTx<'a> {
             .collect();
         let mut tags = tags?;
         self.as_executor()
-            .omit_rows::<ChnotThreadTag>(Wheres::and([
-                Wheres::equal(ChnotThreadTag::THREAD_OTID, meta_otid),
+            .omit_rows::<ChnotTag>(Wheres::and([
+                Wheres::equal(ChnotTag::THREAD_OTID, meta_otid),
                 if tags.is_empty() {
                     Wheres::None
                 } else {
-                    Wheres::not(Wheres::r#in(ChnotThreadTag::TAG, tags.clone()))
+                    Wheres::not(Wheres::r#in(ChnotTag::TAG, tags.clone()))
                 },
             ]))
             .await?;
@@ -45,7 +45,7 @@ impl<'a> KDbTx<'a> {
         for tag in tags {
             executor
                 .exec(
-                    ChnotThreadTag {
+                    ChnotTag {
                         tid: TID::default(),
                         kspace: kspace.to_owned(),
                         tag: tag.to_owned(),
@@ -58,32 +58,6 @@ impl<'a> KDbTx<'a> {
         }
 
         Ok(())
-    }
-
-    pub(super) async fn overwrite_block_metas(
-        &self,
-        blocks: Vec<ChnotOverwriteMetaReqData>,
-        chnot_meta_otid: TID,
-    ) -> AResult<Vec<ChnotMeta>> {
-        let mut metas = vec![];
-        for b in blocks {
-            let rec = ChnotMeta {
-                otid: b.otid,
-                thread_otid: chnot_meta_otid,
-                kind: b.kind,
-                kind_id: b.kind_id,
-                korder: b.korder,
-                tid: TID::default(),
-            };
-
-            metas.push(rec.clone());
-
-            self.as_executor()
-                .omit_rows::<ChnotMeta>(rec.pkey())
-                .await?;
-            self.exec(rec.to_sql_inserter()).await?;
-        }
-        Ok(metas)
     }
 
     async fn overwrite_mdwt_record(&self, block: ChnotOverwriteMdwtReqData) -> EResult {

@@ -33,15 +33,15 @@ fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
     .sov("FROM chnot_thread_meta tm left join chnot_meta cm on tm.otid = cm.thread_otid and cm.korder=0 and cm.kind = 'mdwt' left join mdwt_record r ON cast(cm.kind_id as bigint) = r.otid")
 }
 
-impl ChnotThreadTag {
+impl ChnotTag {
     fn with_those_tag_meta_otids<'a>(
         kspaces: Vec<Varchar<40>>,
-        tags: Option<&ChnotThreadTagSearchType>,
+        tags: Option<&ChnotTagSearchType>,
     ) -> SqlBuilder<'a> {
         let v = vec![];
         let tags = match tags {
             Some(tags) => match tags {
-                ChnotThreadTagSearchType::Inset(items) => items,
+                ChnotTagSearchType::Inset(items) => items,
             },
             None => &v,
         };
@@ -50,16 +50,16 @@ impl ChnotThreadTag {
         } else {
             None
         };
-        SqlBuilder::read(ChnotThreadTag::TABLE, &[ChnotThreadTag::THREAD_OTID])
+        SqlBuilder::read(ChnotTag::TABLE, &[ChnotTag::THREAD_OTID])
             .r#where(Wheres::and([
-                Wheres::r#in(ChnotThreadTag::KSPACE, kspaces),
-                Wheres::if_some(len, |_| Wheres::r#in(ChnotThreadTag::TAG, tags.to_vec())),
+                Wheres::r#in(ChnotTag::KSPACE, kspaces),
+                Wheres::if_some(len, |_| Wheres::r#in(ChnotTag::TAG, tags.to_vec())),
             ]))
             .sov("group by")
-            .sov(ChnotThreadTag::THREAD_OTID)
+            .sov(ChnotTag::THREAD_OTID)
             .some_then(len, |l, sb| {
                 sb.sov("having")
-                    .sov(format!("COUNT(DISTINCT {}) = ", ChnotThreadTag::TAG))
+                    .sov(format!("COUNT(DISTINCT {}) = ", ChnotTag::TAG))
                     .sov(SegOrVal::val(l as i64))
             })
     }
@@ -114,10 +114,10 @@ fn chnot_thread_query_mapper(row: KDbRow) -> AResult<ChnotThread> {
 impl KDb {
     async fn chnot_tag_query_inner<F, T>(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
+        req: KReq<ChnotTagQueryReq>,
         mapper: F,
         name_only: bool,
-    ) -> AResult<ChnotThreadTagQueryRsp<T>>
+    ) -> AResult<ChnotTagQueryRsp<T>>
     where
         F: Fn(KDbRow) -> AResult<T> + Send + 'static,
         T: Serialize + Clone + Send + 'static + AsRef<str>,
@@ -126,24 +126,24 @@ impl KDb {
 
         let sql = SqlBuilder::new()
             .sov("WITH qualified_tids AS (")
-            .merge(ChnotThreadTag::with_those_tag_meta_otids(
+            .merge(ChnotTag::with_those_tag_meta_otids(
                 req.get_spaces(),
                 req.tags.as_ref(),
             ))
             .sov(")")
             .merge(
-                SqlBuilder::read(ChnotThreadTag::TABLE, &[field])
+                SqlBuilder::read(ChnotTag::TABLE, &[field])
                     .sov("as t")
                     .sov("right join qualified_tids q on t.meta_otid = q.meta_otid")
                     .r#where(Wheres::and([Wheres::r#in(
-                        ChnotThreadTag::KSPACE,
+                        ChnotTag::KSPACE,
                         req.get_spaces(),
                     )]))
                     .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index)),
             );
         let data = self.conn().await?.qry_list(sql, mapper).await?;
 
-        Ok(ChnotThreadTagQueryRsp {
+        Ok(ChnotTagQueryRsp {
             data,
             start_index: req.start_index,
         })
@@ -154,8 +154,8 @@ impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
         create_tables(
             vec![
-                ChnotThreadTag::create_sql().to_owned_sql(),
-                ChnotThreadTag::hist_table(),
+                ChnotTag::create_sql().to_owned_sql(),
+                ChnotTag::hist_table(),
                 ChnotThreadMeta::create_sql().to_owned_sql(),
                 ChnotThreadMeta::hist_table(),
                 MdwtRecord::create_sql().to_owned_sql(),
@@ -184,7 +184,7 @@ impl ChnotMapper for KDb {
                 sr.sov("inner join")
                     .sub(
                         "ct",
-                        ChnotThreadTag::with_those_tag_meta_otids(req.get_spaces(), Some(tag)),
+                        ChnotTag::with_those_tag_meta_otids(req.get_spaces(), Some(tag)),
                     )
                     .sov("on t.meta_otid = ct.meta_otid")
             })
@@ -295,46 +295,55 @@ impl ChnotMapper for KDb {
         rsp
     }
 
-    async fn chnot_overwrite_metas(
+    async fn chnot_overwrite_thread_orders(
         &self,
-        req: KReq<ChnotOverwriteMetaReq>,
-    ) -> AResult<ChnotOverwriteMetaRsp> {
+        req: KReq<ChnotOverwriteThreadOrderReq>,
+    ) -> AResult<ChnotOverwriteThreadOrderRsp> {
         let mut conn = self.conn().await?;
         let tx = conn.transaction().await?;
-        let ChnotOverwriteMetaReq {
-            thread_otid: meta_otid,
-            metas,
+        let ChnotOverwriteThreadOrderReq {
+            thread_otid,
+            orders,
         } = req.body;
-        let rsp = tx.overwrite_block_metas(metas, meta_otid).await;
 
-        if let Ok(rsp) = rsp {
-            tx.cmt().await?;
-            Ok(ChnotOverwriteMetaRsp { metas: rsp })
-        } else {
-            tx.rbk().await?;
-            Err(anyhow!("unable to insert chnot metas"))
+        let mut metas = vec![];
+        for (c, b) in orders.iter().enumerate() {
+            let rec = ChnotThreadOrder {
+                otid: b.otid,
+                tid: TID::default(),
+                thread_otid,
+                korder: c.try_into()?,
+            };
+
+            metas.push(rec.clone());
+
+            tx.as_executor().omit_rows::<ChnotMeta>(rec.pkey()).await?;
+            tx.exec(rec.to_sql_inserter()).await?;
         }
+
+        tx.cmt().await?;
+        Ok(ChnotOverwriteThreadOrderRsp {})
     }
 
     async fn chnot_tag_query(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
-    ) -> AResult<ChnotThreadTagQueryRsp<ChnotThreadTag>> {
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
         self.chnot_tag_query_inner(req, |e| (&e).try_into(), false)
             .await
     }
 
     async fn chnot_tag_names(
         &self,
-        req: KReq<ChnotThreadTagQueryReq>,
-    ) -> AResult<ChnotThreadTagQueryRsp<String>> {
+        req: KReq<ChnotTagQueryReq>,
+    ) -> AResult<ChnotTagQueryRsp<String>> {
         info!("{req:#?}");
         let remove_params = req.remove_params.default_true();
         let input_tag = req.body.tags.as_ref().map_or(vec![], |c| match c {
-            ChnotThreadTagSearchType::Inset(items) => items.to_vec(),
+            ChnotTagSearchType::Inset(items) => items.to_vec(),
         });
-        let mut result: ChnotThreadTagQueryRsp<String> = self
-            .chnot_tag_query_inner(req, |e| e.try_get(ChnotThreadTag::TAG), true)
+        let mut result: ChnotTagQueryRsp<String> = self
+            .chnot_tag_query_inner(req, |e| e.try_get(ChnotTag::TAG), true)
             .await?;
 
         result.data = result
@@ -370,7 +379,7 @@ impl ChnotMapper for KDb {
         let mut conn = self.conn().await?;
         let chnots = conn
             .qry_list(get_all, move |e| {
-                Ok(ChnotThreadTagUpdateReq {
+                Ok(ChnotTagUpdateReq {
                     content: e.try_get(MdwtRecord::CONTENT)?,
                     thread_otid: e.try_get(MdwtRecord::OTID)?,
                     kspace: kspace.to_owned(),
@@ -402,10 +411,24 @@ impl ChnotMapper for KDb {
             )
             .await?;
 
-        let block_metas = conn
+        let thread = conn
             .qry_list(
-                SqlBuilder::read_all(ChnotMeta::TABLE)
-                    .r#where(Wheres::equal(ChnotMeta::THREAD_OTID, req.thread_otid)),
+                SqlBuilder::read(
+                    ChnotMeta::TABLE,
+                    &[format!("{}.*", ChnotMeta::TABLE).as_str()],
+                )
+                .sov(format!(
+                    " left join {} on {}.{} = {}.{} ",
+                    ChnotThreadOrder::TABLE,
+                    ChnotMeta::OTID,
+                    ChnotMeta::OTID,
+                    ChnotThreadOrder::TABLE,
+                    ChnotThreadOrder::OTID
+                ))
+                .r#where(Wheres::and([Wheres::equal(
+                    ChnotThreadOrder::THREAD_OTID,
+                    req.thread_otid,
+                )])),
                 |row| ChnotMeta::try_from(&row),
             )
             .await?;
@@ -421,7 +444,7 @@ impl ChnotMapper for KDb {
 
         Ok(ChnotThreadMetaRsp {
             thread_meta: chnot_meta,
-            chnot_meta_sorted: block_metas,
+            chnot_meta_sorted: thread,
         })
     }
 
@@ -440,6 +463,36 @@ impl ChnotMapper for KDb {
 
         Ok(MdwtRecordsRsp {
             mdwt_map: recs.into_iter().map(|r| (r.otid, r)).collect(),
+        })
+    }
+
+    async fn chnot_overwrite_metas(
+        &self,
+        req: KReq<ChnotOverwriteMetaReq>,
+    ) -> AResult<ChnotOverwriteMetaRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.transaction().await?;
+        let ChnotOverwriteMetaReq { metas } = req.body;
+
+        let mut result_metas = vec![];
+        for b in metas {
+            let rec = ChnotMeta {
+                otid: b.otid,
+                tid: TID::default(),
+                kind: b.kind,
+                kind_id: b.kind_id,
+                kspace: b.kspace,
+            };
+
+            result_metas.push(rec.clone());
+
+            tx.as_executor().omit_rows::<ChnotMeta>(rec.pkey()).await?;
+            tx.exec(rec.to_sql_inserter()).await?;
+        }
+
+        tx.cmt().await?;
+        Ok(ChnotOverwriteMetaRsp {
+            metas: result_metas,
         })
     }
 }
@@ -480,15 +533,15 @@ impl TryFrom<&KDbRow> for MdwtRecord {
     }
 }
 
-impl TryFrom<&KDbRow> for ChnotThreadTag {
+impl TryFrom<&KDbRow> for ChnotTag {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
-        let obj = ChnotThreadTag {
-            tid: value.try_get(ChnotThreadTag::TID)?,
-            kspace: value.try_get(ChnotThreadTag::KSPACE)?,
-            tag: value.try_get(ChnotThreadTag::TAG)?,
-            thread_otid: value.try_get(ChnotThreadTag::THREAD_OTID)?,
+        let obj = ChnotTag {
+            tid: value.try_get(ChnotTag::TID)?,
+            kspace: value.try_get(ChnotTag::KSPACE)?,
+            tag: value.try_get(ChnotTag::TAG)?,
+            thread_otid: value.try_get(ChnotTag::THREAD_OTID)?,
         };
         Ok(obj)
     }

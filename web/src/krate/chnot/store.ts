@@ -1,11 +1,7 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import {
-  ChnotThread,
-  ChnotThreadQueryRsp,
-  ChnotThreadTagSearchType,
-} from "./dto";
+import { ChnotThread, ChnotThreadQueryRsp, ChnotTagSearchType } from "./dto";
 import { chnotThreadQuery } from "./service";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
@@ -50,7 +46,7 @@ interface State {
    * Current Query Input
    */
   query?: string;
-  tags?: ChnotThreadTagSearchType;
+  tags?: ChnotTagSearchType;
   kinds?: ChnotKind[];
   isFetchingNextPage: boolean;
 }
@@ -195,7 +191,7 @@ export const useChnotStore = create(
         };
       });
     },
-    setTags: (newTags?: ChnotThreadTagSearchType) => {
+    setTags: (newTags?: ChnotTagSearchType) => {
       set((prev) => {
         return {
           ...prev,
