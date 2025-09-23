@@ -16,32 +16,32 @@ use super::*;
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/chnot-overwrite-mdwts", put(chnot_overwrite_mdwts))
-        .route("/api/v1/chnot-overwrite-metas", put(chnot_overwrite_metas))
+        .route("/api/v1/put-chnot-mdwts", put(chnot_overwrite_mdwts))
+        .route("/api/v1/put-chnot-metas", put(chnot_overwrite_metas))
         .route(
-            "/api/v1/chnot-overwrite-thread-orders",
+            "/api/v1/put-chnot-thread-orders",
             put(chnot_overwrite_thread_orders),
         )
         .route(
-            "/api/v1/chnot-thread-overwrite-meta",
+            "/api/v1/put-chnot-thread-meta",
             post(chnot_thread_overwrite_meta),
         )
         .route(
-            "/api/v1/chnot-thread-meta/{chnot_otid}",
+            "/api/v1/get-chnot-thread-meta/{chnot_otid}",
             get(chnot_thread_meta),
         )
-        .route("/api/v1/mdwt-records", post(mdwt_records))
-        .route("/api/v1/chnot-thread-query", post(chnot_thread_query))
+        .route("/api/v1/query-mdwt-records", post(mdwt_records))
+        .route("/api/v1/query-chnot-thread", post(chnot_thread_query))
         .route(
-            "/api/v1/chnot-thread-tag-query",
+            "/api/v1/query-chnot-thread-tag",
             post(chnot_thread_tag_query),
         )
         .route(
-            "/api/v1/chnot-thread-tag-names",
+            "/api/v1/query-chnot-tag-names",
             post(chnot_thread_tag_names),
         )
         .route(
-            "/api/v1/chnot-thread-tag-refresh-all",
+            "/api/v1/put-all-chnot-tags",
             post(chnot_thread_tag_refresh_all),
         )
 }

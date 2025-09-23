@@ -11,7 +11,7 @@ import { llmchatRecordInsert } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
 import { genTID, TID } from "@/lib/id_util";
-import { useLLMChatComStore } from "./llm-chat-session";
+import { useLLMChatComStore } from "./session";
 
 export const RecordAnswering = ({
   bot,

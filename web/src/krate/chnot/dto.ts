@@ -14,7 +14,7 @@ export type ChnotTagSearchType = {
 };
 
 export type ChnotThread = {
-  head_content?: string;
+  head_content?: DbText;
   todo_event?: TodoEvent;
   meta: ChnotThreadMeta;
 };
@@ -33,9 +33,6 @@ export type ChnotOverwriteMdwtReqData = {
 };
 export type ChnotOverwriteThreadOrderReqData = {
   otid: TID;
-  korder: number;
-  kind: ChnotKind;
-  kind_id: Varchar<200>;
 };
 export type ChnotThreadArchiveReq = {
   thread_otid: TID;
@@ -91,11 +88,9 @@ export type ChnotOverwriteMdwtReq = {
 };
 export type ChnotOverwriteThreadOrderReq = {
   thread_otid: TID;
-  metas: ChnotOverwriteThreadOrderReqData[];
+  orders: ChnotOverwriteThreadOrderReqData[];
 };
-export type ChnotOverwriteThreadOrderRsp = {
-  metas: ChnotMeta[];
-};
+export type ChnotOverwriteThreadOrderRsp = object;
 export type ChnotOverwriteMdwtRsp = {
   todo_event?: TodoEvent;
 };
@@ -104,4 +99,17 @@ export type ChnotThreadQueryRsp = {
   data: ChnotThread[];
   has_next: boolean;
   next_start: number;
+};
+
+export type ChnotOverwriteMetaReqData = {
+  otid: TID;
+  kind: ChnotKind;
+  kind_id: Varchar<200>;
+  kspace: Varchar<200>;
+};
+export type ChnotOverwriteMetaReq = {
+  metas: ChnotOverwriteMetaReqData[];
+};
+export type ChnotOverwriteMetaRsp = {
+  metas: ChnotMeta[];
 };

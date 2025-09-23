@@ -2,7 +2,7 @@ import { LLMChatRecord } from "@/krate/llmchat/po";
 import RecordFrame, { RecordButton } from "./record-frame";
 import { useState } from "react";
 import { Textarea } from "@/common/component/ui/textarea";
-import { useLLMChatComStore } from "./llm-chat-session";
+import { useLLMChatComStore } from "./session";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
 

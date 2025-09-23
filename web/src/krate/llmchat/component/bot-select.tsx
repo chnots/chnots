@@ -7,7 +7,7 @@ import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
 import { llmchatBotAdd } from "@/krate/llmchat/service";
 import BotForm from "./bot-form";
 import { TID } from "@/lib/id_util";
-import { useLLMChatComStore } from "./llm-chat-session";
+import { useLLMChatComStore } from "./session";
 
 const LLMChatBotSelect = () => {
   const [showBotForm, setShowBotForm] = useState(false);

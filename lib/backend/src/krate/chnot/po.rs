@@ -145,14 +145,6 @@ impl<'a> KDbRowBehavier<'a, ChnotKind> for KDbRow {
     }
 }
 
-fn todo_state_enum_to_sql(this: Option<TodoStateEnum>) -> Option<String> {
-    this.map(|e| e.as_static_str().into())
-}
-
-fn todo_priority_enum_to_sql(this: Option<TodoPriorityEnum>) -> Option<i64> {
-    this.map(|e| e.as_priority().into())
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotMeta {
     #[gts_primary]
@@ -238,6 +230,14 @@ impl Curd for ChnotThreadOrder {
 }
 
 impl_otid_support! {ChnotThreadOrder}
+
+fn todo_state_enum_to_sql(this: Option<TodoStateEnum>) -> Option<String> {
+    this.map(|e| e.as_static_str().into())
+}
+
+fn todo_priority_enum_to_sql(this: Option<TodoPriorityEnum>) -> Option<i64> {
+    this.map(|e| e.as_priority().into())
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub(crate) struct ChnotToent {

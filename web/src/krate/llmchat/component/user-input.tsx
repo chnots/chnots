@@ -3,7 +3,7 @@ import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import LLMChatBotSelect from "./bot-select";
 
-const LLMChatSessionInput = ({
+const UserInput = ({
   disabled,
   onAppendRecord,
 }: {
@@ -71,4 +71,4 @@ const LLMChatSessionInput = ({
   );
 };
 
-export default LLMChatSessionInput;
+export default UserInput;

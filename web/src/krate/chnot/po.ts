@@ -35,10 +35,9 @@ export type ChnotTag = {
 
 export type ChnotMeta = {
   otid: TID;
-  thread_otid: TID;
   kind: ChnotKind;
   kind_id: Varchar<200>;
-  korder: number;
+  kspace: Varchar<200>;
   tid: TID;
 };
 
@@ -49,5 +48,12 @@ export type ChnotToent = {
   todo_priority?: TodoPriorityEnum;
   todo_closed: boolean;
   note?: DbText;
+  tid: TID;
+};
+
+export type ChnotThreadOrder = {
+  otid: TID;
+  thread_otid: TID;
+  korder: number;
   tid: TID;
 };

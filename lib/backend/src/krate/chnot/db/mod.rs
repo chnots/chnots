@@ -12,7 +12,6 @@ use crate::mapper::db::{
 };
 use crate::model::dto::KReq;
 use crate::util::result_util::UnwrapOr;
-use anyhow::anyhow;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, SegOrVal, SqlBuilder};

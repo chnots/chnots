@@ -7,7 +7,7 @@ import { createRef, useEffect, useState } from "react";
 import SessionContainer, {
   LLMChatEditorProvider,
   LLMChatContextProps,
-} from "@/krate/llmchat/component/llm-chat-session";
+} from "@/krate/llmchat/component/session";
 import { genTID, TID } from "@/lib/id_util";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { Button } from "@/common/component/ui/button";

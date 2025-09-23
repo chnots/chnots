@@ -92,6 +92,7 @@ export type KTabRowsQueryReqFilter =
 export type KTabRowsQueryReq = {
   table_id: TID;
   filter: KTabRowsQueryReqFilter;
+  must_existed?: boolean;
 };
 
 export type KTabRowsQueryRsp = {

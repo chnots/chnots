@@ -6,7 +6,7 @@ import Icon from "@/common/component/icon";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useLLMChatComStore } from "./llm-chat-session";
+import { useLLMChatComStore } from "./session";
 import LLMChatTemplateList from "./template-list";
 
 const RecordCommon = ({

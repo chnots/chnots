@@ -9,7 +9,7 @@ import { ChnotKind, ChnotMeta, ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
 import { ChnotOverwriteThreadOrderReqData } from "../../dto";
 import {
-  chnotThreadMeta,
+  getChnotThreadMeta,
   chnotOverwriteMetas,
   chnotThreadOverwriteMeta,
 } from "../../service";
@@ -53,7 +53,7 @@ const ChnotThread = ({
 
   useEffect(() => {
     if (threadMeta) {
-      chnotThreadMeta(threadMeta.otid).then((rsp) => {
+      getChnotThreadMeta(threadMeta.otid).then((rsp) => {
         rsp.chnot_meta_sorted.forEach((meta) => {
           cachedChnotDataMapRef.current.set(meta.otid, {
             chnotOtid: meta.otid,

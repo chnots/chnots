@@ -28,7 +28,7 @@ import {
 } from "@/krate/llmchat/service";
 import RecordUser from "./record-user";
 import RecordAssistant, { RecordSystem } from "./record-assistant";
-import LLMChatSessionInput from "./session-input";
+import UserInput from "./user-input";
 import { genTID } from "@/lib/id_util";
 
 export type LLMChatContextProps = {
@@ -397,7 +397,7 @@ const SessionContainer = ({
         )}
       </div>
       {viewMode || (
-        <LLMChatSessionInput
+        <UserInput
           disabled={responsing || records?.at(-1)?.role === "user"}
           onAppendRecord={(content) => {
             return appendUserMsg(content);
