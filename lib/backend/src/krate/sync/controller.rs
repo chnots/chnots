@@ -10,7 +10,7 @@ use crate::{
     app::ShareAppState,
     controller::KResponse,
     krate::{
-        chnot::{ChnotMeta, ChnotTag, ChnotThreadMeta, ChnotToent, MdwtRecord},
+        chnot::{ChnotMeta, ChnotTag, ChnotThreadMetaFetch, ChnotToent, MdwtRecord},
         kfile::KFileMeta,
         kkv::KKV,
         kspace::KSpace,
@@ -65,10 +65,10 @@ macro_rules! sync_invoke_enum2generic {
                 };
                 $worker.$invoke(arg).await
             }
-            OtidTableEnum::ChnotThreadMeta => {
+            OtidTableEnum::ChnotThreadMetaFetch => {
                 let arg = OtidWithGer {
                     dto: $eobj.dto,
-                    table_type: PhantomData::<crate::krate::chnot::ChnotThreadMeta>,
+                    table_type: PhantomData::<crate::krate::chnot::ChnotThreadMetaFetch>,
                 };
                 $worker.$invoke(arg).await
             }
@@ -224,7 +224,7 @@ async fn sync_data_inner(
     }
     let result = match req.table_type {
         OtidTableEnum::MdwtRecord => inner! {MdwtRecord},
-        OtidTableEnum::ChnotThreadMeta => inner! {ChnotThreadMeta},
+        OtidTableEnum::ChnotThreadMetaFetch => inner! {ChnotThreadMetaFetch},
         OtidTableEnum::ChnotTag => inner! {ChnotTag},
         OtidTableEnum::LLMChatBot => inner! {LLMChatBot},
         OtidTableEnum::LLMChatRecord => inner! {LLMChatRecord},
@@ -239,7 +239,7 @@ async fn sync_data_inner(
         OtidTableEnum::KSpace => inner! {KSpace},
         OtidTableEnum::ChnotMeta => inner! {ChnotMeta},
         OtidTableEnum::ChnotToent => inner! {ChnotToent},
-        OtidTableEnum::ChnotThreadOrder => inner! {ChnotThreadMeta},
+        OtidTableEnum::ChnotThreadOrder => inner! {ChnotThreadMetaFetch},
     };
 
     info!("{:?}", serde_json::to_string(&result));

@@ -27,7 +27,7 @@ import {
 } from "@/krate/kspace/component/kspace-select";
 import { useShallow } from "zustand/react/shallow";
 import TodoLabel from "@/krate/toent/component/todo-label";
-import { chnotThreadOverwriteMeta } from "../service";
+import { chnotThreadMetaOverwrite } from "../service";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -101,7 +101,7 @@ const ChnotSidebarItem = React.forwardRef(
       : (chnotThread.head_content?.substring(0, 500) ?? "<unknown>");
 
     const onArchive = async () => {
-      await chnotThreadOverwriteMeta({
+      await chnotThreadMetaOverwrite({
         meta_otid: chnotThread.meta.otid,
         archive: true,
       });
@@ -110,7 +110,7 @@ const ChnotSidebarItem = React.forwardRef(
 
     const onTogglePin = async () => {
       const pin = chnotThread.meta.pin_time ? false : true;
-      await chnotThreadOverwriteMeta({
+      await chnotThreadMetaOverwrite({
         meta_otid: chnotThread.meta.otid,
         pinned: pin,
       });
@@ -194,7 +194,7 @@ const ChnotSidebarItem = React.forwardRef(
                   <KSpaceSelectDropDownGroup
                     kspace={chnotThread.meta.kspace}
                     onSelect={(e) => {
-                      chnotThreadOverwriteMeta({
+                      chnotThreadMetaOverwrite({
                         meta_otid: chnotThread.meta.otid,
                         kspace: e,
                       }).then(() => {

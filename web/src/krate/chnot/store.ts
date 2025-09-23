@@ -1,8 +1,8 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { ChnotThread, ChnotThreadQueryRsp, ChnotTagSearchType } from "./dto";
-import { chnotThreadQuery } from "./service";
+import { ChnotThread, ChnotThreadListRsp, ChnotTagSearchType } from "./dto";
+import { ChnotThreadList } from "./service";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
 import { kspaceStore } from "../kspace/store";
@@ -71,7 +71,7 @@ export const useChnotStore = create(
         tags,
         kinds,
       } = get();
-      const cs: ChnotThreadQueryRsp = await chnotThreadQuery({
+      const cs: ChnotThreadListRsp = await ChnotThreadList({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,

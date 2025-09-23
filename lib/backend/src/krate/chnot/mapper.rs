@@ -6,112 +6,108 @@ use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 use super::*;
 
 pub trait ChnotMapper {
-    async fn chnot_overwrite_mdwt(
-        &self,
-        req: KReq<ChnotOverwriteMdwtReq>,
-    ) -> AResult<ChnotOverwriteMdwtRsp>;
+    async fn chnot_mdwt_commit(&self, req: KReq<ChnotMdwtCommitReq>)
+    -> AResult<ChnotMdwtCommitRsp>;
 
-    async fn chnot_overwrite_metas(
-        &self,
-        req: KReq<ChnotOverwriteMetaReq>,
-    ) -> AResult<ChnotOverwriteMetaRsp>;
+    async fn chnot_meta_commit(&self, req: KReq<ChnotMetaCommitReq>)
+    -> AResult<ChnotMetaCommitRsp>;
     async fn chnot_overwrite_thread_orders(
         &self,
-        req: KReq<ChnotOverwriteThreadOrderReq>,
-    ) -> AResult<ChnotOverwriteThreadOrderRsp>;
+        req: KReq<ChnotThreadOrderCommitReq>,
+    ) -> AResult<ChnotThreadOrderCommitRsp>;
 
-    async fn chnot_thread_query(
+    async fn chnot_thread_list(&self, req: KReq<ChnotThreadListReq>)
+    -> AResult<ChnotThreadListRsp>;
+    async fn chnot_thread_meta_commit(
         &self,
-        req: KReq<ChnotThreadQueryReq>,
-    ) -> AResult<ChnotThreadQueryRsp>;
-    async fn chnot_overwrite_thread_meta(
-        &self,
-        req: KReq<ChnotOverwriteThreadMetaReq>,
-    ) -> AResult<ChnotOverwriteThreadMetaRsp>;
+        req: KReq<ChnotThreadMetaFetchCommitReq>,
+    ) -> AResult<ChnotThreadMetaFetchCommitRsp>;
 
-    async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult;
-    async fn chnot_tag_query(
+    async fn all_chnot_tag_refresh(&self, kspace: Varchar<40>) -> EResult;
+    async fn chnot_tag_list(
         &self,
-        req: KReq<ChnotTagQueryReq>,
-    ) -> AResult<ChnotTagQueryRsp<ChnotTag>>;
-    async fn chnot_tag_names(
+        req: KReq<ChnotTagListReq>,
+    ) -> AResult<ChnotTagListRsp<ChnotTag>>;
+    async fn chnot_tag_name_list(
         &self,
-        req: KReq<ChnotTagQueryReq>,
-    ) -> AResult<ChnotTagQueryRsp<String>>;
+        req: KReq<ChnotTagListReq>,
+    ) -> AResult<ChnotTagListRsp<String>>;
 
-    async fn chnot_thread_meta(&self, req: KReq<ChnotThreadMetaReq>)
-    -> AResult<ChnotThreadMetaRsp>;
-    async fn mdwt_blocks(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp>;
+    async fn chnot_thread_meta_fetch(
+        &self,
+        req: KReq<ChnotThreadMetaFetchReq>,
+    ) -> AResult<ChnotThreadMetaFetchRsp>;
+    async fn chnot_mdwt_list(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp>;
 
     async fn ensure_table_chnot(&self) -> EResult;
 }
 
 impl ChnotMapper for MapperType {
-    async fn chnot_overwrite_mdwt(
+    async fn chnot_mdwt_commit(
         &self,
-        req: KReq<ChnotOverwriteMdwtReq>,
-    ) -> AResult<ChnotOverwriteMdwtRsp> {
-        expand_mt_branch!(self.chnot_overwrite_mdwt(req))
+        req: KReq<ChnotMdwtCommitReq>,
+    ) -> AResult<ChnotMdwtCommitRsp> {
+        expand_mt_branch!(self.chnot_mdwt_commit(req))
     }
 
-    async fn chnot_thread_query(
+    async fn chnot_thread_list(
         &self,
-        req: KReq<ChnotThreadQueryReq>,
-    ) -> AResult<ChnotThreadQueryRsp> {
-        expand_mt_branch!(self.chnot_thread_query(req))
+        req: KReq<ChnotThreadListReq>,
+    ) -> AResult<ChnotThreadListRsp> {
+        expand_mt_branch!(self.chnot_thread_list(req))
     }
 
-    async fn chnot_overwrite_thread_meta(
+    async fn chnot_thread_meta_commit(
         &self,
-        req: KReq<ChnotOverwriteThreadMetaReq>,
-    ) -> AResult<ChnotOverwriteThreadMetaRsp> {
-        expand_mt_branch!(self.chnot_overwrite_thread_meta(req))
+        req: KReq<ChnotThreadMetaFetchCommitReq>,
+    ) -> AResult<ChnotThreadMetaFetchCommitRsp> {
+        expand_mt_branch!(self.chnot_thread_meta_commit(req))
     }
 
     async fn ensure_table_chnot(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_chnot())
     }
 
-    async fn chnot_tag_query(
+    async fn chnot_tag_list(
         &self,
-        req: KReq<ChnotTagQueryReq>,
-    ) -> AResult<ChnotTagQueryRsp<ChnotTag>> {
-        expand_mt_branch!(self.chnot_tag_query(req))
+        req: KReq<ChnotTagListReq>,
+    ) -> AResult<ChnotTagListRsp<ChnotTag>> {
+        expand_mt_branch!(self.chnot_tag_list(req))
     }
 
-    async fn chnot_tag_names(
+    async fn chnot_tag_name_list(
         &self,
-        req: KReq<ChnotTagQueryReq>,
-    ) -> AResult<ChnotTagQueryRsp<String>> {
-        expand_mt_branch!(self.chnot_tag_names(req))
+        req: KReq<ChnotTagListReq>,
+    ) -> AResult<ChnotTagListRsp<String>> {
+        expand_mt_branch!(self.chnot_tag_name_list(req))
     }
 
-    async fn chnot_tag_update_all(&self, kspace: Varchar<40>) -> EResult {
-        expand_mt_branch!(self.chnot_tag_update_all(kspace))
+    async fn all_chnot_tag_refresh(&self, kspace: Varchar<40>) -> EResult {
+        expand_mt_branch!(self.all_chnot_tag_refresh(kspace))
     }
 
-    async fn chnot_thread_meta(
+    async fn chnot_thread_meta_fetch(
         &self,
-        req: KReq<ChnotThreadMetaReq>,
-    ) -> AResult<ChnotThreadMetaRsp> {
-        expand_mt_branch!(self.chnot_thread_meta(req))
+        req: KReq<ChnotThreadMetaFetchReq>,
+    ) -> AResult<ChnotThreadMetaFetchRsp> {
+        expand_mt_branch!(self.chnot_thread_meta_fetch(req))
     }
 
-    async fn mdwt_blocks(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp> {
-        expand_mt_branch!(self.mdwt_blocks(req))
+    async fn chnot_mdwt_list(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp> {
+        expand_mt_branch!(self.chnot_mdwt_list(req))
     }
 
     async fn chnot_overwrite_thread_orders(
         &self,
-        req: KReq<ChnotOverwriteThreadOrderReq>,
-    ) -> AResult<ChnotOverwriteThreadOrderRsp> {
+        req: KReq<ChnotThreadOrderCommitReq>,
+    ) -> AResult<ChnotThreadOrderCommitRsp> {
         expand_mt_branch!(self.chnot_overwrite_thread_orders(req))
     }
 
-    async fn chnot_overwrite_metas(
+    async fn chnot_meta_commit(
         &self,
-        req: KReq<ChnotOverwriteMetaReq>,
-    ) -> AResult<ChnotOverwriteMetaRsp> {
-        expand_mt_branch!(self.chnot_overwrite_metas(req))
+        req: KReq<ChnotMetaCommitReq>,
+    ) -> AResult<ChnotMetaCommitRsp> {
+        expand_mt_branch!(self.chnot_meta_commit(req))
     }
 }

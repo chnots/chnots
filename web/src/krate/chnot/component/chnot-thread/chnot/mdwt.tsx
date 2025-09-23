@@ -4,8 +4,8 @@ import MarkdownViewer from "../../chnot-markdown-viewer";
 import { ChnotKind } from "../../../po";
 
 import {
-  chnotOverwriteMdwts,
-  chnotThreadTagNames,
+  ChnotMdwtCommits,
+  chnotTagNameList,
   MdwtRecords,
   toentTodoEventGuess,
 } from "@/krate/chnot/service";
@@ -13,7 +13,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/common/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { SaveState } from "@/common/types";
-import { ChnotOverwriteMdwtReq } from "@/krate/chnot/dto";
+import { ChnotMdwtCommitReq } from "@/krate/chnot/dto";
 import { ChnotChromeProps } from "./chrome";
 import { genTID, TID } from "@/lib/id_util";
 
@@ -26,7 +26,7 @@ const chnotCompletions = async (
     return null;
   } else if (word.text.startsWith("#")) {
     options = (
-      await chnotThreadTagNames({
+      await chnotTagNameList({
         query: word.text,
         start_index: 0,
         page_size: 20,
@@ -72,7 +72,7 @@ const MdwtRecord = ({
   // use RefObject to avoid
   const cachedContentRef = useRef<string>("");
   const saveStateRef = useRef<SaveState>(SaveState.Dirty);
-  const toSaveArg = useRef<ChnotOverwriteMdwtReq>(null);
+  const toSaveArg = useRef<ChnotMdwtCommitReq>(null);
   const [refreshFlag, setRefreshFlag] = useState<boolean>();
 
   useEffect(() => {
@@ -89,7 +89,7 @@ const MdwtRecord = ({
     if (toSaveArg.current) {
       try {
         onPostSave({ saveState: SaveState.Saving });
-        await chnotOverwriteMdwts(toSaveArg.current);
+        await ChnotMdwtCommits(toSaveArg.current);
         let first = toSaveArg.current.mdwt;
         onPostSave({
           content: first.content,
@@ -127,7 +127,7 @@ const MdwtRecord = ({
             onPostSave({ saveState: SaveState.Dirty });
           }
 
-          const req: ChnotOverwriteMdwtReq = {
+          const req: ChnotMdwtCommitReq = {
             mdwt: {
               otid: mdwtOtid,
               content: content,

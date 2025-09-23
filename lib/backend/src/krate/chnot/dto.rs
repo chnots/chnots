@@ -14,11 +14,11 @@ use super::*;
 pub struct ChnotThread {
     pub head_content: Option<Text>,
     pub todo_event: Option<TodoEvent>,
-    pub meta: ChnotThreadMeta,
+    pub meta: ChnotThreadMetaFetch,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteThreadMetaReq {
+pub struct ChnotThreadMetaFetchCommitReq {
     pub meta_otid: TID,
     pub kspace: Option<Varchar<40>>,
     pub pinned: Option<bool>,
@@ -26,42 +26,42 @@ pub struct ChnotOverwriteThreadMetaReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteThreadMetaRsp {
-    pub meta: ChnotThreadMeta,
+pub struct ChnotThreadMetaFetchCommitRsp {
+    pub meta: ChnotThreadMetaFetch,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteMdwtReqData {
+pub struct ChnotMdwtCommitReqData {
     pub otid: TID,
     pub content: Text,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteMdwtReq {
-    pub mdwt: ChnotOverwriteMdwtReqData,
+pub struct ChnotMdwtCommitReq {
+    pub mdwt: ChnotMdwtCommitReqData,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ChnotOverwriteMdwtRsp {
+pub struct ChnotMdwtCommitRsp {
     pub todo_event: Option<TodoEvent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteThreadOrderReqData {
+pub struct ChnotThreadOrderCommitReqData {
     pub otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteThreadOrderReq {
+pub struct ChnotThreadOrderCommitReq {
     pub thread_otid: TID,
-    pub orders: Vec<ChnotOverwriteThreadOrderReqData>,
+    pub orders: Vec<ChnotThreadOrderCommitReqData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteThreadOrderRsp {}
+pub struct ChnotThreadOrderCommitRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteMetaReqData {
+pub struct ChnotMetaCommitReqData {
     pub otid: TID,
     pub kind: ChnotKind,
     pub kind_id: Varchar<200>,
@@ -69,12 +69,12 @@ pub struct ChnotOverwriteMetaReqData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteMetaReq {
-    pub metas: Vec<ChnotOverwriteMetaReqData>,
+pub struct ChnotMetaCommitReq {
+    pub metas: Vec<ChnotMetaCommitReqData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotOverwriteMetaRsp {
+pub struct ChnotMetaCommitRsp {
     pub metas: Vec<ChnotMeta>,
 }
 
@@ -94,7 +94,7 @@ pub enum ChnotTagSearchType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadQueryReq {
+pub struct ChnotThreadListReq {
     pub query: Option<String>,
     pub thread_otid: Option<TID>,
 
@@ -110,20 +110,20 @@ pub struct ChnotThreadQueryReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadQueryRsp {
+pub struct ChnotThreadListRsp {
     pub data: Vec<ChnotThread>,
     pub has_next: bool,
     pub next_start: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadMetaReq {
+pub struct ChnotThreadMetaFetchReq {
     pub thread_otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadMetaRsp {
-    pub thread_meta: ChnotThreadMeta,
+pub struct ChnotThreadMetaFetchRsp {
+    pub thread_meta: ChnotThreadMetaFetch,
     pub chnot_meta_sorted: Vec<ChnotMeta>,
 }
 
@@ -143,7 +143,7 @@ pub struct Toents {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagQueryReq {
+pub struct ChnotTagListReq {
     pub query: Option<String>,
     pub tags: Option<ChnotTagSearchType>,
     pub remove_params: Option<bool>,
@@ -154,7 +154,7 @@ pub struct ChnotTagQueryReq {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct ChnotTagQueryRsp<T>
+pub struct ChnotTagListRsp<T>
 where
     T: Serialize + Clone,
 {

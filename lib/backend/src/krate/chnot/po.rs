@@ -57,7 +57,7 @@ fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotThreadMeta {
+pub struct ChnotThreadMetaFetch {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
@@ -69,7 +69,7 @@ pub struct ChnotThreadMeta {
     pub tid: TID,
 }
 
-impl Curd for ChnotThreadMeta {
+impl Curd for ChnotThreadMetaFetch {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
         Self::pkey_cond(self.otid)
     }
@@ -77,7 +77,7 @@ impl Curd for ChnotThreadMeta {
         self.tid
     }
 }
-impl_otid_support! {ChnotThreadMeta}
+impl_otid_support! {ChnotThreadMetaFetch}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
 pub struct ChnotTag {

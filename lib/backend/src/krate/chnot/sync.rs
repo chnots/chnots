@@ -6,7 +6,7 @@ use chin_tools::EResult;
 use crate::{
     app::ShareAppState,
     krate::{
-        chnot::{ChnotTag, ChnotThreadMeta, MdwtRecord},
+        chnot::{ChnotTag, ChnotThreadMetaFetch, MdwtRecord},
         sync::{filedumper::StartType, po::SyncEndpoint},
     },
 };
@@ -16,7 +16,7 @@ impl ShareAppState {
         let mapper = &self.mapper;
 
         mapper
-            .dump_to_file::<&PathBuf, ChnotThreadMeta>(backup_dir, start_type)
+            .dump_to_file::<&PathBuf, ChnotThreadMetaFetch>(backup_dir, start_type)
             .await?;
         mapper
             .dump_to_file::<&PathBuf, ChnotTag>(backup_dir, start_type)
@@ -31,7 +31,7 @@ impl ShareAppState {
 
     pub async fn sync_chnots(&self, endpoint: &SyncEndpoint) -> EResult {
         self.sync_one_otid_table1::<MdwtRecord>(endpoint).await?;
-        self.sync_one_otid_table1::<ChnotThreadMeta>(endpoint)
+        self.sync_one_otid_table1::<ChnotThreadMetaFetch>(endpoint)
             .await?;
         self.sync_one_otid_table1::<ChnotTag>(endpoint).await?;
         Ok(())

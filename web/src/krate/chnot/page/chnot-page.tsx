@@ -12,7 +12,7 @@ import { genUID } from "@/lib/id_util";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
-import { ChnotThreadMeta } from "../po";
+import { ChnotThreadMetaFetch } from "../po";
 
 /**
  * This component is only to improve performance, that is to say, when
@@ -31,7 +31,7 @@ const MonoChnot = ({ onNew }: { onNew: () => void }) => {
   );
 
   const [componentKey, setComponentKey] = useState<string>(genUID());
-  const threadOtidRef = useRef<ChnotThreadMeta>(null);
+  const threadOtidRef = useRef<ChnotThreadMetaFetch>(null);
   const [editorThread, setEditorThread] = useState<ChnotThread | undefined>();
 
   useEffect(() => {

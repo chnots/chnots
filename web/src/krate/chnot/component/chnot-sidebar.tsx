@@ -24,7 +24,7 @@ import { ChnotKindSelect } from "./chnot-kind-select";
 import { useCommonStore } from "@/common/store";
 import { NavLink } from "react-router-dom";
 import { RoutePaths } from "@/router";
-import { chnotThreadTagNames } from "../service";
+import { chnotTagNameList } from "../service";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotStore(
@@ -86,7 +86,7 @@ const ChnotSidebar = () => {
 
   useEffect(() => {
     if (tags) {
-      chnotThreadTagNames({
+      chnotTagNameList({
         start_index: 0,
         page_size: 9999,
         tags,

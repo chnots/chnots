@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
 pub enum OtidTableEnum {
     MdwtRecord,
-    ChnotThreadMeta,
+    ChnotThreadMetaFetch,
     ChnotThreadOrder,
     ChnotTag,
     ChnotMeta,

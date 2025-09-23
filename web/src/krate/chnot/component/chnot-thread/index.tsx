@@ -5,13 +5,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ChnotKind, ChnotMeta, ChnotThreadMeta } from "../../po";
+import { ChnotKind, ChnotMeta, ChnotThreadMetaFetch } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import { ChnotOverwriteThreadOrderReqData } from "../../dto";
+import { ChnotThreadOrderCommitReqData } from "../../dto";
 import {
-  getChnotThreadMeta,
-  chnotOverwriteMetas,
-  chnotThreadOverwriteMeta,
+  getChnotThreadMetaFetch,
+  ChnotMetaCommits,
+  chnotThreadMetaOverwrite,
 } from "../../service";
 import Chrome, { PostSaveArg } from "./chnot/chrome";
 import LoadingPage from "@/common/pages/loading-page";
@@ -35,8 +35,8 @@ const ChnotThread = ({
   cachedThreadMetaRef: cachedThreadOtidRef,
   globalBar,
 }: {
-  threadMeta?: ChnotThreadMeta;
-  cachedThreadMetaRef: RefObject<ChnotThreadMeta | null>;
+  threadMeta?: ChnotThreadMetaFetch;
+  cachedThreadMetaRef: RefObject<ChnotThreadMetaFetch | null>;
   globalBar: React.ReactNode;
 }) => {
   const cachedChnotDataMapRef = useRef<Map<TID, ChnotMetaKind>>(new Map());
@@ -53,7 +53,7 @@ const ChnotThread = ({
 
   useEffect(() => {
     if (threadMeta) {
-      getChnotThreadMeta(threadMeta.otid).then((rsp) => {
+      getChnotThreadMetaFetch(threadMeta.otid).then((rsp) => {
         rsp.chnot_meta_sorted.forEach((meta) => {
           cachedChnotDataMapRef.current.set(meta.otid, {
             chnotOtid: meta.otid,
@@ -97,7 +97,7 @@ const ChnotThread = ({
       if (!cachedThreadOtidRef.current) {
         const threadOtid = genTID();
 
-        const rsp = await chnotThreadOverwriteMeta({
+        const rsp = await chnotThreadMetaOverwrite({
           meta_otid: threadOtid,
         });
 
@@ -111,7 +111,7 @@ const ChnotThread = ({
         cachedChnotDataMapRef.current.set(arg.data.chnotOtid, arg.data);
       }
 
-      const metas: ChnotOverwriteThreadOrderReqData[] = chnotOrders
+      const metas: ChnotThreadOrderCommitReqData[] = chnotOrders
         .map((otid, index) => {
           const persistedChnot = cachedChnotDataMapRef.current.get(otid);
 
@@ -137,7 +137,7 @@ const ChnotThread = ({
 
       console.log("overwrite metas");
       if (metas.length > 0) {
-        const rsp = await chnotOverwriteMetas({
+        const rsp = await ChnotMetaCommits({
           thread_otid: cachedThreadOtidRef.current!.otid,
           metas: metas,
         });

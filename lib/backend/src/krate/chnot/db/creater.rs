@@ -60,7 +60,7 @@ impl<'a> KDbTx<'a> {
         Ok(())
     }
 
-    async fn overwrite_mdwt_record(&self, block: ChnotOverwriteMdwtReqData) -> EResult {
+    async fn overwrite_mdwt_record(&self, block: ChnotMdwtCommitReqData) -> EResult {
         struct OldInfo {
             tid: TID,
             content: String,
@@ -120,14 +120,14 @@ impl<'a> KDbTx<'a> {
         Ok(())
     }
 
-    pub(super) async fn chnot_overwrite_mdwt(
+    pub(super) async fn chnot_mdwt_commit(
         &self,
-        req: KReq<ChnotOverwriteMdwtReq>,
-    ) -> AResult<ChnotOverwriteMdwtRsp> {
-        let ChnotOverwriteMdwtReq { mdwt } = req.body;
+        req: KReq<ChnotMdwtCommitReq>,
+    ) -> AResult<ChnotMdwtCommitRsp> {
+        let ChnotMdwtCommitReq { mdwt } = req.body;
 
         self.overwrite_mdwt_record(mdwt).await?;
 
-        Ok(ChnotOverwriteMdwtRsp { todo_event: None })
+        Ok(ChnotMdwtCommitRsp { todo_event: None })
     }
 }
