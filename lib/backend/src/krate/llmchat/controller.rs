@@ -2,7 +2,7 @@ use axum::{
     Json, Router,
     extract::{Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::post,
 };
 
 use super::{mapper::LLMChatMapper, *};
@@ -11,181 +11,147 @@ use crate::{app::ShareAppState, controller::KResponse, model::dto::kreq};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/llmchat/overwrite-bot", put(bot_overwrite))
-        .route("/api/v1/llmchat/bot", delete(bot_deletetion))
-        .route("/api/v1/llmchat/list-bots", get(bot_list))
-        .route("/api/v1/llmchat/delete-template", post(template_deletetion))
+        .route("/api/v1/llmchat-bot-commit", post(llmchat_bot_commit))
+        .route("/api/v1/llmchat-bot-archive", post(llmchat_bot_archive))
+        .route("/api/v1/llmchat-bot-list", post(llmchat_bot_list))
         .route(
-            "/api/v1/llmchat/overwrite-template",
-            put(template_overwrite),
+            "/api/v1/llmchat-template-archive",
+            post(llmchat_template_archive),
         )
-        .route("/api/v1/llmchat/list-templates", get(template_list))
         .route(
-            "/api/v1/llmchat/session-overwrition",
-            put(session_insertion),
+            "/api/v1/llmchat-template-commit",
+            post(llmchat_template_commit),
         )
-        .route("/api/v1/llmchat/session", delete(session_deletetion))
+        .route("/api/v1/llmchat-template-list", post(llmchat_template_list))
         .route(
-            "/api/v1/llmchat/get-session-and-records",
-            get(session_detail),
+            "/api/v1/llmchat-session-commit",
+            post(llmchat_session_commit),
         )
-        .route("/api/v1/llmchat/session-updation", post(session_updation))
-        .route("/api/v1/llmchat/list-sessions", get(session_list))
-        .route("/api/v1/llmchat/truncate-session", post(session_truncation))
-        .route("/api/v1/llmchat/record-overwrition", put(record_insertion))
+        .route(
+            "/api/v1/llmchat-session-archive",
+            post(llmchat_session_archive),
+        )
+        .route("/api/v1/llmchat-session-list", post(llmchat_session_list))
+        .route(
+            "/api/v1/llmchat-session-record-fetch",
+            post(llmchat_session_record_fetch),
+        )
+        .route(
+            "/api/v1/llmchat-session-record-truncate",
+            post(llmchat_session_record_truncate),
+        )
+        .route("/api/v1/llmchat-record-commit", post(llmchat_record_commit))
 }
 
-async fn bot_overwrite(
+async fn llmchat_bot_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<LLMChatOverwriteBotReq>,
-) -> KResponse<LLMChatOverwriteBotRsp> {
-    state
-        .mapper
-        .llm_chat_overwrite_bot(kreq(headers, req))
-        .await
-        .into()
+    Json(req): Json<LLMChatBotCommitReq>,
+) -> KResponse<LLMChatBotCommitRsp> {
+    state.llmchat_bot_commit(kreq(headers, req)).await.into()
 }
 
-async fn bot_deletetion(
+async fn llmchat_bot_archive(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<LLMChatDeleteBotReq>,
-) -> KResponse<LLMChatDeleteBotRsp> {
-    state
-        .mapper
-        .llm_chat_delete_bot(kreq(headers, req))
-        .await
-        .into()
+    Json(req): Json<LLMChatBotArchiveReq>,
+) -> KResponse<LLMChatBotArchiveRsp> {
+    state.llmchat_bot_archive(kreq(headers, req)).await.into()
 }
 
-async fn bot_list(
+async fn llmchat_bot_list(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<LLMChatListBotReq>,
-) -> KResponse<LLMChatListBotRsp> {
-    state
-        .mapper
-        .llm_chat_list_bots(kreq(headers, req))
-        .await
-        .into()
+    Query(req): Query<LLMChatBotListReq>,
+) -> KResponse<LLMChatBotListRsp> {
+    state.llmchat_bot_list(kreq(headers, req)).await.into()
 }
 
-async fn template_deletetion(
+async fn llmchat_template_archive(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<LLMChatDeleteTemplateReq>,
-) -> KResponse<LLMChatDeleteTemplateRsp> {
+    Json(req): Json<LLMChatTemplateArchiveReq>,
+) -> KResponse<LLMChatTemplateArchiveRsp> {
     state
-        .mapper
-        .llm_chat_delete_template(kreq(headers, req))
+        .llmchat_template_archive(kreq(headers, req))
         .await
         .into()
 }
 
-async fn template_overwrite(
+async fn llmchat_template_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<LLMChatOverwriteTemplateReq>,
-) -> KResponse<LLMChatOverwriteTemplateRsp> {
+    Json(req): Json<LLMChatTemplateCommitReq>,
+) -> KResponse<LLMChatTemplateCommitRsp> {
     state
-        .mapper
-        .llm_chat_overwrite_template(kreq(headers, req))
+        .llmchat_template_commit(kreq(headers, req))
         .await
         .into()
 }
 
-async fn template_list(
+async fn llmchat_template_list(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<LLMChatListTemplateReq>,
-) -> KResponse<LLMChatListTemplateRsp> {
+    Query(req): Query<LLMChatTemplateListReq>,
+) -> KResponse<LLMChatTemplateListRsp> {
+    state.llmchat_template_list(kreq(headers, req)).await.into()
+}
+
+async fn llmchat_session_archive(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<LLMChatSessionArchiveReq>,
+) -> KResponse<LLMChatSessionArchiveRsp> {
     state
-        .mapper
-        .llm_chat_list_templates(kreq(headers, req))
+        .llmchat_session_archive(kreq(headers, req))
         .await
         .into()
 }
 
-async fn session_deletetion(
+async fn llmchat_session_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<LLMChatDeleteSessionReq>,
-) -> KResponse<LLMChatDeleteSessionRsp> {
+    Json(req): Json<LLMChatSessionCommitReq>,
+) -> KResponse<LLMChatSessionCommitRsp> {
     state
-        .mapper
-        .llm_chat_delete_session(kreq(headers, req))
+        .llmchat_session_commit(kreq(headers, req))
+        .await
+        .into()
+}
+async fn llmchat_session_list(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<LLMChatSessionListReq>,
+) -> KResponse<LLMChatSessionListRsp> {
+    state.llmchat_session_list(kreq(headers, req)).await.into()
+}
+
+async fn llmchat_session_record_fetch(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Query(req): Query<LLMChatSessionRecordFetchReq>,
+) -> KResponse<LLMChatSessionRecordFetchRsp> {
+    state
+        .llmchat_session_record_fetch(kreq(headers, req))
         .await
         .into()
 }
 
-async fn session_insertion(
+async fn llmchat_session_record_truncate(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<LLMChatInsertSessionReq>,
-) -> KResponse<LLMChatInsertSessionRsp> {
+    Json(req): Json<LLMChatSessionRecordTruncateReq>,
+) -> KResponse<LLMChatSessionRecordTruncateRsp> {
     state
-        .mapper
-        .llm_chat_insert_session(kreq(headers, req))
-        .await
-        .into()
-}
-async fn session_list(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Query(req): Query<LLMChatListSessionReq>,
-) -> KResponse<LLMChatListSessionRsp> {
-    state
-        .mapper
-        .llm_chat_list_sessions(kreq(headers, req))
+        .llmchat_session_record_truncate(kreq(headers, req))
         .await
         .into()
 }
 
-async fn session_detail(
+async fn llmchat_record_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<LLMChatSessionDetialReq>,
-) -> KResponse<LLMChatSessionDetailRsp> {
-    state
-        .mapper
-        .llm_chat_session_detail(kreq(headers, req))
-        .await
-        .into()
-}
-
-async fn session_updation(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<LLMChatUpdateSessionReq>,
-) -> KResponse<LLMChatUpdateSessionRsp> {
-    state
-        .mapper
-        .llm_chat_update_session(kreq(headers, req))
-        .await
-        .into()
-}
-
-async fn session_truncation(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<LLMChatTruncateSessionReq>,
-) -> KResponse<LLMChatTruncateSessionRsp> {
-    state
-        .mapper
-        .llm_chat_truncate_session(kreq(headers, req))
-        .await
-        .into()
-}
-
-async fn record_insertion(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<LLMChatInsertRecordReq>,
-) -> KResponse<LLMChatInsertRecordRsp> {
-    state
-        .mapper
-        .llm_chat_overwrite_record(kreq(headers, req))
-        .await
-        .into()
+    Json(req): Json<LLMChatRecordCommitReq>,
+) -> KResponse<LLMChatRecordCommitRsp> {
+    state.llmchat_record_commit(kreq(headers, req)).await.into()
 }

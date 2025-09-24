@@ -11,7 +11,7 @@ import SessionContainer, {
 import { genTID, TID } from "@/lib/id_util";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { Button } from "@/common/component/ui/button";
-import { llmchatSessionRecords } from "@/krate/llmchat/service";
+import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
 
 const LLMChatChnot = ({ chnotOtid, kindId, onPostSave }: ChnotChromeProps) => {
   const [props, setProps] = useState<LLMChatContextProps | undefined>(
@@ -31,7 +31,7 @@ const LLMChatChnot = ({ chnotOtid, kindId, onPostSave }: ChnotChromeProps) => {
   useEffect(() => {
     (async () => {
       if (sessionOtid) {
-        const rsp = await llmchatSessionRecords(sessionOtid);
+        const rsp = await llmchatSessionRecordFetch(sessionOtid);
         if (rsp.session) {
           setProps(() => {
             const pids = new Set<TID>();

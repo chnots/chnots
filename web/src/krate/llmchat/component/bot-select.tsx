@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { LLMChatBot } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
-import { llmchatBotAdd } from "@/krate/llmchat/service";
+import { llmchatBotCommit } from "@/krate/llmchat/service";
 import BotForm from "./bot-form";
 import { TID } from "@/lib/id_util";
 import { useLLMChatComStore } from "./session";
@@ -122,7 +122,7 @@ const LLMChatBotSelect = () => {
       {showBotForm && (
         <BotForm
           onSubmit={async (bot) => {
-            await llmchatBotAdd(bot);
+            await llmchatBotCommit(bot);
             await refreshBots();
             return true;
           }}

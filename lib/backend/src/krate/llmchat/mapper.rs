@@ -6,126 +6,126 @@ use crate::{expand_mt_branch, mapper::MapperType, model::dto::KReq};
 use super::*;
 
 pub trait LLMChatMapper {
-    async fn llm_chat_overwrite_bot(
+    async fn llmchat_bot_commit(
         &self,
-        req: KReq<LLMChatOverwriteBotReq>,
-    ) -> AResult<LLMChatOverwriteBotRsp>;
+        req: KReq<LLMChatBotCommitReq>,
+    ) -> AResult<LLMChatBotCommitRsp>;
 
-    async fn llm_chat_overwrite_template(
+    async fn llmchat_template_commit(
         &self,
-        req: KReq<LLMChatOverwriteTemplateReq>,
-    ) -> AResult<LLMChatOverwriteTemplateRsp>;
+        req: KReq<LLMChatTemplateCommitReq>,
+    ) -> AResult<LLMChatTemplateCommitRsp>;
 
-    async fn llm_chat_insert_session(
+    async fn llmchat_session_commit(
         &self,
-        req: KReq<LLMChatInsertSessionReq>,
-    ) -> AResult<LLMChatInsertSessionRsp>;
+        req: KReq<LLMChatSessionCommitReq>,
+    ) -> AResult<LLMChatSessionCommitRsp>;
 
-    async fn llm_chat_overwrite_record(
+    async fn llmchat_record_commit(
         &self,
-        req: KReq<LLMChatInsertRecordReq>,
-    ) -> AResult<LLMChatInsertRecordRsp>;
+        req: KReq<LLMChatRecordCommitReq>,
+    ) -> AResult<LLMChatRecordCommitRsp>;
 
-    async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp>;
+    async fn llmchat_bot_list(&self, req: KReq<LLMChatBotListReq>) -> AResult<LLMChatBotListRsp>;
 
-    async fn llm_chat_list_templates(
+    async fn llmchat_template_list(
         &self,
-        req: KReq<LLMChatListTemplateReq>,
-    ) -> AResult<LLMChatListTemplateRsp>;
+        req: KReq<LLMChatTemplateListReq>,
+    ) -> AResult<LLMChatTemplateListRsp>;
 
-    async fn llm_chat_list_sessions(
+    async fn llmchat_session_list(
         &self,
-        req: KReq<LLMChatListSessionReq>,
-    ) -> AResult<LLMChatListSessionRsp>;
+        req: KReq<LLMChatSessionListReq>,
+    ) -> AResult<LLMChatSessionListRsp>;
 
     async fn llm_chat_update_session(
         &self,
         req: KReq<LLMChatUpdateSessionReq>,
     ) -> AResult<LLMChatUpdateSessionRsp>;
 
-    async fn llm_chat_session_detail(
+    async fn llmchat_session_record_fetch(
         &self,
-        req: KReq<LLMChatSessionDetialReq>,
-    ) -> AResult<LLMChatSessionDetailRsp>;
+        req: KReq<LLMChatSessionRecordFetchReq>,
+    ) -> AResult<LLMChatSessionRecordFetchRsp>;
 
-    async fn llm_chat_truncate_session(
+    async fn llmchat_session_record_truncate(
         &self,
-        req: KReq<LLMChatTruncateSessionReq>,
-    ) -> AResult<LLMChatTruncateSessionRsp>;
+        req: KReq<LLMChatSessionRecordTruncateReq>,
+    ) -> AResult<LLMChatSessionRecordTruncateRsp>;
 
-    async fn llm_chat_delete_bot(
+    async fn llmchat_bot_archive(
         &self,
-        req: KReq<LLMChatDeleteBotReq>,
-    ) -> AResult<LLMChatDeleteBotRsp>;
+        req: KReq<LLMChatBotArchiveReq>,
+    ) -> AResult<LLMChatBotArchiveRsp>;
 
-    async fn llm_chat_delete_template(
+    async fn llmchat_template_archive(
         &self,
-        req: KReq<LLMChatDeleteTemplateReq>,
-    ) -> AResult<LLMChatDeleteTemplateRsp>;
+        req: KReq<LLMChatTemplateArchiveReq>,
+    ) -> AResult<LLMChatTemplateArchiveRsp>;
 
-    async fn llm_chat_delete_session(
+    async fn llmchat_session_archive(
         &self,
-        req: KReq<LLMChatDeleteSessionReq>,
-    ) -> AResult<LLMChatDeleteSessionRsp>;
+        req: KReq<LLMChatSessionArchiveReq>,
+    ) -> AResult<LLMChatSessionArchiveRsp>;
 
     async fn ensure_table_llm_chat(&self) -> EResult;
 }
 
 impl LLMChatMapper for MapperType {
-    async fn llm_chat_overwrite_bot(
+    async fn llmchat_bot_commit(
         &self,
-        req: KReq<super::LLMChatOverwriteBotReq>,
-    ) -> AResult<super::LLMChatOverwriteBotRsp> {
-        expand_mt_branch!(self.llm_chat_overwrite_bot(req))
+        req: KReq<super::LLMChatBotCommitReq>,
+    ) -> AResult<super::LLMChatBotCommitRsp> {
+        expand_mt_branch!(self.llmchat_bot_commit(req))
     }
 
-    async fn llm_chat_overwrite_template(
+    async fn llmchat_template_commit(
         &self,
-        req: KReq<super::LLMChatOverwriteTemplateReq>,
-    ) -> AResult<super::LLMChatOverwriteTemplateRsp> {
-        expand_mt_branch!(self.llm_chat_overwrite_template(req))
+        req: KReq<super::LLMChatTemplateCommitReq>,
+    ) -> AResult<super::LLMChatTemplateCommitRsp> {
+        expand_mt_branch!(self.llmchat_template_commit(req))
     }
 
-    async fn llm_chat_insert_session(
+    async fn llmchat_session_commit(
         &self,
-        req: KReq<super::LLMChatInsertSessionReq>,
-    ) -> AResult<super::LLMChatInsertSessionRsp> {
-        expand_mt_branch!(self.llm_chat_insert_session(req))
+        req: KReq<super::LLMChatSessionCommitReq>,
+    ) -> AResult<super::LLMChatSessionCommitRsp> {
+        expand_mt_branch!(self.llmchat_session_commit(req))
     }
 
-    async fn llm_chat_overwrite_record(
+    async fn llmchat_record_commit(
         &self,
-        req: KReq<super::LLMChatInsertRecordReq>,
-    ) -> AResult<super::LLMChatInsertRecordRsp> {
-        expand_mt_branch!(self.llm_chat_overwrite_record(req))
+        req: KReq<super::LLMChatRecordCommitReq>,
+    ) -> AResult<super::LLMChatRecordCommitRsp> {
+        expand_mt_branch!(self.llmchat_record_commit(req))
     }
 
-    async fn llm_chat_list_bots(
+    async fn llmchat_bot_list(
         &self,
-        req: KReq<super::LLMChatListBotReq>,
-    ) -> AResult<super::LLMChatListBotRsp> {
-        expand_mt_branch!(self.llm_chat_list_bots(req))
+        req: KReq<super::LLMChatBotListReq>,
+    ) -> AResult<super::LLMChatBotListRsp> {
+        expand_mt_branch!(self.llmchat_bot_list(req))
     }
 
-    async fn llm_chat_list_templates(
+    async fn llmchat_template_list(
         &self,
-        req: KReq<super::LLMChatListTemplateReq>,
-    ) -> AResult<super::LLMChatListTemplateRsp> {
-        expand_mt_branch!(self.llm_chat_list_templates(req))
+        req: KReq<super::LLMChatTemplateListReq>,
+    ) -> AResult<super::LLMChatTemplateListRsp> {
+        expand_mt_branch!(self.llmchat_template_list(req))
     }
 
-    async fn llm_chat_list_sessions(
+    async fn llmchat_session_list(
         &self,
-        req: KReq<super::LLMChatListSessionReq>,
-    ) -> AResult<super::LLMChatListSessionRsp> {
-        expand_mt_branch!(self.llm_chat_list_sessions(req))
+        req: KReq<super::LLMChatSessionListReq>,
+    ) -> AResult<super::LLMChatSessionListRsp> {
+        expand_mt_branch!(self.llmchat_session_list(req))
     }
 
-    async fn llm_chat_session_detail(
+    async fn llmchat_session_record_fetch(
         &self,
-        req: KReq<super::LLMChatSessionDetialReq>,
-    ) -> AResult<super::LLMChatSessionDetailRsp> {
-        let mut raw_result = expand_mt_branch!(self.llm_chat_session_detail(req))?;
+        req: KReq<super::LLMChatSessionRecordFetchReq>,
+    ) -> AResult<super::LLMChatSessionRecordFetchRsp> {
+        let mut raw_result = expand_mt_branch!(self.llmchat_session_record_fetch(req))?;
 
         sort_util::sort_by_prev(
             &mut raw_result.records,
@@ -145,35 +145,35 @@ impl LLMChatMapper for MapperType {
         expand_mt_branch!(self.llm_chat_update_session(req))
     }
 
-    async fn llm_chat_delete_bot(
+    async fn llmchat_bot_archive(
         &self,
-        req: KReq<super::LLMChatDeleteBotReq>,
-    ) -> AResult<super::LLMChatDeleteBotRsp> {
-        expand_mt_branch!(self.llm_chat_delete_bot(req))
+        req: KReq<super::LLMChatBotArchiveReq>,
+    ) -> AResult<super::LLMChatBotArchiveRsp> {
+        expand_mt_branch!(self.llmchat_bot_archive(req))
     }
 
-    async fn llm_chat_delete_template(
+    async fn llmchat_template_archive(
         &self,
-        req: KReq<super::LLMChatDeleteTemplateReq>,
-    ) -> AResult<super::LLMChatDeleteTemplateRsp> {
-        expand_mt_branch!(self.llm_chat_delete_template(req))
+        req: KReq<super::LLMChatTemplateArchiveReq>,
+    ) -> AResult<super::LLMChatTemplateArchiveRsp> {
+        expand_mt_branch!(self.llmchat_template_archive(req))
     }
 
-    async fn llm_chat_delete_session(
+    async fn llmchat_session_archive(
         &self,
-        req: KReq<super::LLMChatDeleteSessionReq>,
-    ) -> AResult<super::LLMChatDeleteSessionRsp> {
-        expand_mt_branch!(self.llm_chat_delete_session(req))
+        req: KReq<super::LLMChatSessionArchiveReq>,
+    ) -> AResult<super::LLMChatSessionArchiveRsp> {
+        expand_mt_branch!(self.llmchat_session_archive(req))
     }
 
     async fn ensure_table_llm_chat(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_llm_chat())
     }
 
-    async fn llm_chat_truncate_session(
+    async fn llmchat_session_record_truncate(
         &self,
-        req: KReq<LLMChatTruncateSessionReq>,
-    ) -> AResult<LLMChatTruncateSessionRsp> {
-        expand_mt_branch!(self.llm_chat_truncate_session(req))
+        req: KReq<LLMChatSessionRecordTruncateReq>,
+    ) -> AResult<LLMChatSessionRecordTruncateRsp> {
+        expand_mt_branch!(self.llmchat_session_record_truncate(req))
     }
 }

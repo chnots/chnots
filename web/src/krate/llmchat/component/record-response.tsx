@@ -7,7 +7,7 @@ import {
 import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/po";
 import { useEffect, useRef } from "react";
 import RecordAssistant from "./record-assistant";
-import { llmchatRecordInsert } from "@/krate/llmchat/service";
+import { llmchatRecordCommit } from "@/krate/llmchat/service";
 import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
 import { genTID, TID } from "@/lib/id_util";
@@ -78,7 +78,7 @@ export const RecordAnswering = ({
           pre_record_otid: response.prevRecordId,
           tid: genTID(),
         };
-        llmchatRecordInsert(record);
+        llmchatRecordCommit(record);
       }
     };
   }, []);

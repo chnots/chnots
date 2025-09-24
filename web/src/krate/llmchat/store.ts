@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
 import { LLMChatSession, LLMChatBot, LLMChatTemplate } from "./po";
-import { LLMChatListBotRsp } from "./dto";
+import { LLMChatBotListRsp } from "./dto";
 import { llmchatBotList, llmchatTemplateList } from "./service";
 import { TID } from "@/lib/id_util";
 
@@ -25,7 +25,7 @@ export const useLLMChatStore = create(
   combine(getDefaultState(), (set, get) => ({
     getState: () => get(),
     refreshBots: async () => {
-      const bots: LLMChatListBotRsp = await llmchatBotList();
+      const bots: LLMChatBotListRsp = await llmchatBotList();
       set((state) => {
         return {
           ...state,

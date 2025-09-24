@@ -1,12 +1,11 @@
 import request from "@/lib/request";
 import {
-  LLMChatDeleteTemplateReq,
-  LLMChatListBotRsp,
-  LLMChatListSessionRsp,
-  LLMChatListTemplateRsp,
-  LLMChatSessionDetailRsp,
-  LLMChatSessionTruncateReq,
-  LLMChatSessionUpdateReq,
+  LLMChatTemplateArchiveReq,
+  LLMChatBotListRsp,
+  LLMChatSessionListRsp,
+  LLMChatTemplateListRsp,
+  LLMChatSessionRecordFetchRsp,
+  LLMChatSessionRecordTruncateReq,
 } from "./dto";
 import {
   LLMChatBot,
@@ -16,67 +15,61 @@ import {
 } from "./po";
 import { TID } from "@/lib/id_util";
 
-export const llmchatBotList = async (): Promise<LLMChatListBotRsp> => {
-  return await request.get(`api/v1/llmchat/list-bots`);
+export const llmchatBotList = async (): Promise<LLMChatBotListRsp> => {
+  return await request.postJson("api/v1/llmchat-bot-list");
 };
 
 export const llmchatTemplateList =
-  async (): Promise<LLMChatListTemplateRsp> => {
-    return await request.get(`api/v1/llmchat/list-templates`);
+  async (): Promise<LLMChatTemplateListRsp> => {
+    return await request.postJson("api/v1/llmchat-template-list");
   };
 
-export const llmchatSessionList = async (): Promise<LLMChatListSessionRsp> => {
-  return await request.get(`api/v1/llmchat/list-sessions`);
+export const llmchatSessionList = async (): Promise<LLMChatSessionListRsp> => {
+  return await request.postJson("api/v1/llmchat-session-list");
 };
 
-export const llmchatTemplateAdd = async (template: LLMChatTemplate) => {
-  return await request.putJson(`api/v1/llmchat/overwrite-template`, {
+export const llmchatTemplateCommit = async (template: LLMChatTemplate) => {
+  return await request.postJson("api/v1/llmchat-template-commit", {
     template,
   });
 };
 
-export const llmchatTemplateDelete = async (
-  template: LLMChatDeleteTemplateReq,
+export const llmchatTemplateArchive = async (
+  template: LLMChatTemplateArchiveReq,
 ) => {
-  return await request.postJson(`api/v1/llmchat/delete-template`, template);
+  return await request.postJson("api/v1/llmchat-template-archive", template);
 };
 
-export const llmchatBotAdd = async (bot: LLMChatBot) => {
-  return await request.putJson(`api/v1/llmchat/overwrite-bot`, {
+export const llmchatBotCommit = async (bot: LLMChatBot) => {
+  return await request.postJson("api/v1/llmchat-bot-commit", {
     bot,
   });
 };
 
-export const llmchatSessionRecords = async (
+export const llmchatSessionRecordFetch = async (
   session_otid: TID,
-): Promise<LLMChatSessionDetailRsp> => {
-  return await request.get(`api/v1/llmchat/get-session-and-records`, {
+): Promise<LLMChatSessionRecordFetchRsp> => {
+  return await request.postJson("api/v1/llmchat-session-record-fetch", {
     session_otid,
   });
 };
 
-export const llmchatSessionOverwrite = async (session: LLMChatSession) => {
-  await request.putJson(`api/v1/llmchat/session-overwrition`, {
+export const llmchatSessionCommit = async (session: LLMChatSession) => {
+  await request.postJson("api/v1/llmchat-session-commit", {
     session: session,
   });
 };
 
-export const llmchatSessionUpdate = async (req: LLMChatSessionUpdateReq) => {
-  await request.postJson(`api/v1/llmchat/session-updation`, {
-    ...req,
-  });
-};
-
-export const llmchatSessionTruncate = async (
-  req: LLMChatSessionTruncateReq,
+export const llmchatSessionRecordTruncate = async (
+  req: LLMChatSessionRecordTruncateReq,
 ) => {
-  await request.postJson(`api/v1/llmchat/truncate-session`, {
+  await request.postJson("api/v1/llmchat-session-record-truncate", {
     ...req,
   });
 };
 
-export const llmchatRecordInsert = async (record: LLMChatRecord) => {
-  await request.putJson(`api/v1/llmchat/record-overwrition`, {
+export const llmchatRecordCommit = async (record: LLMChatRecord) => {
+  await request.postJson("api/v1/llmchat-record-commit", {
     record: record,
   });
 };

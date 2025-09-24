@@ -84,10 +84,10 @@ impl TryFrom<&KDbRow> for LLMChatSession {
 }
 
 impl LLMChatMapper for KDb {
-    async fn llm_chat_overwrite_bot(
+    async fn llmchat_bot_commit(
         &self,
-        req: KReq<LLMChatOverwriteBotReq>,
-    ) -> AResult<LLMChatOverwriteBotRsp> {
+        req: KReq<LLMChatBotCommitReq>,
+    ) -> AResult<LLMChatBotCommitRsp> {
         let bot = req.body.bot;
         let otid = bot.otid;
 
@@ -100,13 +100,13 @@ impl LLMChatMapper for KDb {
         tx.exec(inserter).await?;
         tx.cmt().await?;
 
-        Ok(LLMChatOverwriteBotRsp {})
+        Ok(LLMChatBotCommitRsp {})
     }
 
-    async fn llm_chat_overwrite_template(
+    async fn llmchat_template_commit(
         &self,
-        req: KReq<LLMChatOverwriteTemplateReq>,
-    ) -> AResult<LLMChatOverwriteTemplateRsp> {
+        req: KReq<LLMChatTemplateCommitReq>,
+    ) -> AResult<LLMChatTemplateCommitRsp> {
         let tmpl = req.body.template;
         let inserter = tmpl.to_owned().to_sql_inserter();
 
@@ -118,13 +118,13 @@ impl LLMChatMapper for KDb {
         tx.exec(inserter).await?;
         tx.cmt().await?;
 
-        Ok(LLMChatOverwriteTemplateRsp {})
+        Ok(LLMChatTemplateCommitRsp {})
     }
 
-    async fn llm_chat_insert_session(
+    async fn llmchat_session_commit(
         &self,
-        req: KReq<LLMChatInsertSessionReq>,
-    ) -> AResult<LLMChatInsertSessionRsp> {
+        req: KReq<LLMChatSessionCommitReq>,
+    ) -> AResult<LLMChatSessionCommitRsp> {
         let mut obj = req.body.session;
         let s: String = obj.title.to_string().chars().take(199).collect();
         obj.title = s.try_into()?;
@@ -138,13 +138,13 @@ impl LLMChatMapper for KDb {
         tx.exec(inserter).await?;
         tx.cmt().await?;
 
-        Ok(LLMChatInsertSessionRsp {})
+        Ok(LLMChatSessionCommitRsp {})
     }
 
-    async fn llm_chat_overwrite_record(
+    async fn llmchat_record_commit(
         &self,
-        req: KReq<LLMChatInsertRecordReq>,
-    ) -> AResult<LLMChatInsertRecordRsp> {
+        req: KReq<LLMChatRecordCommitReq>,
+    ) -> AResult<LLMChatRecordCommitRsp> {
         let obj = req.body.record;
         let otid = obj.otid;
         let inserter = obj.to_owned().to_sql_inserter();
@@ -157,10 +157,10 @@ impl LLMChatMapper for KDb {
         tx.exec(inserter).await?;
         tx.cmt().await?;
 
-        Ok(LLMChatInsertRecordRsp {})
+        Ok(LLMChatRecordCommitRsp {})
     }
 
-    async fn llm_chat_list_bots(&self, req: KReq<LLMChatListBotReq>) -> AResult<LLMChatListBotRsp> {
+    async fn llmchat_bot_list(&self, req: KReq<LLMChatBotListReq>) -> AResult<LLMChatBotListRsp> {
         let _ = req;
         let sql = format!(
             "select * from {} bot left join (select {}, count({}) as bcount from {} where {} > {} group by {}) rc on bot.{} = rc.{} order by bcount desc",
@@ -189,13 +189,13 @@ impl LLMChatMapper for KDb {
             .map(|(_, bot)| bot)
             .collect();
 
-        Ok(LLMChatListBotRsp { bots })
+        Ok(LLMChatBotListRsp { bots })
     }
 
-    async fn llm_chat_list_templates(
+    async fn llmchat_template_list(
         &self,
-        _req: KReq<LLMChatListTemplateReq>,
-    ) -> AResult<LLMChatListTemplateRsp> {
+        _req: KReq<LLMChatTemplateListReq>,
+    ) -> AResult<LLMChatTemplateListRsp> {
         let sql = format!(
             "select b.*, count(r.{}) as bot_count from {} b left join {} r on b.{} = r.{} group by b.{} order by bot_count desc",
             LLMChatRecord::ROLE_ID,
@@ -212,13 +212,13 @@ impl LLMChatMapper for KDb {
             .qry_list(sql, |r| LLMChatTemplate::try_from(&r))
             .await?;
 
-        Ok(LLMChatListTemplateRsp { templates })
+        Ok(LLMChatTemplateListRsp { templates })
     }
 
-    async fn llm_chat_list_sessions(
+    async fn llmchat_session_list(
         &self,
-        req: KReq<LLMChatListSessionReq>,
-    ) -> AResult<LLMChatListSessionRsp> {
+        req: KReq<LLMChatSessionListReq>,
+    ) -> AResult<LLMChatSessionListRsp> {
         let query = SqlBuilder::read_all(LLMChatSession::TABLE)
             .r#where(Wheres::and([Wheres::if_some(
                 req.session_otid.as_ref(),
@@ -232,16 +232,16 @@ impl LLMChatMapper for KDb {
             .qry_list(query, |r| LLMChatSession::try_from(&r))
             .await?;
 
-        Ok(LLMChatListSessionRsp { sessions })
+        Ok(LLMChatSessionListRsp { sessions })
     }
 
-    async fn llm_chat_session_detail(
+    async fn llmchat_session_record_fetch(
         &self,
-        req: KReq<LLMChatSessionDetialReq>,
-    ) -> AResult<LLMChatSessionDetailRsp> {
+        req: KReq<LLMChatSessionRecordFetchReq>,
+    ) -> AResult<LLMChatSessionRecordFetchRsp> {
         let session = self
-            .llm_chat_list_sessions(KReq {
-                body: LLMChatListSessionReq {
+            .llmchat_session_list(KReq {
+                body: LLMChatSessionListReq {
                     session_otid: Some(req.session_otid),
                 },
                 kspace: req.kspace.clone(),
@@ -265,46 +265,46 @@ impl LLMChatMapper for KDb {
             .qry_list(query, |r| LLMChatRecord::try_from(&r))
             .await?;
 
-        Ok(LLMChatSessionDetailRsp { session, records })
+        Ok(LLMChatSessionRecordFetchRsp { session, records })
     }
 
-    async fn llm_chat_delete_bot(
+    async fn llmchat_bot_archive(
         &self,
-        req: KReq<LLMChatDeleteBotReq>,
-    ) -> AResult<LLMChatDeleteBotRsp> {
+        req: KReq<LLMChatBotArchiveReq>,
+    ) -> AResult<LLMChatBotArchiveRsp> {
         self.conn()
             .await?
             .as_executor()
             .omit_rows::<LLMChatBot>(LLMChatBot::pkey_cond(req.bot_otid))
             .await?;
 
-        Ok(LLMChatDeleteBotRsp {})
+        Ok(LLMChatBotArchiveRsp {})
     }
 
-    async fn llm_chat_delete_template(
+    async fn llmchat_template_archive(
         &self,
-        req: KReq<LLMChatDeleteTemplateReq>,
-    ) -> AResult<LLMChatDeleteTemplateRsp> {
+        req: KReq<LLMChatTemplateArchiveReq>,
+    ) -> AResult<LLMChatTemplateArchiveRsp> {
         self.conn()
             .await?
             .as_executor()
             .omit_rows::<LLMChatTemplate>(LLMChatTemplate::pkey_cond(req.template_otid))
             .await?;
 
-        Ok(LLMChatDeleteTemplateRsp {})
+        Ok(LLMChatTemplateArchiveRsp {})
     }
 
-    async fn llm_chat_delete_session(
+    async fn llmchat_session_archive(
         &self,
-        req: KReq<LLMChatDeleteSessionReq>,
-    ) -> AResult<LLMChatDeleteSessionRsp> {
+        req: KReq<LLMChatSessionArchiveReq>,
+    ) -> AResult<LLMChatSessionArchiveRsp> {
         self.conn()
             .await?
             .as_executor()
             .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(req.session_otid))
             .await?;
 
-        Ok(LLMChatDeleteSessionRsp {})
+        Ok(LLMChatSessionArchiveRsp {})
     }
 
     async fn ensure_table_llm_chat(&self) -> EResult {
@@ -353,13 +353,13 @@ impl LLMChatMapper for KDb {
         Ok(LLMChatUpdateSessionRsp {})
     }
 
-    async fn llm_chat_truncate_session(
+    async fn llmchat_session_record_truncate(
         &self,
-        req: KReq<LLMChatTruncateSessionReq>,
-    ) -> AResult<LLMChatTruncateSessionRsp> {
+        req: KReq<LLMChatSessionRecordTruncateReq>,
+    ) -> AResult<LLMChatSessionRecordTruncateRsp> {
         let records = self
-            .llm_chat_session_detail(KReq {
-                body: LLMChatSessionDetialReq {
+            .llmchat_session_record_fetch(KReq {
+                body: LLMChatSessionRecordFetchReq {
                     session_otid: req.session_otid,
                 },
                 kspace: req.kspace.clone(),
@@ -403,7 +403,7 @@ impl LLMChatMapper for KDb {
             )]))
             .await?;
 
-        Ok(LLMChatTruncateSessionRsp { count: 0 })
+        Ok(LLMChatSessionRecordTruncateRsp { count: 0 })
     }
 }
 

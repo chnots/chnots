@@ -6,27 +6,21 @@ import {
   LLMChatRecord,
 } from "./po";
 
-export type LLMChatListBotRsp = {
+export type LLMChatBotListRsp = {
   bots: LLMChatBot[];
 };
 
-export type LLMChatListTemplateRsp = {
+export type LLMChatTemplateListRsp = {
   templates: LLMChatTemplate[];
 };
 
-export type LLMChatListSessionRsp = {
+export type LLMChatSessionListRsp = {
   sessions: LLMChatSession[];
 };
 
-export type LLMChatSessionDetailRsp = {
+export type LLMChatSessionRecordFetchRsp = {
   session?: LLMChatSession;
   records: LLMChatRecord[];
-};
-
-export type LLMChatSessionUpdateReq = {
-  session_otid: TID;
-  delete?: boolean;
-  title?: string;
 };
 
 export type LLMChatSessionTruncateReq = {
@@ -34,73 +28,65 @@ export type LLMChatSessionTruncateReq = {
   remove_rid_included: TID;
 };
 
-export type LLMChatOverwriteBotReq = {
+export type LLMChatBotCommitReq = {
   bot: LLMChatBot;
 };
 
-export type LLMChatOverwriteBotRsp = object;
+export type LLMChatBotCommitRsp = object;
 
-export type LLMChatOverwriteTemplateReq = {
+export type LLMChatTemplateCommitReq = {
   template: LLMChatTemplate;
 };
 
-export type LLMChatOverwriteTemplateRsp = object;
+export type LLMChatTemplateCommitRsp = object;
 
-export type LLMChatInsertSessionReq = {
+export type LLMChatSessionCommitReq = {
   session: LLMChatSession;
 };
 
-export type LLMChatInsertSessionRsp = object;
+export type LLMChatSessionCommitRsp = object;
 
-export type LLMChatInsertRecordReq = {
+export type LLMChatRecordCommitReq = {
   record: LLMChatRecord;
 };
 
-export type LLMChatInsertRecordRsp = object;
+export type LLMChatRecordCommitRsp = object;
 
-export type LLMChatListBotReq = object;
+export type LLMChatBotListReq = object;
 
-export type LLMChatListTemplateReq = object;
+export type LLMChatTemplateListReq = object;
 
-export type LLMChatListSessionReq = {
+export type LLMChatSessionListReq = {
   session_otid?: TID;
 };
 
-export type LLMChatUpdateSessionReq = {
-  title?: string;
-  delete?: boolean;
-  session_otid: TID;
-};
-
-export type LLMChatUpdateSessionRsp = object;
-
-export type LLMChatTruncateSessionReq = {
+export type LLMChatSessionRecordTruncateReq = {
   remove_rid_included: TID;
   session_otid: TID;
 };
 
-export type LLMChatTruncateSessionRsp = {
+export type LLMChatSessionRecordTruncateRsp = {
   count: number;
 };
 
-export type LLMChatSessionDetialReq = {
+export type LLMChatSessionRecordFetchReq = {
   session_otid: TID;
 };
 
-export type LLMChatDeleteBotReq = {
+export type LLMChatBotArchiveReq = {
   bot_otid: TID;
 };
 
-export type LLMChatDeleteBotRsp = object;
+export type LLMChatBotArchiveRsp = object;
 
-export type LLMChatDeleteTemplateReq = {
+export type LLMChatTemplateArchiveReq = {
   template_otid: TID;
 };
 
-export type LLMChatDeleteTemplateRsp = object;
+export type LLMChatTemplateArchiveRsp = object;
 
-export type LLMChatDeleteSessionReq = {
+export type LLMChatSessionArchiveReq = {
   session_otid: TID;
 };
 
-export type LLMChatDeleteSessionRsp = object;
+export type LLMChatSessionArchiveRsp = object;

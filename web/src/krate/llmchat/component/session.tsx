@@ -22,9 +22,9 @@ import { RecordAnswering } from "./record-response";
 
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import {
-  llmchatRecordInsert,
-  llmchatSessionOverwrite,
-  llmchatSessionTruncate,
+  llmchatRecordCommit,
+  llmchatSessionCommit,
+  llmchatSessionRecordTruncate,
 } from "@/krate/llmchat/service";
 import RecordUser from "./record-user";
 import RecordAssistant, { RecordSystem } from "./record-assistant";
@@ -112,7 +112,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
       const session = this.session;
       if (session && this.records) {
         if (this.persistedIds.current!.has(recordOtid)) {
-          await llmchatSessionTruncate({
+          await llmchatSessionRecordTruncate({
             session_otid: session.otid,
             remove_rid_included: recordOtid,
           });
@@ -275,7 +275,7 @@ const SessionContainer = ({
         if (!pids.has(session.otid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
-          await llmchatSessionOverwrite(session);
+          await llmchatSessionCommit(session);
           pids.add(session.otid);
           if (onPostSave) {
             onPostSave(session);
@@ -283,7 +283,7 @@ const SessionContainer = ({
         }
         for (const record of records) {
           if (!pids.has(record.otid)) {
-            await llmchatRecordInsert(record);
+            await llmchatRecordCommit(record);
             console.log("insert record", record);
             pids.add(record.otid);
           }
