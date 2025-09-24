@@ -11,8 +11,8 @@ use crate::{
     app::ShareAppState,
     krate::{
         kfile::{
-            KFILE_BIG_UPLOAD_WITH_SID, KFILE_INLINE_INSERT2, KFileInlineInsert2Req, KFileMeta,
-            mapper::KFileMapper,
+            KFILE_ASSET_UPLOAD_BY_SID, KFILE_INLINE_UPLOAD_DIRECTLY, KFileMeta,
+            KfileInlineUploadDirectlyReq, mapper::KFileMapper,
         },
         sync::{
             dto::SyncDataArg, filedumper::StartType, networksync::OtidRelatedWorker,
@@ -22,7 +22,7 @@ use crate::{
     util::digestutil::file_blake3_sum,
 };
 
-use super::{KFileInlineGetBySidReq, KFileInlineGetBySidRsp};
+use super::{KfileInlineDownloadBySidReq, KfileInlineDownloadBySidRsp};
 
 struct KFileAssetWorker {
     app: ShareAppState,
@@ -34,13 +34,13 @@ impl KFileAssetWorker {
         for kfm in list {
             if kfm.inline {
                 let rsp = client
-                    .get(endpoint.to_url(crate::krate::kfile::dto::KFILE_INLINE_GET_BY_SID))
-                    .query(&KFileInlineGetBySidReq {
+                    .get(endpoint.to_url(crate::krate::kfile::dto::KFILE_INLINE_DOWNLOAD_BY_SID))
+                    .query(&KfileInlineDownloadBySidReq {
                         sid: kfm.sid.clone(),
                     })
                     .send()
                     .await?
-                    .json::<KFileInlineGetBySidRsp>()
+                    .json::<KfileInlineDownloadBySidRsp>()
                     .await?;
                 if let Some(ele) = rsp.file {
                     self.app.insert_inline_kfile2(ele).await?;
@@ -61,7 +61,10 @@ impl KFileAssetWorker {
                 let mut file = File::create(&tmp_path).await?;
 
                 let rsp = client
-                    .get(endpoint.to_url(format!("/api/v1/kfile/{}/{}", kfm.id, kfm.sid)))
+                    .get(endpoint.to_url(format!(
+                        "/api/v1/kfile-asset-download/{}/{}",
+                        kfm.id, kfm.sid
+                    )))
                     .send()
                     .await?;
 
@@ -110,8 +113,8 @@ impl KFileAssetWorker {
                 let rsp = self.app.query_inline_kfile_by_sid(kfm.sid.clone()).await?;
                 if let Some(c) = rsp.file {
                     client
-                        .put(endpoint.to_url(KFILE_INLINE_INSERT2))
-                        .json(&KFileInlineInsert2Req { file: c })
+                        .put(endpoint.to_url(KFILE_INLINE_UPLOAD_DIRECTLY))
+                        .json(&KfileInlineUploadDirectlyReq { file: c })
                         .send()
                         .await?;
                 }
@@ -143,7 +146,7 @@ impl KFileAssetWorker {
                 let response = client
                     .post(
                         endpoint
-                            .to_url(format!("{KFILE_BIG_UPLOAD_WITH_SID}/{}", kfm.sid.as_str())),
+                            .to_url(format!("{KFILE_ASSET_UPLOAD_BY_SID}/{}", kfm.sid.as_str())),
                     )
                     .multipart(form)
                     .header("K-filesize", file_size)

@@ -27,7 +27,7 @@ use crate::{
     config::AttachmentConfig,
     controller::KResponse,
     krate::kfile::{
-        KFileChunkUploadReq, KFileMeta, KFileUploadRsp, QueryKFileReq, mapper::KFileMapper,
+        KFileMeta, KFileUploadRsp, KfileAssetChunkUploadReq, KfileMetaFetchReq, mapper::KFileMapper,
     },
     util::digestutil::file_blake3_sum,
 };
@@ -86,10 +86,10 @@ pub async fn try_mkdirp<P: AsRef<Path>>(path: P) -> EResult {
     Ok(())
 }
 
-pub(super) async fn upload_by_chunks(
+pub(super) async fn kfile_asset_chunk_upload(
     _: HeaderMap,
     state: State<ShareAppState>,
-    TypedMultipart(KFileChunkUploadReq {
+    TypedMultipart(KfileAssetChunkUploadReq {
         filename,
         chunk_no,
         total_chunks,
@@ -99,7 +99,7 @@ pub(super) async fn upload_by_chunks(
         meta_id,
         content_type,
         upload_id,
-    }): TypedMultipart<KFileChunkUploadReq>,
+    }): TypedMultipart<KfileAssetChunkUploadReq>,
 ) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
 
@@ -149,7 +149,7 @@ pub(super) async fn upload_by_chunks(
     })
 }
 
-pub(super) async fn upload_big_file_with_sid(
+pub(super) async fn kfile_asset_upload_by_sid(
     headers: HeaderMap,
     state: State<ShareAppState>,
     RestPath(sid): RestPath<String>,
@@ -162,13 +162,13 @@ pub(super) async fn upload_big_file_with_sid(
             .unwrap_or(0),
         None => 0,
     };
-    upload_big_file_with_sid_inner(state, sid, multipart, filesize)
+    kfile_asset_upload_by_sid_inner(state, sid, multipart, filesize)
         .await
         .into()
 }
 
 #[inline]
-async fn upload_big_file_with_sid_inner(
+async fn kfile_asset_upload_by_sid_inner(
     state: State<ShareAppState>,
     sid: String,
     mut multipart: Multipart,
@@ -238,7 +238,7 @@ where
 }
 
 // https://github.com/tokio-rs/axum/discussions/608
-pub(super) async fn download(
+pub(super) async fn kfile_asset_download(
     state: State<ShareAppState>,
     axum::extract::Path((meta_otid, filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
@@ -250,7 +250,7 @@ pub(super) async fn download(
     ) -> AResult<([(HeaderName, String); 2], body::Body)> {
         let kfile = state
             .mapper
-            .query_kfile_meta(QueryKFileReq {
+            .query_kfile_meta(KfileMetaFetchReq {
                 meta_id: meta_id.to_string().try_into()?,
             })
             .await?

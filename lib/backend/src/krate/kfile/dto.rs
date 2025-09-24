@@ -5,7 +5,7 @@ use chin_sql::str_type::Varchar;
 use serde::{Deserialize, Serialize};
 
 #[derive(TryFromMultipart)]
-pub struct KFileChunkUploadReq {
+pub struct KfileAssetChunkUploadReq {
     pub upload_id: String,
     pub meta_id: String,
     pub filename: String,
@@ -24,7 +24,7 @@ pub struct KFileUploadRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineKFileReq {
+pub struct KfileInlineUploadReq {
     pub meta_id: Varchar<100>,
     pub res: InlineKFile,
     /// archor interval second.
@@ -34,57 +34,57 @@ pub struct InsertInlineKFileReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InsertInlineKFileRsp {
+pub struct KfileInlineUploadRsp {
     pub true_sid: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryInlineKFileReq {
+pub struct KfileInlineDownloadReq {
     pub sid: Option<Varchar<100>>,
     pub meta_id: Option<Varchar<100>>,
     pub with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryInlineKFileRsp {
+pub struct KfileInlineDownloadRsp {
     pub res: Vec<InlineKFile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryKFileReq {
+pub struct KfileMetaFetchReq {
     pub meta_id: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryKFileMetaRsp {
+pub struct KfileMetaFetchRsp {
     pub meta: Option<KFileMeta>,
 }
 
-pub const KFILE_INLINE_INSERT2: &str = "/api/v1/inline-kfile2";
-pub const KFILE_INLINE_GET_BY_SID: &str = "/api/v1/inline-kfile-by-sid";
-pub const KFILE_BIG_UPLOAD_WITH_SID: &str = "/api/v1/kfile/upload-with-sid";
+pub const KFILE_INLINE_UPLOAD_DIRECTLY: &str = "/api/v1/kfile-inline-upload-directly";
+pub const KFILE_INLINE_DOWNLOAD_BY_SID: &str = "/api/v1/kfile-inline-download-by-sid";
+pub const KFILE_ASSET_UPLOAD_BY_SID: &str = "/api/v1/kfile-asset-upload-by-sid";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KFileInlineInsert2Req {
+pub struct KfileInlineUploadDirectlyReq {
     pub file: InlineKFile,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KFileInlineInsert2Rsp {}
+pub struct KfileInlineUploadDirectlyRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KFileInlineGetBySidReq {
+pub struct KfileInlineDownloadBySidReq {
     pub sid: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KFileInlineGetBySidRsp {
+pub struct KfileInlineDownloadBySidRsp {
     pub file: Option<InlineKFile>,
 }
 
 #[test]
 fn tst() {
     let s = "{\"res\":{\"tid\":1749701191901010,\"rid\":\"d0d48143-f149-40eb-bb65-739559a1e2d8\",\"kspace\":\"public\",\"archor\":false,\"name\":\"1749701191901011\",\"content\":\"\",\"content_type\":\"excalidraw-v1\"},\"archor_intervals\":3600}";
-    let c: Result<InsertInlineKFileReq, serde_json::Error> = serde_json::from_str(s);
+    let c: Result<KfileInlineUploadReq, serde_json::Error> = serde_json::from_str(s);
     c.unwrap();
 }

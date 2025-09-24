@@ -18,7 +18,7 @@ export type KFileUploadRsp = {
   finished: boolean;
 };
 
-export type InsertInlineKFileReq = {
+export type KfileInlineUploadReq = {
   meta_id: Varchar<100>;
   res: InlineKFile;
   archor_intervals: number;
@@ -26,40 +26,40 @@ export type InsertInlineKFileReq = {
   content_type: Varchar<200>;
 };
 
-export type InsertInlineKFileRsp = {
+export type KfileInlineUploadRsp = {
   true_sid: Varchar<100>;
 };
 
-export type QueryInlineKFileReq = {
+export type KfileInlineDownloadReq = {
   sid?: Varchar<100>;
   meta_id?: Varchar<100>;
   with_omit?: boolean;
 };
 
-export type QueryInlineKFileRsp = {
+export type KfileInlineDownloadRsp = {
   res: InlineKFile[];
 };
 
-export type QueryKFileReq = {
+export type KfileMetaFetchReq = {
   meta_id: Varchar<100>;
 };
 
-export type QueryKFileMetaRsp = {
+export type KfileMetaFetchRsp = {
   meta?: KFileMeta;
 };
 
-export type KFileInlineInsert2Req = {
+export type KfileInlineUploadDirectlyReq = {
   file: InlineKFile;
 };
-export type KFileInlineInsert2Rsp = object;
-export type KFileInlineGetBySidReq = {
+export type KfileInlineUploadDirectlyRsp = object;
+export type KfileInlineDownloadBySidReq = {
   sid: Varchar<100>;
 };
-export type KFileInlineGetBySidRsp = {
+export type KfileInlineDownloadBySidRsp = {
   file?: InlineKFile;
 };
 
-export type KFileChunkUploadReq = {
+export type KfileAssetChunkUploadReq = {
   upload_id: string;
   meta_id: string;
   filename: string;

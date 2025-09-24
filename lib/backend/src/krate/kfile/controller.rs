@@ -9,18 +9,18 @@ use crate::{app::ShareAppState, controller::KResponse, model::dto::kreq};
 
 use super::{mapper::KFileMapper, *};
 
-pub(crate) async fn query_kfile(
+pub(crate) async fn kfile_meta_fetch(
     state: State<ShareAppState>,
-    Query(req): Query<QueryKFileReq>,
-) -> KResponse<QueryKFileMetaRsp> {
+    Query(req): Query<KfileMetaFetchReq>,
+) -> KResponse<KfileMetaFetchRsp> {
     state.mapper.query_kfile_meta(req).await.into()
 }
 
-async fn query_inline_kfile(
+async fn kfile_inline_download(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<QueryInlineKFileReq>,
-) -> KResponse<QueryInlineKFileRsp> {
+    Query(req): Query<KfileInlineDownloadReq>,
+) -> KResponse<KfileInlineDownloadRsp> {
     state
         .mapper
         .query_inline_kfile(kreq(headers, req))
@@ -28,11 +28,11 @@ async fn query_inline_kfile(
         .into()
 }
 
-async fn insert_inline_kfile(
+async fn kfile_inline_upload(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<InsertInlineKFileReq>,
-) -> KResponse<InsertInlineKFileRsp> {
+    Json(req): Json<KfileInlineUploadReq>,
+) -> KResponse<KfileInlineUploadRsp> {
     state
         .mapper
         .insert_inline_kfile(kreq(headers, req))
@@ -40,46 +40,54 @@ async fn insert_inline_kfile(
         .into()
 }
 
-async fn inline_kfile_insert_directly(
+async fn kfile_inline_upload_directly(
     state: State<ShareAppState>,
-    Json(req): Json<KFileInlineInsert2Req>,
-) -> KResponse<KFileInlineInsert2Rsp> {
+    Json(req): Json<KfileInlineUploadDirectlyReq>,
+) -> KResponse<KfileInlineUploadDirectlyRsp> {
     state
         .insert_inline_kfile2(req.file)
         .await
-        .map(|_| KFileInlineInsert2Rsp {})
+        .map(|_| KfileInlineUploadDirectlyRsp {})
         .into()
 }
 
-async fn inline_kfile_get_by_sid(
+async fn kfile_inline_download_by_sid(
     state: State<ShareAppState>,
-    Query(req): Query<KFileInlineGetBySidReq>,
-) -> KResponse<KFileInlineGetBySidRsp> {
+    Query(req): Query<KfileInlineDownloadBySidReq>,
+) -> KResponse<KfileInlineDownloadBySidRsp> {
     state.query_inline_kfile_by_sid(req.sid).await.into()
 }
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
+        .route("/api/v1/kfile-meta-fetch", get(kfile_meta_fetch))
         .route(
-            "/api/v1/kfile/upload-by-chunks",
+            "/api/v1/kfile-asset-chunk-upload",
             post(|headers, state, mp| async {
                 let rsp: KResponse<KFileUploadRsp> =
-                    transfer::upload_by_chunks(headers, state, mp).await.into();
+                    transfer::kfile_asset_chunk_upload(headers, state, mp)
+                        .await
+                        .into();
                 rsp
             })
             .route_layer(DefaultBodyLimit::max(135476000)),
         )
         .route(
-            "/api/v1/kfile/{meta_otid}/{filename}",
-            get(transfer::download),
+            &format!("{KFILE_ASSET_UPLOAD_BY_SID}/{{sid}}"),
+            post(transfer::kfile_asset_upload_by_sid),
         )
-        .route("/api/v1/kfile/info", get(query_kfile))
-        .route("/api/v1/kfile/inline-upload", put(insert_inline_kfile))
-        .route("/api/v1/kfile/inline-download", get(query_inline_kfile))
-        .route(KFILE_INLINE_GET_BY_SID, get(inline_kfile_get_by_sid))
-        .route(KFILE_INLINE_INSERT2, put(inline_kfile_insert_directly))
         .route(
-            &format!("{KFILE_BIG_UPLOAD_WITH_SID}/{{sid}}"),
-            post(transfer::upload_big_file_with_sid),
+            "/api/v1/kfile-asset-download/{meta_otid}/{filename}",
+            get(transfer::kfile_asset_download),
+        )
+        .route("/api/v1/kfile-inline-upload", put(kfile_inline_upload))
+        .route("/api/v1/kfile-inline-download", get(kfile_inline_download))
+        .route(
+            KFILE_INLINE_DOWNLOAD_BY_SID,
+            get(kfile_inline_download_by_sid),
+        )
+        .route(
+            KFILE_INLINE_UPLOAD_DIRECTLY,
+            put(kfile_inline_upload_directly),
         )
 }

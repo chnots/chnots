@@ -75,8 +75,8 @@ impl KFileMapper for KDb {
 
     async fn insert_inline_kfile(
         &self,
-        mut req: KReq<InsertInlineKFileReq>,
-    ) -> anyhow::Result<InsertInlineKFileRsp> {
+        mut req: KReq<KfileInlineUploadReq>,
+    ) -> anyhow::Result<KfileInlineUploadRsp> {
         let mut bh = blake3::Hasher::new();
         let bytes = req.body.res.content.as_str().as_bytes();
         bh.write_all(bytes)?;
@@ -114,13 +114,13 @@ impl KFileMapper for KDb {
 
         tx.cmt().await?;
 
-        Ok(InsertInlineKFileRsp { true_sid: sid })
+        Ok(KfileInlineUploadRsp { true_sid: sid })
     }
 
     async fn query_inline_kfile_by_sid(
         &self,
         sid: Varchar<100>,
-    ) -> anyhow::Result<KFileInlineGetBySidRsp> {
+    ) -> anyhow::Result<KfileInlineDownloadBySidRsp> {
         let query = SqlBuilder::read_all(InlineKFile::TABLE)
             .r#where(Wheres::equal(InlineKFile::SID, sid))
             .sov("order by tid desc")
@@ -132,13 +132,13 @@ impl KFileMapper for KDb {
             .qry_opt(query, |t| (&t).try_into())
             .await?;
 
-        Ok(KFileInlineGetBySidRsp { file: res })
+        Ok(KfileInlineDownloadBySidRsp { file: res })
     }
 
     async fn query_inline_kfile(
         &self,
-        req: KReq<QueryInlineKFileReq>,
-    ) -> anyhow::Result<QueryInlineKFileRsp> {
+        req: KReq<KfileInlineDownloadReq>,
+    ) -> anyhow::Result<KfileInlineDownloadRsp> {
         let sid: Varchar<100> = if let Some(sid) = &req.sid {
             sid.clone()
         } else if let Some(key) = req.meta_id.clone() {
@@ -154,7 +154,7 @@ impl KFileMapper for KDb {
                 .map(|e| e.sid);
             match sid {
                 Some(sid) => sid,
-                None => return Ok(QueryInlineKFileRsp { res: vec![] }),
+                None => return Ok(KfileInlineDownloadRsp { res: vec![] }),
             }
         } else {
             anyhow::bail!("there are no meta_id and sid")
@@ -162,30 +162,30 @@ impl KFileMapper for KDb {
 
         let res = self.query_inline_kfile_by_sid(sid).await?.file;
 
-        Ok(QueryInlineKFileRsp {
+        Ok(KfileInlineDownloadRsp {
             res: res.map(|e| vec![e]).unwrap_or(vec![]),
         })
     }
 
-    async fn query_kfile_meta(&self, req: QueryKFileReq) -> anyhow::Result<QueryKFileMetaRsp> {
+    async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp> {
         let meta = self
             .conn()
             .await?
             .qry_opt(KFileMeta::pkey_reader(req.meta_id), |e| (&e).try_into())
             .await?;
-        Ok(QueryKFileMetaRsp { meta })
+        Ok(KfileMetaFetchRsp { meta })
     }
 
     async fn query_kfile_meta_by_sid(
         &self,
         sid: Varchar<100>,
-    ) -> anyhow::Result<QueryKFileMetaRsp> {
+    ) -> anyhow::Result<KfileMetaFetchRsp> {
         let meta = self
             .conn()
             .await?
             .qry_opt(KFileMeta::pkey_reader(sid), |e| (&e).try_into())
             .await?;
-        Ok(QueryKFileMetaRsp { meta })
+        Ok(KfileMetaFetchRsp { meta })
     }
 
     async fn insert_inline_kfile2(&self, req: InlineKFile) -> chin_tools::AResult<usize> {
