@@ -38,11 +38,6 @@ pub trait LLMChatMapper {
         req: KReq<LLMChatSessionListReq>,
     ) -> AResult<LLMChatSessionListRsp>;
 
-    async fn llm_chat_update_session(
-        &self,
-        req: KReq<LLMChatUpdateSessionReq>,
-    ) -> AResult<LLMChatUpdateSessionRsp>;
-
     async fn llmchat_session_record_fetch(
         &self,
         req: KReq<LLMChatSessionRecordFetchReq>,
@@ -136,13 +131,6 @@ impl LLMChatMapper for MapperType {
         );
 
         Ok(raw_result)
-    }
-
-    async fn llm_chat_update_session(
-        &self,
-        req: KReq<LLMChatUpdateSessionReq>,
-    ) -> AResult<LLMChatUpdateSessionRsp> {
-        expand_mt_branch!(self.llm_chat_update_session(req))
     }
 
     async fn llmchat_bot_archive(

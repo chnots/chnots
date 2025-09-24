@@ -1,6 +1,6 @@
 import {
   getResouceDownloadUrl,
-  kfileQueryInfo,
+  kfileMetaFetch,
   kfileUpload,
 } from "@/krate/kfile/service";
 import { genUID } from "@/lib/id_util";
@@ -55,7 +55,7 @@ export const CommonKFile = ({
   console.log("kid: ", kid);
   useEffect(() => {
     if (kid) {
-      kfileQueryInfo({ meta_id: kid.toString() }).then(({ meta }) => {
+      kfileMetaFetch({ meta_id: kid.toString() }).then(({ meta }) => {
         setKFile(meta);
       });
     }

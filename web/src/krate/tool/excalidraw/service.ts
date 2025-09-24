@@ -1,4 +1,4 @@
-import { insertInlineKFile, queryInlineKFile } from "@/krate/kfile/service";
+import { kfileInlineUpload, kfileInlineDownload } from "@/krate/kfile/service";
 import { genTID } from "@/lib/id_util";
 import {
   ExcalidrawElement,
@@ -24,7 +24,7 @@ export const fetchExcalidraw = async (
   excalidraw_id: string,
 ): Promise<ExcalidrawChnotState | null> => {
   try {
-    const rsp = await queryInlineKFile({
+    const rsp = await kfileInlineDownload({
       meta_id: excalidraw_id,
     });
     const dataState = JSON.parse(rsp.res[0].content);
@@ -35,7 +35,7 @@ export const fetchExcalidraw = async (
       for (const element of elements) {
         if (element.type === "image" && element.fileId) {
           try {
-            const fileInlineRsp = await queryInlineKFile({
+            const fileInlineRsp = await kfileInlineDownload({
               meta_id: element.fileId,
             });
 
@@ -94,7 +94,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       const ver = savedFilesRef.current.get(fileId);
       const newVar = file.created + "-" + file.version;
       if (!ver || ver != newVar) {
-        await insertInlineKFile({
+        await kfileInlineUpload({
           res: {
             tid: genTID(),
             content: file.dataURL,
@@ -108,7 +108,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       }
     }
 
-    await insertInlineKFile({
+    await kfileInlineUpload({
       res: {
         tid: genTID(),
         content,

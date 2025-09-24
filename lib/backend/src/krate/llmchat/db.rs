@@ -324,35 +324,6 @@ impl LLMChatMapper for KDb {
         .await
     }
 
-    async fn llm_chat_update_session(
-        &self,
-        req: KReq<LLMChatUpdateSessionReq>,
-    ) -> AResult<LLMChatUpdateSessionRsp> {
-        let mut conn = self.conn().await?;
-        let tx = conn.tx().await?;
-
-        let pk_read = LLMChatSession::pkey_reader(req.session_otid);
-        let mut sess = tx
-            .qry_one(pk_read, |r| LLMChatSession::try_from(&r), false)
-            .await?;
-
-        tx.as_executor()
-            .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(req.session_otid))
-            .await?;
-
-        if let Some(title) = req.body.title {
-            sess.title = Varchar::<500>::limit(title);
-        }
-        if let Some(true) = req.body.delete {
-            return Ok(LLMChatUpdateSessionRsp {});
-        }
-        tx.exec(sess.to_sql_inserter()).await?;
-
-        tx.cmt().await?;
-
-        Ok(LLMChatUpdateSessionRsp {})
-    }
-
     async fn llmchat_session_record_truncate(
         &self,
         req: KReq<LLMChatSessionRecordTruncateReq>,

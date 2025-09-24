@@ -4,14 +4,13 @@ use crate::app::ShareAppState;
 use crate::controller::KResponse;
 use crate::model::dto::kreq;
 use axum::extract::Query;
-use axum::routing::get;
 use axum::routing::post;
-use axum::{Json, Router, extract::State, http::HeaderMap, routing::put};
+use axum::{Json, Router, extract::State, http::HeaderMap};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/kspace-list", get(kspace_list))
-        .route("/api/v1/kspace-commit", put(kspace_commit))
+        .route("/api/v1/kspace-list", post(kspace_list))
+        .route("/api/v1/kspace-commit", post(kspace_commit))
         .route("/api/v1/kspace-archive", post(kspace_archive))
 }
 

@@ -38,19 +38,19 @@ export const kfileUpload = async ({
   return await request.postFormdata("api/v1/kfile-asset-chunk-upload", data);
 };
 
-export const kfileQueryInfo = async (
+export const kfileMetaFetch = async (
   req: KfileMetaFetchReq,
 ): Promise<KfileMetaFetchRsp> => {
-  return await request.get("api/v1/kfile-meta-fetch", req);
+  return await request.postJson("api/v1/kfile-meta-fetch", req);
 };
 
-export const insertInlineKFile = async (
+export const kfileInlineUpload = async (
   req: KfileInlineUploadReq,
 ): Promise<KfileInlineUploadRsp> => {
-  return await request.putJson("api/v1/kfile-inline-upload", req);
+  return await request.postJson("api/v1/kfile-inline-upload", req);
 };
 
-export const queryInlineKFile = async (
+export const kfileInlineDownload = async (
   req: KfileInlineDownloadReq,
 ): Promise<KfileInlineDownloadRsp> => {
   return await request.get("api/v1/kfile-inline-download", req);

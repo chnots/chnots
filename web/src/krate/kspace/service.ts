@@ -11,17 +11,17 @@ import {
 export const kspaceList = async (
   req: KSpaceListReq,
 ): Promise<KSpaceListRsp> => {
-  return await request.get(`/api/v1/kspace-list`, req);
+  return await request.postJson(`/api/v1/kspace-list`, req);
 };
 
 export const kspaceCommit = async (
   req: KSpaceCommitReq,
 ): Promise<KSpaceCommitRsp> => {
-  return await request.putJson(`/api/v1/kspace-commit`, req);
+  return await request.postJson(`/api/v1/kspace-commit`, req);
 };
 
 export const ksapceArchive = async (
   req: KSpaceArchiveReq,
 ): Promise<KSpaceArchiveRsp> => {
-  return await request.putJson(`/api/v1/kspace-archive`, req);
+  return await request.postJson(`/api/v1/kspace-archive`, req);
 };

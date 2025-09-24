@@ -11,7 +11,7 @@ import {
 export const getSyncAllEndpoints = async (
   req: GetSyncAllEndpointsReq,
 ): Promise<GetSyncAllEndpointsRsp> => {
-  return await request.get(`/api/v1/sync-endpoint-list`, req);
+  return await request.postJson(`/api/v1/sync-endpoint-list`, req);
 };
 
 export const overwriteSyncAllEndpoints = async (
