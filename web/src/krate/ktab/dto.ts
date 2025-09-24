@@ -7,13 +7,13 @@ export type KTabOverwriteMetaReq = {
   meta: KTabMeta;
 };
 
-export type KTabMetaOverwriteRsp = object;
+export type KTabMetaCommitRsp = object;
 
-export type KTabMetaQueryReq = {
+export type KTabMetaFetchReq = {
   table_id: TID;
 };
 
-export type KTabMetaQueryRsp = {
+export type KTabMetaFetchRsp = {
   meta?: KTabMeta;
 };
 
@@ -63,12 +63,12 @@ export type KTabStoreCell = {
   value: KTabStoreValue;
 };
 
-export type KTabCellsOverwriteReq = {
+export type KTabCellCommitReq = {
   table_id: TID;
   cells: KTabViewCell[];
 };
 
-export type KTabRowsQueryReqFilter =
+export type KTabCellListReqFilter =
   | {
       OneRowByIdx: {
         row_tid: number;
@@ -89,23 +89,23 @@ export type KTabRowsQueryReqFilter =
       };
     };
 
-export type KTabRowsQueryReq = {
+export type KTabCellListReq = {
   table_id: TID;
-  filter: KTabRowsQueryReqFilter;
+  filter: KTabCellListReqFilter;
   must_existed?: boolean;
 };
 
-export type KTabRowsQueryRsp = {
-  rows: KTabRowsQueryRspRow[];
+export type KTabCellListRsp = {
+  rows: KTabCellListRspRow[];
 };
 
-export type KTabMetaOverwriteReq = {
+export type KTabMetaCommitReq = {
   meta: KTabMeta;
 };
 
-export type KTabCellsOverwriteRsp = object;
+export type KTabCellCommitRsp = object;
 
-export type KTabRowsQueryRspRow = {
+export type KTabCellListRspRow = {
   row_tid: TID;
   cells: KTabViewCell[];
 };

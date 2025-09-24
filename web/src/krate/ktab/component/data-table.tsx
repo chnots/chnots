@@ -32,7 +32,7 @@ import EditableCell, { KTabRowData } from "./editable-cell";
 import { genTID } from "@/lib/id_util";
 import { KTabMeta } from "../po";
 import { ktabToStoreValue } from "../dto";
-import { ktabCellsOverwrite } from "../service";
+import { ktabCellCommit } from "../service";
 
 export function DataTable({
   tableMeta,
@@ -91,7 +91,7 @@ export function DataTable({
     async (rowIndex: number, columnId: string, value: any) => {
       console.log("row index: ", rowIndex);
       if (tableMeta) {
-        await ktabCellsOverwrite({
+        await ktabCellCommit({
           table_id: tableMeta.otid,
           cells: [
             {

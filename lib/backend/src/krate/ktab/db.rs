@@ -56,10 +56,10 @@ impl KDb {
 }
 
 impl KTabMapper for KDb {
-    async fn ktab_overwrite_meta(
+    async fn ktab_meta_commit(
         &self,
-        req: KReq<KTabMetaOverwriteReq>,
-    ) -> chin_tools::AResult<KTabMetaOverwriteRsp> {
+        req: KReq<KTabMetaCommitReq>,
+    ) -> chin_tools::AResult<KTabMetaCommitRsp> {
         let KTabMeta {
             otid,
             columns,
@@ -90,13 +90,13 @@ impl KTabMapper for KDb {
         tx.exec(insert_sql).await?;
         tx.cmt().await?;
 
-        Ok(KTabMetaOverwriteRsp {})
+        Ok(KTabMetaCommitRsp {})
     }
 
-    async fn ktab_overwrite_cells(
+    async fn ktab_cell_commit(
         &self,
-        req: KReq<KTabCellsOverwriteReq>,
-    ) -> chin_tools::AResult<KTabCellsOverwriteRsp> {
+        req: KReq<KTabCellCommitReq>,
+    ) -> chin_tools::AResult<KTabCellCommitRsp> {
         info!("req -- {req:?}");
         let empty_wrapper = req.frame(());
         let KReq {
@@ -105,9 +105,9 @@ impl KTabMapper for KDb {
             mkspaces: _,
         } = req;
 
-        let KTabCellsOverwriteReq { cells, table_id } = body;
+        let KTabCellCommitReq { cells, table_id } = body;
         let table_meta = self
-            .ktab_query_table_meta(empty_wrapper.frame(KTabMetaQueryReq { table_id }))
+            .ktab_meta_fetch(empty_wrapper.frame(KTabMetaFetchReq { table_id }))
             .await?
             .meta
             .context("unable to get this table")?;
@@ -133,13 +133,13 @@ impl KTabMapper for KDb {
             }
         }
 
-        Ok(KTabCellsOverwriteRsp {})
+        Ok(KTabCellCommitRsp {})
     }
 
-    async fn ktab_query_table_meta(
+    async fn ktab_meta_fetch(
         &self,
-        req: KReq<KTabMetaQueryReq>,
-    ) -> chin_tools::AResult<KTabMetaQueryRsp> {
+        req: KReq<KTabMetaFetchReq>,
+    ) -> chin_tools::AResult<KTabMetaFetchRsp> {
         let ssb = SqlBuilder::read_all(KTabMeta::TABLE)
             .r#where(Wheres::and([Wheres::equal(KTabMeta::OTID, req.table_id)]));
         let meta = self
@@ -148,17 +148,17 @@ impl KTabMapper for KDb {
             .qry_opt(ssb, |row| (&row).try_into())
             .await?;
 
-        Ok(KTabMetaQueryRsp { meta })
+        Ok(KTabMetaFetchRsp { meta })
     }
 
-    async fn ktab_query_table_data(
+    async fn ktab_cell_list(
         &self,
-        req: KReq<KTabRowsQueryReq>,
-    ) -> chin_tools::AResult<KTabRowsQueryRsp> {
+        req: KReq<KTabCellListReq>,
+    ) -> chin_tools::AResult<KTabCellListRsp> {
         let mut cells = vec![];
         let table_id = req.table_id;
         let config = self
-            .ktab_query_table_meta(req.frame(KTabMetaQueryReq {
+            .ktab_meta_fetch(req.frame(KTabMetaFetchReq {
                 table_id: req.table_id,
             }))
             .await?
@@ -166,7 +166,7 @@ impl KTabMapper for KDb {
         let config = if req.must_existed.unwrap_or_default() {
             config.context("cannot find table")?
         } else {
-            return Ok(KTabRowsQueryRsp { rows: vec![] });
+            return Ok(KTabCellListRsp { rows: vec![] });
         };
 
         let col_names: HashMap<TID, String> = config
@@ -216,14 +216,14 @@ impl KTabMapper for KDb {
         }
         let result = result_map
             .into_iter()
-            .map(|(k, r)| KTabRowsQueryRspRow {
+            .map(|(k, r)| KTabCellListRspRow {
                 row_tid: k,
                 cells: r,
             })
             .sorted_by(|r1, r2| r1.row_tid.cmp(&r2.row_tid))
             .collect();
 
-        Ok(KTabRowsQueryRsp { rows: result })
+        Ok(KTabCellListRsp { rows: result })
     }
 
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {

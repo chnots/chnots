@@ -1,4 +1,4 @@
-import { ktabCellsRead, ktabMetaOverwrite, ktabMetaRead } from "../service";
+import { ktabCellList, ktabMetaCommit, ktabMetaFetch } from "../service";
 import { KTabMeta } from "../po";
 import { DataTable } from "./data-table";
 import { ktabGetViewValue } from "../dto";
@@ -20,7 +20,7 @@ const KTabChnot = ({
   const [meta, setMeta] = useState<KTabMeta>();
   const loadMeta = async () => {
     if (kindId) {
-      const meta = await ktabMetaRead({
+      const meta = await ktabMetaFetch({
         table_id: parseInt(kindId, 10),
       });
       if (meta.meta) {
@@ -46,7 +46,7 @@ const KTabChnot = ({
           start: number,
           size: number,
         ): Promise<KTabRowData[]> => {
-          const data = await ktabCellsRead({
+          const data = await ktabCellList({
             table_id,
             filter: {
               RowsByIdx: {
@@ -66,7 +66,7 @@ const KTabChnot = ({
           });
         }}
         onMetaChange={async (tableMeta: KTabMeta) => {
-          await ktabMetaOverwrite({
+          await ktabMetaCommit({
             meta: tableMeta,
           });
           setMeta(tableMeta);
@@ -96,7 +96,7 @@ const KTabChnot = ({
           real_table: false,
           tid: genTID(),
         };
-        await ktabMetaOverwrite({
+        await ktabMetaCommit({
           meta: meta,
         });
         onAfterSave(meta);

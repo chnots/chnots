@@ -10,34 +10,34 @@ use crate::model::decimal::Decimal;
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabMetaOverwriteReq {
+pub struct KTabMetaCommitReq {
     pub meta: KTabMeta,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabMetaOverwriteRsp {}
+pub struct KTabMetaCommitRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabMetaQueryReq {
+pub struct KTabMetaFetchReq {
     pub table_id: TID,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabMetaQueryRsp {
+pub struct KTabMetaFetchRsp {
     pub meta: Option<KTabMeta>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabCellsOverwriteReq {
+pub struct KTabCellCommitReq {
     pub table_id: TID,
     pub cells: Vec<KTabViewCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabCellsOverwriteRsp {}
+pub struct KTabCellCommitRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum KTabRowsQueryReqFilter {
+pub enum KTabCellListReqFilter {
     OneRowByIdx {
         row_tid: usize,
     },
@@ -54,21 +54,21 @@ pub enum KTabRowsQueryReqFilter {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabRowsQueryReq {
+pub struct KTabCellListReq {
     pub table_id: TID,
-    pub filter: KTabRowsQueryReqFilter,
+    pub filter: KTabCellListReqFilter,
     pub must_existed: Option<bool>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabRowsQueryRspRow {
+pub struct KTabCellListRspRow {
     pub row_tid: TID,
     pub cells: Vec<KTabViewCell>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KTabRowsQueryRsp {
-    pub rows: Vec<KTabRowsQueryRspRow>,
+pub struct KTabCellListRsp {
+    pub rows: Vec<KTabCellListRspRow>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -146,15 +146,13 @@ impl_from_ktab_cell! {KTabCellDecimal, Decimal}
 
 #[cfg(test)]
 mod tests {
-    use crate::krate::ktab::{
-        KTabCellsOverwriteReq, KTabRowsQueryReq, KTabStoreValue, KTabViewCell,
-    };
+    use crate::krate::ktab::{KTabCellCommitReq, KTabCellListReq, KTabStoreValue, KTabViewCell};
 
     #[test]
     fn test_key() {
-        let req = KTabRowsQueryReq {
+        let req = KTabCellListReq {
             table_id: 100.try_into().unwrap(),
-            filter: super::KTabRowsQueryReqFilter::FieldSortPage {
+            filter: super::KTabCellListReqFilter::FieldSortPage {
                 field_name: "fn".to_owned(),
                 field_kind: crate::krate::ktab::KTabColumnStoreKind::Date,
                 start_included: 0,
@@ -168,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_ktab_overwrite_cells_req() {
-        let req = KTabCellsOverwriteReq {
+        let req = KTabCellCommitReq {
             table_id: 123.try_into().unwrap(),
             cells: vec![KTabViewCell {
                 row_tid: 1.try_into().unwrap(),

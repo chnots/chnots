@@ -1,4 +1,4 @@
-import { ktabGetViewValue, KTabRowsQueryRsp } from "./dto";
+import { ktabGetViewValue, KTabCellListRsp } from "./dto";
 
 export type KTabViewRowData = {
   row_tid: number;
@@ -6,7 +6,7 @@ export type KTabViewRowData = {
 };
 
 export function convertResponseToRowData(
-  response: KTabRowsQueryRsp,
+  response: KTabCellListRsp,
 ): KTabViewRowData[] {
   const result: KTabViewRowData[] = [];
 

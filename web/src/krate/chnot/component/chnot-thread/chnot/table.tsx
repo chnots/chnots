@@ -6,9 +6,9 @@ import { KTabMeta } from "@/krate/ktab/po";
 import { KTabRowData } from "@/krate/ktab/component/editable-cell";
 import { DataTable } from "@/krate/ktab/component/data-table";
 import {
-  ktabCellsRead,
-  ktabMetaOverwrite,
-  ktabMetaRead,
+  ktabCellList,
+  ktabMetaCommit,
+  ktabMetaFetch,
 } from "@/krate/ktab/service";
 import { ktabGetViewValue } from "@/krate/ktab/dto";
 import { genTID, genUID, TID } from "@/lib/id_util";
@@ -25,7 +25,7 @@ const TableChnot = ({
   useEffect(() => {
     (async () => {
       if (kindId) {
-        const meta = await ktabMetaRead({
+        const meta = await ktabMetaFetch({
           table_id: parseInt(kindId, 10),
         });
         if (meta.meta) {
@@ -54,7 +54,7 @@ const TableChnot = ({
           start: number,
           size: number,
         ): Promise<KTabRowData[]> => {
-          const data = await ktabCellsRead({
+          const data = await ktabCellList({
             table_id,
             filter: {
               RowsByIdx: {
@@ -74,7 +74,7 @@ const TableChnot = ({
           });
         }}
         onMetaChange={async (meta: KTabMeta) => {
-          await ktabMetaOverwrite({
+          await ktabMetaCommit({
             meta: meta,
           });
           setMeta(meta);

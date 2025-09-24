@@ -1,35 +1,35 @@
 import request from "@/lib/request";
 import {
-  KTabCellsOverwriteReq,
+  KTabCellCommitReq,
   KTabOverwriteCellsRsp,
   KTabOverwriteMetaReq,
-  KTabMetaOverwriteRsp,
-  KTabRowsQueryReq,
-  KTabRowsQueryRsp,
-  KTabMetaQueryReq as KTabMetaQueryReq,
-  KTabMetaQueryRsp as KTabMetaQueryRsp,
+  KTabMetaCommitRsp,
+  KTabCellListReq,
+  KTabCellListRsp,
+  KTabMetaFetchReq as KTabMetaFetchReq,
+  KTabMetaFetchRsp as KTabMetaFetchRsp,
 } from "./dto";
 
-export const ktabMetaRead = async (
-  req: KTabMetaQueryReq,
-): Promise<KTabMetaQueryRsp> => {
-  return await request.postJson(`/api/v1/ktab-meta-read`, req);
+export const ktabMetaFetch = async (
+  req: KTabMetaFetchReq,
+): Promise<KTabMetaFetchRsp> => {
+  return await request.postJson(`/api/v1/ktab-meta-fetch`, req);
 };
 
-export const ktabMetaOverwrite = async (
+export const ktabMetaCommit = async (
   req: KTabOverwriteMetaReq,
-): Promise<KTabMetaOverwriteRsp> => {
-  return await request.putJson(`/api/v1/ktab-meta-overwrite`, req);
+): Promise<KTabMetaCommitRsp> => {
+  return await request.postJson(`/api/v1/ktab-meta-commit`, req);
 };
 
-export const ktabCellsRead = async (
-  req: KTabRowsQueryReq,
-): Promise<KTabRowsQueryRsp> => {
-  return await request.postJson(`/api/v1/ktab-cells-read`, req);
+export const ktabCellList = async (
+  req: KTabCellListReq,
+): Promise<KTabCellListRsp> => {
+  return await request.postJson(`/api/v1/ktab-cell-list`, req);
 };
 
-export const ktabCellsOverwrite = async (
-  req: KTabCellsOverwriteReq,
+export const ktabCellCommit = async (
+  req: KTabCellCommitReq,
 ): Promise<KTabOverwriteCellsRsp> => {
-  return await request.putJson(`/api/v1/ktab-cells-overwrite`, req);
+  return await request.postJson(`/api/v1/ktab-cell-commit`, req);
 };
