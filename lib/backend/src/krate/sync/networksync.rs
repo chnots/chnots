@@ -1,19 +1,19 @@
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_FETCH_TID_PATH, SYNC_INSERT_SYNC_LOG};
+use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_LOG_COMMIT_PATH, SYNC_TID_LIST_PATH};
 use crate::krate::sync::dto::{
-    SyncDataArg, SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncFetchTIDArg, SyncFetchTIDReq,
-    SyncPageInfo, SyncShakeArg, SyncShakeDto,
+    SyncDataArg, SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncPageInfo, SyncShakeArg,
+    SyncShakeDto, SyncTIDListArg, SyncTIDListReq,
 };
-use crate::krate::sync::po::SyncLogTransient;
+use crate::krate::sync::po::SyncLogTransientCommit;
 use crate::model::KOtidSupport;
 use crate::sync_cmds_st_to_json;
 use crate::{
     app::ShareAppState,
     krate::sync::{
         controller::SYNC_SHAKE_PATH,
-        dto::{SyncFetchTIDRsp, SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum},
+        dto::{SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum, SyncTIDListRsp},
         mapper::SyncMapper,
     },
     magics::DB_VERSION,
@@ -113,23 +113,23 @@ impl ShareAppState {
         })
     }
 
-    pub(crate) async fn sync_fetch_tids_tx<T: KOtidSupport>(
+    pub(crate) async fn sync_tid_list_tx<T: KOtidSupport>(
         &self,
         endpoint: &SyncEndpoint,
-        fetch_data: SyncFetchTIDArg<T>,
-    ) -> AResult<SyncFetchTIDRsp> {
+        fetch_data: SyncTIDListArg<T>,
+    ) -> AResult<SyncTIDListRsp> {
         let client = reqwest::Client::builder().build()?;
         let page = fetch_data.dto.page.clone();
 
         let rsp = client
-            .post(endpoint.to_url(SYNC_FETCH_TID_PATH))
-            .json(&SyncFetchTIDReq {
+            .post(endpoint.to_url(SYNC_TID_LIST_PATH))
+            .json(&SyncTIDListReq {
                 table_type: T::get_otid_enum(),
                 dto: fetch_data.dto,
             })
             .send()
             .await?
-            .json::<SyncFetchTIDRsp>()
+            .json::<SyncTIDListRsp>()
             .await?;
 
         info!(
@@ -142,11 +142,11 @@ impl ShareAppState {
         Ok(rsp)
     }
 
-    pub(crate) async fn sync_fetch_tids_rx<T: KOtidSupport>(
+    pub(crate) async fn sync_tid_list_rx<T: KOtidSupport>(
         &self,
-        req: SyncFetchTIDArg<T>,
-    ) -> AResult<SyncFetchTIDRsp> {
-        self.mapper.sync_fetch_tids(req).await
+        req: SyncTIDListArg<T>,
+    ) -> AResult<SyncTIDListRsp> {
+        self.mapper.sync_tid_list(req).await
     }
 
     pub(crate) async fn sync_data_rx<T: KOtidSupport>(
@@ -159,12 +159,12 @@ impl ShareAppState {
     async fn sync_insert_sync_log_tx(
         &self,
         endpoint: &SyncEndpoint,
-        log: &SyncLogTransient,
+        log: &SyncLogTransientCommit,
     ) -> EResult {
         let client = reqwest::Client::builder().build()?;
 
         client
-            .post(endpoint.to_url(SYNC_INSERT_SYNC_LOG))
+            .post(endpoint.to_url(SYNC_LOG_COMMIT_PATH))
             .json(&log)
             .send()
             .await?;
@@ -294,12 +294,12 @@ impl ShareAppState {
                 start_ex,
                 start_ex.as_utc()
             );
-            let result: SyncFetchTIDRsp = self
-                .sync_fetch_tids_tx::<T>(
+            let result: SyncTIDListRsp = self
+                .sync_tid_list_tx::<T>(
                     endpoint,
                     OtidWithGer {
-                        dto: SyncFetchTIDDto {
-                            page: SyncFetchTIDPage::StartEnd {
+                        dto: SyncTIDListDto {
+                            page: SyncTIDListPage::StartEnd {
                                 start_ex,
                                 end_in: sync_info.end_in,
                                 page_size,
@@ -362,7 +362,7 @@ impl ShareAppState {
 
         // self.sync_drop_tmp_table(&sync_info).await?;
 
-        let remote_log = SyncLogTransient {
+        let remote_log = SyncLogTransientCommit {
             remote_id: self.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
@@ -371,14 +371,14 @@ impl ShareAppState {
         };
         self.sync_insert_sync_log_tx(endpoint, &remote_log).await?;
 
-        let local_log: SyncLogTransient = SyncLogTransient {
+        let local_log: SyncLogTransientCommit = SyncLogTransientCommit {
             remote_id: sync_info.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
             start_tid_ex: sync_info.start_ex,
             sync_finish_tid: TID::default(),
         };
-        self.sync_insert_sync_log(local_log).await?;
+        self.sync_log_transient_commit(local_log).await?;
 
         Ok(())
     }

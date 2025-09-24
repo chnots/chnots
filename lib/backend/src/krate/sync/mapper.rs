@@ -7,10 +7,10 @@ use crate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
             dto::{
-                SyncAllEndpointsRsp, SyncDataArg, SyncFetchTIDArg, SyncFetchTIDPage,
-                SyncFetchTIDRsp, SyncInfo, SyncPageInfo,
+                SyncDataArg, SyncEndpointCommitRsp, SyncInfo, SyncPageInfo, SyncTIDListArg,
+                SyncTIDListPage, SyncTIDListRsp,
             },
-            po::{SyncAllEndpoints, SyncLogTransient},
+            po::{SyncAllEndpoints, SyncLogTransientCommit},
         },
     },
     magics::ALL_ENDPOINTS,
@@ -19,17 +19,13 @@ use crate::{
 };
 
 pub trait Dumper {
-    async fn dump<E>(
-        &self,
-        fetch_data: SyncFetchTIDPage,
-        hist: bool,
-    ) -> chin_tools::AResult<Vec<E>>
+    async fn dump<E>(&self, fetch_data: SyncTIDListPage, hist: bool) -> chin_tools::AResult<Vec<E>>
     where
         E: KOtidSupport;
 }
 
 impl Dumper for MapperType {
-    async fn dump<E>(&self, fetch_data: SyncFetchTIDPage, hist: bool) -> chin_tools::AResult<Vec<E>>
+    async fn dump<E>(&self, fetch_data: SyncTIDListPage, hist: bool) -> chin_tools::AResult<Vec<E>>
     where
         E: KOtidSupport,
     {
@@ -41,19 +37,19 @@ impl Dumper for MapperType {
 
 pub trait SyncMapper {
     async fn ensure_sync_table(&self) -> EResult;
-    async fn sync_insert_sync_log(&self, log: SyncLogTransient) -> EResult;
+    async fn sync_log_transient_commit(&self, log: SyncLogTransientCommit) -> EResult;
     async fn sync_get_sync_time(
         &self,
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
     ) -> AResult<TID>;
-    async fn sync_fetch_tids<T: KOtidSupport>(
+    async fn sync_tid_list<T: KOtidSupport>(
         &self,
-        req: SyncFetchTIDArg<T>,
-    ) -> AResult<SyncFetchTIDRsp>;
+        req: SyncTIDListArg<T>,
+    ) -> AResult<SyncTIDListRsp>;
     async fn sync_merge_tids<T: KOtidSupport>(
         &self,
-        data: SyncFetchTIDRsp,
+        data: SyncTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult;
@@ -76,8 +72,8 @@ impl SyncMapper for MapperType {
         expand_mt_branch!(self.ensure_sync_table())
     }
 
-    async fn sync_insert_sync_log(&self, log: SyncLogTransient) -> EResult {
-        expand_mt_branch!(self.sync_insert_sync_log(log))
+    async fn sync_log_transient_commit(&self, log: SyncLogTransientCommit) -> EResult {
+        expand_mt_branch!(self.sync_log_transient_commit(log))
     }
 
     async fn sync_get_sync_time(
@@ -88,16 +84,16 @@ impl SyncMapper for MapperType {
         expand_mt_branch!(self.sync_get_sync_time(table_name, remote_id))
     }
 
-    async fn sync_fetch_tids<T: KOtidSupport>(
+    async fn sync_tid_list<T: KOtidSupport>(
         &self,
-        req: SyncFetchTIDArg<T>,
-    ) -> AResult<SyncFetchTIDRsp> {
-        expand_mt_branch!(self.sync_fetch_tids(req))
+        req: SyncTIDListArg<T>,
+    ) -> AResult<SyncTIDListRsp> {
+        expand_mt_branch!(self.sync_tid_list(req))
     }
 
     async fn sync_merge_tids<T: KOtidSupport>(
         &self,
-        data: SyncFetchTIDRsp,
+        data: SyncTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
@@ -128,7 +124,7 @@ impl SyncMapper for MapperType {
 }
 
 impl MapperType {
-    pub(crate) async fn get_all_endpoints(&self) -> AResult<SyncAllEndpoints> {
+    pub(crate) async fn sync_endpoint_list(&self) -> AResult<SyncAllEndpoints> {
         let kkv: Option<SyncAllEndpoints> = self
             .kkv_transient_fetch::<SyncAllEndpoints>(ALL_ENDPOINTS)
             .await?;
@@ -140,16 +136,16 @@ impl MapperType {
         }
     }
 
-    pub(crate) async fn overwrite_endpoints(
+    pub(crate) async fn sync_endpoint_commit(
         &self,
         req: SyncAllEndpoints,
-    ) -> AResult<SyncAllEndpointsRsp> {
+    ) -> AResult<SyncEndpointCommitRsp> {
         self.kkv_transisent_commit(
             ALL_ENDPOINTS.to_string().try_into()?,
             &req,
             chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),
         )
         .await?;
-        Ok(SyncAllEndpointsRsp {})
+        Ok(SyncEndpointCommitRsp {})
     }
 }

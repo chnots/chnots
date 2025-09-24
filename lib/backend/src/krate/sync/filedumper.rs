@@ -11,7 +11,7 @@ use serde::Deserialize;
 use crate::{
     app::ShareAppState,
     config::ShellExpandPath,
-    krate::sync::{dto::SyncFetchTIDPage, mapper::Dumper, po::SyncEndpoint},
+    krate::sync::{dto::SyncTIDListPage, mapper::Dumper, po::SyncEndpoint},
     mapper::MapperType,
     model::KOtidSupport,
 };
@@ -145,7 +145,7 @@ impl<P: AsRef<Path>, T: KOtidSupport> FileDumper<P, T> {
         loop {
             let c = mapper_type
                 .dump::<T>(
-                    SyncFetchTIDPage::StartEnd {
+                    SyncTIDListPage::StartEnd {
                         start_ex: last,
                         end_in: end,
                         page_size: 500,
@@ -208,7 +208,7 @@ impl ShareAppState {
         Ok(())
     }
 
-    pub async fn sync_to_endpoint(&self, endpoint: &SyncEndpoint) -> EResult {
+    pub async fn sync_endpoint_sync(&self, endpoint: &SyncEndpoint) -> EResult {
         let app = self.clone();
         let endpoint = endpoint.clone();
         tokio::spawn(async move {
@@ -220,7 +220,7 @@ impl ShareAppState {
     }
 
     pub async fn sync_to_all_endpoints(&self) -> EResult {
-        for endpoint in &self.get_all_endpoints().await?.endpoints {
+        for endpoint in &self.sync_endpoint_list().await?.endpoints {
             if let Err(err) = self.sync_to_endpoint_blocking(endpoint).await {
                 error!(
                     "unable to sync {endpoint:?} -- {err:?}, {:?}",

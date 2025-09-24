@@ -1,7 +1,7 @@
 use axum::{
     Json, Router,
     extract::{Query, State},
-    routing::{get, post},
+    routing::post,
 };
 use chin_tools::AResult;
 use log::info;
@@ -18,12 +18,12 @@ use crate::{
         llmchat::{LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate},
         sync::{
             dto::{
-                GetSyncAllEndpointsReq, GetSyncAllEndpointsRsp, SyncAllEndpointsReq,
-                SyncAllEndpointsRsp, SyncDataReqRsp, SyncFetchTIDReq, SyncFetchTIDRsp,
-                SyncShakeReq, SyncShakeRsp, SyncToEndpointReq, SyncToEndpointRsp,
+                SyncDataReqRsp, SyncEndpointCommitReq, SyncEndpointCommitRsp, SyncEndpointListReq,
+                SyncEndpointListRsp, SyncEndpointSyncReq, SyncEndpointSyncRsp, SyncShakeReq,
+                SyncShakeRsp, SyncTIDListReq, SyncTIDListRsp,
             },
             mapper::SyncMapper,
-            po::SyncLogTransient,
+            po::SyncLogTransientCommit,
         },
     },
     model::{KOtidSupport, otid_table::OtidTableEnum},
@@ -33,22 +33,19 @@ use crate::{
 use super::dto::SyncDataDto;
 
 pub const SYNC_SHAKE_PATH: &str = "/api/v1/b/sync-shake";
-pub const SYNC_FETCH_TID_PATH: &str = "/api/v1/b/sync-fetch-tids";
+pub const SYNC_TID_LIST_PATH: &str = "/api/v1/b/sync-tid-list";
 pub const SYNC_DATA_PATH: &str = "/api/v1/b/sync-data";
-pub const SYNC_INSERT_SYNC_LOG: &str = "/api/v1/b/sync-insert-sync-log";
+pub const SYNC_LOG_COMMIT_PATH: &str = "/api/v1/b/sync-insert-sync-log";
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route(SYNC_SHAKE_PATH, post(sync_shake))
-        .route(SYNC_FETCH_TID_PATH, post(sync_fetch_tids))
+        .route(SYNC_TID_LIST_PATH, post(sync_tid_list))
         .route(SYNC_DATA_PATH, post(sync_data))
-        .route(
-            "/api/v1/overwrite-all-sync-endpoints",
-            post(overwrite_endpoints),
-        )
-        .route("/api/v1/get-all-sync-endpoints", get(fetch_endpoints))
-        .route("/api/v1/sync-end-endpoint", post(sync_to_endpoint))
-        .route(SYNC_INSERT_SYNC_LOG, post(sync_insert_sync_log))
+        .route(SYNC_LOG_COMMIT_PATH, post(sync_log_transient_commit))
+        .route("/api/v1/sync-endpoint-commit", post(sync_endpoint_commit))
+        .route("/api/v1/sync-endpoint-list", post(sync_endpoint_list))
+        .route("/api/v1/sync-endpoint-sync", post(sync_endpoint_sync))
 }
 
 macro_rules! sync_invoke_enum2generic {
@@ -189,11 +186,11 @@ async fn sync_shake(
     c.into()
 }
 
-async fn sync_fetch_tids(
+async fn sync_tid_list(
     state: State<ShareAppState>,
-    Json(req): Json<SyncFetchTIDReq>,
-) -> KResponse<SyncFetchTIDRsp> {
-    let c = sync_invoke_enum2generic!(sync_fetch_tids_rx, state, req);
+    Json(req): Json<SyncTIDListReq>,
+) -> KResponse<SyncTIDListRsp> {
+    let c = sync_invoke_enum2generic!(sync_tid_list_rx, state, req);
     c.into()
 }
 
@@ -247,32 +244,32 @@ async fn sync_data_inner(
     Ok(result)
 }
 
-async fn overwrite_endpoints(
+async fn sync_endpoint_commit(
     state: State<ShareAppState>,
-    Json(req): Json<SyncAllEndpointsReq>,
-) -> KResponse<SyncAllEndpointsRsp> {
-    state.overwrite_endpoints(req.data).await.into()
+    Json(req): Json<SyncEndpointCommitReq>,
+) -> KResponse<SyncEndpointCommitRsp> {
+    state.sync_endpoint_commit(req.data).await.into()
 }
 
-async fn fetch_endpoints(
+async fn sync_endpoint_list(
     state: State<ShareAppState>,
-    Query(_): Query<GetSyncAllEndpointsReq>,
-) -> KResponse<GetSyncAllEndpointsRsp> {
+    Query(_): Query<SyncEndpointListReq>,
+) -> KResponse<SyncEndpointListRsp> {
     state
-        .get_all_endpoints()
+        .sync_endpoint_list()
         .await
-        .map(|data| GetSyncAllEndpointsRsp { data })
+        .map(|data| SyncEndpointListRsp { data })
         .into()
 }
 
-async fn sync_to_endpoint(
+async fn sync_endpoint_sync(
     state: State<ShareAppState>,
-    Json(req): Json<SyncToEndpointReq>,
-) -> KResponse<SyncToEndpointRsp> {
+    Json(req): Json<SyncEndpointSyncReq>,
+) -> KResponse<SyncEndpointSyncRsp> {
     state
-        .sync_to_endpoint(&req.endpoint)
+        .sync_endpoint_sync(&req.endpoint)
         .await
-        .map(|_| SyncToEndpointRsp {})
+        .map(|_| SyncEndpointSyncRsp {})
         .into()
 }
 
@@ -289,9 +286,9 @@ async fn sync_data(
     result.into()
 }
 
-async fn sync_insert_sync_log(
+async fn sync_log_transient_commit(
     state: State<ShareAppState>,
-    Json(req): Json<SyncLogTransient>,
+    Json(req): Json<SyncLogTransientCommit>,
 ) -> KResponse<()> {
-    state.sync_insert_sync_log(req).await.into()
+    state.sync_log_transient_commit(req).await.into()
 }

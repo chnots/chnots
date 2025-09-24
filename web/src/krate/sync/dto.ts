@@ -40,13 +40,13 @@ export type SyncShakeDto = {
   db_version: string;
 };
 
-type SyncFetchTIDPage = object;
+type SyncTIDListPage = object;
 
-export type SyncFetchTIDDto = {
-  page: SyncFetchTIDPage;
+export type SyncTIDListDto = {
+  page: SyncTIDListPage;
   hist: boolean;
 };
-export type SyncFetchTIDRsp = {
+export type SyncTIDListRsp = {
   data: TID[];
 };
 export type SyncAllEndpointsReq = {

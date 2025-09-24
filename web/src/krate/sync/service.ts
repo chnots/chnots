@@ -11,17 +11,17 @@ import {
 export const getSyncAllEndpoints = async (
   req: GetSyncAllEndpointsReq,
 ): Promise<GetSyncAllEndpointsRsp> => {
-  return await request.get(`/api/v1/get-all-sync-endpoints`, req);
+  return await request.get(`/api/v1/sync-endpoint-list`, req);
 };
 
 export const overwriteSyncAllEndpoints = async (
   req: SyncAllEndpointsReq,
 ): Promise<SyncAllEndpointsRsp> => {
-  return await request.postJson(`/api/v1/overwrite-all-sync-endpoints`, req);
+  return await request.postJson(`/api/v1/sync-endpoint-commit`, req);
 };
 
 export const syncToEndpoint = async (
   req: SyncToEndpointReq,
 ): Promise<SyncToEndpointRsp> => {
-  return await request.postJson(`/api/v1/sync-end-endpoint`, req);
+  return await request.postJson(`/api/v1/sync-endpoint-sync`, req);
 };

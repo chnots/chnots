@@ -7,11 +7,11 @@ use log::{debug, info};
 use crate::{
     krate::sync::{
         dto::{
-            SyncDataArg, SyncDataOperation, SyncFetchTIDArg, SyncFetchTIDPage, SyncFetchTIDRsp,
-            SyncInfo, SyncPageInfo,
+            SyncDataArg, SyncDataOperation, SyncInfo, SyncPageInfo, SyncTIDListArg,
+            SyncTIDListPage, SyncTIDListRsp,
         },
         mapper::{Dumper, SyncMapper},
-        po::SyncLogTransient,
+        po::SyncLogTransientCommit,
     },
     mapper::db::{
         KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -31,12 +31,12 @@ const C_STATE_ABSENT: i32 = 0;
 const C_MIN_SYNC: &str = "min_sync";
 
 impl Dumper for KDb {
-    async fn dump<E>(&self, fetch_data: SyncFetchTIDPage, hist: bool) -> chin_tools::AResult<Vec<E>>
+    async fn dump<E>(&self, fetch_data: SyncTIDListPage, hist: bool) -> chin_tools::AResult<Vec<E>>
     where
         E: KOtidSupport,
     {
         let sql = match fetch_data {
-            SyncFetchTIDPage::StartEnd {
+            SyncTIDListPage::StartEnd {
                 start_ex,
                 end_in,
                 page_size,
@@ -63,11 +63,15 @@ impl Dumper for KDb {
 
 impl SyncMapper for KDb {
     async fn ensure_sync_table(&self) -> EResult {
-        create_tables(vec![SyncLogTransient::create_sql().to_owned_sql()], self).await?;
+        create_tables(
+            vec![SyncLogTransientCommit::create_sql().to_owned_sql()],
+            self,
+        )
+        .await?;
         Ok(())
     }
 
-    async fn sync_insert_sync_log(&self, log: SyncLogTransient) -> EResult {
+    async fn sync_log_transient_commit(&self, log: SyncLogTransientCommit) -> EResult {
         self.conn().await?.exec(log.to_sql_inserter()).await?;
         Ok(())
     }
@@ -77,17 +81,17 @@ impl SyncMapper for KDb {
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
     ) -> AResult<TID> {
-        let last_sync = SqlBuilder::read_all(SyncLogTransient::TABLE)
+        let last_sync = SqlBuilder::read_all(SyncLogTransientCommit::TABLE)
             .r#where(Wheres::and([
-                Wheres::equal(SyncLogTransient::TABLE_NAME, table_name.clone()),
-                Wheres::equal(SyncLogTransient::REMOTE_ID, remote_id),
+                Wheres::equal(SyncLogTransientCommit::TABLE_NAME, table_name.clone()),
+                Wheres::equal(SyncLogTransientCommit::REMOTE_ID, remote_id),
             ]))
             .sov("order by")
-            .sov(SyncLogTransient::SYNC_FINISH_TID)
+            .sov(SyncLogTransientCommit::SYNC_FINISH_TID)
             .sov("desc")
             .limit(1);
 
-        let sync: Option<SyncLogTransient> = self
+        let sync: Option<SyncLogTransientCommit> = self
             .conn()
             .await?
             .qry_opt(last_sync, |row| (&row).try_into())
@@ -100,17 +104,25 @@ impl SyncMapper for KDb {
         };
 
         let sql = SqlBuilder::read(
-            SyncLogTransient::TABLE,
-            &[format!("min({}) as {C_MIN_SYNC}", SyncLogTransient::START_TID_EX).as_str()],
+            SyncLogTransientCommit::TABLE,
+            &[format!(
+                "min({}) as {C_MIN_SYNC}",
+                SyncLogTransientCommit::START_TID_EX
+            )
+            .as_str()],
         )
         .r#where(Wheres::and([
-            Wheres::equal(SyncLogTransient::TABLE_NAME, table_name.clone()),
+            Wheres::equal(SyncLogTransientCommit::TABLE_NAME, table_name.clone()),
             Wheres::compare(
-                SyncLogTransient::SYNC_FINISH_TID,
+                SyncLogTransientCommit::SYNC_FINISH_TID,
                 ">",
                 sync_log.sync_finish_tid.as_num(),
             ),
-            Wheres::compare(SyncLogTransient::START_TID_EX, "<", sync_log.end_sync_in),
+            Wheres::compare(
+                SyncLogTransientCommit::START_TID_EX,
+                "<",
+                sync_log.end_sync_in,
+            ),
         ]));
 
         let s: Option<Option<TID>> = self
@@ -133,12 +145,12 @@ impl SyncMapper for KDb {
         Ok(st)
     }
 
-    async fn sync_fetch_tids<T: KOtidSupport>(
+    async fn sync_tid_list<T: KOtidSupport>(
         &self,
-        req: SyncFetchTIDArg<T>,
-    ) -> AResult<SyncFetchTIDRsp> {
+        req: SyncTIDListArg<T>,
+    ) -> AResult<SyncTIDListRsp> {
         let sql = match req.dto.page {
-            super::dto::SyncFetchTIDPage::StartEnd {
+            super::dto::SyncTIDListPage::StartEnd {
                 start_ex,
                 end_in,
                 page_size,
@@ -157,12 +169,12 @@ impl SyncMapper for KDb {
             .qry_list(sql, |c| c.try_get(C_TID))
             .await?;
 
-        Ok(SyncFetchTIDRsp { data })
+        Ok(SyncTIDListRsp { data })
     }
 
     async fn sync_merge_tids<T: KOtidSupport>(
         &self,
-        rsp: SyncFetchTIDRsp,
+        rsp: SyncTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
@@ -321,16 +333,16 @@ impl SyncMapper for KDb {
     }
 }
 
-impl TryFrom<&KDbRow> for SyncLogTransient {
+impl TryFrom<&KDbRow> for SyncLogTransientCommit {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
-        let sl = SyncLogTransient {
-            remote_id: value.try_get(SyncLogTransient::REMOTE_ID)?,
-            table_name: value.try_get(SyncLogTransient::TABLE_NAME)?,
-            end_sync_in: value.try_get(SyncLogTransient::END_SYNC_IN)?,
-            start_tid_ex: value.try_get(SyncLogTransient::START_TID_EX)?,
-            sync_finish_tid: value.try_get(SyncLogTransient::SYNC_FINISH_TID)?,
+        let sl = SyncLogTransientCommit {
+            remote_id: value.try_get(SyncLogTransientCommit::REMOTE_ID)?,
+            table_name: value.try_get(SyncLogTransientCommit::TABLE_NAME)?,
+            end_sync_in: value.try_get(SyncLogTransientCommit::END_SYNC_IN)?,
+            start_tid_ex: value.try_get(SyncLogTransientCommit::START_TID_EX)?,
+            sync_finish_tid: value.try_get(SyncLogTransientCommit::SYNC_FINISH_TID)?,
         };
 
         Ok(sl)

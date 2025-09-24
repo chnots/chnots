@@ -93,7 +93,7 @@ pub struct SyncShakeRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) enum SyncFetchTIDPage {
+pub(crate) enum SyncTIDListPage {
     StartEnd {
         start_ex: TID,
         end_in: TID,
@@ -102,16 +102,16 @@ pub(crate) enum SyncFetchTIDPage {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct SyncFetchTIDDto {
-    pub page: SyncFetchTIDPage,
+pub(crate) struct SyncTIDListDto {
+    pub page: SyncTIDListPage,
     pub hist: bool,
 }
 
-pub type SyncFetchTIDReq = OtidWithEnum<SyncFetchTIDDto>;
-pub type SyncFetchTIDArg<T> = OtidWithGer<SyncFetchTIDDto, T>;
+pub type SyncTIDListReq = OtidWithEnum<SyncTIDListDto>;
+pub type SyncTIDListArg<T> = OtidWithGer<SyncTIDListDto, T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncFetchTIDRsp {
+pub struct SyncTIDListRsp {
     pub data: Vec<TID>,
 }
 
@@ -189,25 +189,25 @@ macro_rules! sync_cmds_st_to_json {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncAllEndpointsReq {
+pub struct SyncEndpointCommitReq {
     pub data: SyncAllEndpoints,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncAllEndpointsRsp {}
+pub struct SyncEndpointCommitRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GetSyncAllEndpointsReq {}
+pub struct SyncEndpointListReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GetSyncAllEndpointsRsp {
+pub struct SyncEndpointListRsp {
     pub data: SyncAllEndpoints,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncToEndpointReq {
+pub struct SyncEndpointSyncReq {
     pub endpoint: SyncEndpoint,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncToEndpointRsp {}
+pub struct SyncEndpointSyncRsp {}
