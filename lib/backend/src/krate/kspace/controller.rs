@@ -10,39 +10,31 @@ use axum::{Json, Router, extract::State, http::HeaderMap, routing::put};
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/kspace-all", get(kspace_read_all))
-        .route("/api/v1/kspace-overwrite", put(kspace_overwrite))
-        .route("/api/v1/kspace-deletion", post(kspace_delete))
+        .route("/api/v1/kspace-list", get(kspace_list))
+        .route("/api/v1/kspace-commit", put(kspace_commit))
+        .route("/api/v1/kspace-archive", post(kspace_archive))
 }
 
-async fn kspace_overwrite(
+async fn kspace_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KSpaceOverwriteReq>,
-) -> KResponse<KSpaceOverwriteRsp> {
-    state
-        .mapper
-        .kspace_overwrite(kreq(headers, req))
-        .await
-        .into()
+    Json(req): Json<KSpaceCommitReq>,
+) -> KResponse<KSpaceCommitRsp> {
+    state.kspace_commit(kreq(headers, req)).await.into()
 }
 
-async fn kspace_read_all(
+async fn kspace_list(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<KSpaceQueryAllReq>,
-) -> KResponse<KSpaceQueryAllRsp> {
-    state
-        .mapper
-        .kspace_read_all(kreq(headers, req))
-        .await
-        .into()
+    Query(req): Query<KSpaceListReq>,
+) -> KResponse<KSpaceListRsp> {
+    state.kspace_list(kreq(headers, req)).await.into()
 }
 
-async fn kspace_delete(
+async fn kspace_archive(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<KSpaceDeletionReq>,
-) -> KResponse<KSpaceDeletionRsp> {
-    state.mapper.kspace_delete(kreq(headers, req)).await.into()
+    Query(req): Query<KSpaceArchiveReq>,
+) -> KResponse<KSpaceArchiveRsp> {
+    state.kspace_archive(kreq(headers, req)).await.into()
 }

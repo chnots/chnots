@@ -4,25 +4,25 @@ use serde::{Deserialize, Serialize};
 use super::KSpace;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KSpaceQueryAllReq {}
+pub struct KSpaceListReq {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KSpaceQueryAllRsp {
+pub struct KSpaceListRsp {
     pub kspaces: Vec<KSpace>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KSpaceOverwriteReq {
+pub struct KSpaceCommitReq {
     pub kspace: KSpace,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KSpaceOverwriteRsp {}
+pub struct KSpaceCommitRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KSpaceDeletionReq {
+pub struct KSpaceArchiveReq {
     pub kspace_name: Varchar<500>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KSpaceDeletionRsp {}
+pub struct KSpaceArchiveRsp {}

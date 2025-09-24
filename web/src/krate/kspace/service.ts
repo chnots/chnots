@@ -1,27 +1,27 @@
 import request from "@/lib/request";
 import {
-  KSpaceDeletionReq,
-  KSpaceDeletionRsp,
-  KSpaceOverwriteReq,
-  KSpaceOverwriteRsp,
-  KSpaceQueryAllReq,
-  KSpaceQueryAllRsp,
+  KSpaceArchiveReq,
+  KSpaceArchiveRsp,
+  KSpaceCommitReq,
+  KSpaceCommitRsp,
+  KSpaceListReq,
+  KSpaceListRsp,
 } from "./dto";
 
-export const allKSpaces = async (
-  req: KSpaceQueryAllReq,
-): Promise<KSpaceQueryAllRsp> => {
-  return await request.get(`/api/v1/kspace-all`, req);
+export const kspaceList = async (
+  req: KSpaceListReq,
+): Promise<KSpaceListRsp> => {
+  return await request.get(`/api/v1/kspace-list`, req);
 };
 
-export const overwriteKSpace = async (
-  req: KSpaceOverwriteReq,
-): Promise<KSpaceOverwriteRsp> => {
-  return await request.putJson(`/api/v1/kspace-overwrite`, req);
+export const kspaceCommit = async (
+  req: KSpaceCommitReq,
+): Promise<KSpaceCommitRsp> => {
+  return await request.putJson(`/api/v1/kspace-commit`, req);
 };
 
-export const deleteKSpace = async (
-  req: KSpaceDeletionReq,
-): Promise<KSpaceDeletionRsp> => {
-  return await request.putJson(`/api/v1/kspace-deletion`, req);
+export const ksapceArchive = async (
+  req: KSpaceArchiveReq,
+): Promise<KSpaceArchiveRsp> => {
+  return await request.putJson(`/api/v1/kspace-archive`, req);
 };

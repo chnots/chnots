@@ -27,7 +27,7 @@ import { Checkbox } from "@/common/component/ui/checkbox";
 import { Badge } from "@/common/component/ui/badge";
 import { Trash2, PlusCircle, Pencil } from "lucide-react";
 import { genTID } from "@/lib/id_util";
-import { deleteKSpace, overwriteKSpace } from "../service";
+import { ksapceArchive, kspaceCommit } from "../service";
 import { useKSpaceStore } from "../store";
 
 // Form validation schema
@@ -96,7 +96,7 @@ export default function KSpaceSettings() {
 
   const handleOverwriteKSpace = async (values: KSpaceFormValues) => {
     const kspace = { tid: genTID(), ...values };
-    await overwriteKSpace({
+    await kspaceCommit({
       kspace: kspace,
     });
     refreshKSpaces();
@@ -104,7 +104,7 @@ export default function KSpaceSettings() {
   };
 
   const handleDeleteKSpace = async (name: string) => {
-    await deleteKSpace({
+    await ksapceArchive({
       kspace_name: name,
     });
     refreshKSpaces();

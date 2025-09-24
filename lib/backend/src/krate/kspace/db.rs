@@ -4,7 +4,7 @@ use chin_sql::{SqlBuilder, time_type::TID};
 use crate::{
     krate::kspace::{
         KSpace,
-        dto::{KSpaceDeletionRsp, KSpaceOverwriteRsp, KSpaceQueryAllRsp},
+        dto::{KSpaceArchiveRsp, KSpaceCommitRsp, KSpaceListRsp},
         mapper::KSpaceMapper,
     },
     mapper::{
@@ -17,22 +17,22 @@ use crate::{
 };
 
 impl KSpaceMapper for KDb {
-    async fn kspace_read_all(
+    async fn kspace_list(
         &self,
-        _: crate::model::dto::KReq<super::dto::KSpaceQueryAllReq>,
-    ) -> chin_tools::AResult<super::dto::KSpaceQueryAllRsp> {
+        _: crate::model::dto::KReq<super::dto::KSpaceListReq>,
+    ) -> chin_tools::AResult<super::dto::KSpaceListRsp> {
         let kspaces = self
             .conn()
             .await?
             .qry_list(SqlBuilder::read_all(KSpace::TABLE), |r| (&r).try_into())
             .await?;
-        Ok(KSpaceQueryAllRsp { kspaces })
+        Ok(KSpaceListRsp { kspaces })
     }
 
-    async fn kspace_overwrite(
+    async fn kspace_commit(
         &self,
-        kspace: crate::model::dto::KReq<super::dto::KSpaceOverwriteReq>,
-    ) -> chin_tools::AResult<super::dto::KSpaceOverwriteRsp> {
+        kspace: crate::model::dto::KReq<super::dto::KSpaceCommitReq>,
+    ) -> chin_tools::AResult<super::dto::KSpaceCommitRsp> {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
@@ -43,7 +43,7 @@ impl KSpaceMapper for KDb {
         tx.exec(kspace.body.kspace.to_sql_inserter()).await?;
         tx.cmt().await?;
 
-        Ok(KSpaceOverwriteRsp {})
+        Ok(KSpaceCommitRsp {})
     }
 
     async fn kspace_ensure_table(&self) -> chin_tools::EResult {
@@ -54,10 +54,10 @@ impl KSpaceMapper for KDb {
         .await
     }
 
-    async fn kspace_delete(
+    async fn kspace_archive(
         &self,
-        kspace: crate::model::dto::KReq<super::dto::KSpaceDeletionReq>,
-    ) -> chin_tools::AResult<super::dto::KSpaceDeletionRsp> {
+        kspace: crate::model::dto::KReq<super::dto::KSpaceArchiveReq>,
+    ) -> chin_tools::AResult<super::dto::KSpaceArchiveRsp> {
         self.conn()
             .await?
             .as_executor()
@@ -65,7 +65,7 @@ impl KSpaceMapper for KDb {
                 kspace.body.kspace_name.as_str().to_lowercase().try_into()?,
             ))
             .await?;
-        Ok(KSpaceDeletionRsp {})
+        Ok(KSpaceArchiveRsp {})
     }
 }
 

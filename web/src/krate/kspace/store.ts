@@ -1,7 +1,7 @@
 import { KSpace } from "@/krate/kspace/po";
 import { create, useStore } from "zustand";
 import { combine } from "zustand/middleware";
-import { allKSpaces } from "./service";
+import { kspaceList } from "./service";
 import { useShallow } from "zustand/react/shallow";
 
 interface KSpaceState {
@@ -39,7 +39,7 @@ const getDefaultState = (): KSpaceState => {
 export const kspaceStore = create(
   combine(getDefaultState(), (set, get) => ({
     refreshKSpaces: async () => {
-      const rsp = await allKSpaces({});
+      const rsp = await kspaceList({});
       const kspaceMap = new Map();
       rsp.kspaces.forEach((k) => {
         kspaceMap.set(k.name, k);

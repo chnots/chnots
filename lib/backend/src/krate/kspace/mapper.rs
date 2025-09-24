@@ -4,41 +4,38 @@ use chin_tools::{AResult, EResult};
 
 use crate::{
     MapperType, expand_mt_branch,
-    krate::kspace::dto::{KSpaceDeletionReq, KSpaceDeletionRsp},
+    krate::kspace::dto::{KSpaceArchiveReq, KSpaceArchiveRsp},
     magics::NO_KSPACE,
     model::dto::KReq,
 };
 
 use super::{
-    dto::{KSpaceOverwriteReq, KSpaceOverwriteRsp, KSpaceQueryAllReq, KSpaceQueryAllRsp},
+    dto::{KSpaceCommitReq, KSpaceCommitRsp, KSpaceListReq, KSpaceListRsp},
     *,
 };
 
 pub trait KSpaceMapper {
-    async fn kspace_read_all(&self, kreq: KReq<KSpaceQueryAllReq>) -> AResult<KSpaceQueryAllRsp>;
-    async fn kspace_overwrite(
-        &self,
-        kspace: KReq<KSpaceOverwriteReq>,
-    ) -> AResult<KSpaceOverwriteRsp>;
+    async fn kspace_list(&self, kreq: KReq<KSpaceListReq>) -> AResult<KSpaceListRsp>;
+    async fn kspace_commit(&self, kspace: KReq<KSpaceCommitReq>) -> AResult<KSpaceCommitRsp>;
 
-    async fn kspace_delete(&self, kspace: KReq<KSpaceDeletionReq>) -> AResult<KSpaceDeletionRsp>;
+    async fn kspace_archive(&self, kspace: KReq<KSpaceArchiveReq>) -> AResult<KSpaceArchiveRsp>;
 
     async fn kspace_ensure_table(&self) -> EResult;
     async fn kspace_ensure_data(&self) -> EResult {
         self.kspace_ensure_table().await?;
         let kreq = KReq {
-            body: KSpaceQueryAllReq {},
+            body: KSpaceListReq {},
             kspace: NO_KSPACE.try_into()?,
             mkspaces: vec![],
         };
-        let all_kspaces = self.kspace_read_all(kreq.clone()).await?.kspaces;
+        let all_kspaces = self.kspace_list(kreq.clone()).await?.kspaces;
         for data in [
             ("private", "#aa0000", vec!["public", "work"]),
             ("work", "#aa0000", vec!["public"]),
             ("public", "#aa0000", vec![]),
         ] {
             if !all_kspaces.iter().any(|k| k.name.as_str() == data.0) {
-                self.kspace_overwrite(kreq.frame(KSpaceOverwriteReq {
+                self.kspace_commit(kreq.frame(KSpaceCommitReq {
                     kspace: KSpace {
                         name: data.0.try_into()?,
                         color: data.1.try_into()?,
@@ -56,19 +53,19 @@ pub trait KSpaceMapper {
 }
 
 impl KSpaceMapper for MapperType {
-    async fn kspace_read_all(&self, req: KReq<KSpaceQueryAllReq>) -> AResult<KSpaceQueryAllRsp> {
-        expand_mt_branch!(self.kspace_read_all(req))
+    async fn kspace_list(&self, req: KReq<KSpaceListReq>) -> AResult<KSpaceListRsp> {
+        expand_mt_branch!(self.kspace_list(req))
     }
 
-    async fn kspace_overwrite(&self, req: KReq<KSpaceOverwriteReq>) -> AResult<KSpaceOverwriteRsp> {
-        expand_mt_branch!(self.kspace_overwrite(req))
+    async fn kspace_commit(&self, req: KReq<KSpaceCommitReq>) -> AResult<KSpaceCommitRsp> {
+        expand_mt_branch!(self.kspace_commit(req))
     }
 
     async fn kspace_ensure_table(&self) -> EResult {
         expand_mt_branch!(self.kspace_ensure_table())
     }
 
-    async fn kspace_delete(&self, kspace: KReq<KSpaceDeletionReq>) -> AResult<KSpaceDeletionRsp> {
-        expand_mt_branch!(self.kspace_delete(kspace))
+    async fn kspace_archive(&self, kspace: KReq<KSpaceArchiveReq>) -> AResult<KSpaceArchiveRsp> {
+        expand_mt_branch!(self.kspace_archive(kspace))
     }
 }
