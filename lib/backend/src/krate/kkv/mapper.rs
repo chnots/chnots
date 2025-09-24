@@ -7,17 +7,17 @@ use crate::{MapperType, expand_mt_branch, model::dto::KReq};
 use super::*;
 
 pub trait KKVMapper {
-    async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp>;
-    async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp>;
-    async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp>;
-    async fn kkv_delete(&self, req: KReq<KKVDeleteReq>) -> AResult<KKVDeleteRsp>;
+    async fn kkv_commit(&self, req: KReq<KKVCommitReq>) -> AResult<KKVCommitRsp>;
+    async fn kkv_fetch(&self, req: KReq<KKVFetchReq>) -> AResult<KKVFetchRsp>;
+    async fn kkv_list(&self, req: KKVListReq) -> AResult<KKVListRsp>;
+    async fn kkv_archive(&self, req: KReq<KKVArchiveReq>) -> AResult<KKVArchiveRsp>;
     async fn ensure_table_kkv(&self) -> EResult;
 
-    async fn kkv_transient_query<T>(&self, key: &str) -> AResult<Option<T>>
+    async fn kkv_transient_fetch<T>(&self, key: &str) -> AResult<Option<T>>
     where
         T: Send + DeserializeOwned;
 
-    async fn kkv_transisent_overwrite<T: Serialize>(
+    async fn kkv_transisent_commit<T: Serialize>(
         &self,
         key: Varchar<500>,
         value: T,
@@ -26,39 +26,39 @@ pub trait KKVMapper {
 }
 
 impl KKVMapper for MapperType {
-    async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
-        expand_mt_branch!(self.kkv_overwrite(req))
+    async fn kkv_commit(&self, req: KReq<KKVCommitReq>) -> AResult<KKVCommitRsp> {
+        expand_mt_branch!(self.kkv_commit(req))
     }
 
-    async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
-        expand_mt_branch!(self.kkv_query(req))
+    async fn kkv_fetch(&self, req: KReq<KKVFetchReq>) -> AResult<KKVFetchRsp> {
+        expand_mt_branch!(self.kkv_fetch(req))
     }
 
-    async fn kkv_delete(&self, req: KReq<super::KKVDeleteReq>) -> AResult<super::KKVDeleteRsp> {
-        expand_mt_branch!(self.kkv_delete(req))
+    async fn kkv_archive(&self, req: KReq<super::KKVArchiveReq>) -> AResult<super::KKVArchiveRsp> {
+        expand_mt_branch!(self.kkv_archive(req))
     }
 
     async fn ensure_table_kkv(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_kkv())
     }
 
-    async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {
-        expand_mt_branch!(self.kkv_query_many(req))
+    async fn kkv_list(&self, req: KKVListReq) -> AResult<KKVListRsp> {
+        expand_mt_branch!(self.kkv_list(req))
     }
 
-    async fn kkv_transient_query<T>(&self, key: &str) -> AResult<Option<T>>
+    async fn kkv_transient_fetch<T>(&self, key: &str) -> AResult<Option<T>>
     where
         T: Send + DeserializeOwned,
     {
-        expand_mt_branch!(self.kkv_transient_query(key))
+        expand_mt_branch!(self.kkv_transient_fetch(key))
     }
 
-    async fn kkv_transisent_overwrite<T: Serialize>(
+    async fn kkv_transisent_commit<T: Serialize>(
         &self,
         key: Varchar<500>,
         value: T,
         on_conflict: OnConflict,
     ) -> EResult {
-        expand_mt_branch!(self.kkv_transisent_overwrite(key, value, on_conflict))
+        expand_mt_branch!(self.kkv_transisent_commit(key, value, on_conflict))
     }
 }

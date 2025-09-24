@@ -4,54 +4,37 @@ import { TID } from "@/lib/id_util";
 
 export type KKVType = object;
 
-export type KKVQueryOneReq = {
+export type KKVFetchReq = {
   key: Varchar<500>;
   kind: Varchar<100>;
 };
 
-export type KKVQueryManyReq = {
+export type KKVListReq = {
   key?: Varchar<500>;
   kind?: Varchar<100>;
   kspace?: string;
 };
 
-export type KKVQueryOneRsp = {
+export type KKVFetchRsp = {
   value?: DbText;
   tid?: TID;
 };
 
-export type KKVQueryManyRsp = {
+export type KKVListRsp = {
   kkvs: KKV[];
 };
 
-export type KKVOverwriteReq = {
+export type KKVCommitReq = {
   key: Varchar<500>;
   kind: Varchar<100>;
   value: DbText;
 };
 
-export type KKVOverwriteRsp = object;
+export type KKVCommitRsp = object;
 
-export type KKVDeleteReq = {
+export type KKVArchiveReq = {
   key: string;
   kind: string;
 };
 
-export type KKVDeleteRsp = object;
-
-export type KKVInserterReq = {
-  key: string;
-  kind: string;
-  value: string;
-};
-
-export type KKVInserterRsp = object;
-
-export type KKVQueryReq = {
-  key: string;
-  kind: "to_file" | "chnot_sub_type";
-};
-
-export type KKVQueryRsp = {
-  value?: string;
-};
+export type KKVArchiveRsp = object;

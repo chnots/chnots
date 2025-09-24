@@ -47,7 +47,7 @@ impl MapperType {
 
     pub async fn get_instance_id(&self) -> AResult<String> {
         let instance_id: String = self
-            .kkv_transient_query(CLIENT_ID_KEY)
+            .kkv_transient_fetch(CLIENT_ID_KEY)
             .await?
             .context("there is not instance_id in the db")?;
         info!("instance id: {instance_id}");
@@ -55,9 +55,9 @@ impl MapperType {
     }
 
     pub async fn init_instance_id(&self) -> EResult {
-        let instance_id: Option<String> = self.kkv_transient_query(CLIENT_ID_KEY).await?;
+        let instance_id: Option<String> = self.kkv_transient_fetch(CLIENT_ID_KEY).await?;
         if instance_id.is_none() {
-            self.kkv_transisent_overwrite(
+            self.kkv_transisent_commit(
                 CLIENT_ID_KEY.try_into()?,
                 generate_uuid(),
                 chin_sql::OnConflict::Default,

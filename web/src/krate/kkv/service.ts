@@ -1,10 +1,10 @@
 import request from "@/lib/request";
-import { KKVInserterReq, KKVQueryReq, KKVQueryRsp } from "./dto";
+import { KKVCommitReq, KKVCommitRsp, KKVFetchReq, KKVFetchRsp } from "./dto";
 
-export const insertKKV = async (req: KKVInserterReq) => {
-  return await request.putJson("api/v1/kv", req);
+export const kkvCommit = async (req: KKVCommitReq): Promise<KKVCommitRsp> => {
+  return await request.putJson("api/v1/kkv", req);
 };
 
-export const queryKKV = async (req: KKVQueryReq): Promise<KKVQueryRsp> => {
-  return await request.get("api/v1/kv", req);
+export const kkvFetch = async (req: KKVFetchReq): Promise<KKVFetchRsp> => {
+  return await request.get("api/v1/kkv", req);
 };

@@ -33,9 +33,9 @@ impl TryFrom<&KDbRow> for KKV {
 }
 
 impl KDbExecutor<'_> {
-    pub async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
+    pub async fn kkv_overwrite(&self, req: KReq<KKVCommitReq>) -> AResult<KKVCommitRsp> {
         let old = self
-            .kkv_query(req.frame(KKVQueryOneReq {
+            .kkv_query(req.frame(KKVFetchReq {
                 key: req.key.clone(),
                 kind: req.kind.clone(),
             }))
@@ -58,10 +58,10 @@ impl KDbExecutor<'_> {
             ));
         self.exec(inserter).await?;
 
-        Ok(KKVOverwriteRsp {})
+        Ok(KKVCommitRsp {})
     }
 
-    pub async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
+    pub async fn kkv_query(&self, req: KReq<KKVFetchReq>) -> AResult<KKVFetchRsp> {
         let query = SqlBuilder::read_all(KKV::TABLE).r#where(Wheres::and([
             Wheres::equal(KKV::KEY, req.key.as_str()),
             Wheres::equal(KKV::KIND, req.kind.clone()),
@@ -70,7 +70,7 @@ impl KDbExecutor<'_> {
 
         let kv: Option<KKV> = self.qry_opt(query, |e| (&e).try_into()).await?;
 
-        Ok(KKVQueryOneRsp {
+        Ok(KKVFetchRsp {
             tid: kv.as_ref().map(|kv| kv.tid),
             value: kv.map(|kv| kv.value),
         })
@@ -123,7 +123,7 @@ impl KKVMapper for KDb {
         .await
     }
 
-    async fn kkv_query_many(&self, req: KKVQueryManyReq) -> AResult<KKVQueryManyRsp> {
+    async fn kkv_list(&self, req: KKVListReq) -> AResult<KKVListRsp> {
         let query = SqlBuilder::read_all(KKV::TABLE).r#where(Wheres::and([
             Wheres::if_some(req.key, |key| Wheres::equal(KKV::KEY, key)),
             Wheres::if_some(req.kind, |kind| Wheres::equal(KKV::KIND, kind)),
@@ -138,10 +138,10 @@ impl KKVMapper for KDb {
             .qry_list(query, |e| (&e).try_into())
             .await?;
 
-        Ok(KKVQueryManyRsp { kkvs })
+        Ok(KKVListRsp { kkvs })
     }
 
-    async fn kkv_delete(&self, req: KReq<KKVDeleteReq>) -> AResult<KKVDeleteRsp> {
+    async fn kkv_archive(&self, req: KReq<KKVArchiveReq>) -> AResult<KKVArchiveRsp> {
         let del = SqlDeleter::new(KKV::TABLE).r#where(Wheres::and([
             Wheres::equal(KKV::KEY, req.key.as_str()),
             Wheres::equal(KKV::KIND, &req.kind),
@@ -150,18 +150,18 @@ impl KKVMapper for KDb {
 
         self.conn().await?.exec(del).await?;
 
-        Ok(KKVDeleteRsp {})
+        Ok(KKVArchiveRsp {})
     }
 
-    async fn kkv_overwrite(&self, req: KReq<KKVOverwriteReq>) -> AResult<KKVOverwriteRsp> {
+    async fn kkv_commit(&self, req: KReq<KKVCommitReq>) -> AResult<KKVCommitRsp> {
         self.conn().await?.as_executor().kkv_overwrite(req).await
     }
 
-    async fn kkv_query(&self, req: KReq<KKVQueryOneReq>) -> AResult<KKVQueryOneRsp> {
+    async fn kkv_fetch(&self, req: KReq<KKVFetchReq>) -> AResult<KKVFetchRsp> {
         self.conn().await?.as_executor().kkv_query(req).await
     }
 
-    async fn kkv_transient_query<T>(&self, key: &str) -> AResult<Option<T>>
+    async fn kkv_transient_fetch<T>(&self, key: &str) -> AResult<Option<T>>
     where
         T: Send + DeserializeOwned,
     {
@@ -172,7 +172,7 @@ impl KKVMapper for KDb {
             .await
     }
 
-    async fn kkv_transisent_overwrite<T: Serialize>(
+    async fn kkv_transisent_commit<T: Serialize>(
         &self,
         key: Varchar<500>,
         value: T,

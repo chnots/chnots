@@ -130,7 +130,7 @@ impl SyncMapper for MapperType {
 impl MapperType {
     pub(crate) async fn get_all_endpoints(&self) -> AResult<SyncAllEndpoints> {
         let kkv: Option<SyncAllEndpoints> = self
-            .kkv_transient_query::<SyncAllEndpoints>(ALL_ENDPOINTS)
+            .kkv_transient_fetch::<SyncAllEndpoints>(ALL_ENDPOINTS)
             .await?;
         match kkv {
             Some(kkv) => Ok(kkv),
@@ -144,7 +144,7 @@ impl MapperType {
         &self,
         req: SyncAllEndpoints,
     ) -> AResult<SyncAllEndpointsRsp> {
-        self.kkv_transisent_overwrite(
+        self.kkv_transisent_commit(
             ALL_ENDPOINTS.to_string().try_into()?,
             &req,
             chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),

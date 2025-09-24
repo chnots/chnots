@@ -7,44 +7,44 @@ use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct KKVQueryOneReq {
+pub struct KKVFetchReq {
     pub key: Varchar<500>,
     pub kind: Varchar<100>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct KKVQueryManyReq {
+pub struct KKVListReq {
     pub key: Option<Varchar<500>>,
     pub kind: Option<Varchar<100>>,
     pub kspace: Option<SharedStr>,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct KKVQueryOneRsp {
+pub struct KKVFetchRsp {
     pub value: Option<Text>,
     pub(crate) tid: Option<TID>,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct KKVQueryManyRsp {
+pub struct KKVListRsp {
     pub kkvs: Vec<KKV>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct KKVOverwriteReq {
+pub struct KKVCommitReq {
     pub key: Varchar<500>,
     pub kind: Varchar<100>,
     pub value: Text,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct KKVOverwriteRsp {}
+pub struct KKVCommitRsp {}
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct KKVDeleteReq {
+pub struct KKVArchiveReq {
     pub key: String,
     pub kind: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct KKVDeleteRsp {}
+pub struct KKVArchiveRsp {}

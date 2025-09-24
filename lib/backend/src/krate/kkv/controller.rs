@@ -14,39 +14,39 @@ use axum::{
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/kv", get(kv_query))
-        .route("/api/v1/kv", delete(kv_delete))
-        .route("/api/v1/kv", put(kv_overwrite))
-        .route("/api/v1/kkv-query-many", post(kkv_query_many))
+        .route("/api/v1/kkv", get(kv_fetch))
+        .route("/api/v1/kkv", delete(kv_archive))
+        .route("/api/v1/kkv", put(kv_commit))
+        .route("/api/v1/kkv-list", post(kv_list))
 }
 
-async fn kv_overwrite(
+async fn kv_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KKVOverwriteReq>,
-) -> KResponse<KKVOverwriteRsp> {
-    state.mapper.kkv_overwrite(kreq(headers, req)).await.into()
+    Json(req): Json<KKVCommitReq>,
+) -> KResponse<KKVCommitRsp> {
+    state.kkv_commit(kreq(headers, req)).await.into()
 }
 
-async fn kv_query(
+async fn kv_fetch(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<KKVQueryOneReq>,
-) -> KResponse<KKVQueryOneRsp> {
-    state.mapper.kkv_query(kreq(headers, req)).await.into()
+    Query(req): Query<KKVFetchReq>,
+) -> KResponse<KKVFetchRsp> {
+    state.kkv_fetch(kreq(headers, req)).await.into()
 }
 
-async fn kv_delete(
+async fn kv_archive(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KKVDeleteReq>,
-) -> KResponse<KKVDeleteRsp> {
-    state.mapper.kkv_delete(kreq(headers, req)).await.into()
+    Json(req): Json<KKVArchiveReq>,
+) -> KResponse<KKVArchiveRsp> {
+    state.kkv_archive(kreq(headers, req)).await.into()
 }
 
-async fn kkv_query_many(
+async fn kv_list(
     state: State<ShareAppState>,
-    Json(req): Json<KKVQueryManyReq>,
-) -> KResponse<KKVQueryManyRsp> {
-    state.mapper.kkv_query_many(req).await.into()
+    Json(req): Json<KKVListReq>,
+) -> KResponse<KKVListRsp> {
+    state.kkv_list(req).await.into()
 }
