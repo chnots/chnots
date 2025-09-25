@@ -23,9 +23,9 @@ const UNTAGGED_TAG: &str = "<NON>";
 #[inline]
 fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
     SqlBuilder::new()
-    .sov("SELECT r.tid as rec_tid, r.content, r.archor,")
-    .sov("tm.otid as meta_otid, tm.kspace, tm.pin_time, tm.archive_time, r.todo_event, tm.tid as meta_tid")
-    .sov("FROM chnot_thread_meta tm left join chnot_meta cm on tm.otid = cm.thread_otid and cm.korder=0 and cm.kind = 'mdwt' left join mdwt_record r ON cast(cm.kind_id as bigint) = r.otid")
+    .seg("SELECT r.tid as rec_tid, r.content, r.archor,")
+    .seg("tm.otid as meta_otid, tm.kspace, tm.pin_time, tm.archive_time, r.todo_event, tm.tid as meta_tid")
+    .seg("FROM chnot_thread_meta tm left join chnot_meta cm on tm.otid = cm.thread_otid and cm.korder=0 and cm.kind = 'mdwt' left join mdwt_record r ON cast(cm.kind_id as bigint) = r.otid")
 }
 
 #[inline]
@@ -94,15 +94,15 @@ impl ChnotMapper for KDb {
         let page_start = req.start_index;
 
         let chnot_sql = SqlBuilder::new()
-            .sov("select * from ")
+            .seg("select * from ")
             .sub("t", chnot_query_sql())
             .some_then(req.tags.as_ref(), |tag, sr| {
-                sr.sov("inner join")
+                sr.seg("inner join")
                     .sub(
                         "ct",
                         MdwtTag::with_those_tag_meta_otids(req.get_spaces(), Some(tag)),
                     )
-                    .sov("on t.meta_otid = ct.meta_otid")
+                    .seg("on t.meta_otid = ct.meta_otid")
             })
             .r#where(Wheres::and([
                 // TODO: group by perm tid
@@ -126,7 +126,7 @@ impl ChnotMapper for KDb {
                 }),
                 Wheres::if_some(req.thread_otid, |tid| Wheres::equal("t.meta_otid", tid)),
             ]))
-            .sov("ORDER BY t.pin_time asc, t.meta_otid desc")
+            .seg("ORDER BY t.pin_time asc, t.meta_otid desc")
             .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
 
         let cs = self
@@ -243,7 +243,7 @@ impl ChnotMapper for KDb {
                     ChnotMeta::TABLE,
                     &[format!("{}.*", ChnotMeta::TABLE).as_str()],
                 )
-                .sov(format!(
+                .seg(format!(
                     " left join {} on {}.{} = {}.{} ",
                     ChnotThreadOrder::TABLE,
                     ChnotMeta::TABLE,

@@ -60,7 +60,7 @@ impl KDbExecutor<'_> {
     ) -> AResult<usize> {
         let fields_comma = T::all_columns().join(",");
         let insert_sql = SqlBuilder::new()
-            .sov(format!(
+            .seg(format!(
                 "insert into {}({}) select {} from {}",
                 T::table_name(true),
                 &fields_comma,

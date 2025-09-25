@@ -122,7 +122,7 @@ impl KFileMapper for KDb {
     ) -> anyhow::Result<KfileInlineDownloadBySidRsp> {
         let query = SqlBuilder::read_all(InlineKFile::TABLE)
             .r#where(Wheres::equal(InlineKFile::SID, sid))
-            .sov("order by tid desc")
+            .seg("order by tid desc")
             .custom(LimitOffset::new(1));
 
         let res = self

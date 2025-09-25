@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::Ok;
-use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::{CreateTableSqlOwned, SqlBuilder, Wheres};
+use chin_sql::{SqlBuilder, Wheres};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
@@ -224,7 +223,7 @@ impl LLMChatMapper for KDb {
                 req.session_otid.as_ref(),
                 |tid| Wheres::equal(LLMChatSession::OTID, *tid),
             )]))
-            .sov("order by tid desc");
+            .seg("order by tid desc");
 
         let sessions = self
             .conn()
@@ -257,7 +256,7 @@ impl LLMChatMapper for KDb {
                 LLMChatRecord::SESSION_OTID,
                 req.session_otid,
             )]))
-            .sov("order by tid desc");
+            .seg("order by tid desc");
 
         let records: Vec<LLMChatRecord> = self
             .conn()

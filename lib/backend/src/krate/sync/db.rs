@@ -87,9 +87,9 @@ impl SyncMapper for KDb {
                 Wheres::equal(SyncLogTransientCommit::TABLE_NAME, table_name.clone()),
                 Wheres::equal(SyncLogTransientCommit::REMOTE_ID, remote_id),
             ]))
-            .sov("order by")
-            .sov(SyncLogTransientCommit::SYNC_FINISH_TID)
-            .sov("desc")
+            .seg("order by")
+            .seg(SyncLogTransientCommit::SYNC_FINISH_TID)
+            .seg("desc")
             .limit(1);
 
         let sync: Option<SyncLogTransientCommit> = self
@@ -372,7 +372,7 @@ impl KDb {
                     ]),
                 },
             ]))
-            .sov("order by tid asc")
+            .seg("order by tid asc")
             .limit(sync_page.page_size);
 
         let res = self

@@ -1,15 +1,10 @@
-use std::collections::HashMap;
-
 use chin_sql::{
     str_type::{Text, Varchar},
     time_type::TID,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::krate::{
-    mdwt::MdwtTagSearchType,
-    toent::{logic::todoevent::TodoEvent, po::MdwtToent},
-};
+use crate::krate::{mdwt::MdwtTagSearchType, toent::logic::todoevent::TodoEvent};
 
 use super::*;
 

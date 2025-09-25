@@ -13,7 +13,7 @@ use crate::model::dto::KReq;
 use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::{ChinSqlError, SegOrVal, SqlBuilder};
+use chin_sql::{ChinSqlError, SqlBuilder};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
@@ -165,12 +165,12 @@ impl MdwtTag {
                 Wheres::r#in(MdwtTag::KSPACE, kspaces),
                 Wheres::if_some(len, |_| Wheres::r#in(MdwtTag::TAG, tags.to_vec())),
             ]))
-            .sov("group by")
-            .sov(MdwtTag::THREAD_OTID)
+            .seg("group by")
+            .seg(MdwtTag::THREAD_OTID)
             .some_then(len, |l, sb| {
-                sb.sov("having")
-                    .sov(format!("COUNT(DISTINCT {}) = ", MdwtTag::TAG))
-                    .sov(SegOrVal::val(l as i64))
+                sb.seg("having")
+                    .seg(format!("COUNT(DISTINCT {}) = ", MdwtTag::TAG))
+                    .val(l as i64)
             })
     }
 }
@@ -189,16 +189,16 @@ impl KDb {
         let field = if name_only { "distinct tag" } else { "*" };
 
         let sql = SqlBuilder::new()
-            .sov("WITH qualified_tids AS (")
+            .seg("WITH qualified_tids AS (")
             .merge(MdwtTag::with_those_tag_meta_otids(
                 req.get_spaces(),
                 req.tags.as_ref(),
             ))
-            .sov(")")
+            .seg(")")
             .merge(
                 SqlBuilder::read(MdwtTag::TABLE, &[field])
-                    .sov("as t")
-                    .sov("right join qualified_tids q on t.meta_otid = q.meta_otid")
+                    .seg("as t")
+                    .seg("right join qualified_tids q on t.meta_otid = q.meta_otid")
                     .r#where(Wheres::and([Wheres::r#in(
                         MdwtTag::KSPACE,
                         req.get_spaces(),
