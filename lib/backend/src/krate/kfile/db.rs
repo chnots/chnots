@@ -5,7 +5,8 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver, helper::create_tables,
+            HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver,
+            helper::{Ddls, create_tables},
         },
     },
     model::dto::KReq,
@@ -48,11 +49,9 @@ impl TryFrom<&KDbRow> for KFileMeta {
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
         create_tables(
-            vec![
-                InlineKFile::create_sql().to_owned_sql(),
-                KFileMeta::create_sql().to_owned_sql(),
-                KFileMeta::hist_table(),
-            ],
+            Ddls::new()
+                .with_ddl(InlineKFile::create_sql().to_owned_sql())
+                .with_ddls(KFileMeta::ddls()),
             self,
         )
         .await?;

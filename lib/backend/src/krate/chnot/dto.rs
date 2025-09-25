@@ -34,18 +34,18 @@ pub struct ChnotThreadMetaFetchCommitRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct chnotThreadOrderCommitReqData {
+pub struct ChnotThreadOrderCommitReqData {
     pub otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct chnotThreadOrderCommitReq {
+pub struct ChnotThreadOrderCommitReq {
     pub thread_otid: TID,
-    pub orders: Vec<chnotThreadOrderCommitReqData>,
+    pub orders: Vec<ChnotThreadOrderCommitReqData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct chnotThreadOrderCommitRsp {}
+pub struct ChnotThreadOrderCommitRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotMetaCommitReqData {

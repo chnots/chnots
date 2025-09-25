@@ -9,8 +9,8 @@ import { ChnotKind, ChnotMeta, ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
 import {
   ChnotMetaCommitReqData,
-  chnotThreadOrderCommitReq,
-  chnotThreadOrderCommitReqData,
+  ChnotThreadOrderCommitReq,
+  ChnotThreadOrderCommitReqData,
 } from "../../dto";
 import {
   chnotMetaCommit,
@@ -118,7 +118,7 @@ const ChnotThread = ({
         cachedChnotDataMapRef.current.set(arg.data.chnotOtid, arg.data);
       }
 
-      const metas: chnotThreadOrderCommitReqData[] = chnotOrders
+      const metas: ChnotThreadOrderCommitReqData[] = chnotOrders
         .map((otid) => {
           const persistedChnot = cachedChnotDataMapRef.current.get(otid);
 

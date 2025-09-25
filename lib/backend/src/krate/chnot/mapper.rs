@@ -9,8 +9,8 @@ pub trait ChnotMapper {
     -> AResult<ChnotMetaCommitRsp>;
     async fn chnot_overwrite_thread_orders(
         &self,
-        req: KReq<chnotThreadOrderCommitReq>,
-    ) -> AResult<chnotThreadOrderCommitRsp>;
+        req: KReq<ChnotThreadOrderCommitReq>,
+    ) -> AResult<ChnotThreadOrderCommitRsp>;
 
     async fn chnot_thread_list(&self, req: KReq<ChnotThreadListReq>)
     -> AResult<ChnotThreadListRsp>;
@@ -55,8 +55,8 @@ impl ChnotMapper for MapperType {
 
     async fn chnot_overwrite_thread_orders(
         &self,
-        req: KReq<chnotThreadOrderCommitReq>,
-    ) -> AResult<chnotThreadOrderCommitRsp> {
+        req: KReq<ChnotThreadOrderCommitReq>,
+    ) -> AResult<ChnotThreadOrderCommitRsp> {
         expand_mt_branch!(self.chnot_overwrite_thread_orders(req))
     }
 

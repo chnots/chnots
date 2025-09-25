@@ -1,5 +1,5 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{DbType, IntoSqlSeg, SqlValue, SqlValueRow};
+use chin_sql::{CreateTableSqlOwned, DbType, IntoSqlSeg, SqlValue, SqlValueRow};
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 use postgres_types::FromSql;
@@ -415,6 +415,11 @@ impl<'e> KDbExecutorBehaiver for KDbExecutor<'e> {
 
 pub(crate) trait HistCreateSql<'a> {
     fn hist_table() -> chin_sql::CreateTableSqlOwned;
+    fn main_table() -> chin_sql::CreateTableSqlOwned;
+
+    fn ddls() -> Vec<CreateTableSqlOwned> {
+        vec![Self::hist_table(), Self::main_table()]
+    }
 }
 
 #[macro_export]
@@ -462,6 +467,10 @@ macro_rules! impl_otid_support {
                 create_table.table_name = Self::HIST_TABLE.to_string();
 
                 create_table
+            }
+
+            fn main_table() -> chin_sql::CreateTableSqlOwned {
+                Self::create_sql().to_owned_sql()
             }
         }
     };

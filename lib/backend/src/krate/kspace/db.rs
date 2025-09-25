@@ -11,7 +11,8 @@ use crate::{
         Curd,
         db::{
             HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
-            KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
+            KDbRowBehavier, KDbTransactionBehaiver,
+            helper::{Ddls, create_tables},
         },
     },
 };
@@ -47,11 +48,7 @@ impl KSpaceMapper for KDb {
     }
 
     async fn kspace_ensure_table(&self) -> chin_tools::EResult {
-        create_tables(
-            vec![KSpace::create_sql().to_owned_sql(), KSpace::hist_table()],
-            self,
-        )
-        .await
+        create_tables(Ddls::new().with_ddls(KSpace::ddls()), self).await
     }
 
     async fn kspace_archive(

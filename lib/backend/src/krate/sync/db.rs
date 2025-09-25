@@ -15,7 +15,8 @@ use crate::{
     },
     mapper::db::{
         KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-        KDbTransactionBehaiver, helper::create_tables,
+        KDbTransactionBehaiver,
+        helper::{Ddls, create_tables},
     },
     model::KOtidSupport,
 };
@@ -64,7 +65,7 @@ impl Dumper for KDb {
 impl SyncMapper for KDb {
     async fn ensure_sync_table(&self) -> EResult {
         create_tables(
-            vec![SyncLogTransientCommit::create_sql().to_owned_sql()],
+            Ddls::new().with_ddl(SyncLogTransientCommit::create_sql().to_owned_sql()),
             self,
         )
         .await?;

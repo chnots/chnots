@@ -6,8 +6,9 @@ use crate::{
     model::KOtidSupport,
 };
 
-pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> EResult {
+pub(crate) async fn create_tables(cts: Ddls, kdb: &KDb) -> EResult {
     let sqls: Result<Vec<Vec<String>>, ChinSqlError> = cts
+        .ddls
         .into_iter()
         .map(|cts| cts.sqls(kdb.get_db_type()))
         .collect();
@@ -18,6 +19,28 @@ pub(crate) async fn create_tables(cts: Vec<CreateTableSqlOwned>, kdb: &KDb) -> E
     }
 
     Ok(())
+}
+
+pub(crate) struct Ddls {
+    ddls: Vec<CreateTableSqlOwned>,
+}
+
+impl Ddls {
+    pub fn new() -> Self {
+        Self {
+            ddls: Default::default(),
+        }
+    }
+
+    pub(crate) fn with_ddls(mut self, ddls: Vec<CreateTableSqlOwned>) -> Self {
+        self.ddls.extend(ddls);
+        self
+    }
+
+    pub(crate) fn with_ddl(mut self, ddl: CreateTableSqlOwned) -> Self {
+        self.ddls.push(ddl);
+        self
+    }
 }
 
 impl KDbExecutor<'_> {

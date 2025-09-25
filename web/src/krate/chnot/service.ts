@@ -4,8 +4,8 @@ import {
   ChnotThreadListRsp,
   ChnotThreadMetaFetchCommitReq,
   ChnotThreadMetaFetchRsp,
-  chnotThreadOrderCommitReq,
-  chnotThreadOrderCommitRsp,
+  ChnotThreadOrderCommitReq,
+  ChnotThreadOrderCommitRsp,
   ChnotThreadMetaFetchCommitRsp,
   ChnotMetaCommitReq,
   ChnotMetaCommitRsp,
@@ -27,8 +27,8 @@ export async function chnotMetaCommit(
 }
 
 export async function chnotThreadOrderCommit(
-  req: chnotThreadOrderCommitReq,
-): Promise<chnotThreadOrderCommitRsp> {
+  req: ChnotThreadOrderCommitReq,
+): Promise<ChnotThreadOrderCommitRsp> {
   return await request.postJson(`api/v1/chnot-thread-order-commit`, req);
 }
 

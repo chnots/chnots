@@ -4,7 +4,7 @@ use crate::krate::mdwt::{MdwtRecord, MdwtTag};
 use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::mapper::Curd;
-use crate::mapper::db::helper::create_tables;
+use crate::mapper::db::helper::{Ddls, create_tables};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -77,12 +77,10 @@ fn chnot_thread_query_mapper(row: KDbRow) -> AResult<ChnotThread> {
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
         create_tables(
-            vec![
-                ChnotThreadMeta::create_sql().to_owned_sql(),
-                ChnotThreadMeta::hist_table(),
-                ChnotMeta::create_sql().to_owned_sql(),
-                ChnotMeta::hist_table(),
-            ],
+            Ddls::new()
+                .with_ddls(ChnotThreadOrder::ddls())
+                .with_ddls(ChnotThreadMeta::ddls())
+                .with_ddls(ChnotMeta::ddls()),
             self,
         )
         .await
@@ -198,11 +196,11 @@ impl ChnotMapper for KDb {
 
     async fn chnot_overwrite_thread_orders(
         &self,
-        req: KReq<chnotThreadOrderCommitReq>,
-    ) -> AResult<chnotThreadOrderCommitRsp> {
+        req: KReq<ChnotThreadOrderCommitReq>,
+    ) -> AResult<ChnotThreadOrderCommitRsp> {
         let mut conn = self.conn().await?;
         let tx = conn.transaction().await?;
-        let chnotThreadOrderCommitReq {
+        let ChnotThreadOrderCommitReq {
             thread_otid,
             orders,
         } = req.body;
@@ -223,7 +221,7 @@ impl ChnotMapper for KDb {
         }
 
         tx.cmt().await?;
-        Ok(chnotThreadOrderCommitRsp {})
+        Ok(ChnotThreadOrderCommitRsp {})
     }
 
     async fn chnot_thread_meta_fetch(
@@ -248,7 +246,7 @@ impl ChnotMapper for KDb {
                 .sov(format!(
                     " left join {} on {}.{} = {}.{} ",
                     ChnotThreadOrder::TABLE,
-                    ChnotMeta::OTID,
+                    ChnotMeta::TABLE,
                     ChnotMeta::OTID,
                     ChnotThreadOrder::TABLE,
                     ChnotThreadOrder::OTID

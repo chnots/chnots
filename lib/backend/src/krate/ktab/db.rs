@@ -11,7 +11,8 @@ use crate::{
         Curd,
         db::{
             HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
-            KDbRowBehavier, KDbTransactionBehaiver, helper::create_tables,
+            KDbRowBehavier, KDbTransactionBehaiver,
+            helper::{Ddls, create_tables},
         },
     },
     model::dto::KReq,
@@ -228,16 +229,11 @@ impl KTabMapper for KDb {
 
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
         create_tables(
-            vec![
-                KTabMeta::create_sql().to_owned_sql(),
-                KTabMeta::hist_table(),
-                KTabCellText::create_sql().to_owned_sql(),
-                KTabCellText::hist_table(),
-                KTabCellDecimal::create_sql().to_owned_sql(),
-                KTabCellDecimal::hist_table(),
-                KTabCellDate::create_sql().to_owned_sql(),
-                KTabCellDate::hist_table(),
-            ],
+            Ddls::new()
+                .with_ddls(KTabMeta::ddls())
+                .with_ddls(KTabCellText::ddls())
+                .with_ddls(KTabCellDecimal::ddls())
+                .with_ddls(KTabCellDate::ddls()),
             self,
         )
         .await

@@ -14,7 +14,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             post(chnot_thread_meta_commit),
         )
         .route(
-            "/api/v1/chnot-thread-meta-fetch}",
+            "/api/v1/chnot-thread-meta-fetch",
             post(chnot_thread_meta_fetch),
         )
         .route(
@@ -27,8 +27,8 @@ pub(crate) fn routes() -> Router<ShareAppState> {
 async fn chnot_thread_order_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<chnotThreadOrderCommitReq>,
-) -> KResponse<chnotThreadOrderCommitRsp> {
+    Json(req): Json<ChnotThreadOrderCommitReq>,
+) -> KResponse<ChnotThreadOrderCommitRsp> {
     state
         .chnot_overwrite_thread_orders(kreq(headers, req))
         .await

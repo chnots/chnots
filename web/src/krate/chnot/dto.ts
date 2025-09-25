@@ -25,7 +25,7 @@ export type MdwtCommitReqData = {
   otid: TID;
   content: DbText;
 };
-export type chnotThreadOrderCommitReqData = {
+export type ChnotThreadOrderCommitReqData = {
   otid: TID;
 };
 export type ChnotThreadArchiveReq = {
@@ -51,11 +51,11 @@ export type ChnotThreadMetaFetchRsp = {
   chnot_meta_sorted: ChnotMeta[];
 };
 
-export type chnotThreadOrderCommitReq = {
+export type ChnotThreadOrderCommitReq = {
   thread_otid: TID;
-  orders: chnotThreadOrderCommitReqData[];
+  orders: ChnotThreadOrderCommitReqData[];
 };
-export type chnotThreadOrderCommitRsp = object;
+export type ChnotThreadOrderCommitRsp = object;
 export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
 };

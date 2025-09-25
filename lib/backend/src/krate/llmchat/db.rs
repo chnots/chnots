@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use anyhow::Ok;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::{SqlBuilder, Wheres};
+use chin_sql::{CreateTableSqlOwned, SqlBuilder, Wheres};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
 use crate::mapper::Curd;
-use crate::mapper::db::helper::create_tables;
+use crate::mapper::db::helper::{Ddls, create_tables};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -309,16 +309,11 @@ impl LLMChatMapper for KDb {
 
     async fn ensure_table_llm_chat(&self) -> EResult {
         create_tables(
-            vec![
-                LLMChatBot::create_sql().to_owned_sql(),
-                LLMChatBot::hist_table(),
-                LLMChatTemplate::create_sql().to_owned_sql(),
-                LLMChatTemplate::hist_table(),
-                LLMChatSession::create_sql().to_owned_sql(),
-                LLMChatSession::hist_table(),
-                LLMChatRecord::create_sql().to_owned_sql(),
-                LLMChatRecord::hist_table(),
-            ],
+            Ddls::new()
+                .with_ddls(LLMChatBot::ddls())
+                .with_ddls(LLMChatTemplate::ddls())
+                .with_ddls(LLMChatSession::ddls())
+                .with_ddls(LLMChatRecord::ddls()),
             self,
         )
         .await

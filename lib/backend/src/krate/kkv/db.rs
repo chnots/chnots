@@ -8,7 +8,8 @@ use crate::{
         Curd,
         db::{
             HistCreateSql, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow,
-            KDbRowBehavier, helper::create_tables,
+            KDbRowBehavier,
+            helper::{Ddls, create_tables},
         },
     },
     model::dto::KReq,
@@ -113,11 +114,9 @@ impl KDbExecutor<'_> {
 impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
         create_tables(
-            vec![
-                KKV::create_sql().to_owned_sql(),
-                KKV::hist_table(),
-                KKVTransient::create_sql().to_owned_sql(),
-            ],
+            Ddls::new()
+                .with_ddls(KKV::ddls())
+                .with_ddl(KKVTransient::create_sql().to_owned_sql()),
             self,
         )
         .await
