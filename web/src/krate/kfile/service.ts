@@ -57,11 +57,5 @@ export const kfileInlineDownload = async (
 };
 
 export const getResouceDownloadUrl = (kfile: KFileMeta): string => {
-  return (
-    BASE_URL +
-    "/api/v1/kfile-asset-download/" +
-    kfile.id +
-    "/" +
-    encodeURI(chnotShortDate() + "-" + kfile.filename)
-  );
+  return `${BASE_URL}/api/v1/kfile-asset-download/${kfile.id}/${encodeURI(chnotShortDate() + "-" + kfile.filename)}`;
 };

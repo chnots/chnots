@@ -6,7 +6,10 @@ use chin_sql::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::krate::{
+    mdwt::MdwtTagSearchType,
+    toent::{logic::todoevent::TodoEvent, po::MdwtToent},
+};
 
 use super::*;
 
@@ -14,7 +17,7 @@ use super::*;
 pub struct ChnotThread {
     pub head_content: Option<Text>,
     pub todo_event: Option<TodoEvent>,
-    pub meta: ChnotThreadMetaFetch,
+    pub meta: ChnotThreadMeta,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,38 +30,22 @@ pub struct ChnotThreadMetaFetchCommitReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchCommitRsp {
-    pub meta: ChnotThreadMetaFetch,
+    pub meta: ChnotThreadMeta,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotMdwtCommitReqData {
-    pub otid: TID,
-    pub content: Text,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotMdwtCommitReq {
-    pub mdwt: ChnotMdwtCommitReqData,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ChnotMdwtCommitRsp {
-    pub todo_event: Option<TodoEvent>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadOrderCommitReqData {
+pub struct chnotThreadOrderCommitReqData {
     pub otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadOrderCommitReq {
+pub struct chnotThreadOrderCommitReq {
     pub thread_otid: TID,
-    pub orders: Vec<ChnotThreadOrderCommitReqData>,
+    pub orders: Vec<chnotThreadOrderCommitReqData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadOrderCommitRsp {}
+pub struct chnotThreadOrderCommitRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotMetaCommitReqData {
@@ -89,16 +76,11 @@ pub struct ChnotThreadArchiveReq {
 pub struct ChnotThreadArchiveRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChnotTagSearchType {
-    Inset(Vec<String>),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadListReq {
     pub query: Option<String>,
     pub thread_otid: Option<TID>,
 
-    pub tags: Option<ChnotTagSearchType>,
+    pub tags: Option<MdwtTagSearchType>,
     pub kinds: Vec<ChnotKind>,
 
     pub with_omitted: Option<bool>,
@@ -123,48 +105,6 @@ pub struct ChnotThreadMetaFetchReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchRsp {
-    pub thread_meta: ChnotThreadMetaFetch,
+    pub thread_meta: ChnotThreadMeta,
     pub chnot_meta_sorted: Vec<ChnotMeta>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MdwtRecordsReq {
-    pub mdwt_otids: Vec<TID>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MdwtRecordsRsp {
-    pub mdwt_map: HashMap<TID, MdwtRecord>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Toents {
-    pub toent_inst_map: HashMap<TID, Vec<ChnotToent>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagListReq {
-    pub query: Option<String>,
-    pub tags: Option<ChnotTagSearchType>,
-    pub remove_params: Option<bool>,
-
-    // Paging
-    pub start_index: usize,
-    pub page_size: usize,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ChnotTagListRsp<T>
-where
-    T: Serialize + Clone,
-{
-    pub data: Vec<T>,
-    pub start_index: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotTagUpdateReq {
-    pub content: Text,
-    pub thread_otid: TID,
-    pub kspace: Varchar<40>,
 }

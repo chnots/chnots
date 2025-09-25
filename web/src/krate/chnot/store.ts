@@ -1,12 +1,12 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { ChnotThread, ChnotThreadListRsp, ChnotTagSearchType } from "./dto";
-import { ChnotThreadList } from "./service";
+import { ChnotThread, ChnotThreadListRsp, MdwtTagSearchType } from "./dto";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
 import { kspaceStore } from "../kspace/store";
 import { ChnotKind } from "./po";
+import { chnotThreadList } from "./service";
 
 const newChnotMap = () => {
   return {
@@ -46,7 +46,7 @@ interface State {
    * Current Query Input
    */
   query?: string;
-  tags?: ChnotTagSearchType;
+  tags?: MdwtTagSearchType;
   kinds?: ChnotKind[];
   isFetchingNextPage: boolean;
 }
@@ -71,7 +71,7 @@ export const useChnotStore = create(
         tags,
         kinds,
       } = get();
-      const cs: ChnotThreadListRsp = await ChnotThreadList({
+      const cs: ChnotThreadListRsp = await chnotThreadList({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
@@ -191,7 +191,7 @@ export const useChnotStore = create(
         };
       });
     },
-    setTags: (newTags?: ChnotTagSearchType) => {
+    setTags: (newTags?: MdwtTagSearchType) => {
       set((prev) => {
         return {
           ...prev,

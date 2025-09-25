@@ -10,7 +10,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { autocompletion } from "@codemirror/autocomplete";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { indentOnInput } from "@codemirror/language";
-import { generateKeybinding } from "@/common/component/codemirror/keybinding";
+import { generateKeybinding } from "@/krate/mdwt/component/codemirror/keybinding";
 import { decoratorExtension } from "jolpin-codemirror";
 import {
   Backlink,

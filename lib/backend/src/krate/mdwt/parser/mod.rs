@@ -89,7 +89,7 @@ struct Span {
     span: SpanType,
 }
 
-pub struct ChnotParser<'a> {
+pub struct MdwtParser<'a> {
     original: &'a str,
     chnot_map: HashMap<usize, ChnotBlock>,
 }
@@ -181,7 +181,7 @@ struct Props {
     value: String,
 }
 
-impl<'a> ChnotParser<'a> {
+impl<'a> MdwtParser<'a> {
     pub fn new(text: &'a str) -> Self {
         // The returned nodes are created in the supplied Arena, and are bound by its lifetime.
         let arena = comrak::Arena::new();
@@ -427,7 +427,7 @@ impl<'a> ChnotParser<'a> {
 mod tests {
     use comrak::nodes::LineColumn;
 
-    use crate::krate::chnot::parser::{ChnotParser, TextLocater};
+    use crate::krate::mdwt::parser::{MdwtParser, TextLocater};
 
     #[test]
     fn text_locater_test() {
@@ -490,7 +490,7 @@ Example Text
 
     #[test]
     fn mdwt_it() {
-        let cp = ChnotParser::new(TEST_MARKDOWN);
+        let cp = MdwtParser::new(TEST_MARKDOWN);
         for cb in cp.chnot_map.values() {
             for ele in &cb.backlinks {
                 let src = &TEST_MARKDOWN[ele.start_in.offset..ele.end_ex.offset];

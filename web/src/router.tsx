@@ -7,9 +7,7 @@ import SettingsPage from "@/common/pages/settings-page";
 import App from "@/app";
 import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
-import LLMChatPage from "./krate/llmchat/page/llmchat";
 import FullScreenTimer from "./krate/timer/timer";
-import Pad from "./krate/pad/page";
 
 export enum RoutePaths {
   ROOT = "/",
@@ -43,10 +41,6 @@ const routes: RouteObject[] = [
         element: <ChnotPage />,
       },
       {
-        path: RoutePaths.LLMChat,
-        element: <LLMChatPage />,
-      },
-      {
         path: RoutePaths.Toents,
         element: <ToentPage />,
       },
@@ -58,10 +52,10 @@ const routes: RouteObject[] = [
         path: RoutePaths.Timer,
         element: <FullScreenTimer />,
       },
-      {
+      /*       {
         path: RoutePaths.Pad,
         element: <Pad />,
-      },
+      }, */
     ],
   },
 ];

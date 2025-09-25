@@ -4,5 +4,6 @@ pub(crate) mod kkv;
 pub(crate) mod kspace;
 pub(crate) mod ktab;
 pub(crate) mod llmchat;
+pub(crate) mod mdwt;
 pub(crate) mod sync;
 pub(crate) mod toent;

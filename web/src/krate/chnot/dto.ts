@@ -1,15 +1,9 @@
 import { TID } from "@/lib/id_util";
-import {
-  MdwtRecord,
-  ChnotThreadMeta,
-  ChnotKind,
-  ChnotToent,
-  ChnotMeta,
-} from "./po";
+import { ChnotThreadMeta, ChnotKind, ChnotMeta } from "./po";
 import { DbText, Varchar } from "@/lib/types";
-import { TodoEvent } from "../toent/po";
+import { MdwtToent, TodoEvent } from "../toent/po";
 
-export type ChnotTagSearchType = {
+export type MdwtTagSearchType = {
   Inset: string[];
 };
 
@@ -27,11 +21,11 @@ export type ChnotThreadMetaFetchCommitReq = {
 export type ChnotThreadMetaFetchCommitRsp = {
   meta: ChnotThreadMeta;
 };
-export type ChnotMdwtCommitReqData = {
+export type MdwtCommitReqData = {
   otid: TID;
   content: DbText;
 };
-export type ChnotThreadOrderCommitReqData = {
+export type chnotThreadOrderCommitReqData = {
   otid: TID;
 };
 export type ChnotThreadArchiveReq = {
@@ -42,7 +36,7 @@ export type ChnotThreadArchiveRsp = object;
 export type ChnotThreadListReq = {
   query?: string;
   thread_otid?: TID;
-  tags?: ChnotTagSearchType;
+  tags?: MdwtTagSearchType;
   kinds: ChnotKind[];
   with_omitted?: boolean;
   with_archive?: boolean;
@@ -56,42 +50,13 @@ export type ChnotThreadMetaFetchRsp = {
   thread_meta: ChnotThreadMeta;
   chnot_meta_sorted: ChnotMeta[];
 };
-export type MdwtRecordsReq = {
-  mdwt_otids: TID[];
-};
-export type MdwtRecordsRsp = {
-  mdwt_map: Record<TID, MdwtRecord>;
-};
-export type Toents = {
-  toent_inst_map: Record<TID, ChnotToent[]>;
-};
-export type ChnotTagListReq = {
-  query?: string;
-  tags?: ChnotTagSearchType;
-  remove_params?: boolean;
-  start_index: number;
-  page_size: number;
-};
-export type ChnotTagUpdateReq = {
-  content: DbText;
-  thread_otid: TID;
-  kspace: Varchar<40>;
-};
 
-export type ChnotTagListRsp<T> = {
-  data: T[];
-  start_index: number;
-};
-
-export type ChnotMdwtCommitReq = {
-  mdwt: ChnotMdwtCommitReqData;
-};
-export type ChnotThreadOrderCommitReq = {
+export type chnotThreadOrderCommitReq = {
   thread_otid: TID;
-  orders: ChnotThreadOrderCommitReqData[];
+  orders: chnotThreadOrderCommitReqData[];
 };
-export type ChnotThreadOrderCommitRsp = object;
-export type ChnotMdwtCommitRsp = {
+export type chnotThreadOrderCommitRsp = object;
+export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
 };
 

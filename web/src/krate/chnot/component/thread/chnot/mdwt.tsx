@@ -3,19 +3,19 @@ import { useEffect, useRef, useState } from "react";
 import MarkdownViewer from "../../chnot-markdown-viewer";
 import { ChnotKind } from "../../../po";
 
-import {
-  ChnotMdwtCommits,
-  chnotTagNameList,
-  MdwtRecords,
-  toentTodoEventGuess,
-} from "@/krate/chnot/service";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
-import { MdwtEditorMemo } from "@/common/component/codemirror/mdwt-editor";
+import { MdwtEditorMemo } from "@/krate/mdwt/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { SaveState } from "@/common/types";
-import { ChnotMdwtCommitReq } from "@/krate/chnot/dto";
 import { ChnotChromeProps } from "./chrome";
 import { genTID, TID } from "@/lib/id_util";
+import {
+  chnotTagNameList,
+  mdwtCommit,
+  mdwtRecordList,
+} from "@/krate/mdwt/service";
+import { MdwtCommitReq } from "@/krate/mdwt/dto";
+import { toentTodoEventGuess } from "@/krate/toent/service";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -72,11 +72,11 @@ const MdwtRecord = ({
   // use RefObject to avoid
   const cachedContentRef = useRef<string>("");
   const saveStateRef = useRef<SaveState>(SaveState.Dirty);
-  const toSaveArg = useRef<ChnotMdwtCommitReq>(null);
+  const toSaveArg = useRef<MdwtCommitReq>(null);
   const [refreshFlag, setRefreshFlag] = useState<boolean>();
 
   useEffect(() => {
-    MdwtRecords({
+    mdwtRecordList({
       mdwt_otids: [mdwtOtid],
     }).then((rsp) => {
       const mdwt = rsp.mdwt_map[mdwtOtid];
@@ -89,7 +89,7 @@ const MdwtRecord = ({
     if (toSaveArg.current) {
       try {
         onPostSave({ saveState: SaveState.Saving });
-        await ChnotMdwtCommits(toSaveArg.current);
+        await mdwtCommit(toSaveArg.current);
         let first = toSaveArg.current.mdwt;
         onPostSave({
           content: first.content,
@@ -127,7 +127,7 @@ const MdwtRecord = ({
             onPostSave({ saveState: SaveState.Dirty });
           }
 
-          const req: ChnotMdwtCommitReq = {
+          const req: MdwtCommitReq = {
             mdwt: {
               otid: mdwtOtid,
               content: content,

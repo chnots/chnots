@@ -25,3 +25,11 @@ export type TidCompare = {
   lstate: object;
   rstate: object;
 };
+
+export type SyncLogTransientCommit = {
+  remote_id: Varchar<100>;
+  table_name: Varchar<100>;
+  end_sync_in: TID;
+  start_tid_ex: TID;
+  sync_finish_tid: TID;
+};

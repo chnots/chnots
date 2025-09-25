@@ -1,3 +1,6 @@
+import { TID } from "@/lib/id_util";
+import { MdwtToent } from "./po";
+
 type PossibleToent = object;
 type PossibleScore = number;
 
@@ -11,4 +14,8 @@ export type GuessElem<T> = {
 };
 export type ToentGuessRsp<T> = {
   toents: T[];
+};
+
+export type Toents = {
+  toent_inst_map: Record<TID, MdwtToent[]>;
 };

@@ -90,3 +90,10 @@ export type LLMChatSessionArchiveReq = {
 };
 
 export type LLMChatSessionArchiveRsp = object;
+
+export type LLMChatUpdateSessionReq = {
+  title?: string;
+  delete?: boolean;
+  session_otid: TID;
+};
+export type LLMChatUpdateSessionRsp = object;

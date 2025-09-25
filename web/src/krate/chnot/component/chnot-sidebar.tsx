@@ -21,10 +21,9 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
 import { useShallow } from "zustand/react/shallow";
 import { ChnotKindSelect } from "./chnot-kind-select";
-import { useCommonStore } from "@/common/store";
 import { NavLink } from "react-router-dom";
 import { RoutePaths } from "@/router";
-import { chnotTagNameList } from "../service";
+import { chnotTagNameList } from "@/krate/mdwt/service";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotStore(

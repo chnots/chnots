@@ -5,13 +5,18 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ChnotKind, ChnotMeta, ChnotThreadMetaFetch } from "../../po";
+import { ChnotKind, ChnotMeta, ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import { ChnotThreadOrderCommitReqData } from "../../dto";
 import {
-  getChnotThreadMetaFetch,
-  ChnotMetaCommits,
+  ChnotMetaCommitReqData,
+  chnotThreadOrderCommitReq,
+  chnotThreadOrderCommitReqData,
+} from "../../dto";
+import {
+  chnotMetaCommit,
+  chnotThreadMetaFetch,
   chnotThreadMetaOverwrite,
+  chnotThreadOrderCommit,
 } from "../../service";
 import Chrome, { PostSaveArg } from "./chnot/chrome";
 import LoadingPage from "@/common/pages/loading-page";
@@ -35,8 +40,8 @@ const ChnotThread = ({
   cachedThreadMetaRef: cachedThreadOtidRef,
   globalBar,
 }: {
-  threadMeta?: ChnotThreadMetaFetch;
-  cachedThreadMetaRef: RefObject<ChnotThreadMetaFetch | null>;
+  threadMeta?: ChnotThreadMeta;
+  cachedThreadMetaRef: RefObject<ChnotThreadMeta | null>;
   globalBar: React.ReactNode;
 }) => {
   const cachedChnotDataMapRef = useRef<Map<TID, ChnotMetaKind>>(new Map());
@@ -53,7 +58,9 @@ const ChnotThread = ({
 
   useEffect(() => {
     if (threadMeta) {
-      getChnotThreadMetaFetch(threadMeta.otid).then((rsp) => {
+      chnotThreadMetaFetch({
+        thread_otid: threadMeta.otid,
+      }).then((rsp) => {
         rsp.chnot_meta_sorted.forEach((meta) => {
           cachedChnotDataMapRef.current.set(meta.otid, {
             chnotOtid: meta.otid,
@@ -111,24 +118,20 @@ const ChnotThread = ({
         cachedChnotDataMapRef.current.set(arg.data.chnotOtid, arg.data);
       }
 
-      const metas: ChnotThreadOrderCommitReqData[] = chnotOrders
-        .map((otid, index) => {
+      const metas: chnotThreadOrderCommitReqData[] = chnotOrders
+        .map((otid) => {
           const persistedChnot = cachedChnotDataMapRef.current.get(otid);
 
           if (persistedChnot) {
             const saved = savedChnotMetaMapRef.current.get(otid);
             if (
               saved?.kind === persistedChnot.kind &&
-              saved?.kind_id === persistedChnot.kindId &&
-              saved?.korder === index
+              saved?.kind_id === persistedChnot.kindId
             ) {
               return null;
             }
             return {
               otid: otid,
-              korder: index,
-              kind: persistedChnot.kind,
-              kind_id: persistedChnot.kindId,
             };
           }
           return null;
@@ -137,13 +140,10 @@ const ChnotThread = ({
 
       console.log("overwrite metas");
       if (metas.length > 0) {
-        const rsp = await ChnotMetaCommits({
-          thread_otid: cachedThreadOtidRef.current!.otid,
-          metas: metas,
+        await chnotThreadOrderCommit({
+          thread_otid: cachedThreadOtidRef.current.otid,
+          orders: metas,
         });
-        for (const meta of rsp.metas) {
-          savedChnotMetaMapRef.current.set(meta.otid, meta);
-        }
 
         if (
           "kind" in arg &&
