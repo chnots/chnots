@@ -20,7 +20,7 @@ export type MdwtTagListReq = {
 };
 export type MdwtTagUpdateReq = {
   content: DbText;
-  thread_otid: TID;
+  mdwt_otid: TID;
   kspace: Varchar<40>;
 };
 

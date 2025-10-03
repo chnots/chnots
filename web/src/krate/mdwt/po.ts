@@ -11,7 +11,7 @@ export type MdwtRecord = {
 };
 export type MdwtTag = {
   tag: Varchar<800>;
-  thread_otid: TID;
+  mdwt_otid: TID;
   kspace: Varchar<40>;
   tid: TID;
 };

@@ -8,8 +8,8 @@ export type MdwtTagSearchType = {
 };
 
 export type ChnotThreadListRspData = {
-  head_content?: DbText;
-  todo_event?: TodoEvent;
+  preview_text?: string;
+  chnot_otid?: string;
   meta: ChnotThreadMeta;
 };
 export type ChnotThreadMetaFetchCommitReq = {
@@ -35,10 +35,8 @@ export type ChnotThreadArchiveReq = {
 export type ChnotThreadArchiveRsp = object;
 export type ChnotThreadListReq = {
   query?: string;
-  thread_otid?: TID;
   tags?: MdwtTagSearchType;
   kinds: ChnotKind[];
-  with_omitted?: boolean;
   with_archive?: boolean;
   start_index: number;
   page_size: number;
@@ -70,7 +68,6 @@ export type ChnotMetaCommitReqData = {
   otid: TID;
   kind: ChnotKind;
   kind_id: Varchar<200>;
-  kspace: Varchar<200>;
 };
 export type ChnotMetaCommitReq = {
   metas: ChnotMetaCommitReqData[];
