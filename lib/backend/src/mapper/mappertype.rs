@@ -6,7 +6,7 @@ use crate::{
     krate::{
         chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
         kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper, llmchat::mapper::LLMChatMapper,
-        sync::mapper::SyncMapper,
+        mdwt::mapper::MdwtMapper, sync::mapper::SyncMapper,
     },
     magics::CLIENT_ID_KEY,
     mapper::{MapperConfig, MapperType},
@@ -33,6 +33,7 @@ impl TryFrom<MapperConfig> for MapperType {
 
 impl MapperType {
     pub(crate) async fn ensure_tables(&self) -> EResult {
+        self.ensure_table_mdwt().await?;
         self.ensure_table_chnot().await?;
         self.ensure_table_kfile().await?;
         self.ensure_table_kkv().await?;

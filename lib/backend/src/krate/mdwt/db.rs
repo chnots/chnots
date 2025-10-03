@@ -31,7 +31,7 @@ impl<'a> KDbTx<'a> {
     ) -> EResult {
         let MdwtTagUpdateReq {
             content: _,
-            thread_otid: meta_otid,
+            mdwt_otid,
             kspace,
         } = req;
 
@@ -43,7 +43,7 @@ impl<'a> KDbTx<'a> {
         let mut tags = tags?;
         self.as_executor()
             .omit_rows::<MdwtTag>(Wheres::and([
-                Wheres::equal(MdwtTag::THREAD_OTID, meta_otid),
+                Wheres::equal(MdwtTag::MDWT_OTID, mdwt_otid),
                 if tags.is_empty() {
                     Wheres::None
                 } else {
@@ -63,7 +63,7 @@ impl<'a> KDbTx<'a> {
                         tid: TID::default(),
                         kspace: kspace.to_owned(),
                         tag: tag.to_owned(),
-                        thread_otid: meta_otid,
+                        mdwt_otid,
                     }
                     .to_sql_inserter()
                     .on_conflict(chin_sql::OnConflict::Ignore),
@@ -144,7 +144,7 @@ impl<'a> KDbTx<'a> {
 }
 
 impl MdwtTag {
-    pub fn with_those_tag_meta_otids<'a>(
+    pub fn mdwt_otids_sub<'a>(
         kspaces: Vec<Varchar<40>>,
         tags: Option<&MdwtTagSearchType>,
     ) -> SqlBuilder<'a> {
@@ -160,13 +160,13 @@ impl MdwtTag {
         } else {
             None
         };
-        SqlBuilder::read(MdwtTag::TABLE, &[MdwtTag::THREAD_OTID])
+        SqlBuilder::read(MdwtTag::TABLE, &[MdwtTag::MDWT_OTID])
             .r#where(Wheres::and([
                 Wheres::r#in(MdwtTag::KSPACE, kspaces),
                 Wheres::if_some(len, |_| Wheres::r#in(MdwtTag::TAG, tags.to_vec())),
             ]))
             .seg("group by")
-            .seg(MdwtTag::THREAD_OTID)
+            .seg(MdwtTag::MDWT_OTID)
             .some_then(len, |l, sb| {
                 sb.seg("having")
                     .seg(format!("COUNT(DISTINCT {}) = ", MdwtTag::TAG))
@@ -190,10 +190,7 @@ impl KDb {
 
         let sql = SqlBuilder::new()
             .seg("WITH qualified_tids AS (")
-            .merge(MdwtTag::with_those_tag_meta_otids(
-                req.get_spaces(),
-                req.tags.as_ref(),
-            ))
+            .merge(MdwtTag::mdwt_otids_sub(req.get_spaces(), req.tags.as_ref()))
             .seg(")")
             .merge(
                 SqlBuilder::read(MdwtTag::TABLE, &[field])
@@ -282,7 +279,7 @@ impl MdwtMapper for KDb {
             .qry_list(get_all, move |e| {
                 Ok(MdwtTagUpdateReq {
                     content: e.try_get(MdwtRecord::CONTENT)?,
-                    thread_otid: e.try_get(MdwtRecord::OTID)?,
+                    mdwt_otid: e.try_get(MdwtRecord::OTID)?,
                     kspace: kspace.to_owned(),
                 })
             })
@@ -357,7 +354,7 @@ impl TryFrom<&KDbRow> for MdwtTag {
             tid: value.try_get(MdwtTag::TID)?,
             kspace: value.try_get(MdwtTag::KSPACE)?,
             tag: value.try_get(MdwtTag::TAG)?,
-            thread_otid: value.try_get(MdwtTag::THREAD_OTID)?,
+            mdwt_otid: value.try_get(MdwtTag::MDWT_OTID)?,
         };
         Ok(obj)
     }

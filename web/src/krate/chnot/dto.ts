@@ -7,7 +7,7 @@ export type MdwtTagSearchType = {
   Inset: string[];
 };
 
-export type ChnotThread = {
+export type ChnotThreadListRspData = {
   head_content?: DbText;
   todo_event?: TodoEvent;
   meta: ChnotThreadMeta;
@@ -61,7 +61,7 @@ export type MdwtCommitRsp = {
 };
 
 export type ChnotThreadListRsp = {
-  data: ChnotThread[];
+  data: ChnotThreadListRspData[];
   has_next: boolean;
   next_start: number;
 };

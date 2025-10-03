@@ -1,17 +1,14 @@
-use chin_sql::{
-    str_type::{Text, Varchar},
-    time_type::TID,
-};
+use chin_sql::{str_type::Varchar, time_type::TID};
 use serde::{Deserialize, Serialize};
 
-use crate::krate::{mdwt::MdwtTagSearchType, toent::logic::todoevent::TodoEvent};
+use crate::krate::mdwt::MdwtTagSearchType;
 
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThread {
-    pub head_content: Option<Text>,
-    pub todo_event: Option<TodoEvent>,
+pub struct ChnotThreadListRspData {
+    pub preview_text: Option<String>,
+    pub chnot_otid: Option<String>,
     pub meta: ChnotThreadMeta,
 }
 
@@ -47,7 +44,6 @@ pub struct ChnotMetaCommitReqData {
     pub otid: TID,
     pub kind: ChnotKind,
     pub kind_id: Varchar<200>,
-    pub kspace: Varchar<200>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,12 +69,10 @@ pub struct ChnotThreadArchiveRsp {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadListReq {
     pub query: Option<String>,
-    pub thread_otid: Option<TID>,
 
     pub tags: Option<MdwtTagSearchType>,
     pub kinds: Vec<ChnotKind>,
 
-    pub with_omitted: Option<bool>,
     pub with_archive: Option<bool>,
 
     // Paging
@@ -88,7 +82,7 @@ pub struct ChnotThreadListReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadListRsp {
-    pub data: Vec<ChnotThread>,
+    pub data: Vec<ChnotThreadListRspData>,
     pub has_next: bool,
     pub next_start: usize,
 }

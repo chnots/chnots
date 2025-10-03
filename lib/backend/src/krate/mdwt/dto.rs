@@ -62,6 +62,6 @@ where
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MdwtTagUpdateReq {
     pub content: Text,
-    pub thread_otid: TID,
+    pub mdwt_otid: TID,
     pub kspace: Varchar<40>,
 }

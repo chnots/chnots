@@ -1,8 +1,7 @@
 use super::mapper::ChnotMapper;
 use super::*;
-use crate::krate::mdwt::{MdwtRecord, MdwtTag};
-use crate::krate::toent::logic::EventBuilder;
-use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::krate::llmchat::LLMChatRecord;
+use crate::krate::mdwt::{MdwtRecord, MdwtRecordTable, MdwtTag};
 use crate::mapper::Curd;
 use crate::mapper::db::helper::{Ddls, create_tables};
 use crate::mapper::db::{
@@ -10,69 +9,13 @@ use crate::mapper::db::{
     KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
-use crate::util::result_util::UnwrapOr;
+use crate::util::string_util::StringUtils;
 use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, SqlBuilder};
-use chin_sql::{LimitOffset, Wheres};
+use chin_sql::{Join, JoinCond, Wheres};
 use chin_tools::{AResult, EResult};
-use chrono::Local;
-use itertools::Itertools;
-
-const UNTAGGED_TAG: &str = "<NON>";
-
-#[inline]
-fn chnot_query_sql<'a>() -> SqlBuilder<'a> {
-    SqlBuilder::new()
-    .seg("SELECT r.tid as rec_tid, r.content, r.archor,")
-    .seg("tm.otid as meta_otid, tm.kspace, tm.pin_time, tm.archive_time, r.todo_event, tm.tid as meta_tid")
-    .seg("FROM chnot_thread_meta tm left join chnot_meta cm on tm.otid = cm.thread_otid and cm.korder=0 and cm.kind = 'mdwt' left join mdwt_record r ON cast(cm.kind_id as bigint) = r.otid")
-}
-
-#[inline]
-fn chnot_thread_query_mapper(row: KDbRow) -> AResult<ChnotThread> {
-    let chnot = if let (Ok(tid), Ok(content), Ok(archor), Ok(todo_event), Ok(otid)) = (
-        row.try_get("rec_tid"),
-        row.try_get("content"),
-        row.try_get("archor"),
-        {
-            let opt: AResult<Option<String>> = row.try_get("todo_event");
-            match opt {
-                Ok(Some(opt)) => {
-                    let c: AResult<Option<TodoEvent>> =
-                        Ok(Some(TodoEvent::try_from_standrd_str(opt.as_str())?));
-                    c
-                }
-
-                Ok(None) => Ok(None),
-                Err(_) => Ok(None),
-            }
-        },
-        row.try_get("meta_otid"),
-    ) {
-        Some(MdwtRecord {
-            tid,
-            content,
-            archor,
-            todo_event,
-            otid,
-        })
-    } else {
-        None
-    };
-
-    let meta = ChnotThreadMeta {
-        otid: row.try_get("meta_otid")?,
-        kspace: row.try_get("kspace")?,
-        pin_time: row.try_get("pin_time")?,
-        archive_time: row.try_get("archive_time")?,
-        tid: row.try_get("meta_tid")?,
-    };
-    Ok(ChnotThread {
-        head_content: chnot.as_ref().map(|c| c.content.clone()),
-        todo_event: chnot.and_then(|c| c.todo_event),
-        meta,
-    })
-}
+use chrono::{Local, format};
+use log::info;
 
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
@@ -90,55 +33,93 @@ impl ChnotMapper for KDb {
         &self,
         req: KReq<ChnotThreadListReq>,
     ) -> AResult<ChnotThreadListRsp> {
-        let page_size = req.page_size;
-        let page_start = req.start_index;
+        let ctm = ChnotThreadMetaTable::new("ctm");
+        let cto = ChnotThreadOrderTable::new("cto");
+        let cm = ChnotMetaTable::new("cm");
+        let mr = MdwtRecordTable::new("mr");
 
-        let chnot_sql = SqlBuilder::new()
-            .seg("select * from ")
-            .sub("t", chnot_query_sql())
-            .some_then(req.tags.as_ref(), |tag, sr| {
-                sr.seg("inner join")
-                    .sub(
-                        "ct",
-                        MdwtTag::with_those_tag_meta_otids(req.get_spaces(), Some(tag)),
-                    )
-                    .seg("on t.meta_otid = ct.meta_otid")
-            })
-            .r#where(Wheres::and([
-                // TODO: group by perm tid
-                Wheres::transform(req.with_archive, |e| {
-                    if e.default_false() {
-                        Wheres::None
-                    } else {
-                        Wheres::is_null("archive_time")
-                    }
-                }),
-                Wheres::r#in(
-                    "t.kspace",
-                    req.mkspaces
-                        .clone()
-                        .into_iter()
-                        .merge(vec![req.kspace.clone()])
-                        .collect(),
-                ),
-                Wheres::if_some(req.query.as_ref(), |content| {
-                    Wheres::ilike("t.content", content, ILikeType::Fuzzy)
-                }),
-                Wheres::if_some(req.thread_otid, |tid| Wheres::equal("t.meta_otid", tid)),
-            ]))
-            .seg("ORDER BY t.pin_time asc, t.meta_otid desc")
-            .custom(LimitOffset::new(req.page_size).offset_if_some(Some(req.start_index)));
+        let mut sql_builder = SqlBuilder::new()
+            .seg("select ctm.*, cm.otid as chnot_otid, mr.content as cont from")
+            .merge(
+                Join::first(&ctm)
+                    .left_join(&cto, [(ctm.otid(), cto.thread_otid()).into()])
+                    .left_join(&cm, [(ctm.otid(), cto.otid()).into()]),
+            );
 
-        let cs = self
+        if let Some(query) = req.query.as_ref()
+            && !query.is_empty()
+        {
+            let mdwt = SqlBuilder::read(
+                MdwtRecord::TABLE,
+                &[
+                    &format!("{} content", MdwtRecord::CONTENT),
+                    &format!("{} kind_id", MdwtRecord::OTID),
+                ],
+            )
+            .r#where(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy));
+
+            let llmchat = SqlBuilder::read(
+                LLMChatRecord::TABLE,
+                &[
+                    &format!("{} content", LLMChatRecord::CONTENT),
+                    &format!("{} kind_id", LLMChatRecord::SESSION_OTID),
+                ],
+            )
+            .r#where(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy));
+
+            let keyword_matcher = SqlBuilder::new().merge(mdwt).merge("union").merge(llmchat);
+
+            sql_builder = sql_builder
+                .seg("inner join (")
+                .merge(keyword_matcher)
+                .seg(") cont")
+                .seg("on cont.kind_id = ")
+                .seg(cm.kind_id().twn());
+        } else {
+            sql_builder = sql_builder
+                .seg("left join")
+                .seg(mr.nwa())
+                .seg("on")
+                .seg(cm.kind_id().twn())
+                .seg("=")
+                .seg(format!("CAST({} as varchar)", mr.otid().twn()))
+        }
+
+        if let Some(tags) = req.tags.as_ref() {
+            let mt = MdwtTag::mdwt_otids_sub(req.mkspaces.clone(), Some(tags));
+            sql_builder = sql_builder
+                .seg("inner join (")
+                .merge(mt)
+                .seg(") mt on")
+                .seg("mt.otid = ")
+                .seg(cm.otid().twn())
+                .seg("or")
+                .seg("mt.otid = ")
+                .seg(cm.kind_id().twn())
+        }
+
+        let c = self
             .conn()
             .await?
-            .qry_list(chnot_sql, chnot_thread_query_mapper)
+            .qry_list(sql_builder, |row| {
+                Ok(ChnotThreadListRspData {
+                    meta: ChnotThreadMeta {
+                        otid: row.try_get(ChnotThreadMeta::OTID)?,
+                        kspace: row.try_get(ChnotThreadMeta::KSPACE)?,
+                        pin_time: row.try_get(ChnotThreadMeta::PIN_TIME)?,
+                        archive_time: row.try_get(ChnotThreadMeta::ARCHIVE_TIME)?,
+                        tid: row.try_get(ChnotThreadMeta::TID)?,
+                    },
+                    preview_text: row.try_get("preview_text")?,
+                    chnot_otid: row.try_get("chnot_otid")?,
+                })
+            })
             .await?;
 
         Ok(ChnotThreadListRsp {
-            has_next: cs.len() >= page_size,
-            data: cs,
-            next_start: page_start + page_size,
+            has_next: c.len() >= req.page_size,
+            data: c,
+            next_start: req.start_index + req.page_size,
         })
     }
 
@@ -252,7 +233,7 @@ impl ChnotMapper for KDb {
                     ChnotThreadOrder::OTID
                 ))
                 .r#where(Wheres::and([Wheres::equal(
-                    ChnotThreadOrder::THREAD_OTID,
+                    &ChnotThreadOrder::THREAD_OTID.prefix_with_sep(ChnotThreadOrder::TABLE, "."),
                     req.thread_otid,
                 )])),
                 |row| ChnotMeta::try_from(&row),
@@ -289,7 +270,6 @@ impl ChnotMapper for KDb {
                 tid: TID::default(),
                 kind: b.kind,
                 kind_id: b.kind_id,
-                kspace: b.kspace,
             };
 
             result_metas.push(rec.clone());

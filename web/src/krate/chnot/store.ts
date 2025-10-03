@@ -1,7 +1,11 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create } from "zustand";
 import { combine } from "zustand/middleware";
-import { ChnotThread, ChnotThreadListRsp, MdwtTagSearchType } from "./dto";
+import {
+  ChnotThreadListRspData,
+  ChnotThreadListRsp,
+  MdwtTagSearchType,
+} from "./dto";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
 import { kspaceStore } from "../kspace/store";
@@ -33,12 +37,12 @@ interface State {
   fetchMoreChnots(): unknown;
 
   /**
-   * ChnotThread Map by ChnotThread Meta Id
+   * ChnotThreadListRspData Map by ChnotThreadListRspData Meta Id
    */
-  threadMapByThreadId: DbCache<ChnotThread>;
+  threadMapByThreadId: DbCache<ChnotThreadListRspData>;
 
   /**
-   * Current ChnotThread Meta Id
+   * Current ChnotThreadListRspData Meta Id
    */
   curThreadOtid?: TID;
 
@@ -112,7 +116,7 @@ export const useChnotStore = create(
 
       await get().fetchMoreChnots();
     },
-    overwriteChnotCache: (chnot: ChnotThread) => {
+    overwriteChnotCache: (chnot: ChnotThreadListRspData) => {
       set((state) => {
         const cmm = state.threadMapByThreadId;
         let dbCache = cmm.dbCache;

@@ -49,7 +49,7 @@ pub struct MdwtTag {
     pub tag: Varchar<800>,
     #[gts_primary]
     #[gts_type = "i64"]
-    pub thread_otid: TID,
+    pub mdwt_otid: TID,
     pub kspace: Varchar<40>,
     #[gts_unique]
     #[gts_type = "i64"]
@@ -58,7 +58,7 @@ pub struct MdwtTag {
 
 impl Curd for MdwtTag {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.tag.clone(), self.thread_otid)
+        Self::pkey_cond(self.tag.clone(), self.mdwt_otid)
     }
     fn tid(&self) -> TID {
         self.tid

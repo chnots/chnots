@@ -2,7 +2,7 @@ import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/lib/date-utils";
 import Icon from "@/common/component/icon";
 import { useChnotStore } from "@/krate/chnot/store";
-import { ChnotThread } from "@/krate/chnot/dto";
+import { ChnotThreadListRspData } from "@/krate/chnot/dto";
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -67,7 +67,7 @@ const ChnotSidebarItem = React.forwardRef(
     {
       chnotThread,
       showKSpace,
-    }: { chnotThread: ChnotThread; showKSpace: boolean },
+    }: { chnotThread: ChnotThreadListRspData; showKSpace: boolean },
     ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const {

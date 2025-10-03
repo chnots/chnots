@@ -2,7 +2,7 @@ use chin_sql::GenerateTableSchema;
 use chin_sql::SqlValue;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-/// ChnotThread: knot, which stands for the note.
+/// chnot: knot, which stands for the note.
 ///
 /// Ancients used knots to record events,
 /// so I use "knot" as the basic unit for my notebook,
@@ -90,8 +90,6 @@ pub(crate) struct ChnotMeta {
     #[gts_key]
     pub kind_id: Varchar<200>,
 
-    pub kspace: Varchar<200>,
-
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
@@ -106,7 +104,6 @@ impl TryFrom<&KDbRow> for ChnotMeta {
             kind: value.try_get(Self::KIND)?,
             kind_id: value.try_get(Self::KIND_ID)?,
             tid: value.try_get(Self::TID)?,
-            kspace: value.try_get(Self::KSPACE)?,
         })
     }
 }

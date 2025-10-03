@@ -35,7 +35,7 @@ import { ChnotMetaKind } from "../vo";
  * - Maintain State
  *   - Just edit and save that chnot.
  */
-const ChnotThread = ({
+const ChnotThreadListRspData = ({
   threadMeta,
   cachedThreadMetaRef: cachedThreadOtidRef,
   globalBar,
@@ -202,4 +202,4 @@ const ChnotThread = ({
   );
 };
 
-export default ChnotThread;
+export default ChnotThreadListRspData;
