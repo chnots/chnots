@@ -20,6 +20,7 @@ export type KFileUploadRsp = {
 
 export type KfileInlineUploadReq = {
   meta_id: Varchar<100>;
+  otid: TID;
   res: InlineKFile;
   archor_intervals: number;
   filename?: Varchar<1024>;
@@ -62,6 +63,7 @@ export type KfileInlineDownloadBySidRsp = {
 export type KfileAssetChunkUploadReq = {
   upload_id: string;
   meta_id: string;
+  otid: number;
   filename: string;
   chunk_no: number;
   total_chunks: number;

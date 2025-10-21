@@ -8,13 +8,14 @@ export type InlineKFile = {
 };
 
 export type KFileMeta = {
+  otid: TID;
   id: Varchar<100>;
   inline: boolean;
   archor: boolean;
-  tid: TID;
   filename: Varchar<1024>;
   content_type: Varchar<200>;
   last_modified: TID;
   sid: Varchar<100>;
   filesize: number;
+  tid: TID;
 };
