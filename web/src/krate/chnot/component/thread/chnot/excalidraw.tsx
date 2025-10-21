@@ -11,10 +11,9 @@ import {
   fetchExcalidraw,
   saveExcalidraw,
 } from "@/krate/tool/excalidraw/service";
-import { ChnotChromeProps } from "./chrome";
+import { ChnotChromeProps } from "./rich-chnot";
 
 const ExcalidrawBlock = ({
-  chnotOtid,
   kindId: initialKindId,
   onPostSave,
 }: ChnotChromeProps) => {
@@ -50,19 +49,15 @@ const ExcalidrawBlock = ({
           setState(state);
           onPostSave({
             saveState: SaveState.Saved,
-            data: {
-              chnotOtid: chnotOtid,
-              kind: ChnotKind.ExcalidrawV1,
-              kindId: kindId,
-            },
+            kindId: kindId,
           });
         },
         onFail: () => {
-          onPostSave({ saveState: SaveState.Error });
+          onPostSave({ saveState: SaveState.Error, kindId });
         },
       });
     },
-    [kindId, chnotOtid],
+    [kindId],
   );
 
   return (

@@ -11,11 +11,10 @@ use crate::mapper::db::{
 use crate::model::dto::KReq;
 use crate::util::string_util::StringUtils;
 use chin_sql::time_type::TID;
-use chin_sql::{ILikeType, SqlBuilder};
-use chin_sql::{Join, JoinCond, Wheres};
+use chin_sql::{ILikeType, LimitOffset, SqlBuilder};
+use chin_sql::{Join, Wheres};
 use chin_tools::{AResult, EResult};
-use chrono::{Local, format};
-use log::info;
+use chrono::Local;
 
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
@@ -36,14 +35,14 @@ impl ChnotMapper for KDb {
         let ctm = ChnotThreadMetaTable::new("ctm");
         let cto = ChnotThreadOrderTable::new("cto");
         let cm = ChnotMetaTable::new("cm");
-        let mr = MdwtRecordTable::new("mr");
+        let cont = MdwtRecordTable::new("cont");
 
         let mut sql_builder = SqlBuilder::new()
-            .seg("select ctm.*, cm.otid as chnot_otid, mr.content as cont from")
+            .seg("select ctm.*, cast(cm.otid as varchar) as chnot_otid, cont.content as cont from")
             .merge(
                 Join::first(&ctm)
                     .left_join(&cto, [(ctm.otid(), cto.thread_otid()).into()])
-                    .left_join(&cm, [(ctm.otid(), cto.otid()).into()]),
+                    .left_join(&cm, [(cm.otid(), cto.otid()).into()]),
             );
 
         if let Some(query) = req.query.as_ref()
@@ -78,11 +77,11 @@ impl ChnotMapper for KDb {
         } else {
             sql_builder = sql_builder
                 .seg("left join")
-                .seg(mr.nwa())
+                .seg(cont.nwa())
                 .seg("on")
                 .seg(cm.kind_id().twn())
                 .seg("=")
-                .seg(format!("CAST({} as varchar)", mr.otid().twn()))
+                .seg(format!("CAST({} as varchar)", cont.otid().twn()))
         }
 
         if let Some(tags) = req.tags.as_ref() {
@@ -98,7 +97,27 @@ impl ChnotMapper for KDb {
                 .seg(cm.kind_id().twn())
         }
 
-        let c = self
+        sql_builder = sql_builder
+            .r#where(Wheres::and([
+                Wheres::transform(req.query.as_ref(), |q| {
+                    if q.is_some() {
+                        cto.korder().v_eq(0)
+                    } else {
+                        Wheres::None
+                    }
+                }),
+                ctm.kspace().v_in(req.get_spaces()),
+            ]))
+            .seg("order by")
+            .seg(ctm.pin_time().twn())
+            .seg("desc,")
+            .seg(ctm.otid().twn())
+            .seg("desc,")
+            .seg(cto.korder().twn())
+            .seg("asc")
+            .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index));
+
+        let data = self
             .conn()
             .await?
             .qry_list(sql_builder, |row| {
@@ -110,16 +129,16 @@ impl ChnotMapper for KDb {
                         archive_time: row.try_get(ChnotThreadMeta::ARCHIVE_TIME)?,
                         tid: row.try_get(ChnotThreadMeta::TID)?,
                     },
-                    preview_text: row.try_get("preview_text")?,
+                    preview_text: row.try_get("cont")?,
                     chnot_otid: row.try_get("chnot_otid")?,
                 })
             })
             .await?;
 
         Ok(ChnotThreadListRsp {
-            has_next: c.len() >= req.page_size,
-            data: c,
-            next_start: req.start_index + req.page_size,
+            next_start: req.start_index + data.len(),
+            has_next: data.len() >= req.page_size,
+            data,
         })
     }
 
@@ -197,7 +216,9 @@ impl ChnotMapper for KDb {
 
             metas.push(rec.clone());
 
-            tx.as_executor().omit_rows::<ChnotMeta>(rec.pkey()).await?;
+            tx.as_executor()
+                .omit_rows::<ChnotThreadOrder>(rec.pkey())
+                .await?;
             tx.exec(rec.to_sql_inserter()).await?;
         }
 
@@ -233,7 +254,7 @@ impl ChnotMapper for KDb {
                     ChnotThreadOrder::OTID
                 ))
                 .r#where(Wheres::and([Wheres::equal(
-                    &ChnotThreadOrder::THREAD_OTID.prefix_with_sep(ChnotThreadOrder::TABLE, "."),
+                    ChnotThreadOrder::THREAD_OTID.prefix_with_sep(ChnotThreadOrder::TABLE, "."),
                     req.thread_otid,
                 )])),
                 |row| ChnotMeta::try_from(&row),

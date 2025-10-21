@@ -7,7 +7,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { SaveState } from "@/common/types";
-import { ChnotChromeProps } from "./chrome";
+import { ChnotChromeProps } from "./rich-chnot";
 import { genTID, TID } from "@/lib/id_util";
 import {
   chnotTagNameList,
@@ -55,12 +55,7 @@ const chnotCompletions = async (
   };
 };
 
-const MdwtRecord = ({
-  chnotOtid,
-  isFocused,
-  onPostSave,
-  kindId,
-}: ChnotChromeProps) => {
+const MdwtRecord = ({ readonly, onPostSave, kindId }: ChnotChromeProps) => {
   const [mdwtOtid] = useState<TID>(kindId ? parseInt(kindId) : genTID());
 
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -88,21 +83,18 @@ const MdwtRecord = ({
   const directlySave = async () => {
     if (toSaveArg.current) {
       try {
-        onPostSave({ saveState: SaveState.Saving });
-        await mdwtCommit(toSaveArg.current);
-        let first = toSaveArg.current.mdwt;
         onPostSave({
-          content: first.content,
+          saveState: SaveState.Saving,
+          kindId: mdwtOtid.toString(),
+        });
+        await mdwtCommit(toSaveArg.current);
+        onPostSave({
           saveState: SaveState.Saved,
-          data: {
-            chnotOtid: chnotOtid,
-            kind: ChnotKind.MDWT,
-            kindId: mdwtOtid.toString(),
-          },
+          kindId: mdwtOtid.toString(),
         });
         toSaveArg.current = null;
       } catch (_ex) {
-        onPostSave({ saveState: SaveState.Error });
+        onPostSave({ saveState: SaveState.Error, kindId: mdwtOtid.toString() });
       }
     }
   };
@@ -115,16 +107,19 @@ const MdwtRecord = ({
     true,
   );
 
-  return !isFocused ? (
+  return !readonly ? (
     <MarkdownViewer content={cachedContentRef.current ?? ""} keepBreak={true} />
   ) : (
-    <div className="w-full break-all" onBlur={() => directlySave()}>
+    <div className="w-full h-full break-all" onBlur={() => directlySave()}>
       <MdwtEditorMemo
         content={cachedContentRef.current}
         onContentChange={(content) => {
           cachedContentRef.current = content;
           if (saveStateRef.current != SaveState.Dirty) {
-            onPostSave({ saveState: SaveState.Dirty });
+            onPostSave({
+              saveState: SaveState.Dirty,
+              kindId: mdwtOtid.toString(),
+            });
           }
 
           const req: MdwtCommitReq = {

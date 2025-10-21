@@ -1,6 +1,6 @@
 import { SaveState } from "@/common/types";
 import { ChnotKind } from "@/krate/chnot/po";
-import { ChnotChromeProps } from "./chrome";
+import { ChnotChromeProps } from "./rich-chnot";
 import KTabChnot from "@/krate/ktab/component/ktab-container";
 import { KTabMeta } from "@/krate/ktab/po";
 import { KTabRowData } from "@/krate/ktab/component/editable-cell";
@@ -14,12 +14,7 @@ import { ktabGetViewValue } from "@/krate/ktab/dto";
 import { genTID, genUID, TID } from "@/lib/id_util";
 import { useEffect, useRef, useState } from "react";
 
-const TableChnot = ({
-  chnotOtid,
-  kindId,
-  onPostSave,
-  isFocused,
-}: ChnotChromeProps) => {
+const TableChnot = ({ kindId, onPostSave, readonly }: ChnotChromeProps) => {
   const [meta, setMeta] = useState<KTabMeta>();
 
   useEffect(() => {
@@ -80,14 +75,10 @@ const TableChnot = ({
           setMeta(meta);
           onPostSave({
             saveState: SaveState.Saved,
-            data: {
-              chnotOtid,
-              kind: ChnotKind.KTab,
-              kindId: meta.otid.toString(),
-            },
+            kindId: meta.otid.toString(),
           });
         }}
-        isEditing={isFocused || true}
+        isEditing={readonly || true}
       />
     )
   );

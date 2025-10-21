@@ -57,16 +57,6 @@ pub struct ChnotMetaCommitRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadArchiveReq {
-    pub thread_otid: TID,
-    /// logic or physical deletion
-    pub logic: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadArchiveRsp {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadListReq {
     pub query: Option<String>,
 

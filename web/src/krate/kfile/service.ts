@@ -47,7 +47,7 @@ export const kfileMetaFetch = async (
 export const kfileInlineUpload = async (
   req: KfileInlineUploadReq,
 ): Promise<KfileInlineUploadRsp> => {
-  return await request.postJson("api/v1/kfile-inline-upload", req);
+  return await request.putJson("api/v1/kfile-inline-upload", req);
 };
 
 export const kfileInlineDownload = async (

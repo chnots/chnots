@@ -18,7 +18,7 @@ import {
   chnotThreadMetaOverwrite,
   chnotThreadOrderCommit,
 } from "../../service";
-import Chrome, { PostSaveArg } from "./chnot/chrome";
+import RichChnot, { PostSaveArg } from "./chnot/rich-chnot";
 import LoadingPage from "@/common/pages/loading-page";
 import { useChnotStore } from "../../store";
 import { SaveState } from "@/common/types";
@@ -152,8 +152,6 @@ const ChnotThreadListRspData = ({
         ) {
           overwriteChnotCache({
             meta: cachedThreadOtidRef.current,
-            head_content: arg.content,
-            todo_event: undefined,
           });
         }
       }
@@ -178,13 +176,8 @@ const ChnotThreadListRspData = ({
           <div className="flex flex-col space-y-4 p-4 border m-2 w-full max-w-4xl">
             {chnotOrders.map((otid, index) => {
               return (
-                <Chrome
+                <RichChnot
                   key={otid}
-                  onMoveUp={() => {}}
-                  onMoveDown={() => {}}
-                  onDelete={() => {}}
-                  isFirst={index === 0}
-                  isLast={index === chnotOrders.length - 1}
                   otid={otid}
                   onPostSave={(arg: PostSaveArg) => {
                     if (arg.saveState === SaveState.Saved) {
