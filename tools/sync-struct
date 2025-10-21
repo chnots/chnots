@@ -239,6 +239,9 @@ def sync_one_file(serverfile: str):
         web_content = f.read()
     for rt in rtypes:
         print(" => parse struct:", rt.struct_name)
+        if rt.struct_name.endswith("<"):
+            print(" -> skip: ", rt.struct_name)
+            continue
 
         pos = get_type_position(web_content, rt.struct_name)
         web_new = convert_rs_2_ts(rt)
