@@ -1,13 +1,14 @@
 use super::*;
 use axum::body::Bytes;
 use axum_typed_multipart::{FieldData, TryFromMultipart};
-use chin_sql::str_type::Varchar;
+use chin_sql::{str_type::Varchar, time_type::TID};
 use serde::{Deserialize, Serialize};
 
 #[derive(TryFromMultipart)]
 pub struct KfileAssetChunkUploadReq {
     pub upload_id: String,
     pub meta_id: String,
+    pub otid: i64,
     pub filename: String,
     pub chunk_no: usize,
     pub total_chunks: usize,
@@ -26,6 +27,7 @@ pub struct KFileUploadRsp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KfileInlineUploadReq {
     pub meta_id: Varchar<100>,
+    pub otid: TID,
     pub res: InlineKFile,
     /// archor interval second.
     pub archor_intervals: i64,

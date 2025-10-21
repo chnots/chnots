@@ -99,6 +99,7 @@ pub(super) async fn kfile_asset_chunk_upload(
         meta_id,
         content_type,
         upload_id,
+        otid,
     }): TypedMultipart<KfileAssetChunkUploadReq>,
 ) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
@@ -126,11 +127,12 @@ pub(super) async fn kfile_asset_chunk_upload(
             assemble_file(tmp_dir, state.config.attachment.clone(), total_chunks).await?;
 
         let kfile = KFileMeta {
+            otid: otid.try_into()?,
+            id: meta_id.try_into()?,
             tid,
             content_type: content_type.try_into()?,
             filesize,
             sid: blake3_sum.to_string().try_into()?,
-            id: meta_id.try_into()?,
             inline: false,
             archor: false,
             filename: filename.try_into()?,

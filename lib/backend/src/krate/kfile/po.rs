@@ -8,14 +8,14 @@ use crate::impl_otid_support;
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct KFileMeta {
     #[gts_primary]
+    #[gts_type = "i64"]
+    pub otid: TID,
+
+    #[gts_unique]
     pub id: Varchar<100>,
 
     pub inline: bool,
     pub archor: bool,
-
-    #[gts_unique]
-    #[gts_type = "i64"]
-    pub tid: TID,
 
     pub filename: Varchar<1024>,
     pub content_type: Varchar<200>,
@@ -26,6 +26,10 @@ pub struct KFileMeta {
     #[gts_key]
     pub sid: Varchar<100>,
     pub filesize: i64,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
 }
 
 impl_otid_support! {KFileMeta}
