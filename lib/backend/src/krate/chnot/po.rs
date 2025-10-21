@@ -87,8 +87,8 @@ pub(crate) struct ChnotMeta {
 
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
-    #[gts_key]
-    pub kind_id: Varchar<200>,
+
+    pub kspace: Varchar<40>,
 
     #[gts_unique]
     #[gts_type = "i64"]
@@ -102,8 +102,8 @@ impl TryFrom<&KDbRow> for ChnotMeta {
         Ok(Self {
             otid: value.try_get(Self::OTID)?,
             kind: value.try_get(Self::KIND)?,
-            kind_id: value.try_get(Self::KIND_ID)?,
             tid: value.try_get(Self::TID)?,
+            kspace: value.try_get(Self::KSPACE)?,
         })
     }
 }

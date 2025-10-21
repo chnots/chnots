@@ -20,7 +20,7 @@ export type ChnotThreadMeta = {
 export type ChnotMeta = {
   otid: TID;
   kind: ChnotKind;
-  kind_id: Varchar<200>;
+  kspace: Varchar<40>;
   tid: TID;
 };
 

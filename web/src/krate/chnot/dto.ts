@@ -67,7 +67,7 @@ export type ChnotThreadListRsp = {
 export type ChnotMetaCommitReqData = {
   otid: TID;
   kind: ChnotKind;
-  kind_id: Varchar<200>;
+  kspace: Varchar<40>;
 };
 export type ChnotMetaCommitReq = {
   metas: ChnotMetaCommitReqData[];

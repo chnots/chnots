@@ -43,7 +43,7 @@ pub struct ChnotThreadOrderCommitRsp {}
 pub struct ChnotMetaCommitReqData {
     pub otid: TID,
     pub kind: ChnotKind,
-    pub kind_id: Varchar<200>,
+    pub kspace: Varchar<40>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

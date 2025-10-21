@@ -38,7 +38,7 @@ impl ChnotMapper for KDb {
         let cont = MdwtRecordTable::new("cont");
 
         let mut sql_builder = SqlBuilder::new()
-            .seg("select ctm.*, cast(cm.otid as varchar) as chnot_otid, cont.content as cont from")
+            .seg("select ctm.*, cm.otid as chnot_otid, cont.content as cont from")
             .merge(
                 Join::first(&ctm)
                     .left_join(&cto, [(ctm.otid(), cto.thread_otid()).into()])
@@ -52,7 +52,7 @@ impl ChnotMapper for KDb {
                 MdwtRecord::TABLE,
                 &[
                     &format!("{} content", MdwtRecord::CONTENT),
-                    &format!("{} kind_id", MdwtRecord::OTID),
+                    &format!("{} chnot_otid", MdwtRecord::OTID),
                 ],
             )
             .r#where(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy));
@@ -61,7 +61,7 @@ impl ChnotMapper for KDb {
                 LLMChatRecord::TABLE,
                 &[
                     &format!("{} content", LLMChatRecord::CONTENT),
-                    &format!("{} kind_id", LLMChatRecord::SESSION_OTID),
+                    &format!("{} chnot_otid", LLMChatRecord::SESSION_OTID),
                 ],
             )
             .r#where(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy));
@@ -72,16 +72,16 @@ impl ChnotMapper for KDb {
                 .seg("inner join (")
                 .merge(keyword_matcher)
                 .seg(") cont")
-                .seg("on cont.kind_id = ")
-                .seg(cm.kind_id().twn());
+                .seg("on cont.chnot_otid = ")
+                .seg(cm.otid().twn());
         } else {
             sql_builder = sql_builder
                 .seg("left join")
                 .seg(cont.nwa())
                 .seg("on")
-                .seg(cm.kind_id().twn())
+                .seg(cm.otid().twn())
                 .seg("=")
-                .seg(format!("CAST({} as varchar)", cont.otid().twn()))
+                .seg(cont.otid().twn())
         }
 
         if let Some(tags) = req.tags.as_ref() {
@@ -94,7 +94,7 @@ impl ChnotMapper for KDb {
                 .seg(cm.otid().twn())
                 .seg("or")
                 .seg("mt.otid = ")
-                .seg(cm.kind_id().twn())
+                .seg(cm.otid().twn())
         }
 
         sql_builder = sql_builder
@@ -290,7 +290,7 @@ impl ChnotMapper for KDb {
                 otid: b.otid,
                 tid: TID::default(),
                 kind: b.kind,
-                kind_id: b.kind_id,
+                kspace: b.kspace,
             };
 
             result_metas.push(rec.clone());
