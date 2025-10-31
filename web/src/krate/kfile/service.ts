@@ -4,11 +4,11 @@ import {
   KfileInlineUploadReq,
   KfileInlineDownloadReq,
   KfileInlineDownloadRsp,
-  KFileUploadReq,
   KFileUploadRsp,
   KfileInlineUploadRsp,
   KfileMetaFetchReq,
   KfileMetaFetchRsp,
+  KfileAssetChunkUploadReq,
 } from "./dto";
 import { chnotShortDate } from "@/lib/date-utils";
 import { KFileMeta } from "./po";
@@ -23,7 +23,8 @@ export const kfileUpload = async ({
   last_modified,
   filesize,
   content_type,
-}: KFileUploadReq): Promise<KFileUploadRsp> => {
+  otid,
+}: KfileAssetChunkUploadReq): Promise<KFileUploadRsp> => {
   const data = new FormData();
   data.append("chunk", chunk);
   data.append("filename", filename);
@@ -34,6 +35,7 @@ export const kfileUpload = async ({
   data.append("content_type", content_type.toString());
   data.append("meta_id", meta_id);
   data.append("upload_id", upload_id);
+  data.append("otid", otid.toString());
 
   return await request.postFormdata("api/v1/kfile-asset-chunk-upload", data);
 };
@@ -53,7 +55,7 @@ export const kfileInlineUpload = async (
 export const kfileInlineDownload = async (
   req: KfileInlineDownloadReq,
 ): Promise<KfileInlineDownloadRsp> => {
-  return await request.get("api/v1/kfile-inline-download", req);
+  return await request.postJson("api/v1/kfile-inline-download", req);
 };
 
 export const getResouceDownloadUrl = (kfile: KFileMeta): string => {

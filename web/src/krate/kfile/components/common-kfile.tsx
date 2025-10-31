@@ -43,7 +43,7 @@ export const CommonKFile = ({
   otid,
   onPostSave,
 }: {
-  otid?: TID;
+  otid: TID;
   onPostSave?: (r: KFileMeta) => void;
 }) => {
   const [progress, setProgress] = useState(0);
@@ -89,6 +89,7 @@ export const CommonKFile = ({
           content_type: uploadFile.type,
           filesize: uploadFile.size,
           last_modified: uploadFile.lastModified,
+          otid: otid,
         });
 
         if (kfile) {

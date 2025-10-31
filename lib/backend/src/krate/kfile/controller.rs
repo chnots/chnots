@@ -11,7 +11,7 @@ use super::{mapper::KFileMapper, *};
 
 pub(crate) async fn kfile_meta_fetch(
     state: State<ShareAppState>,
-    Query(req): Query<KfileMetaFetchReq>,
+    Json(req): Json<KfileMetaFetchReq>,
 ) -> KResponse<KfileMetaFetchRsp> {
     state.mapper.query_kfile_meta(req).await.into()
 }
@@ -19,7 +19,7 @@ pub(crate) async fn kfile_meta_fetch(
 async fn kfile_inline_download(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<KfileInlineDownloadReq>,
+    Json(req): Json<KfileInlineDownloadReq>,
 ) -> KResponse<KfileInlineDownloadRsp> {
     state
         .mapper
@@ -60,7 +60,7 @@ async fn kfile_inline_download_by_sid(
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/kfile-meta-fetch", get(kfile_meta_fetch))
+        .route("/api/v1/kfile-meta-fetch", post(kfile_meta_fetch))
         .route(
             "/api/v1/kfile-asset-chunk-upload",
             post(|headers, state, mp| async {
@@ -81,7 +81,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             get(transfer::kfile_asset_download),
         )
         .route("/api/v1/kfile-inline-upload", put(kfile_inline_upload))
-        .route("/api/v1/kfile-inline-download", get(kfile_inline_download))
+        .route("/api/v1/kfile-inline-download", post(kfile_inline_download))
         .route(
             KFILE_INLINE_DOWNLOAD_BY_SID,
             get(kfile_inline_download_by_sid),

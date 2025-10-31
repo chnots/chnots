@@ -2,18 +2,6 @@ import { TID } from "@/lib/id_util";
 import { InlineKFile, KFileMeta } from "./po";
 import { Varchar } from "@/lib/types";
 
-export type KFileUploadReq = {
-  upload_id: string;
-  meta_id: string;
-  filename: string;
-  chunk_no: number;
-  total_chunks: number;
-  chunk: Blob;
-  last_modified: number;
-  filesize: number;
-  content_type: string;
-};
-
 export type KFileUploadRsp = {
   kfile?: KFileMeta;
   finished: boolean;
@@ -66,7 +54,7 @@ export type KfileInlineDownloadBySidRsp = {
 export type KfileAssetChunkUploadReq = {
   upload_id: string;
   meta_id: string;
-  otid: number;
+  otid: TID;
   filename: string;
   chunk_no: number;
   total_chunks: number;
