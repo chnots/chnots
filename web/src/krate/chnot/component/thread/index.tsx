@@ -1,10 +1,4 @@
-import React, {
-  RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
 import { PostSaveArg } from "./chnot/rich-chnot";
@@ -19,7 +13,8 @@ import {
   chnotThreadOrderCommit,
 } from "../../service";
 import { arraysAreEqual } from "@/lib/col-util";
-import { Button } from "@/common/component/ui/button";
+import { mdwtRecordList } from "@/krate/mdwt/service";
+import { MdwtRecord } from "@/krate/mdwt/po";
 
 /**
  * This is the main component for the `Chnots` app.
@@ -40,31 +35,46 @@ const ChnotThread = ({
 }) => {
   console.log("render Thread: ", threadMeta?.otid);
 
-  const { overwriteChnotCache } = useChnotStore(
-    useShallow((store) => {
-      return {
-        overwriteChnotCache: store.overwriteChnotCache,
-      };
-    }),
-  );
+  const { overwriteChnotCache } = useChnotStore((store) => {
+    return {
+      overwriteChnotCache: store.overwriteChnotCache,
+    };
+  });
 
   const savedChnotOrdersRef = useRef<TID[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
   const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
-  useEffect(() => {
-    chnotThreadMetaFetch({ thread_otid: threadMeta.otid }).then((rsp) => {
-      const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
-      if (chnotOtids.length == 0) {
-        setChnotOrders([genTID()]);
-      } else {
-        setChnotOrders([...chnotOtids, genTID()]);
-      }
-      if (rsp.thread_meta) {
-        savedChnotThreadMetaRef.current = rsp.thread_meta;
-      }
+  const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
+  const [loading, setLoading] = useState<boolean>(true);
 
-      savedChnotOrdersRef.current = chnotOtids;
-    });
+  useEffect(() => {
+    (async () => {
+      try {
+        const rsp = await chnotThreadMetaFetch({
+          thread_otid: threadMeta.otid,
+        });
+
+        if (rsp.thread_meta) {
+          savedChnotThreadMetaRef.current = rsp.thread_meta;
+        }
+
+        if (rsp.chnot_meta_sorted.length == 0) {
+          setChnotOrders([genTID()]);
+        } else {
+          const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
+
+          savedChnotOrdersRef.current = chnotOtids;
+
+          const mdwtMap = await mdwtRecordList({
+            mdwt_otids: chnotOtids,
+          });
+          setChnotOrders([...chnotOtids, genTID()]);
+          setMdwtMap(mdwtMap.mdwt_map);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [threadMeta]);
 
   const handlePostSaveOnChnot = useCallback(
@@ -95,12 +105,12 @@ const ChnotThread = ({
 
   return (
     <div className="flex flex-col w-full items-center overflow-y-auto">
-      {chnotOrders.length == 0 ? (
+      {loading ? (
         <LoadingPage />
       ) : (
         <>
           <div>{globalBar}</div>
-          <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl rounded-2xl border-separate border-spacing-2 border">
+          <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl items-center">
             {chnotOrders.map((otid, index) => {
               return (
                 <Chrome
@@ -111,6 +121,7 @@ const ChnotThread = ({
                       handlePostSaveOnChnot(arg);
                     }
                   }}
+                  content={mdwtMap[otid]?.content ?? undefined}
                 />
               );
             })}

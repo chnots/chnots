@@ -2,7 +2,11 @@ import { useChnotStore } from "@/krate/chnot/store";
 import DebounceInput from "./debounce-input";
 
 const SearchPanel = () => {
-  const { changeKeyword } = useChnotStore();
+  const { changeKeyword } = useChnotStore((store) => {
+    return {
+      changeKeyword: store.changeKeyword,
+    };
+  });
 
   return (
     <div className="h-full">

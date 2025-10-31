@@ -1,5 +1,5 @@
 import { SaveState } from "@/common/types";
-import { ChnotChromeProps } from "./rich-chnot";
+import { RichPropProps } from "./rich-chnot";
 import LLMChatTemplateList from "@/krate/llmchat/component/template-list";
 import { LLMChatTemplate } from "@/krate/llmchat/po";
 import { createRef, useEffect, useState } from "react";
@@ -7,20 +7,23 @@ import SessionContainer, {
   LLMChatEditorProvider,
   LLMChatContextProps,
 } from "@/krate/llmchat/component/session";
-import { genTID, TID } from "@/lib/id_util";
+import { TID } from "@/lib/id_util";
 import { useLLMChatStore } from "@/krate/llmchat/store";
-import { Button } from "@/common/component/ui/button";
 import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
+import Fullscreen from "./fullscreen";
 
-const LLMChatChnot = ({ otid: kindId, onPostSave }: ChnotChromeProps) => {
+const LLMChatChnot = ({
+  otid,
+  fullscreen,
+  onPostSave,
+  onSetFullscreen,
+}: RichPropProps) => {
+  const pidRef = createRef<Set<TID>>();
+
   const [props, setProps] = useState<LLMChatContextProps | undefined>(
     undefined,
   );
-  const [sessionOtid] = useState(kindId ? kindId : genTID());
   const { refreshTemplates } = useLLMChatStore();
-  const [fullscreen, setFullscreen] = useState(false);
-
-  console.log("fullscreen", fullscreen);
 
   useEffect(() => {
     refreshTemplates();
@@ -29,8 +32,10 @@ const LLMChatChnot = ({ otid: kindId, onPostSave }: ChnotChromeProps) => {
   // Used to load from database.
   useEffect(() => {
     (async () => {
-      if (sessionOtid) {
-        const rsp = await llmchatSessionRecordFetch(sessionOtid);
+      if (otid) {
+        const rsp = await llmchatSessionRecordFetch({
+          session_otid: otid,
+        });
         if (rsp.session) {
           setProps(() => {
             const pids = new Set<TID>();
@@ -41,26 +46,29 @@ const LLMChatChnot = ({ otid: kindId, onPostSave }: ChnotChromeProps) => {
               });
               pids.add(rsp.session.otid);
             }
-            const pidRef = createRef<Set<TID>>();
             pidRef.current = pids;
             return {
-              sessionOtid: sessionOtid,
+              sessionOtid: otid,
               records: rsp.records,
               session: rsp.session,
               persistedIds: pidRef,
             };
           });
+        } else {
+          setProps({
+            sessionOtid: otid,
+            persistedIds: pidRef,
+          });
         }
       }
     })();
-  }, [sessionOtid]);
+  }, [otid]);
   console.log("props", props);
 
   return props ? (
     <LLMChatEditorProvider props={props}>
       {fullscreen ? (
-        <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0 m-0 p-0 bg-background items-center">
-          <Button onClick={() => setFullscreen(false)}>Close</Button>
+        <Fullscreen onFullscreen={onSetFullscreen}>
           <SessionContainer
             onPostSave={(session) => {
               console.log("session post save");
@@ -68,27 +76,20 @@ const LLMChatChnot = ({ otid: kindId, onPostSave }: ChnotChromeProps) => {
                 saveState: SaveState.Saved,
               });
             }}
-            viewMode={false}
+            readonly={false}
           />
-        </div>
+        </Fullscreen>
       ) : (
         <div className="m-0 p-0">
-          <Button
-            onClick={() => {
-              setFullscreen(true);
-            }}
-          >
-            Fullscreen
-          </Button>
-          <SessionContainer viewMode={true} />
+          <SessionContainer readonly={true} />
         </div>
       )}
     </LLMChatEditorProvider>
   ) : (
-    <div>
+    <div className="w-full h-full">
       <LLMChatTemplateList
-        onClickTemplate={(template: LLMChatTemplate) => {
-          setFullscreen(true);
+        onSelectTemplate={(template: LLMChatTemplate) => {
+          onSetFullscreen(true);
 
           setProps((props) => {
             if (props) {
@@ -100,12 +101,20 @@ const LLMChatChnot = ({ otid: kindId, onPostSave }: ChnotChromeProps) => {
               const ref = createRef<Set<TID> | null>();
               ref.current = new Set();
               const props: LLMChatContextProps = {
-                sessionOtid,
+                sessionOtid: otid,
                 persistedIds: ref,
                 template: template,
               };
               return props;
             }
+          });
+        }}
+        onNew={() => {
+          onSetFullscreen(true);
+          setProps({
+            showTemplateForm: true,
+            sessionOtid: otid,
+            persistedIds: pidRef,
           });
         }}
       />

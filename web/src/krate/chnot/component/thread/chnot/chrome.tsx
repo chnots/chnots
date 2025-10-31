@@ -1,18 +1,18 @@
 import { TID } from "@/lib/id_util";
 import RichChnot, { PostSaveArg } from "./rich-chnot";
 import MdwtRecord from "./mdwt";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { arraysAreEqual } from "@/lib/col-util";
 import { chnotMetaCommit, chnotMetaList } from "../../../service";
-import { ChnotKind, ChnotMeta } from "../../../po";
+import { ChnotKind } from "../../../po";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import Icon from "@/common/component/icon";
-
-const RightSide = ({}: {}) => {};
+import { useChnotStore } from "@/krate/chnot/store";
+import { useIsMobile } from "@/hooks/use-mobile";
+import clsx from "clsx";
 
 const parseChnotsFromContent = (content: string): TID[] => {
-  const regex = /\[\[([0-9]*?)\]\]/g;
+  const regex = /\[\[([0-9]{16}?)\]\]/g;
   const matches: TID[] = [];
   let match;
 
@@ -35,67 +35,79 @@ const Chrome = ({
   content?: string;
 }) => {
   console.log("render Chrome: ", otid);
-  const [chnots, setChnots] = useState<TID[]>([]);
-  const [chnotMetas, setChnotMetas] = useState<ChnotMeta[]>();
+
   const { currentKSpace } = useKSpaceStore((e) => {
-    {
-      return {
-        currentKSpace: e.currentKSpace,
-      };
-    }
+    return {
+      currentKSpace: e.currentKSpace,
+    };
   });
+  const { setChnotMetaCache } = useChnotStore((store) => {
+    return {
+      setChnotMetaCache: store.setChnotMeta,
+    };
+  });
+
+  const [chnots, setChnots] = useState<TID[]>([]);
+  const isMobile = useIsMobile();
+
+  const updateChnots = useCallback(
+    async (content?: string) => {
+      if (content) {
+        const newChnots = parseChnotsFromContent(content);
+        if (!arraysAreEqual(chnots, newChnots) && newChnots.length > 0) {
+          const chnotMetas = await chnotMetaList({ otids: newChnots });
+          if (chnotMetas.metas.length > 0) {
+            chnotMetas.metas.forEach((cm) => {
+              setChnotMetaCache(cm);
+            });
+          }
+          setChnots(newChnots);
+        }
+      }
+    },
+    [chnots],
+  );
   useEffect(() => {
-    if (initialContent) {
-      setChnots(parseChnotsFromContent(initialContent));
-    }
+    updateChnots(initialContent);
   }, []);
-  useEffect(() => {
-    (async () => {
-      const chnotMetas = await chnotMetaList({ otids: chnots });
-      setChnotMetas(chnotMetas.metas);
-    })();
-  }, [chnots]);
 
   return (
-    <div className="grid grid-cols-2 border-b-1">
-      <div className="h-full w-full">
-        <MdwtRecord
-          otid={otid}
-          readonly={readonly}
-          onPostSave={(arg: PostSaveArg) => {
-            if (arg.saveState === SaveState.Saved) {
-              chnotMetaCommit({
-                metas: [
-                  {
-                    otid: otid,
-                    kind: ChnotKind.MDWT,
-                    kspace: currentKSpace,
-                  },
-                ],
-              });
-            }
-            onPostSave(arg);
-          }}
-          content={initialContent}
-          onContentChange={(content) => {
-            const links = parseChnotsFromContent(content);
-            if (!arraysAreEqual(links, chnots)) {
-              setChnots(chnots);
-            }
-          }}
-        />
-      </div>
-      {chnotMetas && (
+    <div
+      className={clsx(
+        "w-full max-w-4xl border p-1 m-1 rounded",
+        isMobile ? "flex flex-col" : "grid grid-cols-2",
+      )}
+    >
+      <MdwtRecord
+        tryFetch={false}
+        otid={otid}
+        readonly={readonly}
+        onPostSave={(arg: PostSaveArg) => {
+          if (arg.saveState === SaveState.Saved) {
+            chnotMetaCommit({
+              metas: [
+                {
+                  otid: otid,
+                  kind: ChnotKind.MDWT,
+                  kspace: currentKSpace,
+                },
+              ],
+            });
+          }
+
+          onPostSave(arg);
+        }}
+        content={initialContent}
+        onContentChange={(content) => {
+          updateChnots(content);
+        }}
+        fullscreen={false}
+        onSetFullscreen={() => {}}
+      />
+      {chnots.length > 0 && (
         <div>
-          {chnotMetas.map((cm) => (
-            <div key={cm.otid}>
-              <RichChnot
-                meta={{
-                  chnotOtid: cm.otid,
-                  kind: cm.kind,
-                }}
-              />
-            </div>
+          {chnots.map((cm) => (
+            <RichChnot kspace={currentKSpace} otid={cm} key={cm} />
           ))}
         </div>
       )}

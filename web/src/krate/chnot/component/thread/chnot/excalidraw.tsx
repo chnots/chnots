@@ -10,10 +10,15 @@ import {
   saveExcalidraw,
   SaveFileCache,
 } from "@/krate/tool/excalidraw/service";
-import { ChnotChromeProps } from "./rich-chnot";
+import { RichPropProps } from "./rich-chnot";
+import Fullscreen from "./fullscreen";
 
-const ExcalidrawBlock = ({ otid, onPostSave }: ChnotChromeProps) => {
-  const [open, setOpen] = useState(false);
+const ExcalidrawBlock = ({
+  otid,
+  fullscreen,
+  onPostSave,
+  onSetFullscreen,
+}: RichPropProps) => {
   const [state, setState] = useState<ExcalidrawChnotState>();
   const savedFilesRef = useRef(new Map<string, SaveFileCache>());
 
@@ -61,10 +66,8 @@ const ExcalidrawBlock = ({ otid, onPostSave }: ChnotChromeProps) => {
       <div className="flex h-auto justify-center">
         <ExcalidrawPreview state={state} className="w-8/12" />
       </div>
-      <Button onClick={() => setOpen((prev) => !prev)}>Edit</Button>
-      {open && (
-        <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0">
-          <Button onClick={() => setOpen(false)}>Close</Button>
+      {fullscreen && (
+        <Fullscreen onFullscreen={onSetFullscreen}>
           <ExcalidrawEditor
             otid={otid}
             state={state}
@@ -73,7 +76,7 @@ const ExcalidrawBlock = ({ otid, onPostSave }: ChnotChromeProps) => {
               directlySave(state, contentType);
             }}
           />
-        </div>
+        </Fullscreen>
       )}
     </div>
   );

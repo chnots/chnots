@@ -75,16 +75,14 @@ const ChnotSidebarItem = React.forwardRef(
       getCurrentChnot,
       validateChnotCache,
       overwriteChnotCache,
-    } = useChnotStore(
-      useShallow((store) => {
-        return {
-          overwriteChnotCache: store.overwriteChnotCache,
-          setCurrentChnotMetaId: store.setCurrentThreadOtid,
-          getCurrentChnot: store.getCurrentThread,
-          validateChnotCache: store.validateChnotCache,
-        };
-      }),
-    );
+    } = useChnotStore((store) => {
+      return {
+        overwriteChnotCache: store.overwriteChnotCache,
+        setCurrentChnotMetaId: store.setCurrentThreadOtid,
+        getCurrentChnot: store.getCurrentThread,
+        validateChnotCache: store.validateChnotCache,
+      };
+    });
 
     const onClick = (_: React.MouseEvent) => {
       setCurrentChnotMetaId(chnotThread.meta.otid);

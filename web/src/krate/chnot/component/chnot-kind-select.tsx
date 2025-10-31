@@ -14,7 +14,12 @@ import { ChnotKindIcon } from "./chnot-kind-icon";
 import { ChnotKind } from "../po";
 
 export const ChnotKindSelect = () => {
-  const { kinds, setChnotKinds } = useChnotStore();
+  const { kinds, setChnotKinds } = useChnotStore((s) => {
+    return {
+      kinds: s.kinds,
+      setChnotKinds: s.setChnotKinds,
+    };
+  });
 
   return (
     <DropdownMenu>

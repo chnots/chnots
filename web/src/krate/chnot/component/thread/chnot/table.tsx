@@ -1,5 +1,5 @@
 import { SaveState } from "@/common/types";
-import { ChnotChromeProps } from "./rich-chnot";
+import { RichPropProps } from "./rich-chnot";
 import { KTabMeta } from "@/krate/ktab/po";
 import { KTabRowData } from "@/krate/ktab/component/editable-cell";
 import { DataTable } from "@/krate/ktab/component/data-table";
@@ -11,23 +11,28 @@ import {
 import { ktabGetViewValue } from "@/krate/ktab/dto";
 import { genTID, genUID } from "@/lib/id_util";
 import { useEffect, useState } from "react";
+import Fullscreen from "./fullscreen";
 
-const TableChnot = ({ otid, onPostSave, readonly }: ChnotChromeProps) => {
+const TableChnot = ({
+  otid,
+  onPostSave,
+  readonly,
+  fullscreen,
+  onSetFullscreen,
+}: RichPropProps) => {
+  console.log("render TableChnot", otid, readonly);
   const [meta, setMeta] = useState<KTabMeta>();
 
   useEffect(() => {
     (async () => {
-      if (otid) {
-        const meta = await ktabMetaFetch({
-          table_id: otid,
-        });
-        if (meta.meta) {
-          setMeta(meta.meta);
-        }
-        throw new Error(`find no ktab with kindId: ${otid}`);
+      const meta = await ktabMetaFetch({
+        table_id: otid,
+      });
+      if (meta.meta) {
+        setMeta(meta.meta);
       } else {
         setMeta({
-          otid: genTID(),
+          otid: otid,
           columns: {},
           table_name: genUID(),
           table_comment: genUID(),
@@ -40,43 +45,87 @@ const TableChnot = ({ otid, onPostSave, readonly }: ChnotChromeProps) => {
 
   return (
     meta && (
-      <DataTable
-        tableMeta={meta}
-        fetchData={async (
-          table_id: number,
-          start: number,
-          size: number,
-        ): Promise<KTabRowData[]> => {
-          const data = await ktabCellList({
-            table_id,
-            filter: {
-              RowsByIdx: {
-                row_tid_included: start,
-                page_size: size,
-              },
-            },
-          });
-          return data.rows.map((row) => {
-            return row.cells.reduce<KTabRowData>(
-              (acc, cell) => {
-                acc[cell.column_name] = ktabGetViewValue(cell.value);
-                return acc;
-              },
-              { row_tid: row.row_tid },
-            );
-          });
-        }}
-        onMetaChange={async (meta: KTabMeta) => {
-          await ktabMetaCommit({
-            meta: meta,
-          });
-          setMeta(meta);
-          onPostSave({
-            saveState: SaveState.Saved,
-          });
-        }}
-        isEditing={readonly || true}
-      />
+      <>
+        {fullscreen ? (
+          <Fullscreen onFullscreen={onSetFullscreen}>
+            <DataTable
+              tableMeta={meta}
+              fetchData={async (
+                table_id: number,
+                start: number,
+                size: number,
+              ): Promise<KTabRowData[]> => {
+                const data = await ktabCellList({
+                  table_id,
+                  filter: {
+                    RowsByIdx: {
+                      row_tid_included: start,
+                      page_size: size,
+                    },
+                  },
+                });
+                return data.rows.map((row) => {
+                  return row.cells.reduce<KTabRowData>(
+                    (acc, cell) => {
+                      acc[cell.column_name] = ktabGetViewValue(cell.value);
+                      return acc;
+                    },
+                    { row_tid: row.row_tid },
+                  );
+                });
+              }}
+              onMetaChange={async (meta: KTabMeta) => {
+                await ktabMetaCommit({
+                  meta: meta,
+                });
+                setMeta(meta);
+                onPostSave({
+                  saveState: SaveState.Saved,
+                });
+              }}
+              readonly={readonly || false}
+            />
+          </Fullscreen>
+        ) : (
+          <DataTable
+            tableMeta={meta}
+            fetchData={async (
+              table_id: number,
+              start: number,
+              size: number,
+            ): Promise<KTabRowData[]> => {
+              const data = await ktabCellList({
+                table_id,
+                filter: {
+                  RowsByIdx: {
+                    row_tid_included: start,
+                    page_size: size,
+                  },
+                },
+              });
+              return data.rows.map((row) => {
+                return row.cells.reduce<KTabRowData>(
+                  (acc, cell) => {
+                    acc[cell.column_name] = ktabGetViewValue(cell.value);
+                    return acc;
+                  },
+                  { row_tid: row.row_tid },
+                );
+              });
+            }}
+            onMetaChange={async (meta: KTabMeta) => {
+              await ktabMetaCommit({
+                meta: meta,
+              });
+              setMeta(meta);
+              onPostSave({
+                saveState: SaveState.Saved,
+              });
+            }}
+            readonly={readonly || false}
+          />
+        )}
+      </>
     )
   );
 };

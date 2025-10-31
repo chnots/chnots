@@ -1,119 +1,131 @@
 import { useCallback, useState } from "react";
 import { ChnotKind } from "../../../po";
 import { SaveState } from "@/common/types";
-import BlockState from "../save-state";
 import MdwtRecord from "./mdwt";
-import { ChnotMetaKind } from "../../vo";
 import ExcalidrawBlock from "./excalidraw";
 import { ChnotKindIcon } from "../../chnot-kind-icon";
 import KFileBlock from "./kfile";
 import TableChnot from "./table";
 import LLMChatChnot from "./llmchat";
 import { chnotMetaCommit } from "@/krate/chnot/service";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import { TID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
+import { useChnotStore } from "@/krate/chnot/store";
+import { Button } from "@/common/component/ui/button";
+import Icon from "@/common/component/icon";
 
 export type PostSaveArg = {
   saveState: SaveState;
 };
 
-export type ChnotChromeProps = {
+export type RichPropProps = {
   otid: TID;
   readonly?: boolean;
+  fullscreen: boolean;
+  onSetFullscreen: (flag: boolean) => void;
   onPostSave: (arg: PostSaveArg) => void;
 };
 
-const RichChnot = ({
-  meta,
-  readonly,
+const ChnotKindSelector = ({
+  setKind,
 }: {
-  meta: ChnotMetaKind;
-  readonly?: boolean;
+  setKind: (kind: ChnotKind) => void;
 }) => {
-  const kind = meta.kind;
-  const [saveState, setSaveState] = useState(SaveState.Initial);
-  const { kspace } = useKSpaceStore((s) => {
+  return Object.values(ChnotKind).map((kind) => {
+    return (
+      <Button onClick={() => setKind(kind)}>
+        <ChnotKindIcon kind={kind} />
+      </Button>
+    );
+  });
+};
+
+const RichChnot = ({
+  otid,
+  readonly,
+  kspace,
+}: {
+  otid: TID;
+  readonly?: boolean;
+  kspace: string;
+}) => {
+  console.log("render RichChnot", otid);
+  const { getChnotMeta, setChnotMetaCache } = useChnotStore((store) => {
     return {
-      kspace: s.currentKSpace,
+      getChnotMeta: store.getChnotMeta,
+      setChnotMetaCache: store.setChnotMeta,
     };
   });
 
+  const [fullscreen, setFullscreen] = useState<boolean>(false);
+  const [saveState, setSaveState] = useState(SaveState.Initial);
+  const [kind, setKind] = useState<ChnotKind | undefined>(
+    getChnotMeta(otid)?.kind,
+  );
+
   const handlePostSave = useCallback(
-    (arg: PostSaveArg) => {
+    async (arg: PostSaveArg) => {
       if (
         saveState === SaveState.Initial &&
         kind &&
         arg.saveState === SaveState.Saved
       ) {
-        chnotMetaCommit({
-          metas: [
-            {
-              otid: meta.chnotOtid,
-              kind: kind,
-              kspace: kspace,
-            },
-          ],
-        });
+        const meta = {
+          otid: otid,
+          kind: kind,
+          kspace: kspace,
+          tid: genTID(),
+        };
+
+        await chnotMetaCommit({ metas: [meta] });
+
+        setChnotMetaCache(meta);
       }
       setSaveState(arg.saveState);
     },
     [saveState, kind],
   );
 
-  return (
-    <div className="flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white hover:bg-accent">
-      <div className="flex flex-col space-y-1">
-        {saveState !== SaveState.Saved || !kind ? (
-          <BlockState saveState={saveState} />
-        ) : (
-          <ChnotKindIcon kind={kind} className="w-4 h-4 text-gray-400 m-1" />
-        )}
-      </div>
+  const props = {
+    otid: otid,
+    readonly: readonly,
+    fullscreen,
+    onPostSave: (arg: PostSaveArg) => {
+      handlePostSave(arg);
+    },
+    onSetFullscreen: (flag: boolean) => {
+      setFullscreen(flag);
+    },
+  };
 
+  return (
+    <div className="relative flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white hover:bg-accent">
+      <Button
+        onClick={() => setFullscreen(true)}
+        className="absolute top-1 right-1 z-49"
+      >
+        <Icon.Fullscreen />
+      </Button>
       <div
-        className="flex-1 rounded focus:outline-none h-full space-y-2 border"
+        className="flex-1 rounded focus:outline-none h-full space-y-2 border max-w-full p-1"
         tabIndex={0}
         aria-label="Text block, click to edit"
       >
         {kind === ChnotKind.MDWT ? (
-          <MdwtRecord
-            otid={meta.chnotOtid}
-            readonly={readonly}
-            onPostSave={(arg: PostSaveArg) => {
-              handlePostSave(arg);
-            }}
-          />
+          <MdwtRecord {...props} tryFetch={true} />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
-          <ExcalidrawBlock
-            readonly={readonly}
-            otid={meta.chnotOtid}
-            onPostSave={(arg: PostSaveArg) => {
-              handlePostSave(arg);
-            }}
-          />
+          <ExcalidrawBlock {...props} />
         ) : kind === ChnotKind.KFileV1 ? (
-          <KFileBlock
-            otid={meta.chnotOtid}
-            onPostSave={(arg: PostSaveArg) => {
-              handlePostSave(arg);
-            }}
-          />
+          <KFileBlock {...props} />
         ) : kind == ChnotKind.KTab ? (
-          <TableChnot
-            otid={meta.chnotOtid}
-            onPostSave={function (arg: PostSaveArg): void {
-              handlePostSave(arg);
-            }}
-          />
+          <TableChnot {...props} />
         ) : kind === ChnotKind.LLMChat ? (
-          <LLMChatChnot
-            otid={meta.chnotOtid}
-            onPostSave={function (arg: PostSaveArg): void {
-              handlePostSave(arg);
+          <LLMChatChnot {...props} />
+        ) : (
+          <ChnotKindSelector
+            setKind={function (kind: ChnotKind): void {
+              setKind(kind);
             }}
           />
-        ) : (
-          <></>
         )}
       </div>
     </div>

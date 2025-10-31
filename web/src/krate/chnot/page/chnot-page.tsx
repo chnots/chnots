@@ -23,14 +23,12 @@ import { useKSpaceStore } from "@/krate/kspace/store";
  * @returns ChnotThreadListRspData Editor Container
  */
 const MonoChnot = ({ onNew }: { onNew: () => void }) => {
-  const { curMetaId, getCurrentThread } = useChnotStore(
-    useShallow((store) => {
-      return {
-        curMetaId: store.curThreadOtid,
-        getCurrentThread: store.getCurrentThread,
-      };
-    }),
-  );
+  const { curMetaId, getCurrentThread } = useChnotStore((store) => {
+    return {
+      curMetaId: store.curThreadOtid,
+      getCurrentThread: store.getCurrentThread,
+    };
+  });
 
   const { currentKSpace, selectKSpace } = useKSpaceStore((e) => {
     return {
@@ -85,13 +83,11 @@ const StateBar = ({ onNew }: { onNew: () => void }) => {
  */
 const ChnotPage = () => {
   const [monoComponentKey, setMonoComponentKey] = useState(genUID());
-  const { setCurrentThreadOtid } = useChnotStore(
-    useShallow((store) => {
-      return {
-        setCurrentThreadOtid: store.setCurrentThreadOtid,
-      };
-    }),
-  );
+  const { setCurrentThreadOtid } = useChnotStore((store) => {
+    return {
+      setCurrentThreadOtid: store.setCurrentThreadOtid,
+    };
+  });
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <SidebarProvider

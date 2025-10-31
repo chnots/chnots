@@ -19,21 +19,18 @@ import { Search } from "lucide-react";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotSidebarItem, ChnotSidebarTagItem } from "./chnot-sidebar-item";
-import { useShallow } from "zustand/react/shallow";
 import { ChnotKindSelect } from "./chnot-kind-select";
 import { NavLink } from "react-router-dom";
 import { RoutePaths } from "@/router";
 import { chnotTagNameList } from "@/krate/mdwt/service";
 
 const TagsView = () => {
-  const { setTagsInset, tags } = useChnotStore(
-    useShallow((store) => {
-      return {
-        setTagsInset: store.setTagsInset,
-        tags: store.tags,
-      };
-    }),
-  );
+  const { setTagsInset, tags } = useChnotStore((store) => {
+    return {
+      setTagsInset: store.setTagsInset,
+      tags: store.tags,
+    };
+  });
 
   return (
     <div className="w-full flex-row space-x-1 items-center inline">
@@ -57,16 +54,28 @@ const TagsView = () => {
 
 const ChnotSidebar = () => {
   const {
-    fetchMoreChnotThreads: fetchMoreChnots,
-    refreshChnotThreads: refreshChnots,
-    isFetchingNextPage,
-    threadMapByThreadId: chnotMapByMetaId,
+    fetchMoreChnotThreads,
+    refreshChnotThreads,
     changeKeyword,
+    isFetchingNextPage,
+    threadMapByThreadId,
     tags,
     setTagsInset,
     setTags,
     kinds,
-  } = useChnotStore();
+  } = useChnotStore((store) => {
+    return {
+      fetchMoreChnotThreads: store.fetchMoreChnotThreads,
+      changeKeyword: store.changeKeyword,
+      refreshChnotThreads: store.refreshChnots,
+      isFetchingNextPage: store.isFetchingNextPage,
+      threadMapByThreadId: store.threadMapByThreadId,
+      tags: store.tags,
+      setTagsInset: store.setTagsInset,
+      setTags: store.setTags,
+      kinds: store.kinds,
+    };
+  });
 
   const [keyword, setKeyword] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
@@ -96,7 +105,7 @@ const ChnotSidebar = () => {
     } else {
       setTagList(undefined);
     }
-    refreshChnots();
+    refreshChnotThreads();
   }, [tags, keyword, mkspaces, kinds]);
 
   return (
@@ -170,11 +179,11 @@ const ChnotSidebar = () => {
             </ul>
           )}
           <KPageList
-            onFetchMore={fetchMoreChnots}
+            onFetchMore={fetchMoreChnotThreads}
             isFetchingNextPage={isFetchingNextPage}
-            hasNextPage={chnotMapByMetaId.hasNextPage}
+            hasNextPage={threadMapByThreadId.hasNextPage}
           >
-            {[...chnotMapByMetaId.dbCache.values()].map((chnot) => (
+            {[...threadMapByThreadId.dbCache.values()].map((chnot) => (
               <ChnotSidebarItem
                 chnotThread={chnot}
                 key={chnot.meta.otid}

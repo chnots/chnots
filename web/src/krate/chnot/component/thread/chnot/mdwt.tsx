@@ -5,8 +5,7 @@ import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
 import { SaveState } from "@/common/types";
-import { ChnotChromeProps } from "./rich-chnot";
-import { genTID, TID } from "@/lib/id_util";
+import { RichPropProps } from "./rich-chnot";
 import {
   chnotTagNameList,
   mdwtCommit,
@@ -59,11 +58,13 @@ const MdwtRecord = ({
   otid,
   content: initialContent,
   onContentChange,
-}: ChnotChromeProps & {
+  tryFetch,
+}: RichPropProps & {
   content?: string;
   onContentChange?: (content: string) => void;
+  tryFetch: boolean;
 }) => {
-  const [mdwtOtid] = useState<TID>(otid ? otid : genTID());
+  console.log("render MdwtRecord", otid);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -71,25 +72,27 @@ const MdwtRecord = ({
     setHeight(entry.contentRect.height);
   });
 
-  // use RefObject to avoid
-  const cachedContentRef = useRef<string>("");
+  // use RefObject to avoid rerender
+  const cachedContentRef = useRef<string>(initialContent ?? "");
   const saveStateRef = useRef<SaveState>(SaveState.Dirty);
   const toSaveArg = useRef<MdwtCommitReq>(null);
   const [refreshFlag, setRefreshFlag] = useState<boolean>();
 
   useEffect(() => {
-    if (!initialContent) {
-      mdwtRecordList({
-        mdwt_otids: [mdwtOtid],
-      }).then((rsp) => {
-        const mdwt = rsp.mdwt_map[mdwtOtid];
-        cachedContentRef.current = mdwt?.content ?? "";
-        setRefreshFlag((prev) => !prev);
-      });
-    } else {
+    if (initialContent) {
       cachedContentRef.current = initialContent;
+    } else {
+      if (tryFetch) {
+        mdwtRecordList({
+          mdwt_otids: [otid],
+        }).then((rsp) => {
+          const mdwt = rsp.mdwt_map[otid];
+          cachedContentRef.current = mdwt?.content ?? "";
+          setRefreshFlag((prev) => !prev);
+        });
+      }
     }
-  }, [mdwtOtid]);
+  }, []);
 
   const directlySave = async () => {
     if (toSaveArg.current) {
@@ -135,7 +138,7 @@ const MdwtRecord = ({
 
           const req: MdwtCommitReq = {
             mdwt: {
-              otid: mdwtOtid,
+              otid: otid,
               content: content,
             },
           };

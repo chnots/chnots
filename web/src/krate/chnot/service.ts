@@ -29,6 +29,10 @@ export async function chnotMetaCommit(
 export async function chnotMetaList(
   req: ChnotMetaListReq,
 ): Promise<ChnotMetaListRsp> {
+  if (req.otids.length == 0) {
+    return { metas: [] };
+  }
+
   return await request.postJson(`api/v1/chnot-meta-list`, req);
 }
 
