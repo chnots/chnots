@@ -1,6 +1,11 @@
 import KSVG from "@/common/component/svg";
 import { Button } from "@/common/component/ui/button";
-import { DialogClose, DialogFooter } from "@/common/component/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogFooter,
+  DialogPortal,
+} from "@/common/component/ui/dialog";
 import { Input } from "@/common/component/ui/input";
 import { Label } from "@/common/component/ui/label";
 import { Textarea } from "@/common/component/ui/textarea";
@@ -13,9 +18,11 @@ import { useLLMChatStore } from "../store";
 const TemplateForm = ({
   template,
   onSubmit,
+  onClose,
 }: {
   template?: LLMChatTemplate;
   onSubmit: (data: LLMChatTemplate) => Promise<boolean>;
+  onClose: () => void;
 }) => {
   const [formData, setFormData] = useState<{
     name?: string;
@@ -59,63 +66,72 @@ const TemplateForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-4">
-        <Label htmlFor="name" className="block mb-2">
-          Name
-        </Label>
-        <Input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name ?? ""}
-          onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          required
-          tabIndex={0}
-          aria-label="Template Name"
-        />
-      </div>
-      <div className="mb-4">
-        <Label htmlFor="svg_logo" className="block mb-2">
-          Svg Logo Data
-        </Label>
-        <div className="flex flex-row space-x-2 items-center">
-          <div className="border rounded-md">
-            <KSVG src={formData.svg_logo ?? ""} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-150 relative">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <Label htmlFor="name" className="block mb-2">
+              Name
+            </Label>
+            <Input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name ?? ""}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              required
+              tabIndex={0}
+              aria-label="Template Name"
+            />
           </div>
+          <div className="mb-4">
+            <Label htmlFor="svg_logo" className="block mb-2">
+              Svg Logo Data
+            </Label>
+            <div className="flex flex-row space-x-2 items-center">
+              <div className="border rounded-md">
+                <KSVG src={formData.svg_logo ?? ""} />
+              </div>
 
-          <Textarea
-            id="svg_logo"
-            name="svg_logo"
-            value={formData.svg_logo ?? ""}
-            onChange={handleInputChange}
-            aria-label="Template Name"
-          />
-        </div>
+              <Textarea
+                id="svg_logo"
+                name="svg_logo"
+                value={formData.svg_logo ?? ""}
+                onChange={handleInputChange}
+                aria-label="Template Name"
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <Label htmlFor="prompt" className="block mb-2">
+              Prompt
+            </Label>
+            <Textarea
+              id="prompt"
+              name="prompt"
+              value={formData.prompt ?? ""}
+              onChange={handleInputChange}
+              required
+              aria-label="Template Prompt"
+            />
+          </div>
+          <div className="flex flex-row justify-center space-x-4">
+            <Button className="p-2" type="submit" aria-label="Submit Template">
+              Submit
+            </Button>
+            <Button
+              className="p-2"
+              type="reset"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              Close
+            </Button>
+          </div>
+        </form>
       </div>
-      <div className="mb-4">
-        <Label htmlFor="prompt" className="block mb-2">
-          Prompt
-        </Label>
-        <Textarea
-          id="prompt"
-          name="prompt"
-          value={formData.prompt ?? ""}
-          onChange={handleInputChange}
-          required
-          aria-label="Template Prompt"
-        />
-      </div>
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="outline">Cancel</Button>
-        </DialogClose>
-        <Button type="submit" aria-label="Submit Template">
-          Submit
-        </Button>
-      </DialogFooter>
-    </form>
+    </div>
   );
 };
 

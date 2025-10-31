@@ -6,6 +6,8 @@ import {
   LLMChatTemplateListRsp,
   LLMChatSessionRecordFetchRsp,
   LLMChatSessionRecordTruncateReq,
+  LLMChatSessionRecordFetchReq,
+  LLMChatSessionCommitReq,
 } from "./dto";
 import {
   LLMChatBot,
@@ -47,17 +49,13 @@ export const llmchatBotCommit = async (bot: LLMChatBot) => {
 };
 
 export const llmchatSessionRecordFetch = async (
-  session_otid: TID,
+  req: LLMChatSessionRecordFetchReq,
 ): Promise<LLMChatSessionRecordFetchRsp> => {
-  return await request.postJson("api/v1/llmchat-session-record-fetch", {
-    session_otid,
-  });
+  return await request.postJson("api/v1/llmchat-session-record-fetch", req);
 };
 
-export const llmchatSessionCommit = async (session: LLMChatSession) => {
-  await request.postJson("api/v1/llmchat-session-commit", {
-    session: session,
-  });
+export const llmchatSessionCommit = async (req: LLMChatSessionCommitReq) => {
+  await request.postJson("api/v1/llmchat-session-commit", req);
 };
 
 export const llmchatSessionRecordTruncate = async (

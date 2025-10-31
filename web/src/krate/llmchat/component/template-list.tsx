@@ -4,20 +4,22 @@ import { LLMChatTemplate } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 
 const LLMChatTemplateList = ({
-  onClickTemplate,
+  onSelectTemplate,
+  onNew,
 }: {
-  onClickTemplate: (template: LLMChatTemplate) => void;
+  onSelectTemplate: (template: LLMChatTemplate) => void;
+  onNew: () => void;
 }) => {
   const { templates } = useLLMChatStore();
 
   return (
-    <div className="flex flex-wrap space-x-4 text-sm">
+    <div className="flex flex-wrap space-x-4 text-sm p-3">
       {[...templates.values()].map((item) => (
         <div
           key={item.otid}
           className={"hover:cursor-pointer space-x-1 items-center flex py-1"}
           onClick={() => {
-            onClickTemplate(item);
+            onSelectTemplate(item);
           }}
         >
           {item.svg_logo ? (
@@ -28,6 +30,15 @@ const LLMChatTemplateList = ({
           <span>{item.name}</span>
         </div>
       ))}
+      <div
+        key={"add-new"}
+        className={"hover:cursor-pointer space-x-1 items-center flex py-1"}
+        onClick={() => {
+          onNew();
+        }}
+      >
+        <Icon.BadgePlus />
+      </div>
     </div>
   );
 };

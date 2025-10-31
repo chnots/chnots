@@ -135,9 +135,10 @@ export const RecordSystem = ({
       />
       {showTemplates && (
         <LLMChatTemplateList
-          onClickTemplate={function (template: LLMChatTemplate): void {
+          onSelectTemplate={function (template: LLMChatTemplate): void {
             setTemplate(template);
           }}
+          onNew={function (): void {}}
         />
       )}
     </>

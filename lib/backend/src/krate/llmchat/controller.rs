@@ -129,7 +129,7 @@ async fn llmchat_session_list(
 async fn llmchat_session_record_fetch(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Query(req): Query<LLMChatSessionRecordFetchReq>,
+    Json(req): Json<LLMChatSessionRecordFetchReq>,
 ) -> KResponse<LLMChatSessionRecordFetchRsp> {
     state
         .llmchat_session_record_fetch(kreq(headers, req))
