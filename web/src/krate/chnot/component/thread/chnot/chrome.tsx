@@ -28,11 +28,13 @@ const Chrome = ({
   otid,
   readonly,
   content: initialContent,
+  onChanged,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
   readonly?: boolean;
   content?: string;
+  onChanged: () => void;
 }) => {
   console.log("render Chrome: ", otid);
 
@@ -98,6 +100,7 @@ const Chrome = ({
         content={initialContent}
         onContentChange={(content) => {
           updateChnots(content);
+          onChanged();
         }}
         fullscreen={false}
         onSetFullscreen={() => {}}

@@ -35,14 +35,9 @@ const ChnotThread = ({
 }) => {
   console.log("render Thread: ", threadMeta?.otid);
 
-  const { overwriteChnotCache } = useChnotStore((store) => {
-    return {
-      overwriteChnotCache: store.overwriteChnotCache,
-    };
-  });
-
   const savedChnotOrdersRef = useRef<TID[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
+  const initializedOtids = useRef<Set<TID>>(new Set());
   const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,6 +57,7 @@ const ChnotThread = ({
           setChnotOrders([genTID()]);
         } else {
           const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
+          initializedOtids.current.union(new Set(chnotOtids));
 
           savedChnotOrdersRef.current = chnotOtids;
 
@@ -89,14 +85,13 @@ const ChnotThread = ({
       if (!arraysAreEqual(chnotOrders, savedChnotOrdersRef.current)) {
         chnotThreadOrderCommit({
           thread_otid: threadMeta.otid,
-          orders: chnotOrders.map((e) => {
-            return { otid: e };
-          }),
+          orders: chnotOrders
+            .filter((otid) => initializedOtids.current.has(otid))
+            .map((e) => {
+              return { otid: e };
+            }),
         }).then((rsp) => {
           savedChnotOrdersRef.current = chnotOrders;
-          setChnotOrders((prev) => {
-            return [...prev, genTID()];
-          });
         });
       }
     },
@@ -122,6 +117,24 @@ const ChnotThread = ({
                     }
                   }}
                   content={mdwtMap[otid]?.content ?? undefined}
+                  onChanged={function (): void {
+                    const inited = initializedOtids.current;
+                    /**
+                     * if this otid is not added, we think maybe we should add a new chnot to the end of chnot-thread.
+                     *
+                     * try to add changed otid
+                     */
+                    if (!inited.has(otid)) {
+                      inited.add(otid);
+
+                      const lastOtid = chnotOrders.at(chnotOrders.length - 1)!;
+                      if (inited.has(lastOtid)) {
+                        setChnotOrders((prev) => {
+                          return [...prev, genTID()];
+                        });
+                      }
+                    }
+                  }}
                 />
               );
             })}
