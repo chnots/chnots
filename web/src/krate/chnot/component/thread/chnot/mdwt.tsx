@@ -143,7 +143,9 @@ const MdwtRecord = ({
             },
           };
           toSaveArg.current = req;
-
+          if (onContentChange) {
+            onContentChange(content);
+          }
           debounceSave();
         }}
         autoCompletion={chnotCompletions}

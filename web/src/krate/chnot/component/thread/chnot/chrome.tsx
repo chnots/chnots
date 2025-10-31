@@ -52,17 +52,15 @@ const Chrome = ({
 
   const updateChnots = useCallback(
     async (content?: string) => {
-      if (content) {
-        const newChnots = parseChnotsFromContent(content);
-        if (!arraysAreEqual(chnots, newChnots) && newChnots.length > 0) {
-          const chnotMetas = await chnotMetaList({ otids: newChnots });
-          if (chnotMetas.metas.length > 0) {
-            chnotMetas.metas.forEach((cm) => {
-              setChnotMetaCache(cm);
-            });
-          }
-          setChnots(newChnots);
+      const newChnots = content ? parseChnotsFromContent(content) : [];
+      if (!arraysAreEqual(chnots, newChnots)) {
+        const chnotMetas = await chnotMetaList({ otids: newChnots });
+        if (chnotMetas.metas.length > 0) {
+          chnotMetas.metas.forEach((cm) => {
+            setChnotMetaCache(cm);
+          });
         }
+        setChnots(newChnots);
       }
     },
     [chnots],
