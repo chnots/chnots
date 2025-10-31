@@ -38,7 +38,7 @@ export function DataTable({
   tableMeta,
   fetchData,
   onMetaChange,
-  isEditing,
+  readonly,
 }: {
   tableMeta: KTabMeta;
   onMetaChange: (tableMeta: KTabMeta) => Promise<void>;
@@ -48,7 +48,7 @@ export function DataTable({
     size: number,
     column_name?: string,
   ) => Promise<KTabRowData[]>;
-  isEditing: boolean;
+  readonly: boolean;
 }) {
   const [loading, setLoading] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
@@ -195,13 +195,13 @@ export function DataTable({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     meta: {
-      isEditing,
+      isEditing: !readonly,
       updateData,
     },
   });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Tab" || !isEditing) return;
+    if (e.key !== "Tab" || readonly) return;
 
     const activeElement = document.activeElement;
     const allInputs = Array.from(
@@ -226,7 +226,7 @@ export function DataTable({
   return (
     <div onKeyDown={handleKeyDown}>
       <div className="flex items-center justify-between py-4">
-        {isEditing && (
+        {readonly || (
           <div className="flex items-center space-x-2">
             <Input
               placeholder="New Column Name"
@@ -268,7 +268,7 @@ export function DataTable({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="max-w-full">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -298,7 +298,7 @@ export function DataTable({
           </TableBody>
         </Table>
       </div>
-      {isEditing && (
+      {!readonly && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <Button variant="outline" size="sm" onClick={addNewRow}>
             Add Row

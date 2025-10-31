@@ -26,7 +26,7 @@ const KTabChnot = ({
       if (meta.meta) {
         return meta.meta;
       }
-      throw new Error(`find no ktab with kindId: ${kindId}`);
+      throw new Error(`find no ktab with otid: ${kindId}`);
     }
   };
   useEffect(() => {
@@ -71,7 +71,7 @@ const KTabChnot = ({
           });
           setMeta(tableMeta);
         }}
-        isEditing={isEditing}
+        readonly={isEditing}
       />
     </div>
   ) : (
