@@ -85,6 +85,8 @@ pub(crate) struct ChnotMeta {
     #[gts_type = "i64"]
     pub otid: TID,
 
+    pub archive_time: Option<DateTime<FixedOffset>>,
+
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
 
@@ -104,6 +106,7 @@ impl TryFrom<&KDbRow> for ChnotMeta {
             kind: value.try_get(Self::KIND)?,
             tid: value.try_get(Self::TID)?,
             kspace: value.try_get(Self::KSPACE)?,
+            archive_time: value.try_get(Self::ARCHIVE_TIME)?,
         })
     }
 }

@@ -44,6 +44,7 @@ pub struct ChnotMetaCommitReqData {
     pub otid: TID,
     pub kind: ChnotKind,
     pub kspace: Varchar<40>,
+    pub archive: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

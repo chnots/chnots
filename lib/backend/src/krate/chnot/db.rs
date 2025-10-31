@@ -15,7 +15,7 @@ use chin_sql::time_type::TID;
 use chin_sql::{ILikeType, LimitOffset, SqlBuilder};
 use chin_sql::{Join, Wheres};
 use chin_tools::{AResult, EResult};
-use chrono::Local;
+use chrono::{FixedOffset, Local};
 
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
@@ -290,6 +290,11 @@ impl ChnotMapper for KDb {
                 tid: TID::default(),
                 kind: b.kind,
                 kspace: b.kspace,
+                archive_time: if b.archive.is_some_and(|v| v) {
+                    Some(Local::now().fixed_offset())
+                } else {
+                    None
+                },
             };
 
             result_metas.push(rec.clone());
