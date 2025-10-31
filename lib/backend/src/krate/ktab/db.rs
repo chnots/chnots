@@ -164,10 +164,13 @@ impl KTabMapper for KDb {
             }))
             .await?
             .meta;
-        let config = if req.must_existed.unwrap_or_default() {
-            config.context("cannot find table")?
-        } else {
-            return Ok(KTabCellListRsp { rows: vec![] });
+        let Some(config) = config else {
+            if req.must_existed.unwrap_or_default() {
+                return Err(anyhow::anyhow!("cannot find table {}", table_id));
+            } else {
+                info!("cannot find table {}", table_id);
+                return Ok(KTabCellListRsp { rows: vec![] });
+            }
         };
 
         let col_names: HashMap<TID, String> = config
