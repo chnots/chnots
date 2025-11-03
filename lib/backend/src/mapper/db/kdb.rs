@@ -1,9 +1,14 @@
 use actor_sqlite::client::{ActorSqliteConnClient, ActorSqliteTxClient};
-use chin_sql::{CreateTableSqlOwned, DbType, IntoSqlSeg, SqlValue, SqlValueRow};
+use chin_sql::{
+    CreateTableSqlOwned, DbType, IntoSqlSeg, LimitOffset, SqlBuilder, SqlReader, SqlValue,
+    SqlValueRow,
+};
 use chin_tools::{AResult, EResult};
 use deadpool_postgres::{Client, GenericClient, Transaction};
 use postgres_types::FromSql;
 use tokio_postgres::Row;
+
+use crate::model::dto::PageRsp;
 
 use super::{postgres, sqlite};
 
@@ -474,4 +479,37 @@ macro_rules! impl_otid_support {
             }
         }
     };
+}
+
+pub(crate) trait PageReader {
+    async fn page_read<T, F>(
+        &self,
+        sr: SqlReader<'_>,
+        offset: LimitOffset,
+        map: F,
+    ) -> AResult<PageRsp<T>>
+    where
+        F: Fn(KDbRow) -> AResult<T> + Send + 'static,
+        T: Send + 'static;
+}
+
+impl PageReader for KDbConn {
+    async fn page_read<T, F>(
+        &self,
+        sr: SqlReader<'_>,
+        limit: LimitOffset,
+        map: F,
+    ) -> AResult<PageRsp<T>>
+    where
+        F: Fn(KDbRow) -> AResult<T> + Send + 'static,
+        T: Send + 'static,
+    {
+        let sb: SqlBuilder<'_> = sr.limit(limit).into();
+        let data = self.qry_list(sb, map).await?;
+        Ok(PageRsp {
+            has_next: limit.limit <= data.len(),
+            next_start: limit.offset.unwrap_or(0) + data.len(),
+            data,
+        })
+    }
 }

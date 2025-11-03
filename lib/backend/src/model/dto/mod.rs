@@ -6,7 +6,7 @@ use std::{fmt::Debug, ops::Deref};
 use axum::http::HeaderMap;
 
 use chin_sql::str_type::Varchar;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct KReq<E: Debug + Clone + DeserializeOwned> {
@@ -77,4 +77,11 @@ where
             mkspaces: self.mkspaces.clone(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PageRsp<T> {
+    pub data: Vec<T>,
+    pub has_next: bool,
+    pub next_start: usize,
 }

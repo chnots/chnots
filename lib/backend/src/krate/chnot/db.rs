@@ -1,22 +1,162 @@
 use super::mapper::ChnotMapper;
 use super::*;
 use crate::krate::llmchat::LLMChatRecord;
-use crate::krate::mdwt::{MdwtRecord, MdwtRecordTable, MdwtTag};
+use crate::krate::mdwt::db::MdwtOtidInTags;
+use crate::krate::mdwt::{MdwtRecord, MdwtRecordTable};
 use crate::mapper::Curd;
 use crate::mapper::db::helper::{Ddls, create_tables};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-    KDbTransactionBehaiver,
+    KDbTransactionBehaiver, PageReader,
 };
 use crate::model::KSerde;
-use crate::model::dto::KReq;
+use crate::model::dto::{KReq, PageRsp};
 use crate::util::string_util::StringUtils;
+use chin_sql::str_type::{Text, Varchar};
 use chin_sql::time_type::TID;
-use chin_sql::{ILikeType, LimitOffset, SqlBuilder};
-use chin_sql::{Join, Wheres};
+use chin_sql::{Froms, GenerateTableSchema, LimitOffset, SqlField, SubQueryTable, Wheres};
+use chin_sql::{ILikeType, JoinTable, JoinType, Joins, OrderBy, SqlBuilder, SqlReader};
 use chin_tools::{AResult, EResult};
-use chrono::{FixedOffset, Local};
+use chrono::Local;
 
+#[allow(dead_code)]
+#[derive(Debug, Clone, GenerateTableSchema)]
+struct QueryContent {
+    #[gts_type = "i64"]
+    chnot_otid: TID,
+    content: Text,
+}
+
+impl<'a> QueryContentTable<'a> {
+    fn sub_query_table(query: Option<&'a str>) -> Option<SubQueryTable<'a>> {
+        if let Some(query) = query.as_ref()
+            && !query.is_empty()
+        {
+            let mdwt = SqlReader::builder(
+                [
+                    SqlField {
+                        alias: QueryContent::CHNOT_OTID.into(),
+                        table_alias: "mr",
+                        field_name: MdwtRecord::OTID,
+                    },
+                    SqlField {
+                        alias: QueryContent::CONTENT.into(),
+                        table_alias: "mr",
+                        field_name: MdwtRecord::CONTENT,
+                    },
+                ],
+                chin_sql::Froms::Table {
+                    table_name: MdwtRecord::TABLE,
+                    alias: "mr",
+                },
+            )
+            .wheres(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy))
+            .build();
+
+            let llmchat = SqlReader::builder(
+                [
+                    SqlField {
+                        alias: QueryContent::CHNOT_OTID.into(),
+                        table_alias: "llm",
+                        field_name: LLMChatRecord::OTID,
+                    },
+                    SqlField {
+                        alias: QueryContent::CONTENT.into(),
+                        table_alias: "llm",
+                        field_name: LLMChatRecord::CONTENT,
+                    },
+                ],
+                chin_sql::Froms::Table {
+                    table_name: LLMChatRecord::TABLE,
+                    alias: "llm",
+                },
+            )
+            .wheres(Wheres::ilike(
+                LLMChatRecord::CONTENT,
+                query,
+                ILikeType::Fuzzy,
+            ))
+            .build();
+
+            Some(SubQueryTable {
+                reader: SqlReader::builder(
+                    [
+                        SqlField {
+                            alias: None,
+                            table_alias: "cont",
+                            field_name: QueryContent::CONTENT,
+                        },
+                        SqlField {
+                            alias: QueryContent::CONTENT.into(),
+                            table_alias: "mr",
+                            field_name: MdwtRecord::CONTENT,
+                        },
+                    ],
+                    chin_sql::Froms::Union {
+                        table: [
+                            Froms::SubQuery {
+                                table: mdwt.into(),
+                                alias: "mr",
+                            },
+                            Froms::SubQuery {
+                                table: llmchat.into(),
+                                alias: "llm",
+                            },
+                        ]
+                        .into(),
+                        alias: "cont",
+                    },
+                )
+                .build(),
+            })
+        } else {
+            None
+        }
+    }
+}
+
+/// ```emacs-lisp
+/// (let ((ctm ChnotThreadMeta)
+///       (cto ChnotThreadOrder)
+///       (cm  ChnotMeta)
+///       (mr MdwtRecord)
+///       (lcr LLMChatRecord)
+///       (cotid (if with-thread cto.otid cm.otid)) ; chnot otid
+///       (kspace (if with-thread ctm.kspace cm.otid))
+///       )
+///   (select (if with-thread
+///               ())
+///           (from (if with-thread
+///                     (join ctm
+///                           (left-join cto (ctm.otid cto.thread_otid))
+///                           (when with-tag (inner-join mt (mt.otid cto.otid))))
+///                   (join cm
+///                         (when with-tag (inner-join mt (mt.otid cm.otid)))))
+///
+///
+///                 ;; query part
+///                 (when query
+///                   (inner-join
+///                    (union (select (content, chnot_otid)
+///                                   mr
+///                                   (where (ilike content query)))
+///                           (select (content, chnot_otid)
+///                                   lcr
+///                                   (where (ilike content query))))))
+///                 ;; used for the title
+///                 (left-join mr (cm.otid mr.otid)))
+///           (where
+///            (when with-thread
+///              (= cto.korder 0))
+///            (in kspace kspaces))
+///           (order
+///            (if with-thread
+///                ((desc ctm.pin_tid)
+///                 (desc ctm.otid)
+///                 (asc cto.korder))
+///              ((desc cm.pin_tid)
+///               (desc cm.otid))))))
+/// ``
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
         create_tables(
@@ -27,120 +167,6 @@ impl ChnotMapper for KDb {
             self,
         )
         .await
-    }
-
-    async fn chnot_thread_list(
-        &self,
-        req: KReq<ChnotThreadListReq>,
-    ) -> AResult<ChnotThreadListRsp> {
-        let ctm = ChnotThreadMetaTable::new("ctm");
-        let cto = ChnotThreadOrderTable::new("cto");
-        let cm = ChnotMetaTable::new("cm");
-        let cont = MdwtRecordTable::new("cont");
-
-        let mut sql_builder = SqlBuilder::new()
-            .seg("select ctm.*, cm.otid as chnot_otid, cont.content as cont from")
-            .merge(
-                Join::first(&ctm)
-                    .left_join(&cto, [(ctm.otid(), cto.thread_otid()).into()])
-                    .left_join(&cm, [(cm.otid(), cto.otid()).into()]),
-            );
-
-        if let Some(query) = req.query.as_ref()
-            && !query.is_empty()
-        {
-            let mdwt = SqlBuilder::read(
-                MdwtRecord::TABLE,
-                &[
-                    &format!("{} content", MdwtRecord::CONTENT),
-                    &format!("{} chnot_otid", MdwtRecord::OTID),
-                ],
-            )
-            .r#where(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy));
-
-            let llmchat = SqlBuilder::read(
-                LLMChatRecord::TABLE,
-                &[
-                    &format!("{} content", LLMChatRecord::CONTENT),
-                    &format!("{} chnot_otid", LLMChatRecord::SESSION_OTID),
-                ],
-            )
-            .r#where(Wheres::ilike(MdwtRecord::CONTENT, query, ILikeType::Fuzzy));
-
-            let keyword_matcher = SqlBuilder::new().merge(mdwt).merge("union").merge(llmchat);
-
-            sql_builder = sql_builder
-                .seg("inner join (")
-                .merge(keyword_matcher)
-                .seg(") cont")
-                .seg("on cont.chnot_otid = ")
-                .seg(cm.otid().twn());
-        } else {
-            sql_builder = sql_builder
-                .seg("left join")
-                .seg(cont.nwa())
-                .seg("on")
-                .seg(cm.otid().twn())
-                .seg("=")
-                .seg(cont.otid().twn())
-        }
-
-        if let Some(tags) = req.tags.as_ref() {
-            let mt = MdwtTag::mdwt_otids_sub(req.mkspaces.clone(), Some(tags));
-            sql_builder = sql_builder
-                .seg("inner join (")
-                .merge(mt)
-                .seg(") mt on")
-                .seg("mt.otid = ")
-                .seg(cm.otid().twn())
-                .seg("or")
-                .seg("mt.otid = ")
-                .seg(cm.otid().twn())
-        }
-
-        sql_builder = sql_builder
-            .r#where(Wheres::and([
-                Wheres::transform(req.query.as_ref(), |q| {
-                    if q.is_some() {
-                        cto.korder().v_eq(0)
-                    } else {
-                        Wheres::None
-                    }
-                }),
-                ctm.kspace().v_in(req.get_spaces()),
-            ]))
-            .seg("order by")
-            .seg(ctm.pin_time().twn())
-            .seg("desc,")
-            .seg(ctm.otid().twn())
-            .seg("desc,")
-            .seg(cto.korder().twn())
-            .seg("asc")
-            .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index));
-
-        let data = self
-            .conn()
-            .await?
-            .qry_list(sql_builder, |row| {
-                Ok(ChnotThreadListRspData {
-                    meta: ChnotThreadMeta {
-                        otid: row.try_get(ChnotThreadMeta::OTID)?,
-                        kspace: row.try_get(ChnotThreadMeta::KSPACE)?,
-                        pin_time: row.try_get(ChnotThreadMeta::PIN_TIME)?,
-                        archive_time: row.try_get(ChnotThreadMeta::ARCHIVE_TIME)?,
-                        tid: row.try_get(ChnotThreadMeta::TID)?,
-                    },
-                    preview_text: row.try_get("cont")?,
-                    chnot_otid: row.try_get("chnot_otid")?,
-                })
-            })
-            .await?;
-
-        Ok(ChnotThreadListRsp {
-            next_start: req.start_index + data.len(),
-            has_next: data.len() >= req.page_size,
-            data,
-        })
     }
 
     async fn chnot_thread_meta_commit(
@@ -158,9 +184,10 @@ impl ChnotMapper for KDb {
                 .unwrap_or(ChnotThreadMeta {
                     otid: req.meta_otid,
                     kspace: req.kspace.clone(),
-                    pin_time: None,
-                    archive_time: None,
+                    pin_tid: None,
+                    archive_tid: None,
                     tid: TID::default(),
+                    title: Varchar::limit(""),
                 });
 
         tx.as_executor()
@@ -170,17 +197,17 @@ impl ChnotMapper for KDb {
         meta.tid = TID::default();
         if let Some(pin_it) = req.pinned {
             if pin_it {
-                meta.pin_time = Some(Local::now().fixed_offset());
+                meta.pin_tid = Some(TID::default());
             } else {
-                meta.pin_time = None;
+                meta.pin_tid = None;
             }
         }
 
         if let Some(archive_it) = req.archive {
             if archive_it {
-                meta.archive_time = Some(Local::now().fixed_offset());
+                meta.archive_tid = Some(TID::default());
             } else {
-                meta.archive_time = None;
+                meta.archive_tid = None;
             }
         }
 
@@ -290,8 +317,13 @@ impl ChnotMapper for KDb {
                 tid: TID::default(),
                 kind: b.kind,
                 kspace: b.kspace,
-                archive_time: if b.archive.is_some_and(|v| v) {
-                    Some(Local::now().fixed_offset())
+                archive_tid: if b.archive.is_some_and(|v| v) {
+                    Some(TID::default())
+                } else {
+                    None
+                },
+                pin_tid: if b.pin_it.is_some_and(|v| v) {
+                    Some(TID::default())
                 } else {
                     None
                 },
@@ -322,6 +354,188 @@ impl ChnotMapper for KDb {
             .await?;
         Ok(ChnotMetaListRsp { metas: cms })
     }
+
+    async fn chnot_thread_search(
+        &self,
+        req: KReq<ChnotSearchReq>,
+    ) -> AResult<PageRsp<ChnotSearchRspThread>> {
+        let ctm = ChnotThreadMetaTable::new("ctm");
+        let cto = ChnotThreadOrderTable::new("cto");
+        let with_cto = req.query.as_ref().is_some_and(|s| !s.is_empty()) || req.tags.is_some();
+
+        let tag_constraint = MdwtOtidInTags::new("tag_constraint");
+        let query_constraint = QueryContentTable::new("query");
+
+        let sr = SqlReader::builder(
+            // select
+            [SqlField {
+                alias: None,
+                table_alias: ctm.alias,
+                field_name: "*",
+            }],
+            // from
+            // Chnot Thread Meta
+            Joins::new(chin_sql::Froms::Table {
+                table_name: ctm.table(),
+                alias: ctm.alias,
+            })
+            // Chnot Thread Order
+            .join_if(
+                with_cto,
+                JoinTable {
+                    join_type: JoinType::LeftJoin,
+                    table: chin_sql::Froms::Table {
+                        table_name: cto.table(),
+                        alias: cto.alias,
+                    },
+                    conds: [(ctm.otid(), cto.thread_otid()).into()].into(),
+                },
+            )
+            .join_some(
+                tag_constraint.sub_query_table(req.tags.clone(), req.get_spaces()),
+                |v| JoinTable {
+                    join_type: JoinType::InnerJoin,
+                    table: Froms::SubQuery {
+                        table: v.reader.into(),
+                        alias: &tag_constraint.alias,
+                    },
+                    conds: [(tag_constraint.mdwt_otid(), cto.otid()).into()].into(),
+                },
+            )
+            .join_some(
+                QueryContentTable::sub_query_table(req.query.as_deref()),
+                |v| JoinTable {
+                    join_type: JoinType::InnerJoin,
+                    table: Froms::SubQuery {
+                        table: v.reader.into(),
+                        alias: query_constraint.alias,
+                    },
+                    conds: [(query_constraint.chnot_otid(), cto.otid()).into()].into(),
+                },
+            )
+            .into(),
+        )
+        .wheres(Wheres::and([ctm.kspace().v_in(req.get_spaces())]))
+        .order_by([
+            OrderBy::Desc(ctm.pin_tid().twn()),
+            OrderBy::Desc(ctm.otid().twn()),
+            if with_cto {
+                OrderBy::Asc(cto.korder().twn())
+            } else {
+                OrderBy::None
+            },
+        ])
+        .build();
+
+        self.conn()
+            .await?
+            .page_read(
+                sr,
+                LimitOffset {
+                    limit: req.page_size,
+                    offset: req.start_index.into(),
+                },
+                |row| {
+                    Ok(ChnotSearchRspThread {
+                        meta: ChnotThreadMeta {
+                            otid: row.try_get(ChnotThreadMeta::OTID)?,
+                            kspace: row.try_get(ChnotThreadMeta::KSPACE)?,
+                            pin_tid: row.try_get(ChnotThreadMeta::PIN_TID)?,
+                            archive_tid: row.try_get(ChnotThreadMeta::ARCHIVE_TID)?,
+                            tid: row.try_get(ChnotThreadMeta::TID)?,
+                            title: row.try_get(ChnotThreadMeta::TITLE)?,
+                        },
+                    })
+                },
+            )
+            .await
+    }
+
+    async fn chnot_single_search(
+        &self,
+        req: KReq<ChnotSearchReq>,
+    ) -> AResult<PageRsp<ChnotSearchRspSingle>> {
+        let cm = ChnotMetaTable::new("cm");
+        let tag_constraint = MdwtOtidInTags::new("tag_constraint");
+        let query_constraint = QueryContentTable::new("query");
+        let mr = MdwtRecordTable::new("mr");
+
+        let sr = SqlReader::builder(
+            // select
+            [SqlField {
+                alias: None,
+                table_alias: cm.alias,
+                field_name: "*",
+            }],
+            // from
+            // Chnot Thread Meta
+            Joins::new(chin_sql::Froms::Table {
+                table_name: cm.table(),
+                alias: cm.alias,
+            })
+            .join_some(
+                tag_constraint.sub_query_table(req.tags.clone(), req.get_spaces()),
+                |v| JoinTable {
+                    join_type: JoinType::InnerJoin,
+                    table: Froms::SubQuery {
+                        table: v.reader.into(),
+                        alias: &tag_constraint.alias,
+                    },
+                    conds: [(tag_constraint.mdwt_otid(), cm.otid()).into()].into(),
+                },
+            )
+            .join_some(
+                QueryContentTable::sub_query_table(req.query.as_deref()),
+                |v| JoinTable {
+                    join_type: JoinType::InnerJoin,
+                    table: Froms::SubQuery {
+                        table: v.reader.into(),
+                        alias: query_constraint.alias,
+                    },
+                    conds: [(query_constraint.chnot_otid(), cm.otid()).into()].into(),
+                },
+            )
+            .join(JoinTable {
+                join_type: JoinType::LeftJoin,
+                table: Froms::Table {
+                    table_name: mr.table(),
+                    alias: mr.alias,
+                },
+                conds: [(mr.otid(), cm.otid()).into()].into(),
+            })
+            .into(),
+        )
+        .wheres(Wheres::and([cm.kspace().v_in(req.get_spaces())]))
+        .order_by([
+            OrderBy::Desc(cm.pin_tid().twn()),
+            OrderBy::Desc(cm.otid().twn()),
+        ])
+        .build();
+
+        self.conn()
+            .await?
+            .page_read(
+                sr,
+                LimitOffset {
+                    limit: req.page_size,
+                    offset: req.start_index.into(),
+                },
+                |row| {
+                    Ok(ChnotSearchRspSingle {
+                        meta: ChnotMeta {
+                            otid: row.try_get(ChnotMeta::OTID)?,
+                            kspace: row.try_get(ChnotMeta::KSPACE)?,
+                            pin_tid: row.try_get(ChnotMeta::PIN_TID)?,
+                            archive_tid: row.try_get(ChnotMeta::ARCHIVE_TID)?,
+                            tid: row.try_get(ChnotMeta::TID)?,
+                            kind: row.try_get(ChnotMeta::KIND)?,
+                        },
+                        preview_text: row.try_get("cont")?,
+                    })
+                },
+            )
+            .await
+    }
 }
 
 impl TryFrom<&KDbRow> for ChnotThreadMeta {
@@ -331,9 +545,10 @@ impl TryFrom<&KDbRow> for ChnotThreadMeta {
         let chnot = ChnotThreadMeta {
             otid: value.try_get(ChnotThreadMeta::OTID)?,
             kspace: value.try_get(ChnotThreadMeta::KSPACE)?,
-            pin_time: value.try_get(ChnotThreadMeta::PIN_TIME)?,
-            archive_time: value.try_get(ChnotThreadMeta::ARCHIVE_TIME)?,
+            archive_tid: value.try_get(ChnotThreadMeta::ARCHIVE_TID)?,
+            pin_tid: value.try_get(ChnotThreadMeta::PIN_TID)?,
             tid: value.try_get(ChnotThreadMeta::TID)?,
+            title: value.try_get(ChnotThreadMeta::TITLE)?,
         };
         Ok(chnot)
     }

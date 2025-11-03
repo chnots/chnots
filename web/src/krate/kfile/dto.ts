@@ -54,7 +54,7 @@ export type KfileInlineDownloadBySidRsp = {
 export type KfileAssetChunkUploadReq = {
   upload_id: string;
   meta_id: string;
-  otid: TID;
+  otid: number;
   filename: string;
   chunk_no: number;
   total_chunks: number;

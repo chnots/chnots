@@ -2,7 +2,7 @@ import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
 import ChnotThreadEditor from "@/krate/chnot/component/thread";
 import { useChnotStore } from "@/krate/chnot/store";
 import { useEffect, useRef, useState } from "react";
-import { ChnotThreadListRspData } from "@/krate/chnot/dto";
+import { ChnotSearchRspThread } from "@/krate/chnot/dto";
 import {
   SidebarInset,
   SidebarProvider,
@@ -20,7 +20,7 @@ import { useKSpaceStore } from "@/krate/kspace/store";
  * This component is only to improve performance, that is to say, when
  * editor changes, the list should not be rerendered.
  *
- * @returns ChnotThreadListRspData Editor Container
+ * @returns ChnotSearchRspThread Editor Container
  */
 const MonoChnot = ({ onNew }: { onNew: () => void }) => {
   const { curMetaId, getCurrentThread } = useChnotStore((store) => {
@@ -41,6 +41,7 @@ const MonoChnot = ({ onNew }: { onNew: () => void }) => {
   useEffect(() => {
     if (!curMetaId && !editorThread) {
       setEditorThread({
+        title: "",
         otid: genTID(),
         kspace: currentKSpace,
         tid: genTID(),
@@ -79,7 +80,7 @@ const StateBar = ({ onNew }: { onNew: () => void }) => {
  * Page for chnots, which is left and right layouted.
  *
  * Current there is only one chnot editor in the page, use multi webpages.
- * @returns ChnotThreadListRspData Page
+ * @returns ChnotSearchRspThread Page
  */
 const ChnotPage = () => {
   const [monoComponentKey, setMonoComponentKey] = useState(genUID());

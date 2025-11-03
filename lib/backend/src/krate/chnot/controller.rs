@@ -1,6 +1,6 @@
 use crate::app::ShareAppState;
 use crate::controller::KResponse;
-use crate::model::dto::kreq;
+use crate::model::dto::{PageRsp, kreq};
 use axum::{Json, Router, extract::State, http::HeaderMap, routing::post};
 
 use super::mapper::ChnotMapper;
@@ -22,7 +22,8 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/chnot-thread-order-commit",
             post(chnot_thread_order_commit),
         )
-        .route("/api/v1/chnot-thread-list", post(chnot_thread_list))
+        .route("/api/v1/chnot-thread-search", post(chnot_thread_search))
+        .route("/api/v1/chnot-single-search", post(chnot_single_search))
 }
 
 async fn chnot_thread_order_commit(
@@ -63,12 +64,20 @@ async fn chnot_thread_meta_commit(
         .into()
 }
 
-async fn chnot_thread_list(
+async fn chnot_thread_search(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotThreadListReq>,
-) -> KResponse<ChnotThreadListRsp> {
-    state.chnot_thread_list(kreq(headers, req)).await.into()
+    Json(req): Json<ChnotSearchReq>,
+) -> KResponse<PageRsp<ChnotSearchRspThread>> {
+    state.chnot_thread_search(kreq(headers, req)).await.into()
+}
+
+async fn chnot_single_search(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotSearchReq>,
+) -> KResponse<PageRsp<ChnotSearchRspSingle>> {
+    state.chnot_single_search(kreq(headers, req)).await.into()
 }
 
 async fn chnot_thread_meta_fetch(

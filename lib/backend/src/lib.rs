@@ -38,7 +38,7 @@ pub async fn run(config: Config) -> EResult {
             }
 
             if let Err(err) = state.dump_to_files(StartType::All).await {
-                log::error!("unable to backup to files {err}")
+                log::error!("unable to backup to files {err}, {}", err.backtrace())
             }
 
             log::info!("begin to sync via network {}", state.instance_id.as_str());

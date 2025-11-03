@@ -1,11 +1,7 @@
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { create, useStore } from "zustand";
 import { combine } from "zustand/middleware";
-import {
-  ChnotThreadListRspData,
-  ChnotThreadListRsp,
-  MdwtTagSearchType,
-} from "./dto";
+import { ChnotSearchRspThread, ChnotSearchRsp, MdwtTagSearchType } from "./dto";
 import { TID } from "@/lib/id_util";
 import { DbCache } from "@/common/store";
 import { kspaceStore } from "../kspace/store";
@@ -33,7 +29,7 @@ const getDefaultState = (): State => {
     tags: undefined,
     changeKeyword: function (query?: string): void {},
 
-    overwriteChnotCache: function (chnot: ChnotThreadListRspData): void {},
+    overwriteChnotCache: function (chnot: ChnotSearchRspThread): void {},
     setCurrentThreadOtid: function (chnotMetaId?: TID): void {},
     setTagKeyword: function (tagKeyword?: string): void {},
     setChnotKinds: function (): void {},
@@ -54,11 +50,11 @@ interface State {
   refreshChnots(): unknown;
   fetchMoreChnotThreads(): unknown;
   changeKeyword(query?: string): void;
-  overwriteChnotCache(chnot: ChnotThreadListRspData): void;
+  overwriteChnotCache(chnot: ChnotSearchRspThread): void;
   setCurrentThreadOtid(chnotMetaId?: TID): void;
   setTagKeyword(tagKeyword?: string): void;
   setChnotKinds(changeKinds: (kinds?: ChnotKind[]) => ChnotKind[]): void;
-  getCurrentThread(): ChnotThreadListRspData | undefined;
+  getCurrentThread(): ChnotSearchRspThread | undefined;
   setChnotMeta(meta: ChnotMeta): void;
   getChnotMeta(otid: TID): ChnotMeta | undefined;
   validateChnotCache(toRemoves: TID[]): void;
@@ -68,7 +64,7 @@ interface State {
   /**
    * ChnotThread Map by ChnotThread Meta Id
    */
-  threadMapByThreadId: DbCache<ChnotThreadListRspData>;
+  threadMapByThreadId: DbCache<ChnotSearchRspThread>;
 
   /**
    * Current ChnotThread Meta Id
@@ -109,7 +105,7 @@ export const chnotStore = create(
         tags,
         kinds,
       } = get();
-      const cs: ChnotThreadListRsp = await chnotThreadList({
+      const cs: ChnotSearchRsp = await chnotThreadList({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
         query: query,
@@ -150,7 +146,7 @@ export const chnotStore = create(
 
       await get().fetchMoreChnotThreads();
     },
-    overwriteChnotCache: (chnot: ChnotThreadListRspData) => {
+    overwriteChnotCache: (chnot: ChnotSearchRspThread) => {
       set((state) => {
         const cmm = state.threadMapByThreadId;
         let dbCache = cmm.dbCache;

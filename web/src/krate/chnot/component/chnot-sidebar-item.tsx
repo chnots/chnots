@@ -2,7 +2,7 @@ import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/lib/date-utils";
 import Icon from "@/common/component/icon";
 import { useChnotStore } from "@/krate/chnot/store";
-import { ChnotThreadListRspData } from "@/krate/chnot/dto";
+import { ChnotSearchRspThread } from "@/krate/chnot/dto";
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -67,7 +67,7 @@ const ChnotSidebarItem = React.forwardRef(
     {
       chnotThread,
       showKSpace,
-    }: { chnotThread: ChnotThreadListRspData; showKSpace: boolean },
+    }: { chnotThread: ChnotSearchRspThread; showKSpace: boolean },
     ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const {
@@ -107,12 +107,12 @@ const ChnotSidebarItem = React.forwardRef(
     };
 
     const onTogglePin = async () => {
-      const pin = chnotThread.meta.pin_time ? false : true;
+      const pin = chnotThread.meta.pin_tid ? false : true;
       await chnotThreadMetaOverwrite({
         meta_otid: chnotThread.meta.otid,
         pinned: pin,
       });
-      chnotThread.meta.pin_time = pin ? new Date() : undefined;
+      chnotThread.meta.pin_tid = pin ? new Date() : undefined;
       overwriteChnotCache(chnotThread);
     };
 
@@ -143,7 +143,7 @@ const ChnotSidebarItem = React.forwardRef(
                 className="h-3.5 w-3.5 text-muted-foreground/60"
               />
             )}
-            {chnotThread.meta.pin_time && (
+            {chnotThread.meta.pin_tid && (
               <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
             )}
           </div>

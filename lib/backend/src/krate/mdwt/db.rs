@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::*;
 use crate::krate::chnot::ChnotThreadMeta;
 use crate::krate::mdwt::mapper::MdwtMapper;
@@ -13,7 +15,10 @@ use crate::model::dto::KReq;
 use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::{ChinSqlError, SqlBuilder};
+use chin_sql::{
+    ChinSqlError, GroupBy, Having, SqlBuilder, SqlField, SqlReader, SqlTable, SqlTypedField,
+    SubQueryTable,
+};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
@@ -143,35 +148,60 @@ impl<'a> KDbTx<'a> {
     }
 }
 
-impl MdwtTag {
-    pub fn mdwt_otids_sub<'a>(
+pub(crate) struct MdwtOtidInTags<'a> {
+    pub alias: Cow<'a, str>,
+    mt: MdwtTagTable<'a>,
+}
+
+impl<'a> MdwtOtidInTags<'a> {
+    pub fn new(alias: &'a str) -> Self {
+        let mt: MdwtTagTable<'static> = MdwtTagTable::new("mt");
+        Self {
+            alias: alias.into(),
+            mt,
+        }
+    }
+
+    pub fn mdwt_otid(&'a self) -> SqlTypedField<'a, TID> {
+        SqlTypedField::new(&self.alias, MdwtTag::MDWT_OTID)
+    }
+
+    pub fn sub_query_table(
+        &'a self,
+        tags: Option<MdwtTagSearchType>,
         kspaces: Vec<Varchar<40>>,
-        tags: Option<&MdwtTagSearchType>,
-    ) -> SqlBuilder<'a> {
-        let v = vec![];
-        let tags = match tags {
-            Some(tags) => match tags {
-                MdwtTagSearchType::Inset(items) => items,
-            },
-            None => &v,
+    ) -> Option<SubQueryTable<'a>> {
+        let Some(tags) = tags.map(|s| match s {
+            MdwtTagSearchType::Inset(items) => items,
+        }) else {
+            return None;
         };
-        let len = if !tags.is_empty() {
-            Some(tags.len())
+        let len = if tags.len() > 0 {
+            tags.len()
         } else {
-            None
+            return None;
         };
-        SqlBuilder::read(MdwtTag::TABLE, &[MdwtTag::MDWT_OTID])
-            .r#where(Wheres::and([
-                Wheres::r#in(MdwtTag::KSPACE, kspaces),
-                Wheres::if_some(len, |_| Wheres::r#in(MdwtTag::TAG, tags.to_vec())),
-            ]))
-            .seg("group by")
-            .seg(MdwtTag::MDWT_OTID)
-            .some_then(len, |l, sb| {
-                sb.seg("having")
-                    .seg(format!("COUNT(DISTINCT {}) = ", MdwtTag::TAG))
-                    .val(l as i64)
-            })
+
+        let reader = SqlReader::builder(
+            [self.mdwt_otid().erased()],
+            chin_sql::Froms::Table {
+                table_name: self.mt.table(),
+                alias: self.mt.alias(),
+            },
+        )
+        .wheres(Wheres::and([
+            self.mt.kspace().v_in(kspaces),
+            self.mt
+                .tag()
+                .v_in(tags.iter().map(|v| Varchar::limit(v)).collect()),
+        ]))
+        .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
+        .having(Having::Custom(
+            format!("COUNT(DISTINCT {}) = {}", MdwtTag::TAG, len).into(),
+        ))
+        .build();
+
+        Some(SubQueryTable { reader })
     }
 }
 
@@ -187,21 +217,31 @@ impl KDb {
         T: Serialize + Clone + Send + 'static + AsRef<str>,
     {
         let field = if name_only { "distinct tag" } else { "*" };
+        let otids = MdwtOtidInTags::new("otids");
 
         let sql = SqlBuilder::new()
-            .seg("WITH qualified_tids AS (")
-            .merge(MdwtTag::mdwt_otids_sub(req.get_spaces(), req.tags.as_ref()))
-            .seg(")")
-            .merge(
-                SqlBuilder::read(MdwtTag::TABLE, &[field])
-                    .seg("as t")
-                    .seg("right join qualified_tids q on t.mdwt_otid = q.mdwt_otid")
-                    .r#where(Wheres::and([Wheres::r#in(
-                        MdwtTag::KSPACE,
-                        req.get_spaces(),
-                    )]))
-                    .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index)),
-            );
+            .seg(field)
+            .seg("from")
+            .seg(MdwtTag::TABLE)
+            .seg("as tags")
+            .some_then(
+                otids.sub_query_table(req.tags.clone(), req.get_spaces()),
+                |sqt, this| {
+                    let f1 = otids.mdwt_otid().twn().to_string();
+                    this.seg("right join")
+                        .merge(sqt.reader)
+                        .seg("on")
+                        .seg(f1)
+                        .seg("=")
+                        .seg("tags.")
+                        .seg(MdwtTag::MDWT_OTID)
+                },
+            )
+            .r#where(Wheres::and([Wheres::r#in(
+                MdwtTag::KSPACE,
+                req.get_spaces(),
+            )]))
+            .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index));
         let data = self.conn().await?.qry_list(sql, mapper).await?;
 
         Ok(MdwtTagListRsp {

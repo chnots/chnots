@@ -11,9 +11,10 @@ export enum ChnotKind {
 
 export type ChnotThreadMeta = {
   otid: TID;
+  title: Varchar<500>;
   kspace: Varchar<40>;
-  pin_time?: Date;
-  archive_time?: Date;
+  pin_tid?: Date;
+  archive_tid?: Date;
   tid: TID;
 };
 
@@ -21,6 +22,8 @@ export type ChnotMeta = {
   otid: TID;
   kind: ChnotKind;
   kspace: Varchar<40>;
+  archive_tid?: TID;
+  pin_tid?: TID;
   tid: TID;
 };
 

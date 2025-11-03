@@ -7,7 +7,7 @@ export type MdwtTagSearchType = {
   Inset: string[];
 };
 
-export type ChnotThreadListRspData = {
+export type ChnotSearchRspThread = {
   preview_text?: string;
   chnot_otid?: TID;
   meta: ChnotThreadMeta;
@@ -33,7 +33,7 @@ export type ChnotThreadArchiveReq = {
   logic: boolean;
 };
 export type ChnotThreadArchiveRsp = object;
-export type ChnotThreadListReq = {
+export type ChnotSearchReq = {
   query?: string;
   tags?: MdwtTagSearchType;
   kinds: ChnotKind[];
@@ -58,8 +58,8 @@ export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
 };
 
-export type ChnotThreadListRsp = {
-  data: ChnotThreadListRspData[];
+export type ChnotSearchRsp = {
+  data: ChnotSearchRspThread[];
   has_next: boolean;
   next_start: number;
 };
@@ -68,6 +68,8 @@ export type ChnotMetaCommitReqData = {
   otid: TID;
   kind: ChnotKind;
   kspace: Varchar<40>;
+  archive?: boolean;
+  pin_it?: boolean;
 };
 export type ChnotMetaCommitReq = {
   metas: ChnotMetaCommitReqData[];
@@ -81,4 +83,9 @@ export type ChnotMetaListReq = {
 };
 export type ChnotMetaListRsp = {
   metas: ChnotMeta[];
+};
+
+export type ChnotSearchRspSingle = {
+  preview_text?: string;
+  meta: ChnotMeta;
 };

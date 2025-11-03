@@ -2,13 +2,6 @@ use chin_sql::GenerateTableSchema;
 use chin_sql::SqlValue;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-/// chnot: knot, which stands for the note.
-///
-/// Ancients used knots to record events,
-/// so I use "knot" as the basic unit for my notebook,
-/// but the name "knot" is too repetitive, so I made a change.
-///
-use chrono::{DateTime, FixedOffset};
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 
@@ -25,9 +18,13 @@ pub struct ChnotThreadMeta {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
+    /// This field is used to speed up search requests.
+    pub title: Varchar<500>,
     pub kspace: Varchar<40>,
-    pub pin_time: Option<DateTime<FixedOffset>>,
-    pub archive_time: Option<DateTime<FixedOffset>>,
+    #[gts_type = "i64"]
+    pub pin_tid: Option<TID>,
+    #[gts_type = "i64"]
+    pub archive_tid: Option<TID>,
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
@@ -85,12 +82,16 @@ pub(crate) struct ChnotMeta {
     #[gts_type = "i64"]
     pub otid: TID,
 
-    pub archive_time: Option<DateTime<FixedOffset>>,
-
     #[gts_type = "Varchar<40>"]
     pub kind: ChnotKind,
 
     pub kspace: Varchar<40>,
+
+    #[gts_type = "i64"]
+    pub archive_tid: Option<TID>,
+
+    #[gts_type = "i64"]
+    pub pin_tid: Option<TID>,
 
     #[gts_unique]
     #[gts_type = "i64"]
@@ -106,7 +107,8 @@ impl TryFrom<&KDbRow> for ChnotMeta {
             kind: value.try_get(Self::KIND)?,
             tid: value.try_get(Self::TID)?,
             kspace: value.try_get(Self::KSPACE)?,
-            archive_time: value.try_get(Self::ARCHIVE_TIME)?,
+            archive_tid: value.try_get(Self::ARCHIVE_TID)?,
+            pin_tid: value.try_get(Self::PIN_TID)?,
         })
     }
 }

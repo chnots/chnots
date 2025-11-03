@@ -6,10 +6,14 @@ use crate::krate::mdwt::MdwtTagSearchType;
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadListRspData {
-    pub preview_text: Option<String>,
-    pub chnot_otid: Option<TID>,
+pub struct ChnotSearchRspThread {
     pub meta: ChnotThreadMeta,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotSearchRspSingle {
+    pub preview_text: Option<String>,
+    pub meta: ChnotMeta,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,6 +49,7 @@ pub struct ChnotMetaCommitReqData {
     pub kind: ChnotKind,
     pub kspace: Varchar<40>,
     pub archive: Option<bool>,
+    pub pin_it: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,7 +73,7 @@ pub struct ChnotMetaListRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadListReq {
+pub struct ChnotSearchReq {
     pub query: Option<String>,
 
     pub tags: Option<MdwtTagSearchType>,
@@ -79,13 +84,6 @@ pub struct ChnotThreadListReq {
     // Paging
     pub start_index: usize,
     pub page_size: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadListRsp {
-    pub data: Vec<ChnotThreadListRspData>,
-    pub has_next: bool,
-    pub next_start: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

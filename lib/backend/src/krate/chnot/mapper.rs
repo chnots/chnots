@@ -1,6 +1,9 @@
 use chin_tools::{AResult, EResult};
 
-use crate::{MapperType, expand_mt_branch, model::dto::KReq};
+use crate::{
+    MapperType, expand_mt_branch,
+    model::dto::{KReq, PageRsp},
+};
 
 use super::*;
 
@@ -12,8 +15,16 @@ pub trait ChnotMapper {
         req: KReq<ChnotThreadOrderCommitReq>,
     ) -> AResult<ChnotThreadOrderCommitRsp>;
 
-    async fn chnot_thread_list(&self, req: KReq<ChnotThreadListReq>)
-    -> AResult<ChnotThreadListRsp>;
+    async fn chnot_thread_search(
+        &self,
+        req: KReq<ChnotSearchReq>,
+    ) -> AResult<PageRsp<ChnotSearchRspThread>>;
+
+    async fn chnot_single_search(
+        &self,
+        req: KReq<ChnotSearchReq>,
+    ) -> AResult<PageRsp<ChnotSearchRspSingle>>;
+
     async fn chnot_thread_meta_commit(
         &self,
         req: KReq<ChnotThreadMetaFetchCommitReq>,
@@ -29,11 +40,18 @@ pub trait ChnotMapper {
 }
 
 impl ChnotMapper for MapperType {
-    async fn chnot_thread_list(
+    async fn chnot_thread_search(
         &self,
-        req: KReq<ChnotThreadListReq>,
-    ) -> AResult<ChnotThreadListRsp> {
-        expand_mt_branch!(self.chnot_thread_list(req))
+        req: KReq<ChnotSearchReq>,
+    ) -> AResult<PageRsp<ChnotSearchRspThread>> {
+        expand_mt_branch!(self.chnot_thread_search(req))
+    }
+
+    async fn chnot_single_search(
+        &self,
+        req: KReq<ChnotSearchReq>,
+    ) -> AResult<PageRsp<ChnotSearchRspSingle>> {
+        expand_mt_branch!(self.chnot_single_search(req))
     }
 
     async fn chnot_thread_meta_commit(
