@@ -56,7 +56,7 @@ const ChnotSidebar = () => {
   const {
     fetchMoreChnotThreads,
     refreshChnotThreads,
-    changeKeyword,
+    changeSearchStr,
     isFetchingNextPage,
     threadMapByThreadId,
     tags,
@@ -66,10 +66,10 @@ const ChnotSidebar = () => {
   } = useChnotStore((store) => {
     return {
       fetchMoreChnotThreads: store.fetchMoreChnotThreads,
-      changeKeyword: store.changeKeyword,
-      refreshChnotThreads: store.refreshChnots,
+      changeSearchStr: store.changeSearchStr,
+      refreshChnotThreads: store.refreshChnotThreads,
       isFetchingNextPage: store.isFetchingNextPage,
-      threadMapByThreadId: store.threadMapByThreadId,
+      threadMapByThreadId: store.threadMapByOtid,
       tags: store.tags,
       setTagsInset: store.setTagsInset,
       setTags: store.setTags,
@@ -77,7 +77,7 @@ const ChnotSidebar = () => {
     };
   });
 
-  const [keyword, setKeyword] = useState<string>();
+  const [searchStr, setSearchStr] = useState<string>();
   const [tagList, setTagList] = useState<string[]>();
 
   const { currentKSpace, selectKSpace, mkspaces } = useKSpaceStore((store) => {
@@ -89,8 +89,8 @@ const ChnotSidebar = () => {
   });
 
   useEffect(() => {
-    changeKeyword(keyword);
-  }, [keyword]);
+    changeSearchStr(searchStr);
+  }, [searchStr]);
 
   useEffect(() => {
     if (tags) {
@@ -98,7 +98,7 @@ const ChnotSidebar = () => {
         start_index: 0,
         page_size: 9999,
         tags,
-        query: keyword,
+        query: searchStr,
       }).then((rsp) => {
         setTagList(rsp.data);
       });
@@ -106,7 +106,7 @@ const ChnotSidebar = () => {
       setTagList(undefined);
     }
     refreshChnotThreads();
-  }, [tags, keyword, mkspaces, kinds]);
+  }, [tags, searchStr, mkspaces, kinds]);
 
   return (
     <Sidebar>
@@ -152,7 +152,7 @@ const ChnotSidebar = () => {
                 placeholder="Search the docs..."
                 className="pl-8"
                 onChange={(e) => {
-                  setKeyword(e.target.value);
+                  setSearchStr(e.target.value);
                 }}
               />
               <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />

@@ -171,12 +171,10 @@ impl<'a> MdwtOtidInTags<'a> {
         tags: Option<MdwtTagSearchType>,
         kspaces: Vec<Varchar<40>>,
     ) -> Option<SubQueryTable<'a>> {
-        let Some(tags) = tags.map(|s| match s {
+        let tags = tags.map(|s| match s {
             MdwtTagSearchType::Inset(items) => items,
-        }) else {
-            return None;
-        };
-        let len = if tags.len() > 0 {
+        })?;
+        let len = if !tags.is_empty() {
             tags.len()
         } else {
             return None;
@@ -193,7 +191,7 @@ impl<'a> MdwtOtidInTags<'a> {
             self.mt.kspace().v_in(kspaces),
             self.mt
                 .tag()
-                .v_in(tags.iter().map(|v| Varchar::limit(v)).collect()),
+                .v_in(tags.iter().map(Varchar::limit).collect()),
         ]))
         .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
         .having(Having::Custom(
@@ -220,6 +218,7 @@ impl KDb {
         let otids = MdwtOtidInTags::new("otids");
 
         let sql = SqlBuilder::new()
+            .seg("select")
             .seg(field)
             .seg("from")
             .seg(MdwtTag::TABLE)

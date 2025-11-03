@@ -9,7 +9,7 @@ import { ChnotKind, ChnotMeta } from "./po";
 import { chnotThreadList } from "./service";
 import { useShallow } from "zustand/react/shallow";
 
-const newChnotMap = () => {
+const cacheMap = () => {
   return {
     dbNextStartIndex: 0,
     dbPageSize: 20,
@@ -21,13 +21,13 @@ const newChnotMap = () => {
 const getDefaultState = (): State => {
   return {
     fetchMoreChnotThreads: () => {},
-    refreshChnots: () => {},
-    threadMapByThreadId: newChnotMap(),
+    refreshChnotThreads: () => {},
+    threadMapByOtid: cacheMap(),
     cachedChnotMap: new Map(),
     query: undefined,
     isFetchingNextPage: false,
     tags: undefined,
-    changeKeyword: function (query?: string): void {},
+    changeSearchStr: function (query?: string): void {},
 
     overwriteChnotCache: function (chnot: ChnotSearchRspThread): void {},
     setCurrentThreadOtid: function (chnotMetaId?: TID): void {},
@@ -47,9 +47,9 @@ const getDefaultState = (): State => {
 };
 
 interface State {
-  refreshChnots(): unknown;
+  refreshChnotThreads(): unknown;
   fetchMoreChnotThreads(): unknown;
-  changeKeyword(query?: string): void;
+  changeSearchStr(query?: string): void;
   overwriteChnotCache(chnot: ChnotSearchRspThread): void;
   setCurrentThreadOtid(chnotMetaId?: TID): void;
   setTagKeyword(tagKeyword?: string): void;
@@ -64,7 +64,7 @@ interface State {
   /**
    * ChnotThread Map by ChnotThread Meta Id
    */
-  threadMapByThreadId: DbCache<ChnotSearchRspThread>;
+  threadMapByOtid: DbCache<ChnotSearchRspThread>;
 
   /**
    * Current ChnotThread Meta Id
@@ -99,12 +99,8 @@ export const chnotStore = create(
         };
       });
 
-      const {
-        threadMapByThreadId: chnotMapByMetaId,
-        query,
-        tags,
-        kinds,
-      } = get();
+      const { threadMapByOtid: chnotMapByMetaId, query, tags, kinds } = get();
+      console.log("read", get());
       const cs: ChnotSearchRsp = await chnotThreadList({
         start_index: chnotMapByMetaId.dbNextStartIndex,
         page_size: chnotMapByMetaId.dbPageSize,
@@ -114,7 +110,7 @@ export const chnotStore = create(
       });
 
       set((state) => {
-        const cmm = state.threadMapByThreadId;
+        const cmm = state.threadMapByOtid;
         const cm = cmm.dbCache;
 
         for (const c of cs.data) {
@@ -123,7 +119,7 @@ export const chnotStore = create(
 
         return {
           ...state,
-          threadMapByThreadId: {
+          threadMapByOtid: {
             ...cmm,
             dbNextStartIndex: cs.next_start,
             hasNextPage: cs.has_next,
@@ -132,23 +128,22 @@ export const chnotStore = create(
         };
       });
     },
-    changeKeyword: async (query?: string) => {
+    changeSearchStr: async (query?: string) => {
+      console.log("change keyword", query);
       set((state) => {
         return { ...state, query: query, startIndex: 0 };
       });
-
-      await get().refreshChnots();
     },
     refreshChnotThreads: async () => {
       set((state) => {
-        return { ...state, threadMapByThreadId: newChnotMap() };
+        return { ...state, threadMapByOtid: cacheMap() };
       });
 
       await get().fetchMoreChnotThreads();
     },
     overwriteChnotCache: (chnot: ChnotSearchRspThread) => {
       set((state) => {
-        const cmm = state.threadMapByThreadId;
+        const cmm = state.threadMapByOtid;
         let dbCache = cmm.dbCache;
         if (dbCache.has(chnot.meta.otid)) {
           dbCache.set(chnot.meta.otid, chnot);
@@ -156,7 +151,7 @@ export const chnotStore = create(
           dbCache = insertMapAtIndex(0, chnot.meta.otid, chnot, dbCache);
         }
         cmm.dbCache = dbCache;
-        return { ...state, threadMapByThreadId: cmm };
+        return { ...state, threadMapByOtid: cmm };
       });
     },
     setCurrentThreadOtid: (chnotMetaId?: TID) => {
@@ -177,7 +172,7 @@ export const chnotStore = create(
     getCurrentThread: () => {
       const read = get();
       return read.curThreadOtid
-        ? read.threadMapByThreadId.dbCache.get(read.curThreadOtid)
+        ? read.threadMapByOtid.dbCache.get(read.curThreadOtid)
         : undefined;
     },
     setChnotMeta: (meta: ChnotMeta) => {
@@ -190,7 +185,7 @@ export const chnotStore = create(
       return get().cachedChnotMap.get(otid);
     },
     validateChnotCache: (toRemoves: TID[]) => {
-      const cmm = get().threadMapByThreadId;
+      const cmm = get().threadMapByOtid;
       const dbCacheMap = cmm.dbCache;
 
       const toRemove2 = Array.from(
@@ -218,7 +213,7 @@ export const chnotStore = create(
       set((prev) => {
         return {
           ...prev,
-          threadMapByThreadId: cmm,
+          threadMapByOtid: cmm,
           curThreadOtid:
             prev.curThreadOtid && dbCacheMap.has(prev.curThreadOtid)
               ? prev.curThreadOtid

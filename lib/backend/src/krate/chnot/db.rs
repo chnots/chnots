@@ -84,26 +84,16 @@ impl<'a> QueryContentTable<'a> {
                         SqlField {
                             alias: None,
                             table_alias: "cont",
-                            field_name: QueryContent::CONTENT,
+                            field_name: QueryContent::CHNOT_OTID,
                         },
                         SqlField {
-                            alias: QueryContent::CONTENT.into(),
-                            table_alias: "mr",
-                            field_name: MdwtRecord::CONTENT,
+                            alias: None,
+                            table_alias: "cont",
+                            field_name: QueryContent::CONTENT,
                         },
                     ],
                     chin_sql::Froms::Union {
-                        table: [
-                            Froms::SubQuery {
-                                table: mdwt.into(),
-                                alias: "mr",
-                            },
-                            Froms::SubQuery {
-                                table: llmchat.into(),
-                                alias: "llm",
-                            },
-                        ]
-                        .into(),
+                        table: [mdwt, llmchat].into(),
                         alias: "cont",
                     },
                 )
