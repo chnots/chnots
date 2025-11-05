@@ -8,9 +8,8 @@ export type MdwtTagSearchType = {
 };
 
 export type ChnotSearchRspThread = {
-  preview_text?: string;
-  chnot_otid?: TID;
   meta: ChnotThreadMeta;
+  title?: string;
 };
 export type ChnotThreadMetaFetchCommitReq = {
   meta_otid: TID;

@@ -28,6 +28,7 @@ import {
 import { useShallow } from "zustand/react/shallow";
 import TodoLabel from "@/krate/toent/component/todo-label";
 import { chnotThreadMetaOverwrite } from "../service";
+import { genTID } from "@/lib/id_util";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -94,9 +95,9 @@ const ChnotSidebarItem = React.forwardRef(
 
     const isSelected = currentChnot?.meta.otid === chnotThread.meta.otid;
 
-    const title = chnotThread.preview_text?.startsWith("# ")
-      ? chnotThread.preview_text.split("\n")[0].substring(2)
-      : (chnotThread.preview_text?.substring(0, 500) ?? "<unknown>");
+    const title = chnotThread.title?.startsWith("# ")
+      ? chnotThread.title.split("\n")[0].substring(2)
+      : (chnotThread.title?.substring(0, 500) ?? "<unknown>");
 
     const onArchive = async () => {
       await chnotThreadMetaOverwrite({
@@ -112,7 +113,7 @@ const ChnotSidebarItem = React.forwardRef(
         meta_otid: chnotThread.meta.otid,
         pinned: pin,
       });
-      chnotThread.meta.pin_tid = pin ? new Date() : undefined;
+      chnotThread.meta.pin_tid = pin ? genTID() : undefined;
       overwriteChnotCache(chnotThread);
     };
 

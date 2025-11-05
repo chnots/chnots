@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::mapper::ChnotMapper;
 use super::*;
 use crate::krate::llmchat::LLMChatRecord;
@@ -177,7 +179,6 @@ impl ChnotMapper for KDb {
                     pin_tid: None,
                     archive_tid: None,
                     tid: TID::default(),
-                    title: Varchar::limit(""),
                 });
 
         tx.as_executor()
@@ -356,7 +357,7 @@ impl ChnotMapper for KDb {
         let tag_constraint = MdwtOtidInTags::new("tag_constraint");
         let query_constraint = QueryContentTable::new("query");
 
-        let sr = SqlReader::builder(
+        let fetch_metas = SqlReader::builder(
             // select
             [SqlField {
                 alias: None,
@@ -417,10 +418,11 @@ impl ChnotMapper for KDb {
         ])
         .build();
 
-        self.conn()
+        let mut metas = self
+            .conn()
             .await?
             .page_read(
-                sr,
+                fetch_metas,
                 LimitOffset {
                     limit: req.page_size,
                     offset: req.start_index.into(),
@@ -433,12 +435,58 @@ impl ChnotMapper for KDb {
                             pin_tid: row.try_get(ChnotThreadMeta::PIN_TID)?,
                             archive_tid: row.try_get(ChnotThreadMeta::ARCHIVE_TID)?,
                             tid: row.try_get(ChnotThreadMeta::TID)?,
-                            title: row.try_get(ChnotThreadMeta::TITLE)?,
                         },
+                        title: None,
                     })
                 },
             )
-            .await
+            .await?;
+
+        let mr = MdwtRecordTable::new("mr");
+        let fetch_titles = SqlReader::builder(
+            [cto.thread_otid().erased(), mr.content().erased()],
+            Joins::new(Froms::Table {
+                table_name: cto.table(),
+                alias: cto.alias,
+            })
+            .join(JoinTable {
+                join_type: JoinType::LeftJoin,
+                table: Froms::Table {
+                    table_name: mr.table(),
+                    alias: mr.alias,
+                },
+                conds: [(mr.otid(), cto.otid()).into()].into(),
+            })
+            .into(),
+        )
+        .wheres(Wheres::and([
+            // we only focus on the first chnot
+            cto.korder().v_eq(0),
+            // limit thread otids
+            cto.thread_otid()
+                .v_in(metas.data.iter().map(|m| m.meta.otid).collect()),
+        ]))
+        .build();
+        let content = mr.content().field_name;
+        let otid = cto.thread_otid().field_name;
+
+        let titles: Vec<(TID, String)> = self
+            .conn()
+            .await?
+            .qry_list(fetch_titles, |row| {
+                let otid: TID = row.try_get(otid)?;
+                let content: String = row.try_get(content)?;
+                Ok((otid, content))
+            })
+            .await?;
+        let mut titles: HashMap<TID, String> = titles.into_iter().collect();
+        metas.data.iter_mut().for_each(|m| {
+            if let Some(title) = titles.remove(&m.meta.otid) {
+                m.title.replace(title);
+            }
+        });
+
+        Ok(metas)
     }
 
     async fn chnot_single_search(
@@ -538,7 +586,6 @@ impl TryFrom<&KDbRow> for ChnotThreadMeta {
             archive_tid: value.try_get(ChnotThreadMeta::ARCHIVE_TID)?,
             pin_tid: value.try_get(ChnotThreadMeta::PIN_TID)?,
             tid: value.try_get(ChnotThreadMeta::TID)?,
-            title: value.try_get(ChnotThreadMeta::TITLE)?,
         };
         Ok(chnot)
     }

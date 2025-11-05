@@ -1,4 +1,4 @@
-use std::{io::Write, vec};
+use std::io::Write;
 
 use super::{mapper::KFileMapper, *};
 use crate::{

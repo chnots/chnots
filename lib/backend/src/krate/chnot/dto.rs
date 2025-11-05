@@ -8,6 +8,7 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotSearchRspThread {
     pub meta: ChnotThreadMeta,
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

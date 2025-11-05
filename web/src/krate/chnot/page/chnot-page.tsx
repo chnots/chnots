@@ -41,7 +41,6 @@ const MonoChnot = ({ onNew }: { onNew: () => void }) => {
   useEffect(() => {
     if (!curMetaId && !editorThread) {
       setEditorThread({
-        title: "",
         otid: genTID(),
         kspace: currentKSpace,
         tid: genTID(),

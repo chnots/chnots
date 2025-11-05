@@ -18,8 +18,6 @@ pub struct ChnotThreadMeta {
     #[gts_primary]
     #[gts_type = "i64"]
     pub otid: TID,
-    /// This field is used to speed up search requests.
-    pub title: Varchar<500>,
     pub kspace: Varchar<40>,
     #[gts_type = "i64"]
     pub pin_tid: Option<TID>,
