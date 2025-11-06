@@ -98,7 +98,7 @@ const RichChnot = ({
   };
 
   return (
-    <div className="relative flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white hover:bg-accent">
+    <div className="relative flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white">
       <Button
         onClick={() => setFullscreen(true)}
         className="absolute top-1 right-1 z-49"
