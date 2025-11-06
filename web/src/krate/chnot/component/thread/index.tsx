@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import { PostSaveArg } from "./chnot/rich-chnot";
+import { PostSaveArg } from "../chnot/rich-chnot";
 import LoadingPage from "@/common/pages/loading-page";
 import { useChnotStore } from "../../store";
 import { SaveState } from "@/common/types";
 import { useShallow } from "zustand/react/shallow";
-import Chrome from "./chnot/chrome";
+import Chrome from "../chnot/chrome";
 import {
   chnotThreadMetaFetch,
   chnotThreadMetaOverwrite,

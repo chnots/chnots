@@ -1,6 +1,6 @@
 import useResizeObserver from "@react-hook/resize-observer";
 import { useEffect, useRef, useState } from "react";
-import MarkdownViewer from "../../chnot-markdown-viewer";
+import MarkdownViewer from "../chnot-markdown-viewer";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";

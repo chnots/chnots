@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
-import { ChnotKind } from "../../../po";
+import { ChnotKind } from "../../po";
 import { SaveState } from "@/common/types";
 import MdwtRecord from "./mdwt";
 import ExcalidrawBlock from "./excalidraw";
-import { ChnotKindIcon } from "../../chnot-kind-icon";
+import { ChnotKindIcon } from "../chnot-kind-icon";
 import KFileBlock from "./kfile";
 import TableChnot from "./table";
 import LLMChatChnot from "./llmchat";
