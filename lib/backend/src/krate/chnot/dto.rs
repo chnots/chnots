@@ -13,7 +13,7 @@ pub struct ChnotSearchRspThread {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotSearchRspSingle {
-    pub preview_text: Option<String>,
+    pub title: Option<String>,
     pub meta: ChnotMeta,
 }
 

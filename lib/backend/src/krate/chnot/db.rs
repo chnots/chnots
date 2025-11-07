@@ -14,7 +14,7 @@ use crate::mapper::db::{
 use crate::model::KSerde;
 use crate::model::dto::{KReq, PageRsp};
 use crate::util::string_util::StringUtils;
-use chin_sql::str_type::{Text, Varchar};
+use chin_sql::str_type::Text;
 use chin_sql::time_type::TID;
 use chin_sql::{Froms, GenerateTableSchema, LimitOffset, SqlField, SubQueryTable, Wheres};
 use chin_sql::{ILikeType, JoinTable, JoinType, Joins, OrderBy, SqlBuilder, SqlReader};
@@ -442,49 +442,51 @@ impl ChnotMapper for KDb {
             )
             .await?;
 
-        let mr = MdwtRecordTable::new("mr");
-        let fetch_titles = SqlReader::builder(
-            [cto.thread_otid().erased(), mr.content().erased()],
-            Joins::new(Froms::Table {
-                table_name: cto.table(),
-                alias: cto.alias,
-            })
-            .join(JoinTable {
-                join_type: JoinType::LeftJoin,
-                table: Froms::Table {
-                    table_name: mr.table(),
-                    alias: mr.alias,
-                },
-                conds: [(mr.otid(), cto.otid()).into()].into(),
-            })
-            .into(),
-        )
-        .wheres(Wheres::and([
-            // we only focus on the first chnot
-            cto.korder().v_eq(0),
-            // limit thread otids
-            cto.thread_otid()
-                .v_in(metas.data.iter().map(|m| m.meta.otid).collect()),
-        ]))
-        .build();
-        let content = mr.content().field_name;
-        let otid = cto.thread_otid().field_name;
+        if !metas.data.is_empty() {
+            let mr = MdwtRecordTable::new("mr");
+            let fetch_titles = SqlReader::builder(
+                [cto.thread_otid().erased(), mr.content().erased()],
+                Joins::new(Froms::Table {
+                    table_name: cto.table(),
+                    alias: cto.alias,
+                })
+                .join(JoinTable {
+                    join_type: JoinType::LeftJoin,
+                    table: Froms::Table {
+                        table_name: mr.table(),
+                        alias: mr.alias,
+                    },
+                    conds: [(mr.otid(), cto.otid()).into()].into(),
+                })
+                .into(),
+            )
+            .wheres(Wheres::and([
+                // we only focus on the first chnot
+                cto.korder().v_eq(0),
+                // limit thread otids
+                cto.thread_otid()
+                    .v_in(metas.data.iter().map(|m| m.meta.otid).collect()),
+            ]))
+            .build();
+            let content = mr.content().field_name;
+            let otid = cto.thread_otid().field_name;
 
-        let titles: Vec<(TID, String)> = self
-            .conn()
-            .await?
-            .qry_list(fetch_titles, |row| {
-                let otid: TID = row.try_get(otid)?;
-                let content: String = row.try_get(content)?;
-                Ok((otid, content))
-            })
-            .await?;
-        let mut titles: HashMap<TID, String> = titles.into_iter().collect();
-        metas.data.iter_mut().for_each(|m| {
-            if let Some(title) = titles.remove(&m.meta.otid) {
-                m.title.replace(title);
-            }
-        });
+            let titles: Vec<(TID, String)> = self
+                .conn()
+                .await?
+                .qry_list(fetch_titles, |row| {
+                    let otid: TID = row.try_get(otid)?;
+                    let content: String = row.try_get(content)?;
+                    Ok((otid, content))
+                })
+                .await?;
+            let mut titles: HashMap<TID, String> = titles.into_iter().collect();
+            metas.data.iter_mut().for_each(|m| {
+                if let Some(title) = titles.remove(&m.meta.otid) {
+                    m.title.replace(title);
+                }
+            });
+        }
 
         Ok(metas)
     }
@@ -500,11 +502,18 @@ impl ChnotMapper for KDb {
 
         let sr = SqlReader::builder(
             // select
-            [SqlField {
-                alias: None,
-                table_alias: cm.alias,
-                field_name: "*",
-            }],
+            [
+                SqlField {
+                    alias: None,
+                    table_alias: cm.alias,
+                    field_name: "*",
+                },
+                SqlField {
+                    alias: None,
+                    table_alias: mr.alias,
+                    field_name: mr.content().field_name,
+                },
+            ],
             // from
             // Chnot Thread Meta
             Joins::new(chin_sql::Froms::Table {
@@ -568,7 +577,7 @@ impl ChnotMapper for KDb {
                             tid: row.try_get(ChnotMeta::TID)?,
                             kind: row.try_get(ChnotMeta::KIND)?,
                         },
-                        preview_text: row.try_get("cont")?,
+                        title: row.try_get(MdwtRecord::CONTENT)?,
                     })
                 },
             )
