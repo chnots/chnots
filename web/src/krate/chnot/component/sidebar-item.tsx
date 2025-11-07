@@ -1,8 +1,7 @@
 import React, { ForwardedRef } from "react";
 import { chnotShortDate } from "@/lib/date-utils";
 import Icon from "@/common/component/icon";
-import { useChnotStore } from "@/krate/chnot/store";
-import { ChnotSearchRspThread } from "@/krate/chnot/dto";
+import { StateChnotLike } from "@/krate/chnot/store";
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -25,10 +24,8 @@ import {
   KSpaceIcon,
   KSpaceSelectDropDownGroup,
 } from "@/krate/kspace/component/kspace-select";
-import { useShallow } from "zustand/react/shallow";
-import TodoLabel from "@/krate/toent/component/todo-label";
 import { chnotThreadMetaOverwrite } from "../service";
-import { genTID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -61,68 +58,63 @@ const ChnotSidebarTagItem = React.forwardRef(
   },
 );
 
-ChnotSidebarTagItem.displayName = "MdwtTagListItem";
+ChnotSidebarTagItem.displayName = "ChnotSidebarTagItem";
 
 const ChnotSidebarItem = React.forwardRef(
   (
     {
-      chnotThread,
+      item,
       showKSpace,
-    }: { chnotThread: ChnotSearchRspThread; showKSpace: boolean },
+      curOtid,
+      getCurrent,
+      overwrite,
+      setCurrOtid,
+      unvalidate,
+    }: {
+      item: StateChnotLike;
+      showKSpace: boolean;
+      curOtid?: TID;
+      getCurrent(): StateChnotLike | undefined;
+      overwrite(chnot: StateChnotLike): void;
+      setCurrOtid(cutOtid?: TID): void;
+      unvalidate(toRemoves: TID[]): void;
+    },
     ref: ForwardedRef<HTMLLIElement>,
   ) => {
-    const {
-      setCurrentChnotMetaId,
-      getCurrentChnot,
-      validateChnotCache,
-      overwriteChnotCache,
-    } = useChnotStore((store) => {
-      return {
-        overwriteChnotCache: store.overwriteChnotCache,
-        setCurrentChnotMetaId: store.setCurrentThreadOtid,
-        getCurrentChnot: store.getCurrentThread,
-        validateChnotCache: store.validateChnotCache,
-      };
-    });
-
-    const onClick = (_: React.MouseEvent) => {
-      setCurrentChnotMetaId(chnotThread.meta.otid);
-    };
-
-    const currentChnot = getCurrentChnot();
-
     const { isMobile } = useSidebar();
 
-    const isSelected = currentChnot?.meta.otid === chnotThread.meta.otid;
+    const isSelected = curOtid === item.meta.otid;
 
-    const title = chnotThread.title?.startsWith("# ")
-      ? chnotThread.title.split("\n")[0].substring(2)
-      : (chnotThread.title?.substring(0, 500) ?? "<unknown>");
+    const title = item.title?.startsWith("# ")
+      ? item.title.split("\n")[0].substring(2)
+      : (item.title?.substring(0, 500) ?? "<unknown>");
 
     const onArchive = async () => {
       await chnotThreadMetaOverwrite({
-        meta_otid: chnotThread.meta.otid,
+        meta_otid: item.meta.otid,
         archive: true,
       });
-      validateChnotCache([chnotThread.meta.otid]);
+      unvalidate([item.meta.otid]);
     };
 
     const onTogglePin = async () => {
-      const pin = chnotThread.meta.pin_tid ? false : true;
+      const pin = item.meta.pin_tid ? false : true;
       await chnotThreadMetaOverwrite({
-        meta_otid: chnotThread.meta.otid,
+        meta_otid: item.meta.otid,
         pinned: pin,
       });
-      chnotThread.meta.pin_tid = pin ? genTID() : undefined;
-      overwriteChnotCache(chnotThread);
+      item.meta.pin_tid = pin ? genTID() : undefined;
+      overwrite(item);
     };
 
     return (
-      <SidebarMenuItem key={chnotThread.meta.otid}>
+      <SidebarMenuItem key={item.meta.otid}>
         <a
-          href={"#" + chnotThread.meta.otid}
-          key={chnotThread.meta.otid}
-          onClick={onClick}
+          href={"#" + item.meta.otid}
+          key={item.meta.otid}
+          onClick={() => {
+            setCurrOtid(item.meta.otid);
+          }}
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
             "hover:shadow-xs border",
@@ -133,18 +125,18 @@ const ChnotSidebarItem = React.forwardRef(
         >
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <time
-              dateTime={new Date(chnotThread.meta.otid / 1e3).toISOString()}
+              dateTime={new Date(item.meta.otid / 1e3).toISOString()}
               className="text-[0.7rem] break-keep"
             >
-              {chnotShortDate(new Date(chnotThread.meta.otid / 1e3))}
+              {chnotShortDate(new Date(item.meta.otid / 1e3))}
             </time>
             {showKSpace && (
               <KSpaceIcon
-                name={chnotThread.meta.kspace}
+                name={item.meta.kspace}
                 className="h-3.5 w-3.5 text-muted-foreground/60"
               />
             )}
-            {chnotThread.meta.pin_tid && (
+            {item.meta.pin_tid && (
               <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
             )}
           </div>
@@ -188,13 +180,13 @@ const ChnotSidebarItem = React.forwardRef(
               <DropdownMenuPortal>
                 <DropdownMenuSubContent>
                   <KSpaceSelectDropDownGroup
-                    kspace={chnotThread.meta.kspace}
+                    kspace={item.meta.kspace}
                     onSelect={(e) => {
                       chnotThreadMetaOverwrite({
-                        meta_otid: chnotThread.meta.otid,
+                        meta_otid: item.meta.otid,
                         kspace: e,
                       }).then(() => {
-                        validateChnotCache([chnotThread.meta.otid]);
+                        unvalidate([item.meta.otid]);
                       });
                     }}
                   />

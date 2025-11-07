@@ -9,12 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
-import { useChnotStore } from "../store";
-import { ChnotKindIcon } from "./chnot-kind-icon";
-import { ChnotKind } from "../po";
+import { ChnotKindIcon } from "../kind-icon";
+import { ChnotKind } from "../../po";
+import { useChnotHeadStore } from "../../store";
 
 export const ChnotKindSelect = () => {
-  const { kinds, setChnotKinds } = useChnotStore((s) => {
+  const { kinds, setChnotKinds } = useChnotHeadStore((s) => {
     return {
       kinds: s.kinds,
       setChnotKinds: s.setChnotKinds,

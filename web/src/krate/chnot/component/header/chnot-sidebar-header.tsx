@@ -12,13 +12,16 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { ChnotKindSelect } from "./chnot-kind-select";
 import { NavLink } from "react-router-dom";
 import { RoutePaths } from "@/router";
-import ChnotThreadSwitch from "./chnot-thread-switch";
-import { useChnotStore } from "../store";
-import { useState } from "react";
 import { Button } from "@/common/component/ui/button";
+import {
+  ChnotViewType,
+  useChnotHeadStore,
+  useChnotSingleStore,
+} from "../../store";
+import ChnotThreadSwitch from "./chnot-thread-switch";
 
 const TagsView = () => {
-  const { setTagsInset, tags } = useChnotStore((store) => {
+  const { setTagsInset, tags } = useChnotHeadStore((store) => {
     return {
       setTagsInset: store.setTagsInset,
       tags: store.tags,
@@ -45,12 +48,11 @@ const TagsView = () => {
   );
 };
 
-const Header = ({}: {}) => {
-  const { tags, setTagsInset, setTags } = useChnotStore((store) => {
+const Header = ({ viewType }: { viewType: ChnotViewType }) => {
+  const { tags, setTagsInset } = useChnotHeadStore((store) => {
     return {
       tags: store.tags,
       setTagsInset: store.setTagsInset,
-      setTags: store.setTags,
     };
   });
 
@@ -61,7 +63,7 @@ const Header = ({}: {}) => {
     };
   });
 
-  const { changeSearchStr } = useChnotStore((store) => {
+  const { changeSearchStr } = useChnotHeadStore((store) => {
     return {
       changeSearchStr: store.changeSearchStr,
     };
@@ -71,7 +73,6 @@ const Header = ({}: {}) => {
     <>
       <div className="flex justify-between items-center">
         <div className="flex align-center space-x-1">
-          <ChnotThreadSwitch />
           <KSpaceSelect
             onSelect={function (kspace: string): void {
               selectKSpace(kspace);
@@ -84,7 +85,7 @@ const Header = ({}: {}) => {
             size={"sm"}
             onClick={() => {
               if (tags) {
-                setTags(undefined);
+                setTagsInset(undefined);
               } else {
                 setTagsInset([]);
               }
@@ -93,7 +94,8 @@ const Header = ({}: {}) => {
             <Icon.Hash />
           </Toggle>
         </div>
-        <div>
+        <div className="flex">
+          <ChnotThreadSwitch viewType={viewType} />
           <NavLink to={RoutePaths.Settings} id={"Settings"}>
             <div>
               <Icon.Settings className="w-4 h-4 mx-2" />

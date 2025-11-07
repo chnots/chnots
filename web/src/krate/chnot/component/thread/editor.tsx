@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import { PostSaveArg } from "../chnot/rich-chnot";
+import { PostSaveArg } from "../rich-chnot/rich-chnot";
 import LoadingPage from "@/common/pages/loading-page";
-import { useChnotStore } from "../../store";
 import { SaveState } from "@/common/types";
-import { useShallow } from "zustand/react/shallow";
-import Chrome from "../chnot/chrome";
+import RichMdwt from "../rich-chnot/rich-mdwt";
 import {
   chnotThreadMetaFetch,
   chnotThreadMetaOverwrite,
@@ -15,6 +13,7 @@ import {
 import { arraysAreEqual } from "@/lib/col-util";
 import { mdwtRecordList } from "@/krate/mdwt/service";
 import { MdwtRecord } from "@/krate/mdwt/po";
+import { useChnotThreadStore } from "../../store";
 
 /**
  * This is the main component for the `Chnots` app.
@@ -26,14 +25,18 @@ import { MdwtRecord } from "@/krate/mdwt/po";
  * - Maintain State
  *   - Just edit and save that chnot.
  */
-const ChnotThread = ({
-  threadMeta,
+const ChnotThreadEditor = ({
+  otid,
   globalBar,
 }: {
-  threadMeta: ChnotThreadMeta;
+  otid: TID;
   globalBar: React.ReactNode;
 }) => {
-  console.log("render Thread: ", threadMeta?.otid);
+  console.log("render Thread: ", otid);
+
+  const {} = useChnotThreadStore((store) => {
+    return {};
+  });
 
   const savedChnotOrdersRef = useRef<TID[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
@@ -108,7 +111,7 @@ const ChnotThread = ({
           <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl items-center">
             {chnotOrders.map((otid, index) => {
               return (
-                <Chrome
+                <RichMdwt
                   key={otid}
                   otid={otid}
                   onPostSave={(arg: PostSaveArg) => {
@@ -145,4 +148,4 @@ const ChnotThread = ({
   );
 };
 
-export default ChnotThread;
+export default ChnotThreadEditor;

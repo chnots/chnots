@@ -1,68 +1,19 @@
-import ChnotSidebar from "@/krate/chnot/component/chnot-thread-sidebar";
-import ChnotThreadEditor from "@/krate/chnot/component/thread";
-import { ChnotViewType, useChnotStore } from "@/krate/chnot/store";
-import { useEffect, useRef, useState } from "react";
+import ChnotThreadSidebar from "@/krate/chnot/component/thread/sidebar";
+import { ChnotViewType } from "@/krate/chnot/store";
+import { useState } from "react";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/common/component/ui/sidebar";
-import { genTID, genUID, TID } from "@/lib/id_util";
+import { genTID, genUID } from "@/lib/id_util";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
-import { ChnotThreadMeta } from "../po";
-import LoadingPage from "@/common/pages/loading-page";
-import { useKSpaceStore } from "@/krate/kspace/store";
+import UnderConstructionPage from "@/common/pages/under-construction-page";
+import ChnotSingleSidebar from "../component/single/sidebar";
+import ChnotSingleEditor from "../component/single/editor";
 
-/**
- * This component is only to improve performance, that is to say, when
- * editor changes, the list should not be rerendered.
- *
- * @returns ChnotSearchRspThread Editor Container
- */
-const MonoChnot = ({ onNew }: { onNew: () => void }) => {
-  const { curMetaId, getCurrentThread } = useChnotStore((store) => {
-    return {
-      curMetaId: store.curThreadOtid,
-      getCurrentThread: store.getCurrentThread,
-    };
-  });
-
-  const { currentKSpace, selectKSpace } = useKSpaceStore((e) => {
-    return {
-      currentKSpace: e.currentKSpace,
-      selectKSpace: e.selectKSpace,
-    };
-  });
-
-  const [editorThread, setEditorThread] = useState<ChnotThreadMeta>();
-  useEffect(() => {
-    if (!curMetaId && !editorThread) {
-      setEditorThread({
-        otid: genTID(),
-        kspace: currentKSpace,
-        tid: genTID(),
-      });
-    } else if (curMetaId !== editorThread?.otid) {
-      const t = getCurrentThread();
-      if (t) {
-        setEditorThread(t.meta);
-      }
-    }
-  }, [curMetaId, editorThread]);
-
-  return editorThread ? (
-    <ChnotThreadEditor
-      key={editorThread.otid}
-      threadMeta={editorThread}
-      globalBar={<StateBar onNew={onNew} />}
-    />
-  ) : (
-    <LoadingPage></LoadingPage>
-  );
-};
-
-const StateBar = ({ onNew }: { onNew: () => void }) => {
+const HeadBar = ({ onNew }: { onNew: () => void }) => {
   return (
     <div className="w-full">
       <SidebarTrigger />
@@ -81,11 +32,6 @@ const StateBar = ({ onNew }: { onNew: () => void }) => {
  */
 const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
   const [monoComponentKey, setMonoComponentKey] = useState(genUID());
-  const { setCurrentThreadOtid } = useChnotStore((store) => {
-    return {
-      setCurrentThreadOtid: store.setCurrentThreadOtid,
-    };
-  });
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <SidebarProvider
@@ -96,16 +42,43 @@ const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
           } as React.CSSProperties
         }
       >
-        <ChnotSidebar />
-        <SidebarInset className="min-w-0">
-          <MonoChnot
-            onNew={() => {
-              setCurrentThreadOtid(undefined);
-              setMonoComponentKey(genUID());
-            }}
-            key={monoComponentKey}
-          />
-        </SidebarInset>
+        {viewType === ChnotViewType.Single ? (
+          <>
+            <ChnotSingleSidebar viewType={ChnotViewType.Single} />
+            <SidebarInset className="min-w-0">
+              <HeadBar
+                onNew={() => {
+                  setMonoComponentKey(genUID());
+                }}
+              />
+              <ChnotSingleEditor key={monoComponentKey} otid={genTID()} />
+            </SidebarInset>
+          </>
+        ) : viewType === ChnotViewType.Thread ? (
+          <>
+            <ChnotThreadSidebar viewType={viewType} />
+            <SidebarInset className="min-w-0">
+              <HeadBar
+                onNew={function (): void {
+                  setMonoComponentKey(genUID());
+                }}
+              />
+              {/*               <ChnotThreadEditor
+                key={monoComponentKey}
+                threadMeta={{
+                  otid: 0,
+                  kspace: "",
+                  pin_tid: undefined,
+                  archive_tid: undefined,
+                  tid: 0,
+                }}
+                globalBar={undefined}
+              /> */}
+            </SidebarInset>
+          </>
+        ) : (
+          <UnderConstructionPage />
+        )}
       </SidebarProvider>
     </div>
   );

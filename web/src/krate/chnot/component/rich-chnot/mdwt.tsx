@@ -1,6 +1,5 @@
 import useResizeObserver from "@react-hook/resize-observer";
 import { useEffect, useRef, useState } from "react";
-import MarkdownViewer from "../chnot-markdown-viewer";
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
@@ -13,6 +12,8 @@ import {
 } from "@/krate/mdwt/service";
 import { MdwtCommitReq } from "@/krate/mdwt/dto";
 import { toentTodoEventGuess } from "@/krate/toent/service";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -50,6 +51,27 @@ const chnotCompletions = async (
     options: options,
     filter: false,
   };
+};
+
+const MarkdownViewer = ({
+  content: initialContent,
+  keepBreak,
+}: {
+  content: string;
+  keepBreak?: boolean;
+}) => {
+  const content = keepBreak
+    ? initialContent.replaceAll("\n", "  \n")
+    : initialContent;
+  return (
+    <div
+      className={
+        "prose prose-sm max-w-none prose-code:text-wrap prose-code:break-all prose-code:!p-2 min-w-full break-all h-full"
+      }
+    >
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    </div>
+  );
 };
 
 const MdwtRecord = ({

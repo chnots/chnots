@@ -18,7 +18,7 @@ const KPageList = ({
     if (inView && !isFetchingNextPage && hasNextPage) {
       onFetchMore();
     }
-  }, [onFetchMore, hasNextPage, inView, isFetchingNextPage]);
+  }, [hasNextPage, inView, isFetchingNextPage]);
 
   return (
     <ul className="m-0 grid gap-2 pt-2 pr-1 pb-1 pl-2">

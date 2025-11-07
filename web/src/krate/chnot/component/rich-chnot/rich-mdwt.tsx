@@ -7,7 +7,7 @@ import { chnotMetaCommit, chnotMetaList } from "../../service";
 import { ChnotKind } from "../../po";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import { useChnotStore } from "@/krate/chnot/store";
+import { cachedChnotMapByOtid } from "@/krate/chnot/store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import clsx from "clsx";
 
@@ -23,7 +23,7 @@ const parseChnotsFromContent = (content: string): TID[] => {
   return matches;
 };
 
-const Chrome = ({
+const RichMdwt = ({
   onPostSave,
   otid,
   readonly,
@@ -43,11 +43,6 @@ const Chrome = ({
       currentKSpace: e.currentKSpace,
     };
   });
-  const { setChnotMetaCache } = useChnotStore((store) => {
-    return {
-      setChnotMetaCache: store.setChnotMeta,
-    };
-  });
 
   const [chnots, setChnots] = useState<TID[]>([]);
   const isMobile = useIsMobile();
@@ -59,7 +54,7 @@ const Chrome = ({
         const chnotMetas = await chnotMetaList({ otids: newChnots });
         if (chnotMetas.metas.length > 0) {
           chnotMetas.metas.forEach((cm) => {
-            setChnotMetaCache(cm);
+            cachedChnotMapByOtid.set(cm.otid, cm);
           });
         }
         setChnots(newChnots);
@@ -116,4 +111,4 @@ const Chrome = ({
   );
 };
 
-export default Chrome;
+export default RichMdwt;

@@ -57,12 +57,6 @@ export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
 };
 
-export type ChnotSearchRsp = {
-  data: ChnotSearchRspThread[];
-  has_next: boolean;
-  next_start: number;
-};
-
 export type ChnotMetaCommitReqData = {
   otid: TID;
   kind: ChnotKind;
@@ -85,6 +79,6 @@ export type ChnotMetaListRsp = {
 };
 
 export type ChnotSearchRspSingle = {
-  preview_text?: string;
+  title?: string;
   meta: ChnotMeta;
 };

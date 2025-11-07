@@ -3,15 +3,15 @@ import { ChnotKind } from "../../po";
 import { SaveState } from "@/common/types";
 import MdwtRecord from "./mdwt";
 import ExcalidrawBlock from "./excalidraw";
-import { ChnotKindIcon } from "../chnot-kind-icon";
+import { ChnotKindIcon } from "../kind-icon";
 import KFileBlock from "./kfile";
 import TableChnot from "./table";
 import LLMChatChnot from "./llmchat";
 import { chnotMetaCommit } from "@/krate/chnot/service";
 import { genTID, TID } from "@/lib/id_util";
-import { useChnotStore } from "@/krate/chnot/store";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
+import { cachedChnotMapByOtid } from "../../store";
 
 export type PostSaveArg = {
   saveState: SaveState;
@@ -49,17 +49,11 @@ const RichChnot = ({
   kspace: string;
 }) => {
   console.log("render RichChnot", otid);
-  const { getChnotMeta, setChnotMetaCache } = useChnotStore((store) => {
-    return {
-      getChnotMeta: store.getChnotMeta,
-      setChnotMetaCache: store.setChnotMeta,
-    };
-  });
 
   const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [saveState, setSaveState] = useState(SaveState.Initial);
   const [kind, setKind] = useState<ChnotKind | undefined>(
-    getChnotMeta(otid)?.kind,
+    cachedChnotMapByOtid.get(otid)?.kind,
   );
 
   const handlePostSave = useCallback(
@@ -78,7 +72,7 @@ const RichChnot = ({
 
         await chnotMetaCommit({ metas: [meta] });
 
-        setChnotMetaCache(meta);
+        cachedChnotMapByOtid.set(meta.otid, meta);
       }
       setSaveState(arg.saveState);
     },

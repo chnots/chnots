@@ -1,7 +1,6 @@
 import request from "@/lib/request";
 import {
   ChnotSearchReq,
-  ChnotSearchRsp,
   ChnotThreadMetaFetchCommitReq,
   ChnotThreadMetaFetchRsp,
   ChnotThreadOrderCommitReq,
@@ -12,12 +11,20 @@ import {
   ChnotThreadMetaFetchReq,
   ChnotMetaListReq,
   ChnotMetaListRsp,
+  ChnotSearchRspSingle,
 } from "./dto";
+import { PageRsp } from "@/common/types";
 
-export const chnotThreadList = async (
+export const chnotThreadSearch = async (
   req: ChnotSearchReq,
-): Promise<ChnotSearchRsp> => {
+): Promise<PageRsp<ChnotSearchRspSingle>> => {
   return await request.postJson(`api/v1/chnot-thread-search`, req);
+};
+
+export const chnotSingleSearch = async (
+  req: ChnotSearchReq,
+): Promise<PageRsp<ChnotSearchRspSingle>> => {
+  return await request.postJson(`api/v1/chnot-single-search`, req);
 };
 
 export async function chnotMetaCommit(

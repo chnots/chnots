@@ -59,8 +59,8 @@ export type DbCache<T> = {
   /**
    * for db result empty hole
    */
-  dbNextStartIndex: number;
-  dbPageSize: number;
-  hasNextPage: boolean;
-  dbCache: Map<TID, T>;
+  nextStartIn: number;
+  pageSize: number;
+  hasMore: boolean;
+  cache: Map<TID, T>;
 };
