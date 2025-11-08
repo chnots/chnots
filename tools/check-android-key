@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+PROJECT_DIR="$(git rev-parse --show-toplevel)"
+KEY_FILE="${PROJECT_DIR}/tauri/src-tauri/gen/android/key.properties"
+
+
+create() {
+    set -eu
+    echo "keyAlias=${ANDROID_KEY_ALIAS}" > "$KEY_FILE"
+    echo "keyPassword=${ANDROID_KEY_PASSWORD}" >> "$KEY_FILE"
+    echo "storePassword=${ANDROID_KEY_PASSWORD}" >> "$KEY_FILE"
+    echo "storeFile=${STORE_FILE_PATH}/keystore.jks" >> "$KEY_FILE"
+}
+
+check_or_die() {
+    if [ ! -f "$KEY_FILE" ]; then
+        echo "$KEY_FILE is absent or use \`$0 -c'"
+        exit 1
+    fi
+}
+
+if [ $# -eq 0 ]; then
+    check_or_die
+elif [[ " -c " =~ "$*" ]]; then
+    create
+else
+    check_or_die
+fi

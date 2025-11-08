@@ -44,4 +44,4 @@ build-tauri-desktop:
 
 build-tauri-android:
 	make build-web
-	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build --split-per-abi
+	tools/check-android-key && test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build --split-per-abi
