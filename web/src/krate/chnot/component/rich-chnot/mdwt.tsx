@@ -74,7 +74,7 @@ const MarkdownViewer = ({
   );
 };
 
-const MdwtRecord = ({
+const MdwtChnot = ({
   readonly,
   onPostSave,
   otid,
@@ -147,7 +147,11 @@ const MdwtRecord = ({
   return readonly ? (
     <MarkdownViewer content={cachedContentRef.current ?? ""} keepBreak={true} />
   ) : (
-    <div className="w-full h-full break-all" onBlur={() => directlySave()}>
+    <div
+      className="w-full h-full break-all"
+      onBlur={() => directlySave()}
+      ref={bodyRef}
+    >
       <MdwtEditorMemo
         content={cachedContentRef.current}
         onContentChange={(content) => {
@@ -178,4 +182,4 @@ const MdwtRecord = ({
   );
 };
 
-export default MdwtRecord;
+export default MdwtChnot;

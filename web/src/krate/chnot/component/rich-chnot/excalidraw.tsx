@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SaveState } from "@/common/types";
 import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
-import { Button } from "@/common/component/ui/button";
 import ExcalidrawPreview from "@/krate/tool/excalidraw/component/excalidraw-preview";
 import {
   ExcalidrawChnotState,
@@ -13,8 +12,9 @@ import {
 import { RichPropProps } from "./rich-chnot";
 import Fullscreen from "./fullscreen";
 
-const ExcalidrawBlock = ({
+const ExcalidrawChnot = ({
   otid,
+  readonly,
   fullscreen,
   onPostSave,
   onSetFullscreen,
@@ -63,11 +63,22 @@ const ExcalidrawBlock = ({
 
   return (
     <div className="w-full flex flex-col">
-      <div className="flex h-auto justify-center">
-        <ExcalidrawPreview state={state} className="w-8/12" />
-      </div>
+      {readonly ? (
+        <div className="flex h-auto justify-center">
+          <ExcalidrawPreview state={state} className="w-8/12" />
+        </div>
+      ) : (
+        <ExcalidrawEditor
+          otid={otid}
+          state={state}
+          readOnly={false}
+          onSave={(state, contentType) => {
+            directlySave(state, contentType);
+          }}
+        />
+      )}
       {fullscreen && (
-        <Fullscreen onFullscreen={onSetFullscreen}>
+        <Fullscreen onSetFullscreen={onSetFullscreen}>
           <ExcalidrawEditor
             otid={otid}
             state={state}
@@ -82,4 +93,4 @@ const ExcalidrawBlock = ({
   );
 };
 
-export default ExcalidrawBlock;
+export default ExcalidrawChnot;

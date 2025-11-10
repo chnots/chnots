@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { ChnotKind } from "../../po";
 import { SaveState } from "@/common/types";
-import MdwtRecord from "./mdwt";
-import ExcalidrawBlock from "./excalidraw";
+import MdwtChnot from "./mdwt";
+import ExcalidrawChnot from "./excalidraw";
 import { ChnotKindIcon } from "../kind-icon";
-import KFileBlock from "./kfile";
+import KFileChnot from "./kfile";
 import TableChnot from "./table";
 import LLMChatChnot from "./llmchat";
 import { chnotMetaCommit } from "@/krate/chnot/service";
@@ -21,7 +21,7 @@ export type RichPropProps = {
   otid: TID;
   readonly?: boolean;
   fullscreen: boolean;
-  onSetFullscreen: (flag: boolean) => void;
+  onSetFullscreen?: (flag: boolean) => void;
   onPostSave: (arg: PostSaveArg) => void;
 };
 
@@ -105,11 +105,11 @@ const RichChnot = ({
         aria-label="Text block, click to edit"
       >
         {kind === ChnotKind.MDWT ? (
-          <MdwtRecord {...props} tryFetch={true} />
+          <MdwtChnot {...props} tryFetch={true} />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
-          <ExcalidrawBlock {...props} />
+          <ExcalidrawChnot {...props} />
         ) : kind === ChnotKind.KFileV1 ? (
-          <KFileBlock {...props} />
+          <KFileChnot {...props} />
         ) : kind == ChnotKind.KTab ? (
           <TableChnot {...props} />
         ) : kind === ChnotKind.LLMChat ? (

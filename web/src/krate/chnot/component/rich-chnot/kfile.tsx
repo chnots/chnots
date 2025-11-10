@@ -2,7 +2,7 @@ import { SaveState } from "@/common/types";
 import { CommonKFile } from "@/krate/kfile/components/common-kfile";
 import { RichPropProps } from "./rich-chnot";
 
-const KFileBlock = ({ otid, onPostSave }: RichPropProps) => {
+const KFileChnot = ({ otid, onPostSave }: RichPropProps) => {
   return (
     <CommonKFile
       otid={otid}
@@ -15,4 +15,4 @@ const KFileBlock = ({ otid, onPostSave }: RichPropProps) => {
   );
 };
 
-export default KFileBlock;
+export default KFileChnot;

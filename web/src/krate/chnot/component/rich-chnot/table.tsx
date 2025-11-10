@@ -47,7 +47,7 @@ const TableChnot = ({
     meta && (
       <>
         {fullscreen ? (
-          <Fullscreen onFullscreen={onSetFullscreen}>
+          <Fullscreen onSetFullscreen={onSetFullscreen}>
             <DataTable
               tableMeta={meta}
               fetchData={async (

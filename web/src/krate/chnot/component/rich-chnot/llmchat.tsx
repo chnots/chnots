@@ -15,6 +15,7 @@ import Fullscreen from "./fullscreen";
 const LLMChatChnot = ({
   otid,
   fullscreen,
+  readonly,
   onPostSave,
   onSetFullscreen,
 }: RichPropProps) => {
@@ -68,10 +69,9 @@ const LLMChatChnot = ({
   return props ? (
     <LLMChatEditorProvider props={props}>
       {fullscreen ? (
-        <Fullscreen onFullscreen={onSetFullscreen}>
+        <Fullscreen onSetFullscreen={onSetFullscreen}>
           <SessionContainer
-            onPostSave={(session) => {
-              console.log("session post save");
+            onPostSave={(_) => {
               onPostSave({
                 saveState: SaveState.Saved,
               });
@@ -81,7 +81,18 @@ const LLMChatChnot = ({
         </Fullscreen>
       ) : (
         <div className="m-0 p-0">
-          <SessionContainer readonly={true} />
+          {readonly ? (
+            <SessionContainer readonly={true} />
+          ) : (
+            <SessionContainer
+              readonly={false}
+              onPostSave={(_) => {
+                onPostSave({
+                  saveState: SaveState.Saved,
+                });
+              }}
+            />
+          )}
         </div>
       )}
     </LLMChatEditorProvider>
@@ -89,7 +100,9 @@ const LLMChatChnot = ({
     <div className="w-full h-full">
       <LLMChatTemplateList
         onSelectTemplate={(template: LLMChatTemplate) => {
-          onSetFullscreen(true);
+          if (onSetFullscreen) {
+            onSetFullscreen(true);
+          }
 
           setProps((props) => {
             if (props) {
@@ -110,7 +123,9 @@ const LLMChatChnot = ({
           });
         }}
         onNew={() => {
-          onSetFullscreen(true);
+          if (onSetFullscreen) {
+            onSetFullscreen(true);
+          }
           setProps({
             showTemplateForm: true,
             sessionOtid: otid,

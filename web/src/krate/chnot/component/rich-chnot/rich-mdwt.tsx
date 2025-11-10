@@ -1,6 +1,6 @@
 import { TID } from "@/lib/id_util";
 import RichChnot, { PostSaveArg } from "./rich-chnot";
-import MdwtRecord from "./mdwt";
+import MdwtChnot from "./mdwt";
 import { useCallback, useEffect, useState } from "react";
 import { arraysAreEqual } from "@/lib/col-util";
 import { chnotMetaCommit, chnotMetaList } from "../../service";
@@ -29,12 +29,14 @@ const RichMdwt = ({
   readonly,
   content: initialContent,
   onChanged,
+  whfull,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
   readonly?: boolean;
   content?: string;
   onChanged: () => void;
+  whfull?: boolean;
 }) => {
   console.log("render Chrome: ", otid);
 
@@ -70,10 +72,11 @@ const RichMdwt = ({
     <div
       className={clsx(
         "w-full max-w-4xl border p-1 m-1 rounded",
-        isMobile ? "flex flex-col" : "grid grid-cols-2",
+        isMobile || chnots.length == 0 ? "flex flex-col" : "grid grid-cols-2",
+        whfull && "h-full",
       )}
     >
-      <MdwtRecord
+      <MdwtChnot
         tryFetch={false}
         otid={otid}
         readonly={readonly}

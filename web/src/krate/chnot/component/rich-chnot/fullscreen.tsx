@@ -4,19 +4,21 @@ import { ReactNode } from "react";
 
 const Fullscreen = ({
   children,
-  onFullscreen,
+  onSetFullscreen,
 }: {
   children: ReactNode;
-  onFullscreen: (flag: boolean) => void;
+  onSetFullscreen?: (flag: boolean) => void;
 }) => {
   return (
     <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0 m-0 p-2 bg-background items-center">
-      <Button
-        onClick={() => onFullscreen(false)}
-        className="absolute top-1 right-1 z-49"
-      >
-        <Icon.Fullscreen />
-      </Button>
+      {onSetFullscreen && (
+        <Button
+          onClick={() => onSetFullscreen(false)}
+          className="absolute top-1 right-1 z-49"
+        >
+          <Icon.Fullscreen />
+        </Button>
+      )}
       {children}
     </div>
   );
