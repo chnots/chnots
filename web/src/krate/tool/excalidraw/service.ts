@@ -29,6 +29,9 @@ export const fetchExcalidraw = async (
     const rsp = await kfileInlineDownload({
       req_id: id,
     });
+    if (!rsp.file) {
+      return null;
+    }
     const dataState = JSON.parse(rsp.file!.content);
     const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
     const elements = dataState.elements as readonly ExcalidrawElement[] | null;
