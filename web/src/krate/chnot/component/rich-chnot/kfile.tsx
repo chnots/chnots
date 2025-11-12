@@ -4,14 +4,16 @@ import { RichPropProps } from "./rich-chnot";
 
 const KFileChnot = ({ otid, onPostSave }: RichPropProps) => {
   return (
-    <CommonKFile
-      otid={otid}
-      onPostSave={(_) => {
-        onPostSave({
-          saveState: SaveState.Saved,
-        });
-      }}
-    />
+    <div>
+      <CommonKFile
+        otid={otid}
+        onPostSave={(_) => {
+          onPostSave({
+            saveState: SaveState.Saved,
+          });
+        }}
+      />
+    </div>
   );
 };
 
