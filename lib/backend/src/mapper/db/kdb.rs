@@ -469,6 +469,16 @@ macro_rules! impl_otid_support {
                     create_table.keys.push((ele.clone(), vec![ele]));
                 }
 
+                let unikeys = create_table.unikeys.clone();
+                create_table.unikeys.clear();
+                for ele in unikeys {
+                    if ele.1[0].to_lowercase() == "tid" && ele.1.len() == 1 {
+                        create_table.unikeys.push(ele)
+                    } else {
+                        create_table.keys.push(ele);
+                    }
+                }
+
                 create_table.table_name = Self::HIST_TABLE.to_string();
 
                 create_table
