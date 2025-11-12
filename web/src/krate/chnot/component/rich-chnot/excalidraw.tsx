@@ -42,6 +42,8 @@ const ExcalidrawChnot = ({
 
   const directlySave = useCallback(
     (state: ExcalidrawChnotState, contentType: string) => {
+      const title =
+        state.elements.find((e) => e.type === "text")?.text || "Some Shapes";
       saveExcalidraw({
         savedFilesRef,
         state,
@@ -50,10 +52,11 @@ const ExcalidrawChnot = ({
           setState(state);
           onPostSave({
             saveState: SaveState.Saved,
+            title,
           });
         },
         onFail: () => {
-          onPostSave({ saveState: SaveState.Error });
+          onPostSave({ saveState: SaveState.Error, title });
         },
         otid: otid,
       });

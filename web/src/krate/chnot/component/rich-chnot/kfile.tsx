@@ -7,9 +7,10 @@ const KFileChnot = ({ otid, onPostSave }: RichPropProps) => {
     <div>
       <CommonKFile
         otid={otid}
-        onPostSave={(_) => {
+        onPostSave={(f) => {
           onPostSave({
             saveState: SaveState.Saved,
+            title: f.filename,
           });
         }}
       />

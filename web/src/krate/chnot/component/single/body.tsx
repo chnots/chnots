@@ -12,6 +12,7 @@ import { chnotMetaCommit } from "../../service";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { useChnotSingleStore } from "../../store";
 import React from "react";
+import { mdwtCommit } from "@/krate/mdwt/service";
 
 const ChnotSingleBody = ({
   otid,
@@ -31,12 +32,6 @@ const ChnotSingleBody = ({
       kspace: s.currentKSpace,
     };
   });
-  const metaRef = useRef<ChnotMeta>({
-    otid: otid,
-    kind: kind,
-    kspace: kspace,
-    tid: genTID(),
-  });
 
   const { overwrite, setCurOtid } = useChnotSingleStore((s) => {
     return {
@@ -47,19 +42,38 @@ const ChnotSingleBody = ({
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
+      const meta = {
+        otid: otid,
+        kind: kind,
+        kspace: kspace,
+        tid: genTID(),
+      };
+      let title = "";
+      if (arg.title !== titleRef.current) {
+        title = arg.title ?? "";
+        titleRef.current = title;
+        if (kind !== ChnotKind.MDWT) {
+          await mdwtCommit({
+            mdwt: {
+              otid: otid,
+              content: title,
+            },
+          });
+        }
+      }
       if (
         saveStateRef.current === SaveState.Initial &&
         kind &&
         arg.saveState === SaveState.Saved
       ) {
-        await chnotMetaCommit({ metas: [metaRef.current] });
+        await chnotMetaCommit({ metas: [meta] });
+        saveStateRef.current = arg.saveState;
+        overwrite({
+          meta: meta,
+          title: titleRef.current ?? undefined,
+        });
+        setCurOtid(otid);
       }
-      overwrite({
-        meta: metaRef.current,
-        title: titleRef.current ?? undefined,
-      });
-      setCurOtid(otid);
-      saveStateRef.current = arg.saveState;
     },
     [kind],
   );
@@ -87,14 +101,13 @@ const ChnotSingleBody = ({
         <RichMdwt
           {...props}
           tryfetch={true}
+          onPostSave={(arg) => {
+            handlePostSave(arg);
+          }}
           onChanged={(cont: string) => {
             if (!initialed.current) {
               setKind(ChnotKind.MDWT);
               initialed.current = true;
-            }
-            const title = cont.length > 100 ? cont.substring(0, 100) : cont;
-            if (title !== titleRef.current) {
-              titleRef.current = title;
             }
           }}
           whfull={true}

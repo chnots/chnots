@@ -81,6 +81,9 @@ const TableChnot = ({
                 setMeta(meta);
                 onPostSave({
                   saveState: SaveState.Saved,
+                  title: Object.values(meta.columns)
+                    .map((e) => e.name)
+                    .join("|"),
                 });
               }}
               readonly={readonly || false}
@@ -120,6 +123,9 @@ const TableChnot = ({
               setMeta(meta);
               onPostSave({
                 saveState: SaveState.Saved,
+                title: Object.values(meta.columns)
+                  .map((e) => e.name)
+                  .join("|"),
               });
             }}
             readonly={readonly || false}

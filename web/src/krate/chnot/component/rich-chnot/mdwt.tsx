@@ -118,20 +118,23 @@ const MdwtChnot = ({
 
   const directlySave = async () => {
     if (toSaveArg.current) {
+      const title =
+        toSaveArg.current.mdwt.content.length > 300
+          ? toSaveArg.current.mdwt.content.substring(0, 300)
+          : toSaveArg.current.mdwt.content;
       try {
         onPostSave({
           saveState: SaveState.Saving,
+          title,
         });
         await mdwtCommit(toSaveArg.current);
-        if (onContentChange) {
-          onContentChange(toSaveArg.current.mdwt.content);
-        }
         onPostSave({
           saveState: SaveState.Saved,
+          title,
         });
         toSaveArg.current = null;
       } catch (_ex) {
-        onPostSave({ saveState: SaveState.Error });
+        onPostSave({ saveState: SaveState.Error, title });
       }
     }
   };
@@ -140,7 +143,7 @@ const MdwtChnot = ({
     async () => {
       directlySave();
     },
-    5000,
+    2000,
     true,
   );
 
@@ -156,12 +159,6 @@ const MdwtChnot = ({
         content={cachedContentRef.current}
         onContentChange={(content) => {
           cachedContentRef.current = content;
-          if (saveStateRef.current != SaveState.Dirty) {
-            onPostSave({
-              saveState: SaveState.Dirty,
-            });
-          }
-
           const req: MdwtCommitReq = {
             mdwt: {
               otid: otid,

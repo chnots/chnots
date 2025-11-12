@@ -15,6 +15,7 @@ import { cachedChnotMapByOtid } from "../../store";
 
 export type PostSaveArg = {
   saveState: SaveState;
+  title: string;
 };
 
 export type RichPropProps = {

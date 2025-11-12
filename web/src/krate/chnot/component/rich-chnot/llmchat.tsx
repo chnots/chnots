@@ -73,9 +73,10 @@ const LLMChatChnot = ({
         {fullscreen ? (
           <Fullscreen onSetFullscreen={onSetFullscreen}>
             <SessionContainer
-              onPostSave={(_) => {
+              onPostSave={(s) => {
                 onPostSave({
                   saveState: SaveState.Saved,
+                  title: s.title,
                 });
               }}
               readonly={false}
@@ -88,9 +89,10 @@ const LLMChatChnot = ({
             ) : (
               <SessionContainer
                 readonly={false}
-                onPostSave={(_) => {
+                onPostSave={(s) => {
                   onPostSave({
                     saveState: SaveState.Saved,
+                    title: s.title,
                   });
                 }}
               />
