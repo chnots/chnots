@@ -30,13 +30,15 @@ const RichMdwt = ({
   content: initialContent,
   onChanged,
   whfull,
+  tryfetch,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
   readonly?: boolean;
   content?: string;
-  onChanged: () => void;
+  onChanged: (content: string) => void;
   whfull?: boolean;
+  tryfetch: boolean;
 }) => {
   console.log("render Chrome: ", otid);
 
@@ -77,28 +79,16 @@ const RichMdwt = ({
       )}
     >
       <MdwtChnot
-        tryFetch={false}
+        tryFetch={tryfetch}
         otid={otid}
         readonly={readonly}
         onPostSave={(arg: PostSaveArg) => {
-          if (arg.saveState === SaveState.Saved) {
-            chnotMetaCommit({
-              metas: [
-                {
-                  otid: otid,
-                  kind: ChnotKind.MDWT,
-                  kspace: currentKSpace,
-                },
-              ],
-            });
-          }
-
           onPostSave(arg);
         }}
         content={initialContent}
         onContentChange={(content) => {
           updateChnots(content);
-          onChanged();
+          onChanged(content);
         }}
         fullscreen={false}
         onSetFullscreen={() => {}}

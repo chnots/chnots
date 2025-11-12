@@ -95,10 +95,13 @@ interface State<T extends StateChnotLike> {
   mapByOtid: DbCache<T>;
 
   isFetchingNextPage: boolean;
+  setChangeCompCurOtid(setter?: (otid?: TID) => void): void;
+
+  changeCompCurOtid?: (otid?: TID) => void;
 
   getMeta(otid: TID): T | undefined;
   overwrite(chnot: T): void;
-  setCurrOtid(cutOtid?: TID): void;
+  setCurOtid(cutOtid?: TID): void;
   unvalidate(toRemoves: TID[]): void;
 
   clearCache(): Promise<void>;
@@ -116,6 +119,8 @@ export const createChnotStore = <T extends StateChnotLike>(
     isFetchingNextPage: false,
 
     mapByOtid: emptyCacheMap(),
+
+    changeCompCurOtid: undefined,
 
     fetchMore: async () => {
       const { isFetchingNextPage, mapByOtid } = get();
@@ -169,8 +174,15 @@ export const createChnotStore = <T extends StateChnotLike>(
         } else {
           dbCache = insertMapAtIndex(0, chnot.meta.otid, chnot, dbCache);
         }
-        cmm.cache = dbCache;
-        return { ...state, mapByOtid: cmm };
+        return {
+          ...state,
+          mapByOtid: {
+            cache: dbCache,
+            nextStartIn: cmm.nextStartIn + 1,
+            pageSize: cmm.pageSize,
+            hasMore: cmm.hasMore,
+          },
+        };
       });
     },
 
@@ -178,8 +190,12 @@ export const createChnotStore = <T extends StateChnotLike>(
       set((state) => ({ ...state, mapByOtid: emptyCacheMap() }));
     },
 
-    setCurrOtid: (curOtid?: TID) => {
+    setCurOtid: (curOtid?: TID) => {
       set((state) => ({ ...state, curOtid }));
+    },
+
+    setChangeCompCurOtid: (setter?: (otid?: TID) => void) => {
+      set((state) => ({ ...state, changeCompCurOtid: setter }));
     },
 
     getMeta: (otid: TID) => {

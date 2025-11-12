@@ -1,28 +1,13 @@
 import ChnotThreadSidebar from "@/krate/chnot/component/thread/sidebar";
 import { ChnotViewType } from "@/krate/chnot/store";
 import { useState } from "react";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/common/component/ui/sidebar";
-import { genTID, genUID } from "@/lib/id_util";
-import { Button } from "@/common/component/ui/button";
-import Icon from "@/common/component/icon";
+import { SidebarInset, SidebarProvider } from "@/common/component/ui/sidebar";
+import { genTID } from "@/lib/id_util";
 import UnderConstructionPage from "@/common/pages/under-construction-page";
 import ChnotSingleSidebar from "../component/single/sidebar";
-import ChnotSingleEditor from "../component/single/editor";
-
-const HeadBar = ({ onNew }: { onNew: () => void }) => {
-  return (
-    <div className="w-full">
-      <SidebarTrigger />
-      <Button onClick={onNew}>
-        <Icon.BadgePlusIcon />
-      </Button>
-    </div>
-  );
-};
+import ChnotSingleHeadbar from "../component/single/header";
+import { ChnotKind } from "../po";
+import ChnotSingleMain from "../component/single/main";
 
 /**
  * Page for chnots, which is left and right layouted.
@@ -31,7 +16,7 @@ const HeadBar = ({ onNew }: { onNew: () => void }) => {
  * @returns ChnotSearchRspThread Page
  */
 const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
-  const [monoComponentKey, setMonoComponentKey] = useState(genUID());
+  const [monoComponentKey, setMonoComponentKey] = useState(genTID());
   return (
     <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
       <SidebarProvider
@@ -46,22 +31,18 @@ const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
           <>
             <ChnotSingleSidebar viewType={ChnotViewType.Single} />
             <SidebarInset className="min-w-0">
-              <HeadBar
-                onNew={() => {
-                  setMonoComponentKey(genUID());
-                }}
-              />
-              <ChnotSingleEditor key={monoComponentKey} otid={genTID()} />
+              <ChnotSingleMain />
             </SidebarInset>
           </>
         ) : viewType === ChnotViewType.Thread ? (
           <>
             <ChnotThreadSidebar viewType={viewType} />
             <SidebarInset className="min-w-0">
-              <HeadBar
-                onNew={function (): void {
-                  setMonoComponentKey(genUID());
+              <ChnotSingleHeadbar
+                onNew={() => {
+                  setMonoComponentKey(genTID());
                 }}
+                setKind={function (kind: ChnotKind): void {}}
               />
               {/*               <ChnotThreadEditor
                 key={monoComponentKey}

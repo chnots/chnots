@@ -26,6 +26,8 @@ import {
 } from "@/krate/kspace/component/kspace-select";
 import { chnotThreadMetaOverwrite } from "../service";
 import { genTID, TID } from "@/lib/id_util";
+import { ChnotKind } from "../po";
+import { ChnotKindIcon } from "./kind-icon";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -66,17 +68,21 @@ const ChnotSidebarItem = React.forwardRef(
       item,
       showKSpace,
       curOtid,
+      kind,
       getCurrent,
-      overwrite,
-      setCurrOtid,
+      setCurOtid,
       unvalidate,
+      onArchive,
+      onTogglePin,
     }: {
       item: StateChnotLike;
       showKSpace: boolean;
       curOtid?: TID;
+      kind?: ChnotKind;
+      onArchive(): void;
+      onTogglePin(): void;
       getCurrent(): StateChnotLike | undefined;
-      overwrite(chnot: StateChnotLike): void;
-      setCurrOtid(cutOtid?: TID): void;
+      setCurOtid(cutOtid?: TID): void;
       unvalidate(toRemoves: TID[]): void;
     },
     ref: ForwardedRef<HTMLLIElement>,
@@ -89,31 +95,13 @@ const ChnotSidebarItem = React.forwardRef(
       ? item.title.split("\n")[0].substring(2)
       : (item.title?.substring(0, 500) ?? "<unknown>");
 
-    const onArchive = async () => {
-      await chnotThreadMetaOverwrite({
-        meta_otid: item.meta.otid,
-        archive: true,
-      });
-      unvalidate([item.meta.otid]);
-    };
-
-    const onTogglePin = async () => {
-      const pin = item.meta.pin_tid ? false : true;
-      await chnotThreadMetaOverwrite({
-        meta_otid: item.meta.otid,
-        pinned: pin,
-      });
-      item.meta.pin_tid = pin ? genTID() : undefined;
-      overwrite(item);
-    };
-
     return (
       <SidebarMenuItem key={item.meta.otid}>
         <a
           href={"#" + item.meta.otid}
           key={item.meta.otid}
           onClick={() => {
-            setCurrOtid(item.meta.otid);
+            setCurOtid(item.meta.otid);
           }}
           className={cn(
             "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
@@ -126,10 +114,11 @@ const ChnotSidebarItem = React.forwardRef(
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <time
               dateTime={new Date(item.meta.otid / 1e3).toISOString()}
-              className="text-[0.7rem] break-keep"
+              className="text-[0.7rem] whitespace-nowrap"
             >
               {chnotShortDate(new Date(item.meta.otid / 1e3))}
             </time>
+            {kind && <ChnotKindIcon kind={kind} className="h-3.5 w-3.5" />}
             {showKSpace && (
               <KSpaceIcon
                 name={item.meta.kspace}

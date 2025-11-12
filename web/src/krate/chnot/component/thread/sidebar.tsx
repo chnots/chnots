@@ -104,7 +104,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 overwrite={function (chnot: StateChnotLike): void {
                   throw new Error("Function not implemented.");
                 }}
-                setCurrOtid={function (cutOtid?: TID): void {
+                setCurOtid={function (cutOtid?: TID): void {
                   throw new Error("Function not implemented.");
                 }}
                 unvalidate={function (toRemoves: TID[]): void {

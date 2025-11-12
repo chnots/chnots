@@ -18,17 +18,30 @@ import {
 } from "../../store";
 import { TID } from "@/lib/id_util";
 import Header from "../header/chnot-sidebar-header";
+import useDebugChanged from "@/hooks/use-debug-changed";
 
 const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
-  const { fetchMore, clearCache, isFetchingNextPage, mapByOtid } =
-    useChnotSingleStore((store) => {
-      return {
-        fetchMore: store.fetchMore,
-        clearCache: store.clearCache,
-        isFetchingNextPage: store.isFetchingNextPage,
-        mapByOtid: store.mapByOtid,
-      };
-    });
+  const {
+    curOtid,
+    isFetchingNextPage,
+    mapByOtid,
+    fetchMore,
+    clearCache,
+    setCurOtid,
+    changeCompCurOtid,
+  } = useChnotSingleStore((store) => {
+    return {
+      curOtid: store.curOtid,
+      isFetchingNextPage: store.isFetchingNextPage,
+      mapByOtid: store.mapByOtid,
+      fetchMore: store.fetchMore,
+      clearCache: store.clearCache,
+      setCurOtid: store.setCurOtid,
+      changeCompCurOtid: store.changeCompCurOtid,
+    };
+  });
+
+  useDebugChanged(mapByOtid, "mapByOtid");
 
   const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore(
     (store) => {
@@ -65,7 +78,6 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     clearCache();
     fetchMore();
   }, [tags, searchStr, mkspaces, kinds]);
-  console.log("chnots", mapByOtid);
 
   return (
     <Sidebar>
@@ -99,13 +111,21 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
               <ChnotSidebarItem
                 item={chnot}
                 key={chnot.meta.otid}
+                kind={chnot.meta.kind}
                 showKSpace={mkspaces.length > 0}
                 getCurrent={function (): StateChnotLike | undefined {
                   return undefined;
                 }}
-                overwrite={function (chnot: StateChnotLike): void {}}
-                setCurrOtid={function (cutOtid?: TID): void {}}
+                curOtid={curOtid}
+                setCurOtid={(curOtid?: TID) => {
+                  setCurOtid(curOtid);
+                  if (changeCompCurOtid) {
+                    changeCompCurOtid(curOtid);
+                  }
+                }}
                 unvalidate={function (toRemoves: TID[]): void {}}
+                onArchive={function (): void {}}
+                onTogglePin={function (): void {}}
               />
             ))}
           </KPageList>
