@@ -66,74 +66,39 @@ const LLMChatChnot = ({
   }, [otid]);
   console.log("props", props);
 
-  return props ? (
-    <LLMChatEditorProvider props={props}>
-      {fullscreen ? (
-        <Fullscreen onSetFullscreen={onSetFullscreen}>
-          <SessionContainer
-            onPostSave={(_) => {
-              onPostSave({
-                saveState: SaveState.Saved,
-              });
-            }}
-            readonly={false}
-          />
-        </Fullscreen>
-      ) : (
-        <div className="m-0 p-0">
-          {readonly ? (
-            <SessionContainer readonly={true} />
-          ) : (
+  console.log("render llmchat", props, readonly, fullscreen);
+  return (
+    props && (
+      <LLMChatEditorProvider props={props}>
+        {fullscreen ? (
+          <Fullscreen onSetFullscreen={onSetFullscreen}>
             <SessionContainer
-              readonly={false}
               onPostSave={(_) => {
                 onPostSave({
                   saveState: SaveState.Saved,
                 });
               }}
+              readonly={false}
             />
-          )}
-        </div>
-      )}
-    </LLMChatEditorProvider>
-  ) : (
-    <div className="w-full h-full">
-      <LLMChatTemplateList
-        onSelectTemplate={(template: LLMChatTemplate) => {
-          if (onSetFullscreen) {
-            onSetFullscreen(true);
-          }
-
-          setProps((props) => {
-            if (props) {
-              return {
-                ...props,
-                template: template,
-              };
-            } else {
-              const ref = createRef<Set<TID> | null>();
-              ref.current = new Set();
-              const props: LLMChatContextProps = {
-                sessionOtid: otid,
-                persistedIds: ref,
-                template: template,
-              };
-              return props;
-            }
-          });
-        }}
-        onNew={() => {
-          if (onSetFullscreen) {
-            onSetFullscreen(true);
-          }
-          setProps({
-            showTemplateForm: true,
-            sessionOtid: otid,
-            persistedIds: pidRef,
-          });
-        }}
-      />
-    </div>
+          </Fullscreen>
+        ) : (
+          <div className="m-0 p-0">
+            {readonly ? (
+              <SessionContainer readonly={true} />
+            ) : (
+              <SessionContainer
+                readonly={false}
+                onPostSave={(_) => {
+                  onPostSave({
+                    saveState: SaveState.Saved,
+                  });
+                }}
+              />
+            )}
+          </div>
+        )}
+      </LLMChatEditorProvider>
+    )
   );
 };
 
