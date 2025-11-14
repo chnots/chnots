@@ -1,6 +1,12 @@
 "use client";
 
-import { CellContext, ColumnDef } from "@tanstack/react-table";
+import {
+  AccessorFn,
+  CellContext,
+  ColumnDef,
+  ColumnMeta,
+  Table,
+} from "@tanstack/react-table";
 import { Button } from "@/common/component/ui/button";
 import { Input } from "@/common/component/ui/input";
 import { Calendar } from "@/common/component/ui/calendar";
