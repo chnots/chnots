@@ -20,15 +20,25 @@ import { TID } from "@/lib/id_util";
 import Header from "../header/chnot-sidebar-header";
 
 const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
-  const { fetchMore, clearCache, isFetchingNextPage, mapByOtid } =
-    useChnotThreadStore((store) => {
-      return {
-        fetchMore: store.fetchMore,
-        clearCache: store.clearCache,
-        isFetchingNextPage: store.isFetchingNextPage,
-        mapByOtid: store.mapByOtid,
-      };
-    });
+  const {
+    curOtid,
+    isFetchingNextPage,
+    mapByOtid,
+    fetchMore,
+    clearCache,
+    setCurOtid,
+    changeCompCurOtid,
+  } = useChnotThreadStore((store) => {
+    return {
+      curOtid: store.curOtid,
+      isFetchingNextPage: store.isFetchingNextPage,
+      mapByOtid: store.mapByOtid,
+      fetchMore: store.fetchMore,
+      clearCache: store.clearCache,
+      setCurOtid: store.setCurOtid,
+      changeCompCurOtid: store.changeCompCurOtid,
+    };
+  });
 
   const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore(
     (store) => {
@@ -101,13 +111,19 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 getCurrent={function (): StateChnotLike | undefined {
                   throw new Error("Function not implemented.");
                 }}
-                overwrite={function (chnot: StateChnotLike): void {
-                  throw new Error("Function not implemented.");
-                }}
-                setCurOtid={function (cutOtid?: TID): void {
-                  throw new Error("Function not implemented.");
+                setCurOtid={(curOtid?: TID) => {
+                  setCurOtid(curOtid);
+                  if (changeCompCurOtid) {
+                    changeCompCurOtid(curOtid);
+                  }
                 }}
                 unvalidate={function (toRemoves: TID[]): void {
+                  throw new Error("Function not implemented.");
+                }}
+                onArchive={function (): void {
+                  throw new Error("Function not implemented.");
+                }}
+                onTogglePin={function (): void {
                   throw new Error("Function not implemented.");
                 }}
               />

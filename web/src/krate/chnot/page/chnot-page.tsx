@@ -1,13 +1,10 @@
 import ChnotThreadSidebar from "@/krate/chnot/component/thread/sidebar";
 import { ChnotViewType } from "@/krate/chnot/store";
-import { useState } from "react";
-import { SidebarInset, SidebarProvider } from "@/common/component/ui/sidebar";
-import { genTID } from "@/lib/id_util";
+import { SidebarProvider } from "@/common/component/ui/sidebar";
 import UnderConstructionPage from "@/common/pages/under-construction-page";
 import ChnotSingleSidebar from "../component/single/sidebar";
-import ChnotSingleHeadbar from "../component/single/header";
-import { ChnotKind } from "../po";
 import ChnotSingleMain from "../component/single/main";
+import ChnotThreadMain from "../component/thread/main";
 
 /**
  * Page for chnots, which is left and right layouted.
@@ -16,7 +13,6 @@ import ChnotSingleMain from "../component/single/main";
  * @returns ChnotSearchRspThread Page
  */
 const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
-  const [monoComponentKey, setMonoComponentKey] = useState(genTID());
   return (
     <div className="bg-panel flex max-w-screen w-screen h-screen max-h-screen overflow-hidden">
       <SidebarProvider>
@@ -30,25 +26,9 @@ const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
         ) : viewType === ChnotViewType.Thread ? (
           <>
             <ChnotThreadSidebar viewType={viewType} />
-            <SidebarInset>
-              <ChnotSingleHeadbar
-                onNew={() => {
-                  setMonoComponentKey(genTID());
-                }}
-                setKind={function (kind: ChnotKind): void {}}
-              />
-              {/*               <ChnotThreadEditor
-                key={monoComponentKey}
-                threadMeta={{
-                  otid: 0,
-                  kspace: "",
-                  pin_tid: undefined,
-                  archive_tid: undefined,
-                  tid: 0,
-                }}
-                globalBar={undefined}
-              /> */}
-            </SidebarInset>
+            <main className="w-full h-screen">
+              <ChnotThreadMain />
+            </main>
           </>
         ) : (
           <UnderConstructionPage />

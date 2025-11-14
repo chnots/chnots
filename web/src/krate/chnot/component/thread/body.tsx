@@ -13,6 +13,7 @@ import {
 import { arraysAreEqual } from "@/lib/col-util";
 import { mdwtRecordList } from "@/krate/mdwt/service";
 import { MdwtRecord } from "@/krate/mdwt/po";
+import { ChnotSearchRspThread } from "../../dto";
 import { useChnotThreadStore } from "../../store";
 
 /**
@@ -25,25 +26,19 @@ import { useChnotThreadStore } from "../../store";
  * - Maintain State
  *   - Just edit and save that chnot.
  */
-const ChnotThreadEditor = ({
-  otid,
-  globalBar,
-}: {
-  otid: TID;
-  globalBar: React.ReactNode;
-}) => {
-  console.log("render Thread: ", otid);
-
-  const {} = useChnotThreadStore((store) => {
-    return {};
-  });
-
+const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const savedChnotOrdersRef = useRef<TID[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
   const initializedOtids = useRef<Set<TID>>(new Set());
   const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
+
+  const { getMeta } = useChnotThreadStore((s) => {
+    return {
+      getMeta: s.getMeta,
+    };
+  });
 
   useEffect(() => {
     (async () => {
@@ -106,46 +101,46 @@ const ChnotThreadEditor = ({
       {loading ? (
         <LoadingPage />
       ) : (
-        <>
-          <div>{globalBar}</div>
-          <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl items-center">
-            {chnotOrders.map((otid, index) => {
-              return (
-                <RichMdwt
-                  key={otid}
-                  otid={otid}
-                  onPostSave={(arg: PostSaveArg) => {
-                    if (arg.saveState === SaveState.Saved) {
-                      handlePostSaveOnChnot(arg);
-                    }
-                  }}
-                  content={mdwtMap[otid]?.content ?? undefined}
-                  onChanged={function (): void {
-                    const inited = initializedOtids.current;
-                    /**
-                     * if this otid is not added, we think maybe we should add a new chnot to the end of chnot-thread.
-                     *
-                     * try to add changed otid
-                     */
-                    if (!inited.has(otid)) {
-                      inited.add(otid);
+        <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl items-center">
+          {chnotOrders.map((otid, index) => {
+            return (
+              <RichMdwt
+                key={otid}
+                otid={otid}
+                onPostSave={(arg: PostSaveArg) => {
+                  if (arg.saveState === SaveState.Saved) {
+                    handlePostSaveOnChnot(arg);
+                  }
+                }}
+                content={mdwtMap[otid]?.content ?? undefined}
+                onChanged={function (): void {
+                  const inited = initializedOtids.current;
+                  /**
+                   * if this otid is not added, we think maybe we should add a new chnot to the end of chnot-thread.
+                   *
+                   * try to add changed otid
+                   */
+                  if (!inited.has(otid)) {
+                    inited.add(otid);
 
-                      const lastOtid = chnotOrders.at(chnotOrders.length - 1)!;
-                      if (inited.has(lastOtid)) {
-                        setChnotOrders((prev) => {
-                          return [...prev, genTID()];
-                        });
-                      }
+                    const lastOtid = chnotOrders.at(chnotOrders.length - 1)!;
+                    if (inited.has(lastOtid)) {
+                      setChnotOrders((prev) => {
+                        return [...prev, genTID()];
+                      });
                     }
-                  }}
-                />
-              );
-            })}
-          </div>
-        </>
+                  }
+                }}
+                tryfetch={false}
+              />
+            );
+          })}
+        </div>
       )}
     </div>
   );
 };
 
-export default ChnotThreadEditor;
+export const ChnotThreadBodyMemo = React.memo(ChnotThreadBody);
+
+export default ChnotThreadBody;
