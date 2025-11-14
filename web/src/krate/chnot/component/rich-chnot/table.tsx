@@ -90,46 +90,48 @@ const TableChnot = ({
             />
           </Fullscreen>
         ) : (
-          <DataTable
-            tableMeta={meta}
-            fetchData={async (
-              table_id: number,
-              start: number,
-              size: number,
-            ): Promise<KTabRowData[]> => {
-              const data = await ktabCellList({
-                table_id,
-                filter: {
-                  RowsByIdx: {
-                    row_tid_included: start,
-                    page_size: size,
+          <div className="flex flex-col h-full w-full mx-1 max-w-full">
+            <DataTable
+              tableMeta={meta}
+              fetchData={async (
+                table_id: number,
+                start: number,
+                size: number,
+              ): Promise<KTabRowData[]> => {
+                const data = await ktabCellList({
+                  table_id,
+                  filter: {
+                    RowsByIdx: {
+                      row_tid_included: start,
+                      page_size: size,
+                    },
                   },
-                },
-              });
-              return data.rows.map((row) => {
-                return row.cells.reduce<KTabRowData>(
-                  (acc, cell) => {
-                    acc[cell.column_name] = ktabGetViewValue(cell.value);
-                    return acc;
-                  },
-                  { row_tid: row.row_tid },
-                );
-              });
-            }}
-            onMetaChange={async (meta: KTabMeta) => {
-              await ktabMetaCommit({
-                meta: meta,
-              });
-              setMeta(meta);
-              onPostSave({
-                saveState: SaveState.Saved,
-                title: Object.values(meta.columns)
-                  .map((e) => e.name)
-                  .join("|"),
-              });
-            }}
-            readonly={readonly || false}
-          />
+                });
+                return data.rows.map((row) => {
+                  return row.cells.reduce<KTabRowData>(
+                    (acc, cell) => {
+                      acc[cell.column_name] = ktabGetViewValue(cell.value);
+                      return acc;
+                    },
+                    { row_tid: row.row_tid },
+                  );
+                });
+              }}
+              onMetaChange={async (meta: KTabMeta) => {
+                await ktabMetaCommit({
+                  meta: meta,
+                });
+                setMeta(meta);
+                onPostSave({
+                  saveState: SaveState.Saved,
+                  title: Object.values(meta.columns)
+                    .map((e) => e.name)
+                    .join("|"),
+                });
+              }}
+              readonly={readonly || false}
+            />
+          </div>
         )}
       </>
     )

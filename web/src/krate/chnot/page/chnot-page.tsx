@@ -18,26 +18,19 @@ import ChnotSingleMain from "../component/single/main";
 const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
   const [monoComponentKey, setMonoComponentKey] = useState(genTID());
   return (
-    <div className="bg-panel flex h-full max-h-full rounded-md overflow-hidden">
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 96)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-      >
+    <div className="bg-panel flex max-w-screen w-screen h-screen max-h-screen overflow-hidden">
+      <SidebarProvider>
         {viewType === ChnotViewType.Single ? (
           <>
             <ChnotSingleSidebar viewType={ChnotViewType.Single} />
-            <SidebarInset className="min-w-0">
+            <main className="w-full h-screen">
               <ChnotSingleMain />
-            </SidebarInset>
+            </main>
           </>
         ) : viewType === ChnotViewType.Thread ? (
           <>
             <ChnotThreadSidebar viewType={viewType} />
-            <SidebarInset className="min-w-0">
+            <SidebarInset>
               <ChnotSingleHeadbar
                 onNew={() => {
                   setMonoComponentKey(genTID());

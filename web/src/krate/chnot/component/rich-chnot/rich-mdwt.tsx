@@ -37,7 +37,7 @@ const RichMdwt = ({
   readonly?: boolean;
   content?: string;
   onChanged: (content: string) => void;
-  whfull?: boolean;
+  whfull?: string;
   tryfetch: boolean;
 }) => {
   console.log("render Chrome: ", otid);
@@ -74,8 +74,8 @@ const RichMdwt = ({
     <div
       className={clsx(
         "w-full max-w-4xl border p-1 m-1 rounded",
-        isMobile || chnots.length == 0 ? "flex flex-col" : "grid grid-cols-2",
-        whfull && "h-full",
+        isMobile || chnots.length == 0 ? "" : "grid grid-cols-2",
+        whfull,
       )}
     >
       <MdwtChnot

@@ -88,9 +88,11 @@ const ChnotSingleBody = ({
   };
 
   return (
-    <div className="flex w-full h-full justify-center">
+    <div className="flex flex-grow w-full items-center justify-center m-0 p-1 border-2 border-blue-300 overflow-hidden">
       {kind === ChnotKind.ExcalidrawV1 ? (
-        <ExcalidrawChnot {...props} />
+        <div className="flex w-full h-full overflow-auto">
+          <ExcalidrawChnot {...props} />
+        </div>
       ) : kind === ChnotKind.KFileV1 ? (
         <KFileChnot {...props} />
       ) : kind == ChnotKind.KTab ? (
@@ -110,7 +112,7 @@ const ChnotSingleBody = ({
               initialed.current = true;
             }
           }}
-          whfull={true}
+          whfull={"h-[90%]"}
         />
       )}
     </div>

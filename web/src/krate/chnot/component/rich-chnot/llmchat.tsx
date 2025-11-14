@@ -1,7 +1,5 @@
 import { SaveState } from "@/common/types";
 import { RichPropProps } from "./rich-chnot";
-import LLMChatTemplateList from "@/krate/llmchat/component/template-list";
-import { LLMChatTemplate } from "@/krate/llmchat/po";
 import { createRef, useEffect, useState } from "react";
 import SessionContainer, {
   LLMChatEditorProvider,
@@ -19,7 +17,7 @@ const LLMChatChnot = ({
   onPostSave,
   onSetFullscreen,
 }: RichPropProps) => {
-  const pidRef = createRef<Set<TID>>();
+  const persistedIds = createRef<Set<TID>>();
 
   const [props, setProps] = useState<LLMChatContextProps | undefined>(
     undefined,
@@ -34,37 +32,32 @@ const LLMChatChnot = ({
   useEffect(() => {
     (async () => {
       if (otid) {
-        const rsp = await llmchatSessionRecordFetch({
+        const { session, records } = await llmchatSessionRecordFetch({
           session_otid: otid,
         });
-        if (rsp.session) {
+        if (session) {
           setProps(() => {
-            const pids = new Set<TID>();
+            const pids = new Set<TID>(records.map((e) => e.otid));
 
-            if (rsp.session) {
-              rsp.records.forEach((r) => {
-                pids.add(r.otid);
-              });
-              pids.add(rsp.session.otid);
-            }
-            pidRef.current = pids;
+            pids.add(session.otid);
+
+            persistedIds.current = pids;
             return {
               sessionOtid: otid,
-              records: rsp.records,
-              session: rsp.session,
-              persistedIds: pidRef,
+              records: records,
+              session: session,
+              persistedIds: persistedIds,
             };
           });
         } else {
           setProps({
             sessionOtid: otid,
-            persistedIds: pidRef,
+            persistedIds: persistedIds,
           });
         }
       }
     })();
   }, [otid]);
-  console.log("props", props);
 
   console.log("render llmchat", props, readonly, fullscreen);
   return (
@@ -83,7 +76,7 @@ const LLMChatChnot = ({
             />
           </Fullscreen>
         ) : (
-          <div className="m-0 p-0">
+          <div className="w-full h-full">
             {readonly ? (
               <SessionContainer readonly={true} />
             ) : (

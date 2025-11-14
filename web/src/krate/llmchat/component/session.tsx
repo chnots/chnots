@@ -356,9 +356,9 @@ const SessionContainer = ({
   }, [atBottomRef, scrollToEnd]);
 
   return (
-    <div className="flex flex-col h-full max-h-full overflow-hidden max-w-4xl lllllllllllllllllll">
+    <div className="flex flex-col h-full w-full">
       <div
-        className="flex flex-row h-full overflow-y-auto justify-center w-full"
+        className="flex flex-row flex-grow overflow-y-auto justify-center w-full"
         onScroll={onScroll}
       >
         {records && session ? (

@@ -113,7 +113,7 @@ export type KTabCellListRspRow = {
 export type KTabViewCell = {
   row_tid: TID;
   column_name: string;
-  value?: KTabStoreValue;
+  value: KTabStoreValue;
 };
 
 export type KTabCell = {

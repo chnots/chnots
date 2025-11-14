@@ -35,7 +35,7 @@ const ChnotSingleMain = () => {
   }, [otid]);
 
   return (
-    <>
+    <div className="w-full h-full flex flex-col">
       <ChnotSingleHeadbar
         onNew={() => {
           setOtid(genTID());
@@ -53,7 +53,7 @@ const ChnotSingleMain = () => {
           setKind={setKind}
         />
       )}
-    </>
+    </div>
   );
 };
 
