@@ -81,17 +81,21 @@ const MdwtChnot = ({
   content: initialContent,
   onContentChange,
   tryFetch,
+  fixedHeight,
 }: RichPropProps & {
   content?: string;
   onContentChange?: (content: string) => void;
   tryFetch: boolean;
+  fixedHeight: boolean;
 }) => {
   console.log("render MdwtRecord", otid);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
-    setHeight(entry.contentRect.height);
+    if (fixedHeight) {
+      setHeight(entry.contentRect.height);
+    }
   });
 
   // use RefObject to avoid rerender
@@ -172,7 +176,7 @@ const MdwtChnot = ({
           debounceSave();
         }}
         autoCompletion={chnotCompletions}
-        height={height}
+        height={fixedHeight ? height : undefined}
         foldGutter={false}
       />
     </div>

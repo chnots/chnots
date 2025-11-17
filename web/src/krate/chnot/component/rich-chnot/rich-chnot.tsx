@@ -93,7 +93,7 @@ const RichChnot = ({
   };
 
   return (
-    <div className="relative flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white">
+    <div className="relative flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white min-h-12">
       <Button
         onClick={() => setFullscreen(true)}
         className="absolute top-1 right-1 z-49"
@@ -101,12 +101,12 @@ const RichChnot = ({
         <Icon.Fullscreen />
       </Button>
       <div
-        className="flex-1 rounded focus:outline-none h-full space-y-2 border max-w-full p-1"
+        className="flex-1 focus:outline-none h-full space-y-2 max-w-full p-1"
         tabIndex={0}
         aria-label="Text block, click to edit"
       >
         {kind === ChnotKind.MDWT ? (
-          <MdwtChnot {...props} tryFetch={true} />
+          <MdwtChnot {...props} tryFetch={true} fixedHeight={false} />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
           <ExcalidrawChnot {...props} />
         ) : kind === ChnotKind.KFileV1 ? (

@@ -14,27 +14,25 @@ import ChnotThreadMain from "../component/thread/main";
  */
 const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
   return (
-    <div className="bg-panel flex max-w-screen w-screen h-screen max-h-screen overflow-hidden">
-      <SidebarProvider>
-        {viewType === ChnotViewType.Single ? (
-          <>
-            <ChnotSingleSidebar viewType={ChnotViewType.Single} />
-            <main className="w-full h-screen">
-              <ChnotSingleMain />
-            </main>
-          </>
-        ) : viewType === ChnotViewType.Thread ? (
-          <>
-            <ChnotThreadSidebar viewType={viewType} />
-            <main className="w-full h-screen">
-              <ChnotThreadMain />
-            </main>
-          </>
-        ) : (
-          <UnderConstructionPage />
-        )}
-      </SidebarProvider>
-    </div>
+    <SidebarProvider>
+      {viewType === ChnotViewType.Single ? (
+        <div className="bg-panel flex max-w-screen w-screen overflow-y-auto">
+          <ChnotSingleSidebar viewType={ChnotViewType.Single} />
+          <main className="w-full h-screen">
+            <ChnotSingleMain />
+          </main>
+        </div>
+      ) : viewType === ChnotViewType.Thread ? (
+        <>
+          <ChnotThreadSidebar viewType={viewType} />
+          <main className="w-full h-screen">
+            <ChnotThreadMain />
+          </main>
+        </>
+      ) : (
+        <UnderConstructionPage />
+      )}
+    </SidebarProvider>
   );
 };
 

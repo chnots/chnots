@@ -101,6 +101,7 @@ const ChnotSingleBody = ({
         <LLMChatChnot {...props} />
       ) : (
         <RichMdwt
+          fixedHeight={true}
           {...props}
           tryfetch={true}
           onPostSave={(arg) => {

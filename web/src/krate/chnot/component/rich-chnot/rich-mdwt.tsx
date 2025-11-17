@@ -31,6 +31,7 @@ const RichMdwt = ({
   onChanged,
   whfull,
   tryfetch,
+  fixedHeight,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
@@ -39,6 +40,7 @@ const RichMdwt = ({
   onChanged: (content: string) => void;
   whfull?: string;
   tryfetch: boolean;
+  fixedHeight: boolean;
 }) => {
   console.log("render Chrome: ", otid);
 
@@ -69,12 +71,12 @@ const RichMdwt = ({
   useEffect(() => {
     updateChnots(initialContent);
   }, []);
-
+  console.log("rich chnots:", chnots);
   return (
     <div
       className={clsx(
         "w-full max-w-4xl border p-1 m-1 rounded",
-        isMobile || chnots.length == 0 ? "" : "grid grid-cols-2",
+        isMobile || chnots.length == 0 ? "flex flex-col" : "grid grid-cols-2",
         whfull,
       )}
     >
@@ -92,11 +94,17 @@ const RichMdwt = ({
         }}
         fullscreen={false}
         onSetFullscreen={() => {}}
+        fixedHeight={true}
       />
       {chnots.length > 0 && (
-        <div>
-          {chnots.map((cm) => (
-            <RichChnot kspace={currentKSpace} otid={cm} key={cm} />
+        <div
+          className={clsx(
+            "border-l space-y-2 divide-y rounded-none",
+            fixedHeight ? "flex-col overflow-auto" : "",
+          )}
+        >
+          {chnots.map((otid) => (
+            <RichChnot kspace={currentKSpace} otid={otid} key={otid} />
           ))}
         </div>
       )}

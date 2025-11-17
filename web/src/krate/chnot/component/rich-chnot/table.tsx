@@ -86,7 +86,7 @@ const TableChnot = ({
                     .join("|"),
                 });
               }}
-              readonly={readonly || false}
+              readonly={false}
             />
           </Fullscreen>
         ) : (
