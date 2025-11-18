@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import clsx from "clsx";
 import React from "react";
 import { ForwardedRef, ReactNode } from "react";
@@ -16,7 +17,7 @@ const KListItem = React.forwardRef(
         className={clsx(
           "list-none p-3 relative select-none group text-xs hover:kc-active hover:cursor-pointer border rounded-xl",
           focused ? "kc-active" : "border-transparent",
-          className
+          className,
         )}
         ref={ref}
         {...rest}
@@ -24,7 +25,7 @@ const KListItem = React.forwardRef(
         {children}
       </li>
     );
-  }
+  },
 );
 
 KListItem.displayName = "KListItem";

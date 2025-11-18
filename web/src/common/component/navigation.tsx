@@ -8,6 +8,7 @@ import { useCommonStore } from "@/common/store";
 import useParamState from "@/hooks/use-param-state";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 interface NavLinkItem {
   tid: string;
@@ -23,10 +24,11 @@ const Navigation = ({
   orientation?: "vertical" | "horizontal";
 }) => {
   const t = useTranslate();
-  const { currentKSpace, selectKSpace } = useKSpaceStore(e => {
+  const { currentKSpace, selectKSpace } = useKSpaceStore((e) => {
     return {
-      currentKSpace: e.currentKSpace, selectKSpace: e.selectKSpace
-    }
+      currentKSpace: e.currentKSpace,
+      selectKSpace: e.selectKSpace,
+    };
   });
   const { toggleSidebar } = useCommonStore();
   const [, setKSpaceParam] = useParamState<string>("ns", "public");
@@ -75,7 +77,7 @@ const Navigation = ({
     <div
       className={clsx(
         "h-full overflow-auto flex flex-col items-center z-30 hide-scrollbar kc-basic-with-bdr border-r space-y-2 py-1",
-        className
+        className,
       )}
     >
       <Button
@@ -98,7 +100,7 @@ const Navigation = ({
           className={({ isActive }) =>
             clsx(
               "p-2 rounded-xl border",
-              isActive ? "kc-active" : "border-transparent kc-basic"
+              isActive ? "kc-active" : "border-transparent kc-basic",
             )
           }
           key={navLink.tid}

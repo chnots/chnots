@@ -67,7 +67,7 @@ const ExcalidrawChnot = ({
   return (
     <div className="w-full flex flex-col">
       {readonly ? (
-        <div className="flex h-auto justify-center">
+        <div className="flex h-auto justify-center items-center w-full">
           <ExcalidrawPreview state={state} className="w-8/12" />
         </div>
       ) : (

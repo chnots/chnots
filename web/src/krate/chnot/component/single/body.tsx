@@ -88,7 +88,7 @@ const ChnotSingleBody = ({
   };
 
   return (
-    <div className="flex flex-grow w-full items-center justify-center m-0 p-1 border-2 border-blue-300 overflow-hidden">
+    <div className="flex w-full items-center justify-center m-0 p-1 border-2 border-blue-300">
       {kind === ChnotKind.ExcalidrawV1 ? (
         <div className="flex w-full h-full overflow-auto">
           <ExcalidrawChnot {...props} />
@@ -101,7 +101,6 @@ const ChnotSingleBody = ({
         <LLMChatChnot {...props} />
       ) : (
         <RichMdwt
-          fixedHeight={true}
           {...props}
           tryfetch={true}
           onPostSave={(arg) => {
@@ -113,7 +112,6 @@ const ChnotSingleBody = ({
               initialed.current = true;
             }
           }}
-          whfull={"h-[90%]"}
         />
       )}
     </div>

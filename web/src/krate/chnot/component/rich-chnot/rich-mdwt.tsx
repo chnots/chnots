@@ -1,7 +1,7 @@
 import { TID } from "@/lib/id_util";
 import RichChnot, { PostSaveArg } from "./rich-chnot";
 import MdwtChnot from "./mdwt";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { arraysAreEqual } from "@/lib/col-util";
 import { chnotMetaCommit, chnotMetaList } from "../../service";
 import { ChnotKind } from "../../po";
@@ -10,6 +10,8 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { cachedChnotMapByOtid } from "@/krate/chnot/store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import clsx from "clsx";
+import { cn } from "@/lib/utils";
+import useResizeObserver from "@react-hook/resize-observer";
 
 const parseChnotsFromContent = (content: string): TID[] => {
   const regex = /\[\[([0-9]{16}?)\]\]/g;
@@ -31,7 +33,6 @@ const RichMdwt = ({
   onChanged,
   whfull,
   tryfetch,
-  fixedHeight,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
@@ -40,7 +41,6 @@ const RichMdwt = ({
   onChanged: (content: string) => void;
   whfull?: string;
   tryfetch: boolean;
-  fixedHeight: boolean;
 }) => {
   console.log("render Chrome: ", otid);
 
@@ -52,6 +52,14 @@ const RichMdwt = ({
 
   const [chnots, setChnots] = useState<TID[]>([]);
   const isMobile = useIsMobile();
+
+  const [minHeight, setMinHeight] = useState<number | undefined>(200);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
+    console.log("set minheight", entry.contentRect.height);
+    setMinHeight(entry.contentRect.height);
+  });
+  console.log(minHeight);
 
   const updateChnots = useCallback(
     async (content?: string) => {
@@ -71,11 +79,12 @@ const RichMdwt = ({
   useEffect(() => {
     updateChnots(initialContent);
   }, []);
+
   console.log("rich chnots:", chnots);
   return (
     <div
-      className={clsx(
-        "w-full max-w-4xl border p-1 m-1 rounded",
+      className={cn(
+        "h-full w-full max-w-4xl border p-1 m-1 rounded",
         isMobile || chnots.length == 0 ? "flex flex-col" : "grid grid-cols-2",
         whfull,
       )}
@@ -94,15 +103,9 @@ const RichMdwt = ({
         }}
         fullscreen={false}
         onSetFullscreen={() => {}}
-        fixedHeight={true}
       />
       {chnots.length > 0 && (
-        <div
-          className={clsx(
-            "border-l space-y-2 divide-y rounded-none",
-            fixedHeight ? "flex-col overflow-auto" : "",
-          )}
-        >
+        <div className="border-l space-y-2 rounded-none" ref={bodyRef}>
           {chnots.map((otid) => (
             <RichChnot kspace={currentKSpace} otid={otid} key={otid} />
           ))}

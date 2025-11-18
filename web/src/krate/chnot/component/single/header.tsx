@@ -3,18 +3,26 @@ import { Button } from "@/common/component/ui/button";
 import { SidebarTrigger } from "@/common/component/ui/sidebar";
 import { ChnotKind } from "../../po";
 import { ChnotKindIcon } from "../kind-icon";
+import { cn } from "@/lib/utils";
 
 const ChnotSingleHeadbar = ({
   kind,
   onNew,
   setKind,
+  className,
 }: {
   kind?: ChnotKind;
   onNew: () => void;
   setKind: (kind: ChnotKind) => void;
+  className?: string;
 }) => {
   return (
-    <div className="w-full flex align-center items-center p-1 space-x-1">
+    <div
+      className={cn(
+        "w-full flex align-center items-center p-1 space-x-1",
+        className,
+      )}
+    >
       <SidebarTrigger />
       <div className="m-1">
         <Button onClick={onNew}>

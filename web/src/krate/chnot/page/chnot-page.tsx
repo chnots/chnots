@@ -16,12 +16,10 @@ const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
   return (
     <SidebarProvider>
       {viewType === ChnotViewType.Single ? (
-        <div className="bg-panel flex max-w-screen w-screen overflow-y-auto">
+        <>
           <ChnotSingleSidebar viewType={ChnotViewType.Single} />
-          <main className="w-full h-screen">
-            <ChnotSingleMain />
-          </main>
-        </div>
+          <ChnotSingleMain className="w-full h-screen" />
+        </>
       ) : viewType === ChnotViewType.Thread ? (
         <>
           <ChnotThreadSidebar viewType={viewType} />

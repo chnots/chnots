@@ -1,7 +1,10 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { EditorView } from "@codemirror/view";
 import { languages } from "@codemirror/language-data";
-import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import CodeMirror, {
+  EditorSelection,
+  type ReactCodeMirrorRef,
+} from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { toast } from "sonner";
 import { html2mdAsync } from "@/lib/markdown-utils";
@@ -17,8 +20,8 @@ import {
   ChnotProps,
   Hashtag,
   todoHighlightPlugin,
-} from "./mdwt-extension";
-import { createCodemirrorTheme } from "./theme";
+} from "./codemirror/mdwt-extension";
+import { createCodemirrorTheme } from "./codemirror/theme";
 import { GFM } from "@lezer/markdown";
 
 const eventHandlers = EditorView.domEventHandlers({
@@ -98,20 +101,27 @@ const eventHandlers = EditorView.domEventHandlers({
 
 const MdwtEditor = ({
   content,
-  onContentChange,
-  autoCompletion,
   foldGutter,
   height,
+  onContentChange,
+  autoCompletion,
+  setCodeMirrorRef: setCMRef,
 }: {
   content?: string;
+  foldGutter: boolean;
+  height?: number;
   onContentChange: (content: string) => void;
   autoCompletion: (
     context: CompletionContext,
   ) => Promise<CompletionResult | null>;
-  foldGutter: boolean;
-  height?: number;
+  setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
+  useEffect(() => {
+    if (setCMRef) {
+      setCMRef(codeMirror);
+    }
+  }, [setCMRef]);
 
   const markdownExtension = markdown({
     base: markdownLanguage,

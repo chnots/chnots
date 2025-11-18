@@ -12,10 +12,11 @@ import { genTID, TID } from "@/lib/id_util";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
 import { cachedChnotMapByOtid } from "../../store";
+import { chnotShortDate } from "@/lib/date-utils";
 
 export type PostSaveArg = {
   saveState: SaveState;
-  title: string;
+  title?: string;
 };
 
 export type RichPropProps = {
@@ -93,22 +94,31 @@ const RichChnot = ({
   };
 
   return (
-    <div className="relative flex items-start space-x-2 px-2 py-0 my-1 rounded bg-white min-h-12">
-      <Button
-        onClick={() => setFullscreen(true)}
-        className="absolute top-1 right-1 z-49"
-      >
-        <Icon.Fullscreen />
-      </Button>
+    <div className="flex flex-col items-start px-2 py-0 my-1 rounded bg-white min-h-12 w-full">
+      <div className="flex items-center justify-between border-y border-muted h-5 w-full text-muted-foreground">
+        <div className="flex items-center space-x-2">
+          {kind && <ChnotKindIcon kind={kind} className="w-4 h-4" />}
+          <time
+            dateTime={new Date(otid / 1e3).toISOString()}
+            className="text-[0.7rem] whitespace-nowrap"
+          >
+            {chnotShortDate(new Date(otid / 1e3))}
+          </time>
+        </div>
+        <Icon.Fullscreen
+          className="w-4 h-4 cursor-pointer"
+          onClick={() => setFullscreen(true)}
+        />
+      </div>
       <div
         className="flex-1 focus:outline-none h-full space-y-2 max-w-full p-1"
         tabIndex={0}
         aria-label="Text block, click to edit"
       >
         {kind === ChnotKind.MDWT ? (
-          <MdwtChnot {...props} tryFetch={true} fixedHeight={false} />
+          <MdwtChnot {...props} tryFetch={true} />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
-          <ExcalidrawChnot {...props} />
+          <ExcalidrawChnot {...props} readonly={true} />
         ) : kind === ChnotKind.KFileV1 ? (
           <KFileChnot {...props} />
         ) : kind == ChnotKind.KTab ? (

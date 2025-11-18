@@ -70,13 +70,9 @@ const App = () => {
   return !initialized ? (
     <LoadingPage />
   ) : (
-    <div className="h-screen max-h-screen flex flex-row kc-basic">
-      <div className="w-full h-full">
-        <Suspense fallback={<LoadingPage />}>
-          <Outlet />
-        </Suspense>
-      </div>
-    </div>
+    <Suspense fallback={<LoadingPage />}>
+      <Outlet />
+    </Suspense>
   );
 };
 

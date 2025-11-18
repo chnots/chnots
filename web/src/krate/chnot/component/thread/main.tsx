@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChnotKind, ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import { useChnotSingleStore, useChnotThreadStore } from "../../store";
+import { useChnotThreadStore } from "../../store";
 import ChnotThreadHeadbar from "./header";
 import ChnotThreadBody from "./body";
 import { useKSpaceStore } from "@/krate/kspace/store";

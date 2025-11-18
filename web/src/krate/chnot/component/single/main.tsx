@@ -4,14 +4,9 @@ import { ChnotSingleBodyMemo } from "./body";
 import ChnotSingleHeadbar from "./header";
 import { genTID, TID } from "@/lib/id_util";
 import { useChnotSingleStore } from "../../store";
+import { cn } from "@/lib/utils";
 
-export type ChnotSingleMainStore = {
-  otid: TID;
-  kind?: ChnotKind;
-  setKind: (kind: ChnotKind) => void;
-};
-
-const ChnotSingleMain = () => {
+const ChnotSingleMain = ({ className }: { className?: string }) => {
   const { getMeta, setChangeCompCurOtid } = useChnotSingleStore((s) => {
     return {
       getMeta: s.getMeta,
@@ -35,8 +30,9 @@ const ChnotSingleMain = () => {
   }, [otid]);
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <main className={cn("relative flex flex-col overflow-y-auto", className)}>
       <ChnotSingleHeadbar
+        className={"sticky top-0 left-0"}
         onNew={() => {
           setOtid(genTID());
         }}
@@ -53,7 +49,7 @@ const ChnotSingleMain = () => {
           setKind={setKind}
         />
       )}
-    </div>
+    </main>
   );
 };
 
