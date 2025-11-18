@@ -1,5 +1,5 @@
 import { kfileInlineUpload, kfileInlineDownload } from "@/krate/kfile/service";
-import { genTID } from "@/lib/id_util";
+import { genTID, TID } from "@/lib/id_util";
 import {
   ExcalidrawElement,
   FileId,
@@ -12,22 +12,24 @@ import {
   DataURL,
 } from "@excalidraw/excalidraw/types";
 import { RefObject } from "react";
+import { KfileMetaFetchReqId } from "@/krate/kfile/dto";
 
 export type ExcalidrawChnotState = {
-  excalidrawId: string;
+  otid: TID;
+  metaId: string;
   elements: readonly ExcalidrawElement[];
   appState: AppState;
   files: BinaryFiles;
 };
 
 export const fetchExcalidraw = async (
-  excalidraw_id: string,
+  id: KfileMetaFetchReqId,
 ): Promise<ExcalidrawChnotState | null> => {
   try {
     const rsp = await kfileInlineDownload({
-      meta_id: excalidraw_id,
+      req_id: id,
     });
-    const dataState = JSON.parse(rsp.res[0].content);
+    const dataState = JSON.parse(rsp.file!.content);
     const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
     const elements = dataState.elements as readonly ExcalidrawElement[] | null;
 
@@ -36,10 +38,10 @@ export const fetchExcalidraw = async (
         if (element.type === "image" && element.fileId) {
           try {
             const fileInlineRsp = await kfileInlineDownload({
-              meta_id: element.fileId,
+              req_id: { ID: element.fileId },
             });
 
-            const fileInline = fileInlineRsp.res.at(0);
+            const fileInline = fileInlineRsp.file;
             if (fileInline) {
               fileMap.set(element.fileId, {
                 // @ts-ignore
@@ -62,27 +64,34 @@ export const fetchExcalidraw = async (
 
     return {
       ...dataState,
+      metaId: rsp.meta?.id,
       files: Object.fromEntries(fileMap.entries()),
       elements: dataState.elements,
     };
   } catch (e) {
-    console.error("unable to fetch inline-kfile", excalidraw_id, e);
+    console.error("unable to fetch inline-kfile", id, e);
   }
   return null;
 };
 
+export type SaveFileCache = {
+  ver: string;
+  otid: TID;
+};
+
 export type SaveExcalidrawProps = {
+  otid: TID;
   state: ExcalidrawChnotState;
   contentType: string;
   onSuccess: () => void;
   onFail: () => void;
-  savedFilesRef: RefObject<Map<string, string>>;
+  savedFilesRef: RefObject<Map<string, SaveFileCache>>;
 };
 
 export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
   const { state, contentType, onSuccess, onFail, savedFilesRef } = props;
 
-  const { elements, appState, excalidrawId, files } = state;
+  const { elements, appState, metaId, files } = state;
   try {
     if (elements.length == 0) {
       return;
@@ -91,9 +100,10 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
     const content = serializeAsJSON(elements, appState, files, "database");
 
     for (const [fileId, file] of Object.entries(files)) {
-      const ver = savedFilesRef.current.get(fileId);
-      const newVar = file.created + "-" + file.version;
-      if (!ver || ver != newVar) {
+      const cache = savedFilesRef.current.get(fileId);
+      const newVer = file.created + "-" + file.version;
+      if (!cache || cache.ver != newVer) {
+        const otid = cache ? cache.otid : genTID();
         await kfileInlineUpload({
           res: {
             tid: genTID(),
@@ -102,9 +112,10 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
           },
           archor_intervals: 3600,
           meta_id: file.id,
-          content_type: file.mimeType ?? "chnots/unknown",
+          content_type: file.mimeType ?? "chnot/unknown",
+          otid: otid,
         });
-        savedFilesRef.current.set(fileId, newVar);
+        savedFilesRef.current.set(fileId, { ver: newVer, otid: otid });
       }
     }
 
@@ -115,8 +126,9 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
         sid: "placeholder",
       },
       archor_intervals: 3600,
-      meta_id: excalidrawId,
+      meta_id: metaId,
       content_type: contentType,
+      otid: props.otid,
     });
     onSuccess();
   } catch (err) {

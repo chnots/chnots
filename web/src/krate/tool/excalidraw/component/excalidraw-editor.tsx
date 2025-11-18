@@ -11,18 +11,19 @@ import {
 import { Excalidraw, useHandleLibrary } from "@excalidraw/excalidraw";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 import { ExcalidrawChnotState } from "../service";
+import { genUID, TID } from "@/lib/id_util";
 
 const CONTENT_TYPE = "chnots/excalidraw-v1";
 
 const ExcalidrawEditor = ({
-  excalidrawId,
+  otid,
   useCustom,
   customArgs,
   readOnly: viewMode,
   onSave,
   state,
 }: {
-  excalidrawId: string;
+  otid: TID;
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
   customArgs?: any[];
   readOnly?: boolean;
@@ -84,7 +85,13 @@ const ExcalidrawEditor = ({
       excalidrawAPI={excalidrawRefCallback}
       initialData={state}
       onChange={(elements, appState, files) => {
-        excalidrawSaves.current = { elements, appState, files, excalidrawId };
+        excalidrawSaves.current = {
+          otid,
+          elements,
+          appState,
+          files,
+          metaId: state ? state.metaId : genUID(),
+        };
       }}
       viewModeEnabled={viewModeEnabled}
       zenModeEnabled={zenModeEnabled}
