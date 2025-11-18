@@ -41,6 +41,8 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     };
   });
 
+  console.log("render ChnotSingleSidebar", curOtid);
+
   useDebugChanged(mapByOtid, "mapByOtid");
 
   const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore(

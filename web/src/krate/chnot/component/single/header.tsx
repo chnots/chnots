@@ -4,18 +4,27 @@ import { SidebarTrigger } from "@/common/component/ui/sidebar";
 import { ChnotKind } from "../../po";
 import { ChnotKindIcon } from "../kind-icon";
 import { cn } from "@/lib/utils";
+import { TID } from "@/lib/id_util";
+import { useChnotSingleStore } from "../../store";
 
 const ChnotSingleHeadbar = ({
-  kind,
+  otid,
   onNew,
   setKind,
   className,
 }: {
-  kind?: ChnotKind;
+  otid?: TID;
   onNew: () => void;
   setKind: (kind: ChnotKind) => void;
   className?: string;
 }) => {
+  const { mapByOtid, getMeta } = useChnotSingleStore((s) => {
+    return {
+      mapByOtid: s.mapByOtid,
+      getMeta: s.getMeta,
+    };
+  });
+
   return (
     <div
       className={cn(
@@ -29,7 +38,7 @@ const ChnotSingleHeadbar = ({
           <Icon.BadgePlusIcon />
         </Button>
       </div>
-      {!kind && (
+      {(!otid || !getMeta(otid)) && (
         <div className="rounded-md border p-0 m-0">
           {Object.values(ChnotKind).map((kind) => {
             return (

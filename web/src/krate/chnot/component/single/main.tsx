@@ -29,6 +29,8 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
     }
   }, [otid]);
 
+  console.log("otid, kind", otid, kind);
+
   return (
     <main className={cn("relative flex flex-col overflow-y-auto", className)}>
       <ChnotSingleHeadbar
@@ -39,14 +41,13 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
         setKind={(kind: ChnotKind) => {
           setKind(kind);
         }}
-        kind={kind}
+        otid={otid}
       />
       {otid && (
         <ChnotSingleBodyMemo
           key={otid}
           otid={otid}
           kind={kind ?? ChnotKind.MDWT}
-          setKind={setKind}
         />
       )}
     </main>

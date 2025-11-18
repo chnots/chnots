@@ -85,7 +85,9 @@ const RichMdwt = ({
     <div
       className={cn(
         "h-full w-full max-w-4xl border p-1 m-1 rounded",
-        isMobile || chnots.length == 0 ? "flex flex-col" : "grid grid-cols-2",
+        isMobile || chnots.length == 0
+          ? "flex flex-col divide-y"
+          : "grid grid-cols-2 divide-x",
         whfull,
       )}
     >
@@ -105,7 +107,7 @@ const RichMdwt = ({
         onSetFullscreen={() => {}}
       />
       {chnots.length > 0 && (
-        <div className="border-l space-y-2 rounded-none" ref={bodyRef}>
+        <div className="space-y-2 rounded-none" ref={bodyRef}>
           {chnots.map((otid) => (
             <RichChnot kspace={currentKSpace} otid={otid} key={otid} />
           ))}
