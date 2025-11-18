@@ -59,12 +59,8 @@ export type LLMChatContextState = {
 } & LLMChatContextProps;
 
 function createLLMChatStore(props: LLMChatContextProps) {
-  const refObj = createRef<Set<TID>>();
-  refObj.current = new Set();
-
   return createStore<LLMChatContextState>()((set) => ({
     ...props,
-    persistedIds: refObj,
     responsing: false,
     setSession: (session: LLMChatSession) => {
       set((prev) => {
@@ -263,15 +259,6 @@ const SessionContainer = ({
 
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef<boolean>(false);
-  console.log(
-    "all tids",
-    records?.map((e) => {
-      return {
-        tid: e.otid,
-        role: e.role,
-      };
-    }),
-  );
 
   useEffect(() => {
     if (template) {
@@ -294,6 +281,7 @@ const SessionContainer = ({
         if (!pids.has(session.otid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
+          console.log("session,", pids);
           await llmchatSessionCommit({
             session: session,
           });

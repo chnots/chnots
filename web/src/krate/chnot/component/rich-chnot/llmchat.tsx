@@ -31,17 +31,16 @@ const LLMChatChnot = ({
   // Used to load from database.
   useEffect(() => {
     (async () => {
+      persistedIds.current = new Set();
+
       if (otid) {
         const { session, records } = await llmchatSessionRecordFetch({
           session_otid: otid,
         });
         if (session) {
           setProps(() => {
-            const pids = new Set<TID>(records.map((e) => e.otid));
-
-            pids.add(session.otid);
-
-            persistedIds.current = pids;
+            persistedIds.current!.add(session.otid);
+            records.forEach((r) => persistedIds.current!.add(r.otid));
             return {
               sessionOtid: otid,
               records: records,
