@@ -8,8 +8,8 @@ create() {
     set -eu
     echo "keyAlias=${ANDROID_KEY_ALIAS}" > "$KEY_FILE"
     echo "keyPassword=${ANDROID_KEY_PASSWORD}" >> "$KEY_FILE"
-    echo "storePassword=${ANDROID_KEY_PASSWORD}" >> "$KEY_FILE"
-    echo "storeFile=${STORE_FILE_PATH}/keystore.jks" >> "$KEY_FILE"
+    echo "storePassword=${ANDROID_STORE_PASSWORD}" >> "$KEY_FILE"
+    echo "storeFile=${ANDROID_STORE_FILE_PATH}" >> "$KEY_FILE"
 }
 
 check_or_die() {
