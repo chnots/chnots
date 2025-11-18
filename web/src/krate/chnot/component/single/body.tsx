@@ -100,7 +100,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       <LLMChatChnot {...props} />
     </div>
   ) : (
-    <div className="flex w-full items-center justify-center m-0 p-1 border-2 border-blue-300">
+    <div className="flex w-full items-center justify-center m-0 p-1 min-h-100">
       <RichMdwt
         {...props}
         tryfetch={true}
