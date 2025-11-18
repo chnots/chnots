@@ -15,6 +15,7 @@ import { toentTodoEventGuess } from "@/krate/toent/service";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { EditorSelection, ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import { chnotSingleSearch } from "../../service";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -34,7 +35,21 @@ const chnotCompletions = async (
       return { label: name, type: "hashtag" };
     });
   } else if (word.text.startsWith("[[")) {
-    options = [{ label: `[[backlink-ph]]`, type: "backlink" }];
+    // [{ label: `[[backlink-ph]]`, type: "backlink" }]
+    options = (
+      await chnotSingleSearch({
+        query: word.text.substring(3),
+        start_index: 0,
+        page_size: 10,
+        kinds: [],
+      })
+    ).data.map((chnot) => {
+      return {
+        label: chnot.title ?? "",
+        apply: `[[${chnot.meta.otid}]]`,
+        type: "backlink",
+      };
+    });
   } else if (word.text.includes("# [") || word.text.includes("- [")) {
     options = (
       await toentTodoEventGuess({ input: word.text.replace(/.*\[/, "") })
@@ -105,6 +120,7 @@ const MdwtChnot = ({
         }).then((rsp) => {
           const mdwt = rsp.mdwt_map[otid];
           if (
+            mdwt &&
             onContentChange &&
             mdwt.content &&
             cachedContentRef.current !== mdwt.content
