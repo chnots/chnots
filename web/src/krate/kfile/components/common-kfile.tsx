@@ -52,7 +52,6 @@ export const CommonKFile = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
 
-  console.log("kid: ", otid);
   useEffect(() => {
     if (otid) {
       kfileMetaFetch({ req_id: { Otid: otid } }).then(({ meta }) => {
@@ -152,7 +151,7 @@ export const CommonKFile = ({
 
   return (
     <div
-      className={`flex ${isMobile ? "flex-col space-y-6" : "flex-row space-x-6"}  m-4 w-full pr-10 items-center`}
+      className={`flex ${isMobile ? "flex-col space-y-6" : "flex-row space-x-6"}  p-4 w-full justify-center items-center`}
     >
       <div className="flex flexcol justify-center align-middle h-full">
         <div
