@@ -9,7 +9,7 @@ export type MdwtTagSearchType = {
 
 export type ChnotThreadListRspData = {
   preview_text?: string;
-  chnot_otid?: string;
+  chnot_otid?: TID;
   meta: ChnotThreadMeta;
 };
 export type ChnotThreadMetaFetchCommitReq = {
@@ -45,7 +45,7 @@ export type ChnotThreadMetaFetchReq = {
   thread_otid: TID;
 };
 export type ChnotThreadMetaFetchRsp = {
-  thread_meta: ChnotThreadMeta;
+  thread_meta?: ChnotThreadMeta;
   chnot_meta_sorted: ChnotMeta[];
 };
 
@@ -73,5 +73,12 @@ export type ChnotMetaCommitReq = {
   metas: ChnotMetaCommitReqData[];
 };
 export type ChnotMetaCommitRsp = {
+  metas: ChnotMeta[];
+};
+
+export type ChnotMetaListReq = {
+  otids: TID[];
+};
+export type ChnotMetaListRsp = {
   metas: ChnotMeta[];
 };

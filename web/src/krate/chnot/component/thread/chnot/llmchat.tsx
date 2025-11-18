@@ -1,5 +1,4 @@
 import { SaveState } from "@/common/types";
-import { ChnotKind } from "@/krate/chnot/po";
 import { ChnotChromeProps } from "./rich-chnot";
 import LLMChatTemplateList from "@/krate/llmchat/component/template-list";
 import { LLMChatTemplate } from "@/krate/llmchat/po";
@@ -13,11 +12,11 @@ import { useLLMChatStore } from "@/krate/llmchat/store";
 import { Button } from "@/common/component/ui/button";
 import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
 
-const LLMChatChnot = ({ kindId, onPostSave }: ChnotChromeProps) => {
+const LLMChatChnot = ({ otid: kindId, onPostSave }: ChnotChromeProps) => {
   const [props, setProps] = useState<LLMChatContextProps | undefined>(
     undefined,
   );
-  const [sessionOtid] = useState(kindId ? parseInt(kindId) : genTID());
+  const [sessionOtid] = useState(kindId ? kindId : genTID());
   const { refreshTemplates } = useLLMChatStore();
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -67,7 +66,6 @@ const LLMChatChnot = ({ kindId, onPostSave }: ChnotChromeProps) => {
               console.log("session post save");
               onPostSave({
                 saveState: SaveState.Saved,
-                kindId: session.otid.toString(),
               });
             }}
             viewMode={false}

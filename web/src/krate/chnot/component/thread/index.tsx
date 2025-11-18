@@ -5,25 +5,21 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ChnotKind, ChnotMeta, ChnotThreadMeta } from "../../po";
+import { ChnotThreadMeta } from "../../po";
 import { genTID, TID } from "@/lib/id_util";
-import {
-  ChnotMetaCommitReqData,
-  ChnotThreadOrderCommitReq,
-  ChnotThreadOrderCommitReqData,
-} from "../../dto";
-import {
-  chnotMetaCommit,
-  chnotThreadMetaFetch,
-  chnotThreadMetaOverwrite,
-  chnotThreadOrderCommit,
-} from "../../service";
-import RichChnot, { PostSaveArg } from "./chnot/rich-chnot";
+import { PostSaveArg } from "./chnot/rich-chnot";
 import LoadingPage from "@/common/pages/loading-page";
 import { useChnotStore } from "../../store";
 import { SaveState } from "@/common/types";
 import { useShallow } from "zustand/react/shallow";
-import { ChnotMetaKind } from "../vo";
+import Chrome from "./chnot/chrome";
+import {
+  chnotThreadMetaFetch,
+  chnotThreadMetaOverwrite,
+  chnotThreadOrderCommit,
+} from "../../service";
+import { arraysAreEqual } from "@/lib/col-util";
+import { Button } from "@/common/component/ui/button";
 
 /**
  * This is the main component for the `Chnots` app.
@@ -35,18 +31,14 @@ import { ChnotMetaKind } from "../vo";
  * - Maintain State
  *   - Just edit and save that chnot.
  */
-const ChnotThreadListRspData = ({
+const ChnotThread = ({
   threadMeta,
-  cachedThreadMetaRef: cachedThreadOtidRef,
   globalBar,
 }: {
-  threadMeta?: ChnotThreadMeta;
-  cachedThreadMetaRef: RefObject<ChnotThreadMeta | null>;
+  threadMeta: ChnotThreadMeta;
   globalBar: React.ReactNode;
 }) => {
-  const cachedChnotDataMapRef = useRef<Map<TID, ChnotMetaKind>>(new Map());
-  const savedChnotMetaMapRef = useRef<Map<TID, ChnotMeta>>(new Map());
-  const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
+  console.log("render Thread: ", threadMeta?.otid);
 
   const { overwriteChnotCache } = useChnotStore(
     useShallow((store) => {
@@ -56,116 +48,51 @@ const ChnotThreadListRspData = ({
     }),
   );
 
+  const savedChnotOrdersRef = useRef<TID[]>([]);
+  const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
+  const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
   useEffect(() => {
-    if (threadMeta) {
-      chnotThreadMetaFetch({
-        thread_otid: threadMeta.otid,
-      }).then((rsp) => {
-        rsp.chnot_meta_sorted.forEach((meta) => {
-          cachedChnotDataMapRef.current.set(meta.otid, {
-            chnotOtid: meta.otid,
-            kind: meta.kind,
-            kindId: meta.kind_id,
-          });
-        });
-        savedChnotMetaMapRef.current = rsp.chnot_meta_sorted.reduce(function (
-          map: Map<TID, ChnotMeta>,
-          obj: ChnotMeta,
-        ) {
-          map.set(obj.otid, obj);
-          return map;
-        }, new Map());
-        setChnotOrders([...rsp.chnot_meta_sorted.map((e) => e.otid), genTID()]);
-      });
-      cachedThreadOtidRef.current = threadMeta;
-    } else {
-      setChnotOrders([genTID()]);
-    }
-  }, []);
+    chnotThreadMetaFetch({ thread_otid: threadMeta.otid }).then((rsp) => {
+      const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
+      if (chnotOtids.length == 0) {
+        setChnotOrders([genTID()]);
+      } else {
+        setChnotOrders([...chnotOtids, genTID()]);
+      }
+      if (rsp.thread_meta) {
+        savedChnotThreadMetaRef.current = rsp.thread_meta;
+      }
 
-  if (
-    chnotOrders.length === 0 ||
-    cachedChnotDataMapRef.current.has(chnotOrders[chnotOrders.length - 1])
-  ) {
-    setChnotOrders((prev) => {
-      return [...prev, genTID()];
+      savedChnotOrdersRef.current = chnotOtids;
     });
-  }
+  }, [threadMeta]);
 
-  /**
-   * We can only use this when the initial chnot OTIDs are present, since the `chnotOrders` is not empty.
-   *
-   * 1. try to save thread meta: check if threadMeta is undefined and otid is not cached(new chnotThread).
-   * 2. check if chnot is persisted, so we can try to persist the chnot meta.
-   * 3. check if persisted chnot is not same as the current listitem.
-   */
-  const saveMetas = useCallback(
+  const handlePostSaveOnChnot = useCallback(
     async (arg: PostSaveArg) => {
-      if (!cachedThreadOtidRef.current) {
-        const threadOtid = genTID();
-
-        const rsp = await chnotThreadMetaOverwrite({
-          meta_otid: threadOtid,
-        });
-
-        cachedThreadOtidRef.current = rsp.meta;
-
-        overwriteChnotCache({
-          meta: rsp.meta,
+      if (!savedChnotThreadMetaRef.current) {
+        chnotThreadMetaOverwrite({
+          meta_otid: threadMeta.otid,
+          kspace: threadMeta.kspace,
         });
       }
-      if (arg.data) {
-        cachedChnotDataMapRef.current.set(arg.data.chnotOtid, arg.data);
-      }
 
-      const metas: ChnotThreadOrderCommitReqData[] = chnotOrders
-        .map((otid) => {
-          const persistedChnot = cachedChnotDataMapRef.current.get(otid);
-
-          if (persistedChnot) {
-            const saved = savedChnotMetaMapRef.current.get(otid);
-            if (
-              saved?.kind === persistedChnot.kind &&
-              saved?.kind_id === persistedChnot.kindId
-            ) {
-              return null;
-            }
-            return {
-              otid: otid,
-            };
-          }
-          return null;
-        })
-        .filter((e) => e !== null);
-
-      console.log("overwrite metas");
-      if (metas.length > 0) {
-        await chnotThreadOrderCommit({
-          thread_otid: cachedThreadOtidRef.current.otid,
-          orders: metas,
-        });
-
-        if (
-          "kind" in arg &&
-          arg.kind === ChnotKind.MDWT &&
-          chnotOrders.at(0) === arg.data?.chnotOtid
-        ) {
-          overwriteChnotCache({
-            meta: cachedThreadOtidRef.current,
+      if (!arraysAreEqual(chnotOrders, savedChnotOrdersRef.current)) {
+        chnotThreadOrderCommit({
+          thread_otid: threadMeta.otid,
+          orders: chnotOrders.map((e) => {
+            return { otid: e };
+          }),
+        }).then((rsp) => {
+          savedChnotOrdersRef.current = chnotOrders;
+          setChnotOrders((prev) => {
+            return [...prev, genTID()];
           });
-        }
-      }
-
-      if (
-        savedChnotMetaMapRef.current.has(chnotOrders[chnotOrders.length - 1])
-      ) {
-        setChnotOrders([...chnotOrders, genTID()]);
+        });
       }
     },
-    [chnotOrders],
+    [chnotOrders, threadMeta],
   );
 
-  console.log("rerender");
   return (
     <div className="flex flex-col w-full items-center overflow-y-auto">
       {chnotOrders.length == 0 ? (
@@ -173,18 +100,17 @@ const ChnotThreadListRspData = ({
       ) : (
         <>
           <div>{globalBar}</div>
-          <div className="flex flex-col space-y-4 p-4 border m-2 w-full max-w-4xl">
+          <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl rounded-2xl border-separate border-spacing-2 border">
             {chnotOrders.map((otid, index) => {
               return (
-                <RichChnot
+                <Chrome
                   key={otid}
                   otid={otid}
                   onPostSave={(arg: PostSaveArg) => {
                     if (arg.saveState === SaveState.Saved) {
-                      saveMetas(arg);
+                      handlePostSaveOnChnot(arg);
                     }
                   }}
-                  meta={cachedChnotDataMapRef.current.get(otid)}
                 />
               );
             })}
@@ -195,4 +121,4 @@ const ChnotThreadListRspData = ({
   );
 };
 
-export default ChnotThreadListRspData;
+export default ChnotThread;

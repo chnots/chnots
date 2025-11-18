@@ -8,7 +8,7 @@ use super::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadListRspData {
     pub preview_text: Option<String>,
-    pub chnot_otid: Option<String>,
+    pub chnot_otid: Option<TID>,
     pub meta: ChnotThreadMeta,
 }
 
@@ -57,6 +57,16 @@ pub struct ChnotMetaCommitRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotMetaListReq {
+    pub otids: Vec<TID>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotMetaListRsp {
+    pub metas: Vec<ChnotMeta>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadListReq {
     pub query: Option<String>,
 
@@ -84,6 +94,6 @@ pub struct ChnotThreadMetaFetchReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchRsp {
-    pub thread_meta: ChnotThreadMeta,
+    pub thread_meta: Option<ChnotThreadMeta>,
     pub chnot_meta_sorted: Vec<ChnotMeta>,
 }

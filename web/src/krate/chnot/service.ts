@@ -10,9 +10,9 @@ import {
   ChnotMetaCommitReq,
   ChnotMetaCommitRsp,
   ChnotThreadMetaFetchReq,
+  ChnotMetaListReq,
+  ChnotMetaListRsp,
 } from "./dto";
-import { ToentGuessReq, ToentGuessRsp } from "../toent/dto";
-import { TodoEvent, ToentTimeEvent } from "../toent/po";
 
 export const chnotThreadList = async (
   req: ChnotThreadListReq,
@@ -24,6 +24,12 @@ export async function chnotMetaCommit(
   req: ChnotMetaCommitReq,
 ): Promise<ChnotMetaCommitRsp> {
   return await request.postJson(`api/v1/chnot-meta-commit`, req);
+}
+
+export async function chnotMetaList(
+  req: ChnotMetaListReq,
+): Promise<ChnotMetaListRsp> {
+  return await request.postJson(`api/v1/chnot-meta-list`, req);
 }
 
 export async function chnotThreadOrderCommit(

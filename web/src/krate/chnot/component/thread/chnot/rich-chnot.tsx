@@ -10,14 +10,15 @@ import KFileBlock from "./kfile";
 import TableChnot from "./table";
 import LLMChatChnot from "./llmchat";
 import { chnotMetaCommit } from "@/krate/chnot/service";
+import { useKSpaceStore } from "@/krate/kspace/store";
+import { TID } from "@/lib/id_util";
 
 export type PostSaveArg = {
   saveState: SaveState;
-  kindId: string;
 };
 
 export type ChnotChromeProps = {
-  kindId?: string;
+  otid: TID;
   readonly?: boolean;
   onPostSave: (arg: PostSaveArg) => void;
 };
@@ -29,10 +30,13 @@ const RichChnot = ({
   meta: ChnotMetaKind;
   readonly?: boolean;
 }) => {
-  const [saveState, setSaveState] = useState(
-    meta.kindId ? SaveState.Saved : SaveState.Initial,
-  );
-  const [kind, setKind] = useState<ChnotKind | undefined>(meta?.kind);
+  const kind = meta.kind;
+  const [saveState, setSaveState] = useState(SaveState.Initial);
+  const { kspace } = useKSpaceStore((s) => {
+    return {
+      kspace: s.currentKSpace,
+    };
+  });
 
   const handlePostSave = useCallback(
     (arg: PostSaveArg) => {
@@ -46,7 +50,7 @@ const RichChnot = ({
             {
               otid: meta.chnotOtid,
               kind: kind,
-              kind_id: arg.kindId,
+              kspace: kspace,
             },
           ],
         });
@@ -73,7 +77,7 @@ const RichChnot = ({
       >
         {kind === ChnotKind.MDWT ? (
           <MdwtRecord
-            kindId={meta?.kindId}
+            otid={meta.chnotOtid}
             readonly={readonly}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
@@ -82,28 +86,28 @@ const RichChnot = ({
         ) : kind === ChnotKind.ExcalidrawV1 ? (
           <ExcalidrawBlock
             readonly={readonly}
-            kindId={meta?.kindId}
+            otid={meta.chnotOtid}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
           />
         ) : kind === ChnotKind.KFileV1 ? (
           <KFileBlock
-            kindId={meta?.kindId}
+            otid={meta.chnotOtid}
             onPostSave={(arg: PostSaveArg) => {
               handlePostSave(arg);
             }}
           />
         ) : kind == ChnotKind.KTab ? (
           <TableChnot
-            kindId={meta?.kindId}
+            otid={meta.chnotOtid}
             onPostSave={function (arg: PostSaveArg): void {
               handlePostSave(arg);
             }}
           />
         ) : kind === ChnotKind.LLMChat ? (
           <LLMChatChnot
-            kindId={meta?.kindId}
+            otid={meta.chnotOtid}
             onPostSave={function (arg: PostSaveArg): void {
               handlePostSave(arg);
             }}

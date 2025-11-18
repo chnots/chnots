@@ -1,33 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SaveState } from "@/common/types";
-import { genUID } from "@/lib/id_util";
 import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
-import { ChnotKind } from "@/krate/chnot/po";
 import { Button } from "@/common/component/ui/button";
 import ExcalidrawPreview from "@/krate/tool/excalidraw/component/excalidraw-preview";
 import {
   ExcalidrawChnotState,
   fetchExcalidraw,
   saveExcalidraw,
+  SaveFileCache,
 } from "@/krate/tool/excalidraw/service";
 import { ChnotChromeProps } from "./rich-chnot";
 
-const ExcalidrawBlock = ({
-  kindId: initialKindId,
-  onPostSave,
-}: ChnotChromeProps) => {
-  const [kindId] = useState(initialKindId ?? genUID());
+const ExcalidrawBlock = ({ otid, onPostSave }: ChnotChromeProps) => {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ExcalidrawChnotState>();
-  const savedFilesRef = useRef(new Map<string, string>());
+  const savedFilesRef = useRef(new Map<string, SaveFileCache>());
 
   useEffect(() => {
-    fetchExcalidraw(kindId)
+    fetchExcalidraw({ Otid: otid })
       .then((state) => {
         if (state) {
           setState({
-            excalidrawId: kindId,
+            otid: otid,
+            metaId: state.metaId,
             elements: state.elements,
             appState: state.appState,
             files: state.files,
@@ -49,15 +45,15 @@ const ExcalidrawBlock = ({
           setState(state);
           onPostSave({
             saveState: SaveState.Saved,
-            kindId: kindId,
           });
         },
         onFail: () => {
-          onPostSave({ saveState: SaveState.Error, kindId });
+          onPostSave({ saveState: SaveState.Error });
         },
+        otid: otid,
       });
     },
-    [kindId],
+    [otid],
   );
 
   return (
@@ -70,7 +66,7 @@ const ExcalidrawBlock = ({
         <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0">
           <Button onClick={() => setOpen(false)}>Close</Button>
           <ExcalidrawEditor
-            excalidrawId={kindId}
+            otid={otid}
             state={state}
             readOnly={false}
             onSave={(state, contentType) => {

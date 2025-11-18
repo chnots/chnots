@@ -25,6 +25,7 @@ pub trait ChnotMapper {
     ) -> AResult<ChnotThreadMetaFetchRsp>;
 
     async fn ensure_table_chnot(&self) -> EResult;
+    async fn chnot_meta_list(&self, req: KReq<ChnotMetaListReq>) -> AResult<ChnotMetaListRsp>;
 }
 
 impl ChnotMapper for MapperType {
@@ -65,5 +66,9 @@ impl ChnotMapper for MapperType {
         req: KReq<ChnotMetaCommitReq>,
     ) -> AResult<ChnotMetaCommitRsp> {
         expand_mt_branch!(self.chnot_meta_commit(req))
+    }
+
+    async fn chnot_meta_list(&self, req: KReq<ChnotMetaListReq>) -> AResult<ChnotMetaListRsp> {
+        expand_mt_branch!(self.chnot_meta_list(req))
     }
 }

@@ -1,7 +1,5 @@
 import { SaveState } from "@/common/types";
-import { ChnotKind } from "@/krate/chnot/po";
 import { ChnotChromeProps } from "./rich-chnot";
-import KTabChnot from "@/krate/ktab/component/ktab-container";
 import { KTabMeta } from "@/krate/ktab/po";
 import { KTabRowData } from "@/krate/ktab/component/editable-cell";
 import { DataTable } from "@/krate/ktab/component/data-table";
@@ -11,22 +9,22 @@ import {
   ktabMetaFetch,
 } from "@/krate/ktab/service";
 import { ktabGetViewValue } from "@/krate/ktab/dto";
-import { genTID, genUID, TID } from "@/lib/id_util";
-import { useEffect, useRef, useState } from "react";
+import { genTID, genUID } from "@/lib/id_util";
+import { useEffect, useState } from "react";
 
-const TableChnot = ({ kindId, onPostSave, readonly }: ChnotChromeProps) => {
+const TableChnot = ({ otid, onPostSave, readonly }: ChnotChromeProps) => {
   const [meta, setMeta] = useState<KTabMeta>();
 
   useEffect(() => {
     (async () => {
-      if (kindId) {
+      if (otid) {
         const meta = await ktabMetaFetch({
-          table_id: parseInt(kindId, 10),
+          table_id: otid,
         });
         if (meta.meta) {
           setMeta(meta.meta);
         }
-        throw new Error(`find no ktab with kindId: ${kindId}`);
+        throw new Error(`find no ktab with kindId: ${otid}`);
       } else {
         setMeta({
           otid: genTID(),
@@ -75,7 +73,6 @@ const TableChnot = ({ kindId, onPostSave, readonly }: ChnotChromeProps) => {
           setMeta(meta);
           onPostSave({
             saveState: SaveState.Saved,
-            kindId: meta.otid.toString(),
           });
         }}
         isEditing={readonly || true}

@@ -9,6 +9,7 @@ use super::*;
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/chnot-meta-commit", post(chnot_meta_commit))
+        .route("/api/v1/chnot-meta-list", post(chnot_meta_list))
         .route(
             "/api/v1/chnot-thread-meta-commit",
             post(chnot_thread_meta_commit),
@@ -41,6 +42,14 @@ async fn chnot_meta_commit(
     Json(req): Json<ChnotMetaCommitReq>,
 ) -> KResponse<ChnotMetaCommitRsp> {
     state.chnot_meta_commit(kreq(headers, req)).await.into()
+}
+
+async fn chnot_meta_list(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotMetaListReq>,
+) -> KResponse<ChnotMetaListRsp> {
+    state.chnot_meta_list(kreq(headers, req)).await.into()
 }
 
 async fn chnot_thread_meta_commit(

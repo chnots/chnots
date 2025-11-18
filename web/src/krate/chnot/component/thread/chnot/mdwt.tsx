@@ -1,8 +1,6 @@
 import useResizeObserver from "@react-hook/resize-observer";
 import { useEffect, useRef, useState } from "react";
 import MarkdownViewer from "../../chnot-markdown-viewer";
-import { ChnotKind } from "../../../po";
-
 import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/codemirror/mdwt-editor";
 import useDebounce from "@/hooks/use-debounce";
@@ -55,8 +53,17 @@ const chnotCompletions = async (
   };
 };
 
-const MdwtRecord = ({ readonly, onPostSave, kindId }: ChnotChromeProps) => {
-  const [mdwtOtid] = useState<TID>(kindId ? parseInt(kindId) : genTID());
+const MdwtRecord = ({
+  readonly,
+  onPostSave,
+  otid,
+  content: initialContent,
+  onContentChange,
+}: ChnotChromeProps & {
+  content?: string;
+  onContentChange?: (content: string) => void;
+}) => {
+  const [mdwtOtid] = useState<TID>(otid ? otid : genTID());
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -71,13 +78,17 @@ const MdwtRecord = ({ readonly, onPostSave, kindId }: ChnotChromeProps) => {
   const [refreshFlag, setRefreshFlag] = useState<boolean>();
 
   useEffect(() => {
-    mdwtRecordList({
-      mdwt_otids: [mdwtOtid],
-    }).then((rsp) => {
-      const mdwt = rsp.mdwt_map[mdwtOtid];
-      cachedContentRef.current = mdwt?.content ?? "";
-      setRefreshFlag((prev) => !prev);
-    });
+    if (!initialContent) {
+      mdwtRecordList({
+        mdwt_otids: [mdwtOtid],
+      }).then((rsp) => {
+        const mdwt = rsp.mdwt_map[mdwtOtid];
+        cachedContentRef.current = mdwt?.content ?? "";
+        setRefreshFlag((prev) => !prev);
+      });
+    } else {
+      cachedContentRef.current = initialContent;
+    }
   }, [mdwtOtid]);
 
   const directlySave = async () => {
@@ -85,16 +96,17 @@ const MdwtRecord = ({ readonly, onPostSave, kindId }: ChnotChromeProps) => {
       try {
         onPostSave({
           saveState: SaveState.Saving,
-          kindId: mdwtOtid.toString(),
         });
         await mdwtCommit(toSaveArg.current);
+        if (onContentChange) {
+          onContentChange(toSaveArg.current.mdwt.content);
+        }
         onPostSave({
           saveState: SaveState.Saved,
-          kindId: mdwtOtid.toString(),
         });
         toSaveArg.current = null;
       } catch (_ex) {
-        onPostSave({ saveState: SaveState.Error, kindId: mdwtOtid.toString() });
+        onPostSave({ saveState: SaveState.Error });
       }
     }
   };
@@ -107,7 +119,7 @@ const MdwtRecord = ({ readonly, onPostSave, kindId }: ChnotChromeProps) => {
     true,
   );
 
-  return !readonly ? (
+  return readonly ? (
     <MarkdownViewer content={cachedContentRef.current ?? ""} keepBreak={true} />
   ) : (
     <div className="w-full h-full break-all" onBlur={() => directlySave()}>
@@ -118,7 +130,6 @@ const MdwtRecord = ({ readonly, onPostSave, kindId }: ChnotChromeProps) => {
           if (saveStateRef.current != SaveState.Dirty) {
             onPostSave({
               saveState: SaveState.Dirty,
-              kindId: mdwtOtid.toString(),
             });
           }
 

@@ -8,6 +8,7 @@ use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
 };
+use crate::model::KSerde;
 use crate::model::dto::KReq;
 use crate::util::string_util::StringUtils;
 use chin_sql::time_type::TID;
@@ -231,15 +232,13 @@ impl ChnotMapper for KDb {
         req: KReq<ChnotThreadMetaFetchReq>,
     ) -> AResult<ChnotThreadMetaFetchRsp> {
         let conn = self.conn().await?;
-        let chnot_meta = conn
-            .qry_one(
-                ChnotThreadMeta::pkey_reader(req.thread_otid),
-                |e| ChnotThreadMeta::try_from(&e),
-                false,
-            )
+        let thread_meta = conn
+            .qry_opt(ChnotThreadMeta::pkey_reader(req.thread_otid), |e| {
+                ChnotThreadMeta::try_from(&e)
+            })
             .await?;
 
-        let thread = conn
+        let metas = conn
             .qry_list(
                 SqlBuilder::read(
                     ChnotMeta::TABLE,
@@ -271,8 +270,8 @@ impl ChnotMapper for KDb {
         .await?; */
 
         Ok(ChnotThreadMetaFetchRsp {
-            thread_meta: chnot_meta,
-            chnot_meta_sorted: thread,
+            thread_meta,
+            chnot_meta_sorted: metas,
         })
     }
 
@@ -303,6 +302,20 @@ impl ChnotMapper for KDb {
         Ok(ChnotMetaCommitRsp {
             metas: result_metas,
         })
+    }
+
+    async fn chnot_meta_list(&self, req: KReq<ChnotMetaListReq>) -> AResult<ChnotMetaListRsp> {
+        if req.body.otids.is_empty() {
+            return Ok(ChnotMetaListRsp { metas: vec![] });
+        }
+        let cm = ChnotMetaTable::new("cm");
+        let metas = SqlBuilder::read_all(&cm.nwa()).r#where(cm.otid().v_in(req.body.otids));
+        let cms = self
+            .conn()
+            .await?
+            .qry_list(metas, |row| ChnotMeta::try_from_kdb_row(&row))
+            .await?;
+        Ok(ChnotMetaListRsp { metas: cms })
     }
 }
 

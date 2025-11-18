@@ -8,11 +8,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/common/component/ui/sidebar";
-import { genUID } from "@/lib/id_util";
+import { genTID, genUID, TID } from "@/lib/id_util";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
 import { ChnotThreadMeta } from "../po";
+import LoadingPage from "@/common/pages/loading-page";
+import { useKSpaceStore } from "@/krate/kspace/store";
 
 /**
  * This component is only to improve performance, that is to say, when
@@ -30,28 +32,37 @@ const MonoChnot = ({ onNew }: { onNew: () => void }) => {
     }),
   );
 
-  const [componentKey, setComponentKey] = useState<string>(genUID());
-  const threadOtidRef = useRef<ChnotThreadMeta>(null);
-  const [editorThread, setEditorThread] = useState<
-    ChnotThreadListRspData | undefined
-  >();
+  const { currentKSpace, selectKSpace } = useKSpaceStore((e) => {
+    return {
+      currentKSpace: e.currentKSpace,
+      selectKSpace: e.selectKSpace,
+    };
+  });
 
+  const [editorThread, setEditorThread] = useState<ChnotThreadMeta>();
   useEffect(() => {
-    if (curMetaId !== threadOtidRef.current?.otid) {
-      setComponentKey(genUID());
-      const thread = getCurrentThread();
-      setEditorThread(thread);
-      threadOtidRef.current = thread?.meta ?? null;
+    if (!curMetaId && !editorThread) {
+      setEditorThread({
+        otid: genTID(),
+        kspace: currentKSpace,
+        tid: genTID(),
+      });
+    } else if (curMetaId !== editorThread?.otid) {
+      const t = getCurrentThread();
+      if (t) {
+        setEditorThread(t.meta);
+      }
     }
   }, [curMetaId, editorThread]);
 
-  return (
+  return editorThread ? (
     <ChnotThreadEditor
-      key={componentKey}
-      threadMeta={editorThread?.meta}
-      cachedThreadMetaRef={threadOtidRef}
+      key={editorThread.otid}
+      threadMeta={editorThread}
       globalBar={<StateBar onNew={onNew} />}
     />
+  ) : (
+    <LoadingPage></LoadingPage>
   );
 };
 

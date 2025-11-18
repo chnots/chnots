@@ -135,7 +135,7 @@ const ChnotSidebarItem = React.forwardRef(
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <time
               dateTime={new Date(chnotThread.meta.otid / 1e3).toISOString()}
-              className="text-[0.7rem]"
+              className="text-[0.7rem] break-keep"
             >
               {chnotShortDate(new Date(chnotThread.meta.otid / 1e3))}
             </time>
