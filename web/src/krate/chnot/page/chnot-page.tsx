@@ -1,15 +1,13 @@
-import ChnotSidebar from "@/krate/chnot/component/chnot-sidebar";
+import ChnotSidebar from "@/krate/chnot/component/chnot-thread-sidebar";
 import ChnotThreadEditor from "@/krate/chnot/component/thread";
-import { useChnotStore } from "@/krate/chnot/store";
+import { ChnotViewType, useChnotStore } from "@/krate/chnot/store";
 import { useEffect, useRef, useState } from "react";
-import { ChnotSearchRspThread } from "@/krate/chnot/dto";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/common/component/ui/sidebar";
 import { genTID, genUID, TID } from "@/lib/id_util";
-import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/common/component/ui/button";
 import Icon from "@/common/component/icon";
 import { ChnotThreadMeta } from "../po";
@@ -81,7 +79,7 @@ const StateBar = ({ onNew }: { onNew: () => void }) => {
  * Current there is only one chnot editor in the page, use multi webpages.
  * @returns ChnotSearchRspThread Page
  */
-const ChnotPage = () => {
+const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
   const [monoComponentKey, setMonoComponentKey] = useState(genUID());
   const { setCurrentThreadOtid } = useChnotStore((store) => {
     return {

@@ -8,10 +8,12 @@ import App from "@/app";
 import { Toaster } from "sonner";
 import ErrorPage from "@/common/pages/error-page";
 import FullScreenTimer from "./krate/timer/timer";
+import { ChnotViewType } from "./krate/chnot/store";
 
 export enum RoutePaths {
   ROOT = "/",
   Chnots = "/chnots",
+  ChnotThread = "/chnot-thread",
   Toents = "/toents",
   LLMChat = "/llmchat",
   Settings = "/settings",
@@ -38,7 +40,11 @@ const routes: RouteObject[] = [
       },
       {
         path: RoutePaths.Chnots,
-        element: <ChnotPage />,
+        element: <ChnotPage viewType={ChnotViewType.Single} />,
+      },
+      {
+        path: RoutePaths.ChnotThread,
+        element: <ChnotPage viewType={ChnotViewType.Thread} />,
       },
       {
         path: RoutePaths.Toents,
