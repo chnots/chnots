@@ -28,7 +28,10 @@ export type KTabStoreValue =
 export const ktabToStoreValue = (
   kind: string,
   value: unknown,
-): KTabStoreValue => {
+): KTabStoreValue | undefined => {
+  if (!value) {
+    return undefined;
+  }
   switch (kind.toLowerCase()) {
     case "string":
       return { Text: value as string };
@@ -56,12 +59,6 @@ export function ktabGetViewValue(
     throw new Error("Invalid cell value type");
   }
 }
-
-export type KTabStoreCell = {
-  row_tid: number;
-  column_name: string;
-  value: KTabStoreValue;
-};
 
 export type KTabCellCommitReq = {
   table_id: TID;
@@ -113,7 +110,7 @@ export type KTabCellListRspRow = {
 export type KTabViewCell = {
   row_tid: TID;
   column_name: string;
-  value: KTabStoreValue;
+  value?: KTabStoreValue;
 };
 
 export type KTabCell = {
