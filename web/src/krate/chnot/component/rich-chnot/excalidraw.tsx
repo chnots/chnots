@@ -64,6 +64,8 @@ const ExcalidrawChnot = ({
     [otid],
   );
 
+  console.log("ExcalidrawEditor", readonly, fullscreen, otid, state);
+
   return (
     <div className="w-full flex flex-col">
       {readonly ? (
@@ -73,7 +75,6 @@ const ExcalidrawChnot = ({
       ) : (
         <ExcalidrawEditor
           otid={otid}
-          state={state}
           readOnly={false}
           onSave={(state, contentType) => {
             directlySave(state, contentType);
@@ -84,7 +85,6 @@ const ExcalidrawChnot = ({
         <Fullscreen onSetFullscreen={onSetFullscreen}>
           <ExcalidrawEditor
             otid={otid}
-            state={state}
             readOnly={false}
             onSave={(state, contentType) => {
               directlySave(state, contentType);

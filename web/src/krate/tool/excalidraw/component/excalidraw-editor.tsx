@@ -10,8 +10,9 @@ import {
 } from "@excalidraw/excalidraw/element/types";
 import { Excalidraw, useHandleLibrary } from "@excalidraw/excalidraw";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
-import { ExcalidrawChnotState } from "../service";
+import { ExcalidrawChnotState, fetchExcalidraw } from "../service";
 import { genUID, TID } from "@/lib/id_util";
+import { el } from "date-fns/locale";
 
 const CONTENT_TYPE = "chnots/excalidraw-v1";
 
@@ -21,7 +22,6 @@ const ExcalidrawEditor = ({
   customArgs,
   readOnly: viewMode,
   onSave,
-  state,
 }: {
   otid: TID;
   useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
@@ -30,11 +30,13 @@ const ExcalidrawEditor = ({
   state?: ExcalidrawChnotState;
   onSave: (state: ExcalidrawChnotState, contentType: string) => void;
 }) => {
+  console.log("render ExcalidrawEditor", otid);
   const [viewModeEnabled, setViewModeEnabled] = useState(viewMode);
   const [zenModeEnabled, setZenModeEnabled] = useState(false);
   const [gridModeEnabled, setGridModeEnabled] = useState(false);
   const [theme, setTheme] = useState<Theme>("light");
-  const excalidrawSaves = useRef<ExcalidrawChnotState>(null);
+  const toSaveExcalidrawStateRef = useRef<ExcalidrawChnotState>(null);
+  const toSaveExcalidrawMetaIdRef = useRef<string>(null);
 
   useEffect(() => {
     setViewModeEnabled(viewMode ?? false);
@@ -45,8 +47,8 @@ const ExcalidrawEditor = ({
 
   useEffect(() => {
     return () => {
-      if (excalidrawSaves.current) {
-        onSave(excalidrawSaves.current, CONTENT_TYPE);
+      if (toSaveExcalidrawStateRef.current) {
+        onSave(toSaveExcalidrawStateRef.current, CONTENT_TYPE);
       }
     };
   }, []);
@@ -83,15 +85,26 @@ const ExcalidrawEditor = ({
   return (
     <Excalidraw
       excalidrawAPI={excalidrawRefCallback}
-      initialData={state}
+      initialData={async () => {
+        const rsp = await fetchExcalidraw({ Otid: otid });
+        if (rsp) {
+          toSaveExcalidrawMetaIdRef.current = rsp.metaId;
+          return rsp;
+        } else {
+          toSaveExcalidrawMetaIdRef.current = genUID();
+          return null;
+        }
+      }}
       onChange={(elements, appState, files) => {
-        excalidrawSaves.current = {
-          otid,
-          elements,
-          appState,
-          files,
-          metaId: state ? state.metaId : genUID(),
-        };
+        if (toSaveExcalidrawMetaIdRef.current) {
+          toSaveExcalidrawStateRef.current = {
+            otid,
+            elements,
+            appState,
+            files,
+            metaId: toSaveExcalidrawMetaIdRef.current,
+          };
+        }
       }}
       viewModeEnabled={viewModeEnabled}
       zenModeEnabled={zenModeEnabled}
