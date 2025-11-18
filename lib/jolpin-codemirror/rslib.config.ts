@@ -14,10 +14,6 @@ export default defineConfig({
         devDependencies: false,
       },
     },
-    {
-      format: 'cjs',
-      syntax: ['node 18'],
-    },
   ],
   plugins: [
     pluginDts({
