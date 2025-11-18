@@ -60,6 +60,10 @@ export const createCodemirrorTheme = () => {
     // need to be overridden.
     "&, &.CodeMirror": baseGlobalStyle,
 
+    ".cm-activeLine": {
+      backgroundColor: "transparent",
+    },
+
     "& .cm-dropCursor": {
       backgroundColor: isDarkTheme ? "white" : "black",
       width: "1px",

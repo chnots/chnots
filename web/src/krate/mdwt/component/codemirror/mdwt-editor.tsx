@@ -156,7 +156,7 @@ const MdwtEditor = ({
         foldGutter: foldGutter,
         closeBrackets: false,
       }}
-      placeholder={"Take a ChnotThread"}
+      placeholder={"Take a chnot"}
       onChange={(e) => onContentChange(e)}
     />
   );

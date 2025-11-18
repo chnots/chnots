@@ -195,7 +195,7 @@ impl KDb {
             .merge(
                 SqlBuilder::read(MdwtTag::TABLE, &[field])
                     .seg("as t")
-                    .seg("right join qualified_tids q on t.meta_otid = q.meta_otid")
+                    .seg("right join qualified_tids q on t.mdwt_otid = q.mdwt_otid")
                     .r#where(Wheres::and([Wheres::r#in(
                         MdwtTag::KSPACE,
                         req.get_spaces(),
