@@ -90,7 +90,7 @@ const TableChnot = ({
             />
           </Fullscreen>
         ) : (
-          <div className="flex flex-col h-full w-full mx-1 max-w-full">
+          <div className="flex flex-col h-full w-full p-1 max-w-full">
             <DataTable
               tableMeta={meta}
               fetchData={async (

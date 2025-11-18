@@ -158,6 +158,7 @@ export function DataTable({
       return;
     }
     const newColumnId = newColumnName.toLowerCase().replace(/\s+/g, "_");
+    setNewColumnName("");
 
     await onMetaChange({
       ...tableMeta,
@@ -228,7 +229,7 @@ export function DataTable({
     <div onKeyDown={handleKeyDown} className="flex flex-col w-full h-full">
       {!readonly && (
         <div className="flex items-center justify-between py-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap">
             <Input
               placeholder="New Column Name"
               value={newColumnName}
