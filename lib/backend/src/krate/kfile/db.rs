@@ -136,41 +136,37 @@ impl KFileMapper for KDb {
         &self,
         req: KReq<KfileInlineDownloadReq>,
     ) -> anyhow::Result<KfileInlineDownloadRsp> {
-        let sid: Varchar<100> = if let Some(sid) = &req.sid {
-            sid.clone()
-        } else if let Some(key) = req.meta_id.clone() {
-            let sid = self
-                .conn()
-                .await?
-                .as_executor()
-                .qry_opt(KFileMeta::unikey_id_reader(key.clone()), |e| {
-                    let c: KFileMeta = (&e).try_into()?;
-                    Ok(c)
+        let meta_rsp = self
+            .query_kfile_meta(KfileMetaFetchReq {
+                req_id: req.body.req_id,
+            })
+            .await?;
+        match meta_rsp.meta {
+            Some(meta) => {
+                let res = self.query_inline_kfile_by_sid(meta.sid.clone()).await?.file;
+                Ok(KfileInlineDownloadRsp {
+                    file: res,
+                    meta: Some(meta),
                 })
-                .await?
-                .map(|e| e.sid);
-            match sid {
-                Some(sid) => sid,
-                None => return Ok(KfileInlineDownloadRsp { res: vec![] }),
             }
-        } else {
-            anyhow::bail!("there are no meta_id and sid")
-        };
-
-        let res = self.query_inline_kfile_by_sid(sid).await?.file;
-
-        Ok(KfileInlineDownloadRsp {
-            res: res.map(|e| vec![e]).unwrap_or(vec![]),
-        })
+            None => Ok(KfileInlineDownloadRsp {
+                file: None,
+                meta: None,
+            }),
+        }
     }
 
     async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp> {
         let meta = self
             .conn()
             .await?
-            .qry_opt(KFileMeta::unikey_id_reader(req.meta_id), |e| {
-                (&e).try_into()
-            })
+            .qry_opt(
+                match req.req_id {
+                    KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_reader(tid),
+                    KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_reader(id),
+                },
+                |e| (&e).try_into(),
+            )
             .await?;
         Ok(KfileMetaFetchRsp { meta })
     }

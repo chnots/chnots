@@ -3,7 +3,7 @@ import {
   kfileMetaFetch,
   kfileUpload,
 } from "@/krate/kfile/service";
-import { genUID } from "@/lib/id_util";
+import { genUID, TID } from "@/lib/id_util";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button, Button as KButton } from "@/common/component/ui/button";
@@ -40,10 +40,10 @@ const FileInfo = ({ file }: { file: FileLike }) => {
 
 // inspired by https://github.com/AarambhDevHub/frontend-file-Chunks/blob/main/app/page.tsx
 export const CommonKFile = ({
-  kid,
+  otid,
   onPostSave,
 }: {
-  kid?: string;
+  otid?: TID;
   onPostSave?: (r: KFileMeta) => void;
 }) => {
   const [progress, setProgress] = useState(0);
@@ -52,14 +52,14 @@ export const CommonKFile = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMobile = useIsMobile();
 
-  console.log("kid: ", kid);
+  console.log("kid: ", otid);
   useEffect(() => {
-    if (kid) {
-      kfileMetaFetch({ meta_id: kid.toString() }).then(({ meta }) => {
+    if (otid) {
+      kfileMetaFetch({ req_id: { Otid: otid } }).then(({ meta }) => {
         setKFile(meta);
       });
     }
-  }, [kid]);
+  }, [otid]);
   const uploadFileInChunks = async () => {
     if (!uploadFile) {
       alert("Please select a file to upload");

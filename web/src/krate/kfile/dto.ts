@@ -1,3 +1,4 @@
+import { TID } from "@/lib/id_util";
 import { InlineKFile, KFileMeta } from "./po";
 import { Varchar } from "@/lib/types";
 
@@ -31,18 +32,20 @@ export type KfileInlineUploadRsp = {
   true_sid: Varchar<100>;
 };
 
+export type KfileMetaFetchReqId = { Otid: TID } | { ID: string };
+
 export type KfileInlineDownloadReq = {
-  sid?: Varchar<100>;
-  meta_id?: Varchar<100>;
+  req_id: KfileMetaFetchReqId;
   with_omit?: boolean;
 };
 
 export type KfileInlineDownloadRsp = {
-  res: InlineKFile[];
+  meta?: KFileMeta;
+  file?: InlineKFile;
 };
 
 export type KfileMetaFetchReq = {
-  meta_id: Varchar<100>;
+  req_id: KfileMetaFetchReqId;
 };
 
 export type KfileMetaFetchRsp = {

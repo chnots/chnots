@@ -42,19 +42,25 @@ pub struct KfileInlineUploadRsp {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KfileInlineDownloadReq {
-    pub sid: Option<Varchar<100>>,
-    pub meta_id: Option<Varchar<100>>,
+    pub req_id: KfileMetaFetchReqId,
     pub with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KfileInlineDownloadRsp {
-    pub res: Vec<InlineKFile>,
+    pub meta: Option<KFileMeta>,
+    pub file: Option<InlineKFile>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum KfileMetaFetchReqId {
+    Otid(TID),
+    Id(Varchar<100>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KfileMetaFetchReq {
-    pub meta_id: Varchar<100>,
+    pub req_id: KfileMetaFetchReqId,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,7 +92,6 @@ pub struct KfileInlineDownloadBySidRsp {
 
 #[test]
 fn tst() {
-    let s = "{\"res\":{\"tid\":1749701191901010,\"rid\":\"d0d48143-f149-40eb-bb65-739559a1e2d8\",\"kspace\":\"public\",\"archor\":false,\"name\":\"1749701191901011\",\"content\":\"\",\"content_type\":\"excalidraw-v1\"},\"archor_intervals\":3600}";
-    let c: Result<KfileInlineUploadReq, serde_json::Error> = serde_json::from_str(s);
-    c.unwrap();
+    let c = KfileMetaFetchReqId::Otid(100.try_into().unwrap());
+    println!("{}", serde_json::to_string_pretty(&c).unwrap());
 }

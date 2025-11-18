@@ -253,7 +253,9 @@ pub(super) async fn kfile_asset_download(
         let kfile = state
             .mapper
             .query_kfile_meta(KfileMetaFetchReq {
-                meta_id: meta_id.to_string().try_into()?,
+                req_id: crate::krate::kfile::KfileMetaFetchReqId::Id(
+                    meta_id.to_string().try_into()?,
+                ),
             })
             .await?
             .meta
