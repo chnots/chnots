@@ -16,8 +16,7 @@ use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{
-    ChinSqlError, GroupBy, Having, SqlBuilder, SqlField, SqlReader, SqlTable, SqlTypedField,
-    SubQueryTable,
+    ChinSqlError, GroupBy, Having, SqlBuilder, SqlReader, SqlTable, SqlTypedField, SubQueryTable,
 };
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};

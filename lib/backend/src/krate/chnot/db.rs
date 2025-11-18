@@ -19,7 +19,6 @@ use chin_sql::time_type::TID;
 use chin_sql::{Froms, GenerateTableSchema, LimitOffset, SqlField, SubQueryTable, Wheres};
 use chin_sql::{ILikeType, JoinTable, JoinType, Joins, OrderBy, SqlBuilder, SqlReader};
 use chin_tools::{AResult, EResult};
-use chrono::Local;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, GenerateTableSchema)]
