@@ -235,7 +235,10 @@ impl ChnotMapper for KDb {
             metas.push(rec.clone());
 
             tx.as_executor()
-                .omit_rows::<ChnotThreadOrder>(rec.pkey())
+                .omit_rows::<ChnotThreadOrder>(Wheres::equal(
+                    ChnotThreadOrder::THREAD_OTID,
+                    thread_otid,
+                ))
                 .await?;
             tx.exec(rec.to_sql_inserter()).await?;
         }
