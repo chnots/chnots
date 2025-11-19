@@ -1,5 +1,5 @@
-import { TID } from "@/lib/id_util";
-import { SyncAllEndpoints, SyncEndpoint } from "./po";
+import type { SyncAllEndpoints, SyncEndpoint } from './po';
+import type { TID } from '@/lib/id_util';
 
 type TheSameKey = object;
 type SyncTableEnum = object;

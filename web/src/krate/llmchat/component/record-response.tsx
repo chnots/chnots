@@ -1,17 +1,20 @@
+import { useEffect, useRef } from 'react';
+
+import RecordAssistant from './record-assistant';
+import { useLLMChatComStore } from './session';
+
 import {
   ResponseCtl,
+  type ResponseState,
   ResponseStep,
-  ResponseState,
   useLLMResponse,
-} from "@/hooks/use-llm-response";
-import { LLMChatBot, LLMChatRecord } from "@/krate/llmchat/po";
-import { useEffect, useRef } from "react";
-import RecordAssistant from "./record-assistant";
-import { llmchatRecordCommit } from "@/krate/llmchat/service";
-import Icon from "@/common/component/icon";
-import { Button as KButton } from "@/common/component/ui/button";
-import { genTID, TID } from "@/lib/id_util";
-import { useLLMChatComStore } from "./session";
+} from '@/hooks/use-llm-response';
+
+import Icon from '@/common/component/icon';
+import { Button as KButton } from '@/common/component/ui/button';
+import type { LLMChatBot, LLMChatRecord } from '@/krate/llmchat/po';
+import { llmchatRecordCommit } from '@/krate/llmchat/service';
+import { genTID, type TID } from '@/lib/id_util';
 
 export const RecordAnswering = ({
   bot,
@@ -20,8 +23,8 @@ export const RecordAnswering = ({
   bot: LLMChatBot;
   onScrollToEnd?: () => void;
 }) => {
-  const { records, session, setResponsing, appendRecord, answering } =
-    useLLMChatComStore((store) => {
+  const { records, session, setResponsing, appendRecord, answering } = useLLMChatComStore(
+    (store) => {
       return {
         records: store.records,
         session: store.session,
@@ -29,7 +32,8 @@ export const RecordAnswering = ({
         appendRecord: store.appendRecord,
         answering: store.responsing,
       };
-    });
+    },
+  );
   const responseStateRef = useRef<ResponseState>(undefined);
   const otid = useRef<TID>(genTID());
 
@@ -44,9 +48,7 @@ export const RecordAnswering = ({
   });
 
   const onAbort =
-    response.step === ResponseStep.Answering
-      ? () => setAnswerCtl(ResponseCtl.Abort)
-      : undefined;
+    response.step === ResponseStep.Answering ? () => setAnswerCtl(ResponseCtl.Abort) : undefined;
 
   useEffect(() => {
     if (setResponsing) {
@@ -73,7 +75,7 @@ export const RecordAnswering = ({
           session_otid: response.sessionId,
           content: response.content,
           reasoning_content: response.reasoningContent,
-          role: "assistant",
+          role: 'assistant',
           role_id: response.roleId,
           pre_record_otid: response.prevRecordId,
           tid: genTID(),
@@ -90,7 +92,7 @@ export const RecordAnswering = ({
         session_otid: responseState.sessionId,
         content: responseState.content,
         reasoning_content: responseState.reasoningContent,
-        role: "assistant",
+        role: 'assistant',
         role_id: responseState.roleId,
         pre_record_otid: responseState.prevRecordId,
         tid: genTID(),
@@ -119,7 +121,7 @@ export const RecordAnswering = ({
         session_otid={response.sessionId}
         content={response.content}
         reasoning_content={response.reasoningContent}
-        role={"response-assistant"}
+        role={'response-assistant'}
         tid={genTID()}
         timestamp={new Date(otid.current / 1e3).toISOString()}
         viewMode={false}

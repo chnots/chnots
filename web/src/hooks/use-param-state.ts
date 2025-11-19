@@ -1,7 +1,7 @@
 // Adapted from https://dev.to/mr_mornin_star/custom-react-hook-to-sync-state-with-the-url-4b6p
 
-import { useCallback, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * A custom hook that syncs state with a URL search parameter.
@@ -12,7 +12,7 @@ import { useSearchParams } from "react-router-dom";
  */
 function useParamState<T extends string | number | boolean>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
 ): [T, (newValue: T) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
   const paramValue = searchParams.get(key);
@@ -33,7 +33,7 @@ function useParamState<T extends string | number | boolean>(
       newSearchParams.set(key, String(newValue)); // Ensure value is set as string
       setSearchParams(newSearchParams);
     },
-    [key, searchParams, setSearchParams]
+    [key, searchParams, setSearchParams],
   );
 
   return [state, setParamState];

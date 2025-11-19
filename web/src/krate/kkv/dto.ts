@@ -1,6 +1,6 @@
-import { DbText, Varchar } from "@/lib/types";
-import { KKV } from "./po";
-import { TID } from "@/lib/id_util";
+import type { KKV } from './po';
+import type { TID } from '@/lib/id_util';
+import type { DbText, Varchar } from '@/lib/types';
 
 export type KKVType = object;
 

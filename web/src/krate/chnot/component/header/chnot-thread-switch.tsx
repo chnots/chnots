@@ -1,15 +1,17 @@
-import { ChnotViewType } from "../../store";
-import Icon from "@/common/component/icon";
-import { RoutePaths } from "@/router";
-import { NavLink } from "react-router-dom";
+import { NavLink } from 'react-router-dom';
+
+import { ChnotViewType } from '../../store';
+
+import Icon from '@/common/component/icon';
+import { RoutePaths } from '@/router';
 
 const ChnotThreadSwitch = ({ viewType }: { viewType: ChnotViewType }) => {
   return viewType === ChnotViewType.Single ? (
-    <NavLink to={RoutePaths.ChnotThread} id={"chnot"}>
+    <NavLink to={RoutePaths.ChnotThread} id={'chnot'}>
       <Icon.LineSquiggle className="w-4 h-4" />
     </NavLink>
   ) : (
-    <NavLink to={RoutePaths.Chnots} id={"chnot"}>
+    <NavLink to={RoutePaths.Chnots} id={'chnot'}>
       <Icon.Spool className="w-4 h-4" />
     </NavLink>
   );

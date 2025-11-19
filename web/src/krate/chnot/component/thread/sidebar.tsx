@@ -1,23 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import KPageList from "@/common/component/kpagelist";
+import {
+  type ChnotViewType,
+  type StateChnotLike,
+  useChnotHeadStore,
+  useChnotThreadStore,
+} from '../../store';
+import Header from '../header/chnot-sidebar-header';
+import { ChnotSidebarItem, ChnotSidebarTagItem } from '../sidebar-item';
+
+import KPageList from '@/common/component/kpagelist';
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarSeparator,
-} from "@/common/component/ui/sidebar";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import { ChnotSidebarItem, ChnotSidebarTagItem } from "../sidebar-item";
-import { chnotTagNameList } from "@/krate/mdwt/service";
-import {
-  ChnotViewType,
-  StateChnotLike,
-  useChnotHeadStore,
-  useChnotThreadStore,
-} from "../../store";
-import { TID } from "@/lib/id_util";
-import Header from "../header/chnot-sidebar-header";
+} from '@/common/component/ui/sidebar';
+import { useKSpaceStore } from '@/krate/kspace/store';
+import { chnotTagNameList } from '@/krate/mdwt/service';
+import type { TID } from '@/lib/id_util';
 
 const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
   const {
@@ -40,16 +41,14 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     };
   });
 
-  const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore(
-    (store) => {
-      return {
-        tags: store.tags,
-        setTagsInset: store.setTagsInset,
-        kinds: store.kinds,
-        searchStr: store.searchStr,
-      };
-    },
-  );
+  const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore((store) => {
+    return {
+      tags: store.tags,
+      setTagsInset: store.setTagsInset,
+      kinds: store.kinds,
+      searchStr: store.searchStr,
+    };
+  });
 
   const [tagList, setTagList] = useState<string[]>();
 
@@ -90,9 +89,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                   key={tagName}
                   tag={tagName}
                   onClick={() => {
-                    setTagsInset([
-                      ...new Set([...(tags?.Inset ?? []), tagName]),
-                    ]);
+                    setTagsInset([...new Set([...(tags?.Inset ?? []), tagName])]);
                   }}
                 />
               ))}
@@ -108,8 +105,8 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 item={chnot}
                 key={chnot.meta.otid}
                 showKSpace={mkspaces.length > 0}
-                getCurrent={function (): StateChnotLike | undefined {
-                  throw new Error("Function not implemented.");
+                getCurrent={(): StateChnotLike | undefined => {
+                  throw new Error('Function not implemented.');
                 }}
                 curOtid={curOtid}
                 setCurOtid={(curOtid?: TID) => {
@@ -118,9 +115,9 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                     changeCompCurOtid(curOtid);
                   }
                 }}
-                unvalidate={function (toRemoves: TID[]): void {}}
-                onArchive={function (): void {}}
-                onTogglePin={function (): void {}}
+                unvalidate={(toRemoves: TID[]): void => {}}
+                onArchive={(): void => {}}
+                onTogglePin={(): void => {}}
               />
             ))}
           </KPageList>

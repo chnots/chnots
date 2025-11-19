@@ -1,18 +1,14 @@
-import { LLMChatRecord } from "@/krate/llmchat/po";
-import RecordFrame, { RecordButton } from "./record-frame";
-import { useState } from "react";
-import { Textarea } from "@/common/component/ui/textarea";
-import { useLLMChatComStore } from "./session";
-import { Button } from "@/common/component/ui/button";
-import Icon from "@/common/component/icon";
+import { useState } from 'react';
 
-const RecordUser = ({
-  record,
-  viewMode,
-}: {
-  record: LLMChatRecord;
-  viewMode: boolean;
-}) => {
+import RecordFrame, { RecordButton } from './record-frame';
+import { useLLMChatComStore } from './session';
+
+import Icon from '@/common/component/icon';
+import { Button } from '@/common/component/ui/button';
+import { Textarea } from '@/common/component/ui/textarea';
+import type { LLMChatRecord } from '@/krate/llmchat/po';
+
+const RecordUser = ({ record, viewMode }: { record: LLMChatRecord; viewMode: boolean }) => {
   const { content: initialContent, otid } = record;
 
   const [content, setContent] = useState(initialContent);

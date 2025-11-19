@@ -1,5 +1,5 @@
-import { TID } from "@/lib/id_util";
-import { DbText, Varchar } from "@/lib/types";
+import type { TID } from '@/lib/id_util';
+import type { DbText, Varchar } from '@/lib/types';
 
 export type KKV = {
   key: Varchar<500>;

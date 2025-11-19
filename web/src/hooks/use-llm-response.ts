@@ -1,26 +1,27 @@
-import {
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { toast } from 'sonner';
+
+import type {
   LLMChatBot,
   LLMChatBotBodyOpenAIV1,
   LLMChatRecord,
   LLMChatSession,
-} from "@/krate/llmchat/po";
-import { genTID, TID } from "@/lib/id_util";
-import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+} from '@/krate/llmchat/po';
+import { genTID, type TID } from '@/lib/id_util';
 
 export enum ResponseStep {
-  Initial = "init",
-  Answering = "ans",
-  Answered = "fia",
-  Aborted = "abt",
-  Error = "err",
-  End = "end",
+  Initial = 'init',
+  Answering = 'ans',
+  Answered = 'fia',
+  Aborted = 'abt',
+  Error = 'err',
+  End = 'end',
 }
 
 export enum ResponseCtl {
-  Trigger = "tri",
-  Abort = "abt",
+  Trigger = 'tri',
+  Abort = 'abt',
 }
 
 export type ResponseState = {
@@ -40,8 +41,8 @@ const emptyResponse = (session: LLMChatSession, bot: LLMChatBot) => {
     prevRecordId: session.otid,
     sessionId: session.otid,
     roleId: bot.otid,
-    content: "",
-    reasoningContent: "",
+    content: '',
+    reasoningContent: '',
   };
 };
 
@@ -54,12 +55,8 @@ export const useLLMResponse = ({
   records: LLMChatRecord[];
   bot: LLMChatBot;
 }) => {
-  const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(
-    undefined,
-  );
-  const [responseState, setResponseState] = useState<ResponseState>(
-    emptyResponse(session, bot),
-  );
+  const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(undefined);
+  const [responseState, setResponseState] = useState<ResponseState>(emptyResponse(session, bot));
   const abortSignal = useRef<AbortController>(null);
 
   useEffect(() => {
@@ -69,11 +66,8 @@ export const useLLMResponse = ({
   }, []);
 
   const doPostResponse = useCallback(async () => {
-    if (
-      responseState.content.length === 0 &&
-      responseState.reasoningContent.length === 0
-    ) {
-      console.debug("llm result is empty");
+    if (responseState.content.length === 0 && responseState.reasoningContent.length === 0) {
+      console.debug('llm result is empty');
       return;
     }
 
@@ -81,8 +75,8 @@ export const useLLMResponse = ({
     let ended = false;
     if (responseState.reasoningContent.length === 0) {
       const content = responseState.content;
-      const thinkStart = content.indexOf("<think>");
-      const thinkEnd = content.indexOf("</think>");
+      const thinkStart = content.indexOf('<think>');
+      const thinkEnd = content.indexOf('</think>');
       if (thinkStart >= 0) {
         if (thinkEnd > 0) {
           setResponseState((prev) => {
@@ -99,7 +93,7 @@ export const useLLMResponse = ({
             return {
               ...prev,
               step: ResponseStep.End,
-              content: "",
+              content: '',
               reasoningContent: content.substring(thinkStart + 7),
             };
           });
@@ -140,9 +134,9 @@ export const useLLMResponse = ({
     };
 
     fetchEventSource(config.url, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${config.token}`,
       },
       body: JSON.stringify(body),
@@ -150,7 +144,7 @@ export const useLLMResponse = ({
       openWhenHidden: true,
       onmessage: (msg) => {
         const text = msg.data;
-        if (text === "[DONE]") {
+        if (text === '[DONE]') {
           return;
         }
         if (text.trim().length == 0) {
@@ -179,7 +173,7 @@ export const useLLMResponse = ({
         });
       },
       onclose() {
-        console.log("onclose");
+        console.log('onclose');
         setResponseState((prev) => {
           return {
             ...prev,
@@ -191,7 +185,7 @@ export const useLLMResponse = ({
         throw err;
       },
     }).catch((err) => {
-      console.warn("unable to fetch kfiles", err);
+      console.warn('unable to fetch kfiles', err);
       setResponseState((prev) => {
         return {
           ...prev,
@@ -204,36 +198,18 @@ export const useLLMResponse = ({
   }, [setResponseState, abortSignal]);
 
   useEffect(() => {
-    if (
-      answerCtl === ResponseCtl.Abort &&
-      responseState.step !== ResponseStep.End
-    ) {
+    if (answerCtl === ResponseCtl.Abort && responseState.step !== ResponseStep.End) {
       doAbort();
-    } else if (
-      answerCtl === ResponseCtl.Trigger &&
-      responseState.step !== ResponseStep.Answering
-    ) {
+    } else if (answerCtl === ResponseCtl.Trigger && responseState.step !== ResponseStep.Answering) {
       setResponseState(emptyResponse(session, bot));
       doResponse();
     }
     setAnswerCtl(undefined);
-  }, [
-    session,
-    bot,
-    answerCtl,
-    responseState,
-    doAbort,
-    doResponse,
-    setAnswerCtl,
-  ]);
+  }, [session, bot, answerCtl, responseState, doAbort, doResponse, setAnswerCtl]);
 
   useEffect(() => {
     if (
-      [
-        ResponseStep.Aborted,
-        ResponseStep.Answered,
-        ResponseStep.Error,
-      ].includes(responseState.step)
+      [ResponseStep.Aborted, ResponseStep.Answered, ResponseStep.Error].includes(responseState.step)
     ) {
       doPostResponse();
     }

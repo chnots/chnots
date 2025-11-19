@@ -1,7 +1,13 @@
 // components/EndpointSettings.tsx
-import { useEffect, useState } from "react";
-import { Button } from "@/common/component/ui/button";
-import { Input } from "@/common/component/ui/input";
+import { useEffect, useState } from 'react';
+
+import { getSyncAllEndpoints, overwriteSyncAllEndpoints, syncToEndpoint } from '../service';
+
+import type { SyncEndpoint } from '../po';
+import { Button } from '@/common/component/ui/button';
+import { Card } from '@/common/component/ui/card';
+import { Input } from '@/common/component/ui/input';
+import { Label } from '@/common/component/ui/label';
 import {
   Table,
   TableBody,
@@ -9,20 +15,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/common/component/ui/table";
-import { Card } from "@/common/component/ui/card";
-import { Label } from "@/common/component/ui/label";
-import { SyncEndpoint } from "../po";
-import {
-  getSyncAllEndpoints,
-  overwriteSyncAllEndpoints,
-  syncToEndpoint,
-} from "../service";
+} from '@/common/component/ui/table';
 
 export const EndpointSettings = () => {
   const [endpoints, setEndpoints] = useState<SyncEndpoint[]>([]);
   const [newEndpoint, setNewEndpoint] = useState<SyncEndpoint>({
-    ip: "",
+    ip: '',
     port: 3011,
   });
   useEffect(() => {
@@ -46,7 +44,7 @@ export const EndpointSettings = () => {
     });
     const backendEps = await getSyncAllEndpoints({});
     setEndpoints(backendEps.data.endpoints);
-    setNewEndpoint({ ip: "", port: 3011 });
+    setNewEndpoint({ ip: '', port: 3011 });
   };
 
   const handleDeleteEndpoint = async (ip: string, port: number) => {
@@ -76,9 +74,7 @@ export const EndpointSettings = () => {
             <Input
               id="endpoint-ip"
               value={newEndpoint.ip}
-              onChange={(e) =>
-                setNewEndpoint({ ...newEndpoint, ip: e.target.value })
-              }
+              onChange={(e) => setNewEndpoint({ ...newEndpoint, ip: e.target.value })}
               placeholder="127.0.0.1"
             />
           </div>
@@ -125,9 +121,7 @@ export const EndpointSettings = () => {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() =>
-                        handleDeleteEndpoint(endpoint.ip, endpoint.port)
-                      }
+                      onClick={() => handleDeleteEndpoint(endpoint.ip, endpoint.port)}
                     >
                       Delete
                     </Button>

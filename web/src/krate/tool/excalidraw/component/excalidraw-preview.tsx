@@ -1,12 +1,11 @@
-import { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
-import { AppState, BinaryFiles } from "@excalidraw/excalidraw/types";
-import { JSX } from "react";
+import * as React from 'react';
+import { type JSX, useEffect, useState } from 'react';
+import { exportToSvg } from '@excalidraw/excalidraw';
 
-import { exportToSvg } from "@excalidraw/excalidraw";
-import * as React from "react";
-import { useEffect, useState } from "react";
-import { ExcalidrawChnotState } from "../service";
-import { LegacyAppState } from "@excalidraw/excalidraw/data/types";
+import type { LegacyAppState } from '@excalidraw/excalidraw/data/types';
+import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
+import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types';
+import type { ExcalidrawChnotState } from '../service';
 
 // BEGIN lecixel
 /**
@@ -16,9 +15,9 @@ import { LegacyAppState } from "@excalidraw/excalidraw/data/types";
  * LICENSE file in the root directory of this source tree.
  *
  */
-type ImageType = "svg" | "canvas";
+type ImageType = 'svg' | 'canvas';
 
-type Dimension = "inherit" | number;
+type Dimension = 'inherit' | number;
 
 type Props = {
   /**
@@ -66,14 +65,14 @@ const removeStyleFromSvg_HACK = (svg: SVGElement) => {
 
   // Generated SVG is getting double-sized by height and width attributes
   // We want to match the real size of the SVG element
-  const viewBox = svg.getAttribute("viewBox");
+  const viewBox = svg.getAttribute('viewBox');
   if (viewBox != null) {
-    const viewBoxDimensions = viewBox.split(" ");
-    svg.setAttribute("width", viewBoxDimensions[2]);
-    svg.setAttribute("height", viewBoxDimensions[3]);
+    const viewBoxDimensions = viewBox.split(' ');
+    svg.setAttribute('width', viewBoxDimensions[2]);
+    svg.setAttribute('height', viewBoxDimensions[3]);
   }
 
-  if (styleTag && styleTag.tagName === "style") {
+  if (styleTag && styleTag.tagName === 'style') {
     styleTag.remove();
   }
 };
@@ -88,8 +87,8 @@ export const ExcalidrawImage = ({
   imageContainerRef,
   appState,
   rootClassName = null,
-  width = "inherit",
-  height = "inherit",
+  width = 'inherit',
+  height = 'inherit',
 }: Props): JSX.Element => {
   const [Svg, setSvg] = useState<SVGElement | null>(null);
 
@@ -102,9 +101,9 @@ export const ExcalidrawImage = ({
       });
       removeStyleFromSvg_HACK(svg);
 
-      svg.setAttribute("width", "100%");
-      svg.setAttribute("height", "100%");
-      svg.setAttribute("display", "block");
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      svg.setAttribute('display', 'block');
 
       setSvg(svg);
     };
@@ -112,10 +111,10 @@ export const ExcalidrawImage = ({
   }, [elements, files, appState]);
 
   const containerStyle: React.CSSProperties = {};
-  if (width !== "inherit") {
+  if (width !== 'inherit') {
     containerStyle.width = `${width}px`;
   }
-  if (height !== "inherit") {
+  if (height !== 'inherit') {
     containerStyle.height = `${height}px`;
   }
 
@@ -128,9 +127,9 @@ export const ExcalidrawImage = ({
           }
         }
       }}
-      className={rootClassName ?? ""}
+      className={rootClassName ?? ''}
       style={containerStyle}
-      dangerouslySetInnerHTML={{ __html: Svg?.outerHTML ?? "" }}
+      dangerouslySetInnerHTML={{ __html: Svg?.outerHTML ?? '' }}
     />
   );
 };
@@ -140,7 +139,7 @@ export const ExcalidrawImage = ({
 const ExcalidrawPreview = ({
   state,
   className: rootClassName,
-}: { state?: ExcalidrawChnotState } & Omit<Props, "imageContainerRef">) => {
+}: { state?: ExcalidrawChnotState } & Omit<Props, 'imageContainerRef'>) => {
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
 
   return (

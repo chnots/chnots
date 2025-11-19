@@ -1,30 +1,27 @@
-import useResizeObserver from "@react-hook/resize-observer";
-import { RefObject, useEffect, useRef, useState } from "react";
-import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
-import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
-import useDebounce from "@/hooks/use-debounce";
-import { SaveState } from "@/common/types";
-import { RichPropProps } from "./rich-chnot";
-import {
-  chnotTagNameList,
-  mdwtCommit,
-  mdwtRecordList,
-} from "@/krate/mdwt/service";
-import { MdwtCommitReq } from "@/krate/mdwt/dto";
-import { toentTodoEventGuess } from "@/krate/toent/service";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { EditorSelection, ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { chnotSingleSearch } from "../../service";
+import { type RefObject, useEffect, useRef, useState } from 'react';
+import useResizeObserver from '@react-hook/resize-observer';
+import { EditorSelection, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-const chnotCompletions = async (
-  context: CompletionContext,
-): Promise<CompletionResult | null> => {
+import { chnotSingleSearch } from '../../service';
+
+import useDebounce from '@/hooks/use-debounce';
+
+import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import type { RichPropProps } from './rich-chnot';
+import { SaveState } from '@/common/types';
+import { MdwtEditorMemo } from '@/krate/mdwt/component/mdwt-editor';
+import type { MdwtCommitReq } from '@/krate/mdwt/dto';
+import { chnotTagNameList, mdwtCommit, mdwtRecordList } from '@/krate/mdwt/service';
+import { toentTodoEventGuess } from '@/krate/toent/service';
+
+const chnotCompletions = async (context: CompletionContext): Promise<CompletionResult | null> => {
   const word = context.matchBefore(/#[^# ]*|^#* \[|^[ ]*- \[|\[\[/);
   let options;
   if (!word || (word?.from == word?.to && !context.explicit)) {
     return null;
-  } else if (word.text.startsWith("#")) {
+  } else if (word.text.startsWith('#')) {
     options = (
       await chnotTagNameList({
         query: word.text,
@@ -32,9 +29,9 @@ const chnotCompletions = async (
         page_size: 20,
       })
     ).data.map((name) => {
-      return { label: name, type: "hashtag" };
+      return { label: name, type: 'hashtag' };
     });
-  } else if (word.text.startsWith("[[")) {
+  } else if (word.text.startsWith('[[')) {
     // [{ label: `[[backlink-ph]]`, type: "backlink" }]
     options = (
       await chnotSingleSearch({
@@ -45,17 +42,17 @@ const chnotCompletions = async (
       })
     ).data.map((chnot) => {
       return {
-        label: chnot.title ?? "",
+        label: chnot.title ?? '',
         apply: `[[${chnot.meta.otid}]]`,
-        type: "backlink",
+        type: 'backlink',
       };
     });
-  } else if (word.text.includes("# [") || word.text.includes("- [")) {
-    options = (
-      await toentTodoEventGuess({ input: word.text.replace(/.*\[/, "") })
-    ).toents.map((toent) => {
-      return { label: `{${toent}}`, type: "toent" };
-    });
+  } else if (word.text.includes('# [') || word.text.includes('- [')) {
+    options = (await toentTodoEventGuess({ input: word.text.replace(/.*\[/, '') })).toents.map(
+      (toent) => {
+        return { label: `{${toent}}`, type: 'toent' };
+      },
+    );
   } else {
     return null;
   }
@@ -76,13 +73,11 @@ const MarkdownViewer = ({
   content: string;
   keepBreak?: boolean;
 }) => {
-  const content = keepBreak
-    ? initialContent.replaceAll("\n", "  \n")
-    : initialContent;
+  const content = keepBreak ? initialContent.replaceAll('\n', '  \n') : initialContent;
   return (
     <div
       className={
-        "prose prose-sm max-w-none prose-code:text-wrap prose-code:break-all prose-code:!p-2 min-w-full break-all h-full"
+        'prose prose-sm max-w-none prose-code:text-wrap prose-code:break-all prose-code:!p-2 min-w-full break-all h-full'
       }
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
@@ -103,12 +98,11 @@ const MdwtChnot = ({
   onContentChange?: (content: string) => void;
 }) => {
   // use RefObject to avoid rerender
-  const cachedContentRef = useRef<string>(initialContent ?? "");
+  const cachedContentRef = useRef<string>(initialContent ?? '');
   const saveStateRef = useRef<SaveState>(SaveState.Dirty);
   const toSaveArg = useRef<MdwtCommitReq>(null);
   const [refreshFlag, setRefreshFlag] = useState<boolean>();
-  const [codeMirrorRef, setCodeMirrorRef] =
-    useState<RefObject<ReactCodeMirrorRef | null>>();
+  const [codeMirrorRef, setCodeMirrorRef] = useState<RefObject<ReactCodeMirrorRef | null>>();
 
   useEffect(() => {
     if (initialContent) {
@@ -127,7 +121,7 @@ const MdwtChnot = ({
           ) {
             onContentChange(mdwt.content);
           }
-          cachedContentRef.current = mdwt?.content ?? "";
+          cachedContentRef.current = mdwt?.content ?? '';
           setRefreshFlag((prev) => !prev);
         });
       }
@@ -160,12 +154,9 @@ const MdwtChnot = ({
   );
 
   return readonly ? (
-    <MarkdownViewer content={cachedContentRef.current ?? ""} keepBreak={true} />
+    <MarkdownViewer content={cachedContentRef.current ?? ''} keepBreak={true} />
   ) : (
-    <div
-      className="flex flex-col w-full h-full break-all"
-      onBlur={() => directlySave()}
-    >
+    <div className="flex flex-col w-full h-full break-all" onBlur={() => directlySave()}>
       <MdwtEditorMemo
         content={cachedContentRef.current}
         onContentChange={(content) => {

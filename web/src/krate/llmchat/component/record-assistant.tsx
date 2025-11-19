@@ -1,13 +1,16 @@
-import { LLMChatBot, LLMChatRecord, LLMChatTemplate } from "@/krate/llmchat/po";
-import RecordFrame, { RecordButton } from "./record-frame";
-import KSVG from "@/common/component/svg";
-import React, { useState } from "react";
-import Icon from "@/common/component/icon";
-import { useLLMChatStore } from "@/krate/llmchat/store";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { useLLMChatComStore } from "./session";
-import LLMChatTemplateList from "./template-list";
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+import RecordFrame, { RecordButton } from './record-frame';
+import { useLLMChatComStore } from './session';
+import LLMChatTemplateList from './template-list';
+
+import type React from 'react';
+import Icon from '@/common/component/icon';
+import KSVG from '@/common/component/svg';
+import type { LLMChatBot, LLMChatRecord, LLMChatTemplate } from '@/krate/llmchat/po';
+import { useLLMChatStore } from '@/krate/llmchat/store';
 
 const RecordCommon = ({
   otid,
@@ -45,17 +48,15 @@ const RecordCommon = ({
         {reasoning_content && !viewMode && (
           <div
             className={
-              "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"
+              'prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive'
             }
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {reasoning_content}
-            </ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{reasoning_content}</ReactMarkdown>
           </div>
         )}
         <div
           className={
-            "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
+            'prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2'
           }
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
@@ -109,19 +110,19 @@ export const RecordSystem = ({
     <>
       <RecordCommon
         timestamp={timestamp}
-        name={tmpl?.name ?? "Unknown Template"}
+        name={tmpl?.name ?? 'Unknown Template'}
         logo={svgLogo}
         viewMode={!!viewMode}
         otid={otid}
         session_otid={session_otid}
         limitHeight={true}
         content={content}
-        role={"system"}
+        role={'system'}
         tid={tid}
-        reasoning_content={""}
+        reasoning_content={''}
         buttons={
           <>
-            {records?.length === 1 && records.at(0)?.role === "system" && (
+            {records?.length === 1 && records.at(0)?.role === 'system' && (
               <RecordButton
                 onClick={() => {
                   setShowTemplates((prev) => !prev);
@@ -135,10 +136,10 @@ export const RecordSystem = ({
       />
       {showTemplates && (
         <LLMChatTemplateList
-          onSelectTemplate={function (template: LLMChatTemplate): void {
+          onSelectTemplate={(template: LLMChatTemplate): void => {
             setTemplate(template);
           }}
-          onNew={function (): void {}}
+          onNew={(): void => {}}
         />
       )}
     </>
@@ -187,19 +188,19 @@ const RecordAssistant = ({
   return (
     <RecordCommon
       timestamp={timestamp}
-      name={bt?.name ?? "Unknown Bot"}
+      name={bt?.name ?? 'Unknown Bot'}
       logo={svgLogo}
       viewMode={viewMode}
       otid={otid}
       session_otid={session_otid}
       content={content}
       reasoning_content={reasoning_content}
-      role={"assistant"}
+      role={'assistant'}
       tid={tid}
       buttons={
         <>
           <RecordButton
-            onClick={function (): void {
+            onClick={(): void => {
               onRegenrate(otid);
             }}
           >

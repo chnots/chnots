@@ -1,18 +1,11 @@
-import { kfileInlineUpload, kfileInlineDownload } from "@/krate/kfile/service";
-import { genTID, TID } from "@/lib/id_util";
-import {
-  ExcalidrawElement,
-  FileId,
-} from "@excalidraw/excalidraw/element/types";
-import { serializeAsJSON } from "@excalidraw/excalidraw";
-import {
-  AppState,
-  BinaryFileData,
-  BinaryFiles,
-  DataURL,
-} from "@excalidraw/excalidraw/types";
-import { RefObject } from "react";
-import { KfileMetaFetchReqId } from "@/krate/kfile/dto";
+import { serializeAsJSON } from '@excalidraw/excalidraw';
+
+import type { ExcalidrawElement, FileId } from '@excalidraw/excalidraw/element/types';
+import type { AppState, BinaryFileData, BinaryFiles, DataURL } from '@excalidraw/excalidraw/types';
+import type { RefObject } from 'react';
+import type { KfileMetaFetchReqId } from '@/krate/kfile/dto';
+import { kfileInlineDownload, kfileInlineUpload } from '@/krate/kfile/service';
+import { genTID, type TID } from '@/lib/id_util';
 
 export type ExcalidrawChnotState = {
   otid: TID;
@@ -33,12 +26,12 @@ export const fetchExcalidraw = async (
       return null;
     }
     const dataState = JSON.parse(rsp.file!.content);
-    const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
+    const fileMap = new Map<ExcalidrawElement['id'], BinaryFileData>();
     const elements = dataState.elements as readonly ExcalidrawElement[] | null;
 
     if (elements) {
       for (const element of elements) {
-        if (element.type === "image" && element.fileId) {
+        if (element.type === 'image' && element.fileId) {
           try {
             const fileInlineRsp = await kfileInlineDownload({
               req_id: { ID: element.fileId },
@@ -47,7 +40,7 @@ export const fetchExcalidraw = async (
             const fileInline = fileInlineRsp.file;
             if (fileInline) {
               fileMap.set(element.fileId, {
-                // @ts-ignore
+                // @ts-expect-error
                 mimeType: fileInline.content_type,
                 dataURL: fileInline.content as DataURL,
                 created: fileInline.tid,
@@ -56,10 +49,7 @@ export const fetchExcalidraw = async (
               });
             }
           } catch (error) {
-            console.error(
-              `Failed to query inline kfile for fileId ${element.fileId}`,
-              error,
-            );
+            console.error(`Failed to query inline kfile for fileId ${element.fileId}`, error);
           }
         }
       }
@@ -72,7 +62,7 @@ export const fetchExcalidraw = async (
       elements: dataState.elements,
     };
   } catch (e) {
-    console.error("unable to fetch inline-kfile", id, e);
+    console.error('unable to fetch inline-kfile', id, e);
   }
   return null;
 };
@@ -100,22 +90,22 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       return;
     }
 
-    const content = serializeAsJSON(elements, appState, files, "database");
+    const content = serializeAsJSON(elements, appState, files, 'database');
 
     for (const [fileId, file] of Object.entries(files)) {
       const cache = savedFilesRef.current.get(fileId);
-      const newVer = file.created + "-" + file.version;
+      const newVer = file.created + '-' + file.version;
       if (!cache || cache.ver != newVer) {
         const otid = cache ? cache.otid : genTID();
         await kfileInlineUpload({
           res: {
             tid: genTID(),
             content: file.dataURL,
-            sid: "placeholder",
+            sid: 'placeholder',
           },
           archor_intervals: 3600,
           meta_id: file.id,
-          content_type: file.mimeType ?? "chnot/unknown",
+          content_type: file.mimeType ?? 'chnot/unknown',
           otid: otid,
         });
         savedFilesRef.current.set(fileId, { ver: newVer, otid: otid });
@@ -126,7 +116,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       res: {
         tid: genTID(),
         content,
-        sid: "placeholder",
+        sid: 'placeholder',
       },
       archor_intervals: 3600,
       meta_id: metaId,
@@ -135,7 +125,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
     });
     onSuccess();
   } catch (err) {
-    console.error("save excalidraw", err);
+    console.error('save excalidraw', err);
 
     onFail();
   }

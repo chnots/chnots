@@ -1,26 +1,18 @@
-import { SaveState } from "@/common/types";
-import { RichPropProps } from "./rich-chnot";
-import { KTabMeta } from "@/krate/ktab/po";
-import { KTabRowData } from "@/krate/ktab/component/editable-cell";
-import { DataTable } from "@/krate/ktab/component/data-table";
-import {
-  ktabCellList,
-  ktabMetaCommit,
-  ktabMetaFetch,
-} from "@/krate/ktab/service";
-import { ktabGetViewValue } from "@/krate/ktab/dto";
-import { genTID, genUID } from "@/lib/id_util";
-import { useEffect, useState } from "react";
-import Fullscreen from "./fullscreen";
+import { useEffect, useState } from 'react';
 
-const TableChnot = ({
-  otid,
-  onPostSave,
-  readonly,
-  fullscreen,
-  onSetFullscreen,
-}: RichPropProps) => {
-  console.log("render TableChnot", otid, readonly);
+import Fullscreen from './fullscreen';
+
+import type { RichPropProps } from './rich-chnot';
+import { SaveState } from '@/common/types';
+import { DataTable } from '@/krate/ktab/component/data-table';
+import type { KTabRowData } from '@/krate/ktab/component/editable-cell';
+import { ktabGetViewValue } from '@/krate/ktab/dto';
+import type { KTabMeta } from '@/krate/ktab/po';
+import { ktabCellList, ktabMetaCommit, ktabMetaFetch } from '@/krate/ktab/service';
+import { genTID, genUID } from '@/lib/id_util';
+
+const TableChnot = ({ otid, onPostSave, readonly, fullscreen, onSetFullscreen }: RichPropProps) => {
+  console.log('render TableChnot', otid, readonly);
   const [meta, setMeta] = useState<KTabMeta>();
 
   useEffect(() => {
@@ -83,7 +75,7 @@ const TableChnot = ({
                   saveState: SaveState.Saved,
                   title: Object.values(meta.columns)
                     .map((e) => e.name)
-                    .join("|"),
+                    .join('|'),
                 });
               }}
               readonly={false}
@@ -126,7 +118,7 @@ const TableChnot = ({
                   saveState: SaveState.Saved,
                   title: Object.values(meta.columns)
                     .map((e) => e.name)
-                    .join("|"),
+                    .join('|'),
                 });
               }}
               readonly={readonly || false}

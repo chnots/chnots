@@ -1,14 +1,14 @@
-import { EditorSelection, Prec } from "@codemirror/state";
-import { Command, EditorView, KeyBinding, keymap } from "@codemirror/view";
-import { getIndentUnit, indentString } from "@codemirror/language";
-import { historyKeymap, standardKeymap } from "@codemirror/commands";
+import { historyKeymap, standardKeymap } from '@codemirror/commands';
+import { getIndentUnit, indentString } from '@codemirror/language';
+import { EditorSelection, Prec } from '@codemirror/state';
+import { type Command, type EditorView, type KeyBinding, keymap } from '@codemirror/view';
 import {
   insertLineAfter,
+  intersectsSyntaxNode,
   isCursorAtBeginning,
   renumberSelectedLists,
   toggleSelectedLinesStartWith,
-  intersectsSyntaxNode,
-} from "jolpin-codemirror";
+} from 'jolpin-codemirror';
 
 // Prepends the given editor's indentUnit to all lines of the current selection
 // and re-numbers modified ordered lists (if any).
@@ -42,7 +42,7 @@ export const insertOrIncreaseIndent: Command = (view: EditorView): boolean => {
     return increaseIndent(view);
   }
 
-  if (intersectsSyntaxNode(view.state, mainSelection, "ListItem")) {
+  if (intersectsSyntaxNode(view.state, mainSelection, 'ListItem')) {
     return increaseIndent(view);
   }
 
@@ -71,7 +71,7 @@ export const decreaseIndent: Command = (view: EditorView): boolean => {
     // of n spaces.
     new RegExp(`^(?:[\\t]|[ ]{1,${getIndentUnit(view.state)}})`),
     // Don't add new text
-    "",
+    '',
     matchEmpty,
   );
 
@@ -84,11 +84,7 @@ export const decreaseIndent: Command = (view: EditorView): boolean => {
 };
 
 export const generateKeybinding = () => {
-  const keyCommand = (
-    key: string,
-    run: Command,
-    alwaysActive?: boolean,
-  ): KeyBinding => {
+  const keyCommand = (key: string, run: Command, alwaysActive?: boolean): KeyBinding => {
     return {
       key,
       run: (editor) => {
@@ -102,14 +98,14 @@ export const generateKeybinding = () => {
   const keymapConfig = Prec.high(
     keymap.of([
       keyCommand(
-        "Tab",
+        'Tab',
         (view: EditorView) => {
           return insertOrIncreaseIndent(view);
         },
         true,
       ),
       keyCommand(
-        "Shift-Tab",
+        'Shift-Tab',
         (view) => {
           // When at the beginning of the editor, allow shift-tab to act
           // normally.
@@ -122,7 +118,7 @@ export const generateKeybinding = () => {
         true,
       ),
       keyCommand(
-        "Mod-Enter",
+        'Mod-Enter',
         (_: EditorView) => {
           insertLineAfter(_);
           return true;

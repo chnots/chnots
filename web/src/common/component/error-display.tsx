@@ -1,4 +1,4 @@
-import React from "react";
+import type React from 'react';
 
 interface ErrorDisplayProps {
   description: string;
@@ -6,16 +6,13 @@ interface ErrorDisplayProps {
 }
 
 const getErrorMessage = (error: unknown): string => {
-  if (!error) return "No error details available";
-  if (typeof error === "string") return error;
+  if (!error) return 'No error details available';
+  if (typeof error === 'string') return error;
   if (error instanceof Error) return error.message;
   return JSON.stringify(error, null, 2);
 };
 
-const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
-  description,
-  errorDetails,
-}) => {
+const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ description, errorDetails }) => {
   if (!description && !errorDetails) return null;
 
   const message = errorDetails ? getErrorMessage(errorDetails) : null;
@@ -25,7 +22,7 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   };
 
   const handleContainerKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       (e.currentTarget as HTMLElement).blur();
     }
   };

@@ -1,7 +1,7 @@
-import Icon from "@/common/component/icon";
-import KSVG from "@/common/component/svg";
-import { LLMChatTemplate } from "@/krate/llmchat/po";
-import { useLLMChatStore } from "@/krate/llmchat/store";
+import Icon from '@/common/component/icon';
+import KSVG from '@/common/component/svg';
+import type { LLMChatTemplate } from '@/krate/llmchat/po';
+import { useLLMChatStore } from '@/krate/llmchat/store';
 
 const LLMChatTemplateList = ({
   onSelectTemplate,
@@ -17,7 +17,7 @@ const LLMChatTemplateList = ({
       {[...templates.values()].map((item) => (
         <div
           key={item.otid}
-          className={"hover:cursor-pointer space-x-1 items-center flex py-1"}
+          className={'hover:cursor-pointer space-x-1 items-center flex py-1'}
           onClick={() => {
             onSelectTemplate(item);
           }}
@@ -31,8 +31,8 @@ const LLMChatTemplateList = ({
         </div>
       ))}
       <div
-        key={"add-new"}
-        className={"hover:cursor-pointer space-x-1 items-center flex py-1"}
+        key={'add-new'}
+        className={'hover:cursor-pointer space-x-1 items-center flex py-1'}
         onClick={() => {
           onNew();
         }}

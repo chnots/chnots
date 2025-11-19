@@ -1,14 +1,16 @@
-import { SaveState } from "@/common/types";
-import { RichPropProps } from "./rich-chnot";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useEffect, useState } from 'react';
+
+import Fullscreen from './fullscreen';
+
+import type { RichPropProps } from './rich-chnot';
+import { SaveState } from '@/common/types';
 import SessionContainer, {
+  type LLMChatContextProps,
   LLMChatEditorProvider,
-  LLMChatContextProps,
-} from "@/krate/llmchat/component/session";
-import { TID } from "@/lib/id_util";
-import { useLLMChatStore } from "@/krate/llmchat/store";
-import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
-import Fullscreen from "./fullscreen";
+} from '@/krate/llmchat/component/session';
+import { llmchatSessionRecordFetch } from '@/krate/llmchat/service';
+import { useLLMChatStore } from '@/krate/llmchat/store';
+import type { TID } from '@/lib/id_util';
 
 const LLMChatChnot = ({
   otid,
@@ -19,9 +21,7 @@ const LLMChatChnot = ({
 }: RichPropProps) => {
   const persistedIds = createRef<Set<TID>>();
 
-  const [props, setProps] = useState<LLMChatContextProps | undefined>(
-    undefined,
-  );
+  const [props, setProps] = useState<LLMChatContextProps | undefined>(undefined);
   const { refreshTemplates } = useLLMChatStore();
 
   useEffect(() => {
@@ -58,7 +58,7 @@ const LLMChatChnot = ({
     })();
   }, [otid]);
 
-  console.log("render llmchat", props, readonly, fullscreen);
+  console.log('render llmchat', props, readonly, fullscreen);
   return (
     props && (
       <LLMChatEditorProvider props={props}>

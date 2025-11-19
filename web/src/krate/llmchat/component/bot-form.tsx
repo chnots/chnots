@@ -1,11 +1,13 @@
-import { Button as KButton } from "@/common/component/ui/button";
-import KSVG from "@/common/component/svg";
-import { LLMChatBot, LLMChatBotBodyOpenAIV1 } from "@/krate/llmchat/po";
-import React, { RefObject, useEffect, useRef, useState } from "react";
-import { genTID, TID } from "@/lib/id_util";
-import { Textarea } from "@/common/component/ui/textarea";
-import { Input } from "@/common/component/ui/input";
-import { detectSVG } from "@/lib/svg-utils";
+import { type RefObject, useEffect, useRef, useState } from 'react';
+
+import type React from 'react';
+import KSVG from '@/common/component/svg';
+import { Button as KButton } from '@/common/component/ui/button';
+import { Input } from '@/common/component/ui/input';
+import { Textarea } from '@/common/component/ui/textarea';
+import type { LLMChatBot, LLMChatBotBodyOpenAIV1 } from '@/krate/llmchat/po';
+import { genTID, type TID } from '@/lib/id_util';
+import { detectSVG } from '@/lib/svg-utils';
 
 const LLMChatBotBodyOpenAIV1Body = ({
   bodyRef,
@@ -25,15 +27,13 @@ const LLMChatBotBodyOpenAIV1Body = ({
 
   useEffect(() => {
     bodyRef.current = {
-      model_name: formData.model_name ?? "",
-      token: formData.token ?? "",
-      url: formData.url ?? "",
+      model_name: formData.model_name ?? '',
+      token: formData.token ?? '',
+      url: formData.url ?? '',
     };
   }, [formData, bodyRef]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -47,7 +47,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
           type="text"
           id="url"
           name="url"
-          value={formData.url ?? ""}
+          value={formData.url ?? ''}
           onChange={handleInputChange}
           className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           required
@@ -62,7 +62,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
         <Input
           id="token"
           name="token"
-          value={formData.token ?? ""}
+          value={formData.token ?? ''}
           onChange={handleInputChange}
           className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           aria-label="Token"
@@ -75,7 +75,7 @@ const LLMChatBotBodyOpenAIV1Body = ({
         <Input
           id="model_name"
           name="model_name"
-          value={formData.model_name ?? ""}
+          value={formData.model_name ?? ''}
           onChange={handleInputChange}
           className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           required
@@ -99,34 +99,30 @@ const BotForm = ({
     name: string;
     svg_logo?: string;
   }>({
-    name: bot?.name ?? "",
+    name: bot?.name ?? '',
     svg_logo: bot?.svg_logo,
   });
 
   const [botId, setBotId] = useState<TID>(bot?.otid ?? genTID());
 
-  const body = bot?.body
-    ? (JSON.parse(bot?.body) as LLMChatBotBodyOpenAIV1)
-    : null;
+  const body = bot?.body ? (JSON.parse(bot?.body) as LLMChatBotBodyOpenAIV1) : null;
 
   const bodyRef = useRef<LLMChatBotBodyOpenAIV1>(body);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
-      formData?.name?.trim() === "" ||
+      formData?.name?.trim() === '' ||
       !bodyRef.current ||
-      bodyRef.current.url.trim() === "" ||
-      bodyRef.current.token.trim() === "" ||
-      bodyRef.current.model_name.trim() === ""
+      bodyRef.current.url.trim() === '' ||
+      bodyRef.current.token.trim() === '' ||
+      bodyRef.current.model_name.trim() === ''
     ) {
-      alert("Please fill in all fields.");
+      alert('Please fill in all fields.');
       return;
     } else {
       const body: LLMChatBotBodyOpenAIV1 = {
@@ -138,10 +134,7 @@ const BotForm = ({
       const toInsert: LLMChatBot = {
         otid: botId,
         name: formData.name,
-        svg_logo:
-          formData.svg_logo && detectSVG(formData.svg_logo)
-            ? formData.svg_logo
-            : "",
+        svg_logo: formData.svg_logo && detectSVG(formData.svg_logo) ? formData.svg_logo : '',
         body: JSON.stringify(body),
         tid: genTID(),
       };
@@ -165,7 +158,7 @@ const BotForm = ({
               type="text"
               id="name"
               name="name"
-              value={formData.name ?? ""}
+              value={formData.name ?? ''}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border-b  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
@@ -182,7 +175,7 @@ const BotForm = ({
               <Textarea
                 id="svg_logo"
                 name="svg_logo"
-                value={formData.svg_logo ?? ""}
+                value={formData.svg_logo ?? ''}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border-b border-gray-300  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 aria-label="Bot Logo"
@@ -202,7 +195,7 @@ const BotForm = ({
               aria-label="Duplicate"
               onClick={() => {
                 setFormData((prev) => {
-                  return { ...prev, name: prev.name + " -- Clone" };
+                  return { ...prev, name: prev.name + ' -- Clone' };
                 });
                 setBotId(genTID());
               }}

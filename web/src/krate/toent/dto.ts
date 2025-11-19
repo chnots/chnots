@@ -1,5 +1,5 @@
-import { TID } from "@/lib/id_util";
-import { MdwtToent } from "./po";
+import type { MdwtToent } from './po';
+import type { TID } from '@/lib/id_util';
 
 type PossibleToent = object;
 type PossibleScore = number;

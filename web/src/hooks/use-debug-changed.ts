@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 const useDebugChanged = (value: any, title?: string) => {
   useEffect(() => {

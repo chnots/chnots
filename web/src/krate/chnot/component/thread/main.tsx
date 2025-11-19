@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
-import { ChnotKind, ChnotThreadMeta } from "../../po";
-import { genTID, TID } from "@/lib/id_util";
-import { useChnotThreadStore } from "../../store";
-import ChnotThreadHeadbar from "./header";
-import ChnotThreadBody from "./body";
-import { useKSpaceStore } from "@/krate/kspace/store";
+import { useEffect, useState } from 'react';
+
+import { useChnotThreadStore } from '../../store';
+import ChnotThreadBody from './body';
+import ChnotThreadHeadbar from './header';
+
+import type { ChnotKind, ChnotThreadMeta } from '../../po';
+import { useKSpaceStore } from '@/krate/kspace/store';
+import { genTID, type TID } from '@/lib/id_util';
 
 export type ChnotSingleMainStore = {
   otid: TID;

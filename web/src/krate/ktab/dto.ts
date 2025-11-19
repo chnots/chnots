@@ -1,5 +1,5 @@
-import { TID } from "@/lib/id_util";
-import { KTabColumnStoreKind, KTabMeta } from "./po";
+import type { KTabColumnStoreKind, KTabMeta } from './po';
+import type { TID } from '@/lib/id_util';
 
 export type KTabOverwriteCellsRsp = object;
 
@@ -17,7 +17,7 @@ export type KTabMetaFetchRsp = {
   meta?: KTabMeta;
 };
 
-export type KTabViewTypeName = "string" | "date" | "demical";
+export type KTabViewTypeName = 'string' | 'date' | 'demical';
 
 export type KTabStoreValue =
   | { Text: string }
@@ -25,38 +25,33 @@ export type KTabStoreValue =
   | { Date: Date }
   | { Blob: Blob };
 
-export const ktabToStoreValue = (
-  kind: string,
-  value: unknown,
-): KTabStoreValue | undefined => {
+export const ktabToStoreValue = (kind: string, value: unknown): KTabStoreValue | undefined => {
   if (!value) {
     return undefined;
   }
   switch (kind.toLowerCase()) {
-    case "string":
+    case 'string':
       return { Text: value as string };
-    case "demical":
+    case 'demical':
       return { Decimal: value as string };
-    case "date":
+    case 'date':
       return { Date: value as Date };
     default:
       throw new Error();
   }
 };
 
-export function ktabGetViewValue(
-  cellValue?: KTabStoreValue,
-): string | number | Date | null {
+export function ktabGetViewValue(cellValue?: KTabStoreValue): string | number | Date | null {
   if (!cellValue) {
     return null;
-  } else if ("Text" in cellValue) {
+  } else if ('Text' in cellValue) {
     return cellValue.Text;
-  } else if ("Decimal" in cellValue) {
+  } else if ('Decimal' in cellValue) {
     return cellValue.Decimal;
-  } else if ("Date" in cellValue) {
+  } else if ('Date' in cellValue) {
     return cellValue.Date;
   } else {
-    throw new Error("Invalid cell value type");
+    throw new Error('Invalid cell value type');
   }
 }
 

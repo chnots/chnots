@@ -1,18 +1,19 @@
-import { genTID, TID } from "@/lib/id_util";
-import { ChnotKind, ChnotMeta } from "../../po";
-import RichMdwt from "../rich-chnot/rich-mdwt";
-import ExcalidrawChnot from "../rich-chnot/excalidraw";
-import KFileChnot from "../rich-chnot/kfile";
-import LLMChatChnot from "../rich-chnot/llmchat";
-import TableChnot from "../rich-chnot/table";
-import { memo, useCallback, useEffect, useRef } from "react";
-import { PostSaveArg } from "../rich-chnot/rich-chnot";
-import { SaveState } from "@/common/types";
-import { chnotMetaCommit } from "../../service";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import { useChnotSingleStore } from "../../store";
-import React from "react";
-import { mdwtCommit } from "@/krate/mdwt/service";
+import React, { memo, useCallback, useEffect, useRef } from 'react';
+
+import { ChnotKind, ChnotMeta } from '../../po';
+import { chnotMetaCommit } from '../../service';
+import { useChnotSingleStore } from '../../store';
+import ExcalidrawChnot from '../rich-chnot/excalidraw';
+import KFileChnot from '../rich-chnot/kfile';
+import LLMChatChnot from '../rich-chnot/llmchat';
+import RichMdwt from '../rich-chnot/rich-mdwt';
+import TableChnot from '../rich-chnot/table';
+
+import type { PostSaveArg } from '../rich-chnot/rich-chnot';
+import { SaveState } from '@/common/types';
+import { useKSpaceStore } from '@/krate/kspace/store';
+import { mdwtCommit } from '@/krate/mdwt/service';
+import { genTID, type TID } from '@/lib/id_util';
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -46,9 +47,9 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         kspace: kspace,
         tid: genTID(),
       };
-      let title = "";
+      let title = '';
       if (arg.title !== titleRef.current) {
-        title = arg.title ?? "";
+        title = arg.title ?? '';
         titleRef.current = title;
         if (kind !== ChnotKind.MDWT) {
           await mdwtCommit({
@@ -59,11 +60,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
           });
         }
       }
-      if (
-        saveStateRef.current === SaveState.Initial &&
-        kind &&
-        arg.saveState === SaveState.Saved
-      ) {
+      if (saveStateRef.current === SaveState.Initial && kind && arg.saveState === SaveState.Saved) {
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
         overwrite({

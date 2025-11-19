@@ -1,17 +1,17 @@
-import { TID } from "@/lib/id_util";
-import RichChnot, { PostSaveArg } from "./rich-chnot";
-import MdwtChnot from "./mdwt";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { arraysAreEqual } from "@/lib/col-util";
-import { chnotMetaCommit, chnotMetaList } from "../../service";
-import { ChnotKind } from "../../po";
-import { SaveState } from "@/common/types";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import { cachedChnotMapByOtid } from "@/krate/chnot/store";
-import { useIsMobile } from "@/hooks/use-mobile";
-import clsx from "clsx";
-import { cn } from "@/lib/utils";
-import useResizeObserver from "@react-hook/resize-observer";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import useResizeObserver from '@react-hook/resize-observer';
+
+import { chnotMetaList } from '../../service';
+import MdwtChnot from './mdwt';
+import RichChnot, { type PostSaveArg } from './rich-chnot';
+
+import { useIsMobile } from '@/hooks/use-mobile';
+
+import { cachedChnotMapByOtid } from '@/krate/chnot/store';
+import { useKSpaceStore } from '@/krate/kspace/store';
+import { arraysAreEqual } from '@/lib/col-util';
+import type { TID } from '@/lib/id_util';
+import { cn } from '@/lib/utils';
 
 const parseChnotsFromContent = (content: string): TID[] => {
   const regex = /\[\[([0-9]{16}?)\]\]/g;
@@ -42,7 +42,7 @@ const RichMdwt = ({
   whfull?: string;
   tryfetch: boolean;
 }) => {
-  console.log("render Chrome: ", otid);
+  console.log('render Chrome: ', otid);
 
   const { currentKSpace } = useKSpaceStore((e) => {
     return {
@@ -56,7 +56,7 @@ const RichMdwt = ({
   const [minHeight, setMinHeight] = useState<number | undefined>(200);
   const bodyRef = useRef<HTMLDivElement>(null);
   useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
-    console.log("set minheight", entry.contentRect.height);
+    console.log('set minheight', entry.contentRect.height);
     setMinHeight(entry.contentRect.height);
   });
   console.log(minHeight);
@@ -78,16 +78,14 @@ const RichMdwt = ({
   );
   useEffect(() => {
     updateChnots(initialContent);
-  }, []);
+  }, [updateChnots]);
 
-  console.log("rich chnots:", chnots);
+  console.log('rich chnots:', chnots);
   return (
     <div
       className={cn(
-        "h-full w-full max-w-4xl border p-1 m-1 rounded",
-        isMobile || chnots.length == 0
-          ? "flex flex-col divide-y"
-          : "grid grid-cols-2 divide-x",
+        'h-full w-full max-w-4xl border p-1 m-1 rounded',
+        isMobile || chnots.length == 0 ? 'flex flex-col divide-y' : 'grid grid-cols-2 divide-x',
         whfull,
       )}
     >

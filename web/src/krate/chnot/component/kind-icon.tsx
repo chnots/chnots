@@ -1,11 +1,9 @@
-import Icon from "@/common/component/icon";
-import { ChnotKind } from "../po";
-import { LucideProps } from "lucide-react";
+import { ChnotKind } from '../po';
 
-export const ChnotKindIcon = ({
-  kind,
-  ...rest
-}: { kind: ChnotKind } & LucideProps) => {
+import type { LucideProps } from 'lucide-react';
+import Icon from '@/common/component/icon';
+
+export const ChnotKindIcon = ({ kind, ...rest }: { kind: ChnotKind } & LucideProps) => {
   return kind === ChnotKind.MDWT ? (
     <Icon.Text {...rest} />
   ) : kind === ChnotKind.ExcalidrawV1 ? (

@@ -1,5 +1,5 @@
-import { TID } from "@/lib/id_util";
-import { Varchar } from "@/lib/types";
+import type { TID } from '@/lib/id_util';
+import type { Varchar } from '@/lib/types';
 
 export type Point2PointInfo = object;
 

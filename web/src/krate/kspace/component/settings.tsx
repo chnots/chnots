@@ -1,19 +1,27 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/common/component/ui/button";
+import { useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+import { ksapceArchive, kspaceCommit } from '../service';
+import { useKSpaceStore } from '../store';
+
+import { Badge } from '@/common/component/ui/badge';
+import { Button } from '@/common/component/ui/button';
+import { Checkbox } from '@/common/component/ui/checkbox';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
-  DialogClose,
-} from "@/common/component/ui/dialog";
-import { Input } from "@/common/component/ui/input";
-import { Label } from "@/common/component/ui/label";
+} from '@/common/component/ui/dialog';
+import { Input } from '@/common/component/ui/input';
+import { Label } from '@/common/component/ui/label';
+import { Switch } from '@/common/component/ui/switch';
 import {
   Table,
   TableBody,
@@ -21,19 +29,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/common/component/ui/table";
-import { Switch } from "@/common/component/ui/switch";
-import { Checkbox } from "@/common/component/ui/checkbox";
-import { Badge } from "@/common/component/ui/badge";
-import { Trash2, PlusCircle, Pencil } from "lucide-react";
-import { genTID } from "@/lib/id_util";
-import { ksapceArchive, kspaceCommit } from "../service";
-import { useKSpaceStore } from "../store";
+} from '@/common/component/ui/table';
+import { genTID } from '@/lib/id_util';
 
 // Form validation schema
 const kspaceSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  color: z.string().min(1, "Color is required"),
+  name: z.string().min(1, 'Name is required'),
+  color: z.string().min(1, 'Color is required'),
   managers: z.array(z.string()),
   public_access: z.boolean(),
 });
@@ -59,12 +61,12 @@ export default function KSpaceSettings() {
 
   const [editingKSpaceName, setEditingKSpace] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const preservedNames = new Set(["private", "work", "public"]);
+  const preservedNames = new Set(['private', 'work', 'public']);
   const form = useForm<KSpaceFormValues>({
     resolver: zodResolver(kspaceSchema),
     defaultValues: {
-      name: "",
-      color: "#3b82f6",
+      name: '',
+      color: '#3b82f6',
       managers: [],
       public_access: false,
     },
@@ -85,8 +87,8 @@ export default function KSpaceSettings() {
         }
       } else {
         form.reset({
-          name: "",
-          color: "#3b82f6",
+          name: '',
+          color: '#3b82f6',
           managers: [],
           public_access: false,
         });
@@ -127,42 +129,32 @@ export default function KSpaceSettings() {
       <div className="flex justify-between items-center mb-6">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button
-              variant="default"
-              className="gap-2"
-              aria-label="Add new kspace"
-            >
+            <Button variant="default" className="gap-2" aria-label="Add new kspace">
               <PlusCircle size={16} />
               Add KSpace
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>
-                {editingKSpaceName ? "Edit KSpace" : "Create New KSpace"}
-              </DialogTitle>
+              <DialogTitle>{editingKSpaceName ? 'Edit KSpace' : 'Create New KSpace'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">KSpace Name</Label>
                 {editingKSpaceName ? (
-                  <Badge variant={"default"} className="capitalize">
+                  <Badge variant={'default'} className="capitalize">
                     {editingKSpaceName}
                   </Badge>
                 ) : (
                   <>
                     <Input
                       id="name"
-                      {...form.register("name")}
+                      {...form.register('name')}
                       placeholder="Enter kspace name"
-                      aria-invalid={
-                        form.formState.errors.name ? "true" : "false"
-                      }
+                      aria-invalid={form.formState.errors.name ? 'true' : 'false'}
                     />
                     {form.formState.errors.name && (
-                      <p className="text-red-500 text-sm">
-                        {form.formState.errors.name.message}
-                      </p>
+                      <p className="text-red-500 text-sm">{form.formState.errors.name.message}</p>
                     )}
                   </>
                 )}
@@ -175,12 +167,10 @@ export default function KSpaceSettings() {
                     id="color"
                     type="color"
                     className="w-16 h-10 p-1"
-                    {...form.register("color")}
+                    {...form.register('color')}
                     aria-label="Select kspace color"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    {form.watch("color")}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{form.watch('color')}</span>
                 </div>
               </div>
 
@@ -189,24 +179,17 @@ export default function KSpaceSettings() {
                 <div className="grid gap-2">
                   {availableManagers.length > 0 ? (
                     availableManagers.map((manager) => (
-                      <div
-                        key={manager.tid}
-                        className="flex items-center gap-3"
-                      >
+                      <div key={manager.tid} className="flex items-center gap-3">
                         <Checkbox
                           id={`manager-${manager.tid}`}
-                          checked={form
-                            .watch("managers")
-                            .includes(manager.name)}
+                          checked={form.watch('managers').includes(manager.name)}
                           onCheckedChange={(checked) => {
-                            const managers = form.getValues("managers");
+                            const managers = form.getValues('managers');
                             const newManagers = checked
                               ? [...managers, manager.name]
-                              : managers.filter(
-                                  (name) => name !== manager.name,
-                                );
+                              : managers.filter((name) => name !== manager.name);
 
-                            form.setValue("managers", newManagers);
+                            form.setValue('managers', newManagers);
                           }}
                           aria-label={`Select ${manager.name} as manager`}
                         />
@@ -223,18 +206,13 @@ export default function KSpaceSettings() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No other kspaces available
-                    </p>
+                    <p className="text-sm text-muted-foreground">No other kspaces available</p>
                   )}
                 </div>
               </div>
 
               <div className="flex justify-between pt-2">
-                <Label
-                  htmlFor="access"
-                  className="flex flex-col space-y-1 items-start"
-                >
+                <Label htmlFor="access" className="flex flex-col space-y-1 items-start">
                   <span>Public Access</span>
                   <span className="text-xs font-normal text-muted-foreground">
                     Allow LLM to access this kspace
@@ -242,10 +220,8 @@ export default function KSpaceSettings() {
                 </Label>
                 <Switch
                   id="access"
-                  checked={form.watch("public_access")}
-                  onCheckedChange={(value) =>
-                    form.setValue("public_access", value)
-                  }
+                  checked={form.watch('public_access')}
+                  onCheckedChange={(value) => form.setValue('public_access', value)}
                   aria-label="Toggle public access"
                 />
               </div>
@@ -257,7 +233,7 @@ export default function KSpaceSettings() {
                   </Button>
                 </DialogClose>
                 <Button type="submit">
-                  {editingKSpaceName ? "Save Changes" : "Create KSpace"}
+                  {editingKSpaceName ? 'Save Changes' : 'Create KSpace'}
                 </Button>
               </DialogFooter>
             </form>
@@ -288,9 +264,7 @@ export default function KSpaceSettings() {
                         style={{ backgroundColor: kspace.color }}
                         aria-label={`Color: ${kspace.color}`}
                       />
-                      <span className="text-sm text-muted-foreground">
-                        {kspace.color}
-                      </span>
+                      <span className="text-sm text-muted-foreground">{kspace.color}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -320,10 +294,10 @@ export default function KSpaceSettings() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={kspace.public_access ? "default" : "secondary"}
+                      variant={kspace.public_access ? 'default' : 'secondary'}
                       className="capitalize"
                     >
-                      {kspace.public_access ? "Public" : "Private"}
+                      {kspace.public_access ? 'Public' : 'Private'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

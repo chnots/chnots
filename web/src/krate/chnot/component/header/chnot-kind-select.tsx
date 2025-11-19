@@ -1,5 +1,9 @@
-import Icon from "@/common/component/icon";
-import { Button } from "@/common/component/ui/button";
+import { ChnotKind } from '../../po';
+import { useChnotHeadStore } from '../../store';
+import { ChnotKindIcon } from '../kind-icon';
+
+import Icon from '@/common/component/icon';
+import { Button } from '@/common/component/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,10 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/common/component/ui/dropdown-menu";
-import { ChnotKindIcon } from "../kind-icon";
-import { ChnotKind } from "../../po";
-import { useChnotHeadStore } from "../../store";
+} from '@/common/component/ui/dropdown-menu';
 
 export const ChnotKindSelect = () => {
   const { kinds, setChnotKinds } = useChnotHeadStore((s) => {
@@ -38,10 +39,7 @@ export const ChnotKindSelect = () => {
         <DropdownMenuLabel>KSpace</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            key={"all"}
-            onClick={() => setChnotKinds((_) => [])}
-          >
+          <DropdownMenuItem key={'all'} onClick={() => setChnotKinds((_) => [])}>
             <Icon.Squirrel />
             <span>all</span>
           </DropdownMenuItem>
@@ -58,7 +56,7 @@ export const ChnotKindSelect = () => {
                   tabIndex={0}
                   aria-label={`Select ${e}`}
                   onKeyDown={(event) =>
-                    (event.key === "Enter" || event.key === " ") &&
+                    (event.key === 'Enter' || event.key === ' ') &&
                     setChnotKinds((kinds) => {
                       return [e, ...(kinds ?? [])];
                     })

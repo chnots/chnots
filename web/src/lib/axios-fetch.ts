@@ -1,16 +1,18 @@
 // Adopted from https://juejin.cn/post/7237840998985072698
 
-import { kspaceStore } from "@/krate/kspace/store";
-import axios from "axios";
+import axios from 'axios';
+import { toast } from 'sonner';
+
+import { recursiveDateConversion } from './date-utils';
+
 import type {
   AxiosInstance,
   AxiosResponse,
   CreateAxiosDefaults,
   InternalAxiosRequestConfig,
-} from "axios";
-import { recursiveDateConversion } from "./date-utils";
-import { useCommonStore } from "@/common/store";
-import { toast } from "sonner";
+} from 'axios';
+import { useCommonStore } from '@/common/store';
+import { kspaceStore } from '@/krate/kspace/store';
 
 class Request {
   private instance: AxiosInstance;
@@ -21,27 +23,24 @@ class Request {
 
     this.abortControllerMap = new Map();
 
-    this.instance.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        useCommonStore.getState().appendLog(config.baseURL ?? "");
-        const kspace = kspaceStore.getState();
-        config.headers!["K-kspace"] = kspace.currentKSpace;
-        config.headers!["K-mkspaces"] = kspace.mkspaces.join(",");
+    this.instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+      useCommonStore.getState().appendLog(config.baseURL ?? '');
+      const kspace = kspaceStore.getState();
+      config.headers!['K-kspace'] = kspace.currentKSpace;
+      config.headers!['K-mkspaces'] = kspace.mkspaces.join(',');
 
-        const controller = new AbortController();
-        const url = config.url || "";
-        config.signal = controller.signal;
+      const controller = new AbortController();
+      const url = config.url || '';
+      config.signal = controller.signal;
 
-        this.abortControllerMap.set(url, controller);
+      this.abortControllerMap.set(url, controller);
 
-        return config;
-      },
-      Promise.reject,
-    );
+      return config;
+    }, Promise.reject);
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => {
-        useCommonStore.getState().appendLog(response.data ?? "");
-        const url = response.config.url || "";
+        useCommonStore.getState().appendLog(response.data ?? '');
+        const url = response.config.url || '';
         this.abortControllerMap.delete(url);
 
         const data = recursiveDateConversion(response.data);
@@ -49,13 +48,9 @@ class Request {
         return response;
       },
       (err: Error) => {
-        useCommonStore
-          .getState()
-          .appendLog(`${err.message} -- ${err.stack} -- ${err.name}`);
+        useCommonStore.getState().appendLog(`${err.message} -- ${err.stack} -- ${err.name}`);
 
-        toast.error(
-          `Error! ${err.name}, ${err.message} ${err.stack} ${err.cause}`,
-        );
+        toast.error(`Error! ${err.name}, ${err.message} ${err.stack} ${err.cause}`);
 
         return Promise.reject(err);
       },
@@ -100,7 +95,7 @@ class Request {
 
 export const BASE_URL = import.meta.env.DEV
   ? import.meta.env.PUBLIC_BACKEND_URL
-  : window.location.protocol + "//" + window.location.host;
+  : window.location.protocol + '//' + window.location.host;
 
 const request = new Request({
   timeout: 30 * 1000,

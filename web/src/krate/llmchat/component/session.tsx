@@ -1,38 +1,35 @@
-import { TID } from "@/lib/id_util";
-import {
-  LLMChatBot,
-  LLMChatRecord,
-  LLMChatSession,
-  LLMChatTemplate,
-} from "../po";
-import LoadingPage from "@/common/pages/loading-page";
 import {
   createContext,
   createRef,
-  RefObject,
+  type RefObject,
+  useCallback,
   useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
-} from "react";
-import { createStore, StoreApi, useStore } from "zustand";
-import { useShallow } from "zustand/react/shallow";
+} from 'react';
+import { createStore, type StoreApi, useStore } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
-import LLMChatTemplateList from "./template-list";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { RecordAnswering } from "./record-response";
+import RecordAssistant, { RecordSystem } from './record-assistant';
+import { RecordAnswering } from './record-response';
+import RecordUser from './record-user';
+import TemplateForm from './template-form';
+import LLMChatTemplateList from './template-list';
+import UserInput from './user-input';
 
-import { useLLMChatStore } from "@/krate/llmchat/store";
+import type { LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate } from '../po';
+import { Dialog } from '@/common/component/ui/dialog';
+import LoadingPage from '@/common/pages/loading-page';
 import {
   llmchatRecordCommit,
   llmchatSessionCommit,
   llmchatSessionRecordTruncate,
   llmchatTemplateCommit,
-} from "@/krate/llmchat/service";
-import RecordUser from "./record-user";
-import RecordAssistant, { RecordSystem } from "./record-assistant";
-import UserInput from "./user-input";
-import { genTID } from "@/lib/id_util";
-import TemplateForm from "./template-form";
-import { Dialog } from "@/common/component/ui/dialog";
+} from '@/krate/llmchat/service';
+import { useLLMChatStore } from '@/krate/llmchat/store';
+import { genTID, type TID } from '@/lib/id_util';
 
 export type LLMChatContextProps = {
   sessionOtid: TID;
@@ -101,7 +98,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
     },
     updateRecord(record) {
       set((prev) => {
-        console.log("prev", prev.persistedIds);
+        console.log('prev', prev.persistedIds);
         prev.persistedIds.current!.delete(record.otid);
         return {
           ...prev,
@@ -153,7 +150,7 @@ export const newTemplateSession = (
   const session: LLMChatSession = {
     otid: sessionOtid || genTID(),
     template_otid: template.otid,
-    title: "Untitled",
+    title: 'Untitled',
     tid: genTID(),
   };
 
@@ -161,9 +158,9 @@ export const newTemplateSession = (
     otid: genTID(),
     session_otid: session.otid,
     content: template.prompt,
-    reasoning_content: "",
+    reasoning_content: '',
     role_id: template.otid,
-    role: "system",
+    role: 'system',
     tid: genTID(),
   };
 
@@ -173,12 +170,9 @@ export const newTemplateSession = (
   };
 };
 
-const LLMChatEditorContext =
-  createContext<StoreApi<LLMChatContextState> | null>(null);
+const LLMChatEditorContext = createContext<StoreApi<LLMChatContextState> | null>(null);
 
-export function useLLMChatComStore<T>(
-  selector: (state: LLMChatContextState) => T,
-) {
+export function useLLMChatComStore<T>(selector: (state: LLMChatContextState) => T) {
   const store = useContext(LLMChatEditorContext);
 
   return useStore(
@@ -196,14 +190,10 @@ export function LLMChatEditorProvider({
   props: LLMChatContextProps;
   children: React.ReactNode;
 }) {
-  const [store] = useState<StoreApi<LLMChatContextState>>(
-    createLLMChatStore(props),
-  );
+  const [store] = useState<StoreApi<LLMChatContextState>>(createLLMChatStore(props));
 
   return store ? (
-    <LLMChatEditorContext.Provider value={store}>
-      {children}
-    </LLMChatEditorContext.Provider>
+    <LLMChatEditorContext.Provider value={store}>{children}</LLMChatEditorContext.Provider>
   ) : (
     <LoadingPage />
   );
@@ -249,7 +239,7 @@ const SessionContainer = ({
       setTemplate: store.setTemplate,
     };
   });
-  console.log("render SessionContainer", sessionOtid);
+  console.log('render SessionContainer', sessionOtid);
 
   const { refreshTemplates, refreshBots } = useLLMChatStore();
   useEffect(() => {
@@ -274,14 +264,14 @@ const SessionContainer = ({
       if (
         session &&
         // At least one user message is inserted
-        records?.some((e) => e.role === "user") &&
+        records?.some((e) => e.role === 'user') &&
         !readonly
       ) {
         const pids = persistedIds.current!;
         if (!pids.has(session.otid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
-          console.log("session,", pids);
+          console.log('session,', pids);
           await llmchatSessionCommit({
             session: session,
           });
@@ -293,7 +283,7 @@ const SessionContainer = ({
         for (const record of records) {
           if (!pids.has(record.otid)) {
             await llmchatRecordCommit(record);
-            console.log("insert record", record);
+            console.log('insert record', record);
             pids.add(record.otid);
           }
         }
@@ -309,8 +299,8 @@ const SessionContainer = ({
           session_otid: session.otid,
           pre_record_otid: records.at(-1)?.otid,
           content,
-          reasoning_content: "",
-          role: "user",
+          reasoning_content: '',
+          role: 'user',
           tid: genTID(),
         };
         appendRecord(record);
@@ -327,19 +317,18 @@ const SessionContainer = ({
     if (contentRef.current) {
       const rect = contentRef.current.getBoundingClientRect();
       // 50 is a experience value.
-      const atBottom =
-        Math.abs(rect.y - rect.height - 50) > contentRef.current.scrollHeight;
+      const atBottom = Math.abs(rect.y - rect.height - 50) > contentRef.current.scrollHeight;
       atBottomRef.current = atBottom;
     }
   }, [atBottomRef]);
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
-  const scrollToEnd = useCallback((behavior: "auto" | "instant" | "smooth") => {
+  const scrollToEnd = useCallback((behavior: 'auto' | 'instant' | 'smooth') => {
     bottomDivRef.current?.scrollIntoView({ behavior });
   }, []);
   const autoScrollToEnd = useCallback(() => {
     if (atBottomRef.current) {
-      scrollToEnd("instant");
+      scrollToEnd('instant');
     }
   }, [atBottomRef, scrollToEnd]);
 
@@ -358,13 +347,9 @@ const SessionContainer = ({
                     return a.otid > b.otid ? 1 : -1;
                   })
                   .map((record) => {
-                    return record.role === "user" ? (
-                      <RecordUser
-                        viewMode={readonly}
-                        record={record}
-                        key={record.otid}
-                      />
-                    ) : record.role === "system" ? (
+                    return record.role === 'user' ? (
+                      <RecordUser viewMode={readonly} record={record} key={record.otid} />
+                    ) : record.role === 'system' ? (
                       <RecordSystem
                         viewMode={readonly}
                         timestamp={new Date(record.otid / 1e3).toISOString()}
@@ -380,7 +365,7 @@ const SessionContainer = ({
                       />
                     );
                   })}
-                {records.at(-1)?.role === "user" && bot && (
+                {records.at(-1)?.role === 'user' && bot && (
                   <RecordAnswering
                     onScrollToEnd={() => {
                       autoScrollToEnd();
@@ -400,7 +385,7 @@ const SessionContainer = ({
               onSelectTemplate={(template) => {
                 setTemplate(template);
               }}
-              onNew={function (): void {
+              onNew={(): void => {
                 setShowTemplateForm(true);
               }}
             />
@@ -409,7 +394,7 @@ const SessionContainer = ({
       </div>
       {readonly || (
         <UserInput
-          disabled={responsing || records?.at(-1)?.role === "user"}
+          disabled={responsing || records?.at(-1)?.role === 'user'}
           onAppendRecord={(content) => {
             return appendUserMsg(content);
           }}
@@ -417,7 +402,7 @@ const SessionContainer = ({
       )}
       {showTemplateForm && (
         <TemplateForm
-          onSubmit={async function (data: LLMChatTemplate): Promise<boolean> {
+          onSubmit={async (data: LLMChatTemplate): Promise<boolean> => {
             try {
               const _ = await llmchatTemplateCommit(data);
               return true;

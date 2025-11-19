@@ -1,24 +1,18 @@
-import Icon from "@/common/component/icon";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarInput,
-} from "@/common/component/ui/sidebar";
-import { Toggle } from "@/common/component/ui/toggle";
-import { Label } from "@radix-ui/react-dropdown-menu";
-import { Search } from "lucide-react";
-import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import { ChnotKindSelect } from "./chnot-kind-select";
-import { NavLink } from "react-router-dom";
-import { RoutePaths } from "@/router";
-import { Button } from "@/common/component/ui/button";
-import {
-  ChnotViewType,
-  useChnotHeadStore,
-  useChnotSingleStore,
-} from "../../store";
-import ChnotThreadSwitch from "./chnot-thread-switch";
+import { Label } from '@radix-ui/react-dropdown-menu';
+import { Search } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+
+import { type ChnotViewType, useChnotHeadStore, useChnotSingleStore } from '../../store';
+import { ChnotKindSelect } from './chnot-kind-select';
+import ChnotThreadSwitch from './chnot-thread-switch';
+
+import Icon from '@/common/component/icon';
+import { Button } from '@/common/component/ui/button';
+import { SidebarGroup, SidebarGroupContent, SidebarInput } from '@/common/component/ui/sidebar';
+import { Toggle } from '@/common/component/ui/toggle';
+import { KSpaceSelect } from '@/krate/kspace/component/kspace-select';
+import { useKSpaceStore } from '@/krate/kspace/store';
+import { RoutePaths } from '@/router';
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotHeadStore((store) => {
@@ -74,7 +68,7 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
       <div className="flex justify-between items-center">
         <div className="flex align-center space-x-1">
           <KSpaceSelect
-            onSelect={function (kspace: string): void {
+            onSelect={(kspace: string): void => {
               selectKSpace(kspace);
             }}
             currentKSpace={currentKSpace}
@@ -82,7 +76,7 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
           />
           <ChnotKindSelect />
           <Toggle
-            size={"sm"}
+            size={'sm'}
             onClick={() => {
               if (tags) {
                 setTagsInset(undefined);
@@ -96,7 +90,7 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
         </div>
         <div className="flex">
           <ChnotThreadSwitch viewType={viewType} />
-          <NavLink to={RoutePaths.Settings} id={"Settings"}>
+          <NavLink to={RoutePaths.Settings} id={'Settings'}>
             <div>
               <Icon.Settings className="w-4 h-4 mx-2" />
             </div>

@@ -1,9 +1,11 @@
-import { create } from "zustand";
-import { combine } from "zustand/middleware";
-import { LLMChatSession, LLMChatBot, LLMChatTemplate } from "./po";
-import { LLMChatBotListRsp } from "./dto";
-import { llmchatBotList, llmchatTemplateList } from "./service";
-import { TID } from "@/lib/id_util";
+import { create } from 'zustand';
+import { combine } from 'zustand/middleware';
+
+import { type LLMChatBot, LLMChatSession, type LLMChatTemplate } from './po';
+import { llmchatBotList, llmchatTemplateList } from './service';
+
+import type { LLMChatBotListRsp } from './dto';
+import type { TID } from '@/lib/id_util';
 
 interface State {
   refreshTemplates: () => void;

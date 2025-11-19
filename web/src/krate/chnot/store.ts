@@ -1,18 +1,20 @@
-import { insertMapAtIndex } from "@/lib/map-utils";
-import { create, useStore } from "zustand";
-import {
+import { create, useStore } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
+
+import { kspaceStore } from '../kspace/store';
+import { chnotSingleSearch, chnotThreadSearch } from './service';
+
+import type {
+  ChnotSearchReq,
+  ChnotSearchRspSingle,
   ChnotSearchRspThread,
   MdwtTagSearchType,
-  ChnotSearchRspSingle,
-  ChnotSearchReq,
-} from "./dto";
-import { TID } from "@/lib/id_util";
-import { DbCache } from "@/common/store";
-import { kspaceStore } from "../kspace/store";
-import { ChnotKind, ChnotMeta } from "./po";
-import { chnotSingleSearch, chnotThreadSearch } from "./service";
-import { useShallow } from "zustand/react/shallow";
-import { PageRsp } from "@/common/types";
+} from './dto';
+import type { ChnotKind, ChnotMeta } from './po';
+import type { DbCache } from '@/common/store';
+import type { PageRsp } from '@/common/types';
+import type { TID } from '@/lib/id_util';
+import { insertMapAtIndex } from '@/lib/map-utils';
 
 const emptyCacheMap = <T>(): DbCache<T> => {
   return {
@@ -134,7 +136,7 @@ export const createChnotStore = <T extends StateChnotLike>(
       }));
 
       const { searchStr, tags, kinds } = chnotHeadStore.getState();
-      console.log("page req: ", mapByOtid.nextStartIn, mapByOtid.pageSize);
+      console.log('page req: ', mapByOtid.nextStartIn, mapByOtid.pageSize);
       const pageRsp: PageRsp<T> = await searchApi({
         start_index: mapByOtid.nextStartIn,
         page_size: mapByOtid.pageSize,
@@ -150,7 +152,7 @@ export const createChnotStore = <T extends StateChnotLike>(
           cm.set(chnot.meta.otid, chnot);
         }
 
-        console.log("page rsp: ", pageRsp.next_start, pageRsp.has_next, cm);
+        console.log('page rsp: ', pageRsp.next_start, pageRsp.has_next, cm);
 
         return {
           ...state,
@@ -209,8 +211,7 @@ export const createChnotStore = <T extends StateChnotLike>(
       const toRemove2 = Array.from(
         [...dbCacheMap.values()]
           .filter((e) => {
-            const result =
-              e.meta.kspace == kspaceStore.getState().currentKSpace;
+            const result = e.meta.kspace == kspaceStore.getState().currentKSpace;
             return !result;
           })
           .map((e) => e.meta.otid),
@@ -229,10 +230,7 @@ export const createChnotStore = <T extends StateChnotLike>(
       set((prev) => ({
         ...prev,
         mapByOtid: cmm,
-        curOtid:
-          prev.curOtid && dbCacheMap.has(prev.curOtid)
-            ? prev.curOtid
-            : undefined,
+        curOtid: prev.curOtid && dbCacheMap.has(prev.curOtid) ? prev.curOtid : undefined,
       }));
     },
 
@@ -258,9 +256,7 @@ export function useChnotHeadStore<S>(selector: (state: HeadState) => S) {
 }
 
 const chnotSingleStore = createChnotStore(chnotSingleSearch);
-export function useChnotSingleStore<S>(
-  selector: (state: State<ChnotSearchRspSingle>) => S,
-) {
+export function useChnotSingleStore<S>(selector: (state: State<ChnotSearchRspSingle>) => S) {
   return useStore(
     chnotSingleStore,
     useShallow((store) => {
@@ -270,9 +266,7 @@ export function useChnotSingleStore<S>(
 }
 
 const chnotThreadStore = createChnotStore(chnotThreadSearch);
-export function useChnotThreadStore<S>(
-  selector: (state: State<ChnotSearchRspThread>) => S,
-) {
+export function useChnotThreadStore<S>(selector: (state: State<ChnotSearchRspThread>) => S) {
   return useStore(
     chnotThreadStore,
     useShallow((store) => {

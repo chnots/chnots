@@ -3,36 +3,35 @@
  * Check out the live demo at https://shadcn-datetime-picker-pro.vercel.app/
  * Find the latest source code at https://github.com/huybuidac/shadcn-datetime-picker
  */
-"use client";
+'use client';
 
-import * as React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  addHours,
+  addMonths,
+  endOfDay,
   endOfHour,
   endOfMinute,
+  endOfMonth,
+  endOfYear,
   format,
-  parse,
   getMonth,
   getYear,
+  parse,
   setHours,
+  setMilliseconds,
   setMinutes,
   setMonth as setMonthFns,
   setSeconds,
   setYear,
+  startOfDay,
   startOfHour,
   startOfMinute,
-  startOfYear,
   startOfMonth,
-  endOfMonth,
-  endOfYear,
-  addMonths,
-  subMonths,
-  setMilliseconds,
-  addHours,
+  startOfYear,
   subHours,
-  startOfDay,
-  endOfDay,
-} from "date-fns";
+  subMonths,
+} from 'date-fns';
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -41,22 +40,18 @@ import {
   ChevronUpIcon,
   Clock,
   XCircle,
-} from "lucide-react";
-import { DayPicker, Matcher, TZDate } from "react-day-picker";
-import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "@/common/component/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/common/component/ui/popover";
-import { ScrollArea } from "@/common/component/ui/scroll-area";
-import Icon from "../icon";
+} from 'lucide-react';
+import { DayPicker, type Matcher, TZDate } from 'react-day-picker';
 
-export type CalendarProps = Omit<
-  React.ComponentProps<typeof DayPicker>,
-  "mode"
->;
+import Icon from '../icon';
+
+import type * as React from 'react';
+import { Button, buttonVariants } from '@/common/component/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/common/component/ui/popover';
+import { ScrollArea } from '@/common/component/ui/scroll-area';
+import { cn } from '@/lib/utils';
+
+export type CalendarProps = Omit<React.ComponentProps<typeof DayPicker>, 'mode'>;
 
 const AM_VALUE = 0;
 const PM_VALUE = 1;
@@ -158,13 +153,8 @@ export function DateTimePicker({
   ...props
 }: DateTimePickerProps & CalendarProps) {
   const [open, setOpen] = useState(false);
-  const [monthYearPicker, setMonthYearPicker] = useState<
-    "month" | "year" | false
-  >(false);
-  const initDate = useMemo(
-    () => new TZDate(value || new Date(), timezone),
-    [value, timezone]
-  );
+  const [monthYearPicker, setMonthYearPicker] = useState<'month' | 'year' | false>(false);
+  const initDate = useMemo(() => new TZDate(value || new Date(), timezone), [value, timezone]);
 
   const [month, setMonth] = useState<Date>(initDate);
   const [date, setDate] = useState<Date>(initDate);
@@ -172,14 +162,8 @@ export function DateTimePicker({
   const endMonth = useMemo(() => {
     return setYear(month, getYear(month) + 1);
   }, [month]);
-  const minDate = useMemo(
-    () => (min ? new TZDate(min, timezone) : undefined),
-    [min, timezone]
-  );
-  const maxDate = useMemo(
-    () => (max ? new TZDate(max, timezone) : undefined),
-    [max, timezone]
-  );
+  const minDate = useMemo(() => (min ? new TZDate(min, timezone) : undefined), [min, timezone]);
+  const maxDate = useMemo(() => (max ? new TZDate(max, timezone) : undefined), [max, timezone]);
 
   const onDayChanged = useCallback(
     (d: Date) => {
@@ -192,7 +176,7 @@ export function DateTimePicker({
       }
       setDate(d);
     },
-    [setDate, setMonth]
+    [setDate, setMonth],
   );
   const onSubmit = useCallback(() => {
     onChange(new Date(date));
@@ -200,15 +184,15 @@ export function DateTimePicker({
   }, [date, onChange]);
 
   const onMonthYearChanged = useCallback(
-    (d: Date, mode: "month" | "year") => {
+    (d: Date, mode: 'month' | 'year') => {
       setMonth(d);
-      if (mode === "year") {
-        setMonthYearPicker("month");
+      if (mode === 'year') {
+        setMonthYearPicker('month');
       } else {
         setMonthYearPicker(false);
       }
     },
-    [setMonth, setMonthYearPicker]
+    [setMonth, setMonthYearPicker],
   );
   const onNextMonth = useCallback(() => {
     setMonth(addMonths(month, 1));
@@ -231,12 +215,12 @@ export function DateTimePicker({
   }, [date, value, open]);
 
   const dislayFormat = useMemo(() => {
-    if (!displayValue) return "Pick a date";
+    if (!displayValue) return 'Pick a date';
     return format(
       displayValue,
-      `${!hideTime ? "MMM" : "MMMM"} d, yyyy${
-        !hideTime ? (use12HourFormat ? " hh:mm:ss a" : " HH:mm:ss") : ""
-      }`
+      `${!hideTime ? 'MMM' : 'MMMM'} d, yyyy${
+        !hideTime ? (use12HourFormat ? ' hh:mm:ss a' : ' HH:mm:ss') : ''
+      }`,
     );
   }, [displayValue, hideTime, use12HourFormat]);
 
@@ -255,11 +239,11 @@ export function DateTimePicker({
         ) : (
           <div
             className={cn(
-              "flex w-full cursor-pointer items-center h-9 ps-3 pe-1 font-normal border border-input rounded-md text-sm shadow-sm",
-              !displayValue && "text-muted-foreground",
-              (!clearable || !value) && "pe-3",
-              disabled && "opacity-50 cursor-not-allowed",
-              classNames?.trigger
+              'flex w-full cursor-pointer items-center h-9 ps-3 pe-1 font-normal border border-input rounded-md text-sm shadow-sm',
+              !displayValue && 'text-muted-foreground',
+              (!clearable || !value) && 'pe-3',
+              disabled && 'opacity-50 cursor-not-allowed',
+              classNames?.trigger,
             )}
             tabIndex={0}
           >
@@ -293,38 +277,26 @@ export function DateTimePicker({
           <div className="text-md font-bold ms-2 flex items-center cursor-pointer">
             <div>
               <span
-                onClick={() =>
-                  setMonthYearPicker(
-                    monthYearPicker === "month" ? false : "month"
-                  )
-                }
+                onClick={() => setMonthYearPicker(monthYearPicker === 'month' ? false : 'month')}
               >
-                {format(month, "MMMM")}
+                {format(month, 'MMMM')}
               </span>
               <span
                 className="ms-1"
-                onClick={() =>
-                  setMonthYearPicker(
-                    monthYearPicker === "year" ? false : "year"
-                  )
-                }
+                onClick={() => setMonthYearPicker(monthYearPicker === 'year' ? false : 'year')}
               >
-                {format(month, "yyyy")}
+                {format(month, 'yyyy')}
               </span>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() =>
-                setMonthYearPicker(monthYearPicker ? false : "year")
-              }
+              onClick={() => setMonthYearPicker(monthYearPicker ? false : 'year')}
             >
               {monthYearPicker ? <ChevronUpIcon /> : <ChevronDownIcon />}
             </Button>
           </div>
-          <div
-            className={cn("flex space-x-2", monthYearPicker ? "hidden" : "")}
-          >
+          <div className={cn('flex space-x-2', monthYearPicker ? 'hidden' : '')}>
             <Button variant="ghost" size="icon" onClick={onPrevMonth}>
               <ChevronLeftIcon />
             </Button>
@@ -342,47 +314,44 @@ export function DateTimePicker({
             month={month}
             endMonth={endMonth}
             disabled={
-              [
-                max ? { after: max } : null,
-                min ? { before: min } : null,
-              ].filter(Boolean) as Matcher[]
+              [max ? { after: max } : null, min ? { before: min } : null].filter(
+                Boolean,
+              ) as Matcher[]
             }
             onMonthChange={setMonth}
             classNames={{
-              dropdowns: "flex w-full gap-2",
-              months: "flex w-full h-fit",
-              month: "flex flex-col w-full",
-              month_caption: "hidden",
-              button_previous: "hidden",
-              button_next: "hidden",
-              month_grid: "w-full border-collapse",
-              weekdays: "flex justify-between mt-2",
-              weekday:
-                "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-              week: "flex w-full justify-between mt-2",
-              day: "h-9 w-9 text-center text-sm p-0 relative flex items-center justify-center [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 rounded-1",
+              dropdowns: 'flex w-full gap-2',
+              months: 'flex w-full h-fit',
+              month: 'flex flex-col w-full',
+              month_caption: 'hidden',
+              button_previous: 'hidden',
+              button_next: 'hidden',
+              month_grid: 'w-full border-collapse',
+              weekdays: 'flex justify-between mt-2',
+              weekday: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
+              week: 'flex w-full justify-between mt-2',
+              day: 'h-9 w-9 text-center text-sm p-0 relative flex items-center justify-center [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 rounded-1',
               day_button: cn(
-                buttonVariants({ variant: "ghost" }),
-                "size-9 rounded-md p-0 font-normal aria-selected:opacity-100"
+                buttonVariants({ variant: 'ghost' }),
+                'size-9 rounded-md p-0 font-normal aria-selected:opacity-100',
               ),
-              range_end: "day-range-end",
+              range_end: 'day-range-end',
               selected:
-                "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-l-md rounded-r-md",
-              today: "bg-accent text-accent-foreground",
+                'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-l-md rounded-r-md',
+              today: 'bg-accent text-accent-foreground',
               outside:
-                "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-              disabled: "text-muted-foreground opacity-50",
-              range_middle:
-                "aria-selected:bg-accent aria-selected:text-accent-foreground",
-              hidden: "invisible",
+                'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
+              disabled: 'text-muted-foreground opacity-50',
+              range_middle: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
+              hidden: 'invisible',
             }}
             showOutsideDays={true}
             {...props}
           />
           <div
             className={cn(
-              "absolute top-0 left-0 bottom-0 right-0",
-              monthYearPicker ? "bg-popover" : "hidden"
+              'absolute top-0 left-0 bottom-0 right-0',
+              monthYearPicker ? 'bg-popover' : 'hidden',
             )}
           ></div>
           <MonthYearPicker
@@ -392,8 +361,8 @@ export function DateTimePicker({
             minDate={minDate}
             maxDate={maxDate}
             className={cn(
-              "absolute top-0 left-0 bottom-0 right-0",
-              monthYearPicker ? "" : "hidden"
+              'absolute top-0 left-0 bottom-0 right-0',
+              monthYearPicker ? '' : 'hidden',
             )}
           />
         </div>
@@ -429,15 +398,15 @@ function MonthYearPicker({
   value,
   minDate,
   maxDate,
-  mode = "month",
+  mode = 'month',
   onChange,
   className,
 }: {
   value: Date;
-  mode: "month" | "year";
+  mode: 'month' | 'year';
   minDate?: Date;
   maxDate?: Date;
-  onChange: (value: Date, mode: "month" | "year") => void;
+  onChange: (value: Date, mode: 'month' | 'year') => void;
   className?: string;
 }) {
   const yearRef = useRef<HTMLDivElement>(null);
@@ -461,7 +430,7 @@ function MonthYearPicker({
       const endM = endOfMonth(setMonthFns(value, i));
       if (minDate && endM < minDate) disabled = true;
       if (maxDate && startM > maxDate) disabled = true;
-      months.push({ value: i, label: format(new Date(0, i), "MMM"), disabled });
+      months.push({ value: i, label: format(new Date(0, i), 'MMM'), disabled });
     }
     return months;
   }, [value]);
@@ -475,29 +444,26 @@ function MonthYearPicker({
       if (maxDate && newDate > maxDate) {
         newDate = setMonthFns(newDate, getMonth(maxDate));
       }
-      onChange(newDate, "year");
+      onChange(newDate, 'year');
     },
-    [onChange, value, minDate, maxDate]
+    [onChange, value, minDate, maxDate],
   );
 
   useEffect(() => {
-    if (mode === "year") {
-      yearRef.current?.scrollIntoView({ behavior: "auto", block: "center" });
+    if (mode === 'year') {
+      yearRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' });
     }
   }, [mode, value]);
   return (
     <div className={cn(className)}>
       <ScrollArea className="h-full">
-        {mode === "year" && (
+        {mode === 'year' && (
           <div className="grid grid-cols-4">
             {years.map((year) => (
-              <div
-                key={year.value}
-                ref={year.value === getYear(value) ? yearRef : undefined}
-              >
+              <div key={year.value} ref={year.value === getYear(value) ? yearRef : undefined}>
                 <Button
                   disabled={year.disabled}
-                  variant={getYear(value) === year.value ? "default" : "ghost"}
+                  variant={getYear(value) === year.value ? 'default' : 'ghost'}
                   className="rounded-full"
                   onClick={() => onYearChange(year)}
                 >
@@ -507,18 +473,16 @@ function MonthYearPicker({
             ))}
           </div>
         )}
-        {mode === "month" && (
+        {mode === 'month' && (
           <div className="grid grid-cols-3 gap-4">
             {months.map((month) => (
               <Button
                 key={month.value}
                 size="lg"
                 disabled={month.disabled}
-                variant={getMonth(value) === month.value ? "default" : "ghost"}
+                variant={getMonth(value) === month.value ? 'default' : 'ghost'}
                 className="rounded-full"
-                onClick={() =>
-                  onChange(setMonthFns(value, month.value), "month")
-                }
+                onClick={() => onChange(setMonthFns(value, month.value), 'month')}
               >
                 {month.label}
               </Button>
@@ -549,23 +513,16 @@ function TimePicker({
   onChange: (date: Date) => void;
   min?: Date;
   max?: Date;
-  timePicker?: DateTimePickerProps["timePicker"];
+  timePicker?: DateTimePickerProps['timePicker'];
 }) {
   // hours24h = HH
   // hours12h = hh
   const formatStr = useMemo(
-    () =>
-      use12HourFormat
-        ? "yyyy-MM-dd hh:mm:ss.SSS a xxxx"
-        : "yyyy-MM-dd HH:mm:ss.SSS xxxx",
-    [use12HourFormat]
+    () => (use12HourFormat ? 'yyyy-MM-dd hh:mm:ss.SSS a xxxx' : 'yyyy-MM-dd HH:mm:ss.SSS xxxx'),
+    [use12HourFormat],
   );
-  const [ampm, setAmpm] = useState(
-    format(value, "a") === "AM" ? AM_VALUE : PM_VALUE
-  );
-  const [hour, setHour] = useState(
-    use12HourFormat ? +format(value, "hh") : value.getHours()
-  );
+  const [ampm, setAmpm] = useState(format(value, 'a') === 'AM' ? AM_VALUE : PM_VALUE);
+  const [hour, setHour] = useState(use12HourFormat ? +format(value, 'hh') : value.getHours());
   const [minute, setMinute] = useState(value.getMinutes());
   const [second, setSecond] = useState(value.getSeconds());
 
@@ -579,7 +536,7 @@ function TimePicker({
         minute,
         second,
         ampm,
-      })
+      }),
     );
   }, [hour, minute, second, ampm, formatStr, use12HourFormat]);
 
@@ -602,11 +559,11 @@ function TimePicker({
         if (max && hStart > max) disabled = true;
         return {
           value: hourValue,
-          label: hourValue.toString().padStart(2, "0"),
+          label: hourValue.toString().padStart(2, '0'),
           disabled,
         };
       }),
-    [value, min, max, use12HourFormat, ampm]
+    [value, min, max, use12HourFormat, ampm],
   );
   const minutes: TimeOption[] = useMemo(() => {
     const anchorDate = setHours(value, _hourIn24h);
@@ -619,16 +576,13 @@ function TimePicker({
       if (max && mStart > max) disabled = true;
       return {
         value: i,
-        label: i.toString().padStart(2, "0"),
+        label: i.toString().padStart(2, '0'),
         disabled,
       };
     });
   }, [value, min, max, _hourIn24h]);
   const seconds: TimeOption[] = useMemo(() => {
-    const anchorDate = setMilliseconds(
-      setMinutes(setHours(value, _hourIn24h), minute),
-      0
-    );
+    const anchorDate = setMilliseconds(setMinutes(setHours(value, _hourIn24h), minute), 0);
     const _min = min ? setMilliseconds(min, 0) : undefined;
     const _max = max ? setMilliseconds(max, 0) : undefined;
     return Array.from({ length: 60 }, (_, i) => {
@@ -638,7 +592,7 @@ function TimePicker({
       if (_max && sDate > _max) disabled = true;
       return {
         value: i,
-        label: i.toString().padStart(2, "0"),
+        label: i.toString().padStart(2, '0'),
         disabled,
       };
     });
@@ -647,8 +601,8 @@ function TimePicker({
     const startD = startOfDay(value);
     const endD = endOfDay(value);
     return [
-      { value: AM_VALUE, label: "AM" },
-      { value: PM_VALUE, label: "PM" },
+      { value: AM_VALUE, label: 'AM' },
+      { value: PM_VALUE, label: 'PM' },
     ].map((v) => {
       let disabled = false;
       const start = addHours(startD, v.value * 12);
@@ -668,9 +622,9 @@ function TimePicker({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (open) {
-        hourRef.current?.scrollIntoView({ behavior: "auto" });
-        minuteRef.current?.scrollIntoView({ behavior: "auto" });
-        secondRef.current?.scrollIntoView({ behavior: "auto" });
+        hourRef.current?.scrollIntoView({ behavior: 'auto' });
+        minuteRef.current?.scrollIntoView({ behavior: 'auto' });
+        secondRef.current?.scrollIntoView({ behavior: 'auto' });
       }
     }, 1);
     return () => clearTimeout(timeoutId);
@@ -710,7 +664,7 @@ function TimePicker({
       }
       setHour(v.value);
     },
-    [setHour, use12HourFormat, value, formatStr, minute, second, ampm]
+    [setHour, use12HourFormat, value, formatStr, minute, second, ampm],
   );
 
   const onMinuteChange = useCallback(
@@ -745,7 +699,7 @@ function TimePicker({
       }
       setMinute(v.value);
     },
-    [setMinute, use12HourFormat, value, formatStr, hour, second, ampm]
+    [setMinute, use12HourFormat, value, formatStr, hour, second, ampm],
   );
 
   const onAmpmChange = useCallback(
@@ -786,32 +740,27 @@ function TimePicker({
       }
       setAmpm(v.value);
     },
-    [setAmpm, use12HourFormat, value, formatStr, hour, minute, second, min, max]
+    [setAmpm, use12HourFormat, value, formatStr, hour, minute, second, min, max],
   );
 
   const display = useMemo(() => {
     const arr = [];
-    for (const element of ["hour", "minute", "second"]) {
+    for (const element of ['hour', 'minute', 'second']) {
       if (!timePicker || timePicker[element as keyof typeof timePicker]) {
-        if (element === "hour") {
-          arr.push(use12HourFormat ? "hh" : "HH");
+        if (element === 'hour') {
+          arr.push(use12HourFormat ? 'hh' : 'HH');
         } else {
-          arr.push(element === "minute" ? "mm" : "ss");
+          arr.push(element === 'minute' ? 'mm' : 'ss');
         }
       }
     }
-    return format(value, arr.join(":") + (use12HourFormat ? " a" : ""));
+    return format(value, arr.join(':') + (use12HourFormat ? ' a' : ''));
   }, [value, use12HourFormat, timePicker]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="justify-between"
-        >
+        <Button variant="outline" role="combobox" aria-expanded={open} className="justify-between">
           <Clock className="mr-2 size-4" />
           {display}
           <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
@@ -824,10 +773,7 @@ function TimePicker({
               <ScrollArea className="h-full flex-grow">
                 <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
                   {hours.map((v) => (
-                    <div
-                      key={v.value}
-                      ref={v.value === hour ? hourRef : undefined}
-                    >
+                    <div key={v.value} ref={v.value === hour ? hourRef : undefined}>
                       <TimeItem
                         option={v}
                         selected={v.value === hour}
@@ -844,10 +790,7 @@ function TimePicker({
               <ScrollArea className="h-full flex-grow">
                 <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
                   {minutes.map((v) => (
-                    <div
-                      key={v.value}
-                      ref={v.value === minute ? minuteRef : undefined}
-                    >
+                    <div key={v.value} ref={v.value === minute ? minuteRef : undefined}>
                       <TimeItem
                         option={v}
                         selected={v.value === minute}
@@ -864,10 +807,7 @@ function TimePicker({
               <ScrollArea className="h-full flex-grow">
                 <div className="flex grow flex-col items-stretch overflow-y-auto pe-2 pb-48">
                   {seconds.map((v) => (
-                    <div
-                      key={v.value}
-                      ref={v.value === second ? secondRef : undefined}
-                    >
+                    <div key={v.value} ref={v.value === second ? secondRef : undefined}>
                       <TimeItem
                         option={v}
                         selected={v.value === second}
@@ -919,13 +859,11 @@ const TimeItem = ({
   return (
     <Button
       variant="ghost"
-      className={cn("flex justify-center px-1 pe-2 ps-1", className)}
+      className={cn('flex justify-center px-1 pe-2 ps-1', className)}
       onClick={() => onSelect(option)}
       disabled={disabled}
     >
-      <div className="w-4">
-        {selected && <CheckIcon className="my-auto size-4" />}
-      </div>
+      <div className="w-4">{selected && <CheckIcon className="my-auto size-4" />}</div>
       <span className="ms-2">{option.label}</span>
     </Button>
   );
@@ -942,29 +880,16 @@ interface BuildTimeOptions {
 }
 
 function buildTime(options: BuildTimeOptions) {
-  const { use12HourFormat, value, formatStr, hour, minute, second, ampm } =
-    options;
+  const { use12HourFormat, value, formatStr, hour, minute, second, ampm } = options;
   let date: Date;
   if (use12HourFormat) {
     const dateStrRaw = format(value, formatStr);
     // yyyy-MM-dd hh:mm:ss.SSS a zzzz
     // 2024-10-14 01:20:07.524 AM GMT+00:00
-    let dateStr =
-      dateStrRaw.slice(0, 11) +
-      hour.toString().padStart(2, "0") +
-      dateStrRaw.slice(13);
-    dateStr =
-      dateStr.slice(0, 14) +
-      minute.toString().padStart(2, "0") +
-      dateStr.slice(16);
-    dateStr =
-      dateStr.slice(0, 17) +
-      second.toString().padStart(2, "0") +
-      dateStr.slice(19);
-    dateStr =
-      dateStr.slice(0, 24) +
-      (ampm == AM_VALUE ? "AM" : "PM") +
-      dateStr.slice(26);
+    let dateStr = dateStrRaw.slice(0, 11) + hour.toString().padStart(2, '0') + dateStrRaw.slice(13);
+    dateStr = dateStr.slice(0, 14) + minute.toString().padStart(2, '0') + dateStr.slice(16);
+    dateStr = dateStr.slice(0, 17) + second.toString().padStart(2, '0') + dateStr.slice(19);
+    dateStr = dateStr.slice(0, 24) + (ampm == AM_VALUE ? 'AM' : 'PM') + dateStr.slice(26);
     date = parse(dateStr, formatStr, value);
   } else {
     date = setHours(setMinutes(setSeconds(value, second), minute), hour);

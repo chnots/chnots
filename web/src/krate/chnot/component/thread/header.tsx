@@ -1,8 +1,9 @@
-import Icon from "@/common/component/icon";
-import { Button } from "@/common/component/ui/button";
-import { SidebarTrigger } from "@/common/component/ui/sidebar";
-import { ChnotKind } from "../../po";
-import { ChnotKindIcon } from "../kind-icon";
+import { ChnotKind } from '../../po';
+import { ChnotKindIcon } from '../kind-icon';
+
+import Icon from '@/common/component/icon';
+import { Button } from '@/common/component/ui/button';
+import { SidebarTrigger } from '@/common/component/ui/sidebar';
 
 const ChnotThreadHeadbar = ({ onNew }: { onNew: () => void }) => {
   return (

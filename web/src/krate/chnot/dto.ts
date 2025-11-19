@@ -1,7 +1,8 @@
-import { TID } from "@/lib/id_util";
-import { ChnotThreadMeta, ChnotKind, ChnotMeta } from "./po";
-import { DbText, Varchar } from "@/lib/types";
-import { MdwtToent, TodoEvent } from "../toent/po";
+import { MdwtToent, type TodoEvent } from '../toent/po';
+
+import type { ChnotKind, ChnotMeta, ChnotThreadMeta } from './po';
+import type { TID } from '@/lib/id_util';
+import type { DbText, Varchar } from '@/lib/types';
 
 export type MdwtTagSearchType = {
   Inset: string[];

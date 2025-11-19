@@ -1,20 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ChnotThreadMeta } from "../../po";
-import { genTID, TID } from "@/lib/id_util";
-import { PostSaveArg } from "../rich-chnot/rich-chnot";
-import LoadingPage from "@/common/pages/loading-page";
-import { SaveState } from "@/common/types";
-import RichMdwt from "../rich-chnot/rich-mdwt";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { ChnotSearchRspThread } from '../../dto';
 import {
   chnotThreadMetaFetch,
   chnotThreadMetaOverwrite,
   chnotThreadOrderCommit,
-} from "../../service";
-import { arraysAreEqual } from "@/lib/col-util";
-import { mdwtRecordList } from "@/krate/mdwt/service";
-import { MdwtRecord } from "@/krate/mdwt/po";
-import { ChnotSearchRspThread } from "../../dto";
-import { useChnotThreadStore } from "../../store";
+} from '../../service';
+import { useChnotThreadStore } from '../../store';
+import RichMdwt from '../rich-chnot/rich-mdwt';
+
+import type { ChnotThreadMeta } from '../../po';
+import type { PostSaveArg } from '../rich-chnot/rich-chnot';
+import LoadingPage from '@/common/pages/loading-page';
+import { SaveState } from '@/common/types';
+import type { MdwtRecord } from '@/krate/mdwt/po';
+import { mdwtRecordList } from '@/krate/mdwt/service';
+import { arraysAreEqual } from '@/lib/col-util';
+import { genTID, type TID } from '@/lib/id_util';
 
 /**
  * This is the main component for the `Chnots` app.
@@ -113,7 +115,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                   }
                 }}
                 content={mdwtMap[otid]?.content ?? undefined}
-                onChanged={function (): void {
+                onChanged={(): void => {
                   const inited = initializedOtids.current;
                   /**
                    * if this otid is not added, we think maybe we should add a new chnot to the end of chnot-thread.

@@ -1,31 +1,29 @@
-import { TID } from "@/lib/id_util";
-import { DbText, Varchar } from "@/lib/types";
+import type { TID } from '@/lib/id_util';
+import type { DbText, Varchar } from '@/lib/types';
 
-export type KTabColumnStoreKind = "str" | "i64" | "f64" | "date" | "blob";
+export type KTabColumnStoreKind = 'str' | 'i64' | 'f64' | 'date' | 'blob';
 
-export type KTabColumnViewKind = "string" | "date" | "decimal";
+export type KTabColumnViewKind = 'string' | 'date' | 'decimal';
 
 // To use Decimal to avoid any lost.
 type Decimal = string;
 
-export const ktabViewToStoreKind = (
-  kind: KTabColumnViewKind,
-): KTabColumnStoreKind => {
+export const ktabViewToStoreKind = (kind: KTabColumnViewKind): KTabColumnStoreKind => {
   switch (kind.toLowerCase()) {
-    case "string":
-      return "str";
-    case "integer":
-      return "i64";
-    case "float":
-      return "f64";
-    case "date":
-      return "date";
-    case "image":
-      return "str";
-    case "blob":
-      return "blob";
-    case "bool":
-      return "i64";
+    case 'string':
+      return 'str';
+    case 'integer':
+      return 'i64';
+    case 'float':
+      return 'f64';
+    case 'date':
+      return 'date';
+    case 'image':
+      return 'str';
+    case 'blob':
+      return 'blob';
+    case 'bool':
+      return 'i64';
     default:
       throw new Error(`unable to map ${kind}`);
   }

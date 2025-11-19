@@ -1,6 +1,6 @@
-import request from "@/lib/request";
-import { ToentGuessReq, ToentGuessRsp } from "./dto";
-import { ToentTimeEvent, TodoEvent } from "./po";
+import type { ToentGuessReq, ToentGuessRsp } from './dto';
+import type { TodoEvent, ToentTimeEvent } from './po';
+import request from '@/lib/request';
 
 export const toentTimeEventGuess = async (
   req: ToentGuessReq,

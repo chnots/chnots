@@ -1,16 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { SaveState } from "@/common/types";
-import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
-import ExcalidrawPreview from "@/krate/tool/excalidraw/component/excalidraw-preview";
+import Fullscreen from './fullscreen';
+
+import type { RichPropProps } from './rich-chnot';
+import { SaveState } from '@/common/types';
+import ExcalidrawEditor from '@/krate/tool/excalidraw/component/excalidraw-editor';
+import ExcalidrawPreview from '@/krate/tool/excalidraw/component/excalidraw-preview';
 import {
-  ExcalidrawChnotState,
+  type ExcalidrawChnotState,
   fetchExcalidraw,
+  type SaveFileCache,
   saveExcalidraw,
-  SaveFileCache,
-} from "@/krate/tool/excalidraw/service";
-import { RichPropProps } from "./rich-chnot";
-import Fullscreen from "./fullscreen";
+} from '@/krate/tool/excalidraw/service';
 
 const ExcalidrawChnot = ({
   otid,
@@ -36,14 +37,13 @@ const ExcalidrawChnot = ({
         }
       })
       .catch((err) => {
-        console.error("unable to load excalidraw", err);
+        console.error('unable to load excalidraw', err);
       });
   }, []);
 
   const directlySave = useCallback(
     (state: ExcalidrawChnotState, contentType: string) => {
-      const title =
-        state.elements.find((e) => e.type === "text")?.text || "Some Shapes";
+      const title = state.elements.find((e) => e.type === 'text')?.text || 'Some Shapes';
       saveExcalidraw({
         savedFilesRef,
         state,
@@ -64,7 +64,7 @@ const ExcalidrawChnot = ({
     [otid],
   );
 
-  console.log("ExcalidrawEditor", readonly, fullscreen, otid, state);
+  console.log('ExcalidrawEditor', readonly, fullscreen, otid, state);
 
   return (
     <div className="w-full flex flex-col">

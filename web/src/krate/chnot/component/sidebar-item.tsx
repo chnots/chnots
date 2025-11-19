@@ -1,14 +1,11 @@
-import React, { ForwardedRef } from "react";
-import { chnotShortDate } from "@/lib/date-utils";
-import Icon from "@/common/component/icon";
-import { StateChnotLike } from "@/krate/chnot/store";
-import {
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarMenuAction,
-  useSidebar,
-} from "@/common/component/ui/sidebar";
-import { MoreHorizontal } from "lucide-react";
+import React, { type ForwardedRef } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+
+import { chnotThreadMetaOverwrite } from '../service';
+import { ChnotKindIcon } from './kind-icon';
+
+import type { ChnotKind } from '../po';
+import Icon from '@/common/component/icon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,24 +15,22 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/common/component/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+} from '@/common/component/ui/dropdown-menu';
 import {
-  KSpaceIcon,
-  KSpaceSelectDropDownGroup,
-} from "@/krate/kspace/component/kspace-select";
-import { chnotThreadMetaOverwrite } from "../service";
-import { genTID, TID } from "@/lib/id_util";
-import { ChnotKind } from "../po";
-import { ChnotKindIcon } from "./kind-icon";
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '@/common/component/ui/sidebar';
+import type { StateChnotLike } from '@/krate/chnot/store';
+import { KSpaceIcon, KSpaceSelectDropDownGroup } from '@/krate/kspace/component/kspace-select';
+import { chnotShortDate } from '@/lib/date-utils';
+import { genTID, type TID } from '@/lib/id_util';
+import { cn } from '@/lib/utils';
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
-    {
-      tag,
-      focused,
-      onClick,
-    }: { tag: string; focused?: boolean; onClick: () => void },
+    { tag, focused, onClick }: { tag: string; focused?: boolean; onClick: () => void },
     ref: ForwardedRef<HTMLLIElement>,
   ) => {
     return (
@@ -44,14 +39,12 @@ const ChnotSidebarTagItem = React.forwardRef(
           size="lg"
           asChild
           onClick={onClick}
-          className={cn(focused ? "border" : "border border-transparent")}
+          className={cn(focused ? 'border' : 'border border-transparent')}
         >
           <div>
             <div className="flex flex-row text-xs m-2 space-x-2">
               <Icon.Hash className="h-4 w-4 min-w-4 text-green-600" />
-              <div className="relative text-xs line-clamp-1 break-all">
-                {tag.replace(RegExp("#"), "")}
-              </div>
+              <div className="relative text-xs line-clamp-1 break-all">{tag.replace(/#/, '')}</div>
             </div>
           </div>
         </SidebarMenuButton>
@@ -60,7 +53,7 @@ const ChnotSidebarTagItem = React.forwardRef(
   },
 );
 
-ChnotSidebarTagItem.displayName = "ChnotSidebarTagItem";
+ChnotSidebarTagItem.displayName = 'ChnotSidebarTagItem';
 
 const ChnotSidebarItem = React.forwardRef(
   (
@@ -91,22 +84,22 @@ const ChnotSidebarItem = React.forwardRef(
 
     const isSelected = curOtid === item.meta.otid;
 
-    const title = item.title?.startsWith("# ")
-      ? item.title.split("\n")[0].substring(2)
-      : (item.title?.substring(0, 500) ?? "<unknown>");
+    const title = item.title?.startsWith('# ')
+      ? item.title.split('\n')[0].substring(2)
+      : (item.title?.substring(0, 500) ?? '<unknown>');
 
     return (
       <SidebarMenuItem key={item.meta.otid}>
         <a
-          href={"#" + item.meta.otid}
+          href={'#' + item.meta.otid}
           key={item.meta.otid}
           onClick={() => {
             setCurOtid(item.meta.otid);
           }}
           className={cn(
-            "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
-            "hover:shadow-xs border",
-            isSelected ? "bg-background" : "bg-transparent border-transparent",
+            'group flex items-start gap-2 p-2 rounded-md transition-colors duration-150',
+            'hover:shadow-xs border',
+            isSelected ? 'bg-background' : 'bg-transparent border-transparent',
           )}
           tabIndex={0}
           aria-label={`Navigate to ${title}`}
@@ -125,16 +118,14 @@ const ChnotSidebarItem = React.forwardRef(
                 className="h-3.5 w-3.5 text-muted-foreground/60"
               />
             )}
-            {item.meta.pin_tid && (
-              <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
-            )}
+            {item.meta.pin_tid && <Icon.Pin className="h-3.5 w-3.5 text-red-900" />}
           </div>
 
           <h3
             className={cn(
-              "text-xs font-medium line-clamp-2 leading-tight break-all",
-              "text-foreground group-hover:text-sidebar-accent-foreground",
-              isSelected ? "text-sidebar-accent-foreground" : "text-foreground",
+              'text-xs font-medium line-clamp-2 leading-tight break-all',
+              'text-foreground group-hover:text-sidebar-accent-foreground',
+              isSelected ? 'text-sidebar-accent-foreground' : 'text-foreground',
             )}
             title={title}
           >
@@ -150,8 +141,8 @@ const ChnotSidebarItem = React.forwardRef(
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-48 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align={isMobile ? "end" : "start"}
+            side={isMobile ? 'bottom' : 'right'}
+            align={isMobile ? 'end' : 'start'}
           >
             <DropdownMenuItem onClick={onTogglePin}>
               <Icon.Pin className="text-muted-foreground" />
@@ -181,7 +172,7 @@ const ChnotSidebarItem = React.forwardRef(
                   />
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
-            </DropdownMenuSub>{" "}
+            </DropdownMenuSub>{' '}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
@@ -189,6 +180,6 @@ const ChnotSidebarItem = React.forwardRef(
   },
 );
 
-ChnotSidebarItem.displayName = "ChnotListItem";
+ChnotSidebarItem.displayName = 'ChnotListItem';
 
 export { ChnotSidebarItem, ChnotSidebarTagItem };

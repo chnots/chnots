@@ -1,6 +1,7 @@
-import { TID } from "@/lib/id_util";
-import { create } from "zustand";
-import { combine } from "zustand/middleware";
+import { create } from 'zustand';
+import { combine } from 'zustand/middleware';
+
+import type { TID } from '@/lib/id_util';
 
 interface State {
   onSearch: boolean;
@@ -13,7 +14,7 @@ const getDefaultState = (): State => {
   return {
     onSearch: false,
     showSidebar: true,
-    globalLog: "",
+    globalLog: '',
     showSettings: false,
   };
 };
@@ -43,12 +44,7 @@ export const useCommonStore = create(
       set((prev) => {
         return {
           ...prev,
-          globalLog:
-            prev.globalLog +
-            "\n\n" +
-            new Date().toLocaleTimeString() +
-            ": " +
-            log,
+          globalLog: prev.globalLog + '\n\n' + new Date().toLocaleTimeString() + ': ' + log,
         };
       });
     },

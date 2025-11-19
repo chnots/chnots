@@ -1,23 +1,20 @@
-"use client";
+'use client';
 
+import React from 'react';
 import {
   AccessorFn,
-  CellContext,
-  ColumnDef,
+  type CellContext,
+  type ColumnDef,
   ColumnMeta,
   Table,
-} from "@tanstack/react-table";
-import { Button } from "@/common/component/ui/button";
-import { Input } from "@/common/component/ui/input";
-import { Calendar } from "@/common/component/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/common/component/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import React from "react";
+} from '@tanstack/react-table';
+import { format } from 'date-fns';
+
+import { Button } from '@/common/component/ui/button';
+import { Calendar } from '@/common/component/ui/calendar';
+import { Input } from '@/common/component/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/common/component/ui/popover';
+import { cn } from '@/lib/utils';
 
 export type KTabRowData = {
   [key: string]: string | number | Date | null;
@@ -31,7 +28,7 @@ export type EditableCellProps = {
   };
   table: any; // Table<KTabRowData>;
   ktabProps: {
-    dataType?: "string" | "date" | "decimal";
+    dataType?: 'string' | 'date' | 'decimal';
     updateData: (rowIndex: number, columnId: string, value: any) => void;
   };
 } & CellContext<KTabRowData, unknown>;
@@ -57,29 +54,25 @@ const EditableCell = ({
   };
 
   if (!isEditing) {
-    if (dataType === "date" && value instanceof Date) {
-      return <span>{format(value, "PPP")}</span>;
+    if (dataType === 'date' && value instanceof Date) {
+      return <span>{format(value, 'PPP')}</span>;
     }
     return <span>{value}</span>;
   }
 
   switch (dataType) {
-    case "date":
+    case 'date':
       return (
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant={"outline"}
+              variant={'outline'}
               className={cn(
-                "w-[240px] pl-3 text-left font-normal",
-                !value && "text-muted-foreground",
+                'w-[240px] pl-3 text-left font-normal',
+                !value && 'text-muted-foreground',
               )}
             >
-              {value ? (
-                format(new Date(value), "PPP")
-              ) : (
-                <span>Pick a date</span>
-              )}
+              {value ? format(new Date(value), 'PPP') : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -95,7 +88,7 @@ const EditableCell = ({
           </PopoverContent>
         </Popover>
       );
-    case "decimal":
+    case 'decimal':
       return (
         <Input
           type="number"
@@ -107,7 +100,7 @@ const EditableCell = ({
     default: // string
       return (
         <Input
-          value={value ? (value as string) : ""}
+          value={value ? (value as string) : ''}
           onChange={(e) => setValue(e.target.value)}
           onBlur={onBlur}
         />

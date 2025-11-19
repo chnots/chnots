@@ -1,4 +1,4 @@
-import useWindowSize from "react-use/lib/useWindowSize";
+import useWindowSize from 'react-use/lib/useWindowSize';
 
 enum TailwindResponsiveWidth {
   sm = 640,

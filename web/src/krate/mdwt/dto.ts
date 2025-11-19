@@ -1,8 +1,8 @@
-import { TID } from "@/lib/id_util";
-import { DbText, Varchar } from "@/lib/types";
-import { MdwtTagSearchType } from "../chnot/dto";
-import { MdwtRecord } from "./po";
-import { TodoEvent } from "../toent/po";
+import type { MdwtTagSearchType } from '../chnot/dto';
+import type { TodoEvent } from '../toent/po';
+import type { MdwtRecord } from './po';
+import type { TID } from '@/lib/id_util';
+import type { DbText, Varchar } from '@/lib/types';
 
 export type MdwtRecordsReq = {
   mdwt_otids: TID[];

@@ -1,12 +1,12 @@
-import { TID as TID } from "@/lib/id_util";
-import { Varchar } from "@/lib/types";
+import type { TID } from '@/lib/id_util';
+import type { Varchar } from '@/lib/types';
 
 export enum ChnotKind {
-  MDWT = "mdwt",
-  ExcalidrawV1 = "exdrv1",
-  KFileV1 = "resov1",
-  KTab = "ktabv1",
-  LLMChat = "llm_chat",
+  MDWT = 'mdwt',
+  ExcalidrawV1 = 'exdrv1',
+  KFileV1 = 'resov1',
+  KTab = 'ktabv1',
+  LLMChat = 'llm_chat',
 }
 
 export type ChnotThreadMeta = {

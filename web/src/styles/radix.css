@@ -1,6 +1,6 @@
-@import "@radix-ui/colors/black-alpha.css";
-@import "@radix-ui/colors/mauve.css";
-@import "@radix-ui/colors/violet.css";
+@import '@radix-ui/colors/black-alpha.css';
+@import '@radix-ui/colors/mauve.css';
+@import '@radix-ui/colors/violet.css';
 
 .PopoverContent {
   border-radius: 4px;
@@ -23,19 +23,19 @@
     0 0 0 2px var(--grass-7);
 }
 
-.PopoverContent[data-state="open"][data-side="top"] {
+.PopoverContent[data-state='open'][data-side='top'] {
   animation-name: slideDownAndFade;
 }
 
-.PopoverContent[data-state="open"][data-side="right"] {
+.PopoverContent[data-state='open'][data-side='right'] {
   animation-name: slideLeftAndFade;
 }
 
-.PopoverContent[data-state="open"][data-side="bottom"] {
+.PopoverContent[data-state='open'][data-side='bottom'] {
   animation-name: slideUpAndFade;
 }
 
-.PopoverContent[data-state="open"][data-side="left"] {
+.PopoverContent[data-state='open'][data-side='left'] {
   animation-name: slideRightAndFade;
 }
 .PopoverArrow {
@@ -99,23 +99,23 @@
   will-change: transform, opacity;
 }
 
-.RadixDropmenuContent[data-side="top"],
-.RadixDropmenuSubContent[data-side="top"] {
+.RadixDropmenuContent[data-side='top'],
+.RadixDropmenuSubContent[data-side='top'] {
   animation-name: slideDownAndFade;
 }
 
-.RadixDropmenuContent[data-side="right"],
-.RadixDropmenuSubContent[data-side="right"] {
+.RadixDropmenuContent[data-side='right'],
+.RadixDropmenuSubContent[data-side='right'] {
   animation-name: slideLeftAndFade;
 }
 
-.RadixDropmenuContent[data-side="bottom"],
-.RadixDropmenuSubContent[data-side="bottom"] {
+.RadixDropmenuContent[data-side='bottom'],
+.RadixDropmenuSubContent[data-side='bottom'] {
   animation-name: slideUpAndFade;
 }
 
-.RadixDropmenuContent[data-side="left"],
-.RadixDropmenuSubContent[data-side="left"] {
+.RadixDropmenuContent[data-side='left'],
+.RadixDropmenuSubContent[data-side='left'] {
   animation-name: slideRightAndFade;
 }
 
