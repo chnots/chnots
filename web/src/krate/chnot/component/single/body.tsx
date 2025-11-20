@@ -83,31 +83,31 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   };
 
   return kind === ChnotKind.ExcalidrawV1 ? (
-			<div className="flex w-full h-full overflow-auto">
-				<ExcalidrawChnot {...props} />
-			</div>
-		) : kind === ChnotKind.KFileV1 ? (
-			<KFileChnot {...props} />
-		) : kind === ChnotKind.KTab ? (
-			<div className="w-full h-full">
-				<TableChnot {...props} />
-			</div>
-		) : kind === ChnotKind.LLMChat ? (
-			<div className="flex w-full h-full overflow-auto">
-				<LLMChatChnot {...props} />
-			</div>
-		) : (
-			<div className="flex flex-col w-full items-center m-0 p-1 min-h-100">
-				<RichMdwt
-					{...props}
-					tryfetch={true}
-					onPostSave={(arg) => {
-						handlePostSave(arg);
-					}}
-					onChanged={() => {}}
-				/>
-			</div>
-		);
+    <div className="flex w-full h-full overflow-auto">
+      <ExcalidrawChnot {...props} />
+    </div>
+  ) : kind === ChnotKind.KFileV1 ? (
+    <KFileChnot {...props} />
+  ) : kind === ChnotKind.KTab ? (
+    <div className="w-full h-full">
+      <TableChnot {...props} />
+    </div>
+  ) : kind === ChnotKind.LLMChat ? (
+    <div className="flex w-full h-full overflow-auto">
+      <LLMChatChnot {...props} />
+    </div>
+  ) : (
+    <div className="flex flex-col w-full items-center m-0 p-1 min-h-100">
+      <RichMdwt
+        {...props}
+        tryfetch={true}
+        onPostSave={(arg) => {
+          handlePostSave(arg);
+        }}
+        onChanged={() => {}}
+      />
+    </div>
+  );
 };
 
 export const ChnotSingleBodyMemo = React.memo(ChnotSingleBody);
