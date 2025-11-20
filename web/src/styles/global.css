@@ -1,5 +1,5 @@
 .wmde-markdown pre > code {
-  text-wrap: wrap !important;
+  text-wrap: wrap;
 }
 /* Firefox 滚动条样式 */
 * {

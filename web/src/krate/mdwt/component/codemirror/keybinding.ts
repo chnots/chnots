@@ -84,7 +84,7 @@ export const decreaseIndent: Command = (view: EditorView): boolean => {
 };
 
 export const generateKeybinding = () => {
-  const keyCommand = (key: string, run: Command, alwaysActive?: boolean): KeyBinding => {
+  const keyCommand = (key: string, run: Command, _alwaysActive?: boolean): KeyBinding => {
     return {
       key,
       run: (editor) => {

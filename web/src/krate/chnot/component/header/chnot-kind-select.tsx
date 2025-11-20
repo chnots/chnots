@@ -46,15 +46,13 @@ export const ChnotKindSelect = () => {
           {Object.values(ChnotKind).map((e) => (
             <DropdownMenuItem key={e}>
               <div className="flex items-center justify-between w-full">
-                <div
+                <Button
                   className="flex items-center flex-1 gap-2 cursor-pointer"
                   onClick={() =>
                     setChnotKinds((kinds) => {
                       return [e, ...(kinds ?? [])];
                     })
                   }
-                  tabIndex={0}
-                  aria-label={`Select ${e}`}
                   onKeyDown={(event) =>
                     (event.key === 'Enter' || event.key === ' ') &&
                     setChnotKinds((kinds) => {
@@ -64,7 +62,7 @@ export const ChnotKindSelect = () => {
                 >
                   <ChnotKindIcon kind={e} />
                   <span className="truncate">{e}</span>
-                </div>
+                </Button>
 
                 <Button
                   variant="ghost"

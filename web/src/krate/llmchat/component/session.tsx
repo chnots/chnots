@@ -1,11 +1,9 @@
 import {
   createContext,
-  createRef,
   type RefObject,
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -20,7 +18,6 @@ import LLMChatTemplateList from './template-list';
 import UserInput from './user-input';
 
 import type { LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate } from '../po';
-import { Dialog } from '@/common/component/ui/dialog';
 import LoadingPage from '@/common/pages/loading-page';
 import {
   llmchatRecordCommit,
@@ -87,7 +84,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
     pushPersisted(recordOtid) {
       set((prev) => {
         const ids = prev.persistedIds;
-        ids.current!.add(recordOtid);
+        ids.current?.add(recordOtid);
         return { ...prev, persistedIds: ids };
       });
     },
@@ -98,8 +95,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
     },
     updateRecord(record) {
       set((prev) => {
-        console.log('prev', prev.persistedIds);
-        prev.persistedIds.current!.delete(record.otid);
+        prev.persistedIds.current?.delete(record.otid);
         return {
           ...prev,
           records: prev.records?.map((e) => {
@@ -115,7 +111,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
     async regenrate(recordOtid) {
       const session = this.session;
       if (session && this.records) {
-        if (this.persistedIds.current!.has(recordOtid)) {
+        if (this.persistedIds.current?.has(recordOtid)) {
           await llmchatSessionRecordTruncate({
             session_otid: session.otid,
             remove_rid_included: recordOtid,
@@ -239,13 +235,12 @@ const SessionContainer = ({
       setTemplate: store.setTemplate,
     };
   });
-  console.log('render SessionContainer', sessionOtid);
 
   const { refreshTemplates, refreshBots } = useLLMChatStore();
   useEffect(() => {
     refreshTemplates();
     refreshBots();
-  }, []);
+  }, [refreshBots, refreshTemplates]);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef<boolean>(false);
@@ -257,7 +252,7 @@ const SessionContainer = ({
       setRecords(sr.records);
       setSession(sr.session);
     }
-  }, [template]);
+  }, [template, sessionOtid, setRecords, setSession, setTemplate]);
 
   useEffect(() => {
     (async () => {
@@ -265,13 +260,13 @@ const SessionContainer = ({
         session &&
         // At least one user message is inserted
         records?.some((e) => e.role === 'user') &&
-        !readonly
+        !readonly &&
+        persistedIds.current
       ) {
-        const pids = persistedIds.current!;
+        const pids = persistedIds.current;
         if (!pids.has(session.otid)) {
           // As the first record is always system template.
           session.title = records[1].content.substring(0, 400);
-          console.log('session,', pids);
           await llmchatSessionCommit({
             session: session,
           });
@@ -283,13 +278,12 @@ const SessionContainer = ({
         for (const record of records) {
           if (!pids.has(record.otid)) {
             await llmchatRecordCommit(record);
-            console.log('insert record', record);
             pids.add(record.otid);
           }
         }
       }
     })();
-  }, [session, records, readonly]);
+  }, [session, records, readonly, onPostSave, persistedIds.current]);
 
   const appendUserMsg = useCallback(
     (content: string) => {
@@ -310,7 +304,7 @@ const SessionContainer = ({
         return false;
       }
     },
-    [records, session],
+    [records, session, appendRecord, setResponsing],
   );
 
   const onScroll = useCallback(() => {
@@ -320,7 +314,7 @@ const SessionContainer = ({
       const atBottom = Math.abs(rect.y - rect.height - 50) > contentRef.current.scrollHeight;
       atBottomRef.current = atBottom;
     }
-  }, [atBottomRef]);
+  }, []);
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const scrollToEnd = useCallback((behavior: 'auto' | 'instant' | 'smooth') => {
@@ -330,7 +324,7 @@ const SessionContainer = ({
     if (atBottomRef.current) {
       scrollToEnd('instant');
     }
-  }, [atBottomRef, scrollToEnd]);
+  }, [scrollToEnd]);
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -365,14 +359,18 @@ const SessionContainer = ({
                       />
                     );
                   })}
-                {records.at(-1)?.role === 'user' && bot && (
-                  <RecordAnswering
-                    onScrollToEnd={() => {
-                      autoScrollToEnd();
-                    }}
-                    bot={bot}
-                  />
-                )}
+                {session &&
+                  bot &&
+                  records &&
+                  records.length > 0 &&
+                  records.at(-1)?.role === 'user' && (
+                    <RecordAnswering
+                      onScrollToEnd={() => {
+                        autoScrollToEnd();
+                      }}
+                      bot={bot}
+                    />
+                  )}
                 <div ref={bottomDivRef}></div>
               </>
             ) : (

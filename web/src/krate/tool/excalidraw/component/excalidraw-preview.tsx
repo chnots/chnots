@@ -129,6 +129,7 @@ export const ExcalidrawImage = ({
       }}
       className={rootClassName ?? ''}
       style={containerStyle}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: safe
       dangerouslySetInnerHTML={{ __html: Svg?.outerHTML ?? '' }}
     />
   );

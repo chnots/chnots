@@ -45,7 +45,7 @@ export const KSpaceSelectDropDownGroup = ({
 
   useEffect(() => {
     refreshKSpaces();
-  }, []);
+  }, [refreshKSpaces]);
 
   return (
     <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
@@ -53,10 +53,9 @@ export const KSpaceSelectDropDownGroup = ({
         <DropdownMenuRadioItem value={e.name} key={e.name}>
           <div className="flex items-center justify-between w-full px-0 py-0">
             <div
+              role="none"
               className="flex items-center flex-1 gap-2 cursor-pointer "
               onClick={() => onSelect(e.name)}
-              tabIndex={0}
-              aria-label={`Select ${e.name}`}
               onKeyDown={(event) =>
                 (event.key === 'Enter' || event.key === ' ') && onSelect(e.name)
               }
@@ -65,7 +64,7 @@ export const KSpaceSelectDropDownGroup = ({
               <span className="truncate">{e.name}</span>
             </div>
           </div>
-          {extra && extra(e)}
+          {extra?.(e)}
         </DropdownMenuRadioItem>
       ))}
     </DropdownMenuRadioGroup>

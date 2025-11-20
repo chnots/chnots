@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { combine } from 'zustand/middleware';
 
-import { type LLMChatBot, LLMChatSession, type LLMChatTemplate } from './po';
 import { llmchatBotList, llmchatTemplateList } from './service';
 
 import type { LLMChatBotListRsp } from './dto';
+import type { LLMChatBot, LLMChatTemplate } from './po';
 import type { TID } from '@/lib/id_util';
 
 interface State {

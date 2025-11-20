@@ -32,7 +32,7 @@ export async function chnotMetaCommit(req: ChnotMetaCommitReq): Promise<ChnotMet
 }
 
 export async function chnotMetaList(req: ChnotMetaListReq): Promise<ChnotMetaListRsp> {
-  if (req.otids.length == 0) {
+  if (req.otids.length === 0) {
     return { metas: [] };
   }
 

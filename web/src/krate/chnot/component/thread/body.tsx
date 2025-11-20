@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ChnotSearchRspThread } from '../../dto';
 import {
   chnotThreadMetaFetch,
   chnotThreadMetaOverwrite,
   chnotThreadOrderCommit,
 } from '../../service';
-import { useChnotThreadStore } from '../../store';
 import RichMdwt from '../rich-chnot/rich-mdwt';
 
 import type { ChnotThreadMeta } from '../../po';
@@ -36,12 +34,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { getMeta } = useChnotThreadStore((s) => {
-    return {
-      getMeta: s.getMeta,
-    };
-  });
-
   useEffect(() => {
     (async () => {
       try {
@@ -53,7 +45,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           savedChnotThreadMetaRef.current = rsp.thread_meta;
         }
 
-        if (rsp.chnot_meta_sorted.length == 0) {
+        if (rsp.chnot_meta_sorted.length === 0) {
           setChnotOrders([genTID()]);
         } else {
           const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
@@ -74,7 +66,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   }, [threadMeta]);
 
   const handlePostSaveOnChnot = useCallback(
-    async (arg: PostSaveArg) => {
+    async (_arg: PostSaveArg) => {
       if (!savedChnotThreadMetaRef.current) {
         chnotThreadMetaOverwrite({
           meta_otid: threadMeta.otid,
@@ -90,7 +82,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
             .map((e) => {
               return { otid: e };
             }),
-        }).then((rsp) => {
+        }).then((_rsp) => {
           savedChnotOrdersRef.current = chnotOrders;
         });
       }
@@ -104,7 +96,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         <LoadingPage />
       ) : (
         <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl items-center">
-          {chnotOrders.map((otid, index) => {
+          {chnotOrders.map((otid, _index) => {
             return (
               <RichMdwt
                 key={otid}
@@ -125,8 +117,8 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                   if (!inited.has(otid)) {
                     inited.add(otid);
 
-                    const lastOtid = chnotOrders.at(chnotOrders.length - 1)!;
-                    if (inited.has(lastOtid)) {
+                    const lastOtid = chnotOrders.at(chnotOrders.length - 1);
+                    if (lastOtid && inited.has(lastOtid)) {
                       setChnotOrders((prev) => {
                         return [...prev, genTID()];
                       });

@@ -4,7 +4,6 @@ import RecordFrame, { RecordButton } from './record-frame';
 import { useLLMChatComStore } from './session';
 
 import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
 import { Textarea } from '@/common/component/ui/textarea';
 import type { LLMChatRecord } from '@/krate/llmchat/po';
 

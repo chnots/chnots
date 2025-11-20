@@ -52,7 +52,7 @@ export default function KSpaceSettings() {
 
   useEffect(() => {
     refreshKSpaces();
-  }, []);
+  }, [refreshKSpaces]);
 
   const sortedKSpaces = [...kspaceMap.values()];
   sortedKSpaces.sort((s1, s2) => {
@@ -94,7 +94,7 @@ export default function KSpaceSettings() {
         });
       }
     }
-  }, [isDialogOpen, editingKSpaceName, form]);
+  }, [isDialogOpen, editingKSpaceName, form, kspaceMap.get]);
 
   const handleOverwriteKSpace = async (values: KSpaceFormValues) => {
     const kspace = { tid: genTID(), ...values };
@@ -262,7 +262,6 @@ export default function KSpaceSettings() {
                       <div
                         className="w-5 h-5 rounded-sm"
                         style={{ backgroundColor: kspace.color }}
-                        aria-label={`Color: ${kspace.color}`}
                       />
                       <span className="text-sm text-muted-foreground">{kspace.color}</span>
                     </div>

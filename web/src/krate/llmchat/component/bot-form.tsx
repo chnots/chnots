@@ -195,7 +195,7 @@ const BotForm = ({
               aria-label="Duplicate"
               onClick={() => {
                 setFormData((prev) => {
-                  return { ...prev, name: prev.name + ' -- Clone' };
+                  return { ...prev, name: `${prev.name} -- Clone` };
                 });
                 setBotId(genTID());
               }}

@@ -32,7 +32,6 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ description, errorDetails }
       role="alert"
       aria-live="assertive"
       className="w-full h-full flex flex-col bg-red-50 border-1 border-dashed border-red-500 rounded-lg p-4"
-      tabIndex={0}
       aria-label="Error notification"
       onClick={handleContainerClick}
       onKeyDown={handleContainerKeyDown}
@@ -43,10 +42,7 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ description, errorDetails }
 
       {message && (
         <div className="flex-1 min-h-0 overflow-hidden">
-          <pre
-            className="w-full h-full bg-white text-red-600 p-3 rounded border border-red-200 overflow-auto text-sm"
-            aria-label="Error details"
-          >
+          <pre className="w-full h-full bg-white text-red-600 p-3 rounded border border-red-200 overflow-auto text-sm">
             {message}
           </pre>
         </div>

@@ -25,7 +25,7 @@ import {
 import type { StateChnotLike } from '@/krate/chnot/store';
 import { KSpaceIcon, KSpaceSelectDropDownGroup } from '@/krate/kspace/component/kspace-select';
 import { chnotShortDate } from '@/lib/date-utils';
-import { genTID, type TID } from '@/lib/id_util';
+import type { TID } from '@/lib/id_util';
 import { cn } from '@/lib/utils';
 
 const ChnotSidebarTagItem = React.forwardRef(
@@ -62,7 +62,6 @@ const ChnotSidebarItem = React.forwardRef(
       showKSpace,
       curOtid,
       kind,
-      getCurrent,
       setCurOtid,
       unvalidate,
       onArchive,
@@ -74,11 +73,10 @@ const ChnotSidebarItem = React.forwardRef(
       kind?: ChnotKind;
       onArchive(): void;
       onTogglePin(): void;
-      getCurrent(): StateChnotLike | undefined;
       setCurOtid(cutOtid?: TID): void;
       unvalidate(toRemoves: TID[]): void;
     },
-    ref: ForwardedRef<HTMLLIElement>,
+    _ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const { isMobile } = useSidebar();
 
@@ -91,7 +89,7 @@ const ChnotSidebarItem = React.forwardRef(
     return (
       <SidebarMenuItem key={item.meta.otid}>
         <a
-          href={'#' + item.meta.otid}
+          href={`#${item.meta.otid}`}
           key={item.meta.otid}
           onClick={() => {
             setCurOtid(item.meta.otid);

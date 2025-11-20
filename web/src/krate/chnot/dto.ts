@@ -1,5 +1,4 @@
-import { MdwtToent, type TodoEvent } from '../toent/po';
-
+import type { TodoEvent } from '../toent/po';
 import type { ChnotKind, ChnotMeta, ChnotThreadMeta } from './po';
 import type { TID } from '@/lib/id_util';
 import type { DbText, Varchar } from '@/lib/types';

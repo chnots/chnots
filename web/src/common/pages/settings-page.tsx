@@ -98,10 +98,8 @@ const Settings = () => {
         <div className="m-8 max-w-4xl">
           {settingsEnum === SettingsEnum.KSpace ? (
             <KSpaceSettings />
-          ) : settingsEnum === SettingsEnum.Endpoint ? (
-            <EndpointSettings />
           ) : (
-            <></>
+            settingsEnum === SettingsEnum.Endpoint && <EndpointSettings />
           )}
         </div>
       </SidebarInset>

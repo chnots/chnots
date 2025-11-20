@@ -59,15 +59,8 @@ export const useLLMResponse = ({
   const [responseState, setResponseState] = useState<ResponseState>(emptyResponse(session, bot));
   const abortSignal = useRef<AbortController>(null);
 
-  useEffect(() => {
-    return () => {
-      doAbort();
-    };
-  }, []);
-
   const doPostResponse = useCallback(async () => {
     if (responseState.content.length === 0 && responseState.reasoningContent.length === 0) {
-      console.debug('llm result is empty');
       return;
     }
 
@@ -107,14 +100,19 @@ export const useLLMResponse = ({
         return { ...prev, step: ResponseStep.End };
       });
     }
-  }, [responseState, setResponseState]);
+  }, [responseState]);
 
   const doAbort = useCallback(() => {
     abortSignal.current?.abort();
     setResponseState((prev) => {
       return { ...prev, step: ResponseStep.Aborted };
     });
-  }, [abortSignal, setResponseState]);
+  }, []);
+  useEffect(() => {
+    return () => {
+      doAbort();
+    };
+  }, [doAbort]);
 
   const doResponse = useCallback(() => {
     setResponseState((prev) => {
@@ -147,7 +145,7 @@ export const useLLMResponse = ({
         if (text === '[DONE]') {
           return;
         }
-        if (text.trim().length == 0) {
+        if (text.trim().length === 0) {
           return;
         }
 
@@ -173,7 +171,6 @@ export const useLLMResponse = ({
         });
       },
       onclose() {
-        console.log('onclose');
         setResponseState((prev) => {
           return {
             ...prev,
@@ -185,7 +182,6 @@ export const useLLMResponse = ({
         throw err;
       },
     }).catch((err) => {
-      console.warn('unable to fetch kfiles', err);
       setResponseState((prev) => {
         return {
           ...prev,
@@ -195,7 +191,7 @@ export const useLLMResponse = ({
       });
       toast.error(`Error when ask for llm result. \n ${err}`);
     });
-  }, [setResponseState, abortSignal]);
+  }, [bot.body, records.map]);
 
   useEffect(() => {
     if (answerCtl === ResponseCtl.Abort && responseState.step !== ResponseStep.End) {
@@ -205,7 +201,7 @@ export const useLLMResponse = ({
       doResponse();
     }
     setAnswerCtl(undefined);
-  }, [session, bot, answerCtl, responseState, doAbort, doResponse, setAnswerCtl]);
+  }, [session, bot, answerCtl, responseState, doAbort, doResponse]);
 
   useEffect(() => {
     if (

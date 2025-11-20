@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 
 export const genUID = () => {
-  return uuid().replaceAll('-', '') + '-UID';
+  return `${uuid().replaceAll('-', '')}-UID`;
 };
 
 export type TID = number;

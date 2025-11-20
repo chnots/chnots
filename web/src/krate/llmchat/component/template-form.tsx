@@ -5,7 +5,6 @@ import { useLLMChatStore } from '../store';
 import type React from 'react';
 import KSVG from '@/common/component/svg';
 import { Button } from '@/common/component/ui/button';
-import { Dialog, DialogClose, DialogFooter, DialogPortal } from '@/common/component/ui/dialog';
 import { Input } from '@/common/component/ui/input';
 import { Label } from '@/common/component/ui/label';
 import { Textarea } from '@/common/component/ui/textarea';
@@ -39,15 +38,20 @@ const TemplateForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData?.name?.trim() === '' || formData?.prompt?.trim() === '') {
+    if (
+      !formData.name ||
+      !formData.prompt ||
+      formData?.name?.trim() === '' ||
+      formData?.prompt?.trim() === ''
+    ) {
       alert('Please fill in all fields.');
       return;
     }
 
     const toInsert: LLMChatTemplate = {
       otid: template ? template.otid : genTID(),
-      name: formData.name!,
-      prompt: formData.prompt!,
+      name: formData.name,
+      prompt: formData.prompt,
       svg_logo: formData.svg_logo && detectSVG(formData.svg_logo) ? formData.svg_logo : '',
       tid: genTID(),
     };

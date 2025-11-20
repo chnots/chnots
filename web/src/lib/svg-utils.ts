@@ -15,8 +15,7 @@ export async function fetchAndModifySvg(url: string) {
     const modifiedSvgString = new XMLSerializer().serializeToString(doc);
 
     return modifiedSvgString;
-  } catch (error) {
-    console.error('Error fetching or modifying SVG:', error);
+  } catch (_error) {
     return null; // Or throw the error, depending on your error handling strategy
   }
 }
@@ -29,8 +28,6 @@ export const detectSVG = (s: string) => {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(s, 'image/svg+xml');
-
-    console.log('doc: ', doc);
     const parserErrors = doc.getElementsByTagName('parsererror');
     if (parserErrors.length > 0) {
       return false;

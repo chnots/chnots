@@ -54,12 +54,6 @@ catalogs:
 
 importers:
 
-  .:
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.3.6
-        version: 2.3.6
-
   lib/jolpin-codemirror:
     dependencies:
       '@codemirror/commands':

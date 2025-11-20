@@ -7,15 +7,12 @@ const hasTauriProperty = (): boolean => {
   }
 
   const propertyNames = Object.getOwnPropertyNames(window);
-  console.log('all properties,', propertyNames);
 
   return propertyNames.some((prop) => prop.startsWith('__TAURI_'));
 };
 
 // Determine environment
 const isTauri = hasTauriProperty();
-
-console.log('isTauri', isTauri, typeof window !== 'undefined', hasTauriProperty());
 
 // Select the appropriate implementation
 const request = isTauri ? tauriRequest : axiosRequest;

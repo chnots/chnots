@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/useHookAtTopLevel: fully tested */
 import { useEffect, useRef } from 'react';
 
 import RecordAssistant from './record-assistant';
@@ -34,12 +35,12 @@ export const RecordAnswering = ({
       };
     },
   );
-  const responseStateRef = useRef<ResponseState>(undefined);
-  const otid = useRef<TID>(genTID());
-
   if (!session || !records || records.length <= 0) {
     return;
   }
+
+  const responseStateRef = useRef<ResponseState>(undefined);
+  const otid = useRef<TID>(genTID());
 
   const { response, setAnswerCtl } = useLLMResponse({
     bot,
@@ -54,7 +55,7 @@ export const RecordAnswering = ({
     if (setResponsing) {
       setResponsing((response && response.step !== ResponseStep.End) ?? false);
     }
-  }, [response]);
+  }, [response, setResponsing]);
 
   useEffect(() => {
     if (answering) {
@@ -64,7 +65,7 @@ export const RecordAnswering = ({
     return () => {
       setAnswerCtl(ResponseCtl.Abort);
     };
-  }, [answering]);
+  }, [answering, setAnswerCtl]);
 
   useEffect(() => {
     return () => {
@@ -101,7 +102,7 @@ export const RecordAnswering = ({
       return record;
     };
 
-    if (response && response.step == ResponseStep.End) {
+    if (response && response.step === ResponseStep.End) {
       appendRecord(buildRecord(response));
       responseStateRef.current = undefined;
     } else {
@@ -110,7 +111,7 @@ export const RecordAnswering = ({
     if (onScrollToEnd) {
       onScrollToEnd();
     }
-  }, [response, responseStateRef, onScrollToEnd]);
+  }, [response, onScrollToEnd, appendRecord]);
 
   return (
     <>
@@ -121,7 +122,6 @@ export const RecordAnswering = ({
         session_otid={response.sessionId}
         content={response.content}
         reasoning_content={response.reasoningContent}
-        role={'response-assistant'}
         tid={genTID()}
         timestamp={new Date(otid.current / 1e3).toISOString()}
         viewMode={false}

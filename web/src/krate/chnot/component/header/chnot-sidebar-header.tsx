@@ -2,7 +2,7 @@ import { Label } from '@radix-ui/react-dropdown-menu';
 import { Search } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
-import { type ChnotViewType, useChnotHeadStore, useChnotSingleStore } from '../../store';
+import { type ChnotViewType, useChnotHeadStore } from '../../store';
 import { ChnotKindSelect } from './chnot-kind-select';
 import ChnotThreadSwitch from './chnot-thread-switch';
 
@@ -29,7 +29,7 @@ const TagsView = () => {
           <Button
             key={tag}
             onClick={() => {
-              setTagsInset([...new Set(tags.Inset.filter((e) => e != tag))]);
+              setTagsInset([...new Set(tags.Inset.filter((e) => e !== tag))]);
             }}
           >
             {tag}

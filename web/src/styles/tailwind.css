@@ -1,7 +1,7 @@
-@import "tailwindcss";
-@plugin "tailwindcss-animate";
-@plugin "@tailwindcss/typography";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin 'tailwindcss-animate';
+@plugin '@tailwindcss/typography';
 
 /* https://github.com/uiwjs/react-markdown-preview/issues/200#issuecomment-1235548530 */
 @layer base {
@@ -137,7 +137,7 @@
 
 @layer utilities {
   .wmde-markdown {
-    background-color: transparent !important;
+    background-color: transparent;
   }
 }
 

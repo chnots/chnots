@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 
-const useDebugChanged = (value: any, title?: string) => {
-  useEffect(() => {
-    console.info(`>> ${title ?? value} changed`);
-  }, [value]);
+const useDebugChanged = (_value: any, _title?: string) => {
+  useEffect(() => {}, []);
 };
 
 export default useDebugChanged;

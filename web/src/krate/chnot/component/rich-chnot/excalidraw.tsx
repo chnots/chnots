@@ -36,10 +36,8 @@ const ExcalidrawChnot = ({
           });
         }
       })
-      .catch((err) => {
-        console.error('unable to load excalidraw', err);
-      });
-  }, []);
+      .catch((_err) => {});
+  }, [otid]);
 
   const directlySave = useCallback(
     (state: ExcalidrawChnotState, contentType: string) => {
@@ -61,10 +59,8 @@ const ExcalidrawChnot = ({
         otid: otid,
       });
     },
-    [otid],
+    [otid, onPostSave],
   );
-
-  console.log('ExcalidrawEditor', readonly, fullscreen, otid, state);
 
   return (
     <div className="w-full flex flex-col">

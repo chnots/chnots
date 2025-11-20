@@ -1,5 +1,3 @@
-import { type LLMChatBot, type LLMChatRecord, LLMChatSession, type LLMChatTemplate } from './po';
-
 import type {
   LLMChatBotListRsp,
   LLMChatSessionCommitReq,
@@ -10,7 +8,7 @@ import type {
   LLMChatTemplateArchiveReq,
   LLMChatTemplateListRsp,
 } from './dto';
-import { TID } from '@/lib/id_util';
+import type { LLMChatBot, LLMChatRecord, LLMChatTemplate } from './po';
 import request from '@/lib/request';
 
 export const llmchatBotList = async (): Promise<LLMChatBotListRsp> => {

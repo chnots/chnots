@@ -19,7 +19,7 @@ const ChnotSingleHeadbar = ({
   setKind: (kind: ChnotKind) => void;
   className?: string;
 }) => {
-  const { mapByOtid, getMeta } = useChnotSingleStore((s) => {
+  const { mapByOtid: _, getMeta } = useChnotSingleStore((s) => {
     return {
       mapByOtid: s.mapByOtid,
       getMeta: s.getMeta,

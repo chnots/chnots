@@ -27,7 +27,7 @@ const ChnotThreadMain = () => {
 
   useEffect(() => {
     setChangeCompCurOtid(setOtid);
-  }, [setOtid]);
+  }, [setChangeCompCurOtid]);
 
   const { kspace } = useKSpaceStore((s) => {
     return {
@@ -48,7 +48,7 @@ const ChnotThreadMain = () => {
         });
       }
     }
-  }, [otid]);
+  }, [otid, getMeta, kspace]);
 
   return (
     <div className="w-full h-full flex flex-col">

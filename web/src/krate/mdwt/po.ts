@@ -1,5 +1,4 @@
-import { type TodoEvent, TodoPriorityEnum, TodoStateEnum } from '../toent/po';
-
+import type { TodoEvent } from '../toent/po';
 import type { TID } from '@/lib/id_util';
 import type { DbText, Varchar } from '@/lib/types';
 

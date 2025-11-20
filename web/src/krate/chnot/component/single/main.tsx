@@ -21,7 +21,7 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
 
   useEffect(() => {
     setChangeCompCurOtid(setOtid);
-  }, [setOtid]);
+  }, [setChangeCompCurOtid]);
 
   useEffect(() => {
     if (otid) {
@@ -29,25 +29,31 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
     } else {
       setKind(undefined);
     }
-  }, [otid]);
-
-  console.log('otid, kind', otid, kind);
+  }, [otid, getMeta]);
 
   return (
-    <main className={cn('relative flex flex-col overflow-y-auto', className)}>
-      <ChnotSingleHeadbar
-        className={'sticky top-0 left-0'}
-        onNew={() => {
-          setOtid(genTID());
-        }}
-        setKind={(kind: ChnotKind) => {
-          setKind(kind);
-        }}
-        otid={otid}
-      />
-      {otid && <ChnotSingleBodyMemo key={otid} otid={otid} kind={kind ?? ChnotKind.MDWT} />}
-    </main>
-  );
+			<main
+				className={cn("relative flex flex-col overflow-y-auto", className)}
+			>
+				<ChnotSingleHeadbar
+					className={"sticky top-0 left-0"}
+					onNew={() => {
+						setOtid(genTID());
+					}}
+					setKind={(kind: ChnotKind) => {
+						setKind(kind);
+					}}
+					otid={otid}
+				/>
+				{otid && (
+					<ChnotSingleBodyMemo
+						key={otid}
+						otid={otid}
+						kind={kind ?? ChnotKind.MDWT}
+					/>
+				)}
+			</main>
+		);
 };
 
 export default ChnotSingleMain;

@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import {
-  type ChnotViewType,
-  type StateChnotLike,
-  useChnotHeadStore,
-  useChnotThreadStore,
-} from '../../store';
+import { type ChnotViewType, useChnotHeadStore, useChnotThreadStore } from '../../store';
 import Header from '../header/chnot-sidebar-header';
 import { ChnotSidebarItem, ChnotSidebarTagItem } from '../sidebar-item';
 
@@ -72,7 +67,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
       setTagList(undefined);
     }
     clearCache();
-  }, [tags, searchStr, mkspaces, kinds]);
+  }, [tags, searchStr, clearCache]);
 
   return (
     <Sidebar>
@@ -105,9 +100,6 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 item={chnot}
                 key={chnot.meta.otid}
                 showKSpace={mkspaces.length > 0}
-                getCurrent={(): StateChnotLike | undefined => {
-                  throw new Error('Function not implemented.');
-                }}
                 curOtid={curOtid}
                 setCurOtid={(curOtid?: TID) => {
                   setCurOtid(curOtid);
@@ -115,7 +107,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                     changeCompCurOtid(curOtid);
                   }
                 }}
-                unvalidate={(toRemoves: TID[]): void => {}}
+                unvalidate={(_toRemoves: TID[]): void => {}}
                 onArchive={(): void => {}}
                 onTogglePin={(): void => {}}
               />

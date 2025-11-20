@@ -55,7 +55,7 @@ const RecordFrame = ({
     } else {
       navigator.clipboard.writeText(contentRef.current);
     }
-  }, []);
+  }, [onCopy]);
 
   const [limitHeight, setLimitHeight] = useState<boolean | undefined>(initLimitHeight);
 
@@ -72,10 +72,10 @@ const RecordFrame = ({
           <span>{name}</span>
           <span>{timestamp ?? 'Now'}</span>
         </div>
-        {limitHeight != undefined && limitHeight ? (
+        {limitHeight !== undefined && limitHeight ? (
           <div className={'max-h-160 overflow-hidden'}>{children}</div>
         ) : (
-          <>{children}</>
+          children
         )}
 
         {viewMode || (
@@ -96,8 +96,9 @@ const RecordFrame = ({
               onClick={(): void => {
                 handleCopy();
               }}
-              children={<Icon.Copy />}
-            />
+            >
+              <Icon.Copy />
+            </RecordButton>
           </div>
         )}
       </div>

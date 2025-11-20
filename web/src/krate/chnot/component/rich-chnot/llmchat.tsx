@@ -26,7 +26,7 @@ const LLMChatChnot = ({
 
   useEffect(() => {
     refreshTemplates();
-  }, []);
+  }, [refreshTemplates]);
 
   // Used to load from database.
   useEffect(() => {
@@ -39,8 +39,10 @@ const LLMChatChnot = ({
         });
         if (session) {
           setProps(() => {
-            persistedIds.current!.add(session.otid);
-            records.forEach((r) => persistedIds.current!.add(r.otid));
+            persistedIds.current?.add(session.otid);
+            records.forEach((r) => {
+              persistedIds.current?.add(r.otid);
+            });
             return {
               sessionOtid: otid,
               records: records,
@@ -56,9 +58,7 @@ const LLMChatChnot = ({
         }
       }
     })();
-  }, [otid]);
-
-  console.log('render llmchat', props, readonly, fullscreen);
+  }, [otid, persistedIds]);
   return (
     props && (
       <LLMChatEditorProvider props={props}>

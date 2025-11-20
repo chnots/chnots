@@ -9,6 +9,7 @@ const SearchButton = () => {
 
   return (
     <button
+      type="button"
       onClick={() => {
         toggleNaviSearch();
       }}

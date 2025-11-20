@@ -78,7 +78,7 @@ export function SimpleTimePicker({
         ampm,
       }),
     );
-  }, [hour, minute, second, ampm, formatStr, use12HourFormat]);
+  }, [hour, minute, second, ampm, formatStr, use12HourFormat, onChange, value]);
 
   const _hourIn24h = useMemo(() => {
     return use12HourFormat ? (hour % 12) + ampm * 12 : hour;
@@ -200,7 +200,7 @@ export function SimpleTimePicker({
       }
       setHour(v.value);
     },
-    [setHour, use12HourFormat, value, formatStr, minute, second, ampm],
+    [use12HourFormat, value, formatStr, minute, second, ampm, max, min],
   );
 
   const onMinuteChange = useCallback(
@@ -235,7 +235,7 @@ export function SimpleTimePicker({
       }
       setMinute(v.value);
     },
-    [setMinute, use12HourFormat, value, formatStr, hour, second, ampm],
+    [use12HourFormat, value, formatStr, second, ampm, max, min, minute],
   );
 
   const onAmpmChange = useCallback(
@@ -276,7 +276,7 @@ export function SimpleTimePicker({
       }
       setAmpm(v.value);
     },
-    [setAmpm, use12HourFormat, value, formatStr, hour, minute, second, min, max],
+    [use12HourFormat, value, formatStr, hour, minute, second, min, max],
   );
 
   const display = useMemo(() => {
@@ -417,7 +417,7 @@ function buildTime(options: BuildTimeOptions) {
     let dateStr = dateStrRaw.slice(0, 11) + hour.toString().padStart(2, '0') + dateStrRaw.slice(13);
     dateStr = dateStr.slice(0, 14) + minute.toString().padStart(2, '0') + dateStr.slice(16);
     dateStr = dateStr.slice(0, 17) + second.toString().padStart(2, '0') + dateStr.slice(19);
-    dateStr = dateStr.slice(0, 24) + (ampm == AM_VALUE ? 'AM' : 'PM') + dateStr.slice(26);
+    dateStr = dateStr.slice(0, 24) + (ampm === AM_VALUE ? 'AM' : 'PM') + dateStr.slice(26);
     date = parse(dateStr, formatStr, value);
   } else {
     date = setHours(setMinutes(setSeconds(setMilliseconds(value, 0), second), minute), hour);

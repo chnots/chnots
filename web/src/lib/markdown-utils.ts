@@ -74,7 +74,7 @@ function taskList(turndownService: TurndownService) {
 function preserveDetail(turndownService: TurndownService) {
   turndownService.addRule('preserveDetail', {
     filter: (node: HTMLInputElement) => node.nodeName === 'DETAILS',
-    replacement: (content: any, node: HTMLInputElement) => {
+    replacement: (_content: any, node: HTMLInputElement) => {
       // TODO: preserve summary of nested details
       const summary = node.querySelector(':scope > summary');
       let detailSummary = '';

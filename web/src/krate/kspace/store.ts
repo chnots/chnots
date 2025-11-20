@@ -22,7 +22,6 @@ const getDefaultState = (): KSpaceState => {
     kspaceMapByName: new Map(),
     currentKSpace: (() => {
       const searchParams = new URLSearchParams(window.location.search.slice(1));
-      console.log('search params:', location.hash);
       return searchParams.get('ns') ?? 'public';
     })(),
     mkspaces: [],
@@ -48,7 +47,6 @@ export const kspaceStore = create(
       });
 
       set({ kspaceMapByName: kspaceMap });
-      console.log('refresh kspace, ', kspaceMap);
     },
     selectKSpace: async (kspace: string) => {
       set((prev) => {
@@ -63,7 +61,7 @@ export const kspaceStore = create(
       set((prev) => {
         return {
           ...prev,
-          mkspaces: [...new Set(mkspaces)].filter((e) => e != prev.currentKSpace),
+          mkspaces: [...new Set(mkspaces)].filter((e) => e !== prev.currentKSpace),
         };
       });
     },
@@ -71,14 +69,14 @@ export const kspaceStore = create(
       set((prev) => {
         return {
           ...prev,
-          mkspaces: prev.mkspaces.filter((e) => e != mkspace),
+          mkspaces: prev.mkspaces.filter((e) => e !== mkspace),
         };
       });
     },
     toggleMKSpace: (mkspace: string) => {
       set((prev) => {
         const mkspaces = prev.mkspaces.includes(mkspace)
-          ? prev.mkspaces.filter((e) => e != mkspace)
+          ? prev.mkspaces.filter((e) => e !== mkspace)
           : [...new Set([...prev.mkspaces, mkspace])];
         return {
           ...prev,
@@ -101,7 +99,7 @@ export const kspaceStore = create(
 
 export function useKSpaceStore<T>(selector: (state: KSpaceState) => T) {
   return useStore(
-    kspaceStore!,
+    kspaceStore,
     useShallow((store) => {
       return selector(store);
     }),

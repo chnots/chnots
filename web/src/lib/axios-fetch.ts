@@ -26,8 +26,10 @@ class Request {
     this.instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       useCommonStore.getState().appendLog(config.baseURL ?? '');
       const kspace = kspaceStore.getState();
-      config.headers!['K-kspace'] = kspace.currentKSpace;
-      config.headers!['K-mkspaces'] = kspace.mkspaces.join(',');
+      if (config.headers) {
+        config.headers['K-kspace'] = kspace.currentKSpace;
+        config.headers['K-mkspaces'] = kspace.mkspaces.join(',');
+      }
 
       const controller = new AbortController();
       const url = config.url || '';
@@ -95,7 +97,7 @@ class Request {
 
 export const BASE_URL = import.meta.env.DEV
   ? import.meta.env.PUBLIC_BACKEND_URL
-  : window.location.protocol + '//' + window.location.host;
+  : `${window.location.protocol}//${window.location.host}`;
 
 const request = new Request({
   timeout: 30 * 1000,

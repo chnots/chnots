@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { Button } from '@/common/component/ui/button';
+
 const Timer = () => {
   const [time, setTime] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -55,15 +57,16 @@ const Timer = () => {
       </div>
 
       <div className="flex gap-4 mb-8">
-        <button
+        <Button
           onClick={handleStartPause}
           className="px-8 py-4 rounded-full text-xl font-semibold bg-emerald-500 hover:bg-emerald-600 transition-colors"
           aria-label={isRunning ? 'Pause timer' : 'Start timer'}
+          onSelect={() => {}}
         >
           {isRunning ? 'Pause' : 'Start'}
-        </button>
+        </Button>
 
-        <button
+        <Button
           onClick={handleReset}
           disabled={time === 0}
           className={`px-8 py-4 rounded-full text-xl font-semibold transition-colors ${
@@ -72,9 +75,10 @@ const Timer = () => {
               : 'bg-amber-500 hover:bg-amber-600'
           }`}
           aria-label="Reset timer"
+          onSelect={() => {}}
         >
           Reset
-        </button>
+        </Button>
       </div>
     </div>
   );

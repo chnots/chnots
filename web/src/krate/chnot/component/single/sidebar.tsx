@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import {
-  type ChnotViewType,
-  type StateChnotLike,
-  useChnotHeadStore,
-  useChnotSingleStore,
-} from '../../store';
+import { type ChnotViewType, useChnotHeadStore, useChnotSingleStore } from '../../store';
 import Header from '../header/chnot-sidebar-header';
 import { ChnotSidebarItem, ChnotSidebarTagItem } from '../sidebar-item';
 
@@ -43,8 +38,6 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     };
   });
 
-  console.log('render ChnotSingleSidebar', curOtid);
-
   useDebugChanged(mapByOtid, 'mapByOtid');
 
   const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore((store) => {
@@ -79,7 +72,7 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     }
     clearCache();
     fetchMore();
-  }, [tags, searchStr, mkspaces, kinds]);
+  }, [tags, searchStr, clearCache, fetchMore]);
 
   return (
     <Sidebar>
@@ -113,7 +106,6 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 key={chnot.meta.otid}
                 kind={chnot.meta.kind}
                 showKSpace={mkspaces.length > 0}
-                getCurrent={(): StateChnotLike | undefined => undefined}
                 curOtid={curOtid}
                 setCurOtid={(curOtid?: TID) => {
                   setCurOtid(curOtid);
@@ -121,7 +113,7 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                     changeCompCurOtid(curOtid);
                   }
                 }}
-                unvalidate={(toRemoves: TID[]): void => {}}
+                unvalidate={(_toRemoves: TID[]): void => {}}
                 onArchive={(): void => {}}
                 onTogglePin={(): void => {}}
               />

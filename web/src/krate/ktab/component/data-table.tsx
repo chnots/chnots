@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useCallback } from 'react';
 import {
   type AccessorKeyColumnDef,
   flexRender,
@@ -59,6 +60,35 @@ export function DataTable({
 
   const [columns, setColumns] = React.useState<AccessorKeyColumnDef<KTabRowData>[]>([]);
 
+  const updateData = React.useCallback(
+    async (rowIndex: number, columnId: string, value: any) => {
+      if (tableMeta) {
+        await ktabCellCommit({
+          table_id: tableMeta.otid,
+          cells: [
+            {
+              row_tid: rowIndex,
+              column_name: columnId,
+              value: ktabToStoreValue(tableMeta.columns[columnId].view_kind, value),
+            },
+          ],
+        });
+        setData((old) =>
+          old.map((row, index) => {
+            if (index === rowIndex && old[rowIndex]) {
+              return {
+                ...old[rowIndex],
+                [columnId]: value,
+              };
+            }
+            return row;
+          }),
+        );
+      }
+    },
+    [tableMeta],
+  );
+
   React.useEffect(() => {
     if (tableMeta) {
       setColumns(
@@ -83,39 +113,9 @@ export function DataTable({
         }, {}),
       );
     }
-  }, [tableMeta]);
+  }, [tableMeta, updateData]);
 
-  const updateData = React.useCallback(
-    async (rowIndex: number, columnId: string, value: any) => {
-      console.log('row index: ', rowIndex);
-      if (tableMeta) {
-        await ktabCellCommit({
-          table_id: tableMeta.otid,
-          cells: [
-            {
-              row_tid: rowIndex,
-              column_name: columnId,
-              value: ktabToStoreValue(tableMeta.columns[columnId].view_kind, value),
-            },
-          ],
-        });
-        setData((old) =>
-          old.map((row, index) => {
-            if (index === rowIndex) {
-              return {
-                ...old[rowIndex]!,
-                [columnId]: value,
-              };
-            }
-            return row;
-          }),
-        );
-      }
-    },
-    [tableMeta],
-  );
-
-  const loadMoreData = async () => {
+  const loadMoreData = useCallback(async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
@@ -129,11 +129,11 @@ export function DataTable({
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchData, tableMeta, hasMore, loading, page]);
 
   React.useEffect(() => {
     loadMoreData();
-  }, []);
+  }, [loadMoreData]);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -197,7 +197,10 @@ export function DataTable({
     const allInputs = Array.from(
       e.currentTarget.querySelectorAll('input, button[role="combobox"]'),
     );
-    const currentIndex = allInputs.findIndex((el) => el === activeElement);
+    if (!activeElement) {
+      return;
+    }
+    const currentIndex = allInputs.indexOf(activeElement);
 
     if (currentIndex === allInputs.length - 1 && !e.shiftKey) {
       e.preventDefault();
@@ -214,7 +217,7 @@ export function DataTable({
   };
 
   return (
-    <div onKeyDown={handleKeyDown} className="flex flex-col w-full h-full">
+    <div role="none" onKeyDown={handleKeyDown} className="flex flex-col w-full h-full">
       {!readonly && (
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-2 flex-wrap">

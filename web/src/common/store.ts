@@ -44,7 +44,7 @@ export const useCommonStore = create(
       set((prev) => {
         return {
           ...prev,
-          globalLog: prev.globalLog + '\n\n' + new Date().toLocaleTimeString() + ': ' + log,
+          globalLog: `${prev.globalLog}\n\n${new Date().toLocaleTimeString()}: ${log}`,
         };
       });
     },

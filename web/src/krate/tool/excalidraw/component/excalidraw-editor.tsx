@@ -6,7 +6,6 @@ import './excalidraw.scss';
 import '@excalidraw/excalidraw/index.css';
 
 import { Excalidraw, useHandleLibrary } from '@excalidraw/excalidraw';
-import { el } from 'date-fns/locale';
 
 import { type ExcalidrawChnotState, fetchExcalidraw } from '../service';
 
@@ -20,23 +19,18 @@ const CONTENT_TYPE = 'chnots/excalidraw-v1';
 
 const ExcalidrawEditor = ({
   otid,
-  useCustom,
-  customArgs,
   readOnly: viewMode,
   onSave,
 }: {
   otid: TID;
-  useCustom?: (api: ExcalidrawImperativeAPI | null, customArgs?: any[]) => void;
-  customArgs?: any[];
   readOnly?: boolean;
   state?: ExcalidrawChnotState;
   onSave: (state: ExcalidrawChnotState, contentType: string) => void;
 }) => {
-  console.log('render ExcalidrawEditor', otid);
   const [viewModeEnabled, setViewModeEnabled] = useState(viewMode);
-  const [zenModeEnabled, setZenModeEnabled] = useState(false);
-  const [gridModeEnabled, setGridModeEnabled] = useState(false);
-  const [theme, setTheme] = useState<Theme>('light');
+  const [zenModeEnabled, _setZenModeEnabled] = useState(false);
+  const [gridModeEnabled, _setGridModeEnabled] = useState(false);
+  const [theme, _setTheme] = useState<Theme>('light');
   const toSaveExcalidrawStateRef = useRef<ExcalidrawChnotState>(null);
   const toSaveExcalidrawMetaIdRef = useRef<string>(null);
 
@@ -52,11 +46,7 @@ const ExcalidrawEditor = ({
         onSave(toSaveExcalidrawStateRef.current, CONTENT_TYPE);
       }
     };
-  }, []);
-
-  if (useCustom) {
-    useCustom(excalidrawAPI, customArgs);
-  }
+  }, [onSave]);
 
   useHandleLibrary({ excalidrawAPI });
 
@@ -67,6 +57,7 @@ const ExcalidrawEditor = ({
         nativeEvent: MouseEvent | React.PointerEvent<HTMLCanvasElement>;
       }>,
     ) => {
+      // biome-ignore lint/style/noNonNullAssertion: safe
       const link = element.link!;
       const { nativeEvent } = event.detail;
       const isNewTab = nativeEvent.ctrlKey || nativeEvent.metaKey;

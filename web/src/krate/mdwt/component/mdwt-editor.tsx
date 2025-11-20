@@ -9,7 +9,7 @@ import { indentOnInput } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
 import { EditorView } from '@codemirror/view';
 import { GFM } from '@lezer/markdown';
-import CodeMirror, { EditorSelection, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { wrappedLineIndent } from 'codemirror-wrapped-line-indent';
 import { decoratorExtension } from 'jolpin-codemirror';
 import { toast } from 'sonner';
@@ -47,8 +47,7 @@ const eventHandlers = EditorView.domEventHandlers({
             insertions.push(md);
           }
         })
-        .catch((err) => {
-          console.error(err);
+        .catch((_err) => {
           insertions.push(plain);
         });
 
@@ -57,9 +56,9 @@ const eventHandlers = EditorView.domEventHandlers({
       const plain = data.getData('text/plain');
       insertions.push(plain);
     } else {
-      for (const file of data.files) {
+      for (const _file of data.files) {
         allPromises.push(
-          new Promise((resolve, reject) => {
+          new Promise((_resolve, _reject) => {
             // TODO!
             /*             kfileUpload(file)
               .then((kfile?) => {
@@ -86,7 +85,7 @@ const eventHandlers = EditorView.domEventHandlers({
         const transaction = view.state.replaceSelection(insertions.join('\n'));
         view.dispatch(transaction);
       })
-      .catch((err) => console.error(err));
+      .catch((_err) => {});
 
     return true;
   },

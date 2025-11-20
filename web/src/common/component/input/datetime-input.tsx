@@ -1,3 +1,8 @@
+/** biome-ignore-all lint/a11y/useKeyWithClickEvents: thirdparty file */
+/** biome-ignore-all lint/complexity/noBannedTypes: thirdparty file */
+/** biome-ignore-all lint/suspicious/noExplicitAny: thirdparty file */
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: thirdparty file */
+
 import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { format, getYear, isValid, parse } from 'date-fns';
@@ -89,7 +94,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, DateTimeInputProps>(
       if (form?.formState.isSubmitted) {
         setSegments(parseFormat(formatStr, value));
       }
-    }, [form?.formState.isSubmitted]);
+    }, [form?.formState.isSubmitted, formatStr, value]);
     useEffect(() => {
       // console.error('valueChanged', {formatStr, inputStr, value});
       setSegments(parseFormat(formatStr, value));
@@ -109,7 +114,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, DateTimeInputProps>(
         const at = segments?.findIndex((s) => s.index === segment?.index);
         if (at !== -1) setSelectedSegmentAt(at);
       },
-      [segments, setSelectedSegmentAt],
+      [segments],
     );
 
     const validSegments = useMemo(() => segments.filter((s) => s.type !== 'space'), [segments]);
@@ -132,14 +137,18 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, DateTimeInputProps>(
       if (isValid(date) && year > 1900 && year < 2100) {
         return date;
       }
-    }, [validSegments, inputStr, formatStr]);
+    }, [validSegments, inputStr, formatStr, timezone, value]);
     useEffect(() => {
       if (!inputValue) return;
       if (value?.getTime() !== inputValue.getTime()) {
         // console.log('inputValueChanged', {formatStr, inputStr, value, inputValue, });
         options.onChange?.(inputValue);
       }
-    }, [inputValue]);
+    }, [
+      inputValue, // console.log('inputValueChanged', {formatStr, inputStr, value, inputValue, });
+      options.onChange,
+      value?.getTime,
+    ]);
 
     const onClick = useEventCallback(
       (event: React.MouseEvent<HTMLInputElement>) => {
@@ -184,7 +193,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, DateTimeInputProps>(
         let shouldNext = false;
         if (segment.type !== 'period') {
           const length = segment.symbols.length;
-          const rawValue = parseInt(segment.value).toString();
+          const rawValue = parseInt(segment.value, 10).toString();
           let newValue = rawValue.length < length ? rawValue + num : num;
           let parsedDate = parse(
             newValue.padStart(length, '0'),
@@ -431,9 +440,12 @@ export function useEventCallback<T extends Function>(fn: T, deps: any[]) {
   useIsomorphicLayoutEffect(() => {
     ref.current = fn;
   });
-  return useCallback((...args: any[]) => {
-    return ref.current?.(...args);
-  }, deps);
+  return useCallback(
+    (...args: any[]) => {
+      return ref.current?.(...args);
+    },
+    [...deps],
+  );
 }
 
 export const useIsomorphicLayoutEffect =

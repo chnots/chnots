@@ -1,5 +1,6 @@
 import Icon from '@/common/component/icon';
 import KSVG from '@/common/component/svg';
+import { Button } from '@/common/component/ui/button';
 import type { LLMChatTemplate } from '@/krate/llmchat/po';
 import { useLLMChatStore } from '@/krate/llmchat/store';
 
@@ -15,7 +16,7 @@ const LLMChatTemplateList = ({
   return (
     <div className="flex flex-wrap space-x-4 text-sm p-3">
       {[...templates.values()].map((item) => (
-        <div
+        <Button
           key={item.otid}
           className={'hover:cursor-pointer space-x-1 items-center flex py-1'}
           onClick={() => {
@@ -28,9 +29,9 @@ const LLMChatTemplateList = ({
             <Icon.MessageCircle className="w-4 h-4" />
           )}
           <span>{item.name}</span>
-        </div>
+        </Button>
       ))}
-      <div
+      <Button
         key={'add-new'}
         className={'hover:cursor-pointer space-x-1 items-center flex py-1'}
         onClick={() => {
@@ -38,7 +39,7 @@ const LLMChatTemplateList = ({
         }}
       >
         <Icon.BadgePlus />
-      </div>
+      </Button>
     </div>
   );
 };

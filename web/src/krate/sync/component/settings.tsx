@@ -48,7 +48,7 @@ export const EndpointSettings = () => {
   };
 
   const handleDeleteEndpoint = async (ip: string, port: number) => {
-    const eps = endpoints.filter((ep) => ep.ip !== ip || ep.port != port);
+    const eps = endpoints.filter((ep) => ep.ip !== ip || ep.port !== port);
     await overwriteSyncAllEndpoints({
       data: {
         endpoints: eps,
@@ -87,7 +87,7 @@ export const EndpointSettings = () => {
               onChange={(e) =>
                 setNewEndpoint({
                   ...newEndpoint,
-                  port: parseInt(e.target.value),
+                  port: parseInt(e.target.value, 10),
                 })
               }
               placeholder="3011"

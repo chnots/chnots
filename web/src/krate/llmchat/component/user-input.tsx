@@ -30,13 +30,13 @@ const UserInput = ({
 
   useEffect(() => {
     if (textareaRef.current) {
-      if (message?.length == 0) {
+      if (message?.length === 0) {
         textareaRef.current.style.height = 'auto';
       } else {
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }
     }
-  }, [textareaRef, message]);
+  }, [message]);
 
   return (
     <div className="pl-3 p-1 flex justify-center space-x-2 mb-2">

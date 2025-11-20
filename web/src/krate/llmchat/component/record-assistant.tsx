@@ -13,8 +13,6 @@ import type { LLMChatBot, LLMChatRecord, LLMChatTemplate } from '@/krate/llmchat
 import { useLLMChatStore } from '@/krate/llmchat/store';
 
 const RecordCommon = ({
-  otid,
-  role,
   reasoning_content,
   content,
   timestamp,
@@ -30,7 +28,7 @@ const RecordCommon = ({
   buttons?: React.ReactNode;
   limitHeight?: boolean;
   viewMode: boolean;
-} & LLMChatRecord) => {
+} & Omit<LLMChatRecord, 'role'>) => {
   const onCopy = () => {
     navigator.clipboard.writeText(content);
   };
@@ -117,21 +115,19 @@ export const RecordSystem = ({
         session_otid={session_otid}
         limitHeight={true}
         content={content}
-        role={'system'}
         tid={tid}
         reasoning_content={''}
         buttons={
-          <>
-            {records?.length === 1 && records.at(0)?.role === 'system' && (
-              <RecordButton
-                onClick={() => {
-                  setShowTemplates((prev) => !prev);
-                }}
-              >
-                <Icon.Glasses />
-              </RecordButton>
-            )}
-          </>
+          records?.length === 1 &&
+          records.at(0)?.role === 'system' && (
+            <RecordButton
+              onClick={() => {
+                setShowTemplates((prev) => !prev);
+              }}
+            >
+              <Icon.Glasses />
+            </RecordButton>
+          )
         }
       />
       {showTemplates && (
@@ -148,7 +144,6 @@ export const RecordSystem = ({
 
 const RecordAssistant = ({
   otid,
-  role,
   role_id,
   reasoning_content,
   content,
@@ -161,7 +156,7 @@ const RecordAssistant = ({
   logo?: string;
   timestamp: string;
   viewMode: boolean;
-} & LLMChatRecord) => {
+} & Omit<LLMChatRecord, 'role'>) => {
   const { bots } = useLLMChatStore();
   const { onRegenrate } = useLLMChatComStore((store) => {
     return {
@@ -195,18 +190,15 @@ const RecordAssistant = ({
       session_otid={session_otid}
       content={content}
       reasoning_content={reasoning_content}
-      role={'assistant'}
       tid={tid}
       buttons={
-        <>
-          <RecordButton
-            onClick={(): void => {
-              onRegenrate(otid);
-            }}
-          >
-            <Icon.RotateCw />
-          </RecordButton>
-        </>
+        <RecordButton
+          onClick={(): void => {
+            onRegenrate(otid);
+          }}
+        >
+          <Icon.RotateCw />
+        </RecordButton>
       }
     />
   );

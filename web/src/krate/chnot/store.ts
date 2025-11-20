@@ -53,7 +53,7 @@ interface HeadState {
   setViewType(viewType: ChnotViewType): void;
 }
 
-export const chnotHeadStore = create<HeadState>((set, get) => ({
+export const chnotHeadStore = create<HeadState>((set, _get) => ({
   searchStr: undefined,
   tags: undefined,
   kinds: undefined,
@@ -136,7 +136,6 @@ export const createChnotStore = <T extends StateChnotLike>(
       }));
 
       const { searchStr, tags, kinds } = chnotHeadStore.getState();
-      console.log('page req: ', mapByOtid.nextStartIn, mapByOtid.pageSize);
       const pageRsp: PageRsp<T> = await searchApi({
         start_index: mapByOtid.nextStartIn,
         page_size: mapByOtid.pageSize,
@@ -151,8 +150,6 @@ export const createChnotStore = <T extends StateChnotLike>(
         for (const chnot of pageRsp.data) {
           cm.set(chnot.meta.otid, chnot);
         }
-
-        console.log('page rsp: ', pageRsp.next_start, pageRsp.has_next, cm);
 
         return {
           ...state,
@@ -211,7 +208,7 @@ export const createChnotStore = <T extends StateChnotLike>(
       const toRemove2 = Array.from(
         [...dbCacheMap.values()]
           .filter((e) => {
-            const result = e.meta.kspace == kspaceStore.getState().currentKSpace;
+            const result = e.meta.kspace === kspaceStore.getState().currentKSpace;
             return !result;
           })
           .map((e) => e.meta.otid),

@@ -18,7 +18,7 @@ const KPageList = ({
     if (inView && !isFetchingNextPage && hasNextPage) {
       onFetchMore();
     }
-  }, [hasNextPage, inView, isFetchingNextPage]);
+  }, [hasNextPage, inView, isFetchingNextPage, onFetchMore]);
 
   return (
     <ul className="m-0 grid gap-2 pt-2 pr-1 pb-1 pl-2">
@@ -28,6 +28,7 @@ const KPageList = ({
           'Loading more...'
         ) : hasNextPage ? (
           <button
+            type="button"
             ref={ref}
             onClick={() => onFetchMore()}
             disabled={!hasNextPage || isFetchingNextPage}

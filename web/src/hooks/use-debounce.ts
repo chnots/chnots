@@ -16,7 +16,7 @@ const useDebounce = (
         argsRef.current = undefined;
       }
     };
-  }, [argsRef, executeOnExit, timeoutRef]);
+  }, [executeOnExit, fn]);
 
   return React.useCallback(
     (...args: unknown[]) => {

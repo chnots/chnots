@@ -1,5 +1,4 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import useResizeObserver from '@react-hook/resize-observer';
 import { EditorSelection, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -8,7 +7,7 @@ import { chnotSingleSearch } from '../../service';
 
 import useDebounce from '@/hooks/use-debounce';
 
-import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import type { RichPropProps } from './rich-chnot';
 import { SaveState } from '@/common/types';
 import { MdwtEditorMemo } from '@/krate/mdwt/component/mdwt-editor';
@@ -18,8 +17,8 @@ import { toentTodoEventGuess } from '@/krate/toent/service';
 
 const chnotCompletions = async (context: CompletionContext): Promise<CompletionResult | null> => {
   const word = context.matchBefore(/#[^# ]*|^#* \[|^[ ]*- \[|\[\[/);
-  let options;
-  if (!word || (word?.from == word?.to && !context.explicit)) {
+  let options: Completion[];
+  if (!word || (word?.from === word?.to && !context.explicit)) {
     return null;
   } else if (word.text.startsWith('#')) {
     options = (
@@ -99,9 +98,9 @@ const MdwtChnot = ({
 }) => {
   // use RefObject to avoid rerender
   const cachedContentRef = useRef<string>(initialContent ?? '');
-  const saveStateRef = useRef<SaveState>(SaveState.Dirty);
+  const _saveStateRef = useRef<SaveState>(SaveState.Dirty);
   const toSaveArg = useRef<MdwtCommitReq>(null);
-  const [refreshFlag, setRefreshFlag] = useState<boolean>();
+  const [_refreshFlag, setRefreshFlag] = useState<boolean>();
   const [codeMirrorRef, setCodeMirrorRef] = useState<RefObject<ReactCodeMirrorRef | null>>();
 
   useEffect(() => {
@@ -126,7 +125,7 @@ const MdwtChnot = ({
         });
       }
     }
-  }, []);
+  }, [initialContent, onContentChange, otid, tryFetch]);
 
   const directlySave = async () => {
     if (toSaveArg.current) {
@@ -156,7 +155,11 @@ const MdwtChnot = ({
   return readonly ? (
     <MarkdownViewer content={cachedContentRef.current ?? ''} keepBreak={true} />
   ) : (
-    <div className="flex flex-col w-full h-full break-all" onBlur={() => directlySave()}>
+    <div
+      className="flex flex-col w-full h-full break-all"
+      onBlur={() => directlySave()}
+      role="none"
+    >
       <MdwtEditorMemo
         content={cachedContentRef.current}
         onContentChange={(content) => {
@@ -179,6 +182,7 @@ const MdwtChnot = ({
       />
       {/* dirty: fix codemirror height */}
       <div
+        role="none"
         className="flex-grow cursor-text min-h-0 p-0 m-0"
         onClick={() => {
           if (codeMirrorRef?.current) {
@@ -191,6 +195,11 @@ const MdwtChnot = ({
               });
               editorView.focus();
             }
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
           }
         }}
       ></div>

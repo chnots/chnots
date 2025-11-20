@@ -29,8 +29,8 @@ export const Backlink: MarkdownConfig = {
     {
       name: 'Backlink',
       before: 'Link',
-      parse(cx: InlineContext, next: number, pos: number) {
-        if (cx.char(pos) != 91 /* [ */ || cx.char(pos + 1) != 91) {
+      parse(cx: InlineContext, _next: number, pos: number) {
+        if (cx.char(pos) !== 91 /* [ */ || cx.char(pos + 1) !== 91) {
           return -1;
         }
 
@@ -72,7 +72,7 @@ export const Hashtag: MarkdownConfig = {
     {
       name: 'Hashtag',
       parse(cx: InlineContext, next: number, pos: number) {
-        if (next != 35 /* # */) {
+        if (next !== 35 /* # */) {
           return -1;
         }
         const start = pos;
@@ -80,7 +80,6 @@ export const Hashtag: MarkdownConfig = {
         const match = hashtagRE.exec(cx.text.slice(pos - cx.offset));
         if (match && /\D/.test(match[0])) {
           pos += match[0].length;
-          console.log('...');
           return cx.addElement(
             cx.elt('Hashtag', start, pos, [
               cx.elt('HashtagMark', start, start + 1),
@@ -128,8 +127,8 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
           if (node.name.startsWith('ATXHeading') || node.name === 'ListItem') {
             const text = state.sliceDoc(node.from, node.to);
 
-            let match;
-            if ((match = toentTodoRE.exec(text)) !== null) {
+            const match: RegExpExecArray | null = toentTodoRE.exec(text);
+            if (match !== null) {
               const start = node.from + match.index;
               const end = start + match[0].length;
 
@@ -166,8 +165,6 @@ const parseChnotProps = (cx: BlockContext, line: Line) => {
   const colonPos = line.text.indexOf(':', keyStart - line.pos);
   const valueStart = colonPos >= 0 ? line.pos + colonPos + 1 : keyEnd;
   const valueEnd = base + line.text.length;
-
-  console.log(base, markerStart, keyStart, keyEnd, valueStart, valueEnd);
   const root = cx.elt('ChnotProps', markerStart, valueEnd, [
     cx.elt('ChnotPropsMarker', markerStart, markerEnd),
     cx.elt('ChnotPropsKey', keyStart, keyEnd),
@@ -194,7 +191,7 @@ export const ChnotProps: MarkdownConfig = {
       parse(cx: BlockContext, line: Line) {
         return parseChnotProps(cx, line);
       },
-      endLeaf(cx: BlockContext, line, _leaf) {
+      endLeaf(_cx: BlockContext, line, _leaf) {
         // try break the cx
         return chnotPropsRE.test(line.text);
       },

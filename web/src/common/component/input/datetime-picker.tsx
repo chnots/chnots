@@ -3,6 +3,8 @@
  * Check out the live demo at https://shadcn-datetime-picker-pro.vercel.app/
  * Find the latest source code at https://github.com/huybuidac/shadcn-datetime-picker
  */
+/** biome-ignore-all lint/a11y/useKeyWithClickEvents: thirdparty file */
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: thirdparty file */
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -176,24 +178,21 @@ export function DateTimePicker({
       }
       setDate(d);
     },
-    [setDate, setMonth],
+    [date.getHours, date.getMinutes, date.getSeconds, max, min],
   );
   const onSubmit = useCallback(() => {
     onChange(new Date(date));
     setOpen(false);
   }, [date, onChange]);
 
-  const onMonthYearChanged = useCallback(
-    (d: Date, mode: 'month' | 'year') => {
-      setMonth(d);
-      if (mode === 'year') {
-        setMonthYearPicker('month');
-      } else {
-        setMonthYearPicker(false);
-      }
-    },
-    [setMonth, setMonthYearPicker],
-  );
+  const onMonthYearChanged = useCallback((d: Date, mode: 'month' | 'year') => {
+    setMonth(d);
+    if (mode === 'year') {
+      setMonthYearPicker('month');
+    } else {
+      setMonthYearPicker(false);
+    }
+  }, []);
   const onNextMonth = useCallback(() => {
     setMonth(addMonths(month, 1));
   }, [month]);
@@ -212,7 +211,7 @@ export function DateTimePicker({
   const displayValue = useMemo(() => {
     if (!open && !value) return value;
     return open ? date : initDate;
-  }, [date, value, open]);
+  }, [date, value, open, initDate]);
 
   const dislayFormat = useMemo(() => {
     if (!displayValue) return 'Pick a date';
@@ -245,7 +244,6 @@ export function DateTimePicker({
               disabled && 'opacity-50 cursor-not-allowed',
               classNames?.trigger,
             )}
-            tabIndex={0}
           >
             <div className="flex-grow flex items-center">
               <Icon.CalendarIcon className="mr-2 size-4" />
@@ -421,7 +419,7 @@ function MonthYearPicker({
       years.push({ value: i, label: i.toString(), disabled });
     }
     return years;
-  }, [value]);
+  }, [value, maxDate, minDate]);
   const months = useMemo(() => {
     const months: TimeOption[] = [];
     for (let i = 0; i < 12; i++) {
@@ -433,7 +431,7 @@ function MonthYearPicker({
       months.push({ value: i, label: format(new Date(0, i), 'MMM'), disabled });
     }
     return months;
-  }, [value]);
+  }, [value, maxDate, minDate]);
 
   const onYearChange = useCallback(
     (v: TimeOption) => {
@@ -453,7 +451,7 @@ function MonthYearPicker({
     if (mode === 'year') {
       yearRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' });
     }
-  }, [mode, value]);
+  }, [mode]);
   return (
     <div className={cn(className)}>
       <ScrollArea className="h-full">
@@ -538,14 +536,14 @@ function TimePicker({
         ampm,
       }),
     );
-  }, [hour, minute, second, ampm, formatStr, use12HourFormat]);
+  }, [hour, minute, second, ampm, formatStr, use12HourFormat, onChange, value]);
 
   const _hourIn24h = useMemo(() => {
     // if (use12HourFormat) {
     //   return (hour % 12) + ampm * 12;
     // }
     return use12HourFormat ? (hour % 12) + ampm * 12 : hour;
-  }, [value, use12HourFormat, ampm]);
+  }, [use12HourFormat, ampm, hour]);
 
   const hours: TimeOption[] = useMemo(
     () =>
@@ -664,7 +662,7 @@ function TimePicker({
       }
       setHour(v.value);
     },
-    [setHour, use12HourFormat, value, formatStr, minute, second, ampm],
+    [use12HourFormat, value, formatStr, minute, second, ampm, max, min],
   );
 
   const onMinuteChange = useCallback(
@@ -699,7 +697,7 @@ function TimePicker({
       }
       setMinute(v.value);
     },
-    [setMinute, use12HourFormat, value, formatStr, hour, second, ampm],
+    [use12HourFormat, value, formatStr, second, ampm, max, min, minute],
   );
 
   const onAmpmChange = useCallback(
@@ -740,7 +738,7 @@ function TimePicker({
       }
       setAmpm(v.value);
     },
-    [setAmpm, use12HourFormat, value, formatStr, hour, minute, second, min, max],
+    [use12HourFormat, value, formatStr, hour, minute, second, min, max],
   );
 
   const display = useMemo(() => {
@@ -889,7 +887,7 @@ function buildTime(options: BuildTimeOptions) {
     let dateStr = dateStrRaw.slice(0, 11) + hour.toString().padStart(2, '0') + dateStrRaw.slice(13);
     dateStr = dateStr.slice(0, 14) + minute.toString().padStart(2, '0') + dateStr.slice(16);
     dateStr = dateStr.slice(0, 17) + second.toString().padStart(2, '0') + dateStr.slice(19);
-    dateStr = dateStr.slice(0, 24) + (ampm == AM_VALUE ? 'AM' : 'PM') + dateStr.slice(26);
+    dateStr = dateStr.slice(0, 24) + (ampm === AM_VALUE ? 'AM' : 'PM') + dateStr.slice(26);
     date = parse(dateStr, formatStr, value);
   } else {
     date = setHours(setMinutes(setSeconds(value, second), minute), hour);

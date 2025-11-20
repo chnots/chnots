@@ -25,7 +25,7 @@ export const fetchExcalidraw = async (
     if (!rsp.file) {
       return null;
     }
-    const dataState = JSON.parse(rsp.file!.content);
+    const dataState = JSON.parse(rsp.file?.content);
     const fileMap = new Map<ExcalidrawElement['id'], BinaryFileData>();
     const elements = dataState.elements as readonly ExcalidrawElement[] | null;
 
@@ -48,9 +48,7 @@ export const fetchExcalidraw = async (
                 id: element.fileId as FileId,
               });
             }
-          } catch (error) {
-            console.error(`Failed to query inline kfile for fileId ${element.fileId}`, error);
-          }
+          } catch (_error) {}
         }
       }
     }
@@ -61,9 +59,7 @@ export const fetchExcalidraw = async (
       files: Object.fromEntries(fileMap.entries()),
       elements: dataState.elements,
     };
-  } catch (e) {
-    console.error('unable to fetch inline-kfile', id, e);
-  }
+  } catch (_e) {}
   return null;
 };
 
@@ -86,7 +82,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
 
   const { elements, appState, metaId, files } = state;
   try {
-    if (elements.length == 0) {
+    if (elements.length === 0) {
       return;
     }
 
@@ -94,8 +90,8 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
 
     for (const [fileId, file] of Object.entries(files)) {
       const cache = savedFilesRef.current.get(fileId);
-      const newVer = file.created + '-' + file.version;
-      if (!cache || cache.ver != newVer) {
+      const newVer = `${file.created}-${file.version}`;
+      if (!cache || cache.ver !== newVer) {
         const otid = cache ? cache.otid : genTID();
         await kfileInlineUpload({
           res: {
@@ -124,9 +120,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       otid: props.otid,
     });
     onSuccess();
-  } catch (err) {
-    console.error('save excalidraw', err);
-
+  } catch (_err) {
     onFail();
   }
 };

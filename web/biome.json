@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
   "files": {
     "includes": [
       "**",
@@ -95,13 +95,17 @@
         }
       },
       "suspicious": {
-        "noConsole": "warn"
+        "noConsole": "warn",
+        "noExplicitAny": "off"
       }
     }
   },
   "css": {
     "formatter": {
       "quoteStyle": "single"
+    },
+    "parser": {
+      "tailwindDirectives": true
     }
   },
   "javascript": {

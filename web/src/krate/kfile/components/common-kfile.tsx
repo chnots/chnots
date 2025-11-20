@@ -99,9 +99,8 @@ export const CommonKFile = ({
 
         currentChunk++;
         localStorage.setItem(uploadFile.name, currentChunk.toString());
-        setProgress(parseInt(((currentChunk / totalChunks) * 100).toFixed(0)));
-      } catch (error) {
-        console.error(error);
+        setProgress(parseInt(((currentChunk / totalChunks) * 100).toFixed(0), 10));
+      } catch (_error) {
         alert('An error occurred during upload.');
         return;
       }
@@ -156,9 +155,7 @@ export const CommonKFile = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          role="button"
-          tabIndex={0}
-          aria-label="File upload area"
+          role="none"
           onClick={() => document.getElementById('file-input')?.click()}
           onKeyDown={(e) => e.key === 'Enter' && document.getElementById('file-input')?.click()}
         >

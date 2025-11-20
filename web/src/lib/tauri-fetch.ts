@@ -8,12 +8,11 @@ const appendUrl = (base: string, suffix: string) => {
   } else if (base.endsWith('/') || suffix.startsWith('/')) {
     return base + suffix;
   } else {
-    return base + '/' + suffix;
+    return `${base}/${suffix}`;
   }
 };
 
 class FetchRequest {
-  private baseConfig: RequestInit;
   private baseURL: string;
 
   constructor(config: { baseURL: string; timeout?: number }) {
@@ -39,7 +38,6 @@ class FetchRequest {
       },
       signal: controller.signal,
     };
-    console.log('request, ', JSON.stringify(req));
     return req;
   }
 
@@ -56,7 +54,6 @@ class FetchRequest {
   async get<T, E>(url: string, params?: E): Promise<T> {
     const query = params ? `?${new URLSearchParams(params as Record<string, string>)}` : '';
     const fullUrl = appendUrl(this.baseURL, `${url}${query}`);
-    console.log(fullUrl);
     const config = await this.requestInterceptor({ url, method: 'GET' });
 
     const response = await fetch(fullUrl, config);

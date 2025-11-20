@@ -24,7 +24,7 @@ const App = () => {
   const [, setKSpaceParam] = useParamState<string>('ns', currentKSpace);
   useEffect(() => {
     setKSpaceParam(currentKSpace);
-  }, [currentKSpace]);
+  }, [currentKSpace, setKSpaceParam]);
 
   useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
@@ -39,7 +39,7 @@ const App = () => {
       const s = faviconSvg.replace('#282828', c.color);
       link.href = `data:image/svg+xml,${encodeURIComponent(s)}`;
     }
-  }, [currentKSpace]);
+  }, [currentKSpaceObj]);
 
   useEffect(() => {
     if (!currentKSpace) {
@@ -66,7 +66,7 @@ const App = () => {
     }
 
     setInitialized(true);
-  }, []);
+  }, [currentKSpace, lastVisited, location.pathname]);
 
   return !initialized ? (
     <LoadingPage />
