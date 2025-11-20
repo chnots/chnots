@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { EditorSelection, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -84,48 +84,45 @@ const MarkdownViewer = ({
   );
 };
 
+/**
+ *
+ * @param content if content is undefined, try to fetch mdwt, or just use it.
+ * @returns
+ */
 const MdwtChnot = ({
   otid,
   readonly,
   onPostSave,
   content: initialContent,
-  tryFetch,
   onContentChange,
 }: RichPropProps & {
   content?: string;
-  tryFetch: boolean;
   onContentChange?: (content: string) => void;
 }) => {
   // use RefObject to avoid rerender
-  const cachedContentRef = useRef<string>(initialContent ?? '');
-  const _saveStateRef = useRef<SaveState>(SaveState.Dirty);
+  const cachedContentRef = useRef<string | undefined>(initialContent);
   const toSaveArg = useRef<MdwtCommitReq>(null);
-  const [_refreshFlag, setRefreshFlag] = useState<boolean>();
   const [codeMirrorRef, setCodeMirrorRef] = useState<RefObject<ReactCodeMirrorRef | null>>();
+  const [content, setContent] = useState<string | undefined>(initialContent);
 
   useEffect(() => {
-    if (initialContent) {
-      cachedContentRef.current = initialContent;
-    } else {
-      if (tryFetch) {
-        mdwtRecordList({
-          mdwt_otids: [otid],
-        }).then((rsp) => {
-          const mdwt = rsp.mdwt_map[otid];
-          if (
-            mdwt &&
-            onContentChange &&
-            mdwt.content &&
-            cachedContentRef.current !== mdwt.content
-          ) {
+    if (!initialContent) {
+      mdwtRecordList({
+        mdwt_otids: [otid],
+      }).then((rsp) => {
+        const mdwt = rsp.mdwt_map[otid];
+        if (mdwt?.content) {
+          setContent(mdwt.content);
+          if (onContentChange && cachedContentRef.current !== mdwt.content) {
             onContentChange(mdwt.content);
           }
-          cachedContentRef.current = mdwt?.content ?? '';
-          setRefreshFlag((prev) => !prev);
-        });
-      }
+        } else {
+          setContent('');
+        }
+        cachedContentRef.current = mdwt?.content;
+      });
     }
-  }, [initialContent, onContentChange, otid, tryFetch]);
+  }, [initialContent, onContentChange, otid]);
 
   const directlySave = async () => {
     if (toSaveArg.current) {
@@ -151,59 +148,65 @@ const MdwtChnot = ({
     2000,
     true,
   );
+  const handleContentChange = useCallback(
+    (content: string) => {
+      cachedContentRef.current = content;
+      const req: MdwtCommitReq = {
+        mdwt: {
+          otid: otid,
+          content: content,
+        },
+      };
+      toSaveArg.current = req;
+      if (onContentChange) {
+        onContentChange(content);
+      }
+      debounceSave();
+    },
+    [debounceSave, onContentChange, otid],
+  );
 
   return readonly ? (
     <MarkdownViewer content={cachedContentRef.current ?? ''} keepBreak={true} />
   ) : (
-    <div
-      className="flex flex-col w-full h-full break-all"
-      onBlur={() => directlySave()}
-      role="none"
-    >
-      <MdwtEditorMemo
-        content={cachedContentRef.current}
-        onContentChange={(content) => {
-          cachedContentRef.current = content;
-          const req: MdwtCommitReq = {
-            mdwt: {
-              otid: otid,
-              content: content,
-            },
-          };
-          toSaveArg.current = req;
-          if (onContentChange) {
-            onContentChange(content);
-          }
-          debounceSave();
-        }}
-        autoCompletion={chnotCompletions}
-        foldGutter={false}
-        setCodeMirrorRef={setCodeMirrorRef}
-      />
-      {/* dirty: fix codemirror height */}
+    content !== undefined && (
       <div
+        className="flex flex-col w-full h-full break-all"
+        onBlur={() => directlySave()}
         role="none"
-        className="flex-grow cursor-text min-h-0 p-0 m-0"
-        onClick={() => {
-          if (codeMirrorRef?.current) {
-            const editorView = codeMirrorRef.current.view;
-            if (editorView) {
-              const docLength = editorView.state.doc.length;
-              editorView.dispatch({
-                selection: EditorSelection.cursor(docLength),
-                scrollIntoView: true,
-              });
-              editorView.focus();
+      >
+        <MdwtEditorMemo
+          content={content}
+          onContentChange={handleContentChange}
+          autoCompletion={chnotCompletions}
+          foldGutter={false}
+          setCodeMirrorRef={setCodeMirrorRef}
+        />
+        {/* dirty: fix codemirror height */}
+        <div
+          role="none"
+          className="flex-grow cursor-text min-h-0 p-0 m-0"
+          onClick={() => {
+            if (codeMirrorRef?.current) {
+              const editorView = codeMirrorRef.current.view;
+              if (editorView) {
+                const docLength = editorView.state.doc.length;
+                editorView.dispatch({
+                  selection: EditorSelection.cursor(docLength),
+                  scrollIntoView: true,
+                });
+                editorView.focus();
+              }
             }
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-          }
-        }}
-      ></div>
-    </div>
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+            }
+          }}
+        ></div>
+      </div>
+    )
   );
 };
 

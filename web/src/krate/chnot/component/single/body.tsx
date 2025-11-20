@@ -100,7 +100,6 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     <div className="flex flex-col w-full items-center m-0 p-1 min-h-100">
       <RichMdwt
         {...props}
-        tryfetch={true}
         onPostSave={(arg) => {
           handlePostSave(arg);
         }}

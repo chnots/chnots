@@ -106,7 +106,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                     handlePostSaveOnChnot(arg);
                   }
                 }}
-                content={mdwtMap[otid]?.content ?? undefined}
+                content={mdwtMap[otid]?.content ?? ''}
                 onChanged={(): void => {
                   const inited = initializedOtids.current;
                   /**
@@ -125,7 +125,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                     }
                   }
                 }}
-                tryfetch={false}
               />
             );
           })}

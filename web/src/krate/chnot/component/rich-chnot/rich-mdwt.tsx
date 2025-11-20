@@ -34,7 +34,6 @@ const RichMdwt = ({
   content: initialContent,
   onChanged,
   whfull,
-  tryfetch,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
@@ -42,7 +41,6 @@ const RichMdwt = ({
   content?: string;
   onChanged: (content: string) => void;
   whfull?: string;
-  tryfetch: boolean;
 }) => {
   const { currentKSpace } = useKSpaceStore((e) => {
     return {
@@ -91,7 +89,6 @@ const RichMdwt = ({
       )}
     >
       <MdwtChnot
-        tryFetch={tryfetch}
         otid={otid}
         readonly={readonly}
         onPostSave={(arg: PostSaveArg) => {

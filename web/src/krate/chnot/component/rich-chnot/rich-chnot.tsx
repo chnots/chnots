@@ -99,7 +99,7 @@ const RichChnot = ({
       </div>
       <div className="flex-1 focus:outline-none h-full space-y-2 max-w-full p-1 w-full">
         {kind === ChnotKind.MDWT ? (
-          <MdwtChnot {...props} tryFetch={true} />
+          <MdwtChnot {...props} />
         ) : kind === ChnotKind.ExcalidrawV1 ? (
           <ExcalidrawChnot {...props} readonly={true} />
         ) : kind === ChnotKind.KFileV1 ? (
