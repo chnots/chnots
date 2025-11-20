@@ -2,6 +2,7 @@
 /** biome-ignore-all lint/complexity/noBannedTypes: thirdparty file */
 /** biome-ignore-all lint/suspicious/noExplicitAny: thirdparty file */
 /** biome-ignore-all lint/a11y/noStaticElementInteractions: thirdparty file */
+/** biome-ignore-all lint/style/noNonNullAssertion: thirdparty file */
 
 import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
