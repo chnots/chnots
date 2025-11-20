@@ -11,9 +11,8 @@ files=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
 [ -z "$files" ] && exit 0
 
 # Prettify all selected files
-if [ -f  "$PROJECT_DIR/web/node_modules/.bin/biome" ]; then
-    cd "$PROJECT_DIR/web" && "$PROJECT_DIR/web/node_modules/.bin/biome" check --write
-fi
+cd "$PROJECT_DIR/web" && pnpm lint
+
 echo "$files" | grep ".rs$" | xargs rustfmt --edition 2024 
 
 # Add back the modified/prettified files to staging

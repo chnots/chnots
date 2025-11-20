@@ -7,6 +7,7 @@
     "dev": "rsbuild dev --host 0.0.0.0",
     "build": "tsc -b && rsbuild build",
     "check": "npx @biomejs/biome check --write",
+    "lint": "npx @biomejs/biome lint --write",
     "preview": "rsbuild preview"
   },
   "dependencies": {
