@@ -17,6 +17,7 @@ import { chnotShortDate } from '@/lib/date-utils';
 import { genTID, type TID } from '@/lib/id_util';
 
 export type PostSaveArg = {
+  otid: TID,
   saveState: SaveState;
   title?: string;
 };

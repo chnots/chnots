@@ -70,6 +70,7 @@ const LLMChatChnot = ({
 						<SessionContainer
 							onPostSave={(s) => {
 								onPostSave({
+									otid,
 									saveState: SaveState.Saved,
 									title: s.title,
 								});
@@ -86,6 +87,7 @@ const LLMChatChnot = ({
 								readonly={false}
 								onPostSave={(s) => {
 									onPostSave({
+										otid,
 										saveState: SaveState.Saved,
 										title: s.title,
 									});
