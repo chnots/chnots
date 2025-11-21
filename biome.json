@@ -5,7 +5,7 @@
       "**",
       "!**/.yarn",
       "!**/coverage",
-      "!**/dist",
+      "!**/web-dist",
       "!**/.pnp.cjs",
       "!**/.pnp.loader.mjs"
     ]
