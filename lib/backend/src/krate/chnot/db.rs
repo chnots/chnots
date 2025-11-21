@@ -162,8 +162,8 @@ impl ChnotMapper for KDb {
 
     async fn chnot_thread_meta_commit(
         &self,
-        req: KReq<ChnotThreadMetaFetchCommitReq>,
-    ) -> AResult<ChnotThreadMetaFetchCommitRsp> {
+        req: KReq<ChnotThreadMetaCommitReq>,
+    ) -> AResult<ChnotThreadMetaCommitRsp> {
         let mut conn = self.conn().await?;
 
         let tx = conn.tx().await?;
@@ -209,7 +209,7 @@ impl ChnotMapper for KDb {
 
         tx.cmt().await?;
 
-        Ok(ChnotThreadMetaFetchCommitRsp { meta })
+        Ok(ChnotThreadMetaCommitRsp { meta })
     }
 
     async fn chnot_overwrite_thread_orders(
@@ -223,23 +223,66 @@ impl ChnotMapper for KDb {
             orders,
         } = req.body;
 
+        let cto = ChnotThreadOrderTable::new("cto");
+        let cto_otid = cto.otid().field_name;
+        let korder_name = cto.korder().field_name;
+
+        struct OtidAndOrder {
+            otid: TID,
+            korder: i64,
+        }
+        let saved_orders = tx
+            .qry_list(
+                SqlReader::builder(
+                    [cto.korder().erased(), cto.otid().erased()],
+                    Froms::Table {
+                        table_name: cto.table(),
+                        alias: cto.alias,
+                    },
+                )
+                .wheres(cto.thread_otid().v_eq(thread_otid))
+                .build(),
+                |r| {
+                    Ok(OtidAndOrder {
+                        otid: r.try_get(cto_otid)?,
+                        korder: r.try_get(korder_name)?,
+                    })
+                },
+            )
+            .await?;
+
+        let mut to_save_map: HashMap<TID, (usize, _)> = orders
+            .into_iter()
+            .enumerate()
+            .map(|(index, o)| (o.otid, (index, o)))
+            .collect();
+        let mut to_remove_list: Vec<TID> = vec![];
+        saved_orders.into_iter().for_each(|e| {
+            let oo = to_save_map.get(&e.otid).map(|cc| (cc.1.otid, cc.0));
+            if oo.is_none_or(|(_, order)| order as i64 != e.korder) {
+                to_remove_list.push(e.otid);
+            } else {
+                to_save_map.remove(&e.otid);
+            }
+        });
+        for ele in to_remove_list {
+            tx.as_executor()
+                .omit_rows::<ChnotThreadOrder>(Wheres::equal(ChnotThreadOrder::OTID, ele))
+                .await?;
+        }
+
         let mut metas = vec![];
-        for (c, b) in orders.iter().enumerate() {
+
+        for (c, b) in to_save_map.values() {
             let rec = ChnotThreadOrder {
                 otid: b.otid,
                 tid: TID::default(),
                 thread_otid,
-                korder: c.try_into()?,
+                korder: (*c).try_into()?,
             };
 
             metas.push(rec.clone());
 
-            tx.as_executor()
-                .omit_rows::<ChnotThreadOrder>(Wheres::equal(
-                    ChnotThreadOrder::THREAD_OTID,
-                    thread_otid,
-                ))
-                .await?;
             tx.exec(rec.to_sql_inserter()).await?;
         }
 
