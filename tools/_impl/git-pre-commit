@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
+echo "=> PRE_COMMIT"
 
 CSDIR="$(dirname "$(realpath "$0")")"
 PROJECT_DIR="$(git rev-parse --show-toplevel)"
-
-echo "=> Project Dir: $PROJECT_DIR"
-
 "$PROJECT_DIR/tools/format-all" 
 
-echo "=> $CSDIR/git-pre-commit Finished"
+echo "=> PRE_COMMIT DONE"

@@ -2,20 +2,20 @@
 
 PROJECT_DIR="$(git rev-parse --show-toplevel)"
 
-echo "-> Format code"
 cd "$PROJECT_DIR"
-
 
 files=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
 
 [ -z "$files" ] && exit 0
 
 # Prettify all selected files
-cd "$PROJECT_DIR/web" && pnpm lint
+BIOME="$PROJECT_DIR/web/node_modules/.bin/biome"
+if [ -f "$BIOME" ]; then
+    "$BIOME" lint --write --staged --diagnostic-level=error --no-errors-on-unmatched --log-kind=compact
+fi
 
 echo "$files" | grep ".rs$" | xargs rustfmt --edition 2024 
 
 # Add back the modified/prettified files to staging
 echo "$files" | xargs git add
 
-echo "-> Format code finished"
