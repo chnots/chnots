@@ -1,17 +1,17 @@
 import type {
-  ChnotMetaCommitReq,
-  ChnotMetaCommitRsp,
-  ChnotMetaListReq,
-  ChnotMetaListRsp,
-  ChnotSearchReq,
-  ChnotSearchRspSingle,
-  ChnotThreadMetaFetchCommitReq,
-  ChnotThreadMetaFetchCommitRsp,
-  ChnotThreadMetaFetchReq,
-  ChnotThreadMetaFetchRsp,
-  ChnotThreadOrderCommitReq,
-  ChnotThreadOrderCommitRsp,
-} from './dto';
+	ChnotMetaCommitReq,
+	ChnotMetaCommitRsp,
+	ChnotMetaListReq,
+	ChnotMetaListRsp,
+	ChnotSearchReq,
+	ChnotSearchRspSingle,
+	ChnotThreadMetaCommitReq,
+	ChnotThreadMetaCommitRsp,
+	ChnotThreadMetaFetchReq,
+	ChnotThreadMetaFetchRsp,
+	ChnotThreadOrderCommitReq,
+	ChnotThreadOrderCommitRsp,
+} from "./dto";
 import type { PageRsp } from '@/common/types';
 import request from '@/lib/request';
 
@@ -52,7 +52,7 @@ export const chnotThreadMetaFetch = async (
 };
 
 export const chnotThreadMetaOverwrite = async (
-  req: ChnotThreadMetaFetchCommitReq,
-): Promise<ChnotThreadMetaFetchCommitRsp> => {
-  return await request.postJson(`api/v1/chnot-thread-meta-commit`, req);
+	req: ChnotThreadMetaCommitReq,
+): Promise<ChnotThreadMetaCommitRsp> => {
+	return await request.postJson(`api/v1/chnot-thread-meta-commit`, req);
 };

@@ -11,14 +11,14 @@ export type ChnotSearchRspThread = {
   meta: ChnotThreadMeta;
   title?: string;
 };
-export type ChnotThreadMetaFetchCommitReq = {
-  meta_otid: TID;
-  kspace?: Varchar<40>;
-  pinned?: boolean;
-  archive?: boolean;
+export type ChnotThreadMetaCommitReq = {
+	meta_otid: TID;
+	kspace?: Varchar<40>;
+	pinned?: boolean;
+	archive?: boolean;
 };
-export type ChnotThreadMetaFetchCommitRsp = {
-  meta: ChnotThreadMeta;
+export type ChnotThreadMetaCommitRsp = {
+	meta: ChnotThreadMeta;
 };
 export type MdwtCommitReqData = {
   otid: TID;

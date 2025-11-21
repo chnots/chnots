@@ -56,8 +56,8 @@ async fn chnot_meta_list(
 async fn chnot_thread_meta_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<ChnotThreadMetaFetchCommitReq>,
-) -> KResponse<ChnotThreadMetaFetchCommitRsp> {
+    Json(req): Json<ChnotThreadMetaCommitReq>,
+) -> KResponse<ChnotThreadMetaCommitRsp> {
     state
         .chnot_thread_meta_commit(kreq(headers, req))
         .await

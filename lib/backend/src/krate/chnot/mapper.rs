@@ -27,8 +27,8 @@ pub trait ChnotMapper {
 
     async fn chnot_thread_meta_commit(
         &self,
-        req: KReq<ChnotThreadMetaFetchCommitReq>,
-    ) -> AResult<ChnotThreadMetaFetchCommitRsp>;
+        req: KReq<ChnotThreadMetaCommitReq>,
+    ) -> AResult<ChnotThreadMetaCommitRsp>;
 
     async fn chnot_thread_meta_fetch(
         &self,
@@ -56,8 +56,8 @@ impl ChnotMapper for MapperType {
 
     async fn chnot_thread_meta_commit(
         &self,
-        req: KReq<ChnotThreadMetaFetchCommitReq>,
-    ) -> AResult<ChnotThreadMetaFetchCommitRsp> {
+        req: KReq<ChnotThreadMetaCommitReq>,
+    ) -> AResult<ChnotThreadMetaCommitRsp> {
         expand_mt_branch!(self.chnot_thread_meta_commit(req))
     }
 

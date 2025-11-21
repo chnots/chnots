@@ -18,7 +18,7 @@ pub struct ChnotSearchRspSingle {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadMetaFetchCommitReq {
+pub struct ChnotThreadMetaCommitReq {
     pub meta_otid: TID,
     pub kspace: Option<Varchar<40>>,
     pub pinned: Option<bool>,
@@ -26,7 +26,7 @@ pub struct ChnotThreadMetaFetchCommitReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadMetaFetchCommitRsp {
+pub struct ChnotThreadMetaCommitRsp {
     pub meta: ChnotThreadMeta,
 }
 
