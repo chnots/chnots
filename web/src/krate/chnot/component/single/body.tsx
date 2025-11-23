@@ -1,19 +1,19 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { ChnotKind } from '../../po';
-import { chnotMetaCommit } from '../../service';
-import { useChnotSingleStore } from '../../store';
-import ExcalidrawChnot from '../rich-chnot/excalidraw';
-import KFileChnot from '../rich-chnot/kfile';
-import LLMChatChnot from '../rich-chnot/llmchat';
-import RichMdwt from '../rich-chnot/rich-mdwt';
-import TableChnot from '../rich-chnot/table';
+import { ChnotKind } from "../../po";
+import { chnotMetaCommit } from "../../service";
+import { useChnotSingleStore } from "../../store";
+import ExcalidrawChnot from "../rich-chnot/excalidraw";
+import KFileChnot from "../rich-chnot/kfile";
+import LLMChatChnot from "../rich-chnot/llmchat";
+import RichMdwt from "../rich-chnot/rich-mdwt";
+import TableChnot from "../rich-chnot/table";
 
-import type { PostSaveArg } from '../rich-chnot/rich-chnot';
-import { SaveState } from '@/common/types';
-import { useKSpaceStore } from '@/krate/kspace/store';
-import { mdwtCommit } from '@/krate/mdwt/service';
-import { genTID, type TID } from '@/lib/id_util';
+import type { PostSaveArg } from "../rich-chnot/rich-chnot";
+import { SaveState } from "@/common/types";
+import { useKSpaceStore } from "@/krate/kspace/store";
+import { mdwtCommit } from "@/krate/mdwt/service";
+import { genTID, type TID } from "@/lib/id_util";
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -47,9 +47,9 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         kspace: kspace,
         tid: genTID(),
       };
-      let title = '';
+      let title = "";
       if (arg.title !== titleRef.current) {
-        title = arg.title ?? '';
+        title = arg.title ?? "";
         titleRef.current = title;
         if (kind !== ChnotKind.MDWT) {
           await mdwtCommit({
@@ -60,7 +60,11 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
           });
         }
       }
-      if (saveStateRef.current === SaveState.Initial && kind && arg.saveState === SaveState.Saved) {
+      if (
+        saveStateRef.current === SaveState.Initial &&
+        kind &&
+        arg.saveState === SaveState.Saved
+      ) {
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
         overwrite({
@@ -73,14 +77,16 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     [kind, kspace, otid, overwrite, setCurOtid],
   );
 
-  const props = {
+  const handleChange = useCallback(() => {}, []);
+
+  const [props] = useState({
     otid: otid,
     readonly: false,
     fullscreen: false,
     onPostSave: (arg: PostSaveArg) => {
       handlePostSave(arg);
     },
-  };
+  });
 
   return kind === ChnotKind.ExcalidrawV1 ? (
     <div className="flex w-full h-full overflow-auto">
@@ -100,10 +106,8 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     <div className="flex flex-col w-full items-center m-0 p-1 min-h-100">
       <RichMdwt
         {...props}
-        onPostSave={(arg) => {
-          handlePostSave(arg);
-        }}
-        onChanged={() => {}}
+        onPostSave={handlePostSave}
+        onChanged={handleChange}
       />
     </div>
   );
