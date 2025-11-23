@@ -1,19 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { type ChnotViewType, useChnotHeadStore, useChnotThreadStore } from '../../store';
-import Header from '../header/chnot-sidebar-header';
-import { ChnotSidebarItem, ChnotSidebarTagItem } from '../sidebar-item';
+import {
+  type ChnotViewType,
+  useChnotHeadStore,
+  useChnotThreadStore,
+} from "../../store";
+import Header from "../header/chnot-sidebar-header";
+import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
 
-import KPageList from '@/common/component/kpagelist';
+import KPageList from "@/common/component/kpagelist";
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarSeparator,
-} from '@/common/component/ui/sidebar';
-import { useKSpaceStore } from '@/krate/kspace/store';
-import { chnotTagNameList } from '@/krate/mdwt/service';
-import type { TID } from '@/lib/id_util';
+} from "@/common/component/ui/sidebar";
+import { useKSpaceStore } from "@/krate/kspace/store";
+import { chnotTagNameList } from "@/krate/mdwt/service";
+import type { TID } from "@/lib/id_util";
 
 const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
   const {
@@ -36,14 +40,16 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     };
   });
 
-  const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore((store) => {
-    return {
-      tags: store.tags,
-      setTagsInset: store.setTagsInset,
-      kinds: store.kinds,
-      searchStr: store.searchStr,
-    };
-  });
+  const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore(
+    (store) => {
+      return {
+        tags: store.tags,
+        setTagsInset: store.setTagsInset,
+        kinds: store.kinds,
+        searchStr: store.searchStr,
+      };
+    },
+  );
 
   const [tagList, setTagList] = useState<string[]>();
 
@@ -84,7 +90,9 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                   key={tagName}
                   tag={tagName}
                   onClick={() => {
-                    setTagsInset([...new Set([...(tags?.Inset ?? []), tagName])]);
+                    setTagsInset([
+                      ...new Set([...(tags?.Inset ?? []), tagName]),
+                    ]);
                   }}
                 />
               ))}
@@ -96,11 +104,11 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
             hasNextPage={mapByOtid.hasMore}
           >
             {[...mapByOtid.cache.values()].map((chnot) => (
-              <ChnotSidebarItem
+              <ChnotSidebarItemMemo
                 item={chnot}
                 key={chnot.meta.otid}
                 showKSpace={mkspaces.length > 0}
-                curOtid={curOtid}
+                isCurrent={curOtid === chnot.meta.otid}
                 setCurOtid={(curOtid?: TID) => {
                   setCurOtid(curOtid);
                   if (changeCompCurOtid) {
