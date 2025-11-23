@@ -17,8 +17,6 @@ import { mdwtRecordList } from "@/krate/mdwt/service";
 import { arraysAreEqual } from "@/lib/col-util";
 import { genTID, type TID } from "@/lib/id_util";
 import type { ChnotThreadMetaCommitReq } from "../../dto";
-import useDebugChanged from "@/hooks/use-debug-changed";
-
 enum ChnotState {
 	Initialized,
 	Saved,
@@ -41,10 +39,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
 	const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
 	const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
 	const [loading, setLoading] = useState<boolean>(true);
-
-	useDebugChanged(threadMeta, "threadMeta");
-	useDebugChanged(mdwtMap, "mdwtMap");
-	useDebugChanged(chnotOrders, "chnotOrders");
 
 	useEffect(() => {
 		(async () => {

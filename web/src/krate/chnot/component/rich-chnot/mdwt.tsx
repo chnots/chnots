@@ -31,7 +31,6 @@ import {
   mdwtRecordList,
 } from "@/krate/mdwt/service";
 import { toentTodoEventGuess } from "@/krate/toent/service";
-import useDebugChanged from "@/hooks/use-debug-changed";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -127,10 +126,6 @@ const MdwtChnot = ({
   const [codeMirrorRef, setCodeMirrorRef] =
     useState<RefObject<ReactCodeMirrorRef | null>>();
   const [content, setContent] = useState<string | undefined>(initialContent);
-
-  useDebugChanged(initialContent, "initialContent");
-  useDebugChanged(onContentChange, "onContentChange");
-  useDebugChanged(otid, "otid");
 
   useEffect(() => {
     if (initialContent === undefined) {

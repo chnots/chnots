@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-const useDebugChanged = (_value: any, _title?: string) => {
-  useEffect(() => {}, []);
+const useDebugChanged = (value: any, title?: string) => {
+  useEffect(() => {
+    console.log("> changed,", title, value);
+  }, [value]);
 };
 
 export default useDebugChanged;

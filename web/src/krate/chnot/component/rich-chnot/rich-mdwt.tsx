@@ -12,8 +12,6 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { arraysAreEqual } from "@/lib/col-util";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
-import useDebugChanged from "@/hooks/use-debug-changed";
-
 const parseChnotsFromContent = (content: string): TID[] => {
   const regex = /\[\[([0-9]{16}?)\]\]/g;
   const matches: TID[] = [];
