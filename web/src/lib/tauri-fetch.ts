@@ -1,11 +1,11 @@
-import { recursiveDateConversion } from './date-utils';
+import { recursiveDateConversion } from "./date-utils";
 
-import { kspaceStore } from '@/krate/kspace/store';
+import { kspaceStore } from "@/krate/kspace/store";
 
 const appendUrl = (base: string, suffix: string) => {
-  if (base.endsWith('/') && suffix.startsWith('/')) {
+  if (base.endsWith("/") && suffix.startsWith("/")) {
     return base + suffix.substring(1);
-  } else if (base.endsWith('/') || suffix.startsWith('/')) {
+  } else if (base.endsWith("/") || suffix.startsWith("/")) {
     return base + suffix;
   } else {
     return `${base}/${suffix}`;
@@ -14,6 +14,7 @@ const appendUrl = (base: string, suffix: string) => {
 
 class FetchRequest {
   private baseURL: string;
+  private baseConfig: RequestInit;
 
   constructor(config: { baseURL: string; timeout?: number }) {
     this.baseURL = config.baseURL;
@@ -22,7 +23,9 @@ class FetchRequest {
     };
   }
 
-  private async requestInterceptor(config: RequestInit & { url: string }): Promise<RequestInit> {
+  private async requestInterceptor(
+    config: RequestInit & { url: string },
+  ): Promise<RequestInit> {
     const kspace = kspaceStore.getState();
 
     const controller = new AbortController();
@@ -33,8 +36,8 @@ class FetchRequest {
       headers: {
         ...this.baseConfig.headers,
         ...config.headers,
-        'K-kspace': kspace.currentKSpace,
-        'K-mkspaces': kspace.mkspaces.join(','),
+        "K-kspace": kspace.currentKSpace,
+        "K-mkspaces": kspace.mkspaces.join(","),
       },
       signal: controller.signal,
     };
@@ -52,9 +55,11 @@ class FetchRequest {
   }
 
   async get<T, E>(url: string, params?: E): Promise<T> {
-    const query = params ? `?${new URLSearchParams(params as Record<string, string>)}` : '';
+    const query = params
+      ? `?${new URLSearchParams(params as Record<string, string>)}`
+      : "";
     const fullUrl = appendUrl(this.baseURL, `${url}${query}`);
-    const config = await this.requestInterceptor({ url, method: 'GET' });
+    const config = await this.requestInterceptor({ url, method: "GET" });
 
     const response = await fetch(fullUrl, config);
     return this.responseInterceptor<T>(response);
@@ -65,7 +70,7 @@ class FetchRequest {
     const body: BodyInit = data;
     const config = await this.requestInterceptor({
       url,
-      method: 'POST',
+      method: "POST",
       body,
     });
 
@@ -78,9 +83,9 @@ class FetchRequest {
     const config = await this.requestInterceptor({
       url,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
 
@@ -92,10 +97,10 @@ class FetchRequest {
     const fullUrl = appendUrl(this.baseURL, url);
     const config = await this.requestInterceptor({
       url,
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -104,7 +109,7 @@ class FetchRequest {
   }
 }
 
-export const BASE_URL = 'http://127.0.0.1:3013';
+export const BASE_URL = "http://127.0.0.1:3013";
 
 const request = new FetchRequest({
   baseURL: BASE_URL,
