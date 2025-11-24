@@ -58,7 +58,6 @@ pub struct LLMChatRecord {
     #[gts_type = "i64"]
     pub pre_record_otid: Option<TID>,
     pub content: Text,
-    pub reasoning_content: Text,
     pub role: Varchar<40>,
     #[gts_type = "i64"]
     pub role_id: Option<TID>, // maybe bot tid

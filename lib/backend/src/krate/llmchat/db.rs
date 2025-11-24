@@ -28,7 +28,6 @@ impl TryFrom<&KDbRow> for LLMChatRecord {
             content: value.try_get(LLMChatRecord::CONTENT)?,
             role: value.try_get(LLMChatRecord::ROLE)?,
             role_id: value.try_get(LLMChatRecord::ROLE_ID)?,
-            reasoning_content: value.try_get(LLMChatRecord::REASONING_CONTENT)?,
             tid: value.try_get(LLMChatBot::TID)?,
         };
         Ok(obj)
