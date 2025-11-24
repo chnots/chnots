@@ -7,7 +7,9 @@
       "!**/coverage",
       "!**/web-dist",
       "!**/.pnp.cjs",
-      "!**/.pnp.loader.mjs"
+      "!**/.pnp.loader.mjs",
+      "!target",
+      "!lib/jolpin-codemirror"
     ]
   },
   "assist": {
