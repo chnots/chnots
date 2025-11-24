@@ -41,17 +41,16 @@ const LLMChatBotSelect = () => {
 
   const AddButton = () => {
     return (
-      <div className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md cursor-pointer">
-        <Button
-          className="flex flex-row space-x-2 items-center"
-          onClick={() => {
-            selectedBotRef.current = undefined;
-            setShowBotForm(true);
-          }}
-        >
-          <Icon.PlusCircle className="w-4 h-4" />
-          <span className="ml-1">Add Bot</span>
-        </Button>
+      <div
+        role="none"
+        className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md cursor-pointer"
+        onClick={() => {
+          selectedBotRef.current = undefined;
+          setShowBotForm(true);
+        }}
+      >
+        <Icon.PlusCircle className="w-4 h-4" />
+        <span className="ml-1">Add Bot</span>
       </div>
     );
   };

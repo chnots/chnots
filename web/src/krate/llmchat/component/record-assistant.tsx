@@ -79,11 +79,8 @@ export const RecordSystem = ({
   viewMode: boolean;
 } & LLMChatRecord) => {
   const { templates } = useLLMChatStore();
-  const { setTemplate, records } = useLLMChatComStore((store) => {
-    return {
-      setTemplate: store.setTemplate,
-      records: store.records,
-    };
+  const [setTemplate, records, setShowTemplateForm] = useLLMChatComStore((store) => {
+    return [store.setTemplate, store.records, store.setShowTemplateForm];
   });
 
   const [showTemplates, setShowTemplates] = useState<boolean>();
@@ -101,7 +98,7 @@ export const RecordSystem = ({
   ) : tmpl?.svg_logo ? (
     <KSVG src={tmpl.svg_logo} />
   ) : (
-    <Icon.Glasses />
+    <Icon.Sparkles />
   );
 
   return (
@@ -135,7 +132,9 @@ export const RecordSystem = ({
           onSelectTemplate={(template: LLMChatTemplate): void => {
             setTemplate(template);
           }}
-          onNew={(): void => {}}
+          onNew={(): void => {
+            setShowTemplateForm(true);
+          }}
         />
       )}
     </>
