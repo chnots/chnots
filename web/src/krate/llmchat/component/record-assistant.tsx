@@ -1,20 +1,21 @@
-import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-import RecordFrame, { RecordButton } from './record-frame';
-import { useLLMChatComStore } from './session';
-import LLMChatTemplateList from './template-list';
+import RecordFrame, { RecordButton } from "./record-frame";
+import { useLLMChatComStore } from "./session";
+import LLMChatTemplateList from "./template-list";
 
-import type React from 'react';
-import Icon from '@/common/component/icon';
-import KSVG from '@/common/component/svg';
-import type { LLMChatBot, LLMChatRecord, LLMChatTemplate } from '@/krate/llmchat/po';
-import { useLLMChatStore } from '@/krate/llmchat/store';
+import type React from "react";
+import Icon from "@/common/component/icon";
+import KSVG from "@/common/component/svg";
+import type { LLMChatBot, LLMChatTemplate } from "@/krate/llmchat/po";
+import { useLLMChatStore } from "@/krate/llmchat/store";
+import type { LLMChatRecordVO } from "../vo";
 
 const RecordCommon = ({
-  reasoning_content,
-  content,
+  body,
+  thinking,
   timestamp,
   name,
   logo,
@@ -28,10 +29,11 @@ const RecordCommon = ({
   buttons?: React.ReactNode;
   limitHeight?: boolean;
   viewMode: boolean;
-} & Omit<LLMChatRecord, 'role'>) => {
+} & Omit<LLMChatRecordVO, "role">) => {
   const onCopy = () => {
-    navigator.clipboard.writeText(content);
+    navigator.clipboard.writeText(body);
   };
+
   return (
     <RecordFrame
       name={name}
@@ -43,21 +45,21 @@ const RecordCommon = ({
       viewMode={viewMode}
     >
       <div className="flex flex-col">
-        {reasoning_content && !viewMode && (
+        {thinking && !viewMode && (
           <div
             className={
-              'prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive'
+              "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"
             }
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{reasoning_content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{thinking}</ReactMarkdown>
           </div>
         )}
         <div
           className={
-            'prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2'
+            "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
           }
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       </div>
     </RecordFrame>
@@ -67,7 +69,8 @@ const RecordCommon = ({
 export const RecordSystem = ({
   otid,
   role_id,
-  content,
+  body,
+  thinking,
   logo,
   timestamp,
   session_otid,
@@ -77,7 +80,7 @@ export const RecordSystem = ({
   logo?: string;
   timestamp: string;
   viewMode: boolean;
-} & LLMChatRecord) => {
+} & LLMChatRecordVO) => {
   const { templates } = useLLMChatStore();
   const [setTemplate, records, setShowTemplateForm] = useLLMChatComStore((store) => {
     return [store.setTemplate, store.records, store.setShowTemplateForm];
@@ -105,18 +108,18 @@ export const RecordSystem = ({
     <>
       <RecordCommon
         timestamp={timestamp}
-        name={tmpl?.name ?? 'Unknown Template'}
+        name={tmpl?.name ?? "Unknown Template"}
         logo={svgLogo}
         viewMode={!!viewMode}
         otid={otid}
         session_otid={session_otid}
         limitHeight={true}
-        content={content}
+        body={body}
+        thinking={thinking}
         tid={tid}
-        reasoning_content={''}
         buttons={
           records?.length === 1 &&
-          records.at(0)?.role === 'system' && (
+          records.at(0)?.role === "system" && (
             <RecordButton
               onClick={() => {
                 setShowTemplates((prev) => !prev);
@@ -144,8 +147,8 @@ export const RecordSystem = ({
 const RecordAssistant = ({
   otid,
   role_id,
-  reasoning_content,
-  content,
+  body,
+  thinking,
   logo,
   timestamp,
   session_otid,
@@ -155,7 +158,7 @@ const RecordAssistant = ({
   logo?: string;
   timestamp: string;
   viewMode: boolean;
-} & Omit<LLMChatRecord, 'role'>) => {
+} & Omit<LLMChatRecordVO, "role">) => {
   const { bots } = useLLMChatStore();
   const { onRegenrate } = useLLMChatComStore((store) => {
     return {
@@ -182,13 +185,13 @@ const RecordAssistant = ({
   return (
     <RecordCommon
       timestamp={timestamp}
-      name={bt?.name ?? 'Unknown Bot'}
+      name={bt?.name ?? "Unknown Bot"}
       logo={svgLogo}
       viewMode={viewMode}
       otid={otid}
       session_otid={session_otid}
-      content={content}
-      reasoning_content={reasoning_content}
+      body={body}
+      thinking={thinking}
       tid={tid}
       buttons={
         <RecordButton

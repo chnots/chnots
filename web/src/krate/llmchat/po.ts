@@ -1,8 +1,20 @@
-import type { TID } from '@/lib/id_util';
-import type { DbText, Varchar } from '@/lib/types';
+import type { TID } from "@/lib/id_util";
+import type { DbText, Varchar } from "@/lib/types";
+
+export const parseContent = (content: string) => {
+  try {
+    const jn = JSON.parse(content);
+    return [jn.body, jn.thinking];
+  } catch (_ex) {
+    return [content, undefined];
+  }
+};
+
+export const stringifyContent = (body: string, thinking?: string) => {
+  return JSON.stringify({ body, thinking });
+};
 
 // LLMChatBot structure
-
 export type LLMChatBot = {
   otid: TID;
   name: Varchar<500>;
@@ -20,7 +32,6 @@ export type LLMChatBotBodyOpenAIV1 = {
 };
 
 // LLMChatTemplate structure
-
 export type LLMChatTemplate = {
   otid: TID;
   name: Varchar<200>;
@@ -31,7 +42,6 @@ export type LLMChatTemplate = {
 };
 
 // LLMChatSession structure
-
 export type LLMChatSession = {
   otid: TID;
   template_otid: TID;
@@ -41,13 +51,11 @@ export type LLMChatSession = {
 };
 
 // LLMChatRecord structure
-
 export type LLMChatRecord = {
   otid: TID;
   session_otid: TID;
   pre_record_otid?: TID;
   content: DbText;
-  reasoning_content: DbText;
   role: Varchar<40>;
   role_id?: TID;
   tid: TID;

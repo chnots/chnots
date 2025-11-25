@@ -1,21 +1,22 @@
 /** biome-ignore-all lint/correctness/useHookAtTopLevel: fully tested */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import RecordAssistant from './record-assistant';
-import { useLLMChatComStore } from './session';
+import RecordAssistant from "./record-assistant";
+import { useLLMChatComStore } from "./session";
 
 import {
   ResponseCtl,
   type ResponseState,
   ResponseStep,
   useLLMResponse,
-} from '@/hooks/use-llm-response';
+} from "@/hooks/use-llm-response";
 
-import Icon from '@/common/component/icon';
-import { Button as KButton } from '@/common/component/ui/button';
-import type { LLMChatBot, LLMChatRecord } from '@/krate/llmchat/po';
-import { llmchatRecordCommit } from '@/krate/llmchat/service';
-import { genTID, type TID } from '@/lib/id_util';
+import Icon from "@/common/component/icon";
+import { Button as KButton } from "@/common/component/ui/button";
+import type { LLMChatBot } from "@/krate/llmchat/po";
+import { llmchatRecordCommit } from "@/krate/llmchat/service";
+import { genTID, type TID } from "@/lib/id_util";
+import type { LLMChatRecordVO } from "../vo";
 
 export const RecordAnswering = ({
   bot,
@@ -71,12 +72,12 @@ export const RecordAnswering = ({
     return () => {
       if (responseStateRef.current) {
         const response = responseStateRef.current;
-        const record: LLMChatRecord = {
+        const record: LLMChatRecordVO = {
           otid: response.tid,
           session_otid: response.sessionId,
-          content: response.content,
-          reasoning_content: response.reasoningContent,
-          role: 'assistant',
+          thinking: response.reasoningContent,
+          body: response.content,
+          role: "assistant",
           role_id: response.roleId,
           pre_record_otid: response.prevRecordId,
           tid: genTID(),
@@ -88,12 +89,12 @@ export const RecordAnswering = ({
 
   useEffect(() => {
     const buildRecord = (responseState: ResponseState) => {
-      const record: LLMChatRecord = {
+      const record: LLMChatRecordVO = {
         otid: responseState.tid,
         session_otid: responseState.sessionId,
-        content: responseState.content,
-        reasoning_content: responseState.reasoningContent,
-        role: 'assistant',
+        body: responseState.content,
+        thinking: responseState.reasoningContent,
+        role: "assistant",
         role_id: responseState.roleId,
         pre_record_otid: responseState.prevRecordId,
         tid: genTID(),
@@ -120,8 +121,8 @@ export const RecordAnswering = ({
         role_id={bot.otid}
         otid={otid.current}
         session_otid={response.sessionId}
-        content={response.content}
-        reasoning_content={response.reasoningContent}
+        body={response.content}
+        thinking={response.reasoningContent}
         tid={genTID()}
         timestamp={new Date(otid.current / 1e3).toISOString()}
         viewMode={false}

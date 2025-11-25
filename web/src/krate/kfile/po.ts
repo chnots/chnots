@@ -1,5 +1,5 @@
-import type { TID } from '@/lib/id_util';
-import type { DbText, Varchar } from '@/lib/types';
+import type { TID } from "@/lib/id_util";
+import type { DbText, Varchar } from "@/lib/types";
 
 export type InlineKFile = {
   sid: Varchar<100>;

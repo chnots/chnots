@@ -1,27 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { toast } from 'sonner';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { toast } from "sonner";
 
-import type {
-  LLMChatBot,
-  LLMChatBotBodyOpenAIV1,
-  LLMChatRecord,
-  LLMChatSession,
-} from '@/krate/llmchat/po';
-import { genTID, type TID } from '@/lib/id_util';
+import type { LLMChatBot, LLMChatBotBodyOpenAIV1, LLMChatSession } from "@/krate/llmchat/po";
+import { genTID, type TID } from "@/lib/id_util";
+import type { LLMChatRecordVO } from "@/krate/llmchat/vo";
 
 export enum ResponseStep {
-  Initial = 'init',
-  Answering = 'ans',
-  Answered = 'fia',
-  Aborted = 'abt',
-  Error = 'err',
-  End = 'end',
+  Initial = "init",
+  Answering = "ans",
+  Answered = "fia",
+  Aborted = "abt",
+  Error = "err",
+  End = "end",
 }
 
 export enum ResponseCtl {
-  Trigger = 'tri',
-  Abort = 'abt',
+  Trigger = "tri",
+  Abort = "abt",
 }
 
 export type ResponseState = {
@@ -41,8 +37,8 @@ const emptyResponse = (session: LLMChatSession, bot: LLMChatBot) => {
     prevRecordId: session.otid,
     sessionId: session.otid,
     roleId: bot.otid,
-    content: '',
-    reasoningContent: '',
+    content: "",
+    reasoningContent: "",
   };
 };
 
@@ -52,7 +48,7 @@ export const useLLMResponse = ({
   bot,
 }: {
   session: LLMChatSession;
-  records: LLMChatRecord[];
+  records: LLMChatRecordVO[];
   bot: LLMChatBot;
 }) => {
   const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(undefined);
@@ -68,8 +64,8 @@ export const useLLMResponse = ({
     let ended = false;
     if (responseState.reasoningContent.length === 0) {
       const content = responseState.content;
-      const thinkStart = content.indexOf('<think>');
-      const thinkEnd = content.indexOf('</think>');
+      const thinkStart = content.indexOf("<think>");
+      const thinkEnd = content.indexOf("</think>");
       if (thinkStart >= 0) {
         if (thinkEnd > 0) {
           setResponseState((prev) => {
@@ -86,7 +82,7 @@ export const useLLMResponse = ({
             return {
               ...prev,
               step: ResponseStep.End,
-              content: '',
+              content: "",
               reasoningContent: content.substring(thinkStart + 7),
             };
           });
@@ -126,15 +122,15 @@ export const useLLMResponse = ({
     const body = {
       model: config.model_name,
       messages: records.map((r) => {
-        return { role: r.role, content: r.content };
+        return { role: r.role, content: r.body };
       }),
       stream: true,
     };
 
     fetchEventSource(config.url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${config.token}`,
       },
       body: JSON.stringify(body),
@@ -142,7 +138,7 @@ export const useLLMResponse = ({
       openWhenHidden: true,
       onmessage: (msg) => {
         const text = msg.data;
-        if (text === '[DONE]') {
+        if (text === "[DONE]") {
           return;
         }
         if (text.trim().length === 0) {

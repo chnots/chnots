@@ -1,5 +1,10 @@
-import type { LLMChatBot, LLMChatRecord, LLMChatSession, LLMChatTemplate } from './po';
-import type { TID } from '@/lib/id_util';
+import type {
+  LLMChatBot,
+  LLMChatRecord,
+  LLMChatSession,
+  LLMChatTemplate,
+} from "./po";
+import type { TID } from "@/lib/id_util";
 
 export type LLMChatBotListRsp = {
   bots: LLMChatBot[];

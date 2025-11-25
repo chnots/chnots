@@ -6,7 +6,6 @@ import { useLLMChatComStore } from './session';
 
 import Icon from '@/common/component/icon';
 import KSVG from '@/common/component/svg';
-import { Button } from '@/common/component/ui/button';
 import type { LLMChatBot } from '@/krate/llmchat/po';
 import { llmchatBotCommit } from '@/krate/llmchat/service';
 import { useLLMChatStore } from '@/krate/llmchat/store';

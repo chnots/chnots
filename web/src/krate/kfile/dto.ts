@@ -1,6 +1,6 @@
-import type { InlineKFile, KFileMeta } from './po';
-import type { TID } from '@/lib/id_util';
-import type { Varchar } from '@/lib/types';
+import type { InlineKFile, KFileMeta } from "./po";
+import type { TID } from "@/lib/id_util";
+import type { Varchar } from "@/lib/types";
 
 export type KFileUploadRsp = {
   kfile?: KFileMeta;

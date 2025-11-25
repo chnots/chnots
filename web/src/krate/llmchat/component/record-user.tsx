@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import RecordFrame, { RecordButton } from './record-frame';
-import { useLLMChatComStore } from './session';
+import RecordFrame, { RecordButton } from "./record-frame";
+import { useLLMChatComStore } from "./session";
 
-import Icon from '@/common/component/icon';
-import { Textarea } from '@/common/component/ui/textarea';
-import type { LLMChatRecord } from '@/krate/llmchat/po';
+import Icon from "@/common/component/icon";
+import { Textarea } from "@/common/component/ui/textarea";
+import type { LLMChatRecordVO } from "../vo";
 
-const RecordUser = ({ record, viewMode }: { record: LLMChatRecord; viewMode: boolean }) => {
-  const { content: initialContent, otid } = record;
+const RecordUser = ({ record, viewMode }: { record: LLMChatRecordVO; viewMode: boolean }) => {
+  const { body: initialContent, otid } = record;
 
   const [content, setContent] = useState(initialContent);
   const [editing, setEditing] = useState<boolean>(false);
@@ -37,7 +37,7 @@ const RecordUser = ({ record, viewMode }: { record: LLMChatRecord; viewMode: boo
                 setEditing(false);
                 updateRecord({
                   ...record,
-                  content: content,
+                  body: content,
                 });
               }}
             >

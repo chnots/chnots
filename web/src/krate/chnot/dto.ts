@@ -1,7 +1,7 @@
-import type { TodoEvent } from '../toent/po';
-import type { ChnotKind, ChnotMeta, ChnotThreadMeta } from './po';
-import type { TID } from '@/lib/id_util';
-import type { DbText, Varchar } from '@/lib/types';
+import type { TodoEvent } from "../toent/po";
+import type { ChnotKind, ChnotMeta, ChnotThreadMeta } from "./po";
+import type { TID } from "@/lib/id_util";
+import type { DbText, Varchar } from "@/lib/types";
 
 export type MdwtTagSearchType = {
   Inset: string[];
@@ -12,13 +12,13 @@ export type ChnotSearchRspThread = {
   title?: string;
 };
 export type ChnotThreadMetaCommitReq = {
-	meta_otid: TID;
-	kspace?: Varchar<40>;
-	pinned?: boolean;
-	archive?: boolean;
+  meta_otid: TID;
+  kspace?: Varchar<40>;
+  pinned?: boolean;
+  archive?: boolean;
 };
 export type ChnotThreadMetaCommitRsp = {
-	meta: ChnotThreadMeta;
+  meta: ChnotThreadMeta;
 };
 export type MdwtCommitReqData = {
   otid: TID;
