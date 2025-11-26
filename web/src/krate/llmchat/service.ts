@@ -53,7 +53,15 @@ export const llmchatSessionRecordFetch = async (
   return {
     session: rsp.session,
     records: rsp.records.map((r) => {
-      const { body, thinking } = JSON.parse(r.content);
+      let body: string, thinking: string;
+      try {
+        const parsed = JSON.parse(r.content);
+        body = parsed.body;
+        thinking = parsed.thinking;
+      } catch (_) {
+        body = r.content;
+        thinking = "";
+      }
       return {
         ...r,
         body,
