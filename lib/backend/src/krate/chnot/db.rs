@@ -597,7 +597,16 @@ impl ChnotMapper for KDb {
             })
             .into(),
         )
-        .wheres(Wheres::and([cm.kspace().v_in(req.get_spaces())]))
+        .wheres(Wheres::and([
+            cm.kspace().v_in(req.get_spaces()),
+            Wheres::transform(req.kinds.clone(), |kinds| {
+                if kinds.len() > 0 {
+                    cm.kind().v_in(req.kinds.clone())
+                } else {
+                    Wheres::None
+                }
+            }),
+        ]))
         .order_by([
             OrderBy::Desc(cm.pin_tid().twn()),
             OrderBy::Desc(cm.otid().twn()),
