@@ -1,15 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import * as RadixDropmenu from '@radix-ui/react-dropdown-menu';
-
-import BotForm from './bot-form';
-import { useLLMChatComStore } from './session';
-
-import Icon from '@/common/component/icon';
-import KSVG from '@/common/component/svg';
-import type { LLMChatBot } from '@/krate/llmchat/po';
-import { llmchatBotCommit } from '@/krate/llmchat/service';
-import { useLLMChatStore } from '@/krate/llmchat/store';
-import type { TID } from '@/lib/id_util';
+import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
+import { useEffect, useRef, useState } from "react";
+import Icon from "@/common/component/icon";
+import KSVG from "@/common/component/svg";
+import type { LLMChatBot } from "@/krate/llmchat/po";
+import { llmchatBotCommit } from "@/krate/llmchat/service";
+import { useLLMChatStore } from "@/krate/llmchat/store";
+import type { TID } from "@/lib/id_util";
+import BotForm from "./bot-form";
+import { useLLMChatComStore } from "./session";
 
 const LLMChatBotSelect = () => {
   const [showBotForm, setShowBotForm] = useState(false);
@@ -54,7 +52,13 @@ const LLMChatBotSelect = () => {
     );
   };
 
-  const BotComponent = ({ bot, settings }: { bot: LLMChatBot; settings?: () => void }) => {
+  const BotComponent = ({
+    bot,
+    settings,
+  }: {
+    bot: LLMChatBot;
+    settings?: () => void;
+  }) => {
     return (
       <div
         role="none"
@@ -71,7 +75,12 @@ const LLMChatBotSelect = () => {
           )}
           <span>{bot.name}</span>
         </div>
-        {settings && <Icon.SettingsIcon onClick={settings} className="size-4 hover:animate-spin" />}
+        {settings && (
+          <Icon.SettingsIcon
+            onClick={settings}
+            className="size-4 hover:animate-spin"
+          />
+        )}
       </div>
     );
   };

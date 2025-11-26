@@ -1,48 +1,54 @@
-import React, { useEffect, useRef } from 'react';
 import {
   autocompletion,
   type CompletionContext,
   type CompletionResult,
-} from '@codemirror/autocomplete';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { indentOnInput } from '@codemirror/language';
-import { languages } from '@codemirror/language-data';
-import { EditorView } from '@codemirror/view';
-import { GFM } from '@lezer/markdown';
-import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { wrappedLineIndent } from 'codemirror-wrapped-line-indent';
-import { decoratorExtension } from 'jolpin-codemirror';
-import { toast } from 'sonner';
-
-import { Backlink, ChnotProps, Hashtag, todoHighlightPlugin } from './codemirror/mdwt-extension';
-import { createCodemirrorTheme } from './codemirror/theme';
-
-import { generateKeybinding } from '@/krate/mdwt/component/codemirror/keybinding';
-import { html2mdAsync } from '@/lib/markdown-utils';
+} from "@codemirror/autocomplete";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { indentOnInput } from "@codemirror/language";
+import { languages } from "@codemirror/language-data";
+import { EditorView } from "@codemirror/view";
+import { GFM } from "@lezer/markdown";
+import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
+import { decoratorExtension } from "jolpin-codemirror";
+import React, { useEffect, useRef } from "react";
+import { toast } from "sonner";
+import { generateKeybinding } from "@/krate/mdwt/component/codemirror/keybinding";
+import { html2mdAsync } from "@/lib/markdown-utils";
+import {
+  Backlink,
+  ChnotProps,
+  Hashtag,
+  todoHighlightPlugin,
+} from "./codemirror/mdwt-extension";
+import { createCodemirrorTheme } from "./codemirror/theme";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
     // adopted from https://github.com/Zettlr/Zettlr/blob/develop/source/common/modules/markdown-editor/plugins/md-paste-drop-handlers.ts
     const data = event.clipboardData;
 
-    if (data === null || (data.types.length === 1 && data.types[0] === 'text/plain')) {
+    if (
+      data === null ||
+      (data.types.length === 1 && data.types[0] === "text/plain")
+    ) {
       return false; // Let the default handler take over
     }
 
-    const textIntention = data.types.includes('text/plain');
+    const textIntention = data.types.includes("text/plain");
 
     const insertions: string[] = [];
     const allPromises: Array<Promise<void>> = [];
 
-    if (textIntention && data.types.includes('text/html')) {
-      const html = data.getData('text/html');
-      const plain = data.getData('text/plain');
+    if (textIntention && data.types.includes("text/html")) {
+      const html = data.getData("text/html");
+      const plain = data.getData("text/plain");
 
       const promise = html2mdAsync(html)
         .then((md) => {
           if (!md || md.length === 0) {
             insertions.push(plain);
-            toast.info('Empty markdown conversation.');
+            toast.info("Empty markdown conversation.");
           } else {
             insertions.push(md);
           }
@@ -53,7 +59,7 @@ const eventHandlers = EditorView.domEventHandlers({
 
       allPromises.push(promise);
     } else if (textIntention) {
-      const plain = data.getData('text/plain');
+      const plain = data.getData("text/plain");
       insertions.push(plain);
     } else {
       for (const _file of data.files) {
@@ -82,7 +88,7 @@ const eventHandlers = EditorView.domEventHandlers({
       .then(() => {
         // After all promises have been resolved or rejected, the
         // insertions array will contain everything we have to paste.
-        const transaction = view.state.replaceSelection(insertions.join('\n'));
+        const transaction = view.state.replaceSelection(insertions.join("\n"));
         view.dispatch(transaction);
       })
       .catch((_err) => {});
@@ -103,7 +109,9 @@ const MdwtEditor = ({
   foldGutter: boolean;
   height?: number;
   onContentChange: (content: string) => void;
-  autoCompletion: (context: CompletionContext) => Promise<CompletionResult | null>;
+  autoCompletion: (
+    context: CompletionContext,
+  ) => Promise<CompletionResult | null>;
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
@@ -147,7 +155,7 @@ const MdwtEditor = ({
       extensions={extensions}
       ref={codeMirror}
       style={{
-        font: 'sans-serif',
+        font: "sans-serif",
       }}
       value={content}
       basicSetup={{
@@ -156,7 +164,7 @@ const MdwtEditor = ({
         foldGutter: foldGutter,
         closeBrackets: false,
       }}
-      placeholder={'Take a chnot'}
+      placeholder={"Take a chnot"}
       onChange={(e) => onContentChange(e)}
     />
   );

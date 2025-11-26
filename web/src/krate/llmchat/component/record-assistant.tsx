@@ -1,17 +1,15 @@
+import type React from "react";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
-import RecordFrame, { RecordButton } from "./record-frame";
-import { useLLMChatComStore } from "./session";
-import LLMChatTemplateList from "./template-list";
-
-import type React from "react";
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot, LLMChatTemplate } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import type { LLMChatRecordVO } from "../vo";
+import RecordFrame, { RecordButton } from "./record-frame";
+import { useLLMChatComStore } from "./session";
+import LLMChatTemplateList from "./template-list";
 
 const RecordCommon = ({
   body,
@@ -51,7 +49,9 @@ const RecordCommon = ({
               "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"
             }
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{thinking}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {thinking}
+            </ReactMarkdown>
           </div>
         )}
         <div
@@ -82,9 +82,11 @@ export const RecordSystem = ({
   viewMode: boolean;
 } & LLMChatRecordVO) => {
   const { templates } = useLLMChatStore();
-  const [setTemplate, records, setShowTemplateForm] = useLLMChatComStore((store) => {
-    return [store.setTemplate, store.records, store.setShowTemplateForm];
-  });
+  const [setTemplate, records, setShowTemplateForm] = useLLMChatComStore(
+    (store) => {
+      return [store.setTemplate, store.records, store.setShowTemplateForm];
+    },
+  );
 
   const [showTemplates, setShowTemplates] = useState<boolean>();
 

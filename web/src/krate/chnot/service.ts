@@ -1,19 +1,19 @@
+import type { PageRsp } from "@/common/types";
+import request from "@/lib/request";
 import type {
-	ChnotMetaCommitReq,
-	ChnotMetaCommitRsp,
-	ChnotMetaListReq,
-	ChnotMetaListRsp,
-	ChnotSearchReq,
-	ChnotSearchRspSingle,
-	ChnotThreadMetaCommitReq,
-	ChnotThreadMetaCommitRsp,
-	ChnotThreadMetaFetchReq,
-	ChnotThreadMetaFetchRsp,
-	ChnotThreadOrderCommitReq,
-	ChnotThreadOrderCommitRsp,
+  ChnotMetaCommitReq,
+  ChnotMetaCommitRsp,
+  ChnotMetaListReq,
+  ChnotMetaListRsp,
+  ChnotSearchReq,
+  ChnotSearchRspSingle,
+  ChnotThreadMetaCommitReq,
+  ChnotThreadMetaCommitRsp,
+  ChnotThreadMetaFetchReq,
+  ChnotThreadMetaFetchRsp,
+  ChnotThreadOrderCommitReq,
+  ChnotThreadOrderCommitRsp,
 } from "./dto";
-import type { PageRsp } from '@/common/types';
-import request from '@/lib/request';
 
 export const chnotThreadSearch = async (
   req: ChnotSearchReq,
@@ -27,11 +27,15 @@ export const chnotSingleSearch = async (
   return await request.postJson(`api/v1/chnot-single-search`, req);
 };
 
-export async function chnotMetaCommit(req: ChnotMetaCommitReq): Promise<ChnotMetaCommitRsp> {
+export async function chnotMetaCommit(
+  req: ChnotMetaCommitReq,
+): Promise<ChnotMetaCommitRsp> {
   return await request.postJson(`api/v1/chnot-meta-commit`, req);
 }
 
-export async function chnotMetaList(req: ChnotMetaListReq): Promise<ChnotMetaListRsp> {
+export async function chnotMetaList(
+  req: ChnotMetaListReq,
+): Promise<ChnotMetaListRsp> {
   if (req.otids.length === 0) {
     return { metas: [] };
   }
@@ -52,7 +56,7 @@ export const chnotThreadMetaFetch = async (
 };
 
 export const chnotThreadMetaOverwrite = async (
-	req: ChnotThreadMetaCommitReq,
+  req: ChnotThreadMetaCommitReq,
 ): Promise<ChnotThreadMetaCommitRsp> => {
-	return await request.postJson(`api/v1/chnot-thread-meta-commit`, req);
+  return await request.postJson(`api/v1/chnot-thread-meta-commit`, req);
 };

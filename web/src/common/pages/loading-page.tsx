@@ -1,4 +1,4 @@
-import Icon from '@/common/component/icon';
+import Icon from "@/common/component/icon";
 
 function LoadingPage() {
   return (

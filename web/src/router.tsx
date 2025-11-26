@@ -1,29 +1,27 @@
 // src/router/index.tsx
 
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
-
-import { ChnotViewType } from './krate/chnot/store';
-import FullScreenTimer from './krate/timer/timer';
-
-import type { RouteObject } from 'react-router-dom';
-import App from '@/app';
-import ErrorPage from '@/common/pages/error-page';
-import SettingsPage from '@/common/pages/settings-page';
-import ToentPage from '@/common/pages/toent-page';
-import ChnotPage from '@/krate/chnot/page/chnot-page';
+import type { RouteObject } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+import App from "@/app";
+import ErrorPage from "@/common/pages/error-page";
+import SettingsPage from "@/common/pages/settings-page";
+import ToentPage from "@/common/pages/toent-page";
+import ChnotPage from "@/krate/chnot/page/chnot-page";
+import { ChnotViewType } from "./krate/chnot/store";
+import FullScreenTimer from "./krate/timer/timer";
 
 export enum RoutePaths {
-  ROOT = '/',
-  Chnots = '/chnots',
-  ChnotThread = '/chnot-thread',
-  Toents = '/toents',
-  LLMChat = '/llmchat',
-  Settings = '/settings',
-  Timer = '/timer',
-  ToolExcalidraw = '/tool/excalidraw',
-  KFiles = '/kfiles',
-  Pad = '/pad',
+  ROOT = "/",
+  Chnots = "/chnots",
+  ChnotThread = "/chnot-thread",
+  Toents = "/toents",
+  LLMChat = "/llmchat",
+  Settings = "/settings",
+  Timer = "/timer",
+  ToolExcalidraw = "/tool/excalidraw",
+  KFiles = "/kfiles",
+  Pad = "/pad",
 }
 
 const routes: RouteObject[] = [
@@ -70,7 +68,7 @@ const routes: RouteObject[] = [
 ];
 
 const browserRoute = createBrowserRouter(routes, {
-  basename: '/',
+  basename: "/",
 });
 
 export default browserRoute;

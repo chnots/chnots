@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import { Button } from '@/common/component/ui/button';
+import { Button } from "@/common/component/ui/button";
 import {
   Form,
   FormControl,
@@ -12,13 +12,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/common/component/ui/form';
-import { Input } from '@/common/component/ui/input';
-import { Textarea } from '@/common/component/ui/textarea';
+} from "@/common/component/ui/form";
+import { Input } from "@/common/component/ui/input";
+import { Textarea } from "@/common/component/ui/textarea";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: 'Table names must be at least 2 characters long',
+    message: "Table names must be at least 2 characters long",
   }),
   description: z.string().optional(),
 });
@@ -31,8 +31,8 @@ export function TableForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
     },
   });
 

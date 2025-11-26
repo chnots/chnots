@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import clsx from 'clsx';
-import { NavLink } from 'react-router-dom';
-
-import Icon from '../component/icon';
+import clsx from "clsx";
+import type React from "react";
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import KSpaceSettings from "@/krate/kspace/component/settings";
+import { EndpointSettings } from "@/krate/sync/component/settings";
+import { RoutePaths } from "@/router";
+import Icon from "../component/icon";
 import {
   Sidebar,
   SidebarContent,
@@ -15,16 +18,11 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from '../component/ui/sidebar';
-
-import type React from 'react';
-import KSpaceSettings from '@/krate/kspace/component/settings';
-import { EndpointSettings } from '@/krate/sync/component/settings';
-import { RoutePaths } from '@/router';
+} from "../component/ui/sidebar";
 
 enum SettingsEnum {
-  Endpoint = 'Endpoint Settings',
-  KSpace = 'KSpace Settings',
+  Endpoint = "Endpoint Settings",
+  KSpace = "KSpace Settings",
 }
 
 const SettingsItem = ({
@@ -34,12 +32,12 @@ const SettingsItem = ({
 }: {
   children: React.ReactNode;
   focused: boolean;
-} & React.ComponentProps<'li'>) => {
+} & React.ComponentProps<"li">) => {
   return (
     <SidebarMenuItem
       className={clsx(
-        'list-none flex items-center space-x-2 w-full text-sm hover:cursor-pointer hover:bg-background border rounded-lg px-2 py-1',
-        focused ? 'bg-background' : 'border-transparent',
+        "list-none flex items-center space-x-2 w-full text-sm hover:cursor-pointer hover:bg-background border rounded-lg px-2 py-1",
+        focused ? "bg-background" : "border-transparent",
       )}
       {...props}
     >
@@ -49,13 +47,15 @@ const SettingsItem = ({
 };
 
 const Settings = () => {
-  const [settingsEnum, setSettingsEnum] = useState<SettingsEnum>(SettingsEnum.KSpace);
+  const [settingsEnum, setSettingsEnum] = useState<SettingsEnum>(
+    SettingsEnum.KSpace,
+  );
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="w-full justify-between items-center flex flex-row p-4">
           <div></div>
-          <NavLink to={RoutePaths.Chnots} id={'chnot'}>
+          <NavLink to={RoutePaths.Chnots} id={"chnot"}>
             <Icon.Brain className="w-4 h-4" />
           </NavLink>
         </SidebarHeader>

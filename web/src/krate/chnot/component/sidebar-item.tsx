@@ -1,10 +1,5 @@
-import React, { memo, type ForwardedRef } from "react";
 import { MoreHorizontal } from "lucide-react";
-
-import { chnotThreadMetaOverwrite } from "../service";
-import { ChnotKindIcon } from "./kind-icon";
-
-import type { ChnotKind } from "../po";
+import React, { type ForwardedRef, memo } from "react";
 import Icon from "@/common/component/icon";
 import {
   DropdownMenu,
@@ -30,6 +25,9 @@ import {
 import { chnotShortDate } from "@/lib/date-utils";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
+import type { ChnotKind } from "../po";
+import { chnotThreadMetaOverwrite } from "../service";
+import { ChnotKindIcon } from "./kind-icon";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (

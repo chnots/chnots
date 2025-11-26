@@ -1,5 +1,5 @@
-import type { ChnotKind } from '../po';
-import type { TID } from '@/lib/id_util';
+import type { TID } from "@/lib/id_util";
+import type { ChnotKind } from "../po";
 
 export type ChnotMetaKind = {
   chnotOtid: TID;

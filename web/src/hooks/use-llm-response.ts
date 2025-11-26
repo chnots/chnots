@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { LLMChatBot, LLMChatBotBodyOpenAIV1, LLMChatSession } from "@/krate/llmchat/po";
-import { genTID, type TID } from "@/lib/id_util";
+import type {
+  LLMChatBot,
+  LLMChatBotBodyOpenAIV1,
+  LLMChatSession,
+} from "@/krate/llmchat/po";
 import type { LLMChatRecordVO } from "@/krate/llmchat/vo";
+import { genTID, type TID } from "@/lib/id_util";
 
 export enum ResponseStep {
   Initial = "init",
@@ -51,12 +55,19 @@ export const useLLMResponse = ({
   records: LLMChatRecordVO[];
   bot: LLMChatBot;
 }) => {
-  const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(undefined);
-  const [responseState, setResponseState] = useState<ResponseState>(emptyResponse(session, bot));
+  const [answerCtl, setAnswerCtl] = useState<ResponseCtl | undefined>(
+    undefined,
+  );
+  const [responseState, setResponseState] = useState<ResponseState>(
+    emptyResponse(session, bot),
+  );
   const abortSignal = useRef<AbortController>(null);
 
   const doPostResponse = useCallback(async () => {
-    if (responseState.content.length === 0 && responseState.reasoningContent.length === 0) {
+    if (
+      responseState.content.length === 0 &&
+      responseState.reasoningContent.length === 0
+    ) {
       return;
     }
 
@@ -190,9 +201,15 @@ export const useLLMResponse = ({
   }, [bot.body, records.map]);
 
   useEffect(() => {
-    if (answerCtl === ResponseCtl.Abort && responseState.step !== ResponseStep.End) {
+    if (
+      answerCtl === ResponseCtl.Abort &&
+      responseState.step !== ResponseStep.End
+    ) {
       doAbort();
-    } else if (answerCtl === ResponseCtl.Trigger && responseState.step !== ResponseStep.Answering) {
+    } else if (
+      answerCtl === ResponseCtl.Trigger &&
+      responseState.step !== ResponseStep.Answering
+    ) {
       setResponseState(emptyResponse(session, bot));
       doResponse();
     }
@@ -201,7 +218,11 @@ export const useLLMResponse = ({
 
   useEffect(() => {
     if (
-      [ResponseStep.Aborted, ResponseStep.Answered, ResponseStep.Error].includes(responseState.step)
+      [
+        ResponseStep.Aborted,
+        ResponseStep.Answered,
+        ResponseStep.Error,
+      ].includes(responseState.step)
     ) {
       doPostResponse();
     }

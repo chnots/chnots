@@ -1,3 +1,4 @@
+import request from "@/lib/request";
 import type {
   GetSyncAllEndpointsReq,
   GetSyncAllEndpointsRsp,
@@ -5,8 +6,7 @@ import type {
   SyncAllEndpointsRsp,
   SyncToEndpointReq,
   SyncToEndpointRsp,
-} from './dto';
-import request from '@/lib/request';
+} from "./dto";
 
 export const getSyncAllEndpoints = async (
   req: GetSyncAllEndpointsReq,
@@ -20,6 +20,8 @@ export const overwriteSyncAllEndpoints = async (
   return await request.postJson(`/api/v1/sync-endpoint-commit`, req);
 };
 
-export const syncToEndpoint = async (req: SyncToEndpointReq): Promise<SyncToEndpointRsp> => {
+export const syncToEndpoint = async (
+  req: SyncToEndpointReq,
+): Promise<SyncToEndpointRsp> => {
   return await request.postJson(`/api/v1/sync-endpoint-sync`, req);
 };

@@ -1,8 +1,8 @@
 // @ts-nocheck
 // adopted from https://github.com/docmost/docmost/blob/main/apps/server/src/integrations/export/turndown-utils.ts
 
-import TurndownService from '@joplin/turndown';
-import * as TurndownPluginGfm from '@joplin/turndown-plugin-gfm';
+import TurndownService from "@joplin/turndown";
+import * as TurndownPluginGfm from "@joplin/turndown-plugin-gfm";
 
 export function html2mdAsync(html: string): Promise<string> {
   return Promise.resolve(html2md(html));
@@ -10,10 +10,10 @@ export function html2mdAsync(html: string): Promise<string> {
 
 export function html2md(html: string): string {
   const turndownService = new TurndownService({
-    headingStyle: 'atx',
-    codeBlockStyle: 'fenced',
-    hr: '---',
-    bulletListMarker: '-',
+    headingStyle: "atx",
+    codeBlockStyle: "fenced",
+    hr: "---",
+    bulletListMarker: "-",
   });
   const tables = TurndownPluginGfm.tables;
   const strikethrough = TurndownPluginGfm.strikethrough;
@@ -31,14 +31,14 @@ export function html2md(html: string): string {
     mathBlock,
   ]);
 
-  return turndownService.turndown(html).replaceAll('<br>', ' ');
+  return turndownService.turndown(html).replaceAll("<br>", " ");
 }
 
 function listParagraph(turndownService: TurndownService) {
-  turndownService.addRule('paragraph', {
-    filter: ['p'],
+  turndownService.addRule("paragraph", {
+    filter: ["p"],
     replacement: (content: any, node: HTMLInputElement) => {
-      if (node.parentElement?.nodeName === 'LI') {
+      if (node.parentElement?.nodeName === "LI") {
         return content;
       }
 
@@ -48,36 +48,39 @@ function listParagraph(turndownService: TurndownService) {
 }
 
 function callout(turndownService: TurndownService) {
-  turndownService.addRule('callout', {
+  turndownService.addRule("callout", {
     filter: (node: HTMLInputElement) =>
-      node.nodeName === 'DIV' && node.getAttribute('data-type') === 'callout',
+      node.nodeName === "DIV" && node.getAttribute("data-type") === "callout",
     replacement: (content: any, node: HTMLInputElement) => {
-      const calloutType = node.getAttribute('data-callout-type');
+      const calloutType = node.getAttribute("data-callout-type");
       return `\n\n:::${calloutType}\n${content.trim()}\n:::\n\n`;
     },
   });
 }
 
 function taskList(turndownService: TurndownService) {
-  turndownService.addRule('taskListItem', {
+  turndownService.addRule("taskListItem", {
     filter: (node: HTMLInputElement) =>
-      node.getAttribute('data-type') === 'taskItem' && node.parentNode.nodeName === 'UL',
+      node.getAttribute("data-type") === "taskItem" &&
+      node.parentNode.nodeName === "UL",
     replacement: (content: any, node: HTMLInputElement) => {
-      const checkbox = node.querySelector('input[type="checkbox"]') as HTMLInputElement;
+      const checkbox = node.querySelector(
+        'input[type="checkbox"]',
+      ) as HTMLInputElement;
       const isChecked = checkbox.checked;
 
-      return `- ${isChecked ? '[x]' : '[ ]'}  ${content.trim()} \n`;
+      return `- ${isChecked ? "[x]" : "[ ]"}  ${content.trim()} \n`;
     },
   });
 }
 
 function preserveDetail(turndownService: TurndownService) {
-  turndownService.addRule('preserveDetail', {
-    filter: (node: HTMLInputElement) => node.nodeName === 'DETAILS',
+  turndownService.addRule("preserveDetail", {
+    filter: (node: HTMLInputElement) => node.nodeName === "DETAILS",
     replacement: (_content: any, node: HTMLInputElement) => {
       // TODO: preserve summary of nested details
-      const summary = node.querySelector(':scope > summary');
-      let detailSummary = '';
+      const summary = node.querySelector(":scope > summary");
+      let detailSummary = "";
 
       if (summary) {
         detailSummary = `<summary>${turndownService.turndown(summary.innerHTML)}</summary>`;
@@ -91,17 +94,19 @@ function preserveDetail(turndownService: TurndownService) {
 }
 
 function mathInline(turndownService: TurndownService) {
-  turndownService.addRule('mathInline', {
+  turndownService.addRule("mathInline", {
     filter: (node: HTMLInputElement) =>
-      node.nodeName === 'SPAN' && node.getAttribute('data-type') === 'mathInline',
+      node.nodeName === "SPAN" &&
+      node.getAttribute("data-type") === "mathInline",
     replacement: (content: any, _node: HTMLInputElement) => `$${content}$`,
   });
 }
 
 function mathBlock(turndownService: TurndownService) {
-  turndownService.addRule('mathBlock', {
+  turndownService.addRule("mathBlock", {
     filter: (node: HTMLInputElement) =>
-      node.nodeName === 'DIV' && node.getAttribute('data-type') === 'mathBlock',
-    replacement: (content: any, _node: HTMLInputElement) => `\n$$${content}$$\n`,
+      node.nodeName === "DIV" && node.getAttribute("data-type") === "mathBlock",
+    replacement: (content: any, _node: HTMLInputElement) =>
+      `\n$$${content}$$\n`,
   });
 }

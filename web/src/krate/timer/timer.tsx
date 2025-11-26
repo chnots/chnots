@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
-import { Button } from '@/common/component/ui/button';
+import { Button } from "@/common/component/ui/button";
 
 const Timer = () => {
   const [time, setTime] = useState<number>(0);
@@ -13,10 +13,10 @@ const Timer = () => {
     const secs = seconds % 60;
 
     return [
-      hours.toString().padStart(2, '0'),
-      minutes.toString().padStart(2, '0'),
-      secs.toString().padStart(2, '0'),
-    ].join(':');
+      hours.toString().padStart(2, "0"),
+      minutes.toString().padStart(2, "0"),
+      secs.toString().padStart(2, "0"),
+    ].join(":");
   }, []);
 
   // 处理开始/暂停
@@ -60,10 +60,10 @@ const Timer = () => {
         <Button
           onClick={handleStartPause}
           className="px-8 py-4 rounded-full text-xl font-semibold bg-emerald-500 hover:bg-emerald-600 transition-colors"
-          aria-label={isRunning ? 'Pause timer' : 'Start timer'}
+          aria-label={isRunning ? "Pause timer" : "Start timer"}
           onSelect={() => {}}
         >
-          {isRunning ? 'Pause' : 'Start'}
+          {isRunning ? "Pause" : "Start"}
         </Button>
 
         <Button
@@ -71,8 +71,8 @@ const Timer = () => {
           disabled={time === 0}
           className={`px-8 py-4 rounded-full text-xl font-semibold transition-colors ${
             time === 0
-              ? 'bg-gray-500 cursor-not-allowed opacity-50'
-              : 'bg-amber-500 hover:bg-amber-600'
+              ? "bg-gray-500 cursor-not-allowed opacity-50"
+              : "bg-amber-500 hover:bg-amber-600"
           }`}
           aria-label="Reset timer"
           onSelect={() => {}}

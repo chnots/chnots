@@ -1,18 +1,20 @@
-import { Label } from '@radix-ui/react-dropdown-menu';
-import { Search } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-
-import { type ChnotViewType, useChnotHeadStore } from '../../store';
-import { ChnotKindSelect } from './chnot-kind-select';
-import ChnotThreadSwitch from './chnot-thread-switch';
-
-import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
-import { SidebarGroup, SidebarGroupContent, SidebarInput } from '@/common/component/ui/sidebar';
-import { Toggle } from '@/common/component/ui/toggle';
-import { KSpaceSelect } from '@/krate/kspace/component/kspace-select';
-import { useKSpaceStore } from '@/krate/kspace/store';
-import { RoutePaths } from '@/router';
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { Search } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarInput,
+} from "@/common/component/ui/sidebar";
+import { Toggle } from "@/common/component/ui/toggle";
+import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
+import { useKSpaceStore } from "@/krate/kspace/store";
+import { RoutePaths } from "@/router";
+import { type ChnotViewType, useChnotHeadStore } from "../../store";
+import { ChnotKindSelect } from "./chnot-kind-select";
+import ChnotThreadSwitch from "./chnot-thread-switch";
 
 const TagsView = () => {
   const { setTagsInset, tags } = useChnotHeadStore((store) => {
@@ -76,7 +78,7 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
           />
           <ChnotKindSelect />
           <Toggle
-            size={'sm'}
+            size={"sm"}
             onClick={() => {
               if (tags) {
                 setTagsInset(undefined);
@@ -90,7 +92,7 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
         </div>
         <div className="flex">
           <ChnotThreadSwitch viewType={viewType} />
-          <NavLink to={RoutePaths.Settings} id={'Settings'}>
+          <NavLink to={RoutePaths.Settings} id={"Settings"}>
             <div>
               <Icon.Settings className="w-4 h-4 mx-2" />
             </div>

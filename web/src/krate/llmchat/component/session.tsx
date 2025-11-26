@@ -9,15 +9,6 @@ import {
 } from "react";
 import { createStore, type StoreApi, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-
-import RecordAssistant, { RecordSystem } from "./record-assistant";
-import { RecordAnswering } from "./record-response";
-import RecordUser from "./record-user";
-import TemplateForm from "./template-form";
-import LLMChatTemplateList from "./template-list";
-import UserInput from "./user-input";
-
-import type { LLMChatBot, LLMChatSession, LLMChatTemplate } from "../po";
 import LoadingPage from "@/common/pages/loading-page";
 import {
   llmchatRecordCommit,
@@ -27,7 +18,14 @@ import {
 } from "@/krate/llmchat/service";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { genTID, type TID } from "@/lib/id_util";
+import type { LLMChatBot, LLMChatSession, LLMChatTemplate } from "../po";
 import type { LLMChatRecordVO } from "../vo";
+import RecordAssistant, { RecordSystem } from "./record-assistant";
+import { RecordAnswering } from "./record-response";
+import RecordUser from "./record-user";
+import TemplateForm from "./template-form";
+import LLMChatTemplateList from "./template-list";
+import UserInput from "./user-input";
 
 export type LLMChatContextProps = {
   sessionOtid: TID;
@@ -167,9 +165,12 @@ export const newTemplateSession = (
   };
 };
 
-const LLMChatEditorContext = createContext<StoreApi<LLMChatContextState> | null>(null);
+const LLMChatEditorContext =
+  createContext<StoreApi<LLMChatContextState> | null>(null);
 
-export function useLLMChatComStore<T>(selector: (state: LLMChatContextState) => T) {
+export function useLLMChatComStore<T>(
+  selector: (state: LLMChatContextState) => T,
+) {
   const store = useContext(LLMChatEditorContext);
 
   return useStore(
@@ -187,10 +188,14 @@ export function LLMChatEditorProvider({
   props: LLMChatContextProps;
   children: React.ReactNode;
 }) {
-  const [store] = useState<StoreApi<LLMChatContextState>>(createLLMChatStore(props));
+  const [store] = useState<StoreApi<LLMChatContextState>>(
+    createLLMChatStore(props),
+  );
 
   return store ? (
-    <LLMChatEditorContext.Provider value={store}>{children}</LLMChatEditorContext.Provider>
+    <LLMChatEditorContext.Provider value={store}>
+      {children}
+    </LLMChatEditorContext.Provider>
   ) : (
     <LoadingPage />
   );
@@ -312,7 +317,8 @@ const SessionContainer = ({
     if (contentRef.current) {
       const rect = contentRef.current.getBoundingClientRect();
       // 50 is a experience value.
-      const atBottom = Math.abs(rect.y - rect.height - 50) > contentRef.current.scrollHeight;
+      const atBottom =
+        Math.abs(rect.y - rect.height - 50) > contentRef.current.scrollHeight;
       atBottomRef.current = atBottom;
     }
   }, []);
@@ -343,7 +349,11 @@ const SessionContainer = ({
                   })
                   .map((record) => {
                     return record.role === "user" ? (
-                      <RecordUser viewMode={readonly} record={record} key={record.otid} />
+                      <RecordUser
+                        viewMode={readonly}
+                        record={record}
+                        key={record.otid}
+                      />
                     ) : record.role === "system" ? (
                       <RecordSystem
                         viewMode={readonly}

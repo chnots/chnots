@@ -1,19 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
+import { SaveState } from "@/common/types";
+import { useKSpaceStore } from "@/krate/kspace/store";
+import { mdwtCommit } from "@/krate/mdwt/service";
+import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../po";
 import { chnotMetaCommit } from "../../service";
 import { useChnotSingleStore } from "../../store";
 import ExcalidrawChnot from "../rich-chnot/excalidraw";
 import KFileChnot from "../rich-chnot/kfile";
 import LLMChatChnot from "../rich-chnot/llmchat";
+import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
 import TableChnot from "../rich-chnot/table";
-
-import type { PostSaveArg } from "../rich-chnot/rich-chnot";
-import { SaveState } from "@/common/types";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import { mdwtCommit } from "@/krate/mdwt/service";
-import { genTID, type TID } from "@/lib/id_util";
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);

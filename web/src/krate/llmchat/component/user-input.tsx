@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-
-import LLMChatBotSelect from './bot-select';
-
-import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
+import { useEffect, useRef, useState } from "react";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
+import LLMChatBotSelect from "./bot-select";
 
 const UserInput = ({
   disabled,
@@ -15,8 +13,12 @@ const UserInput = ({
   const [message, setMessage] = useState<string>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleKeyDown = (e: { key: string; ctrlKey: any; preventDefault: () => void }) => {
-    if (e.key === 'Enter' && e.ctrlKey && !disabled && message) {
+  const handleKeyDown = (e: {
+    key: string;
+    ctrlKey: any;
+    preventDefault: () => void;
+  }) => {
+    if (e.key === "Enter" && e.ctrlKey && !disabled && message) {
       e.preventDefault();
       handleSendUserMsg(message);
     }
@@ -24,14 +26,14 @@ const UserInput = ({
 
   const handleSendUserMsg = (msg: string) => {
     if (onAppendRecord(msg)) {
-      setMessage('');
+      setMessage("");
     }
   };
 
   useEffect(() => {
     if (textareaRef.current) {
       if (message?.length === 0) {
-        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = "auto";
       } else {
         textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       }

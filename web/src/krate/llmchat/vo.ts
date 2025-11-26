@@ -6,6 +6,9 @@ export type LLMChatRecordVO = Omit<LLMChatRecord, "content"> & {
   thinking: string;
 };
 
-export type LLMChatSessionRecordFetchRspVO = Omit<LLMChatSessionRecordFetchRsp, "records"> & {
+export type LLMChatSessionRecordFetchRspVO = Omit<
+  LLMChatSessionRecordFetchRsp,
+  "records"
+> & {
   records: LLMChatRecordVO[];
 };

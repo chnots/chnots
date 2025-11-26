@@ -1,11 +1,19 @@
-import { serializeAsJSON } from '@excalidraw/excalidraw';
+import { serializeAsJSON } from "@excalidraw/excalidraw";
 
-import type { ExcalidrawElement, FileId } from '@excalidraw/excalidraw/element/types';
-import type { AppState, BinaryFileData, BinaryFiles, DataURL } from '@excalidraw/excalidraw/types';
-import type { RefObject } from 'react';
-import type { KfileMetaFetchReqId } from '@/krate/kfile/dto';
-import { kfileInlineDownload, kfileInlineUpload } from '@/krate/kfile/service';
-import { genTID, type TID } from '@/lib/id_util';
+import type {
+  ExcalidrawElement,
+  FileId,
+} from "@excalidraw/excalidraw/element/types";
+import type {
+  AppState,
+  BinaryFileData,
+  BinaryFiles,
+  DataURL,
+} from "@excalidraw/excalidraw/types";
+import type { RefObject } from "react";
+import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
+import { kfileInlineDownload, kfileInlineUpload } from "@/krate/kfile/service";
+import { genTID, type TID } from "@/lib/id_util";
 
 export type ExcalidrawChnotState = {
   otid: TID;
@@ -26,12 +34,12 @@ export const fetchExcalidraw = async (
       return null;
     }
     const dataState = JSON.parse(rsp.file?.content);
-    const fileMap = new Map<ExcalidrawElement['id'], BinaryFileData>();
+    const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
     const elements = dataState.elements as readonly ExcalidrawElement[] | null;
 
     if (elements) {
       for (const element of elements) {
-        if (element.type === 'image' && element.fileId) {
+        if (element.type === "image" && element.fileId) {
           try {
             const fileInlineRsp = await kfileInlineDownload({
               req_id: { ID: element.fileId },
@@ -86,7 +94,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       return;
     }
 
-    const content = serializeAsJSON(elements, appState, files, 'database');
+    const content = serializeAsJSON(elements, appState, files, "database");
 
     for (const [fileId, file] of Object.entries(files)) {
       const cache = savedFilesRef.current.get(fileId);
@@ -97,11 +105,11 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
           res: {
             tid: genTID(),
             content: file.dataURL,
-            sid: 'placeholder',
+            sid: "placeholder",
           },
           archor_intervals: 3600,
           meta_id: file.id,
-          content_type: file.mimeType ?? 'chnot/unknown',
+          content_type: file.mimeType ?? "chnot/unknown",
           otid: otid,
         });
         savedFilesRef.current.set(fileId, { ver: newVer, otid: otid });
@@ -112,7 +120,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       res: {
         tid: genTID(),
         content,
-        sid: 'placeholder',
+        sid: "placeholder",
       },
       archor_intervals: 3600,
       meta_id: metaId,

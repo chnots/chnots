@@ -1,3 +1,12 @@
+import type {
+  Completion,
+  CompletionContext,
+  CompletionResult,
+} from "@codemirror/autocomplete";
+import {
+  EditorSelection,
+  type ReactCodeMirrorRef,
+} from "@uiw/react-codemirror";
 import {
   type RefObject,
   useCallback,
@@ -5,24 +14,10 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  EditorSelection,
-  type ReactCodeMirrorRef,
-} from "@uiw/react-codemirror";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
-import { chnotSingleSearch } from "../../service";
-
-import useDebounce from "@/hooks/use-debounce";
-
-import type {
-  Completion,
-  CompletionContext,
-  CompletionResult,
-} from "@codemirror/autocomplete";
-import type { RichPropProps } from "./rich-chnot";
 import { SaveState } from "@/common/types";
+import useDebounce from "@/hooks/use-debounce";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import type { MdwtCommitReq } from "@/krate/mdwt/dto";
 import {
@@ -31,6 +26,8 @@ import {
   mdwtRecordList,
 } from "@/krate/mdwt/service";
 import { toentTodoEventGuess } from "@/krate/toent/service";
+import { chnotSingleSearch } from "../../service";
+import type { RichPropProps } from "./rich-chnot";
 
 const chnotCompletions = async (
   context: CompletionContext,

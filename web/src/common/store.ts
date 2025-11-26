@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { combine } from 'zustand/middleware';
+import { create } from "zustand";
+import { combine } from "zustand/middleware";
 
-import type { TID } from '@/lib/id_util';
+import type { TID } from "@/lib/id_util";
 
 interface State {
   onSearch: boolean;
@@ -14,7 +14,7 @@ const getDefaultState = (): State => {
   return {
     onSearch: false,
     showSidebar: true,
-    globalLog: '',
+    globalLog: "",
     showSettings: false,
   };
 };

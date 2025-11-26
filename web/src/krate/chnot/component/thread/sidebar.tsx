@@ -1,13 +1,4 @@
 import { useEffect, useState } from "react";
-
-import {
-  type ChnotViewType,
-  useChnotHeadStore,
-  useChnotThreadStore,
-} from "../../store";
-import Header from "../header/chnot-sidebar-header";
-import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
-
 import KPageList from "@/common/component/kpagelist";
 import {
   Sidebar,
@@ -18,6 +9,13 @@ import {
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
 import type { TID } from "@/lib/id_util";
+import {
+  type ChnotViewType,
+  useChnotHeadStore,
+  useChnotThreadStore,
+} from "../../store";
+import Header from "../header/chnot-sidebar-header";
+import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
 
 const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
   const {

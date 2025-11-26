@@ -1,3 +1,5 @@
+import { chnotShortDate } from "@/lib/date-utils";
+import request, { BASE_URL } from "@/lib/request";
 import type {
   KFileUploadRsp,
   KfileAssetChunkUploadReq,
@@ -7,10 +9,8 @@ import type {
   KfileInlineUploadRsp,
   KfileMetaFetchReq,
   KfileMetaFetchRsp,
-} from './dto';
-import type { KFileMeta } from './po';
-import { chnotShortDate } from '@/lib/date-utils';
-import request, { BASE_URL } from '@/lib/request';
+} from "./dto";
+import type { KFileMeta } from "./po";
 
 export const kfileUpload = async ({
   upload_id,
@@ -25,34 +25,36 @@ export const kfileUpload = async ({
   otid,
 }: KfileAssetChunkUploadReq): Promise<KFileUploadRsp> => {
   const data = new FormData();
-  data.append('chunk', chunk);
-  data.append('filename', filename);
-  data.append('chunk_no', chunk_no.toString());
-  data.append('total_chunks', total_chunks.toString());
-  data.append('last_modified', last_modified.toString());
-  data.append('filesize', filesize.toString());
-  data.append('content_type', content_type.toString());
-  data.append('meta_id', meta_id);
-  data.append('upload_id', upload_id);
-  data.append('otid', otid.toString());
+  data.append("chunk", chunk);
+  data.append("filename", filename);
+  data.append("chunk_no", chunk_no.toString());
+  data.append("total_chunks", total_chunks.toString());
+  data.append("last_modified", last_modified.toString());
+  data.append("filesize", filesize.toString());
+  data.append("content_type", content_type.toString());
+  data.append("meta_id", meta_id);
+  data.append("upload_id", upload_id);
+  data.append("otid", otid.toString());
 
-  return await request.postFormdata('api/v1/kfile-asset-chunk-upload', data);
+  return await request.postFormdata("api/v1/kfile-asset-chunk-upload", data);
 };
 
-export const kfileMetaFetch = async (req: KfileMetaFetchReq): Promise<KfileMetaFetchRsp> => {
-  return await request.postJson('api/v1/kfile-meta-fetch', req);
+export const kfileMetaFetch = async (
+  req: KfileMetaFetchReq,
+): Promise<KfileMetaFetchRsp> => {
+  return await request.postJson("api/v1/kfile-meta-fetch", req);
 };
 
 export const kfileInlineUpload = async (
   req: KfileInlineUploadReq,
 ): Promise<KfileInlineUploadRsp> => {
-  return await request.putJson('api/v1/kfile-inline-upload', req);
+  return await request.putJson("api/v1/kfile-inline-upload", req);
 };
 
 export const kfileInlineDownload = async (
   req: KfileInlineDownloadReq,
 ): Promise<KfileInlineDownloadRsp> => {
-  return await request.postJson('api/v1/kfile-inline-download', req);
+  return await request.postJson("api/v1/kfile-inline-download", req);
 };
 
 export const getResouceDownloadUrl = (kfile: KFileMeta): string => {

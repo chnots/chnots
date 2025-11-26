@@ -1,6 +1,6 @@
-import type { RichPropProps } from './rich-chnot';
-import { SaveState } from '@/common/types';
-import { CommonKFile } from '@/krate/kfile/components/common-kfile';
+import { SaveState } from "@/common/types";
+import { CommonKFile } from "@/krate/kfile/components/common-kfile";
+import type { RichPropProps } from "./rich-chnot";
 
 const KFileChnot = ({ otid, onPostSave }: RichPropProps) => {
   return (

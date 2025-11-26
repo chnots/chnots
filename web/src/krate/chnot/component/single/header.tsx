@@ -1,12 +1,11 @@
-import { ChnotKind } from '../../po';
-import { useChnotSingleStore } from '../../store';
-import { ChnotKindIcon } from '../kind-icon';
-
-import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
-import { SidebarTrigger } from '@/common/component/ui/sidebar';
-import type { TID } from '@/lib/id_util';
-import { cn } from '@/lib/utils';
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
+import { SidebarTrigger } from "@/common/component/ui/sidebar";
+import type { TID } from "@/lib/id_util";
+import { cn } from "@/lib/utils";
+import { ChnotKind } from "../../po";
+import { useChnotSingleStore } from "../../store";
+import { ChnotKindIcon } from "../kind-icon";
 
 const ChnotSingleHeadbar = ({
   otid,
@@ -27,7 +26,12 @@ const ChnotSingleHeadbar = ({
   });
 
   return (
-    <div className={cn('w-full flex align-center items-center p-1 space-x-1', className)}>
+    <div
+      className={cn(
+        "w-full flex align-center items-center p-1 space-x-1",
+        className,
+      )}
+    >
       <SidebarTrigger />
       <div className="m-1">
         <Button onClick={onNew}>
@@ -43,7 +47,7 @@ const ChnotSingleHeadbar = ({
                 onClick={() => {
                   setKind(kind);
                 }}
-                variant={'ghost'}
+                variant={"ghost"}
               >
                 <ChnotKindIcon kind={kind} />
               </Button>

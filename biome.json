@@ -1,110 +1,29 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
+  "$schema": "./web/node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
     "includes": [
       "**",
-      "!**/.yarn",
-      "!**/coverage",
-      "!**/web-dist",
-      "!**/.pnp.cjs",
-      "!**/.pnp.loader.mjs",
+      "!**/*.test.js",
+      "!web-dist",
       "!target",
-      "!lib/jolpin-codemirror"
-    ]
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": {
-          "level": "on",
-          "options": {
-            "groups": [
-              {
-                "type": false,
-                "source": ":NODE:"
-              },
-              {
-                "type": false,
-                "source": ["vitest", "vitest/**", "@vitest/**", "vitest-*"]
-              },
-              {
-                "type": false,
-                "source": ["react", "react-dom", "react-dom/**", "react-native"]
-              },
-              {
-                "type": false,
-                "source": [":PACKAGE:"]
-              },
-              ":BLANK_LINE:",
-              {
-                "type": false,
-                "source": [
-                  ":PATH:",
-                  "!**/hooks/*",
-                  "!**/use*.js",
-                  "!**/shared/*",
-                  "!**/utils/*",
-                  "!**/__mocks__/*",
-                  "!**/test-utils.js"
-                ]
-              },
-              ":BLANK_LINE:",
-              {
-                "type": false,
-                "source": ["**/hooks/*", "**/use*.js"]
-              },
-              ":BLANK_LINE:",
-              {
-                "type": false,
-                "source": ["**/shared/*", "**/utils/*"]
-              },
-              ":BLANK_LINE:",
-              {
-                "type": false,
-                "source": "**/__mocks__/*"
-              },
-              ":BLANK_LINE:",
-              {
-                "type": false,
-                "source": "**/test-utils.js"
-              },
-              ":BLANK_LINE:",
-              ":NODE:",
-              ":PACKAGE:",
-              ":PATH:"
-            ]
-          }
-        }
-      }
-    }
+      "!lib/jolpin-codemirror",
+      "!**/*.yaml"
+    ],
+    "ignoreUnknown": false
   },
   "formatter": {
-    "lineWidth": 100,
+    "enabled": true,
     "indentStyle": "space"
   },
   "linter": {
+    "enabled": true,
     "rules": {
-      "complexity": {
-        "noUselessSwitchCase": "off"
-      },
-      "correctness": {
-        "noUnusedImports": "warn",
-        "noUnusedVariables": {
-          "level": "warn",
-          "options": {
-            "ignoreRestSiblings": true
-          }
-        }
-      },
-      "suspicious": {
-        "noConsole": "warn",
-        "noExplicitAny": "off"
-      }
+      "recommended": true
     }
   },
   "css": {
     "formatter": {
-      "quoteStyle": "single"
+      "quoteStyle": "double"
     },
     "parser": {
       "tailwindDirectives": true
@@ -112,20 +31,16 @@
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "single",
-      "jsxQuoteStyle": "single"
+      "quoteStyle": "double",
+      "jsxQuoteStyle": "double"
     }
   },
-  "overrides": [
-    {
-      "includes": ["**/vite.config.ts"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noConsole": "off"
-          }
-        }
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
       }
     }
-  ]
+  }
 }

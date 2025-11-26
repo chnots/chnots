@@ -1,6 +1,6 @@
-import type { TodoEvent } from "../toent/po";
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
+import type { TodoEvent } from "../toent/po";
 
 export type MdwtRecord = {
   otid: TID;

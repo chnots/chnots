@@ -1,13 +1,17 @@
 import { useState } from "react";
-
-import RecordFrame, { RecordButton } from "./record-frame";
-import { useLLMChatComStore } from "./session";
-
 import Icon from "@/common/component/icon";
 import { Textarea } from "@/common/component/ui/textarea";
 import type { LLMChatRecordVO } from "../vo";
+import RecordFrame, { RecordButton } from "./record-frame";
+import { useLLMChatComStore } from "./session";
 
-const RecordUser = ({ record, viewMode }: { record: LLMChatRecordVO; viewMode: boolean }) => {
+const RecordUser = ({
+  record,
+  viewMode,
+}: {
+  record: LLMChatRecordVO;
+  viewMode: boolean;
+}) => {
   const { body: initialContent, otid } = record;
 
   const [content, setContent] = useState(initialContent);

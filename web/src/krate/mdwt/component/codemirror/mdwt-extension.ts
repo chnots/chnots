@@ -1,34 +1,39 @@
-import { syntaxTree } from '@codemirror/language';
-import { type EditorState, RangeSetBuilder } from '@codemirror/state';
+import { syntaxTree } from "@codemirror/language";
+import { type EditorState, RangeSetBuilder } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
   type EditorView,
   ViewPlugin,
   type ViewUpdate,
-} from '@codemirror/view';
-import { tags as t } from '@lezer/highlight';
+} from "@codemirror/view";
+import { tags as t } from "@lezer/highlight";
 
-import type { BlockContext, InlineContext, Line, MarkdownConfig } from '@lezer/markdown';
+import type {
+  BlockContext,
+  InlineContext,
+  Line,
+  MarkdownConfig,
+} from "@lezer/markdown";
 
 const backlinkRE = /[0-9a-zA-Z-]{6,}\]\]/;
 
 export const Backlink: MarkdownConfig = {
   defineNodes: [
-    'Backlink',
+    "Backlink",
     {
-      name: 'BacklinkMarker',
+      name: "BacklinkMarker",
       style: t.escape,
     },
     {
-      name: 'BacklinkID',
+      name: "BacklinkID",
       style: t.heading1,
     },
   ],
   parseInline: [
     {
-      name: 'Backlink',
-      before: 'Link',
+      name: "Backlink",
+      before: "Link",
       parse(cx: InlineContext, _next: number, pos: number) {
         if (cx.char(pos) !== 91 /* [ */ || cx.char(pos + 1) !== 91) {
           return -1;
@@ -41,10 +46,10 @@ export const Backlink: MarkdownConfig = {
         if (match) {
           pos += match[0].length + 1;
           return cx.addElement(
-            cx.elt('Backlink', start, pos, [
-              cx.elt('BacklinkMarker', start, start + 2),
-              cx.elt('BacklinkID', start + 2, pos - 2),
-              cx.elt('BacklinkMarker', pos - 2, pos),
+            cx.elt("Backlink", start, pos, [
+              cx.elt("BacklinkMarker", start, start + 2),
+              cx.elt("BacklinkID", start + 2, pos - 2),
+              cx.elt("BacklinkMarker", pos - 2, pos),
             ]),
           );
         }
@@ -54,23 +59,24 @@ export const Backlink: MarkdownConfig = {
   ],
 };
 
-const hashtagRE = /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~[\]\\\s]+/;
+const hashtagRE =
+  /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~[\]\\\s]+/;
 
 export const Hashtag: MarkdownConfig = {
   defineNodes: [
-    'Hashtag',
+    "Hashtag",
     {
-      name: 'HashtagLabel',
+      name: "HashtagLabel",
       style: t.tagName,
     },
     {
-      name: 'HashtagMark',
+      name: "HashtagMark",
       style: t.escape,
     },
   ],
   parseInline: [
     {
-      name: 'Hashtag',
+      name: "Hashtag",
       parse(cx: InlineContext, next: number, pos: number) {
         if (next !== 35 /* # */) {
           return -1;
@@ -81,9 +87,9 @@ export const Hashtag: MarkdownConfig = {
         if (match && /\D/.test(match[0])) {
           pos += match[0].length;
           return cx.addElement(
-            cx.elt('Hashtag', start, pos, [
-              cx.elt('HashtagMark', start, start + 1),
-              cx.elt('HashtagLabel', start + 1, pos),
+            cx.elt("Hashtag", start, pos, [
+              cx.elt("HashtagMark", start, start + 1),
+              cx.elt("HashtagLabel", start + 1, pos),
             ]),
           );
         }
@@ -101,8 +107,8 @@ export const Hashtag: MarkdownConfig = {
 const toentTodoRE = /\[[A-Za-z]+( ![A-Z])?\]/;
 
 const todoHighlight = Decoration.mark({
-  class: 'cm-todo-highlight',
-  attributes: { 'aria-label': 'TODO item' },
+  class: "cm-todo-highlight",
+  attributes: { "aria-label": "TODO item" },
 });
 
 export const todoHighlightPlugin = ViewPlugin.fromClass(
@@ -124,7 +130,7 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
 
       syntaxTree(state).iterate({
         enter: (node) => {
-          if (node.name.startsWith('ATXHeading') || node.name === 'ListItem') {
+          if (node.name.startsWith("ATXHeading") || node.name === "ListItem") {
             const text = state.sliceDoc(node.from, node.to);
 
             const match: RegExpExecArray | null = toentTodoRE.exec(text);
@@ -155,21 +161,23 @@ const parseChnotProps = (cx: BlockContext, line: Line) => {
   if (!match) return false;
 
   const base = cx.lineStart + match.index;
-  const markerStart = base + match[0].indexOf(';');
+  const markerStart = base + match[0].indexOf(";");
   const markerEnd = markerStart + 1;
 
   const keyStart =
-    markerEnd + (match[1].length - 1) + (match[0].indexOf(match[2]) - match[0].indexOf(';') - 1);
+    markerEnd +
+    (match[1].length - 1) +
+    (match[0].indexOf(match[2]) - match[0].indexOf(";") - 1);
   const keyEnd = keyStart + match[2].length;
 
-  const colonPos = line.text.indexOf(':', keyStart - line.pos);
+  const colonPos = line.text.indexOf(":", keyStart - line.pos);
   const valueStart = colonPos >= 0 ? line.pos + colonPos + 1 : keyEnd;
   const valueEnd = base + line.text.length;
-  const root = cx.elt('ChnotProps', markerStart, valueEnd, [
-    cx.elt('ChnotPropsMarker', markerStart, markerEnd),
-    cx.elt('ChnotPropsKey', keyStart, keyEnd),
-    cx.elt('ChnotPropsMarker', keyEnd, keyEnd + 1),
-    cx.elt('ChnotPropsValue', valueStart, valueEnd),
+  const root = cx.elt("ChnotProps", markerStart, valueEnd, [
+    cx.elt("ChnotPropsMarker", markerStart, markerEnd),
+    cx.elt("ChnotPropsKey", keyStart, keyEnd),
+    cx.elt("ChnotPropsMarker", keyEnd, keyEnd + 1),
+    cx.elt("ChnotPropsValue", valueStart, valueEnd),
   ]);
 
   cx.addElement(root);
@@ -179,15 +187,15 @@ const parseChnotProps = (cx: BlockContext, line: Line) => {
 
 export const ChnotProps: MarkdownConfig = {
   defineNodes: [
-    { name: 'ChnotProps', block: true, style: t.meta },
-    { name: 'ChnotPropsKey', style: t.atom },
-    { name: 'ChnotPropsMarker', style: t.comment },
-    { name: 'ChnotPropsValue', style: t.atom },
+    { name: "ChnotProps", block: true, style: t.meta },
+    { name: "ChnotPropsKey", style: t.atom },
+    { name: "ChnotPropsMarker", style: t.comment },
+    { name: "ChnotPropsValue", style: t.atom },
   ],
 
   parseBlock: [
     {
-      name: 'ChnotProps',
+      name: "ChnotProps",
       parse(cx: BlockContext, line: Line) {
         return parseChnotProps(cx, line);
       },

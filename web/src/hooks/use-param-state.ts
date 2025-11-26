@@ -1,7 +1,7 @@
 // Adapted from https://dev.to/mr_mornin_star/custom-react-hook-to-sync-state-with-the-url-4b6p
 
-import { useCallback, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useCallback, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * A custom hook that syncs state with a URL search parameter.

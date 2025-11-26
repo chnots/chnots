@@ -1,7 +1,5 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useCallback } from 'react';
 import {
   type AccessorKeyColumnDef,
   flexRender,
@@ -9,22 +7,18 @@ import {
   getSortedRowModel,
   type SortingState,
   useReactTable,
-} from '@tanstack/react-table';
-
-import { ktabToStoreValue } from '../dto';
-import { ktabCellCommit } from '../service';
-import EditableCell, { type KTabRowData } from './editable-cell';
-
-import type { KTabMeta } from '../po';
-import { Button } from '@/common/component/ui/button';
-import { Input } from '@/common/component/ui/input';
+} from "@tanstack/react-table";
+import * as React from "react";
+import { useCallback } from "react";
+import { Button } from "@/common/component/ui/button";
+import { Input } from "@/common/component/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/common/component/ui/select';
+} from "@/common/component/ui/select";
 import {
   Table,
   TableBody,
@@ -32,8 +26,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/common/component/ui/table';
-import { genTID } from '@/lib/id_util';
+} from "@/common/component/ui/table";
+import { genTID } from "@/lib/id_util";
+import { ktabToStoreValue } from "../dto";
+import type { KTabMeta } from "../po";
+import { ktabCellCommit } from "../service";
+import EditableCell, { type KTabRowData } from "./editable-cell";
 
 export function DataTable({
   tableMeta,
@@ -58,7 +56,9 @@ export function DataTable({
 
   const [data, setData] = React.useState<KTabRowData[]>([]);
 
-  const [columns, setColumns] = React.useState<AccessorKeyColumnDef<KTabRowData>[]>([]);
+  const [columns, setColumns] = React.useState<
+    AccessorKeyColumnDef<KTabRowData>[]
+  >([]);
 
   const updateData = React.useCallback(
     async (rowIndex: number, columnId: string, value: any) => {
@@ -69,7 +69,10 @@ export function DataTable({
             {
               row_tid: rowIndex,
               column_name: columnId,
-              value: ktabToStoreValue(tableMeta.columns[columnId].view_kind, value),
+              value: ktabToStoreValue(
+                tableMeta.columns[columnId].view_kind,
+                value,
+              ),
             },
           ],
         });
@@ -121,7 +124,11 @@ export function DataTable({
     setLoading(true);
     try {
       if (tableMeta) {
-        const newData = await fetchData(tableMeta.otid, page * pageSize, pageSize);
+        const newData = await fetchData(
+          tableMeta.otid,
+          page * pageSize,
+          pageSize,
+        );
         setData((prev) => [...prev, ...newData]);
         setPage((prev) => prev + 1);
         setHasMore(newData.length === pageSize);
@@ -137,16 +144,18 @@ export function DataTable({
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  const [newColumnName, setNewColumnName] = React.useState('');
-  const [newColumnType, setNewColumnType] = React.useState<'string' | 'date' | 'decimal'>('string');
+  const [newColumnName, setNewColumnName] = React.useState("");
+  const [newColumnType, setNewColumnType] = React.useState<
+    "string" | "date" | "decimal"
+  >("string");
 
   const handleAddNewColumn = async () => {
     if (!newColumnName) {
-      alert('Column name cannot be empty.');
+      alert("Column name cannot be empty.");
       return;
     }
-    const newColumnId = newColumnName.toLowerCase().replace(/\s+/g, '_');
-    setNewColumnName('');
+    const newColumnId = newColumnName.toLowerCase().replace(/\s+/g, "_");
+    setNewColumnName("");
 
     await onMetaChange({
       ...tableMeta,
@@ -155,8 +164,8 @@ export function DataTable({
         [newColumnId]: {
           idx: genTID(),
           name: newColumnId,
-          comment: '',
-          store_kind: 'str',
+          comment: "",
+          store_kind: "str",
           view_kind: newColumnType,
           required: false,
           order_by: Object.values(tableMeta.columns).length + 1,
@@ -191,7 +200,7 @@ export function DataTable({
   });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab' || readonly) return;
+    if (e.key !== "Tab" || readonly) return;
 
     const activeElement = document.activeElement;
     const allInputs = Array.from(
@@ -217,7 +226,11 @@ export function DataTable({
   };
 
   return (
-    <div role="none" onKeyDown={handleKeyDown} className="flex flex-col w-full h-full">
+    <div
+      role="none"
+      onKeyDown={handleKeyDown}
+      className="flex flex-col w-full h-full"
+    >
       {!readonly && (
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-2 flex-wrap">
@@ -226,7 +239,10 @@ export function DataTable({
               value={newColumnName}
               onChange={(e) => setNewColumnName(e.target.value)}
             />
-            <Select value={newColumnType} onValueChange={(value: any) => setNewColumnType(value)}>
+            <Select
+              value={newColumnType}
+              onValueChange={(value: any) => setNewColumnType(value)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Type" />
               </SelectTrigger>
@@ -252,7 +268,10 @@ export function DataTable({
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -261,17 +280,26 @@ export function DataTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>

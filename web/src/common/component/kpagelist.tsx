@@ -1,5 +1,5 @@
-import React from 'react';
-import { useInView } from 'react-intersection-observer';
+import React from "react";
+import { useInView } from "react-intersection-observer";
 
 const KPageList = ({
   children,
@@ -25,7 +25,7 @@ const KPageList = ({
       {children}
       <div className="flex justify-center">
         {isFetchingNextPage ? (
-          'Loading more...'
+          "Loading more..."
         ) : hasNextPage ? (
           <button
             type="button"

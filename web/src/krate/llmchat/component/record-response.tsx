@@ -1,8 +1,7 @@
 /** biome-ignore-all lint/correctness/useHookAtTopLevel: fully tested */
 import { useEffect, useRef } from "react";
-
-import RecordAssistant from "./record-assistant";
-import { useLLMChatComStore } from "./session";
+import Icon from "@/common/component/icon";
+import { Button as KButton } from "@/common/component/ui/button";
 
 import {
   ResponseCtl,
@@ -10,13 +9,12 @@ import {
   ResponseStep,
   useLLMResponse,
 } from "@/hooks/use-llm-response";
-
-import Icon from "@/common/component/icon";
-import { Button as KButton } from "@/common/component/ui/button";
 import type { LLMChatBot } from "@/krate/llmchat/po";
 import { llmchatRecordCommit } from "@/krate/llmchat/service";
 import { genTID, type TID } from "@/lib/id_util";
 import type { LLMChatRecordVO } from "../vo";
+import RecordAssistant from "./record-assistant";
+import { useLLMChatComStore } from "./session";
 
 export const RecordAnswering = ({
   bot,
@@ -25,8 +23,8 @@ export const RecordAnswering = ({
   bot: LLMChatBot;
   onScrollToEnd?: () => void;
 }) => {
-  const { records, session, setResponsing, appendRecord, answering } = useLLMChatComStore(
-    (store) => {
+  const { records, session, setResponsing, appendRecord, answering } =
+    useLLMChatComStore((store) => {
       return {
         records: store.records,
         session: store.session,
@@ -34,8 +32,7 @@ export const RecordAnswering = ({
         appendRecord: store.appendRecord,
         answering: store.responsing,
       };
-    },
-  );
+    });
   if (!session || !records || records.length <= 0) {
     return;
   }
@@ -50,7 +47,9 @@ export const RecordAnswering = ({
   });
 
   const onAbort =
-    response.step === ResponseStep.Answering ? () => setAnswerCtl(ResponseCtl.Abort) : undefined;
+    response.step === ResponseStep.Answering
+      ? () => setAnswerCtl(ResponseCtl.Abort)
+      : undefined;
 
   useEffect(() => {
     if (setResponsing) {

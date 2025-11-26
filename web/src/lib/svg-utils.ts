@@ -1,4 +1,4 @@
-import request from './request';
+import request from "./request";
 
 export async function fetchAndModifySvg(url: string) {
   try {
@@ -7,10 +7,10 @@ export async function fetchAndModifySvg(url: string) {
 
     //Using DOMParser for robust attribute removal
     const parser = new DOMParser();
-    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const doc = parser.parseFromString(svgString, "image/svg+xml");
     const svgElement = doc.documentElement;
-    svgElement.removeAttribute('width');
-    svgElement.removeAttribute('height');
+    svgElement.removeAttribute("width");
+    svgElement.removeAttribute("height");
 
     const modifiedSvgString = new XMLSerializer().serializeToString(doc);
 
@@ -21,20 +21,20 @@ export async function fetchAndModifySvg(url: string) {
 }
 
 export const detectSVG = (s: string) => {
-  if (typeof s !== 'string' || !s.trim()) {
+  if (typeof s !== "string" || !s.trim()) {
     return false;
   }
 
   try {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(s, 'image/svg+xml');
-    const parserErrors = doc.getElementsByTagName('parsererror');
+    const doc = parser.parseFromString(s, "image/svg+xml");
+    const parserErrors = doc.getElementsByTagName("parsererror");
     if (parserErrors.length > 0) {
       return false;
     }
 
     const svgElement = doc.documentElement;
-    return svgElement.tagName.toLowerCase() === 'svg';
+    return svgElement.tagName.toLowerCase() === "svg";
   } catch (_e) {
     return false;
   }

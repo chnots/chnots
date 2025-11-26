@@ -1,17 +1,19 @@
-import type { TodoEvent } from '../po';
+import type { TodoEvent } from "../po";
 
 const TodoLabel = ({ todoEvent }: { todoEvent: TodoEvent }) => {
   switch (todoEvent) {
-    case 'TODO':
+    case "TODO":
       return <span className=" px-2 bg-blue-300 text-black">{todoEvent}</span>;
-    case 'DONE':
+    case "DONE":
       return <span className=" px-2 bg-gray-300 text-black">{todoEvent}</span>;
 
-    case 'WAIT':
-      return <span className=" px-2 bg-purple-300 text-black">{todoEvent}</span>;
-    case 'CANCEL':
+    case "WAIT":
+      return (
+        <span className=" px-2 bg-purple-300 text-black">{todoEvent}</span>
+      );
+    case "CANCEL":
       return <span className=" px-2 bg-gray-500 text-black">{todoEvent}</span>;
-    case 'DOING':
+    case "DOING":
       return <span className=" px-2 bg-red-300 text-black">{todoEvent}</span>;
   }
 };

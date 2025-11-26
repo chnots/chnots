@@ -1,16 +1,14 @@
-import { useState } from 'react';
-
-import { useLLMChatStore } from '../store';
-
-import type React from 'react';
-import KSVG from '@/common/component/svg';
-import { Button } from '@/common/component/ui/button';
-import { Input } from '@/common/component/ui/input';
-import { Label } from '@/common/component/ui/label';
-import { Textarea } from '@/common/component/ui/textarea';
-import type { LLMChatTemplate } from '@/krate/llmchat/po';
-import { genTID } from '@/lib/id_util';
-import { detectSVG } from '@/lib/svg-utils';
+import type React from "react";
+import { useState } from "react";
+import KSVG from "@/common/component/svg";
+import { Button } from "@/common/component/ui/button";
+import { Input } from "@/common/component/ui/input";
+import { Label } from "@/common/component/ui/label";
+import { Textarea } from "@/common/component/ui/textarea";
+import type { LLMChatTemplate } from "@/krate/llmchat/po";
+import { genTID } from "@/lib/id_util";
+import { detectSVG } from "@/lib/svg-utils";
+import { useLLMChatStore } from "../store";
 
 const TemplateForm = ({
   template,
@@ -32,7 +30,9 @@ const TemplateForm = ({
   });
   const { refreshTemplates } = useLLMChatStore();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -41,10 +41,10 @@ const TemplateForm = ({
     if (
       !formData.name ||
       !formData.prompt ||
-      formData?.name?.trim() === '' ||
-      formData?.prompt?.trim() === ''
+      formData?.name?.trim() === "" ||
+      formData?.prompt?.trim() === ""
     ) {
-      alert('Please fill in all fields.');
+      alert("Please fill in all fields.");
       return;
     }
 
@@ -52,7 +52,10 @@ const TemplateForm = ({
       otid: template ? template.otid : genTID(),
       name: formData.name,
       prompt: formData.prompt,
-      svg_logo: formData.svg_logo && detectSVG(formData.svg_logo) ? formData.svg_logo : '',
+      svg_logo:
+        formData.svg_logo && detectSVG(formData.svg_logo)
+          ? formData.svg_logo
+          : "",
       tid: genTID(),
     };
 
@@ -74,7 +77,7 @@ const TemplateForm = ({
               type="text"
               id="name"
               name="name"
-              value={formData.name ?? ''}
+              value={formData.name ?? ""}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
@@ -88,13 +91,13 @@ const TemplateForm = ({
             </Label>
             <div className="flex flex-row space-x-2 items-center">
               <div className="border rounded-md">
-                <KSVG src={formData.svg_logo ?? ''} />
+                <KSVG src={formData.svg_logo ?? ""} />
               </div>
 
               <Textarea
                 id="svg_logo"
                 name="svg_logo"
-                value={formData.svg_logo ?? ''}
+                value={formData.svg_logo ?? ""}
                 onChange={handleInputChange}
                 aria-label="Template Name"
               />
@@ -107,7 +110,7 @@ const TemplateForm = ({
             <Textarea
               id="prompt"
               name="prompt"
-              value={formData.prompt ?? ''}
+              value={formData.prompt ?? ""}
               onChange={handleInputChange}
               required
               aria-label="Template Prompt"
@@ -117,7 +120,12 @@ const TemplateForm = ({
             <Button className="p-2" type="submit" aria-label="Submit Template">
               Submit
             </Button>
-            <Button className="p-2" type="reset" aria-label="Close" onClick={onClose}>
+            <Button
+              className="p-2"
+              type="reset"
+              aria-label="Close"
+              onClick={onClose}
+            >
               Close
             </Button>
           </div>

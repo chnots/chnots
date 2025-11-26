@@ -1,8 +1,6 @@
-import React, { useEffect } from 'react';
-
-import type { KSpace } from '../po';
-import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
+import React, { useEffect } from "react";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,15 +9,22 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/common/component/ui/dropdown-menu';
-import { useKSpaceStore } from '@/krate/kspace/store';
+} from "@/common/component/ui/dropdown-menu";
+import { useKSpaceStore } from "@/krate/kspace/store";
+import type { KSpace } from "../po";
 
-export const KSpaceIcon = ({ name, className }: { name?: string; className?: string }) => {
-  if (name === 'public') {
+export const KSpaceIcon = ({
+  name,
+  className,
+}: {
+  name?: string;
+  className?: string;
+}) => {
+  if (name === "public") {
     return <Icon.BookKey className={className} />;
-  } else if (name === 'work') {
+  } else if (name === "work") {
     return <Icon.BriefcaseBusiness className={className} />;
-  } else if (name === 'private') {
+  } else if (name === "private") {
     return <Icon.BookLock className={className} />;
   } else {
     return <Icon.Dice1 className={className} />;
@@ -57,7 +62,7 @@ export const KSpaceSelectDropDownGroup = ({
               className="flex items-center flex-1 gap-2 cursor-pointer "
               onClick={() => onSelect(e.name)}
               onKeyDown={(event) =>
-                (event.key === 'Enter' || event.key === ' ') && onSelect(e.name)
+                (event.key === "Enter" || event.key === " ") && onSelect(e.name)
               }
             >
               <KSpaceIcon name={e.name} />

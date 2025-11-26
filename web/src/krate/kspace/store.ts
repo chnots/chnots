@@ -1,10 +1,8 @@
-import { create, useStore } from 'zustand';
-import { combine } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
-
-import { kspaceList } from './service';
-
-import type { KSpace } from '@/krate/kspace/po';
+import { create, useStore } from "zustand";
+import { combine } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
+import type { KSpace } from "@/krate/kspace/po";
+import { kspaceList } from "./service";
 
 interface KSpaceState {
   kspaceMapByName: Map<string, KSpace>;
@@ -22,7 +20,7 @@ const getDefaultState = (): KSpaceState => {
     kspaceMapByName: new Map(),
     currentKSpace: (() => {
       const searchParams = new URLSearchParams(window.location.search.slice(1));
-      return searchParams.get('ns') ?? 'public';
+      return searchParams.get("ns") ?? "public";
     })(),
     mkspaces: [],
     currentKSpaceObj: () => {
@@ -61,7 +59,9 @@ export const kspaceStore = create(
       set((prev) => {
         return {
           ...prev,
-          mkspaces: [...new Set(mkspaces)].filter((e) => e !== prev.currentKSpace),
+          mkspaces: [...new Set(mkspaces)].filter(
+            (e) => e !== prev.currentKSpace,
+          ),
         };
       });
     },

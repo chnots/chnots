@@ -1,5 +1,5 @@
-import type { KSpace } from "./po";
 import type { Varchar } from "@/lib/types";
+import type { KSpace } from "./po";
 
 export type KSpaceListRsp = {
   kspaces: KSpace[];

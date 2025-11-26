@@ -1,30 +1,30 @@
-import path from 'node:path';
-import { defineConfig } from '@rsbuild/core';
-import { pluginReact } from '@rsbuild/plugin-react';
-import { pluginSass } from '@rsbuild/plugin-sass';
-import { pluginSourceBuild } from '@rsbuild/plugin-source-build';
+import path from "node:path";
+import { defineConfig } from "@rsbuild/core";
+import { pluginReact } from "@rsbuild/plugin-react";
+import { pluginSass } from "@rsbuild/plugin-sass";
+import { pluginSourceBuild } from "@rsbuild/plugin-source-build";
 
 export default defineConfig({
   plugins: [pluginReact(), pluginSass(), pluginSourceBuild({})],
   resolve: {
     alias: {
       // !! We need to install @types/node to avoid errors(cannot find papth or __dirname).
-      '@': path.resolve(__dirname, 'src'),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   html: {
-    template: './index.html',
+    template: "./index.html",
   },
   source: {
     entry: {
-      index: './src/main.tsx',
+      index: "./src/main.tsx",
     },
   },
   output: {
     cleanDistPath: true,
     // assetPrefix: "/assets/",
     distPath: {
-      root: '../web-dist',
+      root: "../web-dist",
     },
   },
 });

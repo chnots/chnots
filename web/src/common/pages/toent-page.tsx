@@ -1,4 +1,4 @@
-import UnderConstructionPage from './under-construction-page';
+import UnderConstructionPage from "./under-construction-page";
 
 const ToentPage = () => {
   return <UnderConstructionPage />;

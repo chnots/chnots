@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import { openUrl } from '@tauri-apps/plugin-opener';
-
-import FileNameToIcon from './filename-to-icon';
-
-import { useIsMobile } from '@/hooks/use-mobile';
-
-import type { KFileMeta } from '../po';
-import RelativeTime from '@/common/component/relative-time';
-import { Button, Button as KButton } from '@/common/component/ui/button';
-import { getResouceDownloadUrl, kfileMetaFetch, kfileUpload } from '@/krate/kfile/service';
-import { genUID, type TID } from '@/lib/id_util';
-import { isTauri } from '@/lib/request';
-import { humanFileSize } from '@/lib/unit-utils';
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { useCallback, useEffect, useState } from "react";
+import RelativeTime from "@/common/component/relative-time";
+import { Button, Button as KButton } from "@/common/component/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  getResouceDownloadUrl,
+  kfileMetaFetch,
+  kfileUpload,
+} from "@/krate/kfile/service";
+import { genUID, type TID } from "@/lib/id_util";
+import { isTauri } from "@/lib/request";
+import { humanFileSize } from "@/lib/unit-utils";
+import type { KFileMeta } from "../po";
+import FileNameToIcon from "./filename-to-icon";
 
 type FileLike = {
   name: string;
@@ -59,7 +60,7 @@ export const CommonKFile = ({
   }, [otid]);
   const uploadFileInChunks = async () => {
     if (!uploadFile) {
-      alert('Please select a file to upload');
+      alert("Please select a file to upload");
       return;
     }
 
@@ -99,9 +100,11 @@ export const CommonKFile = ({
 
         currentChunk++;
         localStorage.setItem(uploadFile.name, currentChunk.toString());
-        setProgress(parseInt(((currentChunk / totalChunks) * 100).toFixed(0), 10));
+        setProgress(
+          parseInt(((currentChunk / totalChunks) * 100).toFixed(0), 10),
+        );
       } catch (_error) {
-        alert('An error occurred during upload.');
+        alert("An error occurred during upload.");
         return;
       }
     }
@@ -109,23 +112,32 @@ export const CommonKFile = ({
     localStorage.removeItem(uploadFile.name);
   };
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadFile(file);
-      setProgress(0);
-    }
-  }, []);
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        setUploadFile(file);
+        setProgress(0);
+      }
+    },
+    [],
+  );
 
-  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  }, []);
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(true);
+    },
+    [],
+  );
 
-  const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-  }, []);
+  const handleDragLeave = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(false);
+    },
+    [],
+  );
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -139,7 +151,7 @@ export const CommonKFile = ({
 
   return (
     <div
-      className={`flex ${isMobile ? 'flex-col space-y-6' : 'flex-row space-x-6'}  p-4 w-full justify-center items-center`}
+      className={`flex ${isMobile ? "flex-col space-y-6" : "flex-row space-x-6"}  p-4 w-full justify-center items-center`}
     >
       <div className="flex flexcol justify-center align-middle h-full">
         <div
@@ -148,16 +160,18 @@ export const CommonKFile = ({
               transition-all duration-300 ease-out cursor-pointer 
             ${
               isDragging
-                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
+                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
+                : "border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500"
             }
           `}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           role="none"
-          onClick={() => document.getElementById('file-input')?.click()}
-          onKeyDown={(e) => e.key === 'Enter' && document.getElementById('file-input')?.click()}
+          onClick={() => document.getElementById("file-input")?.click()}
+          onKeyDown={(e) =>
+            e.key === "Enter" && document.getElementById("file-input")?.click()
+          }
         >
           <input
             id="file-input"
@@ -166,7 +180,11 @@ export const CommonKFile = ({
             className="hidden"
             aria-describedby="file-input-help"
           />
-          <FileNameToIcon filename={kfile?.filename ?? ''} className="w-14 h-14" strokeWidth={1} />
+          <FileNameToIcon
+            filename={kfile?.filename ?? ""}
+            className="w-14 h-14"
+            strokeWidth={1}
+          />
         </div>
       </div>
 
@@ -212,10 +230,10 @@ export const CommonKFile = ({
               onClick={uploadFileInChunks}
               disabled={!uploadFile}
               className={
-                'max-w-20 w-full py-3.5 px-6 rounded-lg align-center justify-center border kc-basic-with-bdr'
+                "max-w-20 w-full py-3.5 px-6 rounded-lg align-center justify-center border kc-basic-with-bdr"
               }
             >
-              {progress > 0 && progress < 100 ? 'Uploading...' : 'Upload'}
+              {progress > 0 && progress < 100 ? "Uploading..." : "Upload"}
             </KButton>
           </div>
         </div>

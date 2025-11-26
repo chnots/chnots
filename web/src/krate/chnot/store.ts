@@ -1,20 +1,18 @@
-import { create, useStore } from 'zustand';
-import { useShallow } from 'zustand/react/shallow';
-
-import { kspaceStore } from '../kspace/store';
-import { chnotSingleSearch, chnotThreadSearch } from './service';
-
+import { create, useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import type { DbCache } from "@/common/store";
+import type { PageRsp } from "@/common/types";
+import type { TID } from "@/lib/id_util";
+import { insertMapAtIndex } from "@/lib/map-utils";
+import { kspaceStore } from "../kspace/store";
 import type {
   ChnotSearchReq,
   ChnotSearchRspSingle,
   ChnotSearchRspThread,
   MdwtTagSearchType,
-} from './dto';
-import type { ChnotKind, ChnotMeta } from './po';
-import type { DbCache } from '@/common/store';
-import type { PageRsp } from '@/common/types';
-import type { TID } from '@/lib/id_util';
-import { insertMapAtIndex } from '@/lib/map-utils';
+} from "./dto";
+import type { ChnotKind, ChnotMeta } from "./po";
+import { chnotSingleSearch, chnotThreadSearch } from "./service";
 
 const emptyCacheMap = <T>(): DbCache<T> => {
   return {
@@ -208,7 +206,8 @@ export const createChnotStore = <T extends StateChnotLike>(
       const toRemove2 = Array.from(
         [...dbCacheMap.values()]
           .filter((e) => {
-            const result = e.meta.kspace === kspaceStore.getState().currentKSpace;
+            const result =
+              e.meta.kspace === kspaceStore.getState().currentKSpace;
             return !result;
           })
           .map((e) => e.meta.otid),
@@ -227,7 +226,10 @@ export const createChnotStore = <T extends StateChnotLike>(
       set((prev) => ({
         ...prev,
         mapByOtid: cmm,
-        curOtid: prev.curOtid && dbCacheMap.has(prev.curOtid) ? prev.curOtid : undefined,
+        curOtid:
+          prev.curOtid && dbCacheMap.has(prev.curOtid)
+            ? prev.curOtid
+            : undefined,
       }));
     },
 
@@ -253,7 +255,9 @@ export function useChnotHeadStore<S>(selector: (state: HeadState) => S) {
 }
 
 const chnotSingleStore = createChnotStore(chnotSingleSearch);
-export function useChnotSingleStore<S>(selector: (state: State<ChnotSearchRspSingle>) => S) {
+export function useChnotSingleStore<S>(
+  selector: (state: State<ChnotSearchRspSingle>) => S,
+) {
   return useStore(
     chnotSingleStore,
     useShallow((store) => {
@@ -263,7 +267,9 @@ export function useChnotSingleStore<S>(selector: (state: State<ChnotSearchRspSin
 }
 
 const chnotThreadStore = createChnotStore(chnotThreadSearch);
-export function useChnotThreadStore<S>(selector: (state: State<ChnotSearchRspThread>) => S) {
+export function useChnotThreadStore<S>(
+  selector: (state: State<ChnotSearchRspThread>) => S,
+) {
   return useStore(
     chnotThreadStore,
     useShallow((store) => {

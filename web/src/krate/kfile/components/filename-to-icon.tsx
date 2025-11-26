@@ -1,5 +1,5 @@
-import type { JSX } from 'react';
-import Icon from '@/common/component/icon';
+import type { JSX } from "react";
+import Icon from "@/common/component/icon";
 
 const FileNameToIcon = ({
   filename,
@@ -8,7 +8,7 @@ const FileNameToIcon = ({
   filename: string;
 } & Icon.LucideProps) => {
   // Extract extension (case insensitive)
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
+  const extension = filename.split(".").pop()?.toLowerCase() || "";
 
   // Mapping of extensions to Lucide icons
   const iconMap: Record<string, JSX.Element> = {
@@ -36,7 +36,7 @@ const FileNameToIcon = ({
     // Archives
     zip: <Icon.FileArchiveIcon {...rest} />,
     rar: <Icon.FileArchiveIcon {...rest} />,
-    '7z': <Icon.FileArchiveIcon {...rest} />,
+    "7z": <Icon.FileArchiveIcon {...rest} />,
     tar: <Icon.FileArchiveIcon {...rest} />,
     gz: <Icon.FileArchiveIcon {...rest} />,
 

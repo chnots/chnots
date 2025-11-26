@@ -1,5 +1,5 @@
-import type { KTabColumnStoreKind, KTabMeta } from "./po";
 import type { TID } from "@/lib/id_util";
+import type { KTabColumnStoreKind, KTabMeta } from "./po";
 
 export type KTabOverwriteCellsRsp = object;
 

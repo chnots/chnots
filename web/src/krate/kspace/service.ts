@@ -1,3 +1,4 @@
+import request from "@/lib/request";
 import type {
   KSpaceArchiveReq,
   KSpaceArchiveRsp,
@@ -5,17 +6,22 @@ import type {
   KSpaceCommitRsp,
   KSpaceListReq,
   KSpaceListRsp,
-} from './dto';
-import request from '@/lib/request';
+} from "./dto";
 
-export const kspaceList = async (req: KSpaceListReq): Promise<KSpaceListRsp> => {
+export const kspaceList = async (
+  req: KSpaceListReq,
+): Promise<KSpaceListRsp> => {
   return await request.postJson(`/api/v1/kspace-list`, req);
 };
 
-export const kspaceCommit = async (req: KSpaceCommitReq): Promise<KSpaceCommitRsp> => {
+export const kspaceCommit = async (
+  req: KSpaceCommitReq,
+): Promise<KSpaceCommitRsp> => {
   return await request.postJson(`/api/v1/kspace-commit`, req);
 };
 
-export const ksapceArchive = async (req: KSpaceArchiveReq): Promise<KSpaceArchiveRsp> => {
+export const ksapceArchive = async (
+  req: KSpaceArchiveReq,
+): Promise<KSpaceArchiveRsp> => {
   return await request.postJson(`/api/v1/kspace-archive`, req);
 };

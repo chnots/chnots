@@ -1,23 +1,21 @@
-import { useCallback, useState } from 'react';
-
-import { ChnotKind } from '../../po';
-import { cachedChnotMapByOtid } from '../../store';
-import { ChnotKindIcon } from '../kind-icon';
-import ExcalidrawChnot from './excalidraw';
-import KFileChnot from './kfile';
-import LLMChatChnot from './llmchat';
-import MdwtChnot from './mdwt';
-import TableChnot from './table';
-
-import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
-import { SaveState } from '@/common/types';
-import { chnotMetaCommit } from '@/krate/chnot/service';
-import { chnotShortDate } from '@/lib/date-utils';
-import { genTID, type TID } from '@/lib/id_util';
+import { useCallback, useState } from "react";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
+import { SaveState } from "@/common/types";
+import { chnotMetaCommit } from "@/krate/chnot/service";
+import { chnotShortDate } from "@/lib/date-utils";
+import { genTID, type TID } from "@/lib/id_util";
+import { ChnotKind } from "../../po";
+import { cachedChnotMapByOtid } from "../../store";
+import { ChnotKindIcon } from "../kind-icon";
+import ExcalidrawChnot from "./excalidraw";
+import KFileChnot from "./kfile";
+import LLMChatChnot from "./llmchat";
+import MdwtChnot from "./mdwt";
+import TableChnot from "./table";
 
 export type PostSaveArg = {
-  otid: TID,
+  otid: TID;
   saveState: SaveState;
   title?: string;
 };
@@ -30,7 +28,11 @@ export type RichPropProps = {
   onPostSave: (arg: PostSaveArg) => void;
 };
 
-const ChnotKindSelector = ({ setKind }: { setKind: (kind: ChnotKind) => void }) => {
+const ChnotKindSelector = ({
+  setKind,
+}: {
+  setKind: (kind: ChnotKind) => void;
+}) => {
   return Object.values(ChnotKind).map((kind) => {
     return (
       <Button onClick={() => setKind(kind)} key={kind}>
@@ -51,11 +53,17 @@ const RichChnot = ({
 }) => {
   const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [saveState, setSaveState] = useState(SaveState.Initial);
-  const [kind, setKind] = useState<ChnotKind | undefined>(cachedChnotMapByOtid.get(otid)?.kind);
+  const [kind, setKind] = useState<ChnotKind | undefined>(
+    cachedChnotMapByOtid.get(otid)?.kind,
+  );
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
-      if (saveState === SaveState.Initial && kind && arg.saveState === SaveState.Saved) {
+      if (
+        saveState === SaveState.Initial &&
+        kind &&
+        arg.saveState === SaveState.Saved
+      ) {
         const meta = {
           otid: otid,
           kind: kind,
@@ -96,7 +104,10 @@ const RichChnot = ({
             {chnotShortDate(new Date(otid / 1e3))}
           </time>
         </div>
-        <Icon.Fullscreen className="w-4 h-4 cursor-pointer" onClick={() => setFullscreen(true)} />
+        <Icon.Fullscreen
+          className="w-4 h-4 cursor-pointer"
+          onClick={() => setFullscreen(true)}
+        />
       </div>
       <div className="flex-1 focus:outline-none h-full space-y-2 max-w-full p-1 w-full">
         {kind === ChnotKind.MDWT ? (

@@ -1,11 +1,10 @@
-import ChnotSingleMain from '../component/single/main';
-import ChnotSingleSidebar from '../component/single/sidebar';
-import ChnotThreadMain from '../component/thread/main';
-
-import { SidebarProvider } from '@/common/component/ui/sidebar';
-import UnderConstructionPage from '@/common/pages/under-construction-page';
-import ChnotThreadSidebar from '@/krate/chnot/component/thread/sidebar';
-import { ChnotViewType } from '@/krate/chnot/store';
+import { SidebarProvider } from "@/common/component/ui/sidebar";
+import UnderConstructionPage from "@/common/pages/under-construction-page";
+import ChnotThreadSidebar from "@/krate/chnot/component/thread/sidebar";
+import { ChnotViewType } from "@/krate/chnot/store";
+import ChnotSingleMain from "../component/single/main";
+import ChnotSingleSidebar from "../component/single/sidebar";
+import ChnotThreadMain from "../component/thread/main";
 
 /**
  * Page for chnots, which is left and right layouted.
