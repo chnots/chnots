@@ -72,9 +72,11 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     } else {
       setTagList(undefined);
     }
-    clearCache();
-    fetchMore();
-  }, [tags, searchStr, clearCache, fetchMore]);
+    if (kinds || mkspaces) {
+      clearCache();
+      fetchMore();
+    }
+  }, [tags, searchStr, clearCache, fetchMore, kinds, mkspaces]);
 
   const ph = useCallback(() => {}, []);
   const handleSetCurOtid = useCallback(

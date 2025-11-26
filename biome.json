@@ -112,8 +112,8 @@
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double",
-      "jsxQuoteStyle": "double"
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single"
     }
   },
   "overrides": [

@@ -1,9 +1,9 @@
-import { ChnotKind } from '../../po';
-import { useChnotHeadStore } from '../../store';
-import { ChnotKindIcon } from '../kind-icon';
+import { ChnotKind } from "../../po";
+import { useChnotHeadStore } from "../../store";
+import { ChnotKindIcon } from "../kind-icon";
 
-import Icon from '@/common/component/icon';
-import { Button } from '@/common/component/ui/button';
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/common/component/ui/dropdown-menu';
+} from "@/common/component/ui/dropdown-menu";
 
 export const ChnotKindSelect = () => {
   const { kinds, setChnotKinds } = useChnotHeadStore((s) => {
@@ -36,17 +36,21 @@ export const ChnotKindSelect = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>KSpace</DropdownMenuLabel>
+        <DropdownMenuLabel>Chnot Kind</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem key={'all'} onClick={() => setChnotKinds((_) => [])}>
+          <DropdownMenuItem
+            key={"all"}
+            onClick={() => setChnotKinds((_) => [])}
+          >
             <Icon.Squirrel />
             <span>all</span>
           </DropdownMenuItem>
           {Object.values(ChnotKind).map((e) => (
             <DropdownMenuItem key={e}>
               <div className="flex items-center justify-between w-full">
-                <Button
+                <button
+                  type="button"
                   className="flex items-center flex-1 gap-2 cursor-pointer"
                   onClick={() =>
                     setChnotKinds((kinds) => {
@@ -54,7 +58,7 @@ export const ChnotKindSelect = () => {
                     })
                   }
                   onKeyDown={(event) =>
-                    (event.key === 'Enter' || event.key === ' ') &&
+                    (event.key === "Enter" || event.key === " ") &&
                     setChnotKinds((kinds) => {
                       return [e, ...(kinds ?? [])];
                     })
@@ -62,7 +66,7 @@ export const ChnotKindSelect = () => {
                 >
                   <ChnotKindIcon kind={e} />
                   <span className="truncate">{e}</span>
-                </Button>
+                </button>
 
                 <Button
                   variant="ghost"
