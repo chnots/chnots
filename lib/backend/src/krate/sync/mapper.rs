@@ -13,7 +13,7 @@ use crate::{
             po::{SyncAllEndpoints, SyncLogTransientCommit},
         },
     },
-    magics::ALL_ENDPOINTS,
+    magics::ALL_ENDPOINTS_KEY,
     mapper::MapperType,
     model::KOtidSupport,
 };
@@ -126,7 +126,7 @@ impl SyncMapper for MapperType {
 impl MapperType {
     pub(crate) async fn sync_endpoint_list(&self) -> AResult<SyncAllEndpoints> {
         let kkv: Option<SyncAllEndpoints> = self
-            .kkv_transient_fetch::<SyncAllEndpoints>(ALL_ENDPOINTS)
+            .kkv_transient_fetch::<SyncAllEndpoints>(ALL_ENDPOINTS_KEY)
             .await?;
         match kkv {
             Some(kkv) => Ok(kkv),
@@ -141,7 +141,7 @@ impl MapperType {
         req: SyncAllEndpoints,
     ) -> AResult<SyncEndpointCommitRsp> {
         self.kkv_transisent_commit(
-            ALL_ENDPOINTS.to_string().try_into()?,
+            ALL_ENDPOINTS_KEY.to_string().try_into()?,
             &req,
             chin_sql::OnConflict::Replace(KKVTransient::KEY.to_string()),
         )

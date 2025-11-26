@@ -1,10 +1,10 @@
 use app::{AppState, ShareAppState};
-use chin_tools::{AResult, EResult};
+use chin_tools::{AResult, EResult, utils::id_util::generate_uuid};
 use config::Config;
 use log::info;
 use mapper::MapperType;
 
-use crate::krate::sync::filedumper::StartType;
+use crate::{krate::sync::filedumper::StartType, magics::CLIENT_ID_KEY};
 
 pub(crate) mod app;
 pub mod config;
@@ -20,7 +20,7 @@ pub async fn run(config: Config) -> EResult {
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
-    let instance_id = mapper.get_instance_id().await?;
+    let instance_id = mapper.fetch_chnot_meta_value(CLIENT_ID_KEY).await?;
     let state = AppState {
         config: config.clone(),
         mapper,
@@ -33,7 +33,14 @@ pub async fn run(config: Config) -> EResult {
         tokio::spawn(async move {
             info!("Begin to backup.");
 
-            if let Err(err) = state.init_instance_id().await {
+            if let Err(err) = state
+                .commit_chnot_meta_value(
+                    CLIENT_ID_KEY,
+                    generate_uuid(),
+                    chin_sql::OnConflict::Default,
+                )
+                .await
+            {
                 info!("unable to create instace_id {err}");
             }
 

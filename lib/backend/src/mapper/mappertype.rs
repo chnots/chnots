@@ -1,4 +1,5 @@
 use anyhow::Context as _;
+use chin_sql::OnConflict;
 use chin_tools::{AResult, EResult, utils::id_util::generate_uuid};
 use log::info;
 
@@ -41,29 +42,29 @@ impl MapperType {
         self.kspace_ensure_data().await?;
         self.ensure_ktab_tables().await?;
         self.ensure_sync_table().await?;
-        self.init_instance_id().await?;
 
         Ok(())
     }
 
-    pub async fn get_instance_id(&self) -> AResult<String> {
+    pub async fn fetch_chnot_meta_value(&self, key: &'static str) -> AResult<String> {
         let instance_id: String = self
-            .kkv_transient_fetch(CLIENT_ID_KEY)
+            .kkv_transient_fetch(key)
             .await?
             .context("there is not instance_id in the db")?;
         info!("instance id: {instance_id}");
         Ok(instance_id)
     }
 
-    pub async fn init_instance_id(&self) -> EResult {
+    pub async fn commit_chnot_meta_value(
+        &self,
+        key: &'static str,
+        value: String,
+        on_conflict: OnConflict,
+    ) -> EResult {
         let instance_id: Option<String> = self.kkv_transient_fetch(CLIENT_ID_KEY).await?;
         if instance_id.is_none() {
-            self.kkv_transisent_commit(
-                CLIENT_ID_KEY.try_into()?,
-                generate_uuid(),
-                chin_sql::OnConflict::Default,
-            )
-            .await?;
+            self.kkv_transisent_commit(key.try_into()?, value, on_conflict)
+                .await?;
         }
         Ok(())
     }
