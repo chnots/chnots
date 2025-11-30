@@ -14,7 +14,7 @@ const LLMChatTemplateList = ({
   const { templates } = useLLMChatStore();
 
   return (
-    <div className="flex flex-wrap space-x-4 text-sm p-3">
+    <div className="flex flex-wrap space-x-4 text-sm p-3 max-w-4xl space-y-2">
       {[...templates.values()].map((item) => (
         <Button
           key={item.otid}
