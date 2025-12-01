@@ -42,7 +42,7 @@ export const fetchExcalidraw = async (
         if (element.type === "image" && element.fileId) {
           try {
             const fileInlineRsp = await kfileInlineDownload({
-              req_id: { ID: element.fileId },
+              req_id: { Id: element.fileId },
             });
 
             const fileInline = fileInlineRsp.file;
@@ -56,7 +56,7 @@ export const fetchExcalidraw = async (
                 id: element.fileId as FileId,
               });
             }
-          } catch (_error) {}
+          } catch (_error) { }
         }
       }
     }
@@ -67,7 +67,7 @@ export const fetchExcalidraw = async (
       files: Object.fromEntries(fileMap.entries()),
       elements: dataState.elements,
     };
-  } catch (_e) {}
+  } catch (_e) { }
   return null;
 };
 
@@ -85,6 +85,30 @@ export type SaveExcalidrawProps = {
   savedFilesRef: RefObject<Map<string, SaveFileCache>>;
 };
 
+export const unionFileSaved = async (files: BinaryFiles, savedFiles: Map<string, SaveFileCache>
+) => {
+  for (const [fileId, file] of Object.entries(files)) {
+    const cache = savedFiles.get(fileId);
+    const newVer = `${file.created}-${file.version}`;
+    if (!cache || cache.ver !== newVer) {
+      const otid = cache ? cache.otid : genTID();
+      await kfileInlineUpload({
+        res: {
+          tid: genTID(),
+          content: file.dataURL,
+          sid: "placeholder",
+        },
+        archor_intervals: 3600,
+        meta_id: file.id,
+        content_type: file.mimeType ?? "chnot/unknown",
+        otid: otid,
+      });
+      savedFiles.set(fileId, { ver: newVer, otid: otid });
+    }
+  }
+
+
+}
 export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
   const { state, contentType, onSuccess, onFail, savedFilesRef } = props;
 
@@ -96,25 +120,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
 
     const content = serializeAsJSON(elements, appState, files, "database");
 
-    for (const [fileId, file] of Object.entries(files)) {
-      const cache = savedFilesRef.current.get(fileId);
-      const newVer = `${file.created}-${file.version}`;
-      if (!cache || cache.ver !== newVer) {
-        const otid = cache ? cache.otid : genTID();
-        await kfileInlineUpload({
-          res: {
-            tid: genTID(),
-            content: file.dataURL,
-            sid: "placeholder",
-          },
-          archor_intervals: 3600,
-          meta_id: file.id,
-          content_type: file.mimeType ?? "chnot/unknown",
-          otid: otid,
-        });
-        savedFilesRef.current.set(fileId, { ver: newVer, otid: otid });
-      }
-    }
+    unionFileSaved(files, savedFilesRef.current);
 
     await kfileInlineUpload({
       res: {
