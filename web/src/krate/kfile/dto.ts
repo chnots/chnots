@@ -20,7 +20,7 @@ export type KfileInlineUploadRsp = {
   true_sid: Varchar<100>;
 };
 
-export type KfileMetaFetchReqId = { Otid: TID } | { ID: string };
+export type KfileMetaFetchReqId = { Otid: TID } | { Id: string };
 
 export type KfileInlineDownloadReq = {
   req_id: KfileMetaFetchReqId;
