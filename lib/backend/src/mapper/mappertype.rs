@@ -42,6 +42,8 @@ impl MapperType {
         self.kspace_ensure_data().await?;
         self.ensure_ktab_tables().await?;
         self.ensure_sync_table().await?;
+        self.commit_chnot_meta_value(CLIENT_ID_KEY, generate_uuid(), chin_sql::OnConflict::Ignore)
+            .await?;
 
         Ok(())
     }
@@ -50,7 +52,7 @@ impl MapperType {
         let instance_id: String = self
             .kkv_transient_fetch(key)
             .await?
-            .context("there is not instance_id in the db")?;
+            .context("there is not value in the db")?;
         info!("instance id: {instance_id}");
         Ok(instance_id)
     }

@@ -1,0 +1,28 @@
+{
+    "0.2.3": {
+        "target": "0.3.0",
+        "sqls": {
+            "stage1": [
+                "alter table chnot_kind_rel rename to chnot_kind_rel_bak",
+                "alter table chnot_kind_rel_hist rename to chnot_kind_rel_hist_bak",
+                "alter table chnot_metadata rename to chnot_metadata_bak;",
+                "alter table chnot_record rename to chnot_record_bak;",
+                "alter table chnot_tag rename to chnot_tag_bak;",
+                "alter table k_file_meta rename to k_file_meta_bak;",
+                "alter table chnot_metadata_hist rename to chnot_metadata_hist_bak;",
+                "alter table chnot_record_hist rename to chnot_record_hist_bak;",
+                "alter table chnot_tag_hist rename to chnot_tag_hist_bak;",
+                "alter table k_file_meta_hist rename to k_file_meta_hist_bak;"
+            ],
+            "stage2": [
+                "insert into chnot_meta(otid, kspace, kind, tid, archive_tid) select otid, kspace, kind, tid, date_part('epoch', archive_time) * 1000000 from chnot_metadata_bak cm where cm.kind = 'mdwt';",
+                "insert into mdwt_record(otid, tid, todo_event , \"content\", archor) select cr.meta_otid, cr.tid, cr.todo_event, cr.\"content\", cr.archor from chnot_record_bak cr left join chnot_metadata_bak cm on cr.meta_otid = cm.otid where cm.kind = 'mdwt';",
+                "insert into k_file_meta(otid, \"inline\", archor , content_type , filename , filesize , id , last_modified , sid , tid) select case when(cm.meta_otid is not null) then cm.meta_otid else fm.tid end as otid, fm.\"inline\", fm.archor , fm.content_type , fm.filename , fm.filesize , fm.id , fm.last_modified , fm.sid , fm.tid from k_file_meta_bak fm left join chnot_kind_rel_bak  cm on fm.id = cm.kind_id;",
+                "insert into chnot_meta(otid, kspace, kind, tid, archive_tid) select otid, kspace, kind, tid, date_part('epoch', archive_time) * 1000000 from chnot_metadata_bak cm where cm.kind = 'resov1' or cm.kind = 'exdrv1';",
+                "insert into mdwt_record(otid, tid, todo_event , \"content\", archor) select cr.meta_otid, cr.tid, cr.todo_event, cr.\"content\", cr.archor from chnot_record_bak cr left join chnot_metadata_bak cm on cr.meta_otid = cm.otid where cm.kind = 'resov1' or cm.kind = 'exdrv1';",
+                "insert into chnot_meta(otid, kspace, kind, tid, archive_tid) select cast(ckr.kind_id as bigint) as otid, kspace, kind, cm.tid, date_part('epoch', archive_time) * 1000000 from chnot_metadata_bak cm left join chnot_kind_rel_bak ckr on cm.otid = ckr.meta_otid  where (cm.kind = 'ktabv1' or cm.kind = 'llm_chat') and ckr.kind_id  is not null;",
+                "insert into mdwt_record(otid, tid, todo_event , \"content\", archor) select cast(ckr.kind_id as bigint) as otid, cr.tid, cr.todo_event, cr.\"content\", cr.archor from chnot_record_bak cr left join chnot_metadata_bak cm on cr.meta_otid = cm.otid left join chnot_kind_rel_bak ckr on cm.otid = ckr.meta_otid where (cm.kind = 'ktabv1' or cm.kind = 'llm_chat') and kind_id is not null;",
+            ]
+        }
+    }
+}
