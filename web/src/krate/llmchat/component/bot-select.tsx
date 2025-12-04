@@ -97,11 +97,14 @@ const LLMChatBotSelect = () => {
   };
 
 
-  const handleSubmit = useCallback(async (bot: LLMChatBot) => {
-    await llmchatBotCommit(bot);
-    await refreshBots();
-    return true;
-  }, []);
+  const handleSubmit = useCallback(
+    async (bot: LLMChatBot) => {
+      await llmchatBotCommit(bot);
+      await refreshBots();
+      return true;
+    },
+    [refreshBots],
+  );
 
   const handleClose = useCallback(() => {
     setShowBotForm(false);
