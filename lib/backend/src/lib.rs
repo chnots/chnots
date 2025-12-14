@@ -20,7 +20,20 @@ pub async fn run(config: Config) -> EResult {
 
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
-    let instance_id = mapper.fetch_chnot_meta_value(CLIENT_ID_KEY).await?;
+    let instance_id = match mapper.fetch_chnot_meta_value(CLIENT_ID_KEY).await? {
+        Some(instancd_id) => instancd_id,
+        None => {
+            let instance_id = generate_uuid();
+            mapper
+                .commit_chnot_meta_value(
+                    CLIENT_ID_KEY,
+                    instance_id.clone(),
+                    chin_sql::OnConflict::Default,
+                )
+                .await?;
+            instance_id
+        }
+    };
     let state = AppState {
         config: config.clone(),
         mapper,
@@ -32,17 +45,6 @@ pub async fn run(config: Config) -> EResult {
         let state = state.clone();
         tokio::spawn(async move {
             info!("Begin to backup.");
-
-            if let Err(err) = state
-                .commit_chnot_meta_value(
-                    CLIENT_ID_KEY,
-                    generate_uuid(),
-                    chin_sql::OnConflict::Default,
-                )
-                .await
-            {
-                info!("unable to create instace_id {err}");
-            }
 
             if let Err(err) = state.dump_to_files(StartType::All).await {
                 log::error!("unable to backup to files {err}, {}", err.backtrace())

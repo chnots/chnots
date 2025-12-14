@@ -46,12 +46,9 @@ impl MapperType {
         Ok(())
     }
 
-    pub async fn fetch_chnot_meta_value(&self, key: &'static str) -> AResult<String> {
-        let instance_id: String = self
-            .kkv_transient_fetch(key)
-            .await?
-            .context("there is not instance_id in the db")?;
-        info!("instance id: {instance_id}");
+    pub async fn fetch_chnot_meta_value(&self, key: &'static str) -> AResult<Option<String>> {
+        let instance_id: Option<String> = self.kkv_transient_fetch(key).await?;
+        info!("instance id: {instance_id:?}");
         Ok(instance_id)
     }
 
