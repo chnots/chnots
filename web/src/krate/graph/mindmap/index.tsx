@@ -107,13 +107,13 @@ const MindElixirReact = React.forwardRef(
         };
 
         instance.bus.addListener("operation", handleOperation);
-        // @ts-ignore
+        // @ts-expect-error
         instance.bus.addListener("selectNode", handleSelectNode);
         instance.bus.addListener("expandNode", handleExpandNode);
 
         return () => {
           instance.bus.removeListener("operation", handleOperation);
-          // @ts-ignore
+          // @ts-expect-error
           instance.bus.removeListener("selectNode", handleSelectNode);
           instance.bus.removeListener("expandNode", handleExpandNode);
         };

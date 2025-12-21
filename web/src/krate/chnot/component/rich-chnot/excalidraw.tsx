@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaveState } from "@/common/types";
-import ExcalidrawEditor from "@/krate/tool/excalidraw/component/excalidraw-editor";
-import ExcalidrawPreview from "@/krate/tool/excalidraw/component/excalidraw-preview";
+import ExcalidrawEditor from "@/krate/graph/excalidraw/component/excalidraw-editor";
+import ExcalidrawPreview from "@/krate/graph/excalidraw/component/excalidraw-preview";
 import {
   type ExcalidrawChnotState,
   fetchExcalidraw,
   type SaveFileCache,
   saveExcalidraw,
   unionFileSaved,
-} from "@/krate/tool/excalidraw/service";
+} from "@/krate/graph/excalidraw/service";
 import Fullscreen from "./fullscreen";
 import type { RichPropProps } from "./rich-chnot";
 
@@ -25,17 +25,17 @@ const ExcalidrawChnot = ({
   useEffect(() => {
     fetchExcalidraw({ Otid: otid })
       .then((state) => {
-      if (state) {
-        unionFileSaved(state.files, savedFilesRef.current)
-        setState({
-          otid: otid,
-          metaId: state.metaId,
-          elements: state.elements,
-          appState: state.appState,
-          files: state.files,
-        });
-      }
-    })
+        if (state) {
+          unionFileSaved(state.files, savedFilesRef.current)
+          setState({
+            otid: otid,
+            metaId: state.metaId,
+            elements: state.elements,
+            appState: state.appState,
+            files: state.files,
+          });
+        }
+      })
       .catch((_err) => { });
   }, [otid]);
 
