@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RichPropProps } from "./rich-chnot";
 import Fullscreen from "./fullscreen";
 import { fetchMindExilir, type MindElixirChnotState, saveMindExilir } from "@/krate/graph/mindmap/service";
-import MindElixirReact from "mind-elixir-react";
+// import MindElixirReact from "mind-elixir-react";
 import { SaveState } from "@/common/types";
+import "mind-elixir/style.css";
+import MindElixirReact from "@/krate/graph/mindmap";
+
 
 const MindMapChnot = ({
   otid,

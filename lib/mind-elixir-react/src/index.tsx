@@ -46,6 +46,7 @@ const MindElixirReact = React.forwardRef(
     }: MindElixirReactProps,
     ref,
   ) => {
+    console.log("beginto load mind elixir");
     // Default options for better UX
     const defaultOptions = useMemo(
       () => ({
@@ -210,6 +211,7 @@ const MindElixirReact = React.forwardRef(
 
     const setRefs = useCallback(
       (node: HTMLDivElement) => {
+        console.log("set re")
         containerRef.current = node;
 
         if (ref) {
