@@ -1,0 +1,42 @@
+{
+  "name": "mind-elixir-react",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rslib build",
+    "check": "biome check --write",
+    "dev": "rslib build --watch",
+    "format": "biome format --write",
+    "test": "rstest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.8",
+    "@rsbuild/plugin-react": "^1.4.2",
+    "@rslib/core": "^0.18.4",
+    "@rstest/core": "^0.7.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.2.7",
+    "jsdom": "^27.3.0",
+    "react": "^19.2.1",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "react": ">=16.9.0",
+    "react-dom": ">=16.9.0"
+  },
+  "private": true,
+  "dependencies": {
+    "mind-elixir": "^5.3.7"
+  }
+}
