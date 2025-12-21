@@ -12,7 +12,7 @@ import LLMChatChnot from "../rich-chnot/llmchat";
 import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
 import TableChnot from "../rich-chnot/table";
-import MindMapPage from "@/krate/graph/mindmap/index";
+import MindMapChnot from "../rich-chnot/mindmap";
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -61,8 +61,8 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       }
       if (
         saveStateRef.current === SaveState.Initial &&
-        kind &&
-        arg.saveState === SaveState.Saved
+          kind &&
+          arg.saveState === SaveState.Saved
       ) {
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
@@ -103,7 +103,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     </div>
   ) : (
     <div className="flex flex-col w-full items-center m-0 p-1 min-h-100">
-      <MindMapPage />
+      <MindMapChnot {...props} />
     </div>
   );
 };

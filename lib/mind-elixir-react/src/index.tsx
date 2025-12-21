@@ -16,19 +16,13 @@ type MindElixirPlugin = (instance: MindElixirInstance) => void;
 
 export interface MindElixirReactProps {
   style?: CSSProperties;
-
   data?: MindElixirData;
   options?: Omit<Options, "el">;
-
   plugins?: MindElixirPlugin[];
-
   onOperate?: (operation: unknown) => void;
-
   onSelectNode?: (operation: unknown) => void;
-
   onExpandNode?: (operation: unknown) => void;
-
-  onChanged?: (data: unknown) => void;
+  onChanged?: (data: MindElixirData) => void;
 }
 
 export interface MindElixirReactRef {
@@ -242,4 +236,6 @@ const MindElixirReact = React.forwardRef(
 
 MindElixirReact.displayName = "MindElixirReact";
 
+export type { MindElixirData };
+export type { MindElixirPlugin };
 export default MindElixirReact;

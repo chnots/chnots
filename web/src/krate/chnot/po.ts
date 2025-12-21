@@ -7,6 +7,7 @@ export enum ChnotKind {
   KFileV1 = "resov1",
   KTab = "ktabv1",
   LLMChat = "llm_chat",
+  MindMapV1 = "mindmapv1",
 }
 
 export type ChnotThreadMeta = {

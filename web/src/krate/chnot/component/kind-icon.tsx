@@ -16,6 +16,8 @@ export const ChnotKindIcon = ({
     <Icon.Table {...rest} />
   ) : kind === ChnotKind.LLMChat ? (
     <Icon.Bot {...rest} />
+  ) : kind === ChnotKind.MindMapV1 ? (
+    <Icon.Brain {...rest} />
   ) : (
     <Icon.TextCursor {...rest} />
   );
