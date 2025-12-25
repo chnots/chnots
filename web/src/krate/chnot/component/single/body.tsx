@@ -61,8 +61,8 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       }
       if (
         saveStateRef.current === SaveState.Initial &&
-          kind &&
-          arg.saveState === SaveState.Saved
+        kind &&
+        arg.saveState === SaveState.Saved
       ) {
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
@@ -102,7 +102,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       <LLMChatChnot {...props} />
     </div>
   ) : (
-    <div className="flex flex-col w-full items-center m-0 p-1 min-h-100">
+    <div className="flex flex-col w-full items-center m-0 p-1 h-full">
       <MindMapChnot {...props} />
     </div>
   );

@@ -63,7 +63,7 @@ const MindElixirReact = React.forwardRef(
       [options],
     );
 
-    const containerRef = useRef<HTMLElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const mindElixirInstance = useRef<MindElixirInstance>(null);
     const isFirstRun = useRef(true);
 
@@ -103,7 +103,10 @@ const MindElixirReact = React.forwardRef(
         if (!instance || !instance.bus) return;
 
         const handleOperation = (operation: unknown) => {
-          console.log("handle operation", mindElixirInstance.current?.getData())
+          console.log(
+            "handle operation",
+            mindElixirInstance.current?.getData(),
+          );
           if (onOperate) onOperate(operation);
         };
 
@@ -141,7 +144,7 @@ const MindElixirReact = React.forwardRef(
         try {
           if (isInitial) {
             instance.init(newData);
-            console.log("MindElixir initialized with data");
+            console.log("MindElixir initialized with data", newData, "<<");
           } else {
             instance.refresh(newData);
             console.log("MindElixir data refreshed");
@@ -154,7 +157,7 @@ const MindElixirReact = React.forwardRef(
     );
 
     useEffect(() => {
-        console.log("initial with containerRef")
+      console.log("initial with containerRef");
       if (!containerRef.current) return;
 
       const instance = initializeMindElixir();
@@ -188,15 +191,11 @@ const MindElixirReact = React.forwardRef(
         }
         mindElixirInstance.current = null;
       };
-    }, [
-      initializeMindElixir,
-      setupEventListeners,
-      ref
-    ]);
+    }, [initializeMindElixir, setupEventListeners, ref]);
 
     useEffect(() => {
       if (!mindElixirInstance.current) return;
-        console.log("initial with data")
+      console.log("initial with data");
 
       const initializeWithData = async () => {
         const instance = mindElixirInstance.current;
@@ -211,21 +210,9 @@ const MindElixirReact = React.forwardRef(
       initializeWithData();
     }, [data, handleDataUpdate]);
 
-    const setRefs = useCallback(
-      (node: HTMLDivElement) => {
-        console.log("set refs")
-        containerRef.current = node;
-
-        if (ref) {
-          if (typeof ref === "function") {
-            ref(node);
-          } else if (ref) {
-            ref.current = node as unknown as HTMLDivElement;
-          }
-        }
-      },
-      [ref],
-    );
+    const setRefs = useCallback((node: HTMLDivElement) => {
+      containerRef.current = node;
+    }, []);
 
     return (
       <div
