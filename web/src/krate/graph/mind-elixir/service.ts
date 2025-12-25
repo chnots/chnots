@@ -1,17 +1,16 @@
 import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
 import { kfileInlineDownload, kfileInlineUpload } from "@/krate/kfile/service";
-import { genTID, type TID } from "@/lib/id_util";
-import type { MindElixirData } from "mind-elixir-react";
+import { genTID, genUID, type TID } from "@/lib/id_util";
+import type { MindElixirData } from "mind-elixir";
 
-export type MindElixirChnotState = {
+export type MindElixirChnotData = {
   otid: TID;
-  metaId: string;
   data: MindElixirData
 };
 
 export const fetchMindExilir = async (
   id: KfileMetaFetchReqId,
-): Promise<MindElixirChnotState | null> => {
+): Promise<MindElixirData | null> => {
   try {
     const rsp = await kfileInlineDownload({
       req_id: id,
@@ -20,36 +19,32 @@ export const fetchMindExilir = async (
       return null;
     }
     const data = JSON.parse(rsp.file?.content);
-    return {
-      data,
-      otid: rsp.meta!.otid,
-      metaId: rsp.meta!.id,
-    };
+    return data;
   } catch (_e) { }
   return null;
 };
 
 export type SaveMindExilirProps = {
-  state: MindElixirChnotState;
-  contentType: string;
+  otid: TID,
+  data: MindElixirData;
   onSuccess: () => void;
   onFail: () => void;
 };
 
 export const saveMindExilir = async (props: SaveMindExilirProps) => {
-  const { state, contentType, onSuccess, onFail } = props;
+  const { otid, data, onSuccess, onFail } = props;
 
   try {
     await kfileInlineUpload({
       res: {
         tid: genTID(),
-        content: JSON.stringify(state.data),
+        content: JSON.stringify(data),
         sid: "placeholder",
       },
+      meta_id: genUID(),
       archor_intervals: 3600,
-      meta_id: state.metaId,
-      content_type: contentType,
-      otid: state.otid,
+      content_type: "mind-elixir-v5",
+      otid: otid,
     });
     onSuccess();
   } catch (_err) {

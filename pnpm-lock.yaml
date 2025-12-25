@@ -341,9 +341,6 @@ importers:
       mind-elixir:
         specifier: ^5.3.7
         version: 5.3.7
-      mind-elixir-react:
-        specifier: workspace:*
-        version: link:../lib/mind-elixir-react
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

@@ -1,15 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RichPropProps } from "./rich-chnot";
 import Fullscreen from "./fullscreen";
 import {
   fetchMindExilir,
-  type MindElixirChnotState,
+  type MindElixirChnotData,
   saveMindExilir,
-} from "@/krate/graph/mindmap/service";
+} from "@/krate/graph/mind-elixir/service";
 import { SaveState } from "@/common/types";
 import "mind-elixir/style.css";
-import MindElixirReact, { type MindElixirData } from "@/krate/graph/mindmap";
-import { genUID } from "@/lib/id_util";
+import MindElixirReact, { type MindElixirData } from "@/krate/graph/mind-elixir";
 
 const MindMapChnot = ({
   otid,
@@ -18,91 +17,82 @@ const MindMapChnot = ({
   onPostSave,
   onSetFullscreen,
 }: RichPropProps) => {
-  const [state, setState] = useState<MindElixirChnotState>();
-
-  const defaultData: MindElixirData = {
-    direction: 1,
-    nodeData: {
-      id: genUID(),
-      topic: "Root",
-    }
-  };
+  const [data, setData] = useState<MindElixirData>();
+  const savingFlag = useRef<boolean>(false);
 
   useEffect(() => {
     fetchMindExilir({ Otid: otid })
       .then((fetchedState) => {
         if (fetchedState) {
-          setState(fetchedState);
+          setData(fetchedState);
         } else {
-          setState({
-            otid,
-            metaId: genUID(),
-            data: defaultData,
-          });
+          setData(undefined);
         }
       })
-      .catch((_err) => { });
+      .catch((_err) => {
+        setData(undefined);
+      });
   }, [otid]);
 
   const directlySave = useCallback(
-    (state: MindElixirChnotState, contentType: string) => {
-      const title = state.data.nodeData.topic;
+    (toSaveState: MindElixirChnotData) => {
+      if (savingFlag.current === true) {
+        return
+      }
+      savingFlag.current = true;
+      const title = toSaveState.data?.nodeData.topic ?? "Empty Mindmap";
       saveMindExilir({
-        state,
-        contentType: contentType,
+        data: toSaveState.data,
+        otid: otid,
         onSuccess: () => {
-          setState(state);
           onPostSave({
             otid,
             saveState: SaveState.Saved,
             title,
           });
+          savingFlag.current = false;
         },
         onFail: () => {
           onPostSave({ otid, saveState: SaveState.Error, title });
+          savingFlag.current = false;
         },
       });
+
     },
     [otid, onPostSave],
   );
+
 
   return (
     <div className="w-full flex flex-col h-full">
       {readonly ? (
         <div className="flex h-full justify-center items-center w-full">
           <MindElixirReact
-            data={state?.data}
+            data={data}
             options={{ editable: false, toolBar: false }}
           />
         </div>
       ) : (
         <MindElixirReact
-          data={state?.data}
+          data={data}
           onChanged={(data) => {
-            if (state) {
-              directlySave({
-                ...state,
-                data
-              }, "application/json")
-            }
-
-          }
-          }
+            directlySave({
+              otid,
+              data
+            })
+          }}
         />
       )}
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>
           <MindElixirReact
-            data={state?.data}
+            data={data}
             onChanged={(data) => {
-              if (state) {
-                directlySave({
-                  ...state,
-                  data
-                }, "application/json")
-              }
-            }
-            }
+              directlySave({
+                otid,
+                data
+              })
+            }}
           />
         </Fullscreen>
       )}

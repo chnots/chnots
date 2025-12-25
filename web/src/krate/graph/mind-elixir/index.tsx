@@ -14,6 +14,21 @@ import "mind-elixir/style.css";
 
 type MindElixirPlugin = (instance: MindElixirInstance) => void;
 
+type OperationType = "expand" | "changeDirection" | "operation";
+
+function generateUUID() {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+
+  // Set version (4) and variant (RFC 4122 compliant)
+  array[6] = (array[6] & 0x0f) | 0x40; // Version 4
+  array[8] = (array[8] & 0x3f) | 0x80; // Variant
+
+  return [...array]
+    .map((byte, index) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 export interface MindElixirReactProps {
   style?: CSSProperties;
   data?: MindElixirData;
@@ -22,7 +37,8 @@ export interface MindElixirReactProps {
   onOperate?: (operation: unknown) => void;
   onSelectNode?: (operation: unknown) => void;
   onExpandNode?: (operation: unknown) => void;
-  onChanged?: (data: MindElixirData) => void;
+  onChangeDirection?: (direction: number) => void;
+  onChanged?: (data: MindElixirData, operationType: OperationType) => void;
 }
 
 export interface MindElixirReactRef {
@@ -35,18 +51,18 @@ const MindElixirReact = React.forwardRef(
   (
     {
       style,
-      data,
+      data: initialData,
       options = {},
       plugins = [],
       onOperate,
       onSelectNode,
       onExpandNode,
+      onChangeDirection,
       onChanged,
       ...restProps
     }: MindElixirReactProps,
     ref,
   ) => {
-    console.log("beginto load mind elixir");
     // Default options for better UX
     const defaultOptions = useMemo(
       () => ({
@@ -62,6 +78,15 @@ const MindElixirReact = React.forwardRef(
       }),
       [options],
     );
+
+    const data = initialData ?? {
+      direction: 1,
+      nodeData: {
+        id: generateUUID(),
+        topic: "Root",
+      }
+    };
+
 
     const containerRef = useRef<HTMLDivElement>(null);
     const mindElixirInstance = useRef<MindElixirInstance>(null);
@@ -103,10 +128,7 @@ const MindElixirReact = React.forwardRef(
         if (!instance || !instance.bus) return;
 
         const handleOperation = (operation: unknown) => {
-          console.log(
-            "handle operation",
-            mindElixirInstance.current?.getData(),
-          );
+          if (onChanged) onChanged(instance.getData(), "operation");
           if (onOperate) onOperate(operation);
         };
 
@@ -115,22 +137,28 @@ const MindElixirReact = React.forwardRef(
         };
 
         const handleExpandNode = (operation: unknown) => {
+          if (onChanged) onChanged(instance.getData(), "expand");
           if (onExpandNode) onExpandNode(operation);
         };
 
+        const handleChangeDirection = (direction: number) => {
+          if (onChanged) onChanged(instance.getData(), "changeDirection");
+          if (onChangeDirection) onChangeDirection(direction);
+        }
+
         instance.bus.addListener("operation", handleOperation);
-        // @ts-expect-error
-        instance.bus.addListener("selectNode", handleSelectNode);
+        instance.bus.addListener("selectNodes", handleSelectNode);
         instance.bus.addListener("expandNode", handleExpandNode);
+        instance.bus.addListener('changeDirection', handleChangeDirection)
 
         return () => {
           instance.bus.removeListener("operation", handleOperation);
-          // @ts-expect-error
-          instance.bus.removeListener("selectNode", handleSelectNode);
+          instance.bus.removeListener("selectNodes", handleSelectNode);
           instance.bus.removeListener("expandNode", handleExpandNode);
+          instance.bus.removeListener("changeDirection", handleChangeDirection);
         };
       },
-      [onOperate, onSelectNode, onExpandNode],
+      [onOperate, onSelectNode, onExpandNode, onChangeDirection],
     );
 
     const handleDataUpdate = useCallback(
@@ -144,10 +172,8 @@ const MindElixirReact = React.forwardRef(
         try {
           if (isInitial) {
             instance.init(newData);
-            console.log("MindElixir initialized with data", newData, "<<");
           } else {
             instance.refresh(newData);
-            console.log("MindElixir data refreshed");
           }
         } catch (error) {
           console.error("Failed to update MindElixir data:", error);
@@ -157,7 +183,6 @@ const MindElixirReact = React.forwardRef(
     );
 
     useEffect(() => {
-      console.log("initial with containerRef");
       if (!containerRef.current) return;
 
       const instance = initializeMindElixir();
@@ -172,13 +197,11 @@ const MindElixirReact = React.forwardRef(
           ref({
             instance,
             container: containerRef.current,
-            save: () => onChanged && onChanged(instance.getData()),
           });
         } else if (ref) {
           ref.current = {
             instance,
             container: containerRef.current,
-            save: () => onChanged && onChanged(instance.getData()),
           };
         }
       }
@@ -195,7 +218,6 @@ const MindElixirReact = React.forwardRef(
 
     useEffect(() => {
       if (!mindElixirInstance.current) return;
-      console.log("initial with data");
 
       const initializeWithData = async () => {
         const instance = mindElixirInstance.current;
