@@ -45,6 +45,7 @@ pub enum ChnotKind {
     KFileV1,
     KTabV1,
     LLMChat,
+    MindMapV1,
 }
 
 impl ChnotKind {
@@ -55,6 +56,7 @@ impl ChnotKind {
             ChnotKind::KFileV1 => "resov1",
             ChnotKind::KTabV1 => "ktabv1",
             ChnotKind::LLMChat => "llm_chat",
+            ChnotKind::MindMapV1 => "mindmapv1",
         }
     }
 }

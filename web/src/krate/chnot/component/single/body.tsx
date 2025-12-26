@@ -13,6 +13,7 @@ import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
 import TableChnot from "../rich-chnot/table";
 import MindMapChnot from "../rich-chnot/mindmap";
+import MdwtChnot from "../rich-chnot/mdwt";
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -40,6 +41,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
+      console.log("save kind", kind);
       const meta = {
         otid: otid,
         kind: kind,
@@ -78,15 +80,15 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
 
   const handleChange = useCallback(() => { }, []);
 
-  const [props] = useState({
+  const props = {
     otid: otid,
     readonly: false,
     fullscreen: false,
-    onPostSave: (arg: PostSaveArg) => {
-      handlePostSave(arg);
-    },
-  });
+    onPostSave: handlePostSave,
+  };
 
+
+  console.log("kind: ", kind);
   return kind === ChnotKind.ExcalidrawV1 ? (
     <div className="flex w-full h-full overflow-auto">
       <ExcalidrawChnot {...props} />
@@ -101,9 +103,13 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     <div className="flex w-full h-full overflow-auto">
       <LLMChatChnot {...props} />
     </div>
-  ) : (
+  ) : kind === ChnotKind.MindMapV1 ? (
     <div className="flex flex-col w-full items-center m-0 p-1 h-full">
       <MindMapChnot {...props} />
+    </div>
+  ) : (
+    <div className="flex flex-col w-full items-center m-0 p-1 h-full">
+      <RichMdwt onChanged={handleChange} {...props} />
     </div>
   );
 };

@@ -13,6 +13,7 @@ import KFileChnot from "./kfile";
 import LLMChatChnot from "./llmchat";
 import MdwtChnot from "./mdwt";
 import TableChnot from "./table";
+import MindMapChnot from "./mindmap";
 
 export type PostSaveArg = {
   otid: TID;
@@ -120,6 +121,8 @@ const RichChnot = ({
           <TableChnot {...props} />
         ) : kind === ChnotKind.LLMChat ? (
           <LLMChatChnot {...props} />
+        ) : kind === ChnotKind.MindMapV1 ? (
+          <MindMapChnot {...props} />
         ) : (
           <ChnotKindSelector
             setKind={(kind: ChnotKind): void => {
