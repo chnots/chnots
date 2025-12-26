@@ -60,6 +60,10 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
             },
           });
         }
+        overwrite({
+          meta: meta,
+          title: titleRef.current ?? undefined,
+        });
       }
       if (
         saveStateRef.current === SaveState.Initial &&
