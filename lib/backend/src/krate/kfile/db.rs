@@ -5,7 +5,7 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            HistCreateSql, KDbConnBehaiver, KDbRow, KDbTransactionBehaiver,
+            HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver,
             helper::{Ddls, create_tables},
         },
     },
@@ -15,7 +15,10 @@ use chin_tools::EResult;
 
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
-use chin_sql::{LimitOffset, OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{
+    LimitOffset, OnConflict, SqlBuilder, SqlField, SqlReader, SqlReaderBuilder, Wheres,
+    str_type::Varchar, time_type::TID,
+};
 
 impl TryFrom<&KDbRow> for InlineKFile {
     type Error = anyhow::Error;
@@ -47,6 +50,67 @@ impl TryFrom<&KDbRow> for KFileMeta {
     }
 }
 
+impl KDbExecutor<'_> {
+    async fn insert_kfile_meta(&self, mut meta: KFileMeta) -> EResult {
+        let old_meta = self
+            .query_kfile_meta(KfileMetaFetchReq {
+                req_id: KfileMetaFetchReqId::Otid(meta.otid),
+                history_and_archor: true.into(),
+            })
+            .await?
+            .meta;
+        match old_meta {
+            Some(old_meta) => {
+                let diff = meta.tid.as_num() - old_meta.tid.as_num();
+                if diff > 3_600 * 1_000_000
+                /*1 hour */
+                {
+                    meta.archor = true;
+                }
+            }
+            None => {
+                meta.archor = true;
+            }
+        }
+        self.omit_rows::<KFileMeta>(meta.pkey()).await?;
+        self.exec(meta.to_sql_inserter()).await?;
+
+        Ok(())
+    }
+
+    async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp> {
+        let sb: SqlBuilder = if req.history_and_archor.unwrap_or(false) {
+            SqlReader::builder(
+                [SqlField {
+                    alias: None,
+                    table_alias: "kfm",
+                    field_name: "*",
+                }],
+                chin_sql::Froms::Table {
+                    table_name: KFileMeta::HIST_TABLE,
+                    alias: "kfm",
+                },
+            )
+            .wheres(Wheres::and([
+                Wheres::equal(KFileMeta::ARCHOR, 1),
+                match req.req_id {
+                    KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_cond(tid),
+                    KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_cond(id),
+                },
+            ]))
+            .build()
+            .into()
+        } else {
+            match req.req_id {
+                KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_reader(tid),
+                KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_reader(id),
+            }
+        };
+        let meta = self.qry_opt(sb, |e| (&e).try_into()).await?;
+        Ok(KfileMetaFetchRsp { meta })
+    }
+}
+
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
         create_tables(
@@ -60,15 +124,11 @@ impl KFileMapper for KDb {
         Ok(())
     }
 
-    async fn insert_kfile(&self, meta: KFileMeta) -> EResult {
+    async fn insert_kfile_meta(&self, meta: KFileMeta) -> EResult {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-
-        tx.as_executor().omit_rows::<KFileMeta>(meta.pkey()).await?;
-        tx.exec(meta.to_sql_inserter()).await?;
-        tx.cmt().await?;
-
-        Ok(())
+        tx.as_executor().insert_kfile_meta(meta).await?;
+        tx.cmt().await
     }
 
     async fn insert_inline_kfile(
@@ -99,8 +159,7 @@ impl KFileMapper for KDb {
             filesize: bytes.len() as i64,
             otid: req.otid,
         };
-        tx.as_executor().omit_rows::<KFileMeta>(meta.pkey()).await?;
-        tx.exec(meta.to_sql_inserter()).await?;
+        tx.as_executor().insert_kfile_meta(meta).await?;
         tx.exec(
             req.body
                 .res
@@ -139,6 +198,7 @@ impl KFileMapper for KDb {
         let meta_rsp = self
             .query_kfile_meta(KfileMetaFetchReq {
                 req_id: req.body.req_id,
+                history_and_archor: false.into(),
             })
             .await?;
         match meta_rsp.meta {
@@ -157,18 +217,7 @@ impl KFileMapper for KDb {
     }
 
     async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp> {
-        let meta = self
-            .conn()
-            .await?
-            .qry_opt(
-                match req.req_id {
-                    KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_reader(tid),
-                    KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_reader(id),
-                },
-                |e| (&e).try_into(),
-            )
-            .await?;
-        Ok(KfileMetaFetchRsp { meta })
+        self.conn().await?.as_executor().query_kfile_meta(req).await
     }
 
     async fn query_kfile_meta_by_sid(

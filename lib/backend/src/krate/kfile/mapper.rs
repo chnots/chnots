@@ -4,7 +4,7 @@ use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
 pub trait KFileMapper {
-    async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()>;
+    async fn insert_kfile_meta(&self, kfile: KFileMeta) -> anyhow::Result<()>;
     async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp>;
     #[allow(dead_code)]
     async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>)
@@ -38,8 +38,8 @@ pub trait KFileMapper {
 }
 
 impl KFileMapper for MapperType {
-    async fn insert_kfile(&self, kfile: KFileMeta) -> anyhow::Result<()> {
-        expand_mt_branch!(self.insert_kfile(kfile))
+    async fn insert_kfile_meta(&self, kfile: KFileMeta) -> anyhow::Result<()> {
+        expand_mt_branch!(self.insert_kfile_meta(kfile))
     }
 
     async fn ensure_table_kfile(&self) -> EResult {

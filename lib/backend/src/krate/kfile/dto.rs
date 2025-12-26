@@ -61,6 +61,7 @@ pub enum KfileMetaFetchReqId {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KfileMetaFetchReq {
     pub req_id: KfileMetaFetchReqId,
+    pub history_and_archor: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

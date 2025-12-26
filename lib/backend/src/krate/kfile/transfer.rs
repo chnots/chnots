@@ -139,7 +139,7 @@ pub(super) async fn kfile_asset_chunk_upload(
             last_modified: last_modified.try_into()?,
         };
 
-        mapper.insert_kfile(kfile.clone()).await?;
+        mapper.insert_kfile_meta(kfile.clone()).await?;
         Some(kfile)
     } else {
         None
@@ -256,6 +256,7 @@ pub(super) async fn kfile_asset_download(
                 req_id: crate::krate::kfile::KfileMetaFetchReqId::Id(
                     meta_id.to_string().try_into()?,
                 ),
+                history_and_archor: false.into(),
             })
             .await?
             .meta
