@@ -92,7 +92,7 @@ impl KDbExecutor<'_> {
                 },
             )
             .wheres(Wheres::and([
-                Wheres::equal(KFileMeta::ARCHOR, 1),
+                Wheres::equal(KFileMeta::ARCHOR, true),
                 match req.req_id {
                     KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_cond(tid),
                     KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_cond(id),
