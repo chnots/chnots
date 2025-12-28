@@ -2,7 +2,7 @@ packages:
   - web
   - tauri
   - lib/jolpin-codemirror
-  - lib/mind-elixir-react
+  - lib/mind-elixir-core
 
 catalog:
   "@codemirror/autocomplete": ^6.18.6
