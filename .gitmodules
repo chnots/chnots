@@ -1,3 +1,6 @@
 [submodule "lib/chin-tools"]
 	path = lib/chin-tools
 	url = git@github.com:aeghn/chin-tools
+[submodule "lib/mind-elixir-core"]
+	path = lib/mind-elixir-core
+	url = git@github.com:aeghn/mind-elixir-core.git
