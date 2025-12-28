@@ -16,8 +16,7 @@ use chin_tools::EResult;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{
-    LimitOffset, OnConflict, SqlBuilder, SqlField, SqlReader, SqlReaderBuilder, Wheres,
-    str_type::Varchar, time_type::TID,
+    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, SqlReaderBuilder, Wheres, str_type::Varchar, time_type::TID
 };
 
 impl TryFrom<&KDbRow> for InlineKFile {
@@ -98,6 +97,8 @@ impl KDbExecutor<'_> {
                     KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_cond(id),
                 },
             ]))
+                .order_by([OrderBy::Desc(KFileMeta::TID.into())])
+                .limit(LimitOffset::new(1))
             .build()
             .into()
         } else {
