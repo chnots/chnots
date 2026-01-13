@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RichPropProps } from "./rich-chnot";
 import Fullscreen from "./fullscreen";
 import {
@@ -8,7 +8,45 @@ import {
 } from "@/krate/graph/mind-elixir/service";
 import { SaveState } from "@/common/types";
 import "mind-elixir/style.css";
-import MindElixirReact, { type MindElixirData } from "@/krate/graph/mind-elixir";
+import MindElixirReact, {
+  type MindElixirReactProps,
+  type MindElixirData,
+} from "@/krate/graph/mind-elixir";
+import { BASE_URL } from "@/lib/request";
+
+export async function blobToBase64DataUrl(blob: Blob): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("not valid base64 string"));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error("error occured when reading the base64"));
+    };
+
+    reader.onabort = () => {
+      reject(new Error("the read action is aborted"));
+    };
+
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function imageBlobToBase64DataUrl(
+  imageBlob: Blob
+): Promise<string> {
+  if (!imageBlob.type.startsWith("image/")) {
+    throw new TypeError(`the input is no a image: ${imageBlob.type}`);
+  }
+
+  return blobToBase64DataUrl(imageBlob);
+}
 
 const MindMapChnot = ({
   otid,
@@ -37,7 +75,7 @@ const MindMapChnot = ({
   const directlySave = useCallback(
     (toSaveState: MindElixirChnotData) => {
       if (savingFlag.current === true) {
-        return
+        return;
       }
       savingFlag.current = true;
       const title = toSaveState.data?.nodeData.topic ?? "Empty Mindmap";
@@ -57,43 +95,43 @@ const MindMapChnot = ({
           savingFlag.current = false;
         },
       });
-
     },
-    [otid, onPostSave],
+    [otid, onPostSave]
   );
 
+  const options = useMemo<MindElixirReactProps>(() => {
+    return {
+      data,
+      onChanged: (data) => {
+        directlySave({
+          otid,
+          data,
+        });
+      },
+      plugins: [],
+      onClipboard: async (
+        clipboardEvent: ClipboardEvent
+      ): Promise<{ url: string }> => {
+        return "";
+      },
+      imageProxy: (url: string) => {
+        return `${BASE_URL}/api/v1/kfile-inline-asset-download/${url}/d.txt`;
+      },
+    };
+  }, []);
 
   return (
     <div className="w-full flex flex-col h-full">
       {readonly ? (
         <div className="flex h-full justify-center items-center w-full">
-          <MindElixirReact
-            data={data}
-            options={{ editable: false, toolBar: false }}
-          />
+          <MindElixirReact data={data} editable={false} toolBar={false} />
         </div>
       ) : (
-        <MindElixirReact
-          data={data}
-          onChanged={(data) => {
-            directlySave({
-              otid,
-              data
-            })
-          }}
-        />
+        <MindElixirReact {...options} />
       )}
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>
-          <MindElixirReact
-            data={data}
-            onChanged={(data) => {
-              directlySave({
-                otid,
-                data
-              })
-            }}
-          />
+          <MindElixirReact {...options} />
         </Fullscreen>
       )}
     </div>

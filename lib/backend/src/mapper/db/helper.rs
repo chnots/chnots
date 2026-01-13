@@ -1,5 +1,6 @@
 use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres};
 use chin_tools::{AResult, EResult};
+use log::info;
 
 use crate::{
     mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver},
@@ -68,6 +69,7 @@ impl KDbExecutor<'_> {
                 T::table_name(false)
             ))
             .r#where(condition.clone());
+
         let count = self.exec(insert_sql).await?;
         Ok(count)
     }

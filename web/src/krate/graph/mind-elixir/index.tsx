@@ -25,46 +25,67 @@ function generateUUID() {
   array[8] = (array[8] & 0x3f) | 0x80; // Variant
 
   return [...array]
-    .map((byte, index) => byte.toString(16).padStart(2, '0'))
-    .join('');
+    .map((byte, index) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-export interface MindElixirReactProps {
+export type MindElixirReactProps = {
   style?: CSSProperties;
   data?: MindElixirData;
-  options?: Omit<Options, "el">;
   plugins?: MindElixirPlugin[];
   onOperate?: (operation: unknown) => void;
   onSelectNode?: (operation: unknown) => void;
   onExpandNode?: (operation: unknown) => void;
   onChangeDirection?: (direction: number) => void;
   onChanged?: (data: MindElixirData, operationType: OperationType) => void;
-}
+  onHandleImage?: (file: File) => Promise<{ url: string }>;
+} & Partial<Options>;
 
 export interface MindElixirReactRef {
   instance: MindElixirInstance | null;
   container: HTMLDivElement | null;
   save: () => Promise<boolean>;
 }
+const handlePasteImage = async (
+  clipboardEvent: ClipboardEvent,
+  onPasteImage: (file: File) => Promise<{ url: string }>
+): Promise<string | false> => {
+  const items = clipboardEvent.clipboardData?.items;
+  if (!items || !onPasteImage) return false;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.type.indexOf("image") !== -1) {
+      const blob = item.getAsFile();
+      if (blob) {
+        const { url } = await onPasteImage(blob);
+        return url;
+      }
+    }
+  }
+  return false;
+};
 
 const MindElixirReact = React.forwardRef(
   (
     {
       style,
       data: initialData,
-      options = {},
       plugins = [],
       onOperate,
       onSelectNode,
       onExpandNode,
       onChangeDirection,
       onChanged,
+      onHandleImage,
+      imageProxy,
       ...restProps
     }: MindElixirReactProps,
-    ref,
+    ref
   ) => {
+    const mindElixirInstance = useRef<MindElixirInstance>(null);
     // Default options for better UX
-    const defaultOptions = useMemo(
+    const defaultOptions: Partial<Options> = useMemo(
       () => ({
         direction: 2 as const, // 0 left, 1 right, 2 both sides
         draggable: true,
@@ -73,10 +94,19 @@ const MindElixirReact = React.forwardRef(
         keypress: true,
         locale: "en" as const,
         editable: true,
+        allowUndo: true,
         contextMenu: true,
-        ...options,
+        imageProxy,
+        pasteHandler: onHandleImage
+          ? (ce) => {
+              handlePasteImage(ce, (e) => {
+                return onHandleImage(e);
+              });
+            }
+          : undefined,
+        ...restProps,
       }),
-      [options],
+      []
     );
 
     const data = initialData ?? {
@@ -84,12 +114,10 @@ const MindElixirReact = React.forwardRef(
       nodeData: {
         id: generateUUID(),
         topic: "Root",
-      }
+      },
     };
 
-
     const containerRef = useRef<HTMLDivElement>(null);
-    const mindElixirInstance = useRef<MindElixirInstance>(null);
     const isFirstRun = useRef(true);
 
     const containerStyle = useMemo(
@@ -98,7 +126,7 @@ const MindElixirReact = React.forwardRef(
         height: "100%",
         ...style,
       }),
-      [style],
+      [style]
     );
 
     const initializeMindElixir = useCallback(() => {
@@ -144,12 +172,12 @@ const MindElixirReact = React.forwardRef(
         const handleChangeDirection = (direction: number) => {
           if (onChanged) onChanged(instance.getData(), "changeDirection");
           if (onChangeDirection) onChangeDirection(direction);
-        }
+        };
 
         instance.bus.addListener("operation", handleOperation);
         instance.bus.addListener("selectNodes", handleSelectNode);
         instance.bus.addListener("expandNode", handleExpandNode);
-        instance.bus.addListener('changeDirection', handleChangeDirection)
+        instance.bus.addListener("changeDirection", handleChangeDirection);
 
         return () => {
           instance.bus.removeListener("operation", handleOperation);
@@ -158,14 +186,14 @@ const MindElixirReact = React.forwardRef(
           instance.bus.removeListener("changeDirection", handleChangeDirection);
         };
       },
-      [onOperate, onSelectNode, onExpandNode, onChangeDirection],
+      [onOperate, onSelectNode, onExpandNode, onChangeDirection]
     );
 
     const handleDataUpdate = useCallback(
       (
         instance: MindElixirInstance,
         newData: MindElixirData,
-        isInitial = false,
+        isInitial = false
       ) => {
         if (!instance) return;
 
@@ -179,7 +207,7 @@ const MindElixirReact = React.forwardRef(
           console.error("Failed to update MindElixir data:", error);
         }
       },
-      [],
+      []
     );
 
     useEffect(() => {
@@ -241,10 +269,9 @@ const MindElixirReact = React.forwardRef(
         ref={setRefs}
         style={containerStyle}
         className="mind-elixir-container"
-        {...restProps}
       />
     );
-  },
+  }
 );
 
 MindElixirReact.displayName = "MindElixirReact";
