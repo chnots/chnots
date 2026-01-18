@@ -39,32 +39,13 @@ export type MindElixirReactProps = {
   onChangeDirection?: (direction: number) => void;
   onChanged?: (data: MindElixirData, operationType: OperationType) => void;
   onHandleImage?: (file: File) => Promise<{ url: string }>;
+  onPaste?: (e: ClipboardEvent) => void;
 } & Partial<Options>;
 
 export interface MindElixirReactRef {
   instance: MindElixirInstance | null;
-  container: HTMLDivElement | null;
-  save: () => Promise<boolean>;
+  container: HTMLDivElement;
 }
-const handlePasteImage = async (
-  clipboardEvent: ClipboardEvent,
-  onPasteImage: (file: File) => Promise<{ url: string }>
-): Promise<string | false> => {
-  const items = clipboardEvent.clipboardData?.items;
-  if (!items || !onPasteImage) return false;
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (item.type.indexOf("image") !== -1) {
-      const blob = item.getAsFile();
-      if (blob) {
-        const { url } = await onPasteImage(blob);
-        return url;
-      }
-    }
-  }
-  return false;
-};
 
 const MindElixirReact = React.forwardRef(
   (
@@ -79,36 +60,12 @@ const MindElixirReact = React.forwardRef(
       onChanged,
       onHandleImage,
       imageProxy,
+      onPaste,
       ...restProps
     }: MindElixirReactProps,
-    ref
+    ref,
   ) => {
     const mindElixirInstance = useRef<MindElixirInstance>(null);
-    // Default options for better UX
-    const defaultOptions: Partial<Options> = useMemo(
-      () => ({
-        direction: 2 as const, // 0 left, 1 right, 2 both sides
-        draggable: true,
-        toolBar: true,
-        nodeMenu: true,
-        keypress: true,
-        locale: "en" as const,
-        editable: true,
-        allowUndo: true,
-        contextMenu: true,
-        imageProxy,
-        pasteHandler: onHandleImage
-          ? (ce) => {
-              handlePasteImage(ce, (e) => {
-                return onHandleImage(e);
-              });
-            }
-          : undefined,
-        ...restProps,
-      }),
-      []
-    );
-
     const data = initialData ?? {
       direction: 1,
       nodeData: {
@@ -126,16 +83,27 @@ const MindElixirReact = React.forwardRef(
         height: "100%",
         ...style,
       }),
-      [style]
+      [style],
     );
 
     const initializeMindElixir = useCallback(() => {
       if (!containerRef.current) return null;
+      console.log("onHandleImage", onHandleImage);
 
       try {
         const instance = new MindElixir({
+          ...restProps,
           el: containerRef.current,
-          ...defaultOptions,
+          direction: 2 as const, // 0 left, 1 right, 2 both sides
+          draggable: true,
+          toolBar: true,
+          keypress: true,
+          locale: "en" as const,
+          editable: true,
+          allowUndo: true,
+          contextMenu: true,
+          imageProxy,
+          pasteHandler: onPaste,
         });
 
         plugins.forEach((plugin) => {
@@ -149,7 +117,7 @@ const MindElixirReact = React.forwardRef(
         console.error("Failed to initialize MindElixir:", error);
         return null;
       }
-    }, [defaultOptions, plugins]);
+    }, [onHandleImage, imageProxy, plugins]);
 
     const setupEventListeners = useCallback(
       (instance: MindElixirInstance) => {
@@ -186,14 +154,14 @@ const MindElixirReact = React.forwardRef(
           instance.bus.removeListener("changeDirection", handleChangeDirection);
         };
       },
-      [onOperate, onSelectNode, onExpandNode, onChangeDirection]
+      [onOperate, onSelectNode, onExpandNode, onChangeDirection],
     );
 
     const handleDataUpdate = useCallback(
       (
         instance: MindElixirInstance,
         newData: MindElixirData,
-        isInitial = false
+        isInitial = false,
       ) => {
         if (!instance) return;
 
@@ -207,7 +175,7 @@ const MindElixirReact = React.forwardRef(
           console.error("Failed to update MindElixir data:", error);
         }
       },
-      []
+      [],
     );
 
     useEffect(() => {
@@ -271,7 +239,7 @@ const MindElixirReact = React.forwardRef(
         className="mind-elixir-container"
       />
     );
-  }
+  },
 );
 
 MindElixirReact.displayName = "MindElixirReact";

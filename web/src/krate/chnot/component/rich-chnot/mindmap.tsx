@@ -11,8 +11,11 @@ import "mind-elixir/style.css";
 import MindElixirReact, {
   type MindElixirReactProps,
   type MindElixirData,
+  type MindElixirReactRef,
 } from "@/krate/graph/mind-elixir";
 import { BASE_URL } from "@/lib/request";
+import { kfileInlineUpload } from "@/krate/kfile/service";
+import { genTID, genUID } from "@/lib/id_util";
 
 export async function blobToBase64DataUrl(blob: Blob): Promise<string> {
   return new Promise<string>((resolve, reject) => {
@@ -39,13 +42,13 @@ export async function blobToBase64DataUrl(blob: Blob): Promise<string> {
 }
 
 export async function imageBlobToBase64DataUrl(
-  imageBlob: Blob
+  imageBlob: Blob,
 ): Promise<string> {
   if (!imageBlob.type.startsWith("image/")) {
     throw new TypeError(`the input is no a image: ${imageBlob.type}`);
   }
 
-  return blobToBase64DataUrl(imageBlob);
+  return await blobToBase64DataUrl(imageBlob);
 }
 
 const MindMapChnot = ({
@@ -57,6 +60,7 @@ const MindMapChnot = ({
 }: RichPropProps) => {
   const [data, setData] = useState<MindElixirData>();
   const savingFlag = useRef<boolean>(false);
+  const mindELixirRef = useRef<MindElixirReactRef>(null);
 
   useEffect(() => {
     fetchMindExilir({ Otid: otid })
@@ -96,7 +100,7 @@ const MindMapChnot = ({
         },
       });
     },
-    [otid, onPostSave]
+    [otid, onPostSave],
   );
 
   const options = useMemo<MindElixirReactProps>(() => {
@@ -109,16 +113,50 @@ const MindMapChnot = ({
         });
       },
       plugins: [],
-      onClipboard: async (
-        clipboardEvent: ClipboardEvent
-      ): Promise<{ url: string }> => {
-        return "";
+      onPaste: async (clipboardEvent) => {
+        const items = clipboardEvent.clipboardData?.items;
+        if (!items) return false;
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.indexOf("image") !== -1) {
+            const blob = item.getAsFile();
+            if (blob) {
+              try {
+                const base64DataUrl = await imageBlobToBase64DataUrl(blob);
+                const rsp = await kfileInlineUpload({
+                  meta_id: genUID(),
+                  otid: genTID(),
+                  res: {
+                    sid: "placeholder",
+                    tid: 0,
+                    content: base64DataUrl,
+                  },
+                  archor_intervals: 3600,
+                  content_type: blob.type,
+                });
+                if (mindELixirRef.current?.instance?.currentNode) {
+                  mindELixrRef.current.instance.currentNode.nodeObj.image = {
+                    url: rsp.true_sid,
+                    width: 200,
+                    height: 200,
+                    fit: "contain",
+                  };
+                }
+              } catch (error) {
+                console.error("Failed to convert image to base64:", error);
+                throw error;
+              }
+            }
+          }
+        }
       },
       imageProxy: (url: string) => {
-        return `${BASE_URL}/api/v1/kfile-inline-asset-download/${url}/d.txt`;
+        return `${BASE_URL}/api/v1/kfile-inline-asset-download/${url}/d`;
       },
+      ref: mindELixirRef,
     };
-  }, []);
+  }, [data]);
 
   return (
     <div className="w-full flex flex-col h-full">

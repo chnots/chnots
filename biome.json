@@ -7,6 +7,7 @@
       "!web-dist",
       "!target",
       "!lib/jolpin-codemirror",
+      "!lib/mind-elixir-core",
       "!**/*.yaml"
     ],
     "ignoreUnknown": false
