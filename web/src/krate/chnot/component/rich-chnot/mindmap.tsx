@@ -14,7 +14,7 @@ import MindElixirReact, {
   type MindElixirReactRef,
 } from "@/krate/graph/mind-elixir";
 import { BASE_URL } from "@/lib/request";
-import { kfileInlineUpload } from "@/krate/kfile/service";
+import { kfileInlineUpload, kfileUpload } from "@/krate/kfile/service";
 import { genTID, genUID } from "@/lib/id_util";
 
 export async function blobToBase64DataUrl(blob: Blob): Promise<string> {
@@ -65,15 +65,15 @@ const MindMapChnot = ({
   useEffect(() => {
     fetchMindExilir({ Otid: otid })
       .then((fetchedState) => {
-        if (fetchedState) {
-          setData(fetchedState);
-        } else {
-          setData(undefined);
-        }
-      })
-      .catch((_err) => {
+      if (fetchedState) {
+        setData(fetchedState);
+      } else {
         setData(undefined);
-      });
+      }
+    })
+      .catch((_err) => {
+      setData(undefined);
+    });
   }, [otid]);
 
   const directlySave = useCallback(
@@ -123,25 +123,30 @@ const MindMapChnot = ({
             const blob = item.getAsFile();
             if (blob) {
               try {
-                const base64DataUrl = await imageBlobToBase64DataUrl(blob);
-                const rsp = await kfileInlineUpload({
-                  meta_id: genUID(),
-                  otid: genTID(),
-                  res: {
-                    sid: "placeholder",
-                    tid: 0,
-                    content: base64DataUrl,
-                  },
-                  archor_intervals: 3600,
+                const uploadId = genUID();
+                const rsp = await kfileUpload({
+                  upload_id: uploadId,
+                  chunk: blob,
+                  filename: blob.name,
+                  chunk_no: 0,
+                  total_chunks: 1,
+                  meta_id: uploadId,
                   content_type: blob.type,
+                  filesize: blob.size,
+                  last_modified: genTID() ,
+                  otid: genTID(),
+                  db_store: true,
+                  binaryp: true
                 });
-                if (mindELixirRef.current?.instance?.currentNode) {
-                  mindELixrRef.current.instance.currentNode.nodeObj.image = {
-                    url: rsp.true_sid,
+                  const instance = mindELixirRef.current.instance;
+                if (instance && instance?.currentNode && rsp.kfile) {
+                  const image = {
+                    url: rsp.kfile?.id + "/" + blob.name,
                     width: 200,
                     height: 200,
-                    fit: "contain",
+                    fit: "contain" as const,
                   };
+                  instance.reshapeNode(instance.currentNode, {image})
                 }
               } catch (error) {
                 console.error("Failed to convert image to base64:", error);
@@ -152,7 +157,7 @@ const MindMapChnot = ({
         }
       },
       imageProxy: (url: string) => {
-        return `${BASE_URL}/api/v1/kfile-inline-asset-download/${url}/d`;
+        return `${BASE_URL}/api/v1/kfile-asset-download/${url}`;
       },
       ref: mindELixirRef,
     };

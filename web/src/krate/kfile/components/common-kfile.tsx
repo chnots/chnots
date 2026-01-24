@@ -88,6 +88,7 @@ export const CommonKFile = ({
           filesize: uploadFile.size,
           last_modified: uploadFile.lastModified,
           otid: otid,
+          binaryp: true
         });
 
         if (kfile) {

@@ -102,6 +102,7 @@ export const unionFileSaved = async (files: BinaryFiles, savedFiles: Map<string,
         meta_id: file.id,
         content_type: file.mimeType ?? "chnot/unknown",
         otid: otid,
+        binaryp: true
       });
       savedFiles.set(fileId, { ver: newVer, otid: otid });
     }
@@ -132,6 +133,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       meta_id: metaId,
       content_type: contentType,
       otid: props.otid,
+      binaryp: false
     });
     onSuccess();
   } catch (_err) {

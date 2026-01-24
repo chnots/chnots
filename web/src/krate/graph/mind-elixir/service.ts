@@ -45,6 +45,7 @@ export const saveMindExilir = async (props: SaveMindExilirProps) => {
       archor_intervals: 3600,
       content_type: "mind-elixir-v5",
       otid: otid,
+      binaryp: false
     });
     onSuccess();
   } catch (_err) {

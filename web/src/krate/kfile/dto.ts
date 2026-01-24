@@ -14,6 +14,7 @@ export type KfileInlineUploadReq = {
   archor_intervals: number;
   filename?: Varchar<1024>;
   content_type: Varchar<200>;
+  binaryp: boolean;
 };
 
 export type KfileInlineUploadRsp = {
@@ -34,6 +35,7 @@ export type KfileInlineDownloadRsp = {
 
 export type KfileMetaFetchReq = {
   req_id: KfileMetaFetchReqId;
+  history_and_archor?: boolean;
 };
 
 export type KfileMetaFetchRsp = {
@@ -62,4 +64,6 @@ export type KfileAssetChunkUploadReq = {
   last_modified: number;
   filesize: number;
   content_type: string;
+  db_store?: boolean;
+  binaryp: boolean;
 };

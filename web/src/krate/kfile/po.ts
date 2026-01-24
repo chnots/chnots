@@ -18,4 +18,5 @@ export type KFileMeta = {
   sid: Varchar<100>;
   filesize: number;
   tid: TID;
+  binaryp: boolean;
 };
