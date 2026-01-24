@@ -2,7 +2,8 @@ use std::{collections::HashMap, io::Write};
 
 use crate::{
     krate::graph::{
-        ExcalidrawDataV2, ExcalidrawDataV2Po, ExcalidrawFetchRsp, GetKeys, GraphData, GraphMeta,
+        ExcalidrawDataV2, ExcalidrawDataV2Dto, ExcalidrawDataV2Po, ExcalidrawFetchRsp, GetKeys,
+        GraphData, GraphMeta, MindElixirDataV1Po, MindElixirDataV1PoMeta, MindElixirLoadRsp,
         mapper::GraphMapper,
     },
     mapper::{
@@ -137,7 +138,7 @@ impl GraphMapper for KDb {
         }
 
         Ok(ExcalidrawFetchRsp {
-            data: Some(super::ExcalidrawDataV2Dto(ExcalidrawDataV2 {
+            data: Some(ExcalidrawDataV2Dto(ExcalidrawDataV2 {
                 others,
                 elements: elements,
             })),
@@ -180,14 +181,59 @@ impl GraphMapper for KDb {
         &self,
         req: KReq<super::MindElixirLoadReq>,
     ) -> chin_tools::AResult<super::MindElixirLoadRsp> {
-        todo!()
+        let conn = self.conn().await?;
+        let meta = conn.as_executor().query_graph_meta(req.otid).await?;
+        let Some(meta) = meta else {
+            return Ok(MindElixirLoadRsp { data: None });
+        };
+
+        let meta: MindElixirDataV1PoMeta = serde_json::from_str(meta.content.as_str())?;
+        let data = conn
+            .as_executor()
+            .query_graph_data(meta.keys.iter().map(|e| e.as_str()).collect())
+            .await?
+            .into_iter()
+            .map(|(k, v)| (k, v.content.into()))
+            .collect();
+
+        let po = MindElixirDataV1Po { meta, data };
+
+        Ok(MindElixirLoadRsp {
+            data: Some(po.try_into()?),
+        })
     }
 
     async fn mind_elixir_commit(
         &self,
         req: KReq<super::MindElixirCommitReq>,
     ) -> chin_tools::AResult<super::MindElixirCommitRsp> {
-        todo!()
+        let otid = req.otid.clone();
+        let po: MindElixirDataV1Po = req.body.data.try_into()?;
+
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.as_executor()
+            .insert_graph_meta(GraphMeta {
+                otid: otid,
+                // TODO
+                archor: false,
+                kind: super::GraphKind::ExcalidrawV2,
+                content: serde_json::to_string(&po.meta)?.into(),
+                tid: TID::default(),
+            })
+            .await?;
+        for (k, v) in po.data {
+            tx.as_executor()
+                .insert_graph_data(GraphData {
+                    sid: k.try_into()?,
+                    tid: Default::default(),
+                    content: v.into(),
+                })
+                .await?;
+        }
+        tx.cmt().await?;
+
+        Ok(super::MindElixirCommitRsp {})
     }
 
     async fn ensure_table_graph(&self) -> EResult {

@@ -13,6 +13,10 @@ use serde_json::Value;
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 use crate::{enum_common_funcs, impl_otid_support};
 
+pub trait GetKeys {
+    fn get_keys(&self) -> Vec<String>;
+}
+
 #[derive(Debug, Clone, Sequence)]
 pub enum GraphKind {
     ExcalidrawV2,
