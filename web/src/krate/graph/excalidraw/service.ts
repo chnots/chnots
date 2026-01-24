@@ -3,6 +3,7 @@ import { serializeAsJSON } from "@excalidraw/excalidraw";
 import type {
   ExcalidrawElement,
   FileId,
+  OrderedExcalidrawElement,
 } from "@excalidraw/excalidraw/element/types";
 import type {
   AppState,
@@ -14,27 +15,46 @@ import type { RefObject } from "react";
 import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
 import { kfileInlineDownload, kfileInlineUpload } from "@/krate/kfile/service";
 import { genTID, type TID } from "@/lib/id_util";
+import request from "@/lib/request";
+import type {
+  ExcalidrawCommitReq,
+  ExcalidrawCommitRsp,
+  ExcalidrawFetchReq,
+  ExcalidrawFetchRsp,
+} from "../dto";
+import { RestoredDataState } from "@excalidraw/excalidraw/data/restore";
+import type { ImportedDataState } from "@excalidraw/excalidraw/data/types";
 
 export type ExcalidrawChnotState = {
   otid: TID;
-  metaId: string;
-  elements: readonly ExcalidrawElement[];
-  appState: AppState;
-  files: BinaryFiles;
+  elements?: ExcalidrawElement[] | null;
+  appState?: Partial<AppState>;
+  files?: BinaryFiles;
 };
 
+export const excalidrawFetchInner = async (
+  req: ExcalidrawFetchReq,
+): Promise<ExcalidrawFetchRsp> => {
+  return await request.postJson(`api/v1/excalidraw-fetch`, req);
+};
+
+export const excalidrawCommitInner = async (
+  req: ExcalidrawCommitReq,
+): Promise<ExcalidrawCommitRsp> => {
+  return await request.postJson(`api/v1/excalidraw-commit`, req);
+};
 
 export const fetchExcalidraw = async (
-  id: KfileMetaFetchReqId,
+  otid: TID,
 ): Promise<ExcalidrawChnotState | null> => {
   try {
-    const rsp = await kfileInlineDownload({
-      req_id: id,
+    const rsp = await excalidrawFetchInner({
+      otid: otid,
     });
-    if (!rsp.file) {
+    if (!rsp.data) {
       return null;
     }
-    const dataState = JSON.parse(rsp.file?.content);
+    const dataState: ImportedDataState = rsp.data;
     const fileMap = new Map<ExcalidrawElement["id"], BinaryFileData>();
     const elements = dataState.elements as readonly ExcalidrawElement[] | null;
 
@@ -64,9 +84,10 @@ export const fetchExcalidraw = async (
 
     return {
       ...dataState,
-      metaId: rsp.meta?.id,
+      appState: dataState.appState ? { ...dataState.appState } : undefined,
+      otid: otid,
       files: Object.fromEntries(fileMap.entries()),
-      elements: dataState.elements,
+      elements: dataState.elements ? [...dataState.elements] : [],
     };
   } catch (_e) {}
   return null;
@@ -80,7 +101,6 @@ export type SaveFileCache = {
 export type SaveExcalidrawProps = {
   otid: TID;
   state: ExcalidrawChnotState;
-  contentType: string;
   onSuccess: () => void;
   onFail: () => void;
   savedFilesRef: RefObject<Map<string, SaveFileCache>>;
@@ -112,29 +132,27 @@ export const unionFileSaved = async (
   }
 };
 export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
-  const { state, contentType, onSuccess, onFail, savedFilesRef } = props;
+  console.log("begin to save excalidraw");
+  const { state, onSuccess, onFail, savedFilesRef } = props;
 
-  const { elements, appState, metaId, files } = state;
+  const { elements, appState, files } = state;
   try {
-    if (elements.length === 0) {
+    if (!elements || elements.length === 0) {
       return;
     }
 
-    const content = serializeAsJSON(elements, appState, files, "database");
+    const content = serializeAsJSON(
+      elements,
+      appState ?? {},
+      files ?? {},
+      "database",
+    );
 
-    unionFileSaved(files, savedFilesRef.current);
+    unionFileSaved(files ?? {}, savedFilesRef.current);
 
-    await kfileInlineUpload({
-      res: {
-        tid: genTID(),
-        content,
-        sid: "placeholder",
-      },
-      archor_intervals: 3600,
-      meta_id: metaId,
-      content_type: contentType,
+    await excalidrawCommitInner({
       otid: props.otid,
-      binaryp: false,
+      data: content,
     });
     onSuccess();
   } catch (_err) {

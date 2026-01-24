@@ -1,36 +1,57 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
-const useDebounce = (
-  fn: (...args: any[]) => void,
-  duration?: number,
-  executeOnExit: boolean = false,
-) => {
-  const timeoutRef = React.useRef(0);
-  const argsRef = React.useRef<any[]>(undefined);
+type DebouncedFunction<T extends any[]> = (...args: T) => void;
 
+interface UseDebounceOptions {
+  duration?: number;
+  executeOnUnmount?: boolean;
+}
+
+const useDebounce = <T extends any[]>(
+  fn: DebouncedFunction<T>,
+  options: UseDebounceOptions = {},
+): DebouncedFunction<T> => {
+  const { duration = 1000, executeOnUnmount = false } = options;
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const argsRef = useRef<T | null>(null);
+  const fnRef = useRef(fn);
+
+  // Keep fnRef up to date
+  useEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (argsRef.current && executeOnExit) {
-        window.clearTimeout(timeoutRef.current);
-        fn(...argsRef.current);
-        argsRef.current = undefined;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      if (executeOnUnmount && argsRef.current) {
+        fnRef.current(...argsRef.current);
       }
     };
-  }, [executeOnExit, fn]);
+  }, [executeOnUnmount]);
 
-  return React.useCallback(
-    (...args: unknown[]) => {
+  const debouncedFunction = useCallback<DebouncedFunction<T>>(
+    (...args: T) => {
       argsRef.current = args;
-      window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = window.setTimeout(() => {
-        fn(...args);
-        // do nothing when exited if we invoke it.
-        argsRef.current = undefined;
-      }, duration ?? 1000);
-    },
 
-    [duration, fn],
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        fnRef.current(...args);
+        argsRef.current = null;
+      }, duration);
+    },
+    [duration],
   );
+
+  return debouncedFunction;
 };
 
 export default useDebounce;

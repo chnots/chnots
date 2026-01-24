@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import "./excalidraw.scss";
 import "@excalidraw/excalidraw/index.css";
@@ -13,8 +13,7 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
 import { genUID, type TID } from "@/lib/id_util";
 import { type ExcalidrawChnotState, fetchExcalidraw } from "../service";
-
-const CONTENT_TYPE = "chnots/excalidraw-v1";
+import useDebounce from "@/hooks/use-debounce";
 
 const ExcalidrawEditor = ({
   otid,
@@ -24,14 +23,14 @@ const ExcalidrawEditor = ({
   otid: TID;
   readOnly?: boolean;
   state?: ExcalidrawChnotState;
-  onSave: (state: ExcalidrawChnotState, contentType: string) => void;
+  onSave: (state: ExcalidrawChnotState) => Promise<void>;
 }) => {
+  console.log("render ExcalidrawEditor");
   const [viewModeEnabled, setViewModeEnabled] = useState(viewMode);
   const [zenModeEnabled, _setZenModeEnabled] = useState(false);
   const [gridModeEnabled, _setGridModeEnabled] = useState(false);
   const [theme, _setTheme] = useState<Theme>("light");
   const toSaveExcalidrawStateRef = useRef<ExcalidrawChnotState>(null);
-  const toSaveExcalidrawMetaIdRef = useRef<string>(null);
 
   useEffect(() => {
     setViewModeEnabled(viewMode ?? false);
@@ -41,12 +40,20 @@ const ExcalidrawEditor = ({
     useCallbackRefState<ExcalidrawImperativeAPI>();
 
   useEffect(() => {
-    return () => {
-      if (toSaveExcalidrawStateRef.current) {
-        onSave(toSaveExcalidrawStateRef.current, CONTENT_TYPE);
-      }
-    };
+    return () => {};
   }, [onSave]);
+
+  const debounceSave = useDebounce(
+    async () => {
+      if (toSaveExcalidrawStateRef.current) {
+        await onSave(toSaveExcalidrawStateRef.current);
+      }
+    },
+    {
+      duration: 2000,
+      executeOnUnmount: true,
+    },
+  );
 
   useHandleLibrary({ excalidrawAPI });
 
@@ -78,25 +85,22 @@ const ExcalidrawEditor = ({
     <Excalidraw
       excalidrawAPI={excalidrawRefCallback}
       initialData={async () => {
-        const rsp = await fetchExcalidraw({ Otid: otid });
+        const rsp = await fetchExcalidraw(otid);
         if (rsp) {
-          toSaveExcalidrawMetaIdRef.current = rsp.metaId;
           return rsp;
         } else {
-          toSaveExcalidrawMetaIdRef.current = genUID();
           return null;
         }
       }}
       onChange={(elements, appState, files) => {
-        if (toSaveExcalidrawMetaIdRef.current) {
-          toSaveExcalidrawStateRef.current = {
-            otid,
-            elements,
-            appState,
-            files,
-            metaId: toSaveExcalidrawMetaIdRef.current,
-          };
-        }
+        console.log("on change");
+        toSaveExcalidrawStateRef.current = {
+          otid,
+          elements: [...elements],
+          appState: { ...appState },
+          files: { ...files },
+        };
+        debounceSave();
       }}
       viewModeEnabled={viewModeEnabled}
       zenModeEnabled={zenModeEnabled}
@@ -108,4 +112,5 @@ const ExcalidrawEditor = ({
   );
 };
 
-export default ExcalidrawEditor;
+const ExcalidrawEditorMemo = memo(ExcalidrawEditor);
+export default ExcalidrawEditorMemo;

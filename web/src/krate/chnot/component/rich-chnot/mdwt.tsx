@@ -166,8 +166,10 @@ const MdwtChnot = ({
     async () => {
       directlySave();
     },
-    2000,
-    true,
+    {
+      duration: 2000,
+      executeOnUnmount: true,
+    },
   );
   const handleContentChange = useCallback(
     (content: string) => {

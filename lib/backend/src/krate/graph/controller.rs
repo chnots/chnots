@@ -39,6 +39,6 @@ async fn excalidraw_fetch(
 
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
-        .route("/api/v1/excalidraw-commit", put(excalidraw_commit))
+        .route("/api/v1/excalidraw-commit", post(excalidraw_commit))
         .route("/api/v1/excalidraw-fetch", post(excalidraw_fetch))
 }

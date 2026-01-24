@@ -24,7 +24,7 @@ export const kfileUpload = async ({
   content_type,
   otid,
   binaryp,
-  db_store
+  db_store,
 }: KfileAssetChunkUploadReq): Promise<KFileUploadRsp> => {
   const data = new FormData();
   data.append("chunk", chunk);
@@ -38,7 +38,9 @@ export const kfileUpload = async ({
   data.append("upload_id", upload_id);
   data.append("otid", otid.toString());
   data.append("binaryp", binaryp.toString());
-  data.append("db_store", db_store.toString());
+  if (db_store) {
+    data.append("db_store", db_store.toString());
+  }
 
   return await request.postFormdata("api/v1/kfile-asset-chunk-upload", data);
 };

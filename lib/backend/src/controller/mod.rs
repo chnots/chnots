@@ -24,7 +24,7 @@ use tower_http::{
 
 use crate::{
     app::ShareAppState,
-    krate::{chnot, kfile, kkv, kspace, ktab, llmchat, mdwt, sync, toent},
+    krate::{chnot, graph, kfile, kkv, kspace, ktab, llmchat, mdwt, sync, toent},
 };
 
 pub(crate) mod asset;
@@ -73,6 +73,7 @@ pub(crate) async fn serve(app_state: ShareAppState) -> EResult {
         .merge(ktab::controller::routes())
         .merge(sync::controller::routes())
         .merge(mdwt::controller::routes())
+        .merge(graph::controller::routes())
         .with_state(app_state.clone())
         .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(

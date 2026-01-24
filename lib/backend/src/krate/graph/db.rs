@@ -24,18 +24,24 @@ use chin_sql::{SqlBuilder, Wheres, time_type::TID};
 
 impl KDbExecutor<'_> {
     async fn insert_graph_meta(&self, graph: GraphMeta) -> anyhow::Result<()> {
+        self.omit_rows::<GraphMeta>(GraphMeta::pkey_cond(graph.otid))
+            .await?;
         self.exec(graph.to_sql_inserter()).await?;
         Ok(())
     }
-    async fn query_graph_meta(&self, otid: TID) -> anyhow::Result<GraphMeta> {
+    async fn query_graph_meta(&self, otid: TID) -> anyhow::Result<Option<GraphMeta>> {
         let c = self
             .qry_opt(GraphMeta::pkey_reader(otid), |e| (&e).try_into())
-            .await?
-            .ok_or(anyhow::anyhow!("unable to find {}", otid))?;
+            .await?;
         Ok(c)
     }
     async fn insert_graph_data(&self, graph: GraphData) -> anyhow::Result<()> {
-        self.exec(graph.to_sql_inserter()).await?;
+        self.exec(
+            graph
+                .to_sql_inserter()
+                .on_conflict(chin_sql::OnConflict::Ignore),
+        )
+        .await?;
         Ok(())
     }
     async fn query_graph_data(
@@ -97,6 +103,10 @@ impl GraphMapper for KDb {
     ) -> chin_tools::AResult<super::ExcalidrawFetchRsp> {
         let conn = self.conn().await?;
         let meta = conn.as_executor().query_graph_meta(req.otid).await?;
+        let Some(meta) = meta else {
+            return Ok(ExcalidrawFetchRsp { data: None });
+        };
+
         let content: ExcalidrawDataV2<String> = serde_json::from_str(meta.content.as_str())?;
         let keys = content.get_keys();
         let data = conn
@@ -127,10 +137,10 @@ impl GraphMapper for KDb {
         }
 
         Ok(ExcalidrawFetchRsp {
-            data: super::ExcalidrawDataV2Dto(ExcalidrawDataV2 {
+            data: Some(super::ExcalidrawDataV2Dto(ExcalidrawDataV2 {
                 others,
                 elements: elements,
-            }),
+            })),
         })
     }
 
@@ -161,6 +171,7 @@ impl GraphMapper for KDb {
                 })
                 .await?;
         }
+        tx.cmt().await?;
 
         Ok(super::ExcalidrawCommitRsp {})
     }
@@ -177,5 +188,17 @@ impl GraphMapper for KDb {
         req: KReq<super::MindElixirCommitReq>,
     ) -> chin_tools::AResult<super::MindElixirCommitRsp> {
         todo!()
+    }
+
+    async fn ensure_table_graph(&self) -> EResult {
+        create_tables(
+            Ddls::new()
+                .with_ddl(GraphData::create_sql().to_owned_sql())
+                .with_ddls(GraphMeta::ddls()),
+            self,
+        )
+        .await?;
+
+        Ok(())
     }
 }

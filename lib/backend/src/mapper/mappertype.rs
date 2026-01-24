@@ -5,9 +5,9 @@ use log::info;
 
 use crate::{
     krate::{
-        chnot::mapper::ChnotMapper, kfile::mapper::KFileMapper, kkv::mapper::KKVMapper,
-        kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper, llmchat::mapper::LLMChatMapper,
-        mdwt::mapper::MdwtMapper, sync::mapper::SyncMapper,
+        chnot::mapper::ChnotMapper, graph::mapper::GraphMapper, kfile::mapper::KFileMapper,
+        kkv::mapper::KKVMapper, kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper,
+        llmchat::mapper::LLMChatMapper, mdwt::mapper::MdwtMapper, sync::mapper::SyncMapper,
     },
     magics::CLIENT_ID_KEY,
     mapper::{MapperConfig, MapperType},
@@ -42,6 +42,7 @@ impl MapperType {
         self.kspace_ensure_data().await?;
         self.ensure_ktab_tables().await?;
         self.ensure_sync_table().await?;
+        self.ensure_table_graph().await?;
 
         Ok(())
     }

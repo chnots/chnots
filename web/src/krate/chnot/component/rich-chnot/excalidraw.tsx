@@ -19,34 +19,33 @@ const ExcalidrawChnot = ({
   onPostSave,
   onSetFullscreen,
 }: RichPropProps) => {
+  console.log("rerender ExcalidrawChnot");
   const [state, setState] = useState<ExcalidrawChnotState>();
   const savedFilesRef = useRef(new Map<string, SaveFileCache>());
 
   useEffect(() => {
-    fetchExcalidraw({ Otid: otid })
+    fetchExcalidraw(otid)
       .then((state) => {
         if (state) {
-          unionFileSaved(state.files, savedFilesRef.current)
+          unionFileSaved(state.files ?? {}, savedFilesRef.current);
           setState({
             otid: otid,
-            metaId: state.metaId,
             elements: state.elements,
             appState: state.appState,
             files: state.files,
           });
         }
       })
-      .catch((_err) => { });
+      .catch((_err) => {});
   }, [otid]);
 
   const directlySave = useCallback(
-    (state: ExcalidrawChnotState, contentType: string) => {
+    async (state: ExcalidrawChnotState) => {
       const title =
-        state.elements.find((e) => e.type === "text")?.text || "Some Shapes";
+        state.elements?.find((e) => e.type === "text")?.text || "Some Shapes";
       saveExcalidraw({
         savedFilesRef,
         state,
-        contentType: contentType,
         onSuccess: () => {
           setState(state);
           onPostSave({
@@ -71,22 +70,14 @@ const ExcalidrawChnot = ({
           <ExcalidrawPreview state={state} className="w-8/12" />
         </div>
       ) : (
-        <ExcalidrawEditor
-          otid={otid}
-          readOnly={false}
-          onSave={(state, contentType) => {
-            directlySave(state, contentType);
-          }}
-        />
+        <ExcalidrawEditor otid={otid} readOnly={false} onSave={directlySave} />
       )}
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>
           <ExcalidrawEditor
             otid={otid}
             readOnly={false}
-            onSave={(state, contentType) => {
-              directlySave(state, contentType);
-            }}
+            onSave={directlySave}
           />
         </Fullscreen>
       )}

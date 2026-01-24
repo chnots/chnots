@@ -17,6 +17,8 @@ pub trait GraphMapper {
         &self,
         req: KReq<MindElixirCommitReq>,
     ) -> AResult<MindElixirCommitRsp>;
+
+    async fn ensure_table_graph(&self) -> EResult;
 }
 
 impl GraphMapper for MapperType {
@@ -48,5 +50,9 @@ impl GraphMapper for MapperType {
         match self {
             MapperType::KDb(kdb) => kdb.mind_elixir_commit(req).await,
         }
+    }
+
+    async fn ensure_table_graph(&self) -> EResult {
+        expand_mt_branch!(self.ensure_table_graph())
     }
 }
