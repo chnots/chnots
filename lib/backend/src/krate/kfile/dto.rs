@@ -16,6 +16,8 @@ pub struct KfileAssetChunkUploadReq {
     pub last_modified: i64,
     pub filesize: i64,
     pub content_type: String,
+    pub db_store: Option<bool>,
+    pub binaryp: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,6 +35,7 @@ pub struct KfileInlineUploadReq {
     pub archor_intervals: i64,
     pub filename: Option<Varchar<1024>>,
     pub content_type: Varchar<200>,
+    pub binaryp: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

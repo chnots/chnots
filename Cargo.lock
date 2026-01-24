@@ -1039,6 +1039,7 @@ dependencies = [
  "enum-iterator",
  "enum-tag",
  "env_logger",
+ "flate2",
  "futures",
  "itertools 0.14.0",
  "lazy-regex",
@@ -1967,9 +1968,9 @@ dependencies = [
 
 [[package]]
 name = "flate2"
-version = "1.1.2"
+version = "1.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a3d7db9596fecd151c5f638c0ee5d5bd487b6e0ea232e5dc96d5250f6f94b1d"
+checksum = "b375d6465b98090a5f25b1c7703f3859783755aa9a80433b36e0379a3ec2f369"
 dependencies = [
  "crc32fast",
  "miniz_oxide",

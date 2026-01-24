@@ -15,6 +15,7 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
 };
+
 use tokio::{
     fs::File,
     io::{AsyncWriteExt, BufWriter},
@@ -27,9 +28,10 @@ use crate::{
     config::AttachmentConfig,
     controller::KResponse,
     krate::kfile::{
-        KFileMeta, KFileUploadRsp, KfileAssetChunkUploadReq, KfileMetaFetchReq, mapper::KFileMapper,
+        InlineKFile, KFileMeta, KFileUploadRsp, KfileAssetChunkUploadReq, KfileMetaFetchReq,
+        mapper::KFileMapper,
     },
-    util::digestutil::file_blake3_sum,
+    util::digestutil::{de_gzip_base64_blake3, file_blake3_sum, gzip_base64_blake3},
 };
 
 pub(crate) fn asset_tmp_path(config: &AttachmentConfig, upload_id: &str) -> PathBuf {
@@ -100,49 +102,77 @@ pub(super) async fn kfile_asset_chunk_upload(
         content_type,
         upload_id,
         otid,
+        db_store,
+        binaryp,
     }): TypedMultipart<KfileAssetChunkUploadReq>,
 ) -> AResult<KFileUploadRsp> {
     let mapper = &state.mapper;
+    let mut inline = false;
 
-    let tmp_dir = asset_tmp_path(&state.config.attachment, &upload_id);
-
-    try_mkdirp(&tmp_dir).await?;
-
-    let chunk_path = tmp_dir.join(chunk_no.to_string());
-    let mut file = tokio::fs::File::create(&chunk_path).await?;
-    file.write_all(&chunk.contents).await?;
-
-    let mut all_existed = true;
-
-    for p in (0..total_chunks).map(|i| tmp_dir.join(i.to_string())) {
-        if !tokio::fs::try_exists(p).await.is_ok_and(|b| b) {
-            all_existed = false;
-            break;
+    let sid: Option<String> = if db_store.unwrap_or(false) {
+        if chunk_no > 0 || total_chunks > 1 {
+            anyhow::bail!("It only accpets one chunk when store kfile to db");
         }
-    }
-
-    let kfile = if all_existed {
-        let tid = TID::default();
-        let blake3_sum =
-            assemble_file(tmp_dir, state.config.attachment.clone(), total_chunks).await?;
-
-        let kfile = KFileMeta {
-            otid: otid.try_into()?,
-            id: meta_id.try_into()?,
-            tid,
-            content_type: content_type.try_into()?,
-            filesize,
-            sid: blake3_sum.to_string().try_into()?,
-            inline: false,
-            archor: false,
-            filename: filename.try_into()?,
-            last_modified: last_modified.try_into()?,
-        };
-
-        mapper.insert_kfile_meta(kfile.clone()).await?;
-        Some(kfile)
+        let content = chunk.contents;
+        let gbb = gzip_base64_blake3(content)?;
+        mapper
+            .insert_inline_kfile2(InlineKFile {
+                sid: gbb.blake3.clone().try_into()?,
+                tid: TID::default(),
+                content: gbb.b64.into(),
+            })
+            .await?;
+        inline = true;
+        Some(gbb.blake3)
     } else {
-        None
+        let tmp_dir = asset_tmp_path(&state.config.attachment, &upload_id);
+
+        try_mkdirp(&tmp_dir).await?;
+
+        let chunk_path = tmp_dir.join(chunk_no.to_string());
+        let mut file = tokio::fs::File::create(&chunk_path).await?;
+        file.write_all(&chunk.contents).await?;
+
+        let mut all_existed = true;
+
+        for p in (0..total_chunks).map(|i| tmp_dir.join(i.to_string())) {
+            if !tokio::fs::try_exists(p).await.is_ok_and(|b| b) {
+                all_existed = false;
+                break;
+            }
+        }
+
+        if all_existed {
+            let blake3_sum =
+                assemble_file(tmp_dir, state.config.attachment.clone(), total_chunks).await?;
+
+            Some(blake3_sum)
+        } else {
+            None
+        }
+    };
+
+    let kfile = match sid {
+        Some(sid) => {
+            let tid = TID::default();
+            let kfile = KFileMeta {
+                otid: otid.try_into()?,
+                id: meta_id.try_into()?,
+                tid,
+                content_type: content_type.try_into()?,
+                filesize,
+                sid: sid.to_string().try_into()?,
+                inline: inline,
+                archor: false,
+                filename: filename.try_into()?,
+                last_modified: last_modified.try_into()?,
+                binaryp: binaryp,
+            };
+
+            mapper.insert_kfile_meta(kfile.clone()).await?;
+            Some(kfile)
+        }
+        None => None,
     };
 
     Ok(KFileUploadRsp {
@@ -261,22 +291,49 @@ pub(super) async fn kfile_asset_download(
             .await?
             .meta
             .context("unable to find kfile")?;
+        if kfile.inline {
+            let inline_kfil = state
+                .mapper
+                .query_inline_kfile_by_sid(kfile.sid.clone())
+                .await?;
+            let Some(file) = inline_kfil.file else {
+                anyhow::bail!("not found of sid: {}", kfile.sid);
+            };
+            let body: body::Body = if kfile.binaryp {
+                let bytes = de_gzip_base64_blake3(crate::util::digestutil::GzipdBase64Blake3 {
+                    blake3: file.sid.into(),
+                    b64: file.content.into(),
+                })?;
+                body::Body::from(bytes)
+            } else {
+                body::Body::from(file.content.to_string())
+            };
 
-        let save_filepath = state.config.attachment.get_sid_path(kfile.sid.as_str());
+            let headers = [
+                (header::CONTENT_TYPE, kfile.content_type.as_str().to_owned()),
+                (
+                    header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}\"", &kfile.filename.as_str()),
+                ),
+            ];
+            Ok((headers, body))
+        } else {
+            let save_filepath = state.config.attachment.get_sid_path(kfile.sid.as_str());
 
-        let file = tokio::fs::File::open(&save_filepath).await?;
+            let file = tokio::fs::File::open(&save_filepath).await?;
 
-        let stream = ReaderStream::new(file);
-        let body: body::Body = body::Body::from_stream(stream);
+            let stream = ReaderStream::new(file);
+            let body: body::Body = body::Body::from_stream(stream);
 
-        let headers = [
-            (header::CONTENT_TYPE, kfile.content_type.as_str().to_owned()),
-            (
-                header::CONTENT_DISPOSITION,
-                format!("attachment; filename=\"{}\"", &kfile.filename.as_str()),
-            ),
-        ];
-        Ok((headers, body))
+            let headers = [
+                (header::CONTENT_TYPE, kfile.content_type.as_str().to_owned()),
+                (
+                    header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}\"", &kfile.filename.as_str()),
+                ),
+            ];
+            Ok((headers, body))
+        }
     }
 
     let res = inner(state, &meta_otid).await;

@@ -16,7 +16,8 @@ use chin_tools::EResult;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{
-    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, SqlReaderBuilder, Wheres, str_type::Varchar, time_type::TID
+    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, SqlReaderBuilder, Wheres,
+    str_type::Varchar, time_type::TID,
 };
 
 impl TryFrom<&KDbRow> for InlineKFile {
@@ -45,6 +46,7 @@ impl TryFrom<&KDbRow> for KFileMeta {
             content_type: value.try_get(KFileMeta::CONTENT_TYPE)?,
             last_modified: value.try_get(KFileMeta::LAST_MODIFIED)?,
             filesize: value.try_get(KFileMeta::FILESIZE)?,
+            binaryp: value.try_get(KFileMeta::BINARYP)?,
         })
     }
 }
@@ -97,8 +99,8 @@ impl KDbExecutor<'_> {
                     KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_cond(id),
                 },
             ]))
-                .order_by([OrderBy::Desc(KFileMeta::TID.into())])
-                .limit(LimitOffset::new(1))
+            .order_by([OrderBy::Desc(KFileMeta::TID.into())])
+            .limit(LimitOffset::new(1))
             .build()
             .into()
         } else {
@@ -159,6 +161,7 @@ impl KFileMapper for KDb {
             last_modified: TID::default(),
             filesize: bytes.len() as i64,
             otid: req.otid,
+            binaryp: req.binaryp,
         };
         tx.as_executor().insert_kfile_meta(meta).await?;
         tx.exec(
