@@ -8,7 +8,9 @@ use serde_json::Value;
 use crate::util::digestutil::blake3_sum;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct MindElixirDataV1<NT, T> {
+    #[serde(flatten)]
     pub others: HashMap<String, T>,
     pub node_data: NT,
     pub arrows: Option<Vec<T>>,
@@ -16,6 +18,7 @@ pub struct MindElixirDataV1<NT, T> {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MindElixirDataV2Dto(pub MindElixirDataV1<MindElixirNode, Value>);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -32,7 +35,9 @@ pub struct MindElixirDataV1Po {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct MindElixirNode {
+    #[serde(flatten)]
     others: HashMap<String, Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     children: Option<Vec<Box<Self>>>,
 }
 

@@ -63,7 +63,7 @@ const MindMapChnot = ({
   const mindELixirRef = useRef<MindElixirReactRef>(null);
 
   useEffect(() => {
-    fetchMindExilir({ Otid: otid })
+    fetchMindExilir(otid )
       .then((fetchedState) => {
         if (fetchedState) {
           setData(fetchedState);

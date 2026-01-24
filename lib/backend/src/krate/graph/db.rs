@@ -217,7 +217,7 @@ impl GraphMapper for KDb {
                 otid: otid,
                 // TODO
                 archor: false,
-                kind: super::GraphKind::ExcalidrawV2,
+                kind: super::GraphKind::MindElixirV1,
                 content: serde_json::to_string(&po.meta)?.into(),
                 tid: TID::default(),
             })
