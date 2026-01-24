@@ -1,4 +1,5 @@
 pub(crate) mod chnot;
+pub(crate) mod graph;
 pub(crate) mod kfile;
 pub(crate) mod kkv;
 pub(crate) mod kspace;

@@ -23,6 +23,7 @@ export type ExcalidrawChnotState = {
   files: BinaryFiles;
 };
 
+
 export const fetchExcalidraw = async (
   id: KfileMetaFetchReqId,
 ): Promise<ExcalidrawChnotState | null> => {
@@ -56,7 +57,7 @@ export const fetchExcalidraw = async (
                 id: element.fileId as FileId,
               });
             }
-          } catch (_error) { }
+          } catch (_error) {}
         }
       }
     }
@@ -67,7 +68,7 @@ export const fetchExcalidraw = async (
       files: Object.fromEntries(fileMap.entries()),
       elements: dataState.elements,
     };
-  } catch (_e) { }
+  } catch (_e) {}
   return null;
 };
 
@@ -85,7 +86,9 @@ export type SaveExcalidrawProps = {
   savedFilesRef: RefObject<Map<string, SaveFileCache>>;
 };
 
-export const unionFileSaved = async (files: BinaryFiles, savedFiles: Map<string, SaveFileCache>
+export const unionFileSaved = async (
+  files: BinaryFiles,
+  savedFiles: Map<string, SaveFileCache>,
 ) => {
   for (const [fileId, file] of Object.entries(files)) {
     const cache = savedFiles.get(fileId);
@@ -102,14 +105,12 @@ export const unionFileSaved = async (files: BinaryFiles, savedFiles: Map<string,
         meta_id: file.id,
         content_type: file.mimeType ?? "chnot/unknown",
         otid: otid,
-        binaryp: true
+        binaryp: true,
       });
       savedFiles.set(fileId, { ver: newVer, otid: otid });
     }
   }
-
-
-}
+};
 export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
   const { state, contentType, onSuccess, onFail, savedFilesRef } = props;
 
@@ -133,7 +134,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
       meta_id: metaId,
       content_type: contentType,
       otid: props.otid,
-      binaryp: false
+      binaryp: false,
     });
     onSuccess();
   } catch (_err) {

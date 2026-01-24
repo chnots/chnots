@@ -54,9 +54,16 @@ pub(crate) fn de_gzip_base64_blake3(gbb: GzipdBase64Blake3) -> AResult<bytes::By
     let gbb = BASE64_STANDARD.decode(gbb.b64.as_bytes())?;
 
     let mut d = GzDecoder::new(gbb.as_slice());
-    let mut s = bytes::Bytes::new();
     let mut decompressed = Vec::new();
 
     d.read_to_end(&mut decompressed)?;
     Ok(bytes::Bytes::from(decompressed))
+}
+
+#[inline]
+pub(crate) fn blake3_sum(s: &str) -> AResult<String> {
+    let mut hasher = blake3::Hasher::new();
+    let hasher = hasher.update(s.as_bytes());
+    let hash = hasher.finalize().to_string();
+    Ok(hash)
 }

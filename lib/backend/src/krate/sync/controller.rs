@@ -11,6 +11,7 @@ use crate::{
     controller::KResponse,
     krate::{
         chnot::{ChnotMeta, ChnotThreadMeta},
+        graph::{GraphData, GraphMeta},
         kfile::KFileMeta,
         kkv::KKV,
         kspace::KSpace,
@@ -176,6 +177,13 @@ macro_rules! sync_invoke_enum2generic {
                 };
                 $worker.$invoke(arg).await
             }
+            OtidTableEnum::GraphMeta => {
+                let arg = OtidWithGer {
+                    dto: $eobj.dto,
+                    table_type: PhantomData::<crate::krate::graph::GraphMeta>,
+                };
+                $worker.$invoke(arg).await
+            }
         }
     }};
 }
@@ -239,6 +247,7 @@ async fn sync_data_inner(
         OtidTableEnum::ChnotMeta => inner! {ChnotMeta},
         OtidTableEnum::MdwtToent => inner! {MdwtToent},
         OtidTableEnum::ChnotThreadOrder => inner! {ChnotThreadMeta},
+        OtidTableEnum::GraphMeta => inner! {GraphMeta},
     };
 
     info!("{:?}", serde_json::to_string(&result));

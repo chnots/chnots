@@ -65,15 +65,15 @@ const MindMapChnot = ({
   useEffect(() => {
     fetchMindExilir({ Otid: otid })
       .then((fetchedState) => {
-      if (fetchedState) {
-        setData(fetchedState);
-      } else {
-        setData(undefined);
-      }
-    })
+        if (fetchedState) {
+          setData(fetchedState);
+        } else {
+          setData(undefined);
+        }
+      })
       .catch((_err) => {
-      setData(undefined);
-    });
+        setData(undefined);
+      });
   }, [otid]);
 
   const directlySave = useCallback(
@@ -133,12 +133,12 @@ const MindMapChnot = ({
                   meta_id: uploadId,
                   content_type: blob.type,
                   filesize: blob.size,
-                  last_modified: genTID() ,
+                  last_modified: genTID(),
                   otid: genTID(),
                   db_store: true,
-                  binaryp: true
+                  binaryp: true,
                 });
-                  const instance = mindELixirRef.current.instance;
+                const instance = mindELixirRef.current?.instance;
                 if (instance && instance?.currentNode && rsp.kfile) {
                   const image = {
                     url: rsp.kfile?.id + "/" + blob.name,
@@ -146,7 +146,7 @@ const MindMapChnot = ({
                     height: 200,
                     fit: "contain" as const,
                   };
-                  instance.reshapeNode(instance.currentNode, {image})
+                  instance.reshapeNode(instance.currentNode, { image });
                 }
               } catch (error) {
                 console.error("Failed to convert image to base64:", error);
