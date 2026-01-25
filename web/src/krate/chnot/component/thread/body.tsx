@@ -1,3 +1,21 @@
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Plus } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
@@ -21,6 +39,83 @@ enum ChnotState {
   Saved,
 }
 
+const SortableRichMdwt = ({
+  otid,
+  onPostSave,
+  content,
+  onChanged,
+}: {
+  otid: TID;
+  onPostSave: (arg: PostSaveArg) => void;
+  content: string;
+  onChanged: () => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: otid });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="w-full" {...attributes}>
+      <div className="flex items-start space-x-2">
+        <div
+          {...listeners}
+          className="mt-2 p-1 cursor-grab active:cursor-grabbing hover:bg-gray-100 rounded transition-colors"
+          title="拖拽排序"
+        >
+          <svg
+            className="w-4 h-4 text-gray-400"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            aria-hidden="true"
+          >
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+          </svg>
+        </div>
+        <div className="flex-1">
+          <RichMdwt
+            otid={otid}
+            onPostSave={onPostSave}
+            content={content}
+            onChanged={onChanged}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AddButton = ({
+  onAdd,
+  position,
+}: {
+  onAdd: (position: number) => void;
+  position: number;
+}) => {
+  return (
+    <div className="flex justify-center py-2">
+      <button
+        type="button"
+        onClick={() => onAdd(position)}
+        className="flex items-center space-x-2 px-3 py-1 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+        <span>添加</span>
+      </button>
+    </div>
+  );
+};
+
 /**
  * This is the main component for the `Chnots` app.
  *
@@ -38,6 +133,35 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setChnotOrders((items) => {
+        const oldIndex = items.indexOf(active.id as TID);
+        const newIndex = items.indexOf(over?.id as TID);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
+
+  const handleAddBlock = useCallback((position: number) => {
+    const newTid = genTID();
+    setChnotOrders((prev) => {
+      const newOrders = [...prev];
+      newOrders.splice(position, 0, newTid);
+      return newOrders;
+    });
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -63,7 +187,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           const mdwtMap = await mdwtRecordList({
             mdwt_otids: chnotOtids,
           });
-          setChnotOrders([...chnotOtids, genTID()]);
+          setChnotOrders(chnotOtids);
           setMdwtMap(mdwtMap.mdwt_map);
         }
       } finally {
@@ -118,37 +242,35 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
       {loading ? (
         <LoadingPage />
       ) : (
-        <div className="flex flex-col space-y-1 p-4 m-2 w-full max-w-4xl items-center">
-          {chnotOrders.map((otid, _index) => {
-            return (
-              <RichMdwt
-                key={otid}
-                otid={otid}
-                onPostSave={(arg: PostSaveArg) => {
-                  if (arg.saveState === SaveState.Saved) {
-                    handlePostSaveOnChnot(arg);
-                  }
-                }}
-                content={mdwtMap[otid]?.content ?? ""}
-                onChanged={(): void => {
-                  const inited = savedChnotMetaRef.current;
-                  if (!inited.get(otid)) {
-                    inited.set(otid, ChnotState.Initialized);
-                  }
-
-                  if (inited.has(otid)) {
-                    const lastOtid = chnotOrders.at(chnotOrders.length - 1);
-                    if (lastOtid && inited.has(lastOtid)) {
-                      setChnotOrders((prev) => {
-                        return [...prev, genTID()];
-                      });
-                    }
-                  }
-                }}
-              />
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex flex-col p-4 m-2 w-full max-w-4xl items-center">
+            <AddButton onAdd={handleAddBlock} position={0} />
+            <SortableContext
+              items={chnotOrders}
+              strategy={verticalListSortingStrategy}
+            >
+              {chnotOrders.map((otid, index) => (
+                <React.Fragment key={otid}>
+                  <SortableRichMdwt
+                    otid={otid}
+                    onPostSave={(arg: PostSaveArg) => {
+                      if (arg.saveState === SaveState.Saved) {
+                        handlePostSaveOnChnot(arg);
+                      }
+                    }}
+                    content={mdwtMap[otid]?.content ?? ""}
+                    onChanged={(): void => {}}
+                  />
+                  <AddButton onAdd={handleAddBlock} position={index + 1} />
+                </React.Fragment>
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
       )}
     </div>
   );
