@@ -116,6 +116,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 unvalidate={(_toRemoves: TID[]): void => {}}
                 onArchive={(): void => {}}
                 onTogglePin={(): void => {}}
+                onChangeKspace={async (otid, kspace) => {}}
               />
             ))}
           </KPageList>
