@@ -140,10 +140,14 @@ impl<'a> KDbTx<'a> {
 
     pub(super) async fn mdwt_commit(&self, req: KReq<MdwtCommitReq>) -> AResult<MdwtCommitRsp> {
         let MdwtCommitReq { mdwt } = req.body;
+        let title = mdwt.content.as_str().split('\n').take(1).join("");
 
         self.overwrite_mdwt_record(mdwt).await?;
 
-        Ok(MdwtCommitRsp { todo_event: None })
+        Ok(MdwtCommitRsp {
+            todo_event: None,
+            title: title.into(),
+        })
     }
 }
 

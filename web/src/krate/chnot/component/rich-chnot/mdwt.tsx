@@ -150,14 +150,19 @@ const MdwtChnot = ({
           otid,
           saveState: SaveState.Saving,
         });
-        await mdwtCommit(toSaveArg.current);
+        const rsp = await mdwtCommit(toSaveArg.current);
         onPostSave({
           otid,
           saveState: SaveState.Saved,
+          title: rsp.title,
         });
         toSaveArg.current = null;
       } catch (_ex) {
-        onPostSave({ otid, saveState: SaveState.Error });
+        onPostSave({
+          otid,
+          saveState: SaveState.Error,
+          title: "<unable to save>",
+        });
       }
     }
   };

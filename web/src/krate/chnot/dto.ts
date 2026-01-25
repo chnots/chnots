@@ -55,6 +55,7 @@ export type ChnotThreadOrderCommitReq = {
 export type ChnotThreadOrderCommitRsp = object;
 export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
+  title: string;
 };
 
 export type ChnotMetaCommitReqData = {

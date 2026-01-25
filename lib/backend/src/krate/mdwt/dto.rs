@@ -4,6 +4,7 @@ use chin_sql::{
     str_type::{Text, Varchar},
     time_type::TID,
 };
+use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
 use crate::krate::{mdwt::MdwtRecord, toent::logic::todoevent::TodoEvent};
@@ -22,6 +23,7 @@ pub struct MdwtCommitReq {
 #[derive(Debug, Clone, Serialize)]
 pub struct MdwtCommitRsp {
     pub todo_event: Option<TodoEvent>,
+    pub title: SharedStr,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
