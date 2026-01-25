@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize, de};
 use serde_json::Value;
@@ -11,13 +11,13 @@ use crate::{
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExcalidrawDataV2<T> {
     #[serde(flatten)]
-    pub others: HashMap<String, T>,
+    pub others: BTreeMap<String, T>,
     pub elements: Vec<T>,
 }
 
 pub struct ExcalidrawDataV2Po {
     pub meta: ExcalidrawDataV2<String>,
-    pub data: HashMap<String, String>,
+    pub data: BTreeMap<String, String>,
 }
 
 impl GetKeys for ExcalidrawDataV2<String> {
@@ -46,7 +46,7 @@ impl<'de> Deserialize<'de> for ExcalidrawDataV2Dto {
             .ok_or(de::Error::custom("elements is as array"))?;
 
         let full = body.as_object().ok_or(de::Error::custom("body"))?;
-        let mut others = HashMap::new();
+        let mut others = BTreeMap::new();
         for (k, v) in full {
             if k == "elements" {
                 continue;
@@ -65,7 +65,7 @@ impl TryFrom<ExcalidrawDataV2Dto> for ExcalidrawDataV2Po {
     type Error = anyhow::Error;
 
     fn try_from(value: ExcalidrawDataV2Dto) -> Result<Self, Self::Error> {
-        let mut data = HashMap::new();
+        let mut data = BTreeMap::new();
         let mut elements_key = vec![];
         for ele in value.0.elements {
             let cell = ele.to_string();
@@ -73,7 +73,7 @@ impl TryFrom<ExcalidrawDataV2Dto> for ExcalidrawDataV2Po {
             data.insert(sid.clone(), cell);
             elements_key.push(sid);
         }
-        let mut others_key = HashMap::new();
+        let mut others_key = BTreeMap::new();
         for (k, v) in value.0.others {
             let cell = v.to_string();
             let sid = blake3_sum16(&cell.as_bytes())?;

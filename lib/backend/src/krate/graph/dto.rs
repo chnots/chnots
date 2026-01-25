@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use chin_sql::time_type::TID;
 use serde::{Deserialize, Deserializer, Serialize, de};

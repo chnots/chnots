@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::BTreeMap;
 
 use anyhow::anyhow;
 use chin_tools::{AResult, SharedStr};
@@ -11,7 +11,7 @@ use crate::util::digestutil::{blake3_sum, blake3_sum16};
 #[serde(rename_all = "camelCase")]
 pub struct MindElixirDataV1<NT, T> {
     #[serde(flatten)]
-    pub others: HashMap<String, T>,
+    pub others: BTreeMap<String, T>,
     pub node_data: NT,
     pub arrows: Option<Vec<T>>,
     pub summaries: Option<Vec<T>>,
@@ -30,13 +30,13 @@ pub struct MindElixirDataV1PoMeta {
 #[derive(Clone, Debug, Serialize)]
 pub struct MindElixirDataV1Po {
     pub meta: MindElixirDataV1PoMeta,
-    pub data: HashMap<String, String>,
+    pub data: BTreeMap<String, String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct MindElixirNode {
     #[serde(flatten)]
-    others: HashMap<String, Value>,
+    others: BTreeMap<String, Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     children: Option<Vec<Box<Self>>>,
 }
@@ -44,7 +44,7 @@ pub struct MindElixirNode {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MindElixirNodeStr {
     #[serde(flatten)]
-    others: HashMap<String, Value>,
+    others: BTreeMap<String, Value>,
     children: Option<Vec<SharedStr>>,
 }
 
@@ -57,7 +57,7 @@ impl<'de> Deserialize<'de> for MindElixirNode {
         let children = body.get("children");
 
         let full = body.as_object().ok_or(de::Error::custom("body"))?;
-        let mut others = HashMap::new();
+        let mut others = BTreeMap::new();
         for (k, v) in full {
             if k == "children" {
                 continue;
@@ -85,13 +85,13 @@ impl<'de> Deserialize<'de> for MindElixirNode {
 }
 
 impl MindElixirNode {
-    pub fn flattern(&self) -> AResult<(SharedStr, HashMap<SharedStr, String>)> {
-        let mut result_map = HashMap::new();
+    pub fn flattern(&self) -> AResult<(SharedStr, BTreeMap<SharedStr, String>)> {
+        let mut result_map = BTreeMap::new();
         let sid = self.flatten_inner(&mut result_map)?;
         Ok((sid, result_map))
     }
 
-    fn flatten_inner(&self, result_map: &mut HashMap<SharedStr, String>) -> AResult<SharedStr> {
+    fn flatten_inner(&self, result_map: &mut BTreeMap<SharedStr, String>) -> AResult<SharedStr> {
         let children = &self.children;
         let cks = match children {
             Some(children) => {
@@ -148,7 +148,7 @@ impl<'de> Deserialize<'de> for MindElixirDataV2Dto {
         };
 
         let full = body.as_object().ok_or(de::Error::custom("body"))?;
-        let mut others = HashMap::new();
+        let mut others = BTreeMap::new();
         for (k, v) in full {
             if k == "nodeData" || k == "arrows" || k == "summaries" {
                 continue;
@@ -169,9 +169,9 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
     type Error = anyhow::Error;
 
     fn try_from(value: MindElixirDataV2Dto) -> Result<Self, Self::Error> {
-        let mut data = HashMap::new();
+        let mut data = BTreeMap::new();
 
-        let mut others_key = HashMap::new();
+        let mut others_key = BTreeMap::new();
         for (k, v) in value.0.others {
             let cell = v.to_string();
             let sid = blake3_sum16(&cell.as_bytes())?;
@@ -223,7 +223,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
     }
 }
 
-fn depth(root: SharedStr, data: &HashMap<String, String>) -> AResult<MindElixirNode> {
+fn depth(root: SharedStr, data: &BTreeMap<String, String>) -> AResult<MindElixirNode> {
     let v = data
         .get(root.as_str())
         .ok_or(anyhow!("unable to get {}", root))?;
@@ -252,7 +252,7 @@ impl TryFrom<MindElixirDataV1Po> for MindElixirDataV2Dto {
         let MindElixirDataV1Po { meta, data } = value;
 
         let meta = meta.meta;
-        let mut others = HashMap::new();
+        let mut others = BTreeMap::new();
         for (k, v) in meta.others {
             let v = data
                 .get(v.as_str())

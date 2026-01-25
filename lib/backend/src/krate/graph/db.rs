@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Write};
+use std::{collections::BTreeMap, io::Write};
 
 use crate::{
     krate::graph::{
@@ -48,7 +48,7 @@ impl KDbExecutor<'_> {
     async fn query_graph_data(
         &self,
         sids: Vec<&str>,
-    ) -> anyhow::Result<HashMap<String, GraphData>> {
+    ) -> anyhow::Result<BTreeMap<String, GraphData>> {
         let c: Vec<GraphData> = self
             .qry_list(
                 SqlBuilder::read_all(GraphData::TABLE).r#where(Wheres::r#in(GraphData::SID, sids)),
@@ -114,7 +114,7 @@ impl GraphMapper for KDb {
             .as_executor()
             .query_graph_data(keys.iter().map(|e| e.as_str()).collect())
             .await?;
-        let mut others: HashMap<String, Value> = HashMap::new();
+        let mut others: BTreeMap<String, Value> = BTreeMap::new();
         for (k, v) in content.others {
             others.insert(
                 k,
