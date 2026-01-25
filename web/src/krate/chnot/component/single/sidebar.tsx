@@ -16,6 +16,7 @@ import {
 } from "../../store";
 import Header from "../header/chnot-sidebar-header";
 import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
+import { chnotMetaCommit } from "../../service";
 
 const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
   const {
@@ -26,6 +27,7 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     clearCache,
     setCurOtid,
     changeCompCurOtid,
+    unvalidate,
   } = useChnotSingleStore((store) => {
     return {
       curOtid: store.curOtid,
@@ -35,6 +37,7 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
       clearCache: store.clearCache,
       setCurOtid: store.setCurOtid,
       changeCompCurOtid: store.changeCompCurOtid,
+      unvalidate: store.unvalidate,
     };
   });
 
@@ -76,7 +79,57 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     }
   }, [tags, searchStr, clearCache, fetchMore, kinds, mkspaces]);
 
-  const ph = useCallback(() => {}, []);
+  const handleTogglePin = useCallback(
+    async (otid: TID) => {
+      const meta = mapByOtid.cache.get(otid)?.meta;
+      if (meta) {
+        chnotMetaCommit({
+          metas: [
+            {
+              ...meta,
+              pin_it: !meta.pin_tid,
+            },
+          ],
+        });
+      }
+    },
+    [mapByOtid],
+  );
+
+  const handleArchive = useCallback(
+    async (otid: TID) => {
+      const meta = mapByOtid.cache.get(otid)?.meta;
+      if (meta) {
+        chnotMetaCommit({
+          metas: [
+            {
+              ...meta,
+              archive: !meta.archive_tid,
+            },
+          ],
+        });
+      }
+    },
+    [mapByOtid],
+  );
+
+  const handleChangeKspace = useCallback(
+    async (otid: TID, kspace: string) => {
+      const meta = mapByOtid.cache.get(otid)?.meta;
+      if (meta) {
+        chnotMetaCommit({
+          metas: [
+            {
+              ...meta,
+              kspace: kspace,
+            },
+          ],
+        });
+      }
+    },
+    [mapByOtid],
+  );
+
   const handleSetCurOtid = useCallback(
     (curOtid?: TID) => {
       setCurOtid(curOtid);
@@ -86,6 +139,10 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     },
     [changeCompCurOtid, setCurOtid],
   );
+
+  const handleUnvalidate = useCallback((toRemoves: TID[]) => {
+    unvalidate(toRemoves);
+  }, []);
 
   return (
     <Sidebar>
@@ -123,9 +180,10 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 showKSpace={mkspaces.length > 0}
                 isCurrent={curOtid === chnot.meta.otid}
                 setCurOtid={handleSetCurOtid}
-                unvalidate={ph}
-                onArchive={ph}
-                onTogglePin={ph}
+                unvalidate={handleUnvalidate}
+                onArchive={handleArchive}
+                onTogglePin={handleTogglePin}
+                onChangeKspace={handleChangeKspace}
               />
             ))}
           </KPageList>

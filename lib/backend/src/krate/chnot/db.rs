@@ -608,7 +608,14 @@ impl ChnotMapper for KDb {
             }),
         ]))
         .order_by([
-            OrderBy::Desc(cm.pin_tid().twn()),
+            OrderBy::Desc(
+                format!(
+                    "case when {} is null then 0 else {} end",
+                    cm.pin_tid().twn(),
+                    cm.pin_tid().twn()
+                )
+                .into(),
+            ),
             OrderBy::Desc(cm.otid().twn()),
         ])
         .build();

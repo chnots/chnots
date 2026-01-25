@@ -26,7 +26,7 @@ import { chnotShortDate } from "@/lib/date-utils";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import type { ChnotKind } from "../po";
-import { chnotThreadMetaOverwrite } from "../service";
+import { chnotMetaCommit, chnotThreadMetaOverwrite } from "../service";
 import { ChnotKindIcon } from "./kind-icon";
 
 const ChnotSidebarTagItem = React.forwardRef(
@@ -73,15 +73,17 @@ const ChnotSidebarItem = React.forwardRef(
       unvalidate,
       onArchive,
       onTogglePin,
+      onChangeKspace,
     }: {
       item: StateChnotLike;
       showKSpace: boolean;
       isCurrent?: boolean;
       kind?: ChnotKind;
-      onArchive(): void;
-      onTogglePin(): void;
+      onArchive(otid: TID): void;
+      onTogglePin(otid: TID): void;
       setCurOtid(cutOtid?: TID): void;
       unvalidate(toRemoves: TID[]): void;
+      onChangeKspace(otid: TID, kspace: string): Promise<void>;
     },
     _ref: ForwardedRef<HTMLLIElement>,
   ) => {
@@ -150,11 +152,11 @@ const ChnotSidebarItem = React.forwardRef(
             side={isMobile ? "bottom" : "right"}
             align={isMobile ? "end" : "start"}
           >
-            <DropdownMenuItem onClick={onTogglePin}>
+            <DropdownMenuItem onClick={() => onTogglePin(item.meta.otid)}>
               <Icon.Pin className="text-muted-foreground" />
               <span>Pin</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onArchive}>
+            <DropdownMenuItem onClick={() => onArchive(item.meta.otid)}>
               <Icon.Trash2 className="text-muted-foreground" />
               <span>Archive</span>
             </DropdownMenuItem>
@@ -168,10 +170,7 @@ const ChnotSidebarItem = React.forwardRef(
                   <KSpaceSelectDropDownGroup
                     kspace={item.meta.kspace}
                     onSelect={(e) => {
-                      chnotThreadMetaOverwrite({
-                        meta_otid: item.meta.otid,
-                        kspace: e,
-                      }).then(() => {
+                      onChangeKspace(item.meta.otid, e).then(() => {
                         unvalidate([item.meta.otid]);
                       });
                     }}
