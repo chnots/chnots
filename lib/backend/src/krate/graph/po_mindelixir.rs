@@ -5,7 +5,7 @@ use chin_tools::{AResult, SharedStr};
 use serde::{Deserialize, Serialize, de};
 use serde_json::Value;
 
-use crate::util::digestutil::blake3_sum;
+use crate::util::digestutil::{blake3_sum, blake3_sum16};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -110,7 +110,7 @@ impl MindElixirNode {
         };
 
         let leaf = serde_json::to_string(&c)?;
-        let sid: SharedStr = blake3_sum(&leaf)?.into();
+        let sid: SharedStr = blake3_sum16(&leaf.as_bytes())?.into();
 
         result_map.insert(sid.clone(), leaf);
         Ok(sid)
@@ -174,7 +174,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
         let mut others_key = HashMap::new();
         for (k, v) in value.0.others {
             let cell = v.to_string();
-            let sid = blake3_sum(&cell)?;
+            let sid = blake3_sum16(&cell.as_bytes())?;
             data.insert(sid.clone(), cell);
             others_key.insert(k, sid);
         }
@@ -183,7 +183,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
             let mut values_key = vec![];
             for ele in vs {
                 let v = serde_json::to_string(&ele)?;
-                let sid = blake3_sum(&v)?;
+                let sid = blake3_sum16(&v.as_bytes())?;
                 data.insert(sid.clone(), v);
                 values_key.push(sid);
             }
@@ -196,7 +196,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
             let mut values_key = vec![];
             for ele in vs {
                 let v = serde_json::to_string(&ele)?;
-                let sid = blake3_sum(&v)?;
+                let sid = blake3_sum16(&v.as_bytes())?;
                 data.insert(sid.clone(), v);
                 values_key.push(sid);
             }

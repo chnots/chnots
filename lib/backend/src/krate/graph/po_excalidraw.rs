@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize, de};
 use serde_json::Value;
 
-use crate::{krate::graph::GetKeys, util::digestutil::blake3_sum};
+use crate::{
+    krate::graph::GetKeys,
+    util::digestutil::{blake3_sum, blake3_sum16},
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExcalidrawDataV2<T> {
@@ -66,14 +69,14 @@ impl TryFrom<ExcalidrawDataV2Dto> for ExcalidrawDataV2Po {
         let mut elements_key = vec![];
         for ele in value.0.elements {
             let cell = ele.to_string();
-            let sid = blake3_sum(&cell)?;
+            let sid = blake3_sum16(&cell.as_bytes())?;
             data.insert(sid.clone(), cell);
             elements_key.push(sid);
         }
         let mut others_key = HashMap::new();
         for (k, v) in value.0.others {
             let cell = v.to_string();
-            let sid = blake3_sum(&cell)?;
+            let sid = blake3_sum16(&cell.as_bytes())?;
             data.insert(sid.clone(), cell);
             others_key.insert(k, sid);
         }

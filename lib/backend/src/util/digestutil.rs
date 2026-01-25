@@ -61,9 +61,21 @@ pub(crate) fn de_gzip_base64_blake3(gbb: GzipdBase64Blake3) -> AResult<bytes::By
 }
 
 #[inline]
-pub(crate) fn blake3_sum(s: &str) -> AResult<String> {
+pub(crate) fn blake3_sum<const LEN: usize>(s: &[u8]) -> AResult<String> {
     let mut hasher = blake3::Hasher::new();
-    let hasher = hasher.update(s.as_bytes());
-    let hash = hasher.finalize().to_string();
-    Ok(hash)
+    hasher.update(s);
+
+    let mut reader = hasher.finalize_xof();
+
+    let mut output = [0u8; LEN];
+
+    reader.read(&mut output)?;
+    let ohex = hex::encode(output);
+
+    Ok(ohex)
+}
+
+#[inline]
+pub(crate) fn blake3_sum16(s: &[u8]) -> AResult<String> {
+    blake3_sum::<16>(s)
 }
