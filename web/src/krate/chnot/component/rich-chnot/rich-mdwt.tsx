@@ -81,9 +81,9 @@ const RichMdwt = ({
   return (
     <div
       className={cn(
-        "w-full p-1 m-1 h-full",
+        "w-full p-1 h-full",
         isMobile || chnots.length === 0
-          ? "flex flex-col divide-y max-w-4xl border"
+          ? "flex flex-col divide-y max-w-4xl"
           : "grid grid-cols-2 divide-x",
       )}
     >

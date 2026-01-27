@@ -227,6 +227,7 @@ impl ChnotMapper for KDb {
         let cto_otid = cto.otid().field_name;
         let korder_name = cto.korder().field_name;
 
+        #[derive(Debug)]
         struct OtidAndOrder {
             otid: TID,
             korder: i64,
@@ -257,12 +258,16 @@ impl ChnotMapper for KDb {
             .map(|(index, o)| (o.otid, (index, o)))
             .collect();
         let mut to_remove_list: Vec<TID> = vec![];
-        saved_orders.into_iter().for_each(|e| {
-            let oo = to_save_map.get(&e.otid).map(|cc| (cc.1.otid, cc.0));
-            if oo.is_none_or(|(_, order)| order as i64 != e.korder) {
-                to_remove_list.push(e.otid);
+        saved_orders.into_iter().for_each(|saved_otid_and_order| {
+            let to_save_otid_and_order = to_save_map
+                .get(&saved_otid_and_order.otid)
+                .map(|(order, data)| (data.otid, *order));
+            if to_save_otid_and_order
+                .is_none_or(|(_, order)| order as i64 != saved_otid_and_order.korder)
+            {
+                to_remove_list.push(saved_otid_and_order.otid);
             } else {
-                to_save_map.remove(&e.otid);
+                to_save_map.remove(&saved_otid_and_order.otid);
             }
         });
         for ele in to_remove_list {
@@ -318,7 +323,8 @@ impl ChnotMapper for KDb {
                 .r#where(Wheres::and([Wheres::equal(
                     ChnotThreadOrder::THREAD_OTID.prefix_with_sep(ChnotThreadOrder::TABLE, "."),
                     req.thread_otid,
-                )])),
+                )]))
+                .order_by([OrderBy::Asc(ChnotThreadOrder::KORDER.into())]),
                 |row| ChnotMeta::try_from(&row),
             )
             .await?;
@@ -451,7 +457,7 @@ impl ChnotMapper for KDb {
             )
             .into(),
         )
-        .wheres(Wheres::and([ctm.kspace().v_in(req.get_spaces())]))
+        .wheres(ctm.kspace().v_in(req.get_spaces()))
         .order_by([
             OrderBy::Desc(ctm.pin_tid().twn()),
             OrderBy::Desc(ctm.otid().twn()),

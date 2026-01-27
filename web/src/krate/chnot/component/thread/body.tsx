@@ -15,7 +15,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
@@ -33,6 +32,7 @@ import {
 } from "../../service";
 import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
+import Icon from "@/common/component/icon";
 
 enum ChnotState {
   Initialized,
@@ -44,15 +44,11 @@ const SortableRichMdwt = ({
   onPostSave,
   content,
   onChanged,
-  onAdd,
-  index,
 }: {
   otid: TID;
   onPostSave: (arg: PostSaveArg) => void;
   content: string;
   onChanged: () => void;
-  onAdd: (position: number) => void;
-  index: number;
 }) => {
   const {
     attributes,
@@ -71,21 +67,14 @@ const SortableRichMdwt = ({
 
   return (
     <div ref={setNodeRef} style={style} className="w-full" {...attributes}>
-      <div className="flex items-start space-x-1">
-        <div className="flex flex-col items-center mt-2 space-y-1">
+      <div className="flex items-start">
+        <div className="flex items-center justify-center mt-1 w-8">
           <div
             {...listeners}
             className="p-1 cursor-grab active:cursor-grabbing hover:bg-gray-100 rounded transition-colors"
             title="Drag Handler"
           >
-            <svg
-              className="w-4 h-4 text-gray-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              aria-hidden="true"
-            >
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-            </svg>
+            <Icon.GripVertical className="w-4 h-4" />
           </div>
         </div>
         <div className="flex-1">
@@ -126,6 +115,24 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     }),
   );
 
+  const handleOrderSave = useCallback(
+    async (chnotOrders: TID[]) => {
+      const toSaveChnotOrders = chnotOrders.filter(
+        (e) => savedChnotMetaRef.current.get(e) === ChnotState.Saved,
+      );
+      if (!arraysAreEqual(toSaveChnotOrders, savedChnotOrdersRef.current)) {
+        await chnotThreadOrderCommit({
+          thread_otid: threadMeta.otid,
+          orders: toSaveChnotOrders.map((e) => {
+            return { otid: e };
+          }),
+        });
+        savedChnotOrdersRef.current = toSaveChnotOrders;
+      }
+    },
+    [threadMeta],
+  );
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -134,7 +141,9 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         const oldIndex = items.indexOf(active.id as TID);
         const newIndex = items.indexOf(over?.id as TID);
 
-        return arrayMove(items, oldIndex, newIndex);
+        const newOrders = arrayMove(items, oldIndex, newIndex);
+        handleOrderSave(newOrders);
+        return newOrders;
       });
     }
   }, []);
@@ -192,7 +201,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         savedChnotThreadMetaRef.current = rsp.meta;
       }
 
-      console.log("chnotMeta", savedChnotMetaRef, arg.otid);
       if (savedChnotMetaRef.current.get(arg.otid) !== ChnotState.Saved) {
         await chnotMetaCommit({
           metas: [
@@ -206,18 +214,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         savedChnotMetaRef.current.set(arg.otid, ChnotState.Saved);
       }
 
-      const toSaveChnotOrders = chnotOrders.filter(
-        (e) => savedChnotMetaRef.current.get(e) === ChnotState.Saved,
-      );
-      if (!arraysAreEqual(toSaveChnotOrders, savedChnotOrdersRef.current)) {
-        await chnotThreadOrderCommit({
-          thread_otid: threadMeta.otid,
-          orders: toSaveChnotOrders.map((e) => {
-            return { otid: e };
-          }),
-        });
-        savedChnotOrdersRef.current = toSaveChnotOrders;
-      }
+      await handleOrderSave(chnotOrders);
     },
     [chnotOrders, threadMeta],
   );
@@ -248,19 +245,17 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                     }}
                     content={mdwtMap[otid]?.content ?? ""}
                     onChanged={(): void => {}}
-                    onAdd={handleAddBlock}
-                    index={index + 1}
                   />
 
                   <div className="flex items-center w-full">
                     <div className="flex justify-center w-8">
                       <button
                         type="button"
-                        onClick={() => handleAddBlock(0)}
+                        onClick={() => handleAddBlock(index + 1)}
                         className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        title="添加"
+                        title="Add"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Icon.Plus className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="flex-1 border-t border-gray-200 my-2"></div>
