@@ -15,7 +15,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import Icon from "@/common/component/icon";
 import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
 import type { MdwtRecord } from "@/krate/mdwt/po";
@@ -32,7 +33,7 @@ import {
 } from "../../service";
 import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
-import Icon from "@/common/component/icon";
+import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
 
 enum ChnotState {
   Initialized,
@@ -76,16 +77,14 @@ const SortableRichMdwt = ({
           </div>
         </div>
         <div className="flex-1">
-          <RichMdwt
-            otid={otid}
-            onPostSave={onPostSave}
-            content={content}
-          />
+          <RichMdwt otid={otid} onPostSave={onPostSave} content={content} />
         </div>
       </div>
     </div>
   );
 };
+
+const SortableRichMdwtMemo = memo(SortableRichMdwt);
 
 /**
  * This is the main component for the `Chnots` app.
@@ -101,7 +100,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const savedChnotMetaRef = useRef<Map<TID, ChnotState>>(new Map());
   const savedChnotOrdersRef = useRef<TID[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
-  const [chnotOrders, setChnotOrders] = useState<TID[]>([]);
+  const [chnotOrders, setChnotOrders] = useState<(TID | string)[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -112,11 +111,11 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     }),
   );
 
-  const handleOrderSave = useCallback(
-    async (chnotOrders: TID[]) => {
-      const toSaveChnotOrders = chnotOrders.filter(
-        (e) => savedChnotMetaRef.current.get(e) === ChnotState.Saved,
-      );
+  useEffect(() => {
+    (async () => {
+      const toSaveChnotOrders = chnotOrders
+        .filter((e) => typeof e === "number")
+        .filter((e) => savedChnotMetaRef.current.get(e) === ChnotState.Saved);
       if (!arraysAreEqual(toSaveChnotOrders, savedChnotOrdersRef.current)) {
         await chnotThreadOrderCommit({
           thread_otid: threadMeta.otid,
@@ -126,9 +125,8 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         });
         savedChnotOrdersRef.current = toSaveChnotOrders;
       }
-    },
-    [threadMeta],
-  );
+    })();
+  }, [threadMeta, chnotOrders]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -139,17 +137,15 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         const newIndex = items.indexOf(over?.id as TID);
 
         const newOrders = arrayMove(items, oldIndex, newIndex);
-        handleOrderSave(newOrders);
         return newOrders;
       });
     }
   }, []);
 
-  const handleAddBlock = useCallback((position: number) => {
-    const newTid = genTID();
+  const handleAddBlock = useCallback((position: number, find: boolean) => {
     setChnotOrders((prev) => {
       const newOrders = [...prev];
-      newOrders.splice(position, 0, newTid);
+      newOrders.splice(position, 0, find ? "find-" + genTID() : genTID());
       return newOrders;
     });
   }, []);
@@ -187,8 +183,43 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     })();
   }, [threadMeta]);
 
+  const handleSearchAdd = useCallback(
+    async (otidMap: Map<string, TID>) => {
+      const mdwtMap = await mdwtRecordList({
+        mdwt_otids: [...otidMap.values()],
+      });
+      if (Object.keys(mdwtMap.mdwt_map).length > 0) {
+        setMdwtMap((prev) => {
+          return { ...prev, ...mdwtMap.mdwt_map };
+        });
+        const savedMdwts = savedChnotMetaRef.current;
+        for (const k in mdwtMap.mdwt_map) {
+          savedMdwts.set(Number(k), ChnotState.Saved);
+        }
+        setChnotOrders((prev) => {
+          return prev.map((e) => {
+            if (typeof e === "string") {
+              const otid = otidMap.get(e);
+              if (otid) {
+                return otid;
+              } else {
+                return e;
+              }
+            } else {
+              return e;
+            }
+          });
+        });
+      }
+    },
+    [setMdwtMap],
+  );
+
   const handlePostSaveOnChnot = useCallback(
     async (arg: PostSaveArg) => {
+      if (arg.saveState !== SaveState.Saved) {
+        return;
+      }
       if (!savedChnotThreadMetaRef.current) {
         const req: ChnotThreadMetaCommitReq = {
           meta_otid: threadMeta.otid,
@@ -210,8 +241,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         });
         savedChnotMetaRef.current.set(arg.otid, ChnotState.Saved);
       }
-
-      await handleOrderSave(chnotOrders);
     },
     [chnotOrders, threadMeta],
   );
@@ -231,33 +260,46 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
               items={chnotOrders}
               strategy={verticalListSortingStrategy}
             >
-              {chnotOrders.map((otid, index) => (
-                <React.Fragment key={otid}>
-                  <SortableRichMdwt
-                    otid={otid}
-                    onPostSave={(arg: PostSaveArg) => {
-                      if (arg.saveState === SaveState.Saved) {
-                        handlePostSaveOnChnot(arg);
-                      }
-                    }}
-                    content={mdwtMap[otid]?.content ?? ""}
-                  />
+              {chnotOrders.map((otid, index) => {
+                return typeof otid === "number" ? (
+                  <React.Fragment key={otid}>
+                    <SortableRichMdwtMemo
+                      otid={otid}
+                      onPostSave={handlePostSaveOnChnot}
+                      content={mdwtMap[otid]?.content ?? ""}
+                    />
 
-                  <div className="flex items-center w-full">
-                    <div className="flex justify-center w-8">
+                    <div className="flex items-center w-full">
+                      <div className="flex justify-center w-8">
+                        <button
+                          type="button"
+                          onClick={() => handleAddBlock(index + 1, false)}
+                          className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          title="Add"
+                        >
+                          <Icon.Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => handleAddBlock(index + 1)}
+                        onClick={() => handleAddBlock(index + 1, true)}
                         className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                         title="Add"
                       >
-                        <Icon.Plus className="w-4 h-4" />
+                        <Icon.TextSearch className="w-4 h-4" />
                       </button>
+                      <div className="flex-1 border-t border-gray-200 my-2"></div>
                     </div>
-                    <div className="flex-1 border-t border-gray-200 my-2"></div>
-                  </div>
-                </React.Fragment>
-              ))}
+                  </React.Fragment>
+                ) : (
+                  <MdwtChnotSelector
+                    key={otid}
+                    onSelect={(tOtid) =>
+                      handleSearchAdd(new Map([[otid, tOtid]]))
+                    }
+                  />
+                );
+              })}
             </SortableContext>
           </div>
         </DndContext>
