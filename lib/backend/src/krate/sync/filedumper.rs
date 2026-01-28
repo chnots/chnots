@@ -191,6 +191,7 @@ impl ShareAppState {
         self.dump_kspace_to_file(start_type, &backup_dir).await?;
         self.dump_ktab_to_file(start_type, &backup_dir).await?;
         self.dump_llmchat_to_file(start_type, &backup_dir).await?;
+        self.dump_mdwt_to_file(start_type, &backup_dir).await?;
 
         Ok(())
     }
@@ -203,6 +204,7 @@ impl ShareAppState {
         self.sync_kspace(endpoint).await?;
         self.sync_ktab(endpoint).await?;
         self.sync_llmchat(endpoint).await?;
+        self.sync_mdwts(endpoint).await?;
         info!("finished to sync with {endpoint:?}");
 
         Ok(())
