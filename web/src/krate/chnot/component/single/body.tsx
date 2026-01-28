@@ -113,7 +113,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     </div>
   ) : (
     <div className="flex flex-col w-full items-center m-0 p-1 h-full">
-      <RichMdwt onChanged={handleChange} {...props} />
+      <RichMdwt {...props} />
     </div>
   );
 };
