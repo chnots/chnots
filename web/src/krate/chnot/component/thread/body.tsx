@@ -43,12 +43,10 @@ const SortableRichMdwt = ({
   otid,
   onPostSave,
   content,
-  onChanged,
 }: {
   otid: TID;
   onPostSave: (arg: PostSaveArg) => void;
   content: string;
-  onChanged: () => void;
 }) => {
   const {
     attributes,
@@ -82,7 +80,6 @@ const SortableRichMdwt = ({
             otid={otid}
             onPostSave={onPostSave}
             content={content}
-            onChanged={onChanged}
           />
         </div>
       </div>
@@ -244,7 +241,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                       }
                     }}
                     content={mdwtMap[otid]?.content ?? ""}
-                    onChanged={(): void => {}}
                   />
 
                   <div className="flex items-center w-full">

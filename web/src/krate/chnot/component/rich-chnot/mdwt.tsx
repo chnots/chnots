@@ -112,10 +112,8 @@ const MdwtChnot = ({
   readonly,
   onPostSave,
   content: initialContent,
-  onContentChange,
 }: RichPropProps & {
   content?: string;
-  onContentChange?: (content: string) => void;
 }) => {
   // use RefObject to avoid rerender
   const cachedContentRef = useRef<string | undefined>(initialContent);
@@ -132,16 +130,13 @@ const MdwtChnot = ({
         const mdwt = rsp.mdwt_map[otid];
         if (mdwt?.content) {
           setContent(mdwt.content);
-          if (onContentChange && cachedContentRef.current !== mdwt.content) {
-            onContentChange(mdwt.content);
-          }
         } else {
           setContent("");
         }
         cachedContentRef.current = mdwt?.content;
       });
     }
-  }, [initialContent, onContentChange, otid]);
+  }, [initialContent, otid]);
 
   const directlySave = async () => {
     if (toSaveArg.current) {
@@ -186,12 +181,9 @@ const MdwtChnot = ({
         },
       };
       toSaveArg.current = req;
-      if (onContentChange) {
-        onContentChange(content);
-      }
       debounceSave();
     },
-    [debounceSave, onContentChange, otid],
+    [debounceSave, otid],
   );
 
   return readonly ? (

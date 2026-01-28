@@ -29,13 +29,11 @@ const RichMdwt = ({
   otid,
   readonly,
   content: initialContent,
-  onChanged,
 }: {
   onPostSave: (arg: PostSaveArg) => void;
   otid: TID;
   readonly?: boolean;
   content?: string;
-  onChanged: (content: string) => void;
 }) => {
   const { currentKSpace } = useKSpaceStore((e) => {
     return {
@@ -73,11 +71,6 @@ const RichMdwt = ({
     updateChnots(initialContent);
   }, []);
 
-  const handleContentChange = useCallback((content: string) => {
-    updateChnots(content);
-    onChanged(content);
-  }, []);
-
   return (
     <div
       className={cn(
@@ -92,7 +85,6 @@ const RichMdwt = ({
         readonly={readonly}
         onPostSave={onPostSave}
         content={initialContent}
-        onContentChange={handleContentChange}
         fullscreen={false}
         onSetFullscreen={() => {}}
       />
