@@ -131,6 +131,7 @@ pub(crate) struct ChnotThreadOrder {
     #[gts_type = "i64"]
     pub otid: TID,
 
+    #[gts_primary]
     #[gts_key]
     #[gts_type = "i64"]
     pub thread_otid: TID,
@@ -157,7 +158,7 @@ impl TryFrom<&KDbRow> for ChnotThreadOrder {
 
 impl Curd for ChnotThreadOrder {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.otid)
+        Self::pkey_cond(self.otid, self.thread_otid)
     }
 
     fn tid(&self) -> TID {
