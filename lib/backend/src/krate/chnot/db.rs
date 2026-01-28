@@ -496,31 +496,19 @@ impl ChnotMapper for KDb {
         if !metas.data.is_empty() {
             let mr = MdwtRecordTable::new("mr");
             let fetch_titles = SqlReader::builder(
-                [cto.thread_otid().erased(), mr.content().erased()],
-                Joins::new(Froms::Table {
-                    table_name: cto.table(),
-                    alias: cto.alias,
-                })
-                .join(JoinTable {
-                    join_type: JoinType::LeftJoin,
-                    table: Froms::Table {
-                        table_name: mr.table(),
-                        alias: mr.alias,
-                    },
-                    conds: [(mr.otid(), cto.otid()).into()].into(),
-                })
-                .into(),
+                [mr.otid().erased(), mr.content().erased()],
+                Froms::Table {
+                    table_name: mr.table(),
+                    alias: mr.alias,
+                },
             )
-            .wheres(Wheres::and([
-                // we only focus on the first chnot
-                cto.korder().v_eq(0),
-                // limit thread otids
-                cto.thread_otid()
+            .wheres(
+                mr.otid()
                     .v_in(metas.data.iter().map(|m| m.meta.otid).collect()),
-            ]))
+            )
             .build();
             let content = mr.content().field_name;
-            let otid = cto.thread_otid().field_name;
+            let otid = mr.otid().field_name;
 
             let titles: Vec<(TID, String)> = self
                 .conn()
