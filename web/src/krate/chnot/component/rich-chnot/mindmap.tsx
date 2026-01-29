@@ -14,42 +14,10 @@ import MindElixirReact, {
   type MindElixirReactRef,
 } from "@/krate/graph/mind-elixir";
 import { BASE_URL } from "@/lib/request";
-import { kfileInlineUpload, kfileUpload } from "@/krate/kfile/service";
+import { kfileUpload } from "@/krate/kfile/service";
 import { genTID, genUID } from "@/lib/id_util";
-
-export async function blobToBase64DataUrl(blob: Blob): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("not valid base64 string"));
-      }
-    };
-
-    reader.onerror = () => {
-      reject(new Error("error occured when reading the base64"));
-    };
-
-    reader.onabort = () => {
-      reject(new Error("the read action is aborted"));
-    };
-
-    reader.readAsDataURL(blob);
-  });
-}
-
-export async function imageBlobToBase64DataUrl(
-  imageBlob: Blob,
-): Promise<string> {
-  if (!imageBlob.type.startsWith("image/")) {
-    throw new TypeError(`the input is no a image: ${imageBlob.type}`);
-  }
-
-  return await blobToBase64DataUrl(imageBlob);
-}
+import { snapdom } from "@zumer/snapdom";
+import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
 
 const MindMapChnot = ({
   otid,
@@ -63,7 +31,7 @@ const MindMapChnot = ({
   const mindELixirRef = useRef<MindElixirReactRef>(null);
 
   useEffect(() => {
-    fetchMindExilir(otid )
+    fetchMindExilir(otid)
       .then((fetchedState) => {
         if (fetchedState) {
           setData(fetchedState);
@@ -166,9 +134,13 @@ const MindMapChnot = ({
   return (
     <div className="w-full flex flex-col h-full">
       {readonly ? (
-        <div className="flex h-full justify-center items-center w-full">
-          <MindElixirReact data={data} editable={false} toolBar={false} />
-        </div>
+        data ? (
+          <div className="flex h-full justify-center items-center w-full">
+            <MindElixirPreview data={data} />
+          </div>
+        ) : (
+          <div>Loading</div>
+        )
       ) : (
         <MindElixirReact {...options} />
       )}
