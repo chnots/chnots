@@ -26,7 +26,6 @@ import { chnotShortDate } from "@/lib/date-utils";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import type { ChnotKind } from "../po";
-import { chnotMetaCommit, chnotThreadMetaOverwrite } from "../service";
 import { ChnotKindIcon } from "./kind-icon";
 
 const ChnotSidebarTagItem = React.forwardRef(
@@ -87,7 +86,6 @@ const ChnotSidebarItem = React.forwardRef(
     },
     _ref: ForwardedRef<HTMLLIElement>,
   ) => {
-    console.log("render item", item.meta.otid);
     const { isMobile } = useSidebar();
 
     const title = item.title?.startsWith("# ")

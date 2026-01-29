@@ -10,7 +10,7 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
 import type { TID } from "@/lib/id_util";
 import {
-  type ChnotViewType,
+  ChnotViewType,
   useChnotHeadStore,
   useChnotSingleStore,
 } from "../../store";
@@ -18,7 +18,7 @@ import Header from "../header/chnot-sidebar-header";
 import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
 import { chnotMetaCommit } from "../../service";
 
-const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
+const ChnotSingleSidebar = () => {
   const {
     curOtid,
     isFetchingNextPage,
@@ -147,7 +147,7 @@ const ChnotSingleSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
   return (
     <Sidebar>
       <SidebarHeader className="text-sm">
-        <Header viewType={viewType} />
+        <Header viewType={ChnotViewType.Single} />
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>

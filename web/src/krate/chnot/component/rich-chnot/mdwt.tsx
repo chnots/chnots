@@ -111,9 +111,11 @@ const MdwtChnot = ({
   otid,
   readonly,
   onPostSave,
+  onContentChange,
   content: initialContent,
 }: RichPropProps & {
   content?: string;
+  onContentChange?: (content: string) => void;
 }) => {
   // use RefObject to avoid rerender
   const cachedContentRef = useRef<string | undefined>(initialContent);
@@ -132,6 +134,9 @@ const MdwtChnot = ({
           setContent(mdwt.content);
         } else {
           setContent("");
+        }
+        if (onContentChange) {
+          onContentChange(mdwt.content);
         }
         cachedContentRef.current = mdwt?.content;
       });
@@ -173,7 +178,12 @@ const MdwtChnot = ({
   );
   const handleContentChange = useCallback(
     (content: string) => {
-      cachedContentRef.current = content;
+      if (content !== cachedContentRef.current) {
+        if (onContentChange) {
+          onContentChange(content);
+        }
+        cachedContentRef.current = content;
+      }
       const req: MdwtCommitReq = {
         mdwt: {
           otid: otid,

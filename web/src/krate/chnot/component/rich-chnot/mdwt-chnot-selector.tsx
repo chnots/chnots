@@ -10,8 +10,8 @@ import {
 
 import type { TID } from "@/lib/id_util";
 import type { ChnotSearchReq, ChnotSearchRspSingle } from "../../dto";
-import { ChnotKind } from "../../po";
 import { chnotSingleSearch } from "../../service";
+import { ChnotKindIcon } from "../kind-icon";
 
 const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
   const [query, setQuery] = useState("");
@@ -29,7 +29,7 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
     try {
       const req: ChnotSearchReq = {
         query: searchQuery,
-        kinds: [ChnotKind.MDWT],
+        kinds: [],
         with_archive: false,
         start_index: 0,
         page_size: 20,
@@ -39,7 +39,7 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
       console.log("data: ", response.data);
       setResults(response.data);
     } catch (error) {
-      console.error("Error searching MDWT chnots:", error);
+      console.error("Error searching chnots:", error);
       setResults([]);
     } finally {
       setIsLoading(false);
@@ -79,10 +79,10 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
   }, [results]);
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full px-10">
       <Command shouldFilter={false}>
         <CommandInput
-          placeholder="Search MDWT chnots..."
+          placeholder="Search chnots..."
           value={query}
           onValueChange={handleInputChange}
           className="w-full"
@@ -101,11 +101,12 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
                   }}
                 >
                   <div className="flex items-center gap-2">
+                    <ChnotKindIcon kind={result.meta.kind} />
                     <span className="text-sm text-muted-foreground">
                       {result.meta.kspace}
                     </span>
                     <span className="font-medium">
-                      {result.title || `MDWT ${result.meta.otid}`}
+                      {result.title || `${result.meta.otid}`}
                     </span>
                   </div>
                 </CommandItem>
@@ -113,7 +114,7 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
             ) : query ? (
               <CommandEmpty>No chnots found.</CommandEmpty>
             ) : (
-              <CommandEmpty>Type to search MDWT chnots...</CommandEmpty>
+              <CommandEmpty>Type to search chnots...</CommandEmpty>
             )}
           </CommandGroup>
         </CommandList>

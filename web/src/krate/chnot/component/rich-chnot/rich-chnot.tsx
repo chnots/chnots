@@ -122,7 +122,7 @@ const RichChnot = ({
         ) : kind === ChnotKind.LLMChat ? (
           <LLMChatChnot {...props} />
         ) : kind === ChnotKind.MindMapV1 ? (
-          <MindMapChnot {...props} />
+          <MindMapChnot {...props} readonly={true} />
         ) : (
           <ChnotKindSelector
             setKind={(kind: ChnotKind): void => {

@@ -17,12 +17,12 @@ const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
     <SidebarProvider>
       {viewType === ChnotViewType.Single ? (
         <>
-          <ChnotSingleSidebar viewType={ChnotViewType.Single} />
+          <ChnotSingleSidebar />
           <ChnotSingleMain className="w-full h-screen" />
         </>
       ) : viewType === ChnotViewType.Thread ? (
         <>
-          <ChnotThreadSidebar viewType={viewType} />
+          <ChnotThreadSidebar />
           <main className="w-full h-screen">
             <ChnotThreadMain />
           </main>

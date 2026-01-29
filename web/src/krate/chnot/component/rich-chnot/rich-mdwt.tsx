@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils";
 import { chnotMetaList } from "../../service";
 import MdwtChnot from "./mdwt";
 import RichChnot, { type PostSaveArg } from "./rich-chnot";
+import { useStateWithRef } from "@/hooks/use-state-ref";
 
 const parseChnotsFromContent = (content: string): TID[] => {
-  const regex = /\[\[([0-9]{16}?)\]\]/g;
+  console.log("parsecontent", content);
+  const regex = /\[\[([0-9]{16})\]\]/g;
   const matches: TID[] = [];
 
   // biome-ignore lint/suspicious/noImplicitAnyLet: old fashion
@@ -41,34 +43,25 @@ const RichMdwt = ({
     };
   });
 
-  const [chnots, setChnots] = useState<TID[]>([]);
-  const isMobile = useIsMobile();
-
-  const [_minHeight, setMinHeight] = useState<number | undefined>(200);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  useResizeObserver<HTMLDivElement>(bodyRef, (entry) => {
-    setMinHeight(entry.contentRect.height);
-  });
-
-  const updateChnots = useCallback(
-    async (content?: string) => {
-      const newChnots = content ? parseChnotsFromContent(content) : [];
-      if (!arraysAreEqual(chnots, newChnots)) {
-        const chnotMetas = await chnotMetaList({ otids: newChnots });
-        if (chnotMetas.metas.length > 0) {
-          chnotMetas.metas.forEach((cm) => {
-            cachedChnotMapByOtid.set(cm.otid, cm);
-          });
-        }
-        setChnots(newChnots);
-      }
-    },
-    [chnots],
+  console.log("content", initialContent);
+  const [chnots, setChnots, chnotsRef] = useStateWithRef<TID[]>(
+    initialContent ? parseChnotsFromContent(initialContent) : [],
   );
+  const isMobile = useIsMobile();
+  const bodyRef = useRef<HTMLDivElement>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fixed
-  useEffect(() => {
-    updateChnots(initialContent);
+  const handleContentChange = useCallback(async (content?: string) => {
+    const newChnots = content ? parseChnotsFromContent(content) : [];
+    if (!arraysAreEqual(chnotsRef.current, newChnots)) {
+      const chnotMetas = await chnotMetaList({ otids: newChnots });
+      if (chnotMetas.metas.length > 0) {
+        chnotMetas.metas.forEach((cm) => {
+          cachedChnotMapByOtid.set(cm.otid, cm);
+        });
+      }
+
+      setChnots(newChnots);
+    }
   }, []);
 
   return (
@@ -87,6 +80,7 @@ const RichMdwt = ({
         content={initialContent}
         fullscreen={false}
         onSetFullscreen={() => {}}
+        onContentChange={handleContentChange}
       />
       {chnots.length > 0 && (
         <div className="space-y-2 rounded-none" ref={bodyRef}>

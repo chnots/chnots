@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import KPageList from "@/common/component/kpagelist";
 import {
   Sidebar,
@@ -10,14 +10,15 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
 import type { TID } from "@/lib/id_util";
 import {
-  type ChnotViewType,
+  ChnotViewType,
   useChnotHeadStore,
   useChnotThreadStore,
 } from "../../store";
 import Header from "../header/chnot-sidebar-header";
 import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
+import { chnotThreadMetaOverwrite } from "../../service";
 
-const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
+const ChnotThreadSidebar = () => {
   const {
     curOtid,
     isFetchingNextPage,
@@ -26,6 +27,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     clearCache,
     setCurOtid,
     changeCompCurOtid,
+    unvalidate,
   } = useChnotThreadStore((store) => {
     return {
       curOtid: store.curOtid,
@@ -35,6 +37,7 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
       clearCache: store.clearCache,
       setCurOtid: store.setCurOtid,
       changeCompCurOtid: store.changeCompCurOtid,
+      unvalidate: store.unvalidate,
     };
   });
 
@@ -70,13 +73,68 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
     } else {
       setTagList(undefined);
     }
-    clearCache();
-  }, [tags, searchStr, clearCache]);
+    if (kinds || mkspaces) {
+      clearCache();
+      fetchMore();
+    }
+  }, [tags, searchStr, clearCache, fetchMore, kinds, mkspaces]);
 
+  const handleTogglePin = useCallback(
+    async (otid: TID) => {
+      const meta = mapByOtid.cache.get(otid)?.meta;
+      if (meta) {
+        chnotThreadMetaOverwrite({
+          meta_otid: otid,
+          pinned: !!meta.pin_tid && meta.pin_tid > 0,
+        });
+      }
+    },
+    [mapByOtid],
+  );
+
+  const handleArchive = useCallback(
+    async (otid: TID) => {
+      const meta = mapByOtid.cache.get(otid)?.meta;
+      if (meta) {
+        chnotThreadMetaOverwrite({
+          meta_otid: otid,
+          archive: true,
+        });
+      }
+    },
+    [mapByOtid],
+  );
+
+  const handleChangeKspace = useCallback(
+    async (otid: TID, kspace: string) => {
+      const meta = mapByOtid.cache.get(otid)?.meta;
+      if (meta) {
+        chnotThreadMetaOverwrite({
+          meta_otid: otid,
+          kspace: kspace,
+        });
+      }
+    },
+    [mapByOtid],
+  );
+
+  const handleSetCurOtid = useCallback(
+    (curOtid?: TID) => {
+      setCurOtid(curOtid);
+      if (changeCompCurOtid) {
+        changeCompCurOtid(curOtid);
+      }
+    },
+    [changeCompCurOtid, setCurOtid],
+  );
+
+  const handleUnvalidate = useCallback((toRemoves: TID[]) => {
+    unvalidate(toRemoves);
+  }, []);
   return (
     <Sidebar>
       <SidebarHeader className="text-sm">
-        <Header viewType={viewType} />
+        <Header viewType={ChnotViewType.Thread} />
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
@@ -107,16 +165,11 @@ const ChnotThreadSidebar = ({ viewType }: { viewType: ChnotViewType }) => {
                 key={chnot.meta.otid}
                 showKSpace={mkspaces.length > 0}
                 isCurrent={curOtid === chnot.meta.otid}
-                setCurOtid={(curOtid?: TID) => {
-                  setCurOtid(curOtid);
-                  if (changeCompCurOtid) {
-                    changeCompCurOtid(curOtid);
-                  }
-                }}
-                unvalidate={(_toRemoves: TID[]): void => {}}
-                onArchive={(): void => {}}
-                onTogglePin={(): void => {}}
-                onChangeKspace={async (otid, kspace) => {}}
+                setCurOtid={handleSetCurOtid}
+                unvalidate={handleUnvalidate}
+                onArchive={handleArchive}
+                onTogglePin={handleTogglePin}
+                onChangeKspace={handleChangeKspace}
               />
             ))}
           </KPageList>

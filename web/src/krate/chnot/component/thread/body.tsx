@@ -17,7 +17,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
-import LoadingPage from "@/common/pages/loading-page";
 import { SaveState } from "@/common/types";
 import type { MdwtRecord } from "@/krate/mdwt/po";
 import { mdwtRecordList } from "@/krate/mdwt/service";
@@ -35,6 +34,9 @@ import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
 import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
 import MdwtChnot from "../rich-chnot/mdwt";
+import { useChnotThreadStore } from "../../store";
+import { chnotShortDate } from "@/lib/date-utils";
+import RichChnot from "../rich-chnot/rich-chnot";
 
 enum ChnotState {
   Initialized,
@@ -45,10 +47,12 @@ const SortableRichMdwt = ({
   otid,
   onPostSave,
   content,
+  kspace,
 }: {
   otid: TID;
   onPostSave: (arg: PostSaveArg) => void;
   content: string;
+  kspace: string;
 }) => {
   const {
     attributes,
@@ -132,6 +136,12 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
+  const { overwrite } = useChnotThreadStore((store) => {
+    return {
+      overwrite: store.overwrite,
+    };
+  });
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -181,11 +191,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const handleRemoveBlock = useCallback((otid: TID | string) => {
     setChnotOrders((prev) => {
       const removed = prev.filter((e) => e !== otid);
-      if (removed.length === 0) {
-        return [genTID()];
-      } else {
-        return removed;
-      }
+      return removed;
     });
   }, []);
 
@@ -200,22 +206,18 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           savedChnotThreadMetaRef.current = rsp.thread_meta;
         }
 
-        if (rsp.chnot_meta_sorted.length === 0) {
-          setChnotOrders([genTID()]);
-        } else {
-          const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
+        const chnotOtids = rsp.chnot_meta_sorted.map((cm) => cm.otid);
 
-          savedChnotOrdersRef.current = chnotOtids;
-          savedChnotMetaRef.current = new Map(
-            chnotOtids.map((obj) => [obj, ChnotState.Saved]),
-          );
+        savedChnotOrdersRef.current = chnotOtids;
+        savedChnotMetaRef.current = new Map(
+          chnotOtids.map((obj) => [obj, ChnotState.Saved]),
+        );
 
-          const mdwtMap = await mdwtRecordList({
-            mdwt_otids: [...chnotOtids, threadMeta.otid],
-          });
-          setChnotOrders(chnotOtids);
-          setMdwtMap(mdwtMap.mdwt_map);
-        }
+        const mdwtMap = await mdwtRecordList({
+          mdwt_otids: [...chnotOtids, threadMeta.otid],
+        });
+        setChnotOrders(chnotOtids);
+        setMdwtMap(mdwtMap.mdwt_map);
       } finally {
         setLoading(false);
       }
@@ -238,12 +240,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         setChnotOrders((prev) => {
           return prev.map((e) => {
             if (typeof e === "string") {
-              const otid = otidMap.get(e);
-              if (otid) {
-                return otid;
-              } else {
-                return e;
-              }
+              return otidMap.get(e) ?? e;
             } else {
               return e;
             }
@@ -254,20 +251,24 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     [setMdwtMap],
   );
 
+  const handleSaveThreadMeta = useCallback(async () => {
+    if (!savedChnotThreadMetaRef.current) {
+      const req: ChnotThreadMetaCommitReq = {
+        meta_otid: threadMeta.otid,
+        kspace: threadMeta.kspace,
+      };
+      const rsp = await chnotThreadMetaOverwrite(req);
+      savedChnotThreadMetaRef.current = rsp.meta;
+    }
+  }, [savedChnotThreadMetaRef]);
+
   const handlePostSaveOnChnot = useCallback(
     async (arg: PostSaveArg) => {
       if (arg.saveState !== SaveState.Saved) {
         return;
       }
-      if (!savedChnotThreadMetaRef.current) {
-        const req: ChnotThreadMetaCommitReq = {
-          meta_otid: threadMeta.otid,
-          kspace: threadMeta.kspace,
-        };
-        const rsp = await chnotThreadMetaOverwrite(req);
-        savedChnotThreadMetaRef.current = rsp.meta;
-      }
 
+      await handleSaveThreadMeta();
       if (savedChnotMetaRef.current.get(arg.otid) !== ChnotState.Saved) {
         await chnotMetaCommit({
           metas: [
@@ -280,24 +281,45 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         });
         savedChnotMetaRef.current.set(arg.otid, ChnotState.Saved);
       }
+
+      // force update.
+      setChnotOrders((prev) => [...prev]);
     },
     [chnotOrders, threadMeta],
+  );
+
+  const titleRef = useRef<string>(null);
+  const handleTitleSave = useCallback(
+    async (arg: PostSaveArg) => {
+      const meta = threadMeta;
+      await handleSaveThreadMeta();
+      if (arg.title !== titleRef.current) {
+        const title = arg.title ?? "";
+        titleRef.current = title;
+
+        overwrite({
+          meta: meta,
+          title: titleRef.current ?? undefined,
+        });
+      }
+    },
+    [threadMeta],
   );
 
   return (
     <div className="flex flex-col w-full items-center overflow-y-auto">
       {loading ? (
-        <LoadingPage />
+        <div />
       ) : (
         <div className="flex flex-col p-4 m-2 w-full items-center max-w-4xl">
           <div className="flex w-full">
-            <div className="p-2">
+            <div className="py-2 pr-2">
               <Icon.Heading className="w-6 h-6" />
             </div>
             <MdwtChnot
               otid={threadMeta.otid}
               fullscreen={false}
-              onPostSave={() => {}}
+              onPostSave={handleTitleSave}
               content={
                 mdwtMap[threadMeta.otid]?.content ?? `# Thread -- ${genTID()}`
               }
@@ -316,37 +338,41 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                 {chnotOrders.map((otid, index) => {
                   return typeof otid === "number" ? (
                     <React.Fragment key={otid}>
-                      <div className="flex items-center w-full">
-                        <div className="flex-1 border-t border-gray-200 my-2"></div>
+                      <div className="flex items-center w-full text-gray-400">
+                        <span className="flex-1 border-t border-gray-200 my-2" />
+                        {typeof otid === "number" && (
+                          <span className="text-xs mx-2">{otid}</span>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleRemoveBlock(otid)}
-                          className="p-1 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
+                          className="p-1  hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
                           title="Add"
                         >
                           <Icon.Trash2 className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleAddBlock(index, false)}
-                          className="p-1 text-gray-400 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
-                          title="Add"
-                        >
-                          <Icon.Plus className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => handleAddBlock(index, true)}
-                          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
+                          className="p-1  hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
                           title="Add"
                         >
                           <Icon.Search className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddBlock(index, false)}
+                          className="p-1  hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
+                          title="Add"
+                        >
+                          <Icon.Plus className="w-4 h-4" />
                         </button>
                       </div>
                       <SortableRichMdwtMemo
                         otid={otid}
                         onPostSave={handlePostSaveOnChnot}
                         content={mdwtMap[otid]?.content ?? ""}
+                        kspace={threadMeta.kspace}
                       />
                     </React.Fragment>
                   ) : (
@@ -371,6 +397,27 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                     </React.Fragment>
                   );
                 })}
+                <div className="flex text-gray-400 items-center w-full">
+                  <div className="flex-1 border-t border-gray-200 my-2"></div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddBlock(chnotOrders.length + 1, true)}
+                    className="p-1 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
+                    title="Add"
+                  >
+                    <Icon.Search className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleAddBlock(chnotOrders.length + 1, false)
+                    }
+                    className="p-1 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
+                    title="Add"
+                  >
+                    <Icon.Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </SortableContext>
             </div>
           </DndContext>
