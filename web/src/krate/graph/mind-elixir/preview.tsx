@@ -13,7 +13,7 @@ const MindElixirPreview = ({ data }: { data: MindElixirData }) => {
   useEffect(() => {
     (async () => {
       const container = document.createElement("div");
-      container.id = "vx-mindmap-temp";
+      container.id = "mindmao-elixir-temp";
       container.style.position = "absolute";
       container.style.left = "-9999px";
       container.style.top = "-9999px";
@@ -41,6 +41,7 @@ const MindElixirPreview = ({ data }: { data: MindElixirData }) => {
         const imgElement = await result.toSvg({ width: 100, height: 100 });
         setPreview(imgElement);
       } finally {
+        document.body.removeChild(container);
       }
     })();
   }, [data]);
