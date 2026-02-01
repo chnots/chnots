@@ -1,5 +1,4 @@
-import useResizeObserver from "@react-hook/resize-observer";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cachedChnotMapByOtid } from "@/krate/chnot/store";
 import { useKSpaceStore } from "@/krate/kspace/store";
@@ -8,11 +7,10 @@ import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import { chnotMetaList } from "../../service";
 import MdwtChnot from "./mdwt";
-import RichChnot, { type PostSaveArg } from "./rich-chnot";
 import { useStateWithRef } from "@/hooks/use-state-ref";
+import RichChnot, { type PostSaveArg } from "./rich-mdwt-side";
 
 const parseChnotsFromContent = (content: string): TID[] => {
-  console.log("parsecontent", content);
   const regex = /\[\[([0-9]{16})\]\]/g;
   const matches: TID[] = [];
 

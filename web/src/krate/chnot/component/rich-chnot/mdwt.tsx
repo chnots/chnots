@@ -27,7 +27,8 @@ import {
 } from "@/krate/mdwt/service";
 import { toentTodoEventGuess } from "@/krate/toent/service";
 import { chnotSingleSearch } from "../../service";
-import type { RichPropProps } from "./rich-chnot";
+import type { RichPropProps } from "./rich-mdwt-side";
+import { ChnotKind } from "../../po";
 
 const chnotCompletions = async (
   context: CompletionContext,
@@ -149,12 +150,14 @@ const MdwtChnot = ({
         onPostSave({
           otid,
           saveState: SaveState.Saving,
+          kind: ChnotKind.MDWT,
         });
         const rsp = await mdwtCommit(toSaveArg.current);
         onPostSave({
           otid,
           saveState: SaveState.Saved,
           title: rsp.title,
+          kind: ChnotKind.MDWT,
         });
         toSaveArg.current = null;
       } catch (_ex) {
@@ -162,6 +165,7 @@ const MdwtChnot = ({
           otid,
           saveState: SaveState.Error,
           title: "<unable to save>",
+          kind: ChnotKind.MDWT,
         });
       }
     }

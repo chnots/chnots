@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { RichPropProps } from "./rich-chnot";
 import Fullscreen from "./fullscreen";
 import {
   fetchMindExilir,
@@ -16,8 +15,9 @@ import MindElixirReact, {
 import { BASE_URL } from "@/lib/request";
 import { kfileUpload } from "@/krate/kfile/service";
 import { genTID, genUID } from "@/lib/id_util";
-import { snapdom } from "@zumer/snapdom";
 import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
+import type { RichPropProps } from "./rich-mdwt-side";
+import { ChnotKind } from "../../po";
 
 const MindMapChnot = ({
   otid,
@@ -29,6 +29,7 @@ const MindMapChnot = ({
   const [data, setData] = useState<MindElixirData>();
   const savingFlag = useRef<boolean>(false);
   const mindELixirRef = useRef<MindElixirReactRef>(null);
+  const dataCacheRef = useRef<MindElixirData>(undefined);
 
   useEffect(() => {
     fetchMindExilir(otid)
@@ -59,16 +60,35 @@ const MindMapChnot = ({
             otid,
             saveState: SaveState.Saved,
             title,
+            kind: ChnotKind.MindMapV1,
           });
+          dataCacheRef.current = toSaveState.data;
           savingFlag.current = false;
         },
         onFail: () => {
-          onPostSave({ otid, saveState: SaveState.Error, title });
+          onPostSave({
+            otid,
+            saveState: SaveState.Error,
+            title,
+            kind: ChnotKind.MindMapV1,
+          });
           savingFlag.current = false;
         },
       });
     },
     [otid, onPostSave],
+  );
+
+  const handleSetFullscreen = useCallback(
+    (flag: boolean) => {
+      if (!fullscreen) {
+        setData(dataCacheRef.current);
+      }
+      if (onSetFullscreen) {
+        onSetFullscreen(flag);
+      }
+    },
+    [onSetFullscreen],
   );
 
   const options = useMemo<MindElixirReactProps>(() => {
@@ -145,7 +165,7 @@ const MindMapChnot = ({
         <MindElixirReact {...options} />
       )}
       {fullscreen && (
-        <Fullscreen onSetFullscreen={onSetFullscreen}>
+        <Fullscreen onSetFullscreen={handleSetFullscreen}>
           <MindElixirReact {...options} />
         </Fullscreen>
       )}

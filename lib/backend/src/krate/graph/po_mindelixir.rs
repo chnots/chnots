@@ -5,7 +5,7 @@ use chin_tools::{AResult, SharedStr};
 use serde::{Deserialize, Serialize, de};
 use serde_json::Value;
 
-use crate::util::digestutil::{blake3_sum, blake3_sum16};
+use crate::util::digestutil::blake3_sum16;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]

@@ -11,7 +11,8 @@ import {
 } from "@/krate/ktab/service";
 import { genTID, genUID } from "@/lib/id_util";
 import Fullscreen from "./fullscreen";
-import type { RichPropProps } from "./rich-chnot";
+import type { RichPropProps } from "./rich-mdwt-side";
+import { ChnotKind } from "../../po";
 
 const TableChnot = ({
   otid,
@@ -83,6 +84,7 @@ const TableChnot = ({
               title: Object.values(meta.columns)
                 .map((e) => e.name)
                 .join("|"),
+              kind: ChnotKind.KTab,
             });
           }}
           readonly={false}
@@ -127,6 +129,7 @@ const TableChnot = ({
               title: Object.values(meta.columns)
                 .map((e) => e.name)
                 .join("|"),
+              kind: ChnotKind.KTab,
             });
           }}
           readonly={readonly || false}

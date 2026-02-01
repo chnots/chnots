@@ -10,7 +10,8 @@ import {
   unionFileSaved,
 } from "@/krate/graph/excalidraw/service";
 import Fullscreen from "./fullscreen";
-import type { RichPropProps } from "./rich-chnot";
+import type { RichPropProps } from "./rich-mdwt-side";
+import { ChnotKind } from "../../po";
 
 const ExcalidrawChnot = ({
   otid,
@@ -52,10 +53,16 @@ const ExcalidrawChnot = ({
             otid,
             saveState: SaveState.Saved,
             title,
+            kind: ChnotKind.ExcalidrawV1,
           });
         },
         onFail: () => {
-          onPostSave({ otid, saveState: SaveState.Error, title });
+          onPostSave({
+            otid,
+            saveState: SaveState.Error,
+            title,
+            kind: ChnotKind.ExcalidrawV1,
+          });
         },
         otid: otid,
       });

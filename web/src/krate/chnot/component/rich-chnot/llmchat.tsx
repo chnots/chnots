@@ -8,7 +8,8 @@ import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import type { TID } from "@/lib/id_util";
 import Fullscreen from "./fullscreen";
-import type { RichPropProps } from "./rich-chnot";
+import type { RichPropProps } from "./rich-mdwt-side";
+import { ChnotKind } from "../../po";
 
 const LLMChatChnot = ({
   otid,
@@ -71,6 +72,7 @@ const LLMChatChnot = ({
                   otid,
                   saveState: SaveState.Saved,
                   title: s.title,
+                  kind: ChnotKind.LLMChat,
                 });
               }}
               readonly={false}
@@ -88,6 +90,7 @@ const LLMChatChnot = ({
                     otid,
                     saveState: SaveState.Saved,
                     title: s.title,
+                    kind: ChnotKind.LLMChat,
                   });
                 }}
               />

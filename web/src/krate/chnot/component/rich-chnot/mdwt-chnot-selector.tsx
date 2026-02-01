@@ -12,8 +12,13 @@ import type { TID } from "@/lib/id_util";
 import type { ChnotSearchReq, ChnotSearchRspSingle } from "../../dto";
 import { chnotSingleSearch } from "../../service";
 import { ChnotKindIcon } from "../kind-icon";
+import type { ChnotKind } from "../../po";
 
-const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
+const MdwtChnotSelector = ({
+  onSelect,
+}: {
+  onSelect: (otid: TID, kind: ChnotKind) => void;
+}) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ChnotSearchRspSingle[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,8 +67,8 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
   );
 
   const handleSelect = useCallback(
-    (selectedOtid: TID) => {
-      onSelect(selectedOtid);
+    (selectedOtid: TID, kind: ChnotKind) => {
+      onSelect(selectedOtid, kind);
     },
     [onSelect],
   );
@@ -97,7 +102,7 @@ const MdwtChnotSelector = ({ onSelect }: { onSelect: (otid: TID) => void }) => {
                   key={result.meta.otid}
                   onSelect={() => {
                     console.warn("select, ", result.meta.otid);
-                    handleSelect(result.meta.otid);
+                    handleSelect(result.meta.otid, result.meta.kind);
                   }}
                 >
                   <div className="flex items-center gap-2">

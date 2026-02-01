@@ -9,10 +9,10 @@ import { useChnotSingleStore } from "../../store";
 import ExcalidrawChnot from "../rich-chnot/excalidraw";
 import KFileChnot from "../rich-chnot/kfile";
 import LLMChatChnot from "../rich-chnot/llmchat";
-import type { PostSaveArg } from "../rich-chnot/rich-chnot";
 import RichMdwt from "../rich-chnot/rich-mdwt";
 import TableChnot from "../rich-chnot/table";
 import MindMapChnot from "../rich-chnot/mindmap";
+import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);

@@ -41,7 +41,7 @@ const ChnotThreadMain = () => {
   );
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full max-h-full flex flex-col overflow-y-hidden">
       <ChnotThreadHeadbar
         onNew={() => {
           handleOtidChange(genTID());

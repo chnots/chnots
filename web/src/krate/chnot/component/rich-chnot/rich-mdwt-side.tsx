@@ -18,6 +18,7 @@ import MindMapChnot from "./mindmap";
 export type PostSaveArg = {
   otid: TID;
   saveState: SaveState;
+  kind: ChnotKind;
   title?: string;
 };
 

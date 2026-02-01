@@ -1,4 +1,5 @@
 export function arraysAreEqual<T>(arr1: T[], arr2: T[]): boolean {
+  console.log("begin to compare", arr1.length, arr2.length, arr1, arr2);
   if (arr1.length !== arr2.length) {
     return false;
   }
