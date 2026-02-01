@@ -3,6 +3,7 @@ WEB_DIR = web
 SERVER_DIR = server
 TOOLS_DIR = tools
 TAURI_DIR = tauri
+LIB_DIR= lib
 
 run-web:
 	cd $(WEB_DIR) && pnpm install && pnpm run dev
@@ -16,8 +17,9 @@ run-server-postgres:
 run-tauri-desktop:
 	cd $(TAURI_DIR) && pnpm tauri dev
 
-init:
-	git submodule update --init --recursive
+init-workflow:
+	cd $(LIB_DIR)	&& git clone github.com/wzhchin/chin-tools
+	cd $(LIB_DIR)	&& git clone github.com/wzhchin/mind-elixir-core
 	echo $(TOOLS_DIR)/_impl/git-pre-commit >> .git/hooks/pre-commit
 	chmod a+x .git/hooks/pre-commit
 	echo $(TOOLS_DIR)/_impl/git-post-commit >> .git/hooks/post-commit

@@ -70,7 +70,7 @@ jobs:
 
       - name: initialize
         run: |
-          make init
+          make init-workflow
           mkdir ./release
 
       - name: build web
