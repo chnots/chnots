@@ -102,7 +102,7 @@ const SortableRichMdwt = ({
       onPostSave: handlePostSave,
       onSetFullscreen: setFullscreen,
     };
-  }, [fullscreen]);
+  }, [fullscreen, otid]);
 
   return (
     <div
