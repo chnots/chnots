@@ -67,8 +67,36 @@ const removeStyleFromSvg_HACK = (svg: SVGElement) => {
   const viewBox = svg.getAttribute("viewBox");
   if (viewBox != null) {
     const viewBoxDimensions = viewBox.split(" ");
-    svg.setAttribute("width", viewBoxDimensions[2]);
-    svg.setAttribute("height", viewBoxDimensions[3]);
+    const x = parseFloat(viewBoxDimensions[0]);
+    const y = parseFloat(viewBoxDimensions[1]);
+    const width = parseFloat(viewBoxDimensions[2]);
+    const height = parseFloat(viewBoxDimensions[3]);
+
+    // Define minimum viewBox dimensions
+    const MIN_WIDTH = 1000;
+    const MIN_HEIGHT = 50;
+
+    let newX = x;
+    let newY = y;
+    let newWidth = width;
+    let newHeight = height;
+
+    // Add padding if viewBox is too small
+    if (width < MIN_WIDTH || height < MIN_HEIGHT) {
+      const paddingX = width < MIN_WIDTH ? (MIN_WIDTH - width) / 2 : 0;
+      const paddingY = height < MIN_HEIGHT ? (MIN_HEIGHT - height) / 2 : 0;
+
+      newX = x - paddingX;
+      newY = y - paddingY;
+      newWidth = width + paddingX * 2;
+      newHeight = height + paddingY * 2;
+
+      // Update viewBox with padding
+      svg.setAttribute("viewBox", `${newX} ${newY} ${newWidth} ${newHeight}`);
+    }
+
+    svg.setAttribute("width", newWidth.toString());
+    svg.setAttribute("height", newHeight.toString());
   }
 
   if (styleTag && styleTag.tagName === "style") {
@@ -89,7 +117,7 @@ export const ExcalidrawImage = ({
   width = "inherit",
   height = "inherit",
 }: Props): JSX.Element => {
-  const [Svg, setSvg] = useState<SVGElement | null>(null);
+  const [svg, setSvg] = useState<SVGElement | null>(null);
 
   useEffect(() => {
     const setContent = async () => {
@@ -119,17 +147,11 @@ export const ExcalidrawImage = ({
 
   return (
     <div
-      ref={(node) => {
-        if (node) {
-          if (imageContainerRef) {
-            imageContainerRef.current = node;
-          }
-        }
-      }}
+      ref={imageContainerRef}
       className={rootClassName ?? ""}
       style={containerStyle}
       // biome-ignore lint/security/noDangerouslySetInnerHtml: safe
-      dangerouslySetInnerHTML={{ __html: Svg?.outerHTML ?? "" }}
+      dangerouslySetInnerHTML={{ __html: svg?.outerHTML ?? "" }}
     />
   );
 };
