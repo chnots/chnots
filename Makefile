@@ -18,8 +18,8 @@ run-tauri-desktop:
 	cd $(TAURI_DIR) && pnpm tauri dev
 
 init-workflow:
-	cd $(LIB_DIR)	&& git clone github.com/wzhchin/chin-tools
-	cd $(LIB_DIR)	&& git clone github.com/wzhchin/mind-elixir-core
+	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/chin-tools
+	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/mind-elixir-core
 	echo $(TOOLS_DIR)/_impl/git-pre-commit >> .git/hooks/pre-commit
 	chmod a+x .git/hooks/pre-commit
 	echo $(TOOLS_DIR)/_impl/git-post-commit >> .git/hooks/post-commit
