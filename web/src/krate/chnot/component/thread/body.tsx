@@ -1,7 +1,9 @@
 import {
   closestCenter,
+  closestCorners,
   DndContext,
   type DragEndEvent,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -30,12 +32,12 @@ import {
   chnotThreadMetaOverwrite,
   chnotThreadOrderCommit,
 } from "../../service";
-import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
-import MdwtChnot from "../rich-chnot/mdwt";
 import { useChnotThreadStore } from "../../store";
+import { ChnotKindIcon } from "../kind-icon";
+import MdwtChnot from "../rich-chnot/mdwt";
+import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
 import RichChnot, { type PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import ChnotThreadSegment from "./segment";
-import { ChnotKindIcon } from "../kind-icon";
 import SortableRichMdwtMemo from "./segment";
 
 enum ChnotState {
@@ -64,6 +66,8 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const [chnotOrders, setChnotOrders] = useState<ChnotOrder[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  const [activeId, setActiveId] = useState<TID | string | null>(null);
+  const [overId, setOverId] = useState<TID | string | null>(null);
 
   const { overwrite } = useChnotThreadStore((store) => {
     return {
@@ -102,15 +106,26 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     })();
   }, [threadMeta, chnotOrders]);
 
+  const handleDragStart = useCallback((event: DragEndEvent) => {
+    setActiveId(event.active.id as TID | string);
+  }, []);
+
+  const handleDragOver = useCallback((event: DragEndEvent) => {
+    setOverId(event.over?.id as TID | string | null);
+  }, []);
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
+
+    setActiveId(null);
+    setOverId(null);
 
     if (active.id !== over?.id) {
       setChnotOrders((items) => {
         const oldIndex = items.findIndex((e) => e.otid === (active.id as TID));
         const newIndex = items.findIndex((e) => e.otid === (over?.id as TID));
 
-        if (oldIndex && newIndex) {
+        if (oldIndex !== undefined && newIndex !== undefined) {
           return arrayMove(items, oldIndex, newIndex);
         } else {
           return items;
@@ -261,8 +276,10 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           </div>
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
           >
             <div className="flex flex-col w-full items-center">
               <SortableContext
@@ -271,16 +288,22 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
               >
                 {chnotOrders.map((order, index) => {
                   return typeof order.otid === "number" ? (
-                    <SortableRichMdwtMemo
-                      otid={order.otid}
-                      index={index}
-                      kind={order.chnotKind}
-                      onPostSave={handlePostSaveOnChnot}
-                      content={mdwtMap[order.otid]?.content ?? ""}
-                      kspace={threadMeta.kspace}
-                      handleAddBlock={handleAddBlock}
-                      handleRemoveBlock={handleRemoveBlock}
-                    />
+                    <React.Fragment key={order.otid}>
+                      {activeId !== null && overId === order.otid && (
+                        <div className="w-full h-0.5 bg-blue-500 my-1" />
+                      )}
+                      <SortableRichMdwtMemo
+                        otid={order.otid}
+                        index={index}
+                        kind={order.chnotKind}
+                        onPostSave={handlePostSaveOnChnot}
+                        content={mdwtMap[order.otid]?.content ?? ""}
+                        kspace={threadMeta.kspace}
+                        handleAddBlock={handleAddBlock}
+                        handleRemoveBlock={handleRemoveBlock}
+                        isDragging={activeId === order.otid}
+                      />
+                    </React.Fragment>
                   ) : (
                     <React.Fragment key={order.otid}>
                       <div className="flex items-center w-full">
@@ -327,6 +350,11 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                 </div>
               </SortableContext>
             </div>
+            <DragOverlay>
+              {activeId !== null ? (
+                <div className="w-full h-0.5 bg-blue-500" />
+              ) : null}
+            </DragOverlay>
           </DndContext>
         </div>
       )}

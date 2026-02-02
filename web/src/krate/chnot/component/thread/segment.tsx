@@ -1,21 +1,20 @@
-import { mdwtCommit } from "@/krate/mdwt/service";
-import ExcalidrawChnot from "../rich-chnot/excalidraw";
-import KFileChnot from "../rich-chnot/kfile";
-import LLMChatChnot from "../rich-chnot/llmchat";
-import RichMdwt from "../rich-chnot/rich-mdwt";
-import TableChnot from "../rich-chnot/table";
-import MindMapChnot from "../rich-chnot/mindmap";
-
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import React, { memo, useCallback, useMemo, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
+import { mdwtCommit } from "@/krate/mdwt/service";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../po";
 import { chnotMetaCommit } from "../../service";
-import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import { ChnotKindIcon } from "../kind-icon";
+import ExcalidrawChnot from "../rich-chnot/excalidraw";
+import KFileChnot from "../rich-chnot/kfile";
+import LLMChatChnot from "../rich-chnot/llmchat";
+import MindMapChnot from "../rich-chnot/mindmap";
+import RichMdwt from "../rich-chnot/rich-mdwt";
+import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
+import TableChnot from "../rich-chnot/table";
 
 const SortableRichMdwt = ({
   otid,
@@ -26,6 +25,7 @@ const SortableRichMdwt = ({
   content,
   kspace,
   kind: initialKind,
+  isDragging: isItemDragging,
 }: {
   otid: TID;
   index: number;
@@ -35,6 +35,7 @@ const SortableRichMdwt = ({
   kind?: ChnotKind;
   handleAddBlock: (position: number, find: boolean) => void;
   handleRemoveBlock: (otid: string | TID) => void;
+  isDragging?: boolean;
 }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
   const titleRef = useRef<string | null>(null);
@@ -53,9 +54,7 @@ const SortableRichMdwt = ({
   const [fullscreen, setFullscreen] = useState<boolean>(false);
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging || isItemDragging ? 0.5 : 1,
   };
 
   const handlePostSave = useCallback(
