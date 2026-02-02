@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Fullscreen from "./fullscreen";
 import {
   fetchMindExilir,
@@ -18,6 +18,7 @@ import { genTID, genUID } from "@/lib/id_util";
 import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
 import type { RichPropProps } from "./rich-mdwt-side";
 import { ChnotKind } from "../../po";
+import { Button } from "@/common/component/ui/button";
 
 const MindMapChnot = ({
   otid,
@@ -25,23 +26,27 @@ const MindMapChnot = ({
   fullscreen,
   onPostSave,
   onSetFullscreen,
-}: RichPropProps) => {
+  showEditWhenEmpty,
+}: RichPropProps & { showEditWhenEmpty?: boolean }) => {
   const [data, setData] = useState<MindElixirData>();
   const savingFlag = useRef<boolean>(false);
   const mindELixirRef = useRef<MindElixirReactRef>(null);
   const dataCacheRef = useRef<MindElixirData>(undefined);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
+    setLoading(true);
     fetchMindExilir(otid)
       .then((fetchedState) => {
         if (fetchedState) {
           setData(fetchedState);
-        } else {
-          setData(undefined);
         }
       })
       .catch((_err) => {
         setData(undefined);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [otid]);
 
@@ -93,7 +98,6 @@ const MindMapChnot = ({
 
   const options = useMemo<MindElixirReactProps>(() => {
     return {
-      data,
       onChanged: (data) => {
         directlySave({
           otid,
@@ -158,8 +162,23 @@ const MindMapChnot = ({
           <div className="flex h-full justify-center items-center w-full">
             <MindElixirPreview data={data} />
           </div>
-        ) : (
+        ) : loading ? (
           <div>Loading</div>
+        ) : (
+          showEditWhenEmpty && (
+            <div className="p-3">
+              <Button
+                onClick={() => {
+                  if (onSetFullscreen) {
+                    onSetFullscreen(true);
+                  }
+                }}
+                variant={"outline"}
+              >
+                Click to Edit
+              </Button>
+            </div>
+          )
         )
       ) : (
         <MindElixirReact {...options} />
@@ -173,4 +192,6 @@ const MindMapChnot = ({
   );
 };
 
-export default MindMapChnot;
+const MindMapChnotMemo = memo(MindMapChnot);
+
+export default MindMapChnotMemo;

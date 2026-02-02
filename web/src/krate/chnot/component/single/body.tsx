@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { mdwtCommit } from "@/krate/mdwt/service";
@@ -80,12 +86,15 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     [kind, kspace, otid, overwrite, setCurOtid],
   );
 
-  const props = {
-    otid: otid,
-    readonly: false,
-    fullscreen: false,
-    onPostSave: handlePostSave,
-  };
+  const props = useMemo(() => {
+    return {
+      otid: otid,
+      readonly: false,
+      fullscreen: false,
+      onPostSave: handlePostSave,
+      showEditWhenEmpty: false,
+    };
+  }, [otid]);
 
   return kind === ChnotKind.ExcalidrawV1 ? (
     <div className="flex w-full h-full overflow-auto">

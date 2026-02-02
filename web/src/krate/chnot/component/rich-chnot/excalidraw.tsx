@@ -12,6 +12,7 @@ import {
 import Fullscreen from "./fullscreen";
 import type { RichPropProps } from "./rich-mdwt-side";
 import { ChnotKind } from "../../po";
+import { Button } from "@/common/component/ui/button";
 
 const ExcalidrawChnot = ({
   otid,
@@ -19,8 +20,10 @@ const ExcalidrawChnot = ({
   fullscreen,
   onPostSave,
   onSetFullscreen,
-}: RichPropProps) => {
-  console.log("rerender ExcalidrawChnot");
+  showEditWhenEmpty,
+}: RichPropProps & {
+  showEditWhenEmpty: boolean;
+}) => {
   const [state, setState] = useState<ExcalidrawChnotState>();
   const savedFilesRef = useRef(new Map<string, SaveFileCache>());
 
@@ -73,9 +76,24 @@ const ExcalidrawChnot = ({
   return (
     <div className="w-full flex flex-col">
       {readonly ? (
-        <div className="flex h-auto justify-center items-center w-full">
-          <ExcalidrawPreview state={state} className="w-8/12" />
-        </div>
+        state ? (
+          <div className="flex h-auto justify-center items-center w-full">
+            <ExcalidrawPreview state={state} className="w-8/12" />
+          </div>
+        ) : (
+          <div className="p-3">
+            <Button
+              onClick={() => {
+                if (onSetFullscreen) {
+                  onSetFullscreen(true);
+                }
+              }}
+              variant={"outline"}
+            >
+              Click to Edit
+            </Button>
+          </div>
+        )
       ) : (
         <ExcalidrawEditor otid={otid} readOnly={false} onSave={directlySave} />
       )}

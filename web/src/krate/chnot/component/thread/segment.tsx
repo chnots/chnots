@@ -22,7 +22,6 @@ const SortableRichMdwt = ({
   onPostSave,
   handleAddBlock,
   handleRemoveBlock,
-  content,
   kspace,
   kind: initialKind,
   isDragging: isItemDragging,
@@ -39,14 +38,9 @@ const SortableRichMdwt = ({
 }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
   const titleRef = useRef<string | null>(null);
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: otid });
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+    id: otid,
+  });
   const [kind, setKind] = useState<ChnotKind>(initialKind ?? ChnotKind.MDWT);
   const [fixedKind, setFixedKind] = useState<boolean>(
     initialKind !== undefined,
@@ -60,8 +54,8 @@ const SortableRichMdwt = ({
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
       const meta = {
-        otid: otid,
-        kind: kind,
+        otid: arg.otid,
+        kind: arg.kind,
         kspace: kspace,
         tid: genTID(),
       };
@@ -90,16 +84,18 @@ const SortableRichMdwt = ({
 
       setFixedKind(true);
     },
-    [kind, kspace, otid],
+    [kspace],
   );
 
   const props = useMemo(() => {
+    console.log("props changed");
     return {
       otid: otid,
       readonly: true,
       fullscreen,
       onPostSave: handlePostSave,
       onSetFullscreen: setFullscreen,
+      showEditWhenEmpty: true,
     };
   }, [fullscreen, otid]);
 
@@ -132,7 +128,7 @@ const SortableRichMdwt = ({
             </div>
             {Object.values(ChnotKind).map((e) => (
               <ChnotKindIcon
-                className="w-4 h-4 mx-1"
+                className="w-4 h-4 mx-1 hover:cursor-pointer"
                 kind={e}
                 key={e}
                 onClick={() => setKind(e)}
@@ -151,7 +147,7 @@ const SortableRichMdwt = ({
           className="p-1 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
           title="Edit"
         >
-          <Icon.Edit className="w-4 h-4 cursor-pointer" />{" "}
+          <Icon.Edit className="w-4 h-4 cursor-pointer" />
         </button>
 
         <button

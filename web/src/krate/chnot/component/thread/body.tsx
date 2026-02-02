@@ -1,5 +1,4 @@
 import {
-  closestCenter,
   closestCorners,
   DndContext,
   type DragEndEvent,
@@ -13,11 +12,9 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
 import type { MdwtRecord } from "@/krate/mdwt/po";
@@ -27,17 +24,14 @@ import { genTID, type TID } from "@/lib/id_util";
 import type { ChnotThreadMetaCommitReq } from "../../dto";
 import type { ChnotKind, ChnotThreadMeta } from "../../po";
 import {
-  chnotMetaCommit,
   chnotThreadMetaFetch,
   chnotThreadMetaOverwrite,
   chnotThreadOrderCommit,
 } from "../../service";
 import { useChnotThreadStore } from "../../store";
-import { ChnotKindIcon } from "../kind-icon";
 import MdwtChnot from "../rich-chnot/mdwt";
 import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
-import RichChnot, { type PostSaveArg } from "../rich-chnot/rich-mdwt-side";
-import ChnotThreadSegment from "./segment";
+import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import SortableRichMdwtMemo from "./segment";
 
 enum ChnotState {
@@ -90,11 +84,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         .filter((e) => typeof e === "number")
         .filter((e) => savedChnotOtidRef.current.get(e) === ChnotState.Saved);
       if (!arraysAreEqual(toSaveChnotOrderOtids, savedChnotOrdersRef.current)) {
-        console.log(
-          "chnot order commit chnotOrders: ",
-          chnotOrders,
-          savedChnotOrdersRef,
-        );
         await chnotThreadOrderCommit({
           thread_otid: threadMeta.otid,
           orders: toSaveChnotOrderOtids.map((e) => {
@@ -177,8 +166,12 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         const mdwtMap = await mdwtRecordList({
           mdwt_otids: [...savedChnotOrdersRef.current, threadMeta.otid],
         });
-        setChnotOrders(chnotOtids);
-        setMdwtMap(mdwtMap.mdwt_map);
+        if (chnotOtids.length > 0) {
+          setChnotOrders(chnotOtids);
+          setMdwtMap(mdwtMap.mdwt_map);
+        } else {
+          setChnotOrders([{ otid: genTID() }]);
+        }
       } finally {
         setLoading(false);
       }

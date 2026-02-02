@@ -92,6 +92,7 @@ const RichChnot = ({
     onSetFullscreen: (flag: boolean) => {
       setFullscreen(flag);
     },
+    showEditWhenEmpty: true,
   };
 
   return (
