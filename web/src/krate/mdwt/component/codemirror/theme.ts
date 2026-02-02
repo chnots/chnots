@@ -1,106 +1,144 @@
 import { EditorView } from "@codemirror/view";
 
-export const createCodemirrorTheme = () => {
-  const isDarkTheme = false;
+export const createCodemirrorTheme = (isDarkTheme = false) => {
   const editorNoGuttersSelector = "&:not(:has(> .cm-scroller > .cm-gutters))";
+
+  // shadcn/ui color palette (oklch values converted to approximate hex for CodeMirror)
+  const colors = isDarkTheme
+    ? {
+        background: "#242424",
+        foreground: "#fafafa",
+        muted: "#2a2a2a",
+        mutedForeground: "#a1a1a1",
+        border: "#363636",
+        accent: "#2a2a2a",
+        accentForeground: "#fafafa",
+        primary: "#fafafa",
+        primaryForeground: "#171717",
+        ring: "#525252",
+        destructive: "#7f1d1d",
+      }
+    : {
+        background: "#ffffff",
+        foreground: "#171717",
+        muted: "#f5f5f5",
+        mutedForeground: "#737373",
+        border: "#e5e5e5",
+        accent: "#f5f5f5",
+        accentForeground: "#171717",
+        primary: "#171717",
+        primaryForeground: "#fafafa",
+        ring: "#a3a3a3",
+        destructive: "#dc2626",
+      };
+
   const theme = {
     fontFamily:
-      "IBM Plex Mono, monospace, IBM Plex Sans SC, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif",
+      'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     fontSize: 14,
     fontSizeUnits: undefined,
     isDesktop: true,
     marginLeft: 0,
     marginRight: 0,
-    colorFaded: "#999",
+    colorFaded: colors.mutedForeground,
     listTabSize: 2,
-    blockQuoteOpacity: "0.5",
-    searchMarkerColor: "black",
-    searchMarkerBackgroundColor: "white",
+    blockQuoteOpacity: "0.7",
+    searchMarkerColor: colors.primaryForeground,
+    searchMarkerBackgroundColor: colors.primary,
   };
-  const monospaceStyle: Record<string, string> = {};
+
+  const monospaceStyle: Record<string, string> = {
+    fontFamily: theme.fontFamily,
+  };
+
   const baseGlobalStyle: Record<string, string> = {
-    color: "#222",
-    backgroundColor: "#fff",
-
-    // On iOS, apply system font scaling (e.g. font scaling
-    // set in accessibility settings).
+    color: colors.foreground,
+    backgroundColor: "transparent",
     font: "-apple-system-body",
-
-    // Fill container horizontally
     width: "100%",
     boxSizing: "border-box",
   };
-  const baseCursorStyle: Record<string, string> = {};
-  const baseSelectionStyle: Record<string, string> = {};
-  const blurredSelectionStyle: Record<string, string> = {};
+
+  const baseCursorStyle: Record<string, string> = {
+    borderLeftColor: colors.primary,
+    borderLeftWidth: "2px",
+  };
+
+  const baseSelectionStyle: Record<string, string> = {
+    backgroundColor: `${colors.primary}33`,
+  };
+
+  const blurredSelectionStyle: Record<string, string> = {
+    backgroundColor: `${colors.mutedForeground}26`,
+  };
 
   const baseContentStyle: Record<string, string | undefined> = {
     fontFamily: theme.fontFamily,
     fontSize: `${theme.fontSize}${theme.fontSizeUnits ?? "px"}`,
+    lineHeight: theme.isDesktop ? "1.6" : undefined,
+    color: colors.foreground,
+  };
 
-    // Avoid using units here -- 1.55em, for example, can cause lines to overlap
-    // if some lines contain text with a large enough font size.
-    lineHeight: theme.isDesktop ? "1.55" : undefined,
-  };
   const baseHeadingStyle = {
-    fontWeight: "bold",
-    fontFamily: theme.fontFamily,
+    fontWeight: "600",
+    fontFamily:
+      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    color: colors.foreground,
+    letterSpacing: "-0.025em",
   };
+
   return EditorView.theme({
     "&.cm-editor": {
       background: "transparent !important",
     },
+
     ".cm-content": {
-      padding: "0em",
+      padding: "0.5rem 0",
+      caretColor: colors.primary,
     },
+
     ".cm-lineWrapping": {
-      wordBreak: "break-all",
+      wordBreak: "break-word",
+      overflowWrap: "break-word",
     },
-    // Include &.CodeMirror to handle the case where additional CodeMirror 5 styles
-    // need to be overridden.
+
     "&, &.CodeMirror": baseGlobalStyle,
 
     ".cm-activeLine": {
-      backgroundColor: "transparent",
+      backgroundColor: `${colors.muted}80`,
+      borderRadius: "4px",
     },
 
     "& .cm-dropCursor": {
-      backgroundColor: isDarkTheme ? "white" : "black",
-      width: "1px",
+      backgroundColor: colors.primary,
+      width: "2px",
     },
 
-    // These must be !important or more specific than CodeMirror's built-ins
     "& .cm-content": {
-      fontFamily: theme.fontFamily,
       ...baseContentStyle,
-      paddingBottom: theme.isDesktop ? "5px" : null,
+      paddingBottom: theme.isDesktop ? "1rem" : "0.5rem",
       marginLeft: `${theme.marginLeft}px`,
       marginRight: `${theme.marginRight}px`,
     },
 
     "& .cm-listItem": {
-      // Needs to be !important because the tab-size is directly set on the element style
-      // attribute by CodeMirror. And the `EditorState.tabSize` function only accepts a
-      // number, while we need a "em" value to make it match the viewer tab size.
       tabSize: `${theme.listTabSize} !important`,
     },
 
     "&.cm-focused .cm-cursor": baseCursorStyle,
 
-    // The desktop app sets the font for these elements to a specific font.
-    // Override this.
     "& div, & span, & a": {
       fontFamily: "inherit",
     },
 
-    // Override the default border around CodeMirror panels
     "& > .cm-panels": {
-      border: "none",
+      border: `1px solid ${colors.border}`,
+      borderRadius: "0.5rem",
+      backgroundColor: colors.background,
+      margin: "0.5rem",
+      boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
     },
 
-    // &.cm-focused is used to give these styles higher specificity
-    // than the defaults.
-    // [selectionBackgroundSelector]: baseSelectionStyle,
     "&.cm-focused ::selection": baseSelectionStyle,
     "& ::selection": blurredSelectionStyle,
     "& .cm-selectionLayer .cm-selectionBackground": blurredSelectionStyle,
@@ -110,14 +148,17 @@ export const createCodemirrorTheme = () => {
     },
 
     "& .cm-blockQuote": {
-      borderLeft: `4px solid ${theme.colorFaded}`,
+      borderLeft: `3px solid ${colors.border}`,
       opacity: theme.blockQuoteOpacity,
-      paddingLeft: "4px",
+      paddingLeft: "1rem",
+      marginLeft: "0.5rem",
+      color: colors.mutedForeground,
+      fontStyle: "italic",
     },
 
     "& .cm-codeBlock": {
       "&.cm-regionFirstLine, &.cm-regionLastLine": {
-        borderRadius: "2px",
+        borderRadius: "0.375rem",
       },
       "&:not(.cm-regionFirstLine)": {
         borderTop: "none",
@@ -129,110 +170,219 @@ export const createCodemirrorTheme = () => {
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
       },
-
       borderWidth: "1px",
       borderStyle: "solid",
-      borderColor: theme.colorFaded,
-      backgroundColor: "rgba(155, 155, 155, 0.1)",
-
+      borderColor: colors.border,
+      backgroundColor: colors.muted,
       ...monospaceStyle,
+      fontSize: "0.875em",
+      padding: "0.25rem 0.5rem",
     },
 
-    // CodeMirror wraps the existing inline span in an additional element.
-    // Due to a Chrome rendering bug, because the .cm-inlineCode wraps a
-    // span with a larger font-size, the .cm-inlineCode's bounding box won't
-    // be big enough for its content.
-    // As such, we need to style whichever element directly wraps its content.
     "& .cm-inlineCode": {
       borderWidth: "1px",
       borderStyle: "solid",
-      borderColor: isDarkTheme
-        ? "rgba(200, 200, 200, 0.5)"
-        : "rgba(100, 100, 100, 0.5)",
-      borderRadius: "4px",
-
+      borderColor: colors.border,
+      borderRadius: "0.25rem",
+      backgroundColor: colors.muted,
+      padding: "0.125rem 0.375rem",
+      fontSize: "0.875em",
       ...monospaceStyle,
     },
 
     "& .cm-mathBlock, & .cm-inlineMath": {
-      color: isDarkTheme ? "#9fa" : "#276",
+      color: isDarkTheme ? "#7dd3fc" : "#0369a1",
+      fontFamily: theme.fontFamily,
     },
 
     "& .cm-tableHeader, & .cm-tableRow, & .cm-tableDelimiter": monospaceStyle,
     "& .cm-taskMarker": monospaceStyle,
 
-    // Allows editor content to be left-aligned with the toolbar on desktop.
-    // See https://github.com/laurent22/joplin/issues/11279
     [`${editorNoGuttersSelector} .cm-line`]: theme.isDesktop
       ? {
-          // Note: This cannot be zero:
-          paddingLeft: "1px",
+          paddingLeft: "4px",
+          paddingRight: "4px",
         }
       : {},
 
-    // Override the default URL style when the URL is within a link
     "& .tok-url.tok-link, & .tok-link.tok-meta, & .tok-link.tok-string": {
-      opacity: 0.661,
+      color: isDarkTheme ? "#7dd3fc" : "#0369a1",
+      textDecoration: "underline",
+      textUnderlineOffset: "2px",
     },
 
     "& .cm-strike": {
       textDecoration: "line-through",
+      textDecorationColor: colors.mutedForeground,
+      opacity: 0.8,
     },
 
-    // Applying font size changes with CSS rather than the theme below works
-    // around an issue where the border for code blocks in headings was too
-    // small.
     "& .cm-h1": {
       ...baseHeadingStyle,
-      fontSize: "1.6em",
+      fontSize: "1.5em",
+      marginTop: "1.5rem",
+      marginBottom: "0.75rem",
     },
     "& .cm-h2": {
       ...baseHeadingStyle,
-      fontSize: "1.4em",
+      fontSize: "1.25em",
+      marginTop: "1.25rem",
+      marginBottom: "0.5rem",
     },
     "& .cm-h3": {
       ...baseHeadingStyle,
-      fontSize: "1.3em",
+      fontSize: "1.125em",
+      marginTop: "1rem",
+      marginBottom: "0.5rem",
     },
     "& .cm-h4": {
       ...baseHeadingStyle,
-      fontSize: "1.2em",
+      fontSize: "1.05em",
+      marginTop: "0.75rem",
+      marginBottom: "0.375rem",
     },
     "& .cm-h5": {
       ...baseHeadingStyle,
-      fontSize: "1.1em",
+      fontSize: "1em",
+      marginTop: "0.5rem",
+      marginBottom: "0.25rem",
     },
     "& .cm-h6": {
       ...baseHeadingStyle,
-      fontSize: "1.0em",
+      fontSize: "0.95em",
+      marginTop: "0.5rem",
+      marginBottom: "0.25rem",
+      color: colors.mutedForeground,
     },
 
     "& .cm-highlighted": {
       color: theme.searchMarkerColor,
       backgroundColor: theme.searchMarkerBackgroundColor,
+      borderRadius: "2px",
+      padding: "0 2px",
     },
 
-    // Style the search widget. Use ':root' to increase the selector's precedence
-    // (override the existing preset styles).
     ":root & .cm-panel.cm-search": {
+      padding: "0.75rem",
       "& label, & button, & input": {
-        fontSize: "1em",
-        color: isDarkTheme ? "white" : "black",
+        fontSize: "0.875rem",
+        color: colors.foreground,
+        fontFamily:
+          'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      },
+      "& input": {
+        border: `1px solid ${colors.border}`,
+        borderRadius: "0.375rem",
+        padding: "0.375rem 0.75rem",
+        backgroundColor: colors.background,
+        outline: "none",
+        "&:focus": {
+          borderColor: colors.ring,
+          boxShadow: `0 0 0 2px ${colors.ring}40`,
+        },
+      },
+      "& button": {
+        border: `1px solid ${colors.border}`,
+        borderRadius: "0.375rem",
+        padding: "0.375rem 0.75rem",
+        backgroundColor: colors.muted,
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        "&:hover": {
+          backgroundColor: colors.accent,
+        },
+        "&:active": {
+          backgroundColor: colors.border,
+        },
       },
     },
 
     ".cm-hashtag-mark, .cm-hashtag-label": {
-      color: "#682d4b",
+      color: isDarkTheme ? "#f0abfc" : "#a21caf",
+      fontWeight: "500",
     },
 
     ".cm-backlink-mark, .cm-backlink-id": {
-      color: "#319090",
+      color: isDarkTheme ? "#5eead4" : "#0d9488",
+      fontWeight: "500",
     },
+
     ".cm-toent-mark": {
-      color: "#aa0000",
+      color: colors.destructive,
+      fontWeight: "500",
     },
+
     ".cm-todo-highlight": {
-      color: "#aa0000",
+      color: colors.destructive,
+      fontWeight: "600",
+    },
+
+    // Line numbers styling
+    "& .cm-gutters": {
+      backgroundColor: "transparent",
+      borderRight: `1px solid ${colors.border}`,
+      color: colors.mutedForeground,
+      fontFamily: theme.fontFamily,
+      fontSize: "0.75rem",
+      paddingRight: "0.5rem",
+    },
+
+    "& .cm-activeLineGutter": {
+      backgroundColor: `${colors.muted}80`,
+      color: colors.foreground,
+    },
+
+    // Horizontal rule
+    "& .cm-horizontalRule": {
+      borderTop: `1px solid ${colors.border}`,
+      marginTop: "1rem",
+      marginBottom: "1rem",
+    },
+
+    // Lists
+    "& .cm-list": {
+      paddingLeft: "1.5rem",
+    },
+
+    // Emphasis
+    "& .cm-emphasis": {
+      fontStyle: "italic",
+    },
+
+    "& .cm-strong": {
+      fontWeight: "600",
+    },
+
+    // Comments (for code blocks)
+    "& .tok-comment": {
+      color: colors.mutedForeground,
+      fontStyle: "italic",
+    },
+
+    "& .tok-keyword": {
+      color: isDarkTheme ? "#fca5a5" : "#dc2626",
+      fontWeight: "500",
+    },
+
+    "& .tok-string": {
+      color: isDarkTheme ? "#86efac" : "#16a34a",
+    },
+
+    "& .tok-number": {
+      color: isDarkTheme ? "#fdba74" : "#ea580c",
+    },
+
+    "& .tok-function": {
+      color: isDarkTheme ? "#93c5fd" : "#2563eb",
+    },
+
+    "& .tok-typeName": {
+      color: isDarkTheme ? "#c4b5fd" : "#7c3aed",
+    },
+
+    // Focus ring for accessibility
+    "&.cm-focused": {
+      outline: "none",
     },
   });
 };
