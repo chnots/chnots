@@ -98,6 +98,7 @@ const MindMapChnot = ({
 
   const options = useMemo<MindElixirReactProps>(() => {
     return {
+      data,
       onChanged: (data) => {
         directlySave({
           otid,

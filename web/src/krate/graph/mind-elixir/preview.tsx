@@ -1,11 +1,7 @@
 import { snapdom } from "@zumer/snapdom";
-import MindElixir, {
-  type MindElixirData,
-  type MindElixirInstance,
-  type Options,
-} from "mind-elixir";
+import MindElixir, { type MindElixirData } from "mind-elixir";
 import "mind-elixir/style.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const MindElixirPreview = ({ data }: { data: MindElixirData }) => {
   const [htmlImageElement, setPreview] = useState<HTMLImageElement>();

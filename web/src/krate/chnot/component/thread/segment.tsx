@@ -1,6 +1,5 @@
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import React, { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
 import { mdwtCommit } from "@/krate/mdwt/service";
@@ -63,7 +62,7 @@ const SortableRichMdwt = ({
       if (arg.title !== titleRef.current) {
         title = arg.title ?? "";
         titleRef.current = title;
-        if (kind !== ChnotKind.MDWT) {
+        if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
               otid: otid,
@@ -74,7 +73,6 @@ const SortableRichMdwt = ({
       }
       if (
         saveStateRef.current === SaveState.Initial &&
-        kind &&
         arg.saveState === SaveState.Saved
       ) {
         await chnotMetaCommit({ metas: [meta] });

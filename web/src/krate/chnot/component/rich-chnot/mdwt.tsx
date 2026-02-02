@@ -136,7 +136,7 @@ const MdwtChnot = ({
         } else {
           setContent("");
         }
-        if (onContentChange) {
+        if (onContentChange && mdwt.content) {
           onContentChange(mdwt.content);
         }
         cachedContentRef.current = mdwt?.content;
