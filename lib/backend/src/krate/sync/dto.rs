@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     krate::sync::po::{SyncAllEndpoints, SyncEndpoint},
-    model::{KOtidSupport, otid_table::OtidTableEnum},
+    model::{
+        KOtidSupport,
+        otid_table::{OtidTableEnum, OtidWithEnum, OtidWithGeneric},
+    },
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,33 +54,13 @@ impl<T: KOtidSupport> Deref for SyncPageInfo<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct OtidWithEnum<E> {
-    pub(crate) table_type: OtidTableEnum,
-    pub(crate) dto: E,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct OtidWithGer<E, T> {
-    pub(crate) dto: E,
-    pub(crate) table_type: PhantomData<T>,
-}
-
-impl<E, T> Deref for OtidWithGer<E, T> {
-    type Target = E;
-
-    fn deref(&self) -> &Self::Target {
-        &self.dto
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncShakeDto {
     pub instance_id: SharedStr,
     pub db_version: String,
 }
 
 pub type SyncShakeReq = OtidWithEnum<SyncShakeDto>;
-pub type SyncShakeArg<T> = OtidWithGer<SyncShakeDto, T>;
+pub type SyncShakeArg<T> = OtidWithGeneric<SyncShakeDto, T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SyncShakeRspEnum {
@@ -108,7 +91,7 @@ pub(crate) struct SyncTIDListDto {
 }
 
 pub type SyncTIDListReq = OtidWithEnum<SyncTIDListDto>;
-pub type SyncTIDListArg<T> = OtidWithGer<SyncTIDListDto, T>;
+pub type SyncTIDListArg<T> = OtidWithGeneric<SyncTIDListDto, T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncTIDListRsp {

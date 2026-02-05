@@ -8,6 +8,7 @@ use crate::krate::sync::dto::{
 };
 use crate::krate::sync::po::SyncLogTransientCommit;
 use crate::model::KOtidSupport;
+use crate::model::otid_table::OtidWithGeneric;
 use crate::sync_cmds_st_to_json;
 use crate::{
     app::ShareAppState,
@@ -297,7 +298,7 @@ impl ShareAppState {
             let result: SyncTIDListRsp = self
                 .sync_tid_list_tx::<T>(
                     endpoint,
-                    OtidWithGer {
+                    OtidWithGeneric {
                         dto: SyncTIDListDto {
                             page: SyncTIDListPage::StartEnd {
                                 start_ex,
