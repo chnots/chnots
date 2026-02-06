@@ -63,12 +63,12 @@ const RichChnot = ({
     async (arg: PostSaveArg) => {
       if (
         saveState === SaveState.Initial &&
-        kind &&
+        arg.kind &&
         arg.saveState === SaveState.Saved
       ) {
         const meta = {
-          otid: otid,
-          kind: kind,
+          otid: arg.otid,
+          kind: arg.kind,
           kspace: kspace,
           tid: genTID(),
         };
@@ -79,7 +79,7 @@ const RichChnot = ({
       }
       setSaveState(arg.saveState);
     },
-    [saveState, kind, kspace, otid],
+    [saveState, kspace, otid],
   );
 
   const props = {

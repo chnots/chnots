@@ -47,8 +47,8 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
       const meta = {
-        otid: otid,
-        kind: kind,
+        otid: arg.otid,
+        kind: arg.kind,
         kspace: kspace,
         tid: genTID(),
       };
@@ -56,10 +56,10 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       if (arg.title !== titleRef.current) {
         title = arg.title ?? "";
         titleRef.current = title;
-        if (kind !== ChnotKind.MDWT) {
+        if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
-              otid: otid,
+              otid: arg.otid,
               content: title,
             },
           });
@@ -71,7 +71,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       }
       if (
         saveStateRef.current === SaveState.Initial &&
-        kind &&
+        arg.kind &&
         arg.saveState === SaveState.Saved
       ) {
         await chnotMetaCommit({ metas: [meta] });
@@ -83,7 +83,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         setCurOtid(otid);
       }
     },
-    [kind, kspace, otid, overwrite, setCurOtid],
+    [kspace, overwrite, setCurOtid],
   );
 
   const props = useMemo(() => {
