@@ -10,7 +10,9 @@ use axum::{
 use chin_tools::AResult;
 use reqwest::header;
 
-use crate::{app::ShareAppState, controller::KResponse, model::dto::kreq};
+use crate::{
+    app::ShareAppState, controller::KResponse, model::dto::kreq, util::vec_util::RemoveNth,
+};
 
 use super::{mapper::KFileMapper, *};
 
@@ -24,8 +26,8 @@ pub(crate) async fn kfile_meta_fetch(
 async fn kfile_inline_download(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KfileInlineDownloadReq>,
-) -> KResponse<KfileInlineDownloadRsp> {
+    Json(req): Json<InlineKFileDownloadReq>,
+) -> KResponse<InlineKFileDownloadRsp> {
     state
         .mapper
         .query_inline_kfile(kreq(headers, req))
@@ -42,8 +44,11 @@ async fn kfile_inline_asset_download(
         sid: String,
     ) -> AResult<([(HeaderName, String); 1], Body)> {
         let headers = [(header::CONTENT_TYPE, "plain/text".to_owned())];
-        let rsp = state.query_inline_kfile_by_sid(sid.try_into()?).await?;
-        let content = rsp.file.context("unable to get inline kfile")?.content;
+        let rsp = state
+            .po_inline_kfile_list(vec![sid.try_into()?])
+            .await?
+            .remove_n(0);
+        let content = rsp.context("unable to get inline kfile")?.content;
 
         Ok((headers, content.to_string().into()))
     }
@@ -59,8 +64,8 @@ async fn kfile_inline_asset_download(
 async fn kfile_inline_upload(
     headers: HeaderMap,
     state: State<ShareAppState>,
-    Json(req): Json<KfileInlineUploadReq>,
-) -> KResponse<KfileInlineUploadRsp> {
+    Json(req): Json<InlineKFileUploadReq>,
+) -> KResponse<InlineKFileUploadRsp> {
     state
         .mapper
         .insert_inline_kfile(kreq(headers, req))
@@ -68,22 +73,26 @@ async fn kfile_inline_upload(
         .into()
 }
 
-async fn kfile_inline_upload_directly(
+async fn po_inline_kfile_commit(
     state: State<ShareAppState>,
-    Json(req): Json<KfileInlineUploadDirectlyReq>,
-) -> KResponse<KfileInlineUploadDirectlyRsp> {
+    Json(req): Json<PoInlineKfileCommitReq>,
+) -> KResponse<PoInlineKfileCommitRsp> {
     state
-        .insert_inline_kfile2(req.file)
+        .po_inline_kfile_commit(req.file)
         .await
-        .map(|_| KfileInlineUploadDirectlyRsp {})
+        .map(|_| PoInlineKfileCommitRsp {})
         .into()
 }
 
-async fn kfile_inline_download_by_sid(
+async fn po_inline_kfile_list(
     state: State<ShareAppState>,
-    Query(req): Query<KfileInlineDownloadBySidReq>,
-) -> KResponse<KfileInlineDownloadBySidRsp> {
-    state.query_inline_kfile_by_sid(req.sid).await.into()
+    Query(req): Query<PoInlineKFileListReq>,
+) -> KResponse<PoInlineKFileListRsp> {
+    state
+        .po_inline_kfile_list(req.pids)
+        .await
+        .map(|pos| PoInlineKFileListRsp { pos: pos })
+        .into()
 }
 
 pub(crate) fn routes() -> Router<ShareAppState> {
@@ -114,12 +123,6 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         )
         .route("/api/v1/kfile-inline-upload", put(kfile_inline_upload))
         .route("/api/v1/kfile-inline-download", post(kfile_inline_download))
-        .route(
-            KFILE_INLINE_DOWNLOAD_BY_SID,
-            get(kfile_inline_download_by_sid),
-        )
-        .route(
-            KFILE_INLINE_UPLOAD_DIRECTLY,
-            put(kfile_inline_upload_directly),
-        )
+        .route(PO_INLINE_KFILE_LIST, get(po_inline_kfile_list))
+        .route(PO_INLINE_KFILE_COMMIT, put(po_inline_kfile_commit))
 }

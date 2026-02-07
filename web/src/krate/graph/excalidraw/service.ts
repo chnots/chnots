@@ -13,7 +13,7 @@ import type {
 } from "@excalidraw/excalidraw/types";
 import type { RefObject } from "react";
 import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
-import { kfileInlineDownload, kfileInlineUpload } from "@/krate/kfile/service";
+import { inlineKFileDownload, inlineKFileUpload } from "@/krate/kfile/service";
 import { genTID, type TID } from "@/lib/id_util";
 import request from "@/lib/request";
 import type {
@@ -62,7 +62,7 @@ export const fetchExcalidraw = async (
       for (const element of elements) {
         if (element.type === "image" && element.fileId) {
           try {
-            const fileInlineRsp = await kfileInlineDownload({
+            const fileInlineRsp = await inlineKFileDownload({
               req_id: { Id: element.fileId },
             });
 
@@ -115,7 +115,7 @@ export const unionFileSaved = async (
     const newVer = `${file.created}-${file.version}`;
     if (!cache || cache.ver !== newVer) {
       const otid = cache ? cache.otid : genTID();
-      await kfileInlineUpload({
+      await inlineKFileUpload({
         res: {
           tid: genTID(),
           content: file.dataURL,

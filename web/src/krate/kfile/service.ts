@@ -3,10 +3,10 @@ import request, { BASE_URL } from "@/lib/request";
 import type {
   KFileUploadRsp,
   KfileAssetChunkUploadReq,
-  KfileInlineDownloadReq,
-  KfileInlineDownloadRsp,
-  KfileInlineUploadReq,
-  KfileInlineUploadRsp,
+  InlineKFileDownloadReq,
+  InlineKFileDownloadRsp,
+  InlineKFileUploadReq,
+  InlineKFileUploadRsp,
   KfileMetaFetchReq,
   KfileMetaFetchRsp,
 } from "./dto";
@@ -51,15 +51,15 @@ export const kfileMetaFetch = async (
   return await request.postJson("api/v1/kfile-meta-fetch", req);
 };
 
-export const kfileInlineUpload = async (
-  req: KfileInlineUploadReq,
-): Promise<KfileInlineUploadRsp> => {
+export const inlineKFileUpload = async (
+  req: InlineKFileUploadReq,
+): Promise<InlineKFileUploadRsp> => {
   return await request.putJson("api/v1/kfile-inline-upload", req);
 };
 
-export const kfileInlineDownload = async (
-  req: KfileInlineDownloadReq,
-): Promise<KfileInlineDownloadRsp> => {
+export const inlineKFileDownload = async (
+  req: InlineKFileDownloadReq,
+): Promise<InlineKFileDownloadRsp> => {
   return await request.postJson("api/v1/kfile-inline-download", req);
 };
 

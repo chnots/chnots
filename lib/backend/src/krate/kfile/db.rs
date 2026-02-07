@@ -10,6 +10,7 @@ use crate::{
         },
     },
     model::dto::KReq,
+    util::vec_util::RemoveNth,
 };
 use chin_tools::EResult;
 
@@ -52,7 +53,7 @@ impl TryFrom<&KDbRow> for KFileMeta {
 }
 
 impl KDbExecutor<'_> {
-    async fn insert_kfile_meta(&self, mut meta: KFileMeta) -> EResult {
+    async fn po_insert_kfile_meta(&self, mut meta: KFileMeta) -> EResult {
         let old_meta = self
             .query_kfile_meta(KfileMetaFetchReq {
                 req_id: KfileMetaFetchReqId::Otid(meta.otid),
@@ -127,17 +128,17 @@ impl KFileMapper for KDb {
         Ok(())
     }
 
-    async fn insert_kfile_meta(&self, meta: KFileMeta) -> EResult {
+    async fn po_insert_kfile_meta(&self, meta: KFileMeta) -> EResult {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor().insert_kfile_meta(meta).await?;
+        tx.as_executor().po_insert_kfile_meta(meta).await?;
         tx.cmt().await
     }
 
     async fn insert_inline_kfile(
         &self,
-        mut req: KReq<KfileInlineUploadReq>,
-    ) -> anyhow::Result<KfileInlineUploadRsp> {
+        mut req: KReq<InlineKFileUploadReq>,
+    ) -> anyhow::Result<InlineKFileUploadRsp> {
         let mut bh = blake3::Hasher::new();
         let bytes = req.body.res.content.as_str().as_bytes();
         bh.write_all(bytes)?;
@@ -163,7 +164,7 @@ impl KFileMapper for KDb {
             otid: req.otid,
             binaryp: req.binaryp,
         };
-        tx.as_executor().insert_kfile_meta(meta).await?;
+        tx.as_executor().po_insert_kfile_meta(meta).await?;
         tx.exec(
             req.body
                 .res
@@ -174,31 +175,31 @@ impl KFileMapper for KDb {
 
         tx.cmt().await?;
 
-        Ok(KfileInlineUploadRsp { true_sid: sid })
+        Ok(InlineKFileUploadRsp { true_sid: sid })
     }
 
-    async fn query_inline_kfile_by_sid(
+    async fn po_inline_kfile_list(
         &self,
-        sid: Varchar<100>,
-    ) -> anyhow::Result<KfileInlineDownloadBySidRsp> {
+        sid: Vec<Varchar<100>>,
+    ) -> anyhow::Result<Vec<InlineKFile>> {
         let query = SqlBuilder::read_all(InlineKFile::TABLE)
-            .r#where(Wheres::equal(InlineKFile::SID, sid))
+            .r#where(Wheres::r#in(InlineKFile::SID, sid))
             .seg("order by tid desc")
             .custom(LimitOffset::new(1));
 
         let res = self
             .conn()
             .await?
-            .qry_opt(query, |t| (&t).try_into())
+            .qry_list(query, |t| (&t).try_into())
             .await?;
 
-        Ok(KfileInlineDownloadBySidRsp { file: res })
+        Ok(res)
     }
 
     async fn query_inline_kfile(
         &self,
-        req: KReq<KfileInlineDownloadReq>,
-    ) -> anyhow::Result<KfileInlineDownloadRsp> {
+        req: KReq<InlineKFileDownloadReq>,
+    ) -> anyhow::Result<InlineKFileDownloadRsp> {
         let meta_rsp = self
             .query_kfile_meta(KfileMetaFetchReq {
                 req_id: req.body.req_id,
@@ -207,13 +208,16 @@ impl KFileMapper for KDb {
             .await?;
         match meta_rsp.meta {
             Some(meta) => {
-                let res = self.query_inline_kfile_by_sid(meta.sid.clone()).await?.file;
-                Ok(KfileInlineDownloadRsp {
+                let res = self
+                    .po_inline_kfile_list(vec![meta.sid.clone()])
+                    .await?
+                    .remove_n(0);
+                Ok(InlineKFileDownloadRsp {
                     file: res,
                     meta: Some(meta),
                 })
             }
-            None => Ok(KfileInlineDownloadRsp {
+            None => Ok(InlineKFileDownloadRsp {
                 file: None,
                 meta: None,
             }),
@@ -236,11 +240,17 @@ impl KFileMapper for KDb {
         Ok(KfileMetaFetchRsp { meta })
     }
 
-    async fn insert_inline_kfile2(&self, req: InlineKFile) -> chin_tools::AResult<usize> {
-        self.conn()
-            .await?
-            .exec(req.to_sql_inserter().on_conflict(OnConflict::Ignore))
-            .await
+    async fn po_inline_kfile_commit(&self, pos: Vec<InlineKFile>) -> chin_tools::AResult<usize> {
+        let mut conn = self.conn().await?;
+        let tx = conn.transaction().await?;
+        let mut count = 0;
+        for ele in pos {
+            count += tx
+                .exec(ele.to_sql_inserter().on_conflict(OnConflict::Ignore))
+                .await?;
+        }
+        tx.cmt().await?;
+        Ok(count)
     }
 }
 

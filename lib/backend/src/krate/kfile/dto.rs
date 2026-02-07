@@ -27,7 +27,7 @@ pub struct KFileUploadRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineUploadReq {
+pub struct InlineKFileUploadReq {
     pub meta_id: Varchar<100>,
     pub otid: TID,
     pub res: InlineKFile,
@@ -39,18 +39,18 @@ pub struct KfileInlineUploadReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineUploadRsp {
+pub struct InlineKFileUploadRsp {
     pub true_sid: Varchar<100>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineDownloadReq {
+pub struct InlineKFileDownloadReq {
     pub req_id: KfileMetaFetchReqId,
     pub with_omit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineDownloadRsp {
+pub struct InlineKFileDownloadRsp {
     pub meta: Option<KFileMeta>,
     pub file: Option<InlineKFile>,
 }
@@ -72,26 +72,26 @@ pub struct KfileMetaFetchRsp {
     pub meta: Option<KFileMeta>,
 }
 
-pub const KFILE_INLINE_UPLOAD_DIRECTLY: &str = "/api/v1/kfile-inline-upload-directly";
-pub const KFILE_INLINE_DOWNLOAD_BY_SID: &str = "/api/v1/kfile-inline-download-by-sid";
+pub const PO_INLINE_KFILE_COMMIT: &str = "/api/v1/kfile-inline-upload-directly";
+pub const PO_INLINE_KFILE_LIST: &str = "/api/v1/kfile-inline-download-by-sid";
 pub const KFILE_ASSET_UPLOAD_BY_SID: &str = "/api/v1/kfile-asset-upload-by-sid";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineUploadDirectlyReq {
-    pub file: InlineKFile,
+pub struct PoInlineKfileCommitReq {
+    pub file: Vec<InlineKFile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineUploadDirectlyRsp {}
+pub struct PoInlineKfileCommitRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineDownloadBySidReq {
-    pub sid: Varchar<100>,
+pub struct PoInlineKFileListReq {
+    pub pids: Vec<Varchar<100>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KfileInlineDownloadBySidRsp {
-    pub file: Option<InlineKFile>,
+pub struct PoInlineKFileListRsp {
+    pub pos: Vec<InlineKFile>,
 }
 
 #[test]

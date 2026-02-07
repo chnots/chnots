@@ -4,7 +4,13 @@ use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
 pub trait KFileMapper {
-    async fn insert_kfile_meta(&self, kfile: KFileMeta) -> anyhow::Result<()>;
+    async fn po_insert_kfile_meta(&self, kfile: KFileMeta) -> anyhow::Result<()>;
+    async fn po_inline_kfile_commit(&self, pos: Vec<InlineKFile>) -> AResult<usize>;
+    async fn po_inline_kfile_list(
+        &self,
+        sids: Vec<Varchar<100>>,
+    ) -> anyhow::Result<Vec<InlineKFile>>;
+
     async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp>;
     #[allow(dead_code)]
     async fn query_kfile_meta_by_sid(&self, sid: Varchar<100>)
@@ -19,27 +25,31 @@ pub trait KFileMapper {
     ///
     async fn insert_inline_kfile(
         &self,
-        req: KReq<KfileInlineUploadReq>,
-    ) -> anyhow::Result<KfileInlineUploadRsp>;
-
-    async fn insert_inline_kfile2(&self, req: InlineKFile) -> AResult<usize>;
+        req: KReq<InlineKFileUploadReq>,
+    ) -> anyhow::Result<InlineKFileUploadRsp>;
 
     async fn query_inline_kfile(
         &self,
-        req: KReq<KfileInlineDownloadReq>,
-    ) -> anyhow::Result<KfileInlineDownloadRsp>;
-
-    async fn query_inline_kfile_by_sid(
-        &self,
-        sid: Varchar<100>,
-    ) -> anyhow::Result<KfileInlineDownloadBySidRsp>;
+        req: KReq<InlineKFileDownloadReq>,
+    ) -> anyhow::Result<InlineKFileDownloadRsp>;
 
     async fn ensure_table_kfile(&self) -> EResult;
 }
 
 impl KFileMapper for MapperType {
-    async fn insert_kfile_meta(&self, kfile: KFileMeta) -> anyhow::Result<()> {
-        expand_mt_branch!(self.insert_kfile_meta(kfile))
+    async fn po_insert_kfile_meta(&self, kfile: KFileMeta) -> anyhow::Result<()> {
+        expand_mt_branch!(self.po_insert_kfile_meta(kfile))
+    }
+
+    async fn po_inline_kfile_commit(&self, req: Vec<InlineKFile>) -> AResult<usize> {
+        expand_mt_branch!(self.po_inline_kfile_commit(req))
+    }
+
+    async fn po_inline_kfile_list(
+        &self,
+        sids: Vec<Varchar<100>>,
+    ) -> anyhow::Result<Vec<InlineKFile>> {
+        expand_mt_branch!(self.po_inline_kfile_list(sids))
     }
 
     async fn ensure_table_kfile(&self) -> EResult {
@@ -48,15 +58,15 @@ impl KFileMapper for MapperType {
 
     async fn insert_inline_kfile(
         &self,
-        req: KReq<KfileInlineUploadReq>,
-    ) -> anyhow::Result<KfileInlineUploadRsp> {
+        req: KReq<InlineKFileUploadReq>,
+    ) -> anyhow::Result<InlineKFileUploadRsp> {
         expand_mt_branch!(self.insert_inline_kfile(req))
     }
 
     async fn query_inline_kfile(
         &self,
-        req: KReq<KfileInlineDownloadReq>,
-    ) -> anyhow::Result<KfileInlineDownloadRsp> {
+        req: KReq<InlineKFileDownloadReq>,
+    ) -> anyhow::Result<InlineKFileDownloadRsp> {
         expand_mt_branch!(self.query_inline_kfile(req))
     }
 
@@ -69,16 +79,5 @@ impl KFileMapper for MapperType {
         sid: Varchar<100>,
     ) -> anyhow::Result<KfileMetaFetchRsp> {
         expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
-    }
-
-    async fn insert_inline_kfile2(&self, req: InlineKFile) -> AResult<usize> {
-        expand_mt_branch!(self.insert_inline_kfile2(req))
-    }
-
-    async fn query_inline_kfile_by_sid(
-        &self,
-        sid: Varchar<100>,
-    ) -> anyhow::Result<KfileInlineDownloadBySidRsp> {
-        expand_mt_branch!(self.query_inline_kfile_by_sid(sid))
     }
 }

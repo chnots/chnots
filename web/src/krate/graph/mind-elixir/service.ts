@@ -1,5 +1,5 @@
 import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
-import { kfileInlineDownload, kfileInlineUpload } from "@/krate/kfile/service";
+import { inlineKFileDownload, inlineKFileUpload } from "@/krate/kfile/service";
 import { genTID, genUID, type TID } from "@/lib/id_util";
 import type { MindElixirData } from "mind-elixir";
 import type {

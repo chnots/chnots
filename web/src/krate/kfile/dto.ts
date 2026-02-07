@@ -7,7 +7,7 @@ export type KFileUploadRsp = {
   finished: boolean;
 };
 
-export type KfileInlineUploadReq = {
+export type InlineKFileUploadReq = {
   meta_id: Varchar<100>;
   otid: TID;
   res: InlineKFile;
@@ -17,18 +17,18 @@ export type KfileInlineUploadReq = {
   binaryp: boolean;
 };
 
-export type KfileInlineUploadRsp = {
+export type InlineKFileUploadRsp = {
   true_sid: Varchar<100>;
 };
 
 export type KfileMetaFetchReqId = { Otid: TID } | { Id: string };
 
-export type KfileInlineDownloadReq = {
+export type InlineKFileDownloadReq = {
   req_id: KfileMetaFetchReqId;
   with_omit?: boolean;
 };
 
-export type KfileInlineDownloadRsp = {
+export type InlineKFileDownloadRsp = {
   meta?: KFileMeta;
   file?: InlineKFile;
 };
@@ -42,14 +42,14 @@ export type KfileMetaFetchRsp = {
   meta?: KFileMeta;
 };
 
-export type KfileInlineUploadDirectlyReq = {
+export type InlineKFileUploadDirectlyReq = {
   file: InlineKFile;
 };
-export type KfileInlineUploadDirectlyRsp = object;
-export type KfileInlineDownloadBySidReq = {
+export type InlineKFileUploadDirectlyRsp = object;
+export type InlineKFileDownloadBySidReq = {
   sid: Varchar<100>;
 };
-export type KfileInlineDownloadBySidRsp = {
+export type InlineKFileDownloadBySidRsp = {
   file?: InlineKFile;
 };
 

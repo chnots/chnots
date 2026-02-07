@@ -31,7 +31,10 @@ use crate::{
         InlineKFile, KFileMeta, KFileUploadRsp, KfileAssetChunkUploadReq, KfileMetaFetchReq,
         mapper::KFileMapper,
     },
-    util::digestutil::{de_gzip_base64_blake3, file_blake3_sum, gzip_base64_blake3},
+    util::{
+        digestutil::{de_gzip_base64_blake3, file_blake3_sum, gzip_base64_blake3},
+        vec_util::RemoveNth,
+    },
 };
 
 pub(crate) fn asset_tmp_path(config: &AttachmentConfig, upload_id: &str) -> PathBuf {
@@ -116,11 +119,11 @@ pub(super) async fn kfile_asset_chunk_upload(
         let content = chunk.contents;
         let gbb = gzip_base64_blake3(content)?;
         mapper
-            .insert_inline_kfile2(InlineKFile {
+            .po_inline_kfile_commit(vec![InlineKFile {
                 sid: gbb.blake3.clone().try_into()?,
                 tid: TID::default(),
                 content: gbb.b64.into(),
-            })
+            }])
             .await?;
         inline = true;
         Some(gbb.blake3)
@@ -169,7 +172,7 @@ pub(super) async fn kfile_asset_chunk_upload(
                 binaryp: binaryp,
             };
 
-            mapper.insert_kfile_meta(kfile.clone()).await?;
+            mapper.po_insert_kfile_meta(kfile.clone()).await?;
             Some(kfile)
         }
         None => None,
@@ -292,11 +295,11 @@ pub(super) async fn kfile_asset_download(
             .meta
             .context("unable to find kfile")?;
         if kfile.inline {
-            let inline_kfil = state
+            let mut inline_kfiles = state
                 .mapper
-                .query_inline_kfile_by_sid(kfile.sid.clone())
+                .po_inline_kfile_list(vec![kfile.sid.clone()])
                 .await?;
-            let Some(file) = inline_kfil.file else {
+            let Some(file) = inline_kfiles.remove_n(0) else {
                 anyhow::bail!("not found of sid: {}", kfile.sid);
             };
             let body: body::Body = if kfile.binaryp {

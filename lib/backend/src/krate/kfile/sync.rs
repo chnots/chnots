@@ -11,8 +11,8 @@ use crate::{
     app::ShareAppState,
     krate::{
         kfile::{
-            KFILE_ASSET_UPLOAD_BY_SID, KFILE_INLINE_UPLOAD_DIRECTLY, KFileMeta,
-            KfileInlineUploadDirectlyReq, mapper::KFileMapper,
+            KFILE_ASSET_UPLOAD_BY_SID, KFileMeta, PO_INLINE_KFILE_COMMIT, PoInlineKfileCommitReq,
+            mapper::KFileMapper,
         },
         sync::{
             dto::SyncDataArg, filedumper::StartType, networksync::OtidRelatedWorker,
@@ -22,7 +22,7 @@ use crate::{
     util::digestutil::file_blake3_sum,
 };
 
-use super::{KfileInlineDownloadBySidReq, KfileInlineDownloadBySidRsp};
+use super::{PoInlineKFileListReq, PoInlineKFileListRsp};
 
 struct KFileAssetWorker {
     app: ShareAppState,
@@ -31,20 +31,10 @@ struct KFileAssetWorker {
 impl KFileAssetWorker {
     async fn pull_kfile(&self, endpoint: &SyncEndpoint, list: Vec<&KFileMeta>) -> EResult {
         let client = reqwest::Client::builder().build()?;
+        let mut inline_metas = vec![];
         for kfm in list {
             if kfm.inline {
-                let rsp = client
-                    .get(endpoint.to_url(crate::krate::kfile::dto::KFILE_INLINE_DOWNLOAD_BY_SID))
-                    .query(&KfileInlineDownloadBySidReq {
-                        sid: kfm.sid.clone(),
-                    })
-                    .send()
-                    .await?
-                    .json::<KfileInlineDownloadBySidRsp>()
-                    .await?;
-                if let Some(ele) = rsp.file {
-                    self.app.insert_inline_kfile2(ele).await?;
-                }
+                inline_metas.push(kfm);
             } else {
                 let tmp_path = self
                     .app
@@ -102,22 +92,29 @@ impl KFileAssetWorker {
             }
         }
 
+        if inline_metas.len() > 0 {
+            let rsp = client
+                .get(endpoint.to_url(crate::krate::kfile::dto::PO_INLINE_KFILE_LIST))
+                .query(&PoInlineKFileListReq {
+                    pids: inline_metas.iter().map(|e| e.sid.clone()).collect(),
+                })
+                .send()
+                .await?
+                .json::<PoInlineKFileListRsp>()
+                .await?;
+            self.app.po_inline_kfile_commit(rsp.pos).await?;
+        }
+
         Ok(())
     }
 
     async fn push_kfile(&self, endpoint: &SyncEndpoint, list: Vec<&KFileMeta>) -> EResult {
         let client = reqwest::Client::builder().build()?;
+        let mut inline_metas = vec![];
 
         for kfm in list {
             if kfm.inline {
-                let rsp = self.app.query_inline_kfile_by_sid(kfm.sid.clone()).await?;
-                if let Some(c) = rsp.file {
-                    client
-                        .put(endpoint.to_url(KFILE_INLINE_UPLOAD_DIRECTLY))
-                        .json(&KfileInlineUploadDirectlyReq { file: c })
-                        .send()
-                        .await?;
-                }
+                inline_metas.push(kfm);
             } else {
                 let path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
                 let file_size = path.metadata()?.len();
@@ -155,6 +152,18 @@ impl KFileAssetWorker {
                 let result = response.text().await?;
                 info!("upload file result {result}");
             }
+        }
+
+        if inline_metas.len() > 0 {
+            let rsp = self
+                .app
+                .po_inline_kfile_list(inline_metas.iter().map(|e| e.sid.clone()).collect())
+                .await?;
+            client
+                .put(endpoint.to_url(PO_INLINE_KFILE_COMMIT))
+                .json(&PoInlineKfileCommitReq { file: rsp })
+                .send()
+                .await?;
         }
 
         Ok(())
