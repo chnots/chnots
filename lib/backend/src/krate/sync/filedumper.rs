@@ -13,7 +13,7 @@ use crate::{
     config::ShellExpandPath,
     krate::sync::{dto::SyncTIDListPage, mapper::Dumper, po::SyncEndpoint},
     mapper::MapperType,
-    model::KOtidSupport,
+    model::OtidTableSupport,
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -84,7 +84,7 @@ impl DumpFilenamePattern {
     }
 }
 
-pub struct FileDumper<P: AsRef<Path>, E: KOtidSupport> {
+pub struct FileDumper<P: AsRef<Path>, E: OtidTableSupport> {
     pub(crate) backup_dir: P,
     pub(crate) end_in: TID,
     pub(crate) start_type: StartType,
@@ -101,7 +101,7 @@ pub enum StartType {
 }
 
 impl MapperType {
-    pub(crate) async fn dump_to_file<P: AsRef<Path>, E: KOtidSupport>(
+    pub(crate) async fn dump_to_file<P: AsRef<Path>, E: OtidTableSupport>(
         &self,
         backup_dir: P,
         start_type: StartType,
@@ -120,11 +120,11 @@ impl MapperType {
     }
 }
 
-impl<P: AsRef<Path>, T: KOtidSupport> FileDumper<P, T> {
+impl<P: AsRef<Path>, T: OtidTableSupport> FileDumper<P, T> {
     // TODO: rewrite
     pub async fn dump_one_table(&self, mapper_type: &MapperType, hist: bool) -> EResult
     where
-        T: KOtidSupport,
+        T: OtidTableSupport,
     {
         let start_ex = match self.start_type {
             StartType::All => TID::try_from(0)?,

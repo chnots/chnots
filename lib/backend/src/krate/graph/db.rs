@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, io::Write};
+use std::collections::BTreeMap;
 
 use crate::{
     krate::graph::{
@@ -16,7 +16,6 @@ use crate::{
     model::dto::KReq,
 };
 use chin_tools::EResult;
-use serde::Deserialize;
 use serde_json::Value;
 
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
@@ -25,9 +24,7 @@ use chin_sql::{SqlBuilder, Wheres, time_type::TID};
 
 impl KDbExecutor<'_> {
     async fn po_insert_graph_meta(&self, graph: GraphMeta) -> anyhow::Result<()> {
-        self.omit_rows::<GraphMeta>(GraphMeta::pkey_cond(graph.otid))
-            .await?;
-        self.exec(graph.to_sql_inserter()).await?;
+        self.po_otid_insert([graph]).await?;
         Ok(())
     }
     async fn po_query_graph_meta(&self, otid: TID) -> anyhow::Result<Option<GraphMeta>> {

@@ -7,8 +7,8 @@ use log::{debug, info};
 use crate::{
     krate::sync::{
         dto::{
-            SyncDataArg, SyncDataOperation, SyncInfo, SyncPageInfo, SyncTIDListArg,
-            SyncTIDListPage, SyncTIDListRsp,
+            SyncDataDto, SyncDataOperation, SyncInfo, SyncOtidTIDListRsp, SyncPageInfo,
+            SyncTIDListArg, SyncTIDListPage,
         },
         mapper::{Dumper, SyncMapper},
         po::SyncLogTransientCommit,
@@ -18,7 +18,7 @@ use crate::{
         KDbTransactionBehaiver,
         helper::{Ddls, print_ddls},
     },
-    model::KOtidSupport,
+    model::OtidTableSupport,
 };
 
 use super::po::{RecordState, TidCompare};
@@ -34,7 +34,7 @@ const C_MIN_SYNC: &str = "min_sync";
 impl Dumper for KDb {
     async fn dump<E>(&self, fetch_data: SyncTIDListPage, hist: bool) -> chin_tools::AResult<Vec<E>>
     where
-        E: KOtidSupport,
+        E: OtidTableSupport,
     {
         let sql = match fetch_data {
             SyncTIDListPage::StartEnd {
@@ -146,10 +146,11 @@ impl SyncMapper for KDb {
         Ok(st)
     }
 
-    async fn sync_tid_list<T: KOtidSupport>(
+    async fn sync_otid_tid_list<T: OtidTableSupport>(
         &self,
         req: SyncTIDListArg<T>,
-    ) -> AResult<SyncTIDListRsp> {
+    ) -> AResult<SyncOtidTIDListRsp> {
+        let table_name = T::table_name(req.dto.hist);
         let sql = match req.dto.page {
             super::dto::SyncTIDListPage::StartEnd {
                 start_ex,
@@ -157,10 +158,7 @@ impl SyncMapper for KDb {
                 page_size,
             } => {
                 format!(
-                    "select {C_TID} from {} where {C_TID} > {} and {C_TID} < {} order by {C_TID} asc limit {page_size}",
-                    T::table_name(req.dto.hist),
-                    start_ex.as_num(),
-                    end_in.as_num()
+                    "select {C_TID} from {table_name} where {C_TID} > {start_ex} and {C_TID} < {end_in} order by {C_TID} asc limit {page_size}"
                 )
             }
         };
@@ -170,12 +168,12 @@ impl SyncMapper for KDb {
             .qry_list(sql, |c| c.try_get(C_TID))
             .await?;
 
-        Ok(SyncTIDListRsp { data })
+        Ok(SyncOtidTIDListRsp { data })
     }
 
-    async fn sync_merge_tids<T: KOtidSupport>(
+    async fn sync_otid_merge_tids<T: OtidTableSupport>(
         &self,
-        rsp: SyncTIDListRsp,
+        rsp: SyncOtidTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
@@ -189,26 +187,34 @@ impl SyncMapper for KDb {
             return Ok(());
         }
 
+        let data = rsp
+            .data
+            .iter()
+            .map(|t| format!("({}, 0, {})", t.as_num(), dtype.as_num()))
+            .join(",");
+        let dtype = dtype.as_num();
         self.conn()
             .await?
             .exec(format!(
-                "insert into {table_name}({C_TID}, {C_LSTATE}, {C_RSTATE}) values {} on conflict({C_TID}) do update set {C_RSTATE} = {}",
-                rsp.data.iter().map(|t| format!("({}, 0, {})", t.as_num(), dtype.as_num())).join(","),
-                dtype.as_num()
+                "insert into {table_name}({C_TID}, {C_LSTATE}, {C_RSTATE}) values {data} on conflict({C_TID}) do update set {C_RSTATE} = {dtype}"
             ))
             .await?;
         Ok(())
     }
 
-    async fn sync_fetch_operations<T: KOtidSupport>(
+    async fn sync_fetch_operations<T: OtidTableSupport>(
         &self,
         sync_page: &SyncPageInfo<T>,
-    ) -> AResult<SyncDataArg<T>> {
-        let tids = self.sync_fetch_tid_compares(sync_page).await?;
-        let mut operations = vec![];
+    ) -> AResult<SyncDataDto<T>> {
+        let tids = self.sync_otid_fetch_tid_compares(sync_page).await?;
+        let mut cmds = vec![];
         let mut max_tid = TID::try_from(0).unwrap();
 
         let nomore = tids.len() < sync_page.page_size;
+
+        let mut hist_pos = vec![];
+        let mut cur_tids = vec![];
+        let mut to_omit_tids = vec![];
 
         for tc in tids.iter() {
             let l = tc.lstate;
@@ -219,41 +225,47 @@ impl SyncMapper for KDb {
             }
 
             if matches!(l, RecordState::Absent) && matches!(r, RecordState::Cur) {
-                operations.push(SyncDataOperation::Pull { tid, hist: false });
+                cmds.push(SyncDataOperation::Pull { tid, hist: false });
             } else if matches!(l, RecordState::Absent) && matches!(r, RecordState::Hist) {
-                operations.push(SyncDataOperation::Pull { tid, hist: true });
+                cmds.push(SyncDataOperation::Pull { tid, hist: true });
             } else if matches!(l, RecordState::Cur) && matches!(r, RecordState::Absent) {
-                let rec = self.sync_fetch_one_record(false, tid).await?;
-                if let Some(data) = rec {
-                    operations.push(SyncDataOperation::Push { data, hist: false });
-                }
+                cur_tids.push(tid);
             } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Absent) {
-                let rec = self.sync_fetch_one_record(true, tid).await?;
-                if let Some(data) = rec {
-                    operations.push(SyncDataOperation::Push { data, hist: true });
-                }
+                hist_pos.push(tid);
             } else if matches!(l, RecordState::Cur) && matches!(r, RecordState::Hist) {
-                self.conn()
-                    .await?
-                    .as_executor()
-                    .omit_rows::<T>(Wheres::compare(C_TID, "=", tid))
-                    .await?;
+                to_omit_tids.push(tid);
             } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Cur) {
-                operations.push(SyncDataOperation::Omit(tid));
+                cmds.push(SyncDataOperation::Omit(tid));
             }
         }
-        Ok(SyncDataArg {
-            cmds: operations,
+        let rec: Vec<T> = self.sync_otid_fetch_records(false, cur_tids).await?;
+        cmds.extend(rec.into_iter().map(|e| SyncDataOperation::Push {
+            data: e,
+            hist: false,
+        }));
+        let rec = self.sync_otid_fetch_records(true, hist_pos).await?;
+        cmds.extend(rec.into_iter().map(|e| SyncDataOperation::Push {
+            data: e,
+            hist: true,
+        }));
+        self.conn()
+            .await?
+            .as_executor()
+            .omit_rows::<T>(Wheres::r#in(C_TID, to_omit_tids))
+            .await?;
+
+        Ok(SyncDataDto {
+            cmds,
             max_tid,
             nomore,
         })
     }
 
-    async fn sync_merge_operations<T: KOtidSupport>(
+    async fn sync_otid_merge_operations<T: OtidTableSupport>(
         &self,
-        req: SyncDataArg<T>,
-    ) -> AResult<SyncDataArg<T>> {
-        let SyncDataArg {
+        req: SyncDataDto<T>,
+    ) -> AResult<SyncDataDto<T>> {
+        let SyncDataDto {
             cmds,
             max_tid: _,
             nomore: _,
@@ -265,7 +277,7 @@ impl SyncMapper for KDb {
                     self.conn()
                         .await?
                         .as_executor()
-                        .omit_rows::<T>(Wheres::compare(C_TID, "=", tid))
+                        .omit_rows::<T>(Wheres::equal(C_TID, tid))
                         .await?;
                 }
                 SyncDataOperation::Pull { tid, hist } => {
@@ -290,14 +302,17 @@ impl SyncMapper for KDb {
             }
         }
 
-        Ok(SyncDataArg {
+        Ok(SyncDataDto {
             cmds: rsp_cmds,
             max_tid: TID::never(),
             nomore: false,
         })
     }
 
-    async fn sync_create_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult {
+    async fn sync_otid_create_tmp_table<T: OtidTableSupport>(
+        &self,
+        sync_info: &SyncInfo<T>,
+    ) -> EResult {
         let table_name = sync_info.to_table_name();
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
@@ -322,7 +337,10 @@ impl SyncMapper for KDb {
         Ok(())
     }
 
-    async fn sync_drop_tmp_table<T: KOtidSupport>(&self, sync_info: &SyncInfo<T>) -> EResult {
+    async fn sync_otid_drop_tmp_table<T: OtidTableSupport>(
+        &self,
+        sync_info: &SyncInfo<T>,
+    ) -> EResult {
         let table_name = sync_info.to_table_name();
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
@@ -330,6 +348,21 @@ impl SyncMapper for KDb {
         tx.exec(format!("drop table if exists {table_name}"))
             .await?;
         tx.cmt().await?;
+        Ok(())
+    }
+
+    async fn po_sid_sync_list<const LIMIT: usize, T: crate::model::SidTableSupport>(
+        &self,
+        sync_info: Vec<Varchar<LIMIT>>,
+    ) -> AResult<Vec<T>> {
+        self.po_sid_list(sync_info).await
+    }
+
+    async fn po_sid_sync_commit<T: crate::model::SidTableSupport>(
+        &self,
+        sync_info: Vec<T>,
+    ) -> EResult {
+        self.po_sid_insert(sync_info).await?;
         Ok(())
     }
 }
@@ -351,7 +384,7 @@ impl TryFrom<&KDbRow> for SyncLogTransientCommit {
 }
 
 impl KDb {
-    async fn sync_fetch_tid_compares<T: KOtidSupport>(
+    async fn sync_otid_fetch_tid_compares<T: OtidTableSupport>(
         &self,
         sync_page: &SyncPageInfo<T>,
     ) -> AResult<Vec<TidCompare>> {
@@ -367,8 +400,8 @@ impl KDb {
                         Wheres::r#in(C_RSTATE, [&C_STATE_CUR, &C_STATE_HIST].to_vec()),
                     ]),
                     super::dto::SyncSingleStep::Data => Wheres::or([
-                        Wheres::compare(C_LSTATE, "=", C_STATE_ABSENT),
-                        Wheres::compare(C_RSTATE, "=", C_STATE_ABSENT),
+                        Wheres::equal(C_LSTATE, C_STATE_ABSENT),
+                        Wheres::equal(C_RSTATE, C_STATE_ABSENT),
                     ]),
                 },
             ]))
@@ -397,16 +430,16 @@ impl KDb {
         Ok(res)
     }
 
-    async fn sync_fetch_one_record<T: KOtidSupport>(
+    async fn sync_otid_fetch_records<T: OtidTableSupport>(
         &self,
         hist: bool,
-        tid: TID,
-    ) -> AResult<Option<T>> {
+        tids: Vec<TID>,
+    ) -> AResult<Vec<T>> {
         let res = self
             .conn()
             .await?
-            .qry_opt(
-                format!("select * from {} where tid = {}", T::table_name(hist), tid),
+            .qry_list(
+                SqlBuilder::read_all(T::table_name(hist)).r#where(Wheres::r#in(C_TID, tids)),
                 move |row| T::try_from_kdb_row(&row),
             )
             .await?;
@@ -414,7 +447,7 @@ impl KDb {
         Ok(res)
     }
 
-    async fn sync_merge_one_record<T: KOtidSupport>(&self, data: T, hist: bool) -> EResult {
+    async fn sync_merge_one_record<T: OtidTableSupport>(&self, data: T, hist: bool) -> EResult {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
 
@@ -451,9 +484,7 @@ impl KDb {
                     )
                     .await?;
                 } else if db_tid < data.tid() {
-                    tx.as_executor().omit_rows::<T>(data.pkey()).await?;
-                    tx.exec(data.sql_inserter().table_name(T::table_name(false)))
-                        .await?;
+                    tx.as_executor().po_otid_insert([data]).await?;
                 }
             }
         }

@@ -3,7 +3,7 @@ use chin_tools::{AResult, EResult};
 
 use crate::{
     mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver},
-    model::KOtidSupport,
+    model::OtidTableSupport,
 };
 
 pub(crate) async fn create_tables(cts: Ddls, kdb: &KDb) -> EResult {
@@ -56,7 +56,10 @@ impl Ddls {
 }
 
 impl KDbExecutor<'_> {
-    pub(crate) async fn omit_rows<T: KOtidSupport>(&self, condition: Wheres<'_>) -> AResult<usize> {
+    pub(crate) async fn omit_rows<T: OtidTableSupport>(
+        &self,
+        condition: Wheres<'_>,
+    ) -> AResult<usize> {
         let count = self.copy_into_omit_table::<T>(condition.clone()).await?;
         if count > 0 {
             let delete_sql = SqlDeleter::new(T::table_name(false)).r#where(condition);
@@ -66,7 +69,7 @@ impl KDbExecutor<'_> {
         }
     }
 
-    pub(crate) async fn copy_into_omit_table<T: KOtidSupport>(
+    pub(crate) async fn copy_into_omit_table<T: OtidTableSupport>(
         &self,
         condition: Wheres<'_>,
     ) -> AResult<usize> {

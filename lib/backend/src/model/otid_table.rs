@@ -1,7 +1,17 @@
 use std::{marker::PhantomData, ops::Deref};
 
+use chin_sql::{SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
+use chin_tools::AResult;
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    mapper::{
+        Curd,
+        db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbTransactionBehaiver},
+    },
+    model::KSerde,
+};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
 pub enum OtidTableEnum {
@@ -70,5 +80,176 @@ impl<E, T> Deref for OtidWithGeneric<E, T> {
 
     fn deref(&self) -> &Self::Target {
         &self.dto
+    }
+}
+
+pub(crate) trait OtidTableSupport: KSerde + Curd {
+    fn get_otid_enum() -> OtidTableEnum;
+    fn table_name(hist: bool) -> &'static str;
+    fn all_columns() -> &'static [&'static str];
+}
+
+#[macro_export]
+macro_rules! impl_otid_support {
+    ($st:tt) => {
+        impl $st {
+            pub const HIST_TABLE: &str = const_format::formatcp!("{}_hist", $st::TABLE);
+        }
+
+        impl $crate::model::KSerde for $st {
+            fn sql_inserter(&'_ self) -> chin_sql::SqlInserter<'_> {
+                self.clone().to_sql_inserter()
+            }
+
+            fn try_from_kdb_row(row: &$crate::mapper::db::KDbRow) -> chin_tools::AResult<Self> {
+                Self::try_from(row)
+            }
+        }
+
+        impl $crate::model::OtidTableSupport for $st {
+            fn get_otid_enum() -> $crate::model::otid_table::OtidTableEnum {
+                $crate::model::otid_table::OtidTableEnum::$st
+            }
+            fn table_name(hist: bool) -> &'static str {
+                match hist {
+                    true => Self::HIST_TABLE,
+                    false => Self::TABLE,
+                }
+            }
+            fn all_columns() -> &'static [&'static str] {
+                Self::all_field_names()
+            }
+        }
+
+        impl<'a> $crate::mapper::db::kdb::HistCreateSql<'a> for $st {
+            fn hist_table() -> chin_sql::CreateTableSqlOwned {
+                let mut create_table = Self::create_sql().to_owned_sql();
+                let pkey = create_table.pkey.clone();
+                create_table.pkey.clear();
+
+                for ele in pkey {
+                    create_table.keys.push((ele.clone(), vec![ele]));
+                }
+
+                let unikeys = create_table.unikeys.clone();
+                create_table.unikeys.clear();
+                for ele in unikeys {
+                    if ele.1[0].to_lowercase() == "tid" && ele.1.len() == 1 {
+                        create_table.unikeys.push(ele)
+                    } else {
+                        create_table.keys.push(ele);
+                    }
+                }
+
+                create_table.table_name = Self::HIST_TABLE.to_string();
+
+                create_table
+            }
+
+            fn main_table() -> chin_sql::CreateTableSqlOwned {
+                Self::create_sql().to_owned_sql()
+            }
+        }
+    };
+}
+
+pub enum OtidSearchType {
+    Current,
+    Hist,
+    Both,
+}
+
+impl KDbExecutor<'_> {
+    pub async fn po_otid_insert<T, S>(&self, pos: S) -> AResult<usize>
+    where
+        T: OtidTableSupport,
+        S: Into<Vec<T>>,
+    {
+        let vs = pos.into();
+        let mut count = 0;
+        for ele in vs {
+            self.omit_rows::<T>(ele.pkey()).await?;
+            count += self
+                .exec(
+                    ele.sql_inserter()
+                        .on_conflict(chin_sql::OnConflict::Default),
+                )
+                .await?;
+        }
+
+        Ok(count)
+    }
+
+    pub async fn po_otid_list<T, S>(&self, pos: S, search_type: OtidSearchType) -> AResult<Vec<T>>
+    where
+        T: OtidTableSupport,
+        S: Into<Vec<TID>>,
+    {
+        let vs = pos.into();
+
+        let results = match search_type {
+            OtidSearchType::Both => {
+                self.qry_list(
+                    SqlBuilder::new()
+                        .seg("select * from")
+                        .seg(T::table_name(true))
+                        .r#where(Wheres::r#in("otid", vs.clone()))
+                        .seg("union")
+                        .seg("select * from")
+                        .seg(T::table_name(false))
+                        .r#where(Wheres::r#in("otid", vs)),
+                    |row| T::try_from_kdb_row(&row),
+                )
+                .await?
+            }
+            _ => {
+                self.qry_list(
+                    SqlBuilder::new()
+                        .seg("select * from")
+                        .seg(T::table_name(match search_type {
+                            OtidSearchType::Current => false,
+                            OtidSearchType::Hist => true,
+                            OtidSearchType::Both => unreachable!(),
+                        }))
+                        .r#where(Wheres::r#in("otid", vs)),
+                    |row| T::try_from_kdb_row(&row),
+                )
+                .await?
+            }
+        };
+
+        Ok(results)
+    }
+}
+
+impl KDb {
+    pub async fn po_otid_insert<T, S>(&self, pos: S) -> AResult<usize>
+    where
+        T: OtidTableSupport,
+        S: Into<Vec<T>>,
+    {
+        let pos = pos.into();
+        let mut count = 0;
+        if pos.len() == 1 {
+            count = self.conn().await?.as_executor().po_otid_insert(pos).await?;
+        } else if !pos.is_empty() {
+            let mut conn = self.conn().await?;
+            let tx = conn.transaction().await?;
+            count = tx.as_executor().po_otid_insert(pos).await?;
+            tx.cmt().await?;
+        }
+        Ok(count)
+    }
+
+    pub async fn po_otid_list<T, S>(&self, otids: S, search_type: OtidSearchType) -> AResult<Vec<T>>
+    where
+        T: OtidTableSupport,
+        S: Into<Vec<TID>>,
+    {
+        self.conn()
+            .await?
+            .as_executor()
+            .po_otid_list(otids, search_type)
+            .await
     }
 }

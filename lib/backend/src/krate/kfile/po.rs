@@ -3,7 +3,7 @@ use chin_sql::time_type::TID;
 use chin_sql::{GenerateTableSchema, str_type::Text};
 use serde::{Deserialize, Serialize};
 
-use crate::impl_otid_support;
+use crate::{impl_otid_support, impl_sid_support};
 
 #[derive(Clone, Serialize, Deserialize, Debug, GenerateTableSchema)]
 pub struct KFileMeta {
@@ -46,3 +46,5 @@ pub struct InlineKFile {
 
     pub content: Text,
 }
+
+impl_sid_support! {InlineKFile}

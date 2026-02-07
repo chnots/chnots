@@ -21,7 +21,8 @@ impl ShareAppState {
     }
 
     pub async fn sync_mdwts(&self, endpoint: &SyncEndpoint) -> EResult {
-        self.sync_one_otid_table1::<MdwtRecord>(endpoint).await?;
+        self.sync_one_otid_table_only::<MdwtRecord>(endpoint)
+            .await?;
         Ok(())
     }
 }

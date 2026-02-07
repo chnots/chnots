@@ -72,27 +72,7 @@ pub struct KfileMetaFetchRsp {
     pub meta: Option<KFileMeta>,
 }
 
-pub const PO_INLINE_KFILE_COMMIT: &str = "/api/v1/kfile-inline-upload-directly";
-pub const PO_INLINE_KFILE_LIST: &str = "/api/v1/kfile-inline-download-by-sid";
 pub const KFILE_ASSET_UPLOAD_BY_SID: &str = "/api/v1/kfile-asset-upload-by-sid";
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PoInlineKfileCommitReq {
-    pub file: Vec<InlineKFile>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PoInlineKfileCommitRsp {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PoInlineKFileListReq {
-    pub pids: Vec<Varchar<100>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PoInlineKFileListRsp {
-    pub pos: Vec<InlineKFile>,
-}
 
 #[test]
 fn tst() {

@@ -21,7 +21,7 @@ impl ShareAppState {
     }
 
     pub async fn sync_kspace(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
-        self.sync_one_otid_table1::<KSpace>(endpoint).await?;
+        self.sync_one_otid_table_only::<KSpace>(endpoint).await?;
 
         Ok(())
     }

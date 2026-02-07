@@ -1,17 +1,16 @@
-use std::collections::BTreeMap;
-use std::str::FromStr;
-
 use chin_sql::SqlValue;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{GenerateTableSchema, str_type::Text};
-use chin_tools::AResult;
+
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
+use crate::krate::graph::{ExcalidrawDataV2, MindElixirDataV1PoMeta};
+use crate::mapper::Curd;
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
-use crate::{enum_common_funcs, impl_otid_support};
+use crate::model::sid_table::SidTableSupport;
+use crate::{enum_common_funcs, impl_otid_support, impl_sid_support};
 
 pub trait GetKeys {
     fn get_keys(&self) -> Vec<String>;
@@ -21,6 +20,12 @@ pub trait GetKeys {
 pub enum GraphKind {
     ExcalidrawV2,
     MindElixirV1,
+}
+
+#[derive(Debug, Clone)]
+pub enum GraphMetaEnum {
+    ExcalidrawV2(ExcalidrawDataV2<String>),
+    MindElixirV1(MindElixirDataV1PoMeta),
 }
 
 impl GraphKind {
@@ -77,4 +82,30 @@ pub struct GraphData {
     pub tid: TID,
 
     pub content: Text,
+}
+
+impl_sid_support! {GraphData}
+
+impl TryFrom<&GraphMeta> for GraphMetaEnum {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &GraphMeta) -> Result<Self, Self::Error> {
+        match value.kind {
+            GraphKind::ExcalidrawV2 => Ok(GraphMetaEnum::ExcalidrawV2(serde_json::from_str(
+                value.content.as_str(),
+            )?)),
+            GraphKind::MindElixirV1 => Ok(GraphMetaEnum::MindElixirV1(serde_json::from_str(
+                value.content.as_str(),
+            )?)),
+        }
+    }
+}
+
+impl GetKeys for GraphMetaEnum {
+    fn get_keys(&self) -> Vec<String> {
+        match self {
+            GraphMetaEnum::ExcalidrawV2(d) => d.get_keys(),
+            GraphMetaEnum::MindElixirV1(d) => d.keys.clone(),
+        }
+    }
 }

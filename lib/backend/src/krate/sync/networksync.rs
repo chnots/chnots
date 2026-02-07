@@ -1,65 +1,36 @@
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use crate::krate::sync::controller::{SYNC_DATA_PATH, SYNC_LOG_COMMIT_PATH, SYNC_TID_LIST_PATH};
+use crate::krate::sync::controller::{
+    SYNC_DATA_PATH, SYNC_LOG_COMMIT_PATH, SYNC_SID_PO_COMMIT_PATH, SYNC_SID_PO_LIST_PATH,
+    SYNC_TID_LIST_PATH,
+};
 use crate::krate::sync::dto::{
-    SyncDataArg, SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncPageInfo, SyncShakeArg,
-    SyncShakeDto, SyncTIDListArg, SyncTIDListReq,
+    SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncOtidTIDListReq, SyncPageInfo, SyncShakeArg,
+    SyncShakeDto, SyncSidPoCommitReq, SyncSidPoEnumDto, SyncSidPoGenericDto, SyncSidPoListReq,
+    SyncTIDListArg,
 };
 use crate::krate::sync::po::SyncLogTransientCommit;
-use crate::model::KOtidSupport;
 use crate::model::otid_table::OtidWithGeneric;
+use crate::model::{OtidTableSupport, SidTableSupport};
 use crate::sync_cmds_st_to_json;
 use crate::{
     app::ShareAppState,
     krate::sync::{
         controller::SYNC_SHAKE_PATH,
-        dto::{SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum, SyncTIDListRsp},
+        dto::{SyncOtidTIDListRsp, SyncShakeReq, SyncShakeRsp, SyncShakeRspEnum},
         mapper::SyncMapper,
     },
     magics::DB_VERSION,
 };
+use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 use log::info;
 
 use super::po::SyncEndpoint;
 
 impl ShareAppState {
-    pub(crate) async fn sync_shake_rx<T: KOtidSupport>(
-        &self,
-        req: SyncShakeArg<T>,
-    ) -> AResult<SyncShakeRsp> {
-        let instace_id = self.instance_id.clone();
-
-        if req.db_version.as_str() != DB_VERSION {
-            return Ok(SyncShakeRsp {
-                instance_id: instace_id,
-                data: SyncShakeRspEnum::NotSameVersion(DB_VERSION.to_owned()),
-            });
-        }
-
-        if req.instance_id == instace_id {
-            return Ok(SyncShakeRsp {
-                instance_id: instace_id,
-                data: SyncShakeRspEnum::SameClient,
-            });
-        }
-
-        let sync_time = self
-            .mapper
-            .sync_get_sync_time(
-                T::table_name(false).try_into()?,
-                req.instance_id.to_string().try_into()?,
-            )
-            .await?;
-
-        Ok(SyncShakeRsp {
-            instance_id: instace_id,
-            data: SyncShakeRspEnum::BeginSync { sync_time },
-        })
-    }
-
-    pub(crate) async fn sync_shake_tx<T: KOtidSupport>(
+    pub(crate) async fn sync_shake_tx<T: OtidTableSupport>(
         &self,
         endpoint: &SyncEndpoint,
     ) -> AResult<SyncShakeRsp> {
@@ -114,23 +85,57 @@ impl ShareAppState {
         })
     }
 
-    pub(crate) async fn sync_tid_list_tx<T: KOtidSupport>(
+    pub(crate) async fn sync_shake_rx<T: OtidTableSupport>(
+        &self,
+        req: SyncShakeArg<T>,
+    ) -> AResult<SyncShakeRsp> {
+        let instace_id = self.instance_id.clone();
+
+        if req.db_version.as_str() != DB_VERSION {
+            return Ok(SyncShakeRsp {
+                instance_id: instace_id,
+                data: SyncShakeRspEnum::NotSameVersion(DB_VERSION.to_owned()),
+            });
+        }
+
+        if req.instance_id == instace_id {
+            return Ok(SyncShakeRsp {
+                instance_id: instace_id,
+                data: SyncShakeRspEnum::SameClient,
+            });
+        }
+
+        let sync_time = self
+            .mapper
+            .sync_get_sync_time(
+                T::table_name(false).try_into()?,
+                req.instance_id.to_string().try_into()?,
+            )
+            .await?;
+
+        Ok(SyncShakeRsp {
+            instance_id: instace_id,
+            data: SyncShakeRspEnum::BeginSync { sync_time },
+        })
+    }
+
+    pub(crate) async fn sync_otid_tid_list_tx<T: OtidTableSupport>(
         &self,
         endpoint: &SyncEndpoint,
         fetch_data: SyncTIDListArg<T>,
-    ) -> AResult<SyncTIDListRsp> {
+    ) -> AResult<SyncOtidTIDListRsp> {
         let client = reqwest::Client::builder().build()?;
         let page = fetch_data.dto.page.clone();
 
         let rsp = client
             .post(endpoint.to_url(SYNC_TID_LIST_PATH))
-            .json(&SyncTIDListReq {
+            .json(&SyncOtidTIDListReq {
                 table_type: T::get_otid_enum(),
                 dto: fetch_data.dto,
             })
             .send()
             .await?
-            .json::<SyncTIDListRsp>()
+            .json::<SyncOtidTIDListRsp>()
             .await?;
 
         info!(
@@ -143,47 +148,24 @@ impl ShareAppState {
         Ok(rsp)
     }
 
-    pub(crate) async fn sync_tid_list_rx<T: KOtidSupport>(
+    pub(crate) async fn sync_otid_tid_list_rx<T: OtidTableSupport>(
         &self,
         req: SyncTIDListArg<T>,
-    ) -> AResult<SyncTIDListRsp> {
-        self.mapper.sync_tid_list(req).await
+    ) -> AResult<SyncOtidTIDListRsp> {
+        self.mapper.sync_otid_tid_list(req).await
     }
 
-    pub(crate) async fn sync_data_rx<T: KOtidSupport>(
-        &self,
-        req: SyncDataArg<T>,
-    ) -> AResult<SyncDataArg<T>> {
-        self.mapper.sync_merge_operations(req).await
-    }
-
-    async fn sync_insert_sync_log_tx(
-        &self,
-        endpoint: &SyncEndpoint,
-        log: &SyncLogTransientCommit,
-    ) -> EResult {
-        let client = reqwest::Client::builder().build()?;
-
-        client
-            .post(endpoint.to_url(SYNC_LOG_COMMIT_PATH))
-            .json(&log)
-            .send()
-            .await?;
-
-        Ok(())
-    }
-
-    pub(crate) async fn sync_data_tx<T, W>(
+    pub(crate) async fn sync_otid_data_tx<T, W>(
         &self,
         endpoint: &SyncEndpoint,
         sync_info: &SyncPageInfo<T>,
         otid_related_worker: &W,
-    ) -> AResult<SyncDataArg<T>>
+    ) -> AResult<SyncDataDto<T>>
     where
         W: OtidRelatedWorker<T>,
-        T: KOtidSupport,
+        T: OtidTableSupport,
     {
-        let dto: SyncDataArg<T> = self.mapper.sync_fetch_operations(sync_info).await?;
+        let dto: SyncDataDto<T> = self.mapper.sync_fetch_operations(sync_info).await?;
         otid_related_worker.before_send(endpoint, &dto).await?;
 
         let client = reqwest::Client::builder().build()?;
@@ -202,7 +184,7 @@ impl ShareAppState {
             .await?
             .json::<SyncDataReqRsp>()
             .await?;
-        let res: Result<Vec<SyncDataOperation<T>>, serde_json::Error> = rsp
+        let cmds: Result<Vec<SyncDataOperation<T>>, serde_json::Error> = rsp
             .dto
             .cmds
             .into_iter()
@@ -228,30 +210,117 @@ impl ShareAppState {
             })
             .collect();
 
-        Ok(SyncDataArg {
-            cmds: res?,
+        Ok(SyncDataDto {
+            cmds: cmds?,
             max_tid: dto.max_tid,
             nomore: dto.nomore,
         })
     }
 
-    pub(crate) async fn sync_one_otid_table1<T: KOtidSupport>(
+    pub(crate) async fn sync_otid_data_rx<T: OtidTableSupport>(
+        &self,
+        req: SyncDataDto<T>,
+    ) -> AResult<SyncDataDto<T>> {
+        self.mapper.sync_otid_merge_operations(req).await
+    }
+
+    async fn sync_insert_sync_log_tx(
         &self,
         endpoint: &SyncEndpoint,
+        log: &SyncLogTransientCommit,
     ) -> EResult {
-        self.sync_one_otid_table(PhantomData::<T>, endpoint, &SimpleOtidRelatedWorker {})
+        let client = reqwest::Client::builder().build()?;
+
+        client
+            .post(endpoint.to_url(SYNC_LOG_COMMIT_PATH))
+            .json(&log)
+            .send()
             .await?;
+
         Ok(())
     }
 
-    pub(crate) async fn sync_one_otid_table<T, W>(
+    pub async fn sync_insert_sync_log_rx(&self, log: SyncLogTransientCommit) -> EResult {
+        self.sync_log_transient_commit(log).await
+    }
+
+    pub async fn sync_sid_po_list_tx<const LIMIT: usize, T: SidTableSupport>(
         &self,
-        _: PhantomData<T>,
+        endpoint: &SyncEndpoint,
+        log: Vec<Varchar<LIMIT>>,
+    ) -> AResult<Vec<T>> {
+        let client = reqwest::Client::builder().build()?;
+
+        let rsp = client
+            .post(endpoint.to_url(SYNC_SID_PO_LIST_PATH))
+            .json(&SyncSidPoListReq {
+                pids: log,
+                table_type: T::get_sid_enum(),
+            })
+            .send()
+            .await?
+            .json::<SyncSidPoGenericDto<T>>()
+            .await?;
+
+        Ok(rsp.pos)
+    }
+
+    pub async fn sync_sid_po_list_rx<const LIMIT: usize, T: SidTableSupport>(
+        &self,
+        log: Vec<Varchar<LIMIT>>,
+    ) -> AResult<SyncSidPoGenericDto<T>> {
+        Ok(SyncSidPoGenericDto {
+            pos: self.po_sid_sync_list::<LIMIT, T>(log).await?,
+        })
+    }
+
+    pub async fn sync_sid_po_commit_tx<T: SidTableSupport>(
+        &self,
+        endpoint: &SyncEndpoint,
+
+        log: SyncSidPoGenericDto<T>,
+    ) -> EResult {
+        let client = reqwest::Client::builder().build()?;
+
+        client
+            .post(endpoint.to_url(SYNC_SID_PO_COMMIT_PATH))
+            .json(&SyncSidPoCommitReq {
+                pos: SyncSidPoEnumDto::try_from(log)?.pos,
+                table_type: T::get_sid_enum(),
+            })
+            .send()
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn sync_sid_po_commit_rx<T: SidTableSupport>(
+        &self,
+        dto: SyncSidPoGenericDto<T>,
+    ) -> EResult {
+        self.po_sid_sync_commit::<T>(dto.pos).await?;
+        Ok(())
+    }
+
+    pub(crate) async fn sync_one_otid_table_only<T: OtidTableSupport>(
+        &self,
+        endpoint: &SyncEndpoint,
+    ) -> EResult {
+        self.sync_one_otid_table_with_worker::<T, SimpleOtidRelatedWorker>(
+            endpoint,
+            &SimpleOtidRelatedWorker {},
+        )
+        .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn sync_one_otid_table_with_worker<T, W>(
+        &self,
         endpoint: &SyncEndpoint,
         otid_related_worker: &W,
     ) -> EResult
     where
-        T: KOtidSupport,
+        T: OtidTableSupport,
         W: OtidRelatedWorker<T>,
     {
         use crate::krate::sync::dto::*;
@@ -284,7 +353,7 @@ impl ShareAppState {
             pantient: true,
         };
 
-        self.sync_create_tmp_table(&sync_info).await?;
+        self.sync_otid_create_tmp_table(&sync_info).await?;
 
         let mut start_ex = sync_info.start_ex;
         let mut hist = false;
@@ -295,8 +364,8 @@ impl ShareAppState {
                 start_ex,
                 start_ex.as_utc()
             );
-            let result: SyncTIDListRsp = self
-                .sync_tid_list_tx::<T>(
+            let result: SyncOtidTIDListRsp = self
+                .sync_otid_tid_list_tx::<T>(
                     endpoint,
                     OtidWithGeneric {
                         dto: SyncTIDListDto {
@@ -316,7 +385,7 @@ impl ShareAppState {
             if let Some(cstart_ex) = c_sync_time {
                 start_ex = *cstart_ex;
             }
-            self.sync_merge_tids(result, hist, sync_info.clone())
+            self.sync_otid_merge_tids(result, hist, sync_info.clone())
                 .await?;
             if result_len < page_size {
                 if hist {
@@ -338,8 +407,8 @@ impl ShareAppState {
                 sync_step,
             };
 
-            let rsp: SyncDataArg<T> = self
-                .sync_data_tx(endpoint, &sync_page, otid_related_worker)
+            let rsp: SyncDataDto<T> = self
+                .sync_otid_data_tx(endpoint, &sync_page, otid_related_worker)
                 .await?;
             let nomore = rsp.nomore;
 
@@ -347,7 +416,7 @@ impl ShareAppState {
 
             start_ex = rsp.max_tid;
 
-            self.sync_merge_operations(rsp).await?;
+            self.sync_otid_merge_operations(rsp).await?;
             if nomore {
                 match sync_step {
                     SyncSingleStep::Omit => {
@@ -385,20 +454,20 @@ impl ShareAppState {
     }
 }
 
-pub(crate) trait OtidRelatedWorker<T: KOtidSupport> {
-    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataArg<T>) -> EResult;
-    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataArg<T>) -> EResult;
+pub(crate) trait OtidRelatedWorker<T: OtidTableSupport> {
+    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<T>) -> EResult;
+    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<T>) -> EResult;
 }
 
 struct SimpleOtidRelatedWorker;
-impl<T: KOtidSupport> OtidRelatedWorker<T> for SimpleOtidRelatedWorker {
+impl<T: OtidTableSupport> OtidRelatedWorker<T> for SimpleOtidRelatedWorker {
     #[inline]
-    async fn before_send(&self, _: &SyncEndpoint, _: &SyncDataArg<T>) -> EResult {
+    async fn before_send(&self, _: &SyncEndpoint, _: &SyncDataDto<T>) -> EResult {
         Ok(())
     }
 
     #[inline]
-    async fn before_merge(&self, _: &SyncEndpoint, _: &SyncDataArg<T>) -> EResult {
+    async fn before_merge(&self, _: &SyncEndpoint, _: &SyncDataDto<T>) -> EResult {
         Ok(())
     }
 }

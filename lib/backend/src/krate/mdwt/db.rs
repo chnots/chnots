@@ -130,10 +130,7 @@ impl<'a> KDbTx<'a> {
             archor,
         };
 
-        self.as_executor()
-            .omit_rows::<MdwtRecord>(MdwtRecord::pkey_cond(block.otid))
-            .await?;
-        self.exec(rec.to_sql_inserter()).await?;
+        self.as_executor().po_otid_insert([rec]).await?;
 
         Ok(())
     }

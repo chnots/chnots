@@ -1,7 +1,7 @@
 use anyhow::Context;
 use axum::{
     Json, Router,
-    body::{self, Body},
+    body::Body,
     extract::{DefaultBodyLimit, Query, State},
     http::{HeaderMap, HeaderName},
     response::IntoResponse,
@@ -73,28 +73,6 @@ async fn kfile_inline_upload(
         .into()
 }
 
-async fn po_inline_kfile_commit(
-    state: State<ShareAppState>,
-    Json(req): Json<PoInlineKfileCommitReq>,
-) -> KResponse<PoInlineKfileCommitRsp> {
-    state
-        .po_inline_kfile_commit(req.file)
-        .await
-        .map(|_| PoInlineKfileCommitRsp {})
-        .into()
-}
-
-async fn po_inline_kfile_list(
-    state: State<ShareAppState>,
-    Query(req): Query<PoInlineKFileListReq>,
-) -> KResponse<PoInlineKFileListRsp> {
-    state
-        .po_inline_kfile_list(req.pids)
-        .await
-        .map(|pos| PoInlineKFileListRsp { pos: pos })
-        .into()
-}
-
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/kfile-meta-fetch", post(kfile_meta_fetch))
@@ -123,6 +101,4 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         )
         .route("/api/v1/kfile-inline-upload", put(kfile_inline_upload))
         .route("/api/v1/kfile-inline-download", post(kfile_inline_download))
-        .route(PO_INLINE_KFILE_LIST, get(po_inline_kfile_list))
-        .route(PO_INLINE_KFILE_COMMIT, put(po_inline_kfile_commit))
 }

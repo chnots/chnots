@@ -8,7 +8,7 @@ use chin_tools::EResult;
 use crate::{
     krate::kfile::{InlineKFile, KFileMeta},
     mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRowBehavier},
-    model::KOtidSupport,
+    model::OtidTableSupport,
 };
 
 // move excalidraw files to graph

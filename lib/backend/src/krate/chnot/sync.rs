@@ -23,7 +23,7 @@ impl ShareAppState {
     }
 
     pub async fn sync_chnots(&self, endpoint: &SyncEndpoint) -> EResult {
-        self.sync_one_otid_table1::<ChnotThreadMeta>(endpoint)
+        self.sync_one_otid_table_only::<ChnotThreadMeta>(endpoint)
             .await?;
         Ok(())
     }

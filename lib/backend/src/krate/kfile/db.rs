@@ -74,8 +74,7 @@ impl KDbExecutor<'_> {
                 meta.archor = true;
             }
         }
-        self.omit_rows::<KFileMeta>(meta.pkey()).await?;
-        self.exec(meta.to_sql_inserter()).await?;
+        self.po_otid_insert([meta]).await?;
 
         Ok(())
     }
@@ -180,12 +179,11 @@ impl KFileMapper for KDb {
 
     async fn po_inline_kfile_list(
         &self,
-        sid: Vec<Varchar<100>>,
+        sids: Vec<Varchar<100>>,
     ) -> anyhow::Result<Vec<InlineKFile>> {
         let query = SqlBuilder::read_all(InlineKFile::TABLE)
-            .r#where(Wheres::r#in(InlineKFile::SID, sid))
-            .seg("order by tid desc")
-            .custom(LimitOffset::new(1));
+            .r#where(Wheres::r#in(InlineKFile::SID, sids))
+            .seg("order by tid desc");
 
         let res = self
             .conn()
@@ -241,16 +239,7 @@ impl KFileMapper for KDb {
     }
 
     async fn po_inline_kfile_commit(&self, pos: Vec<InlineKFile>) -> chin_tools::AResult<usize> {
-        let mut conn = self.conn().await?;
-        let tx = conn.transaction().await?;
-        let mut count = 0;
-        for ele in pos {
-            count += tx
-                .exec(ele.to_sql_inserter().on_conflict(OnConflict::Ignore))
-                .await?;
-        }
-        tx.cmt().await?;
-        Ok(count)
+        self.po_sid_insert(pos).await
     }
 }
 

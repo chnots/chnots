@@ -1,13 +1,16 @@
 use std::{fmt::Debug, marker::PhantomData, ops::Deref};
 
-use chin_sql::time_type::TID;
+use chin_sql::{
+    str_type::{Text, Varchar},
+    time_type::TID,
+};
 use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     krate::sync::po::{SyncAllEndpoints, SyncEndpoint},
     model::{
-        KOtidSupport,
+        OtidTableSupport, SidTableEnum, SidTableSupport,
         otid_table::{OtidTableEnum, OtidWithEnum, OtidWithGeneric},
     },
 };
@@ -27,7 +30,7 @@ pub enum SyncSingleStep {
     Data,
 }
 
-impl<T: KOtidSupport> SyncInfo<T> {
+impl<T: OtidTableSupport> SyncInfo<T> {
     pub fn to_table_name(&self) -> String {
         format!(
             "sync_{}_{}",
@@ -45,7 +48,7 @@ pub struct SyncPageInfo<T> {
     pub sync_step: SyncSingleStep,
 }
 
-impl<T: KOtidSupport> Deref for SyncPageInfo<T> {
+impl<T: OtidTableSupport> Deref for SyncPageInfo<T> {
     type Target = SyncInfo<T>;
 
     fn deref(&self) -> &Self::Target {
@@ -90,11 +93,11 @@ pub(crate) struct SyncTIDListDto {
     pub hist: bool,
 }
 
-pub type SyncTIDListReq = OtidWithEnum<SyncTIDListDto>;
+pub type SyncOtidTIDListReq = OtidWithEnum<SyncTIDListDto>;
 pub type SyncTIDListArg<T> = OtidWithGeneric<SyncTIDListDto, T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncTIDListRsp {
+pub struct SyncOtidTIDListRsp {
     pub data: Vec<TID>,
 }
 
@@ -106,7 +109,6 @@ pub struct SyncDataDto<T> {
 }
 
 pub type SyncDataReqRsp = OtidWithEnum<SyncDataDto<String>>;
-pub type SyncDataArg<T> = SyncDataDto<T>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SyncDataOperation<T> {
@@ -119,7 +121,7 @@ pub enum SyncDataOperation<T> {
 macro_rules! sync_cmds_json_to_st {
     ($st:ty, $cmds:expr) => {{
         use $crate::krate::sync::dto::SyncDataOperation;
-        let res: Result<Vec<SyncDataOperation<$st>>, serde_json::Error> = $cmds
+        let res: Result<Vec<SyncDataOperation<$st>>, anyhow::Error> = $cmds
             .into_iter()
             .map(|s| {
                 let c = match s {
@@ -132,7 +134,7 @@ macro_rules! sync_cmds_json_to_st {
                     $crate::krate::sync::dto::SyncDataOperation::Push { data, hist } => {
                         SyncDataOperation::Push {
                             data: {
-                                let c: $st = serde_json::from_str(&data)?;
+                                let c: $st = serde_json::from_str::<$st>(&data)?;
                                 c
                             },
                             hist,
@@ -194,3 +196,41 @@ pub struct SyncEndpointSyncReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncEndpointSyncRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncSidPoListReq<const LIMIT: usize> {
+    pub pids: Vec<Varchar<LIMIT>>,
+    pub table_type: SidTableEnum,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncSidPoCommitReq {
+    pub pos: Vec<String>,
+    pub table_type: SidTableEnum,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncSidPoCommitRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncSidPoGenericDto<T> {
+    pub pos: Vec<T>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncSidPoEnumDto {
+    pub pos: Vec<String>,
+    pub table_type: SidTableEnum,
+}
+
+impl<T: SidTableSupport> TryFrom<SyncSidPoGenericDto<T>> for SyncSidPoEnumDto {
+    type Error = anyhow::Error;
+
+    fn try_from(value: SyncSidPoGenericDto<T>) -> Result<Self, Self::Error> {
+        let col: Result<Vec<String>, serde_json::Error> =
+            value.pos.iter().map(|e| serde_json::to_string(e)).collect();
+        Ok(Self {
+            pos: col?,
+            table_type: T::get_sid_enum(),
+        })
+    }
+}

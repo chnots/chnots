@@ -17,7 +17,7 @@ impl ShareAppState {
     }
 
     pub async fn sync_kkv(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
-        self.sync_one_otid_table1::<KKV>(endpoint).await?;
+        self.sync_one_otid_table_only::<KKV>(endpoint).await?;
 
         Ok(())
     }

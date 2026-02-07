@@ -180,10 +180,6 @@ impl ChnotMapper for KDb {
                     tid: TID::default(),
                 });
 
-        tx.as_executor()
-            .omit_rows::<ChnotThreadMeta>(ChnotThreadMeta::pkey_cond(req.meta_otid))
-            .await?;
-
         meta.tid = TID::default();
         if let Some(pin_it) = req.pinned {
             if pin_it {
@@ -205,7 +201,7 @@ impl ChnotMapper for KDb {
             meta.kspace = ksapce;
         }
 
-        tx.exec(meta.clone().to_sql_inserter()).await?;
+        tx.as_executor().po_otid_insert([meta.clone()]).await?;
 
         tx.cmt().await?;
 

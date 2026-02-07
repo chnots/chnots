@@ -10,19 +10,17 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 use crate::{
     app::ShareAppState,
     krate::{
-        kfile::{
-            KFILE_ASSET_UPLOAD_BY_SID, KFileMeta, PO_INLINE_KFILE_COMMIT, PoInlineKfileCommitReq,
-            mapper::KFileMapper,
-        },
+        kfile::{InlineKFile, KFILE_ASSET_UPLOAD_BY_SID, KFileMeta},
         sync::{
-            dto::SyncDataArg, filedumper::StartType, networksync::OtidRelatedWorker,
+            dto::{SyncDataDto, SyncSidPoGenericDto},
+            filedumper::StartType,
+            mapper::SyncMapper,
+            networksync::OtidRelatedWorker,
             po::SyncEndpoint,
         },
     },
     util::digestutil::file_blake3_sum,
 };
-
-use super::{PoInlineKFileListReq, PoInlineKFileListRsp};
 
 struct KFileAssetWorker {
     app: ShareAppState,
@@ -93,16 +91,14 @@ impl KFileAssetWorker {
         }
 
         if inline_metas.len() > 0 {
-            let rsp = client
-                .get(endpoint.to_url(crate::krate::kfile::dto::PO_INLINE_KFILE_LIST))
-                .query(&PoInlineKFileListReq {
-                    pids: inline_metas.iter().map(|e| e.sid.clone()).collect(),
-                })
-                .send()
-                .await?
-                .json::<PoInlineKFileListRsp>()
+            let data = self
+                .app
+                .sync_sid_po_list_tx::<100, InlineKFile>(
+                    endpoint,
+                    inline_metas.iter().map(|e| e.sid.clone()).collect(),
+                )
                 .await?;
-            self.app.po_inline_kfile_commit(rsp.pos).await?;
+            self.app.po_sid_sync_commit(data).await?;
         }
 
         Ok(())
@@ -155,14 +151,13 @@ impl KFileAssetWorker {
         }
 
         if inline_metas.len() > 0 {
-            let rsp = self
+            let data: Vec<InlineKFile> = self
                 .app
-                .po_inline_kfile_list(inline_metas.iter().map(|e| e.sid.clone()).collect())
+                .po_sid_sync_list(inline_metas.iter().map(|e| e.sid.clone()).collect())
                 .await?;
-            client
-                .put(endpoint.to_url(PO_INLINE_KFILE_COMMIT))
-                .json(&PoInlineKfileCommitReq { file: rsp })
-                .send()
+
+            self.app
+                .sync_sid_po_commit_tx(endpoint, SyncSidPoGenericDto { pos: data })
                 .await?;
         }
 
@@ -171,22 +166,26 @@ impl KFileAssetWorker {
 }
 
 impl OtidRelatedWorker<KFileMeta> for KFileAssetWorker {
-    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataArg<KFileMeta>) -> EResult {
+    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<KFileMeta>) -> EResult {
+        let mut metas = vec![];
         for ele in &arg.cmds {
             if let crate::krate::sync::dto::SyncDataOperation::Push { data, hist: _ } = ele {
-                self.push_kfile(endpoint, vec![data]).await?;
+                metas.push(data);
             }
         }
+        self.push_kfile(endpoint, metas).await?;
 
         Ok(())
     }
 
-    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataArg<KFileMeta>) -> EResult {
+    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<KFileMeta>) -> EResult {
+        let mut metas = vec![];
         for ele in &arg.cmds {
             if let crate::krate::sync::dto::SyncDataOperation::Push { data, hist: _ } = ele {
-                self.pull_kfile(endpoint, vec![data]).await?;
+                metas.push(data);
             }
         }
+        self.pull_kfile(endpoint, metas).await?;
 
         Ok(())
     }
@@ -203,7 +202,7 @@ impl ShareAppState {
 
     pub async fn sync_kfile(&self, endpoint: &SyncEndpoint) -> EResult {
         let worker = KFileAssetWorker { app: self.clone() };
-        self.sync_one_otid_table(std::marker::PhantomData::<KFileMeta>, endpoint, &worker)
+        self.sync_one_otid_table_with_worker(endpoint, &worker)
             .await?;
 
         Ok(())

@@ -86,17 +86,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatBotCommitReq>,
     ) -> AResult<LLMChatBotCommitRsp> {
-        let bot = req.body.bot;
-        let otid = bot.otid;
-
-        let inserter = bot.to_sql_inserter();
-        let mut conn = self.conn().await?;
-        let tx = conn.tx().await?;
-        tx.as_executor()
-            .omit_rows::<LLMChatBot>(LLMChatBot::pkey_cond(otid))
-            .await?;
-        tx.exec(inserter).await?;
-        tx.cmt().await?;
+        self.po_otid_insert([req.body.bot]).await?;
 
         Ok(LLMChatBotCommitRsp {})
     }
@@ -105,16 +95,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatTemplateCommitReq>,
     ) -> AResult<LLMChatTemplateCommitRsp> {
-        let tmpl = req.body.template;
-        let inserter = tmpl.to_owned().to_sql_inserter();
-
-        let mut conn = self.conn().await?;
-        let tx = conn.tx().await?;
-        tx.as_executor()
-            .omit_rows::<LLMChatTemplate>(LLMChatTemplate::pkey_cond(tmpl.otid))
-            .await?;
-        tx.exec(inserter).await?;
-        tx.cmt().await?;
+        self.po_otid_insert([req.body.template]).await?;
 
         Ok(LLMChatTemplateCommitRsp {})
     }
@@ -123,18 +104,10 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatSessionCommitReq>,
     ) -> AResult<LLMChatSessionCommitRsp> {
-        let mut obj = req.body.session;
-        let s: String = obj.title.to_string().chars().take(199).collect();
-        obj.title = s.try_into()?;
-        let inserter = obj.to_owned().to_sql_inserter();
-
-        let mut conn = self.conn().await?;
-        let tx = conn.tx().await?;
-        tx.as_executor()
-            .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(obj.otid))
-            .await?;
-        tx.exec(inserter).await?;
-        tx.cmt().await?;
+        let mut session = req.body.session;
+        let s: String = session.title.to_string().chars().take(199).collect();
+        session.title = s.try_into()?;
+        self.po_otid_insert([session]).await?;
 
         Ok(LLMChatSessionCommitRsp {})
     }
@@ -143,17 +116,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatRecordCommitReq>,
     ) -> AResult<LLMChatRecordCommitRsp> {
-        let obj = req.body.record;
-        let otid = obj.otid;
-        let inserter = obj.to_owned().to_sql_inserter();
-
-        let mut conn = self.conn().await?;
-        let tx = conn.tx().await?;
-        tx.as_executor()
-            .omit_rows::<LLMChatRecord>(LLMChatRecord::pkey_cond(otid))
-            .await?;
-        tx.exec(inserter).await?;
-        tx.cmt().await?;
+        self.po_otid_insert([req.body.record]).await?;
 
         Ok(LLMChatRecordCommitRsp {})
     }

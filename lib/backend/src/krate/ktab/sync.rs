@@ -31,11 +31,13 @@ impl ShareAppState {
     }
 
     pub async fn sync_ktab(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
-        self.sync_one_otid_table1::<KTabMeta>(endpoint).await?;
-        self.sync_one_otid_table1::<KTabCellDate>(endpoint).await?;
-        self.sync_one_otid_table1::<KTabCellDecimal>(endpoint)
+        self.sync_one_otid_table_only::<KTabMeta>(endpoint).await?;
+        self.sync_one_otid_table_only::<KTabCellDate>(endpoint)
             .await?;
-        self.sync_one_otid_table1::<KTabCellText>(endpoint).await?;
+        self.sync_one_otid_table_only::<KTabCellDecimal>(endpoint)
+            .await?;
+        self.sync_one_otid_table_only::<KTabCellText>(endpoint)
+            .await?;
 
         Ok(())
     }

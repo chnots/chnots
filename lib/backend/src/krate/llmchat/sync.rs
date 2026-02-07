@@ -35,11 +35,13 @@ impl ShareAppState {
     }
 
     pub async fn sync_llmchat(&self, endpoint: &crate::krate::sync::po::SyncEndpoint) -> EResult {
-        self.sync_one_otid_table1::<LLMChatBot>(endpoint).await?;
-        self.sync_one_otid_table1::<LLMChatRecord>(endpoint).await?;
-        self.sync_one_otid_table1::<LLMChatSession>(endpoint)
+        self.sync_one_otid_table_only::<LLMChatBot>(endpoint)
             .await?;
-        self.sync_one_otid_table1::<LLMChatTemplate>(endpoint)
+        self.sync_one_otid_table_only::<LLMChatRecord>(endpoint)
+            .await?;
+        self.sync_one_otid_table_only::<LLMChatSession>(endpoint)
+            .await?;
+        self.sync_one_otid_table_only::<LLMChatTemplate>(endpoint)
             .await?;
 
         Ok(())
