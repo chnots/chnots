@@ -7,7 +7,7 @@ use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 
 use crate::mapper::Curd;
-use crate::mapper::db::helper::{Ddls, create_tables};
+use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
@@ -306,7 +306,7 @@ impl LLMChatMapper for KDb {
     }
 
     async fn ensure_table_llm_chat(&self) -> EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddls(LLMChatBot::ddls())
                 .with_ddls(LLMChatTemplate::ddls())

@@ -1,6 +1,5 @@
 use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres};
 use chin_tools::{AResult, EResult};
-use log::info;
 
 use crate::{
     mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver},
@@ -22,8 +21,20 @@ pub(crate) async fn create_tables(cts: Ddls, kdb: &KDb) -> EResult {
     Ok(())
 }
 
-pub(crate) struct Ddls {
-    ddls: Vec<CreateTableSqlOwned>,
+pub(crate) async fn print_ddls(cts: Ddls, kdb: &KDb) -> EResult {
+    let sqls: Result<Vec<Vec<String>>, ChinSqlError> = cts
+        .ddls
+        .into_iter()
+        .map(|cts| cts.sqls(kdb.get_db_type()))
+        .collect();
+    let sqls: Vec<String> = sqls?.into_iter().flat_map(|c| c.into_iter()).collect();
+    println!("\n\n{}", sqls.join(";\n"));
+
+    Ok(())
+}
+
+pub struct Ddls {
+    pub ddls: Vec<CreateTableSqlOwned>,
 }
 
 impl Ddls {

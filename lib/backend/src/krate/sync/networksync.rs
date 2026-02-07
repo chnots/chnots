@@ -263,7 +263,7 @@ impl ShareAppState {
         let shake_rsp = self.sync_shake_tx::<T>(endpoint).await?;
         let sync_time = match shake_rsp.data {
             SyncShakeRspEnum::NotSameVersion(nsv) => {
-                anyhow::bail!("not same version {}", nsv);
+                anyhow::bail!("not same version {} {}", nsv, DB_VERSION);
             }
             SyncShakeRspEnum::SameClient => {
                 anyhow::bail!("Same Client");

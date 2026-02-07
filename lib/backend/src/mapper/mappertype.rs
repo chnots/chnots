@@ -1,14 +1,9 @@
-use anyhow::Context as _;
 use chin_sql::OnConflict;
-use chin_tools::{AResult, EResult, utils::id_util::generate_uuid};
+use chin_tools::{AResult, EResult};
 use log::info;
 
 use crate::{
-    krate::{
-        chnot::mapper::ChnotMapper, graph::mapper::GraphMapper, kfile::mapper::KFileMapper,
-        kkv::mapper::KKVMapper, kspace::mapper::KSpaceMapper, ktab::mapper::KTabMapper,
-        llmchat::mapper::LLMChatMapper, mdwt::mapper::MdwtMapper, sync::mapper::SyncMapper,
-    },
+    krate::kkv::mapper::KKVMapper,
     magics::CLIENT_ID_KEY,
     mapper::{MapperConfig, MapperType},
 };
@@ -34,15 +29,12 @@ impl TryFrom<MapperConfig> for MapperType {
 
 impl MapperType {
     pub(crate) async fn ensure_tables(&self) -> EResult {
-        self.ensure_table_mdwt().await?;
-        self.ensure_table_chnot().await?;
-        self.ensure_table_kfile().await?;
-        self.ensure_table_kkv().await?;
-        self.ensure_table_llm_chat().await?;
-        self.kspace_ensure_data().await?;
-        self.ensure_ktab_tables().await?;
-        self.ensure_sync_table().await?;
-        self.ensure_table_graph().await?;
+        match self {
+            MapperType::KDb(kdb) => {
+                kdb.ensure_table_db_version().await?;
+                kdb.sync_db_version().await?;
+            }
+        }
 
         Ok(())
     }

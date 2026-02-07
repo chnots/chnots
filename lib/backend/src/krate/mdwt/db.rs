@@ -6,7 +6,7 @@ use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
 use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
-use crate::mapper::db::helper::{Ddls, create_tables};
+use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver, KDbTx,
@@ -357,7 +357,7 @@ impl MdwtMapper for KDb {
     }
 
     async fn ensure_table_mdwt(&self) -> EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddls(MdwtRecord::ddls())
                 .with_ddls(MdwtTag::ddls()),

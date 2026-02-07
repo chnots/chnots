@@ -205,6 +205,7 @@ impl ShareAppState {
         self.sync_ktab(endpoint).await?;
         self.sync_llmchat(endpoint).await?;
         self.sync_mdwts(endpoint).await?;
+        self.sync_graph(endpoint).await?;
         info!("finished to sync with {endpoint:?}");
 
         Ok(())

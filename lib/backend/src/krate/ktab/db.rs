@@ -12,7 +12,7 @@ use crate::{
         db::{
             HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
             KDbRowBehavier, KDbTransactionBehaiver,
-            helper::{Ddls, create_tables},
+            helper::{Ddls, print_ddls},
         },
     },
     model::dto::KReq,
@@ -231,7 +231,7 @@ impl KTabMapper for KDb {
     }
 
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddls(KTabMeta::ddls())
                 .with_ddls(KTabCellText::ddls())

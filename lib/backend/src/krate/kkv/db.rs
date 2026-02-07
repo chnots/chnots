@@ -9,7 +9,7 @@ use crate::{
         db::{
             HistCreateSql, KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow,
             KDbRowBehavier,
-            helper::{Ddls, create_tables},
+            helper::{Ddls, print_ddls},
         },
     },
     model::dto::KReq,
@@ -113,7 +113,7 @@ impl KDbExecutor<'_> {
 
 impl KKVMapper for KDb {
     async fn ensure_table_kkv(&self) -> chin_tools::EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddls(KKV::ddls())
                 .with_ddl(KKVTransient::create_sql().to_owned_sql()),

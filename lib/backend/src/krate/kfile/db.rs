@@ -6,7 +6,7 @@ use crate::{
         Curd,
         db::{
             HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver,
-            helper::{Ddls, create_tables},
+            helper::{Ddls, print_ddls},
         },
     },
     model::dto::KReq,
@@ -116,7 +116,7 @@ impl KDbExecutor<'_> {
 
 impl KFileMapper for KDb {
     async fn ensure_table_kfile(&self) -> EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddl(InlineKFile::create_sql().to_owned_sql())
                 .with_ddls(KFileMeta::ddls()),

@@ -12,7 +12,7 @@ use crate::{
         db::{
             HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow,
             KDbRowBehavier, KDbTransactionBehaiver,
-            helper::{Ddls, create_tables},
+            helper::{Ddls, print_ddls},
         },
     },
 };
@@ -48,7 +48,7 @@ impl KSpaceMapper for KDb {
     }
 
     async fn kspace_ensure_table(&self) -> chin_tools::EResult {
-        create_tables(Ddls::new().with_ddls(KSpace::ddls()), self).await
+        print_ddls(Ddls::new().with_ddls(KSpace::ddls()), self).await
     }
 
     async fn kspace_archive(

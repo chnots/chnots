@@ -6,7 +6,7 @@ use crate::krate::llmchat::LLMChatRecord;
 use crate::krate::mdwt::db::MdwtOtidInTags;
 use crate::krate::mdwt::{MdwtRecord, MdwtRecordTable};
 use crate::mapper::Curd;
-use crate::mapper::db::helper::{Ddls, create_tables};
+use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver, PageReader,
@@ -150,7 +150,7 @@ impl<'a> QueryContentTable<'a> {
 /// ``
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddls(ChnotThreadOrder::ddls())
                 .with_ddls(ChnotThreadMeta::ddls())

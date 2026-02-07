@@ -10,7 +10,7 @@ use crate::{
         Curd,
         db::{
             HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver,
-            helper::{Ddls, create_tables},
+            helper::{Ddls, print_ddls},
         },
     },
     model::dto::KReq,
@@ -57,6 +57,27 @@ impl KDbExecutor<'_> {
             .await?;
         let c = c.into_iter().map(|e| (e.sid.to_string(), e)).collect();
         Ok(c)
+    }
+
+    pub async fn excalidraw_commit(&self, po: ExcalidrawDataV2Po, otid: TID) -> EResult {
+        self.insert_graph_meta(GraphMeta {
+            otid: otid,
+            // TODO
+            archor: false,
+            kind: super::GraphKind::ExcalidrawV2,
+            content: serde_json::to_string(&po.meta)?.into(),
+            tid: TID::default(),
+        })
+        .await?;
+        for (k, v) in po.data {
+            self.insert_graph_data(GraphData {
+                sid: k.try_into()?,
+                tid: Default::default(),
+                content: v.into(),
+            })
+            .await?;
+        }
+        Ok(())
     }
 }
 
@@ -153,25 +174,7 @@ impl GraphMapper for KDb {
         let po: ExcalidrawDataV2Po = req.body.data.try_into()?;
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor()
-            .insert_graph_meta(GraphMeta {
-                otid: otid,
-                // TODO
-                archor: false,
-                kind: super::GraphKind::ExcalidrawV2,
-                content: serde_json::to_string(&po.meta)?.into(),
-                tid: TID::default(),
-            })
-            .await?;
-        for (k, v) in po.data {
-            tx.as_executor()
-                .insert_graph_data(GraphData {
-                    sid: k.try_into()?,
-                    tid: Default::default(),
-                    content: v.into(),
-                })
-                .await?;
-        }
+        tx.as_executor().excalidraw_commit(po, otid).await?;
         tx.cmt().await?;
 
         Ok(super::ExcalidrawCommitRsp {})
@@ -237,7 +240,7 @@ impl GraphMapper for KDb {
     }
 
     async fn ensure_table_graph(&self) -> EResult {
-        create_tables(
+        print_ddls(
             Ddls::new()
                 .with_ddl(GraphData::create_sql().to_owned_sql())
                 .with_ddls(GraphMeta::ddls()),
