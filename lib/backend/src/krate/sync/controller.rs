@@ -10,12 +10,8 @@ use log::info;
 use crate::{
     app::ShareAppState,
     controller::KResponse,
-    krate::{
-        chnot::po,
-        kfile::InlineKFile,
-        sync::{dto::*, mapper::SyncMapper, po::SyncLogTransientCommit},
-    },
-    model::{SidTableSupport, otid_table::OtidWithEnum},
+    krate::sync::{dto::*, po::SyncLogTransientCommit},
+    model::otid_table::OtidWithEnum,
     otid_enum_generic_invoke, otid_enum_to_generic, sid_enum_to_generic,
 };
 

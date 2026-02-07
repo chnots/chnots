@@ -1,6 +1,5 @@
 use super::*;
 use crate::{MapperType, expand_mt_branch, model::dto::KReq};
-use chin_sql::{str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 
 pub trait GraphMapper {

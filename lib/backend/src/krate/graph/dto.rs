@@ -1,10 +1,8 @@
-use std::collections::BTreeMap;
-
 use chin_sql::time_type::TID;
 use serde::{Deserialize, Deserializer, Serialize, de};
 use serde_json::Value;
 
-use crate::{krate::graph::*, util::digestutil::blake3_sum};
+use crate::krate::graph::*;
 
 fn dto_from_string<'de, D>(deserializer: D) -> Result<ExcalidrawDataV2Dto, D::Error>
 where

@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, ops::Deref};
 
-use chin_sql::{SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{SqlBuilder, Wheres, time_type::TID};
 use chin_tools::AResult;
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};

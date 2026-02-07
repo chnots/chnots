@@ -1,5 +1,5 @@
 use chin_sql::{SqlBuilder, Wheres, str_type::Varchar};
-use chin_tools::{AResult, EResult};
+use chin_tools::AResult;
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 

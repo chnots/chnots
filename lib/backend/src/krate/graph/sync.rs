@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::{
     app::ShareAppState,

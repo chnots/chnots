@@ -17,8 +17,8 @@ use chin_tools::EResult;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{
-    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, SqlReaderBuilder, Wheres,
-    str_type::Varchar, time_type::TID,
+    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, Wheres, str_type::Varchar,
+    time_type::TID,
 };
 
 impl TryFrom<&KDbRow> for InlineKFile {

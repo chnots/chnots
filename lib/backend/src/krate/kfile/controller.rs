@@ -2,7 +2,7 @@ use anyhow::Context;
 use axum::{
     Json, Router,
     body::Body,
-    extract::{DefaultBodyLimit, Query, State},
+    extract::{DefaultBodyLimit, State},
     http::{HeaderMap, HeaderName},
     response::IntoResponse,
     routing::{get, post, put},
@@ -37,7 +37,7 @@ async fn kfile_inline_download(
 
 async fn kfile_inline_asset_download(
     state: State<ShareAppState>,
-    axum::extract::Path((sid, filename)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((sid, _filename)): axum::extract::Path<(String, String)>,
 ) -> impl IntoResponse {
     async fn inner(
         state: State<ShareAppState>,

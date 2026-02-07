@@ -2,7 +2,7 @@ use chin_sql::SqlInserter;
 use chin_tools::AResult;
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::mapper::{Curd, db::KDbRow};
+use crate::mapper::db::KDbRow;
 
 pub mod decimal;
 pub(crate) mod dto;

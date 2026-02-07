@@ -1,9 +1,6 @@
 use std::{fmt::Debug, marker::PhantomData, ops::Deref};
 
-use chin_sql::{
-    str_type::{Text, Varchar},
-    time_type::TID,
-};
+use chin_sql::{str_type::Varchar, time_type::TID};
 use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +8,7 @@ use crate::{
     krate::sync::po::{SyncAllEndpoints, SyncEndpoint},
     model::{
         OtidTableSupport, SidTableEnum, SidTableSupport,
-        otid_table::{OtidTableEnum, OtidWithEnum, OtidWithGeneric},
+        otid_table::{OtidWithEnum, OtidWithGeneric},
     },
 };
 

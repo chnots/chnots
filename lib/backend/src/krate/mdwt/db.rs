@@ -91,7 +91,7 @@ impl<'a> KDbTx<'a> {
         }
 
         // TODO: parse content and backlinks
-        let mdwt_parser = MdwtParser::new(block.content.as_str());
+        let _mdwt_parser = MdwtParser::new(block.content.as_str());
         let rec_tid: TID = TID::default();
 
         // Query for existing record

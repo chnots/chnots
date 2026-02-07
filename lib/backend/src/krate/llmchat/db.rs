@@ -9,8 +9,7 @@ use itertools::Itertools;
 use crate::mapper::Curd;
 use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
-    HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
-    KDbTransactionBehaiver,
+    HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
 };
 use crate::model::dto::KReq;
 

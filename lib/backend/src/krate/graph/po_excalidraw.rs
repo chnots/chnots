@@ -3,10 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize, de};
 use serde_json::Value;
 
-use crate::{
-    krate::graph::GetKeys,
-    util::digestutil::{blake3_sum, blake3_sum16},
-};
+use crate::{krate::graph::GetKeys, util::digestutil::blake3_sum16};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExcalidrawDataV2<T> {
