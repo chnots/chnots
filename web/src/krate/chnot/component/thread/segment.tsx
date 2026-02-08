@@ -12,8 +12,11 @@ import KFileChnot from "../rich-chnot/kfile";
 import LLMChatChnot from "../rich-chnot/llmchat";
 import MindMapChnot from "../rich-chnot/mindmap";
 import RichMdwt from "../rich-chnot/rich-mdwt";
-import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
+import type { PostSaveArg, RichPropProps } from "../rich-chnot/rich-mdwt-side";
 import TableChnot from "../rich-chnot/table";
+import { Agent } from "http";
+import { chnotShortDate } from "@/lib/date-utils";
+import ReadableTID from "@/common/component/chnot-read-tid";
 
 const SortableRichChnot = ({
   otid,
@@ -26,6 +29,7 @@ const SortableRichChnot = ({
   kspace,
   kind: initialKind,
   isDragging: isItemDragging,
+  saveState: initialSaveState,
 }: {
   otid: TID;
   index: number;
@@ -33,6 +37,7 @@ const SortableRichChnot = ({
   kspace: string;
   kind?: ChnotKind;
   closed: boolean;
+  saveState?: SaveState;
   onAddBlock: (position: number, find: boolean) => void;
   onRemoveBlock: (otid: string | TID) => void;
   onPostSave: (arg: PostSaveArg) => void;
@@ -45,11 +50,11 @@ const SortableRichChnot = ({
     id: otid,
   });
   const [kind, setKind] = useState<ChnotKind>(initialKind ?? ChnotKind.MDWT);
-  const [fixedKind, setFixedKind] = useState<boolean>(
-    initialKind !== undefined,
-  );
   const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [closed, setClosed] = useState<boolean>(initialClosed);
+  const [saveState, setSaveState] = useState<SaveState | undefined>(
+    initialSaveState,
+  );
 
   const style = {
     opacity: isDragging || isItemDragging ? 0.5 : 1,
@@ -89,7 +94,7 @@ const SortableRichChnot = ({
       }
       onPostSave({ ...arg });
 
-      setFixedKind(true);
+      setSaveState(arg.saveState);
     },
     [kspace],
   );
@@ -114,7 +119,7 @@ const SortableRichChnot = ({
       {...attributes}
     >
       <div className="flex flex items-center justify-center mt-1 w-full items-center w-full text-gray-400">
-        {fixedKind ? (
+        {saveState === SaveState.Saved ? (
           <>
             <div
               {...listeners}
@@ -155,11 +160,6 @@ const SortableRichChnot = ({
             ))}
           </>
         )}
-
-        <span className="flex-1 border-t border-gray-200 my-2 w-full" />
-        {typeof otid === "number" && (
-          <span className="text-xs mx-2">{otid}</span>
-        )}
         <button
           type="button"
           onClick={() => setFullscreen(true)}
@@ -168,6 +168,21 @@ const SortableRichChnot = ({
         >
           <Icon.Edit className="w-4 h-4 cursor-pointer" />
         </button>
+        {saveState && (
+          <span className="p-1 rounded">
+            {saveState === SaveState.Saved ? (
+              <Icon.CloudCheck className="w-4 h-4" />
+            ) : saveState === SaveState.Dirty ? (
+              <Icon.CloudDrizzle className="w-4 h-4" />
+            ) : (
+              <Icon.CloudAlert className="w-4 h-4" />
+            )}
+          </span>
+        )}
+
+        <span className="flex-1 border-t border-gray-200 my-2 w-full" />
+
+        {typeof otid === "number" && <ReadableTID tid={otid} />}
 
         <button
           type="button"
@@ -183,7 +198,7 @@ const SortableRichChnot = ({
           className="p-1  hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
           title="Search And Add"
         >
-          <Icon.ZoomIn className="w-4 h-4" />
+          <Icon.LinkIcon className="w-4 h-4" />
         </button>
         <button
           type="button"
@@ -196,25 +211,35 @@ const SortableRichChnot = ({
       </div>
       {closed || (
         <div className="w-full ml-4">
-          {kind === ChnotKind.ExcalidrawV1 ? (
-            <ExcalidrawChnot {...props} />
-          ) : kind === ChnotKind.KFileV1 ? (
-            <KFileChnot {...props} />
-          ) : kind === ChnotKind.KTab ? (
-            <TableChnot {...props} readonly={false} />
-          ) : kind === ChnotKind.LLMChat ? (
-            <LLMChatChnot {...props} />
-          ) : kind === ChnotKind.MindMapV1 ? (
-            <MindMapChnot {...props} />
-          ) : (
-            <RichMdwt {...props} readonly={false} />
-          )}
+          <RichChnotMemo props={props} kind={kind} />
         </div>
       )}
     </div>
   );
 };
 
-const SortableRichMdwtMemo = memo(SortableRichChnot);
+const RichChnotMemo = memo(
+  ({
+    kind,
+    props,
+  }: {
+    kind?: ChnotKind;
+    props: RichPropProps & { showEditWhenEmpty: boolean };
+  }) => {
+    return kind === ChnotKind.ExcalidrawV1 ? (
+      <ExcalidrawChnot {...props} />
+    ) : kind === ChnotKind.KFileV1 ? (
+      <KFileChnot {...props} />
+    ) : kind === ChnotKind.KTab ? (
+      <TableChnot {...props} readonly={false} />
+    ) : kind === ChnotKind.LLMChat ? (
+      <LLMChatChnot {...props} />
+    ) : kind === ChnotKind.MindMapV1 ? (
+      <MindMapChnot {...props} />
+    ) : (
+      <RichMdwt {...props} readonly={false} />
+    );
+  },
+);
 
-export default SortableRichMdwtMemo;
+export default SortableRichChnot;
