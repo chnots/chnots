@@ -42,6 +42,25 @@ jobs:
           distribution: "zulu"
           java-version: "17"
 
+
+      - name: Install Rust stable(linux)
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, x86_64-linux-android, x86_64-unknown-linux-gnu
+
+      - name: Install Rust stable(windows)
+        if: matrix.platform == 'windows-latest' # This must match the platform
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Ubuntu dependencies
+        if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
+        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
+
       - name: Setup Android SDK
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         uses: android-actions/setup-android@v3
@@ -50,39 +69,23 @@ jobs:
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: sdkmanager "ndk;29.0.13599879"
 
-      - name: install Rust stable(linux)
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android, x86_64-linux-android, x86_64-unknown-linux-gnu
-
-      - name: install Rust stable(windows)
-        if: matrix.platform == 'windows-latest' # This must match the platform
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: install ubuntu dependencies
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
-
-      - name: initialize
+      - name: Initialize repos
         run: |
           make init-workflow
           mkdir ./release
 
-      - name: build web
+      - name: Build Web
         run: make build-web
 
-      - name: build-server
+
+      - name: Build Server
         run: |
           make build-server
 
-      - name: tauri build
+      - name: Build Tauri Desktop
         run: make build-tauri-desktop
-      - name: setup Android signing
+
+      - name: Setup Android signing
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: |
           cd ./tauri/src-tauri/gen/android
@@ -94,20 +97,20 @@ jobs:
           echo "key.properties created."
           cd ../../../.. # Go back to root
 
-      - name: Build tauri android
+      - name: Build Tauri Android
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: make build-tauri-android
         env:
           NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
 
-      - name: prepare for release(linux)
+      - name: Prepare For Release(linux)
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: |
           mv target/release/chnots-server ./release/chnot-server-${{ steps.get_version.outputs.version }}-gnu_linux-${{ runner.arch }}
           find ./target -type f \( -name '*.rpm' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) -exec mv -t ./release {} \;
           find ./tauri/src-tauri/gen/android/app/build/outputs/ -type f \( -name "*apk" -o -name "*aab" \) -exec sh -c 'mv {} "./release/$(echo {} | awk -F / "{print \$NF}"|sed "s/^app/Chnots-${{ steps.get_version.outputs.version }}/g")"' \;
 
-      - name: prepare for release(windows)
+      - name: Prepare For Release(windows)
         if: matrix.platform == 'windows-latest' # This must match the platform
         run: |
           mv target/release/chnots-server.exe       ./release/chnot-server-${{ steps.get_version.outputs.version }}-windows-${{ runner.arch }}.exe

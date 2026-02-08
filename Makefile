@@ -37,14 +37,22 @@ build-web:
 	cd lib/mind-elixir-core && pnpm install && pnpm run build
 	cd $(WEB_DIR) && pnpm install && pnpm run build
 
+check-web:
+	test -f web-dist/index.html || make build-web
+
 build-server:
-	make build-web
+	make check-web
 	test -f web-dist/index.html && cd $(SERVER_DIR) && cargo build --release
 
 build-tauri-desktop:
-	make build-web
+	make check-web
 	test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri build
 
 build-tauri-android:
-	make build-web
-	tools/check-android-key && test -f web-dist/index.html && cd ./tauri && pnpm install && pnpm tauri android build --split-per-abi
+	tools/check-android-key \
+		&& make check-web \
+		&& cd ./tauri \
+		&& pnpm install \
+		&& export PATH="$$PWD/node_modules/.bin/:$$PATH" \
+		&& find -name tauri -type f \
+		&& pnpm tauri android build --split-per-abi
