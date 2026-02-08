@@ -16,12 +16,6 @@ rename to chnot_tag_bak;
 alter table chnot_tag_hist
 rename to chnot_tag_hist_bak;
 
-alter table chnot_kind_rel
-rename to chnot_kind_rel_bak;
-
-alter table chnot_kind_rel_hist
-rename to chnot_kind_rel_hist_bak;
-
 alter table k_file_meta
 rename to k_file_meta_bak;
 
@@ -34,6 +28,13 @@ rename to llm_chat_record_bak;
 alter table llm_chat_record_hist
 rename to llm_chat_record_hist_bak;
 
+alter table chnot_kind_rel
+rename to chnot_kind_rel_bak;
+
+alter table chnot_kind_rel_hist
+rename to chnot_kind_rel_hist_bak;
+
+-- graph part
 create table
   graph_meta_hist (
     otid number not null,
@@ -42,6 +43,8 @@ create table
     content TEXT not null,
     tid number not null
   );
+
+drop index if exists graph_meta_hist_ukey_tid;
 
 create unique index graph_meta_hist_ukey_tid on graph_meta_hist (tid);
 
@@ -57,7 +60,20 @@ create table
     primary key (otid)
   );
 
+drop index if exists graph_meta_ukey_tid;
+
 create unique index graph_meta_ukey_tid on graph_meta (tid);
+
+CREATE TABLE
+  public.graph_data (
+    sid character varying(100) NOT NULL,
+    tid bigint NOT NULL,
+    content text NOT NULL
+  );
+
+ALTER TABLE ONLY public.graph_data ADD CONSTRAINT graph_data_pkey PRIMARY KEY (sid);
+
+CREATE UNIQUE INDEX graph_data_ukey_tid ON public.graph_data USING btree (tid);
 
 create table
   chnot_thread_order_hist (
@@ -66,6 +82,8 @@ create table
     korder number not null,
     tid number not null
   );
+
+drop index if exists chnot_thread_order_hist_ukey_tid;
 
 create unique index chnot_thread_order_hist_ukey_tid on chnot_thread_order_hist (tid);
 
@@ -180,6 +198,8 @@ create table
     archor integer not null
   );
 
+drop index if exists mdwt_record_hist_ukey_tid;
+
 create unique index mdwt_record_hist_ukey_tid on mdwt_record_hist (tid);
 
 create index mdwt_record_hist_otid on mdwt_record_hist (otid);
@@ -194,6 +214,8 @@ create table
     primary key (otid)
   );
 
+drop index if exists mdwt_record_ukey_tid;
+
 create unique index mdwt_record_ukey_tid on mdwt_record (tid);
 
 create table
@@ -203,6 +225,8 @@ create table
     kspace Varchar(40) not null,
     tid number not null
   );
+
+drop index if exists mdwt_tag_hist_ukey_tid;
 
 create unique index mdwt_tag_hist_ukey_tid on mdwt_tag_hist (tid);
 
@@ -244,13 +268,7 @@ drop index if exists k_file_meta_hist_ukey_id;
 
 create index k_file_meta_hist_ukey_id on k_file_meta_hist (id);
 
-drop index if exists k_file_meta_hist_otid;
-
 create index k_file_meta_hist_otid on k_file_meta_hist (otid);
-
-drop index if exists k_file_meta_hist_ukey_id;
-
-create index k_file_meta_hist_ukey_id on k_file_meta_hist (id);
 
 create table
   k_file_meta (
@@ -275,10 +293,6 @@ create unique index k_file_meta_ukey_id on k_file_meta (id);
 drop index if exists k_file_meta_ukey_tid;
 
 create unique index k_file_meta_ukey_tid on k_file_meta (tid);
-
-drop index if exists k_file_meta_ukey_id;
-
-create index k_file_meta_ukey_id on k_file_meta (id);
 
 insert into
   chnot_meta (otid, kspace, kind, tid, archive_tid)
@@ -411,7 +425,7 @@ select
   fm.last_modified,
   fm.sid,
   fm.tid,
-  0
+  1
 from
   k_file_meta_bak fm
   left join chnot_kind_rel_bak cm on fm.id = cm.kind_id;
@@ -463,7 +477,7 @@ where
 
 insert into
   mdwt_record_hist (otid, tid, todo_event, content, archor)
-select
+select distinct
   cr.meta_otid,
   cr.tid,
   cr.todo_event,
@@ -477,7 +491,7 @@ where
 
 insert into
   mdwt_record_hist (otid, tid, todo_event, content, archor)
-select
+select distinct
   cr.meta_otid,
   cr.tid,
   cr.todo_event,
@@ -492,7 +506,7 @@ where
 
 insert into
   mdwt_record_hist (otid, tid, todo_event, content, archor)
-select
+select distinct
   cast(ckr.kind_id as bigint) as otid,
   cr.tid,
   cr.todo_event,
@@ -520,7 +534,7 @@ from
   chnot_tag_hist_bak;
 
 insert into
-  k_file_meta (
+  k_file_meta_hist (
     otid,
     inline,
     archor,
@@ -533,7 +547,7 @@ insert into
     tid,
     binaryp
   )
-select
+select distinct
   case
     when (cm.meta_otid is not null) then cm.meta_otid
     else fm.tid
@@ -547,7 +561,7 @@ select
   fm.last_modified,
   fm.sid,
   fm.tid,
-  0
+  1
 from
   k_file_meta_hist_bak fm
   left join chnot_kind_rel_hist_bak cm on fm.id = cm.kind_id;
