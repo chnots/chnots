@@ -58,7 +58,7 @@ def change_js_version(fp, version):
 
 
 def main(ver):
-    change_cargo_version("backend/core/Cargo.toml", ver)
+    change_cargo_version("lib/backend/Cargo.toml", ver)
     change_cargo_version("server/Cargo.toml", ver)
     change_cargo_version("tauri/src-tauri/Cargo.toml", ver)
     change_js_version("tauri/package.json", ver)

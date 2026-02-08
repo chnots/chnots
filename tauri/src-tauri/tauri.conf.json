@@ -1,6 +1,6 @@
 {
   "productName": "Chnots",
-  "version": "0.0.4",
+  "version": "0.0.99",
   "identifier": "org.codeberg.wangzh.chnots",
   "build": {
     "frontendDist": "../../web-dist"
@@ -23,6 +23,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"]
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }
