@@ -3,16 +3,60 @@ use chin_sql::{
     str_type::{Text, Varchar},
     time_type::TID,
 };
-use chin_tools::EResult;
+use chin_tools::{AResult, EResult};
 
 use crate::{
-    krate::kfile::{InlineKFile, KFileMeta},
+    krate::{
+        kfile::{InlineKFile, KFileMeta},
+        llmchat::LLMChatRecord,
+    },
     mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRowBehavier},
     model::OtidTableSupport,
 };
 
 // move excalidraw files to graph
 impl KDbExecutor<'_> {
+    async fn sync_llm_chat_record(&self, history: bool) -> EResult {
+        struct ParseType {
+            rec: LLMChatRecord,
+            thinking: Option<Text>,
+        }
+
+        let sb = SqlBuilder::read_all(if !history {
+            "llm_chat_record_bak"
+        } else {
+            "llm_chat_record_hist_bak"
+        });
+        let c: Vec<ParseType> = self
+            .qry_list(sb, |row| {
+                Ok(ParseType {
+                    rec: LLMChatRecord::try_from(&row)?,
+                    thinking: row.try_get("reasoning_content")?,
+                })
+            })
+            .await?;
+        for ele in c {
+            let thinking = ele
+                .thinking
+                .map(|e| e.to_string())
+                .unwrap_or("".to_string());
+            self.exec(
+                LLMChatRecord {
+                    content:
+                        serde_json::json! ({"body": ele.rec.content.as_str(), "thinking":thinking })
+                            .to_string()
+                            .into(),
+                    ..ele.rec
+                }
+                .to_sql_inserter()
+                .table_name(LLMChatRecord::table_name(history)),
+            )
+            .await?;
+        }
+
+        Ok(())
+    }
+
     async fn sync_excalidraw(&self, history: bool) -> EResult {
         struct ParseType {
             otid: TID,
@@ -72,8 +116,11 @@ impl KDbExecutor<'_> {
     }
 
     pub async fn v2_posthook(&self) -> EResult {
+        self.sync_llm_chat_record(true).await?;
+        self.sync_llm_chat_record(false).await?;
         self.sync_excalidraw(false).await?;
         self.sync_excalidraw(true).await?;
+
         Ok(())
     }
 }
