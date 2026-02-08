@@ -19,7 +19,7 @@ run-tauri-desktop:
 
 init-workflow:
 	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/chin-tools
-	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/mind-elixir-core
+	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/mind-elixir-core -b feat/image-controls
 	echo $(TOOLS_DIR)/_impl/git-pre-commit >> .git/hooks/pre-commit
 	chmod a+x .git/hooks/pre-commit
 	echo $(TOOLS_DIR)/_impl/git-post-commit >> .git/hooks/post-commit
