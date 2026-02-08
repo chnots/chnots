@@ -76,12 +76,6 @@ jobs:
       - name: build web
         run: make build-web
 
-      - name: build-server
-        run: |
-          make build-server
-
-      - name: tauri build
-        run: make build-tauri-desktop
       - name: setup Android signing
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: |
@@ -93,12 +87,18 @@ jobs:
           echo "storeFile=$RUNNER_TEMP/keystore.jks" >> key.properties
           echo "key.properties created."
           cd ../../../.. # Go back to root
-
       - name: Build tauri android
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
         run: make build-tauri-android
         env:
           NDK_HOME: /usr/local/lib/android/sdk/ndk/29.0.13599879
+
+      - name: build-server
+        run: |
+          make build-server
+
+      - name: tauri build
+        run: make build-tauri-desktop
 
       - name: prepare for release(linux)
         if: matrix.platform == 'ubuntu-latest' # This must match the platform
