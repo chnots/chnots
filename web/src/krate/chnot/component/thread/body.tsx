@@ -34,11 +34,6 @@ import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
 import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import SortableRichMdwtMemo from "./segment";
 
-enum ChnotState {
-  Initialized,
-  Saved,
-}
-
 enum OrderType {
   Manual,
   Search,
@@ -56,6 +51,7 @@ type ManualChnotOrder = {
   otid: TID;
   chnotKind?: ChnotKind;
   closed: boolean;
+  saved: boolean;
 };
 
 type ChnotOrder = ManualChnotOrder | { type: OrderType.Search; otid: string };
@@ -71,7 +67,6 @@ type ChnotOrder = ManualChnotOrder | { type: OrderType.Search; otid: string };
  *   - Just edit and save that chnot.
  */
 const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
-  const savedChnotOtidRef = useRef<Map<TID, ChnotState>>(new Map());
   const savedChnotOrdersRef = useRef<ManualChnotOrder[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
   const [chnotOrders, setChnotOrders] = useState<ChnotOrder[]>([]);
@@ -95,13 +90,22 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
 
   useEffect(() => {
     (async () => {
-      console.log("chnot order changed: ", chnotOrders);
       const toSaveChnotOrderOtids: ManualChnotOrder[] = chnotOrders
         .filter((e) => e.type === OrderType.Manual)
-        .filter(
-          (e) => savedChnotOtidRef.current.get(e.otid) === ChnotState.Saved,
-        );
-      if (!arraysAreEqual(toSaveChnotOrderOtids, savedChnotOrdersRef.current)) {
+        .filter((e) => e.saved);
+      if (
+        !arraysAreEqual(
+          chnotOrders.filter((e) => e.type === OrderType.Manual),
+          savedChnotOrdersRef.current,
+          (v1, v2) => {
+            return (
+              v1.otid === v2.otid &&
+              v1.chnotKind === v2.chnotKind &&
+              v1.closed === v2.closed
+            );
+          },
+        )
+      ) {
         await handleSaveThreadMeta();
         await chnotThreadOrderCommit({
           thread_otid: threadMeta.otid,
@@ -153,7 +157,12 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
               otid: "find-" + genTID(),
               type: OrderType.Search,
             }
-          : { otid: genTID(), type: OrderType.Manual, closed: false },
+          : {
+              otid: genTID(),
+              type: OrderType.Manual,
+              closed: false,
+              saved: false,
+            },
       );
       return newOrders;
     });
@@ -188,10 +197,10 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           },
         );
 
-        savedChnotOrdersRef.current = chnotOtids.map((e) => e);
-        savedChnotOtidRef.current = new Map(
-          chnotOtids.map((obj) => [obj.otid, ChnotState.Saved]),
-        );
+        savedChnotOrdersRef.current = chnotOtids.map((e) => ({
+          ...e,
+          saved: true,
+        }));
 
         const mdwtMap = await mdwtRecordList({
           mdwt_otids: [
@@ -200,11 +209,16 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           ],
         });
         if (chnotOtids.length > 0) {
-          setChnotOrders(chnotOtids);
+          setChnotOrders(savedChnotOrdersRef.current);
           setMdwtMap(mdwtMap.mdwt_map);
         } else {
           setChnotOrders([
-            { otid: genTID(), type: OrderType.Manual, closed: false },
+            {
+              otid: genTID(),
+              type: OrderType.Manual,
+              closed: false,
+              saved: false,
+            },
           ]);
         }
       } finally {
@@ -215,34 +229,30 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
 
   const handleSearchAdd = useCallback(
     async (old: string, otid: TID, kind: ChnotKind) => {
+      console.log("handle search add", old, otid);
       const mdwtMap = await mdwtRecordList({
         mdwt_otids: [otid],
       });
-      if (Object.keys(mdwtMap.mdwt_map).length > 0) {
-        setMdwtMap((prev) => {
-          return { ...prev, ...mdwtMap.mdwt_map };
+      setMdwtMap((prev) => {
+        return { ...prev, ...mdwtMap.mdwt_map };
+      });
+      setChnotOrders((prev) => {
+        return prev.map((e) => {
+          if (e.type === OrderType.Search && old === e.otid) {
+            return {
+              chnotKind: kind,
+              otid: otid,
+              closed: false,
+              type: OrderType.Manual,
+              saved: true,
+            };
+          } else {
+            return e;
+          }
         });
-        const savedMdwts = savedChnotOtidRef.current;
-        for (const k in mdwtMap.mdwt_map) {
-          savedMdwts.set(Number(k), ChnotState.Saved);
-        }
-        setChnotOrders((prev) => {
-          return prev.map((e) => {
-            if (typeof e === "string" && old === e) {
-              return {
-                chnotKind: kind,
-                otid: otid,
-                closed: false,
-                type: OrderType.Manual,
-              };
-            } else {
-              return e;
-            }
-          });
-        });
-      }
+      });
     },
-    [setMdwtMap],
+    [],
   );
 
   const handleSaveThreadMeta = useCallback(async () => {
@@ -261,11 +271,16 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
       if (arg.saveState !== SaveState.Saved) {
         return;
       }
-
-      savedChnotOtidRef.current.set(arg.otid, ChnotState.Saved);
-
       // force update.
-      setChnotOrders((prev) => [...prev]);
+      setChnotOrders((prev) =>
+        prev.map((e) => {
+          if (e.type === OrderType.Manual && e.otid === arg.otid) {
+            return { ...e, saved: true };
+          } else {
+            return e;
+          }
+        }),
+      );
     },
     [chnotOrders, threadMeta],
   );
@@ -351,6 +366,9 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                         onRemoveBlock={handleRemoveBlock}
                         isDragging={activeId === order.otid}
                         onToggleClosed={handleToggleClosed}
+                        saveState={
+                          order.saved ? SaveState.Saved : SaveState.Initial
+                        }
                       />
                     </React.Fragment>
                   ) : (
@@ -361,9 +379,9 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                           type="button"
                           onClick={() => handleRemoveBlock(order.otid)}
                           className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                          title="Add"
+                          title="Stop Find"
                         >
-                          <Icon.SearchXIcon className="w-4 h-4" />
+                          <Icon.LucideUnlink className="w-4 h-4" />
                         </button>
                       </div>
                       <MdwtChnotSelector
@@ -384,7 +402,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                     className="p-1 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
                     title="Add"
                   >
-                    <Icon.ZoomIn className="w-4 h-4" />
+                    <Icon.LinkIcon className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
