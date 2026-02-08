@@ -159,7 +159,7 @@ export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
 
     await excalidrawCommitInner({
       otid: props.otid,
-      data: content,
+      data: content as Object,
     });
     onSuccess();
   } catch (_err) {

@@ -31,5 +31,6 @@ export type ChnotThreadOrder = {
   otid: TID;
   thread_otid: TID;
   korder: number;
+  closed: boolean;
   tid: TID;
 };

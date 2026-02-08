@@ -26,6 +26,7 @@ export type MdwtCommitReqData = {
 };
 export type ChnotThreadOrderCommitReqData = {
   otid: TID;
+  closed: boolean;
 };
 export type ChnotThreadArchiveReq = {
   thread_otid: TID;
@@ -45,7 +46,7 @@ export type ChnotThreadMetaFetchReq = {
 };
 export type ChnotThreadMetaFetchRsp = {
   thread_meta?: ChnotThreadMeta;
-  chnot_meta_sorted: ChnotMeta[];
+  chnot_meta_sorted: ChnotThreadMetaFetchRspData[];
 };
 
 export type ChnotThreadOrderCommitReq = {
@@ -82,4 +83,9 @@ export type ChnotMetaListRsp = {
 export type ChnotSearchRspSingle = {
   title?: string;
   meta: ChnotMeta;
+};
+
+export type ChnotThreadMetaFetchRspData = {
+  meta: ChnotMeta;
+  closed: boolean;
 };

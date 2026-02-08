@@ -103,11 +103,13 @@ const MdwtEditor = ({
   height,
   onContentChange,
   autoCompletion,
+  placeholder,
   setCodeMirrorRef: setCMRef,
 }: {
   content?: string;
   foldGutter: boolean;
   height?: number;
+  placeholder?: string;
   onContentChange: (content: string) => void;
   autoCompletion: (
     context: CompletionContext,
@@ -164,7 +166,7 @@ const MdwtEditor = ({
         foldGutter: foldGutter,
         closeBrackets: false,
       }}
-      placeholder={"Take a chnot"}
+      placeholder={placeholder ?? "Take a chnot"}
       onChange={(e) => onContentChange(e)}
     />
   );

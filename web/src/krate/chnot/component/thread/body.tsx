@@ -38,10 +38,27 @@ enum ChnotState {
   Initialized,
   Saved,
 }
-type ChnotOrder = {
-  otid: TID | string;
-  chnotKind?: ChnotKind;
+
+enum OrderType {
+  Manual,
+  Search,
+}
+
+type SavedChnotOrder = {
+  type: OrderType.Manual;
+  otid: TID;
+  chnotKind: ChnotKind;
+  closed: boolean;
 };
+
+type ManualChnotOrder = {
+  type: OrderType.Manual;
+  otid: TID;
+  chnotKind?: ChnotKind;
+  closed: boolean;
+};
+
+type ChnotOrder = ManualChnotOrder | { type: OrderType.Search; otid: string };
 
 /**
  * This is the main component for the `Chnots` app.
@@ -55,7 +72,7 @@ type ChnotOrder = {
  */
 const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const savedChnotOtidRef = useRef<Map<TID, ChnotState>>(new Map());
-  const savedChnotOrdersRef = useRef<TID[]>([]);
+  const savedChnotOrdersRef = useRef<ManualChnotOrder[]>([]);
   const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
   const [chnotOrders, setChnotOrders] = useState<ChnotOrder[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
@@ -79,15 +96,17 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   useEffect(() => {
     (async () => {
       console.log("chnot order changed: ", chnotOrders);
-      const toSaveChnotOrderOtids = chnotOrders
-        .map((e) => e.otid)
-        .filter((e) => typeof e === "number")
-        .filter((e) => savedChnotOtidRef.current.get(e) === ChnotState.Saved);
+      const toSaveChnotOrderOtids: ManualChnotOrder[] = chnotOrders
+        .filter((e) => e.type === OrderType.Manual)
+        .filter(
+          (e) => savedChnotOtidRef.current.get(e.otid) === ChnotState.Saved,
+        );
       if (!arraysAreEqual(toSaveChnotOrderOtids, savedChnotOrdersRef.current)) {
+        await handleSaveThreadMeta();
         await chnotThreadOrderCommit({
           thread_otid: threadMeta.otid,
           orders: toSaveChnotOrderOtids.map((e) => {
-            return { otid: e };
+            return { otid: e.otid, closed: e.closed };
           }),
         });
         savedChnotOrdersRef.current = toSaveChnotOrderOtids;
@@ -126,9 +145,16 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   const handleAddBlock = useCallback((position: number, find: boolean) => {
     setChnotOrders((prev) => {
       const newOrders = [...prev];
-      newOrders.splice(position, 0, {
-        otid: find ? "find-" + genTID() : genTID(),
-      });
+      newOrders.splice(
+        position,
+        0,
+        find
+          ? {
+              otid: "find-" + genTID(),
+              type: OrderType.Search,
+            }
+          : { otid: genTID(), type: OrderType.Manual, closed: false },
+      );
       return newOrders;
     });
   }, []);
@@ -151,26 +177,35 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           savedChnotThreadMetaRef.current = rsp.thread_meta;
         }
 
-        const chnotOtids = rsp.chnot_meta_sorted.map((cm) => {
-          return {
-            otid: cm.otid,
-            chnotKind: cm.kind,
-          };
-        });
+        const chnotOtids: SavedChnotOrder[] = rsp.chnot_meta_sorted.map(
+          (cm) => {
+            return {
+              otid: cm.meta.otid,
+              chnotKind: cm.meta.kind,
+              closed: cm.closed,
+              type: OrderType.Manual,
+            };
+          },
+        );
 
-        savedChnotOrdersRef.current = chnotOtids.map((e) => e.otid);
+        savedChnotOrdersRef.current = chnotOtids.map((e) => e);
         savedChnotOtidRef.current = new Map(
           chnotOtids.map((obj) => [obj.otid, ChnotState.Saved]),
         );
 
         const mdwtMap = await mdwtRecordList({
-          mdwt_otids: [...savedChnotOrdersRef.current, threadMeta.otid],
+          mdwt_otids: [
+            ...savedChnotOrdersRef.current.map((e) => e.otid),
+            threadMeta.otid,
+          ],
         });
         if (chnotOtids.length > 0) {
           setChnotOrders(chnotOtids);
           setMdwtMap(mdwtMap.mdwt_map);
         } else {
-          setChnotOrders([{ otid: genTID() }]);
+          setChnotOrders([
+            { otid: genTID(), type: OrderType.Manual, closed: false },
+          ]);
         }
       } finally {
         setLoading(false);
@@ -194,7 +229,12 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         setChnotOrders((prev) => {
           return prev.map((e) => {
             if (typeof e === "string" && old === e) {
-              return { chnotKind: kind, otid: otid };
+              return {
+                chnotKind: kind,
+                otid: otid,
+                closed: false,
+                type: OrderType.Manual,
+              };
             } else {
               return e;
             }
@@ -214,7 +254,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
       const rsp = await chnotThreadMetaOverwrite(req);
       savedChnotThreadMetaRef.current = rsp.meta;
     }
-  }, [savedChnotThreadMetaRef]);
+  }, []);
 
   const handlePostSaveOnChnot = useCallback(
     async (arg: PostSaveArg) => {
@@ -248,6 +288,21 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     [threadMeta],
   );
 
+  const handleToggleClosed = useCallback(
+    async (index: number, closed: boolean) => {
+      setChnotOrders((prev) =>
+        prev.map((co, id) => {
+          if (index === id) {
+            return { ...co, closed };
+          } else {
+            return co;
+          }
+        }),
+      );
+    },
+    [],
+  );
+
   return (
     <div className="flex flex-col w-full items-center overflow-y-auto">
       {loading ? (
@@ -262,9 +317,8 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
               otid={threadMeta.otid}
               fullscreen={false}
               onPostSave={handleTitleSave}
-              content={
-                mdwtMap[threadMeta.otid]?.content ?? `# Thread -- ${genTID()}`
-              }
+              content={mdwtMap[threadMeta.otid]?.content ?? ""}
+              placeholder="Thread Title"
             />
           </div>
           <DndContext
@@ -280,7 +334,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                 strategy={verticalListSortingStrategy}
               >
                 {chnotOrders.map((order, index) => {
-                  return typeof order.otid === "number" ? (
+                  return order.type === OrderType.Manual ? (
                     <React.Fragment key={order.otid}>
                       {activeId !== null && overId === order.otid && (
                         <div className="w-full h-0.5 bg-blue-500 my-1" />
@@ -288,13 +342,15 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                       <SortableRichMdwtMemo
                         otid={order.otid}
                         index={index}
+                        closed={order.closed}
                         kind={order.chnotKind}
                         onPostSave={handlePostSaveOnChnot}
                         content={mdwtMap[order.otid]?.content ?? ""}
                         kspace={threadMeta.kspace}
-                        handleAddBlock={handleAddBlock}
-                        handleRemoveBlock={handleRemoveBlock}
+                        onAddBlock={handleAddBlock}
+                        onRemoveBlock={handleRemoveBlock}
                         isDragging={activeId === order.otid}
+                        onToggleClosed={handleToggleClosed}
                       />
                     </React.Fragment>
                   ) : (

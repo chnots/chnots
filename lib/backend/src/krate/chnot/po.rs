@@ -138,6 +138,8 @@ pub(crate) struct ChnotThreadOrder {
 
     pub korder: i64,
 
+    pub closed: bool,
+
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
@@ -152,6 +154,7 @@ impl TryFrom<&KDbRow> for ChnotThreadOrder {
             thread_otid: value.try_get(Self::THREAD_OTID)?,
             korder: value.try_get(Self::KORDER)?,
             tid: value.try_get(Self::TID)?,
+            closed: value.try_get(Self::CLOSED)?,
         })
     }
 }

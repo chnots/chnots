@@ -111,10 +111,12 @@ const MarkdownViewer = ({
 const MdwtChnot = ({
   otid,
   readonly,
+  placeholder,
   onPostSave,
   onContentChange,
   content: initialContent,
 }: RichPropProps & {
+  placeholder?: string;
   content?: string;
   onContentChange?: (content: string) => void;
 }) => {
@@ -210,6 +212,7 @@ const MdwtChnot = ({
         role="none"
       >
         <MdwtEditorMemo
+          placeholder={placeholder}
           content={content}
           onContentChange={handleContentChange}
           autoCompletion={chnotCompletions}

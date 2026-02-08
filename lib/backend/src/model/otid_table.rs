@@ -166,6 +166,9 @@ impl KDbExecutor<'_> {
         condition: Wheres<'_>,
     ) -> AResult<usize> {
         let count = self.copy_into_omit_table::<T>(condition.clone()).await?;
+        if condition.empty() {
+            return Ok(0);
+        }
         if count > 0 {
             let delete_sql = SqlDeleter::new(T::table_name(false)).r#where(condition);
             self.exec(delete_sql).await
@@ -179,6 +182,9 @@ impl KDbExecutor<'_> {
         &self,
         condition: Wheres<'_>,
     ) -> AResult<usize> {
+        if condition.empty() {
+            return Ok(0);
+        }
         let fields_comma = T::all_columns().join(",");
         let insert_sql = SqlBuilder::new()
             .seg(format!(

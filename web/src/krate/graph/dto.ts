@@ -7,7 +7,7 @@ type MindElixirDataV2Dto = MindElixirData;
 export type ExcalidrawDataV2Dto = object;
 export type ExcalidrawCommitReq = {
   otid: TID;
-  data: string;
+  data: ExcalidrawDataV2Dto;
 };
 export type ExcalidrawCommitRsp = object;
 export type ExcalidrawFetchReq = {

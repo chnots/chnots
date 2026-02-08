@@ -222,16 +222,22 @@ impl ChnotMapper for KDb {
         let cto = ChnotThreadOrderTable::new("cto");
         let cto_otid = cto.otid().field_name;
         let korder_name = cto.korder().field_name;
+        let closed_name = cto.closed().field_name;
 
-        #[derive(Debug)]
+        #[derive(Debug, PartialEq, Eq)]
         struct OtidAndOrder {
             otid: TID,
             korder: i64,
+            closed: bool,
         }
         let saved_orders = tx
             .qry_list(
                 SqlReader::builder(
-                    [cto.korder().erased(), cto.otid().erased()],
+                    [
+                        cto.korder().erased(),
+                        cto.otid().erased(),
+                        cto.closed().erased(),
+                    ],
                     Froms::Table {
                         table_name: cto.table(),
                         alias: cto.alias,
@@ -243,43 +249,49 @@ impl ChnotMapper for KDb {
                     Ok(OtidAndOrder {
                         otid: r.try_get(cto_otid)?,
                         korder: r.try_get(korder_name)?,
+                        closed: r.try_get(closed_name)?,
                     })
                 },
             )
             .await?;
 
-        let mut to_save_map: HashMap<TID, (usize, _)> = orders
+        let mut to_save_map: HashMap<TID, OtidAndOrder> = orders
             .into_iter()
             .enumerate()
-            .map(|(index, o)| (o.otid, (index, o)))
+            .map(|(index, data)| {
+                (
+                    data.otid,
+                    OtidAndOrder {
+                        otid: data.otid,
+                        korder: index as i64,
+                        closed: data.closed,
+                    },
+                )
+            })
             .collect();
         let mut to_remove_list: Vec<TID> = vec![];
         saved_orders.into_iter().for_each(|saved_otid_and_order| {
-            let to_save_otid_and_order = to_save_map
-                .get(&saved_otid_and_order.otid)
-                .map(|(order, data)| (data.otid, *order));
-            if to_save_otid_and_order
-                .is_none_or(|(_, order)| order as i64 != saved_otid_and_order.korder)
-            {
+            let to_save_otid_and_order = to_save_map.get(&saved_otid_and_order.otid);
+            if to_save_otid_and_order.is_none_or(|data| data != &saved_otid_and_order) {
                 to_remove_list.push(saved_otid_and_order.otid);
             } else {
                 to_save_map.remove(&saved_otid_and_order.otid);
             }
         });
-        for ele in to_remove_list {
-            tx.as_executor()
-                .omit_rows::<ChnotThreadOrder>(Wheres::equal(ChnotThreadOrder::OTID, ele))
-                .await?;
-        }
+
+        tx.as_executor()
+            .omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
+            .await?;
 
         let mut metas = vec![];
 
-        for (c, b) in to_save_map.values() {
+        for oao in to_save_map.values() {
             let rec = ChnotThreadOrder {
-                otid: b.otid,
+                otid: oao.otid,
                 tid: TID::default(),
                 thread_otid,
-                korder: (*c).try_into()?,
+                korder: oao.korder,
+                closed: oao.closed,
             };
 
             metas.push(rec.clone());
@@ -306,7 +318,10 @@ impl ChnotMapper for KDb {
             .qry_list(
                 SqlBuilder::read(
                     ChnotMeta::TABLE,
-                    &[format!("{}.*", ChnotMeta::TABLE).as_str()],
+                    &[
+                        format!("{}.*", ChnotMeta::TABLE).as_str(),
+                        ChnotThreadOrder::CLOSED,
+                    ],
                 )
                 .seg(format!(
                     " left join {} on {}.{} = {}.{} ",
@@ -321,7 +336,12 @@ impl ChnotMapper for KDb {
                     req.thread_otid,
                 )]))
                 .order_by([OrderBy::Asc(ChnotThreadOrder::KORDER.into())]),
-                |row| ChnotMeta::try_from(&row),
+                |row| {
+                    Ok(ChnotThreadMetaFetchRspData {
+                        meta: ChnotMeta::try_from(&row)?,
+                        closed: row.try_get(ChnotThreadOrder::CLOSED)?,
+                    })
+                },
             )
             .await?;
         /*         let toents = conn

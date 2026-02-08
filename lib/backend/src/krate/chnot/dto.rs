@@ -33,6 +33,7 @@ pub struct ChnotThreadMetaCommitRsp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadOrderCommitReqData {
     pub otid: TID,
+    pub closed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -93,7 +94,13 @@ pub struct ChnotThreadMetaFetchReq {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotThreadMetaFetchRspData {
+    pub meta: ChnotMeta,
+    pub closed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchRsp {
     pub thread_meta: Option<ChnotThreadMeta>,
-    pub chnot_meta_sorted: Vec<ChnotMeta>,
+    pub chnot_meta_sorted: Vec<ChnotThreadMetaFetchRspData>,
 }

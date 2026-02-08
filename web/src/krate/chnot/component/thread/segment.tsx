@@ -1,5 +1,5 @@
 import { useSortable } from "@dnd-kit/sortable";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
 import { mdwtCommit } from "@/krate/mdwt/service";
@@ -15,24 +15,28 @@ import RichMdwt from "../rich-chnot/rich-mdwt";
 import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import TableChnot from "../rich-chnot/table";
 
-const SortableRichMdwt = ({
+const SortableRichChnot = ({
   otid,
   index,
+  closed: initialClosed,
   onPostSave,
-  handleAddBlock,
-  handleRemoveBlock,
+  onAddBlock: handleAddBlock,
+  onRemoveBlock: handleRemoveBlock,
+  onToggleClosed,
   kspace,
   kind: initialKind,
   isDragging: isItemDragging,
 }: {
   otid: TID;
   index: number;
-  onPostSave: (arg: PostSaveArg) => void;
   content: string;
   kspace: string;
   kind?: ChnotKind;
-  handleAddBlock: (position: number, find: boolean) => void;
-  handleRemoveBlock: (otid: string | TID) => void;
+  closed: boolean;
+  onAddBlock: (position: number, find: boolean) => void;
+  onRemoveBlock: (otid: string | TID) => void;
+  onPostSave: (arg: PostSaveArg) => void;
+  onToggleClosed: (index: number, closed: boolean) => void;
   isDragging?: boolean;
 }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -45,10 +49,15 @@ const SortableRichMdwt = ({
     initialKind !== undefined,
   );
   const [fullscreen, setFullscreen] = useState<boolean>(false);
+  const [closed, setClosed] = useState<boolean>(initialClosed);
 
   const style = {
     opacity: isDragging || isItemDragging ? 0.5 : 1,
   };
+
+  useEffect(() => {
+    onToggleClosed(index, closed);
+  }, [onToggleClosed, closed, index]);
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
@@ -78,7 +87,7 @@ const SortableRichMdwt = ({
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
       }
-      onPostSave(arg);
+      onPostSave({ ...arg });
 
       setFixedKind(true);
     },
@@ -114,6 +123,18 @@ const SortableRichMdwt = ({
             >
               <ChnotKindIcon kind={kind} className="w-4 h-4" />
             </div>
+            <button
+              type="button"
+              onClick={() => setClosed((prev) => !prev)}
+              className="p-1  hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
+              title="Remove"
+            >
+              {closed ? (
+                <Icon.EyeClosed className="w-4 h-4 cursor-pointer" />
+              ) : (
+                <Icon.Eye className="w-4 h-4 cursor-pointer" />
+              )}
+            </button>
           </>
         ) : (
           <>
@@ -173,25 +194,27 @@ const SortableRichMdwt = ({
           <Icon.Plus className="w-4 h-4" />
         </button>
       </div>
-      <div className="w-full ml-4">
-        {kind === ChnotKind.ExcalidrawV1 ? (
-          <ExcalidrawChnot {...props} />
-        ) : kind === ChnotKind.KFileV1 ? (
-          <KFileChnot {...props} />
-        ) : kind === ChnotKind.KTab ? (
-          <TableChnot {...props} readonly={false} />
-        ) : kind === ChnotKind.LLMChat ? (
-          <LLMChatChnot {...props} />
-        ) : kind === ChnotKind.MindMapV1 ? (
-          <MindMapChnot {...props} />
-        ) : (
-          <RichMdwt {...props} readonly={false} />
-        )}
-      </div>
+      {closed || (
+        <div className="w-full ml-4">
+          {kind === ChnotKind.ExcalidrawV1 ? (
+            <ExcalidrawChnot {...props} />
+          ) : kind === ChnotKind.KFileV1 ? (
+            <KFileChnot {...props} />
+          ) : kind === ChnotKind.KTab ? (
+            <TableChnot {...props} readonly={false} />
+          ) : kind === ChnotKind.LLMChat ? (
+            <LLMChatChnot {...props} />
+          ) : kind === ChnotKind.MindMapV1 ? (
+            <MindMapChnot {...props} />
+          ) : (
+            <RichMdwt {...props} readonly={false} />
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
-const SortableRichMdwtMemo = memo(SortableRichMdwt);
+const SortableRichMdwtMemo = memo(SortableRichChnot);
 
 export default SortableRichMdwtMemo;

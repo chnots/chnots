@@ -39,4 +39,5 @@ export type MdwtCommitReqData = {
 };
 export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
+  title: string;
 };
