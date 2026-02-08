@@ -28,7 +28,7 @@ const ExcalidrawChnot = ({
   const savedFilesRef = useRef(new Map<string, SaveFileCache>());
 
   useEffect(() => {
-    fetchExcalidraw(otid)
+    fetchExcalidraw(otid, savedFilesRef.current)
       .then((state) => {
         if (state) {
           unionFileSaved(state.files ?? {}, savedFilesRef.current);

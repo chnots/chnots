@@ -3,7 +3,6 @@ import { serializeAsJSON } from "@excalidraw/excalidraw";
 import type {
   ExcalidrawElement,
   FileId,
-  OrderedExcalidrawElement,
 } from "@excalidraw/excalidraw/element/types";
 import type {
   AppState,
@@ -12,7 +11,6 @@ import type {
   DataURL,
 } from "@excalidraw/excalidraw/types";
 import type { RefObject } from "react";
-import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
 import { inlineKFileDownload, inlineKFileUpload } from "@/krate/kfile/service";
 import { genTID, type TID } from "@/lib/id_util";
 import request from "@/lib/request";
@@ -22,7 +20,6 @@ import type {
   ExcalidrawFetchReq,
   ExcalidrawFetchRsp,
 } from "../dto";
-import { RestoredDataState } from "@excalidraw/excalidraw/data/restore";
 import type { ImportedDataState } from "@excalidraw/excalidraw/data/types";
 
 export type ExcalidrawChnotState = {
@@ -30,6 +27,7 @@ export type ExcalidrawChnotState = {
   elements?: ExcalidrawElement[] | null;
   appState?: Partial<AppState>;
   files?: BinaryFiles;
+  fileOtids?: Map<string, TID>;
 };
 
 export const excalidrawFetchInner = async (
@@ -46,6 +44,7 @@ export const excalidrawCommitInner = async (
 
 export const fetchExcalidraw = async (
   otid: TID,
+  savedFileMaps?: Map<string, SaveFileCache>,
 ): Promise<ExcalidrawChnotState | null> => {
   try {
     const rsp = await excalidrawFetchInner({
@@ -67,14 +66,22 @@ export const fetchExcalidraw = async (
             });
 
             const fileInline = fileInlineRsp.file;
-            if (fileInline) {
-              fileMap.set(element.fileId, {
+            if (fileInline && fileInlineRsp.meta) {
+              const data: BinaryFileData = {
                 // @ts-expect-error
                 mimeType: fileInline.content_type,
                 dataURL: fileInline.content as DataURL,
                 created: fileInline.tid,
                 lastRetrieved: fileInline.tid,
                 id: element.fileId as FileId,
+              };
+              fileMap.set(element.fileId, data);
+
+              const newVer = `${data.created}-${data.version}`;
+
+              savedFileMaps?.set(element.fileId, {
+                ver: newVer,
+                otid: fileInlineRsp.meta.otid,
               });
             }
           } catch (_error) {}
