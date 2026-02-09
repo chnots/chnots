@@ -98,6 +98,9 @@ impl KDbExecutor<'_> {
         S: Into<Vec<Varchar<LIMIT>>>,
     {
         let vs = pos.into();
+        if vs.is_empty() {
+            return Ok(vec![]);
+        }
 
         let results = self
             .qry_list(

@@ -53,7 +53,7 @@ macro_rules! otid_enum_to_generic {
             OtidTableEnum::KTabCellDate => $invoke! {crate::krate::ktab::KTabCellDate},
             OtidTableEnum::KTabCellDecimal => $invoke! {crate::krate::ktab::KTabCellDecimal},
             OtidTableEnum::KTabCellText => $invoke! {crate::krate::ktab::KTabCellText},
-            OtidTableEnum::KFileMeta => $invoke! {crate::krate::ktab::KTabMeta},
+            OtidTableEnum::KFileMeta => $invoke! {crate::krate::kfile::KFileMeta},
             OtidTableEnum::KSpace => $invoke! {crate::krate::kspace::KSpace},
             OtidTableEnum::ChnotMeta => $invoke! {crate::krate::chnot::ChnotMeta},
             OtidTableEnum::MdwtToent => $invoke! {crate::krate::mdwt::MdwtRecord},
