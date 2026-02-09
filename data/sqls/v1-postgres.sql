@@ -423,3 +423,4 @@ CREATE TABLE sync_log_transient (
   start_tid_ex int8 NOT NULL,
   sync_finish_tid int8 NOT NULL
 );
+

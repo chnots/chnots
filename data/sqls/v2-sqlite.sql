@@ -65,15 +65,14 @@ drop index if exists graph_meta_ukey_tid;
 create unique index graph_meta_ukey_tid on graph_meta (tid);
 
 CREATE TABLE
-  public.graph_data (
+  graph_data (
     sid character varying(100) NOT NULL,
     tid bigint NOT NULL,
-    content text NOT NULL
+    content text NOT NULL,
+    PRIMARY KEY (sid)
   );
 
-ALTER TABLE ONLY public.graph_data ADD CONSTRAINT graph_data_pkey PRIMARY KEY (sid);
-
-CREATE UNIQUE INDEX graph_data_ukey_tid ON public.graph_data USING btree (tid);
+CREATE UNIQUE INDEX graph_data_ukey_tid ON graph_data (tid);
 
 create table
   chnot_thread_order_hist (
