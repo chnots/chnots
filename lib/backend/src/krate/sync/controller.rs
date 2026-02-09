@@ -73,7 +73,7 @@ async fn sync_sid_po_commit(
                     .map(|e| serde_json::from_str::<$st>(e.as_str()))
                     .collect::<Result<Vec<$st>, serde_json::Error>>()?;
                 state
-                    .sync_sid_po_commit_rx::<$st>(SyncSidPoGenericDto { pos: pos })
+                    .sync_sid_po_commit_rx::<$st>(SyncSidPoGenericDto { pos })
                     .await?;
                 Ok(SyncSidPoCommitRsp {})
             }};

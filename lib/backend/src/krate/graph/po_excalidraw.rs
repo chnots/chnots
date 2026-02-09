@@ -66,14 +66,14 @@ impl TryFrom<ExcalidrawDataV2Dto> for ExcalidrawDataV2Po {
         let mut elements_key = vec![];
         for ele in value.0.elements {
             let cell = ele.to_string();
-            let sid = blake3_sum16(&cell.as_bytes())?;
+            let sid = blake3_sum16(cell.as_bytes())?;
             data.insert(sid.clone(), cell);
             elements_key.push(sid);
         }
         let mut others_key = BTreeMap::new();
         for (k, v) in value.0.others {
             let cell = v.to_string();
-            let sid = blake3_sum16(&cell.as_bytes())?;
+            let sid = blake3_sum16(cell.as_bytes())?;
             data.insert(sid.clone(), cell);
             others_key.insert(k, sid);
         }

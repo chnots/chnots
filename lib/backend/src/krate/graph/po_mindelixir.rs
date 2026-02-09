@@ -38,7 +38,7 @@ pub struct MindElixirNode {
     #[serde(flatten)]
     others: BTreeMap<String, Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    children: Option<Vec<Box<Self>>>,
+    children: Option<Vec<Self>>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -73,7 +73,7 @@ impl<'de> Deserialize<'de> for MindElixirNode {
             {
                 let c: MindElixirNode = serde_json::from_value(child.clone())
                     .map_err(|err| de::Error::custom(err.to_string()))?;
-                result.push(c.into());
+                result.push(c);
             }
             Some(result)
         } else {
@@ -110,7 +110,7 @@ impl MindElixirNode {
         };
 
         let leaf = serde_json::to_string(&c)?;
-        let sid: SharedStr = blake3_sum16(&leaf.as_bytes())?.into();
+        let sid: SharedStr = blake3_sum16(leaf.as_bytes())?.into();
 
         result_map.insert(sid.clone(), leaf);
         Ok(sid)
@@ -128,21 +128,17 @@ impl<'de> Deserialize<'de> for MindElixirDataV2Dto {
             .ok_or(de::Error::custom("unable to find nodeData"))?;
 
         let node_data: MindElixirNode =
-            serde_json::from_value(node_data.clone()).map_err(|err| de::Error::custom(err))?;
+            serde_json::from_value(node_data.clone()).map_err(de::Error::custom)?;
 
         let arrows = body.get("arrows");
         let arrows = if let Some(arrows) = arrows {
-            arrows
-                .as_array()
-                .map(|a| a.iter().map(|e| e.clone()).collect())
+            arrows.as_array().map(|a| a.to_vec())
         } else {
             None
         };
         let summaries = body.get("summaries");
         let summaries = if let Some(summaries) = summaries {
-            summaries
-                .as_array()
-                .map(|a| a.iter().map(|e| e.clone()).collect())
+            summaries.as_array().map(|a| a.to_vec())
         } else {
             None
         };
@@ -157,10 +153,10 @@ impl<'de> Deserialize<'de> for MindElixirDataV2Dto {
         }
 
         Ok(MindElixirDataV2Dto(MindElixirDataV1 {
-            others: others,
-            node_data: node_data,
-            arrows: arrows,
-            summaries: summaries,
+            others,
+            node_data,
+            arrows,
+            summaries,
         }))
     }
 }
@@ -174,7 +170,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
         let mut others_key = BTreeMap::new();
         for (k, v) in value.0.others {
             let cell = v.to_string();
-            let sid = blake3_sum16(&cell.as_bytes())?;
+            let sid = blake3_sum16(cell.as_bytes())?;
             data.insert(sid.clone(), cell);
             others_key.insert(k, sid);
         }
@@ -183,7 +179,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
             let mut values_key = vec![];
             for ele in vs {
                 let v = serde_json::to_string(&ele)?;
-                let sid = blake3_sum16(&v.as_bytes())?;
+                let sid = blake3_sum16(v.as_bytes())?;
                 data.insert(sid.clone(), v);
                 values_key.push(sid);
             }
@@ -196,7 +192,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
             let mut values_key = vec![];
             for ele in vs {
                 let v = serde_json::to_string(&ele)?;
-                let sid = blake3_sum16(&v.as_bytes())?;
+                let sid = blake3_sum16(v.as_bytes())?;
                 data.insert(sid.clone(), v);
                 values_key.push(sid);
             }
@@ -218,7 +214,7 @@ impl TryFrom<MindElixirDataV2Dto> for MindElixirDataV1Po {
                 },
                 keys: data.keys().map(|e| e.to_string()).collect(),
             },
-            data: data,
+            data,
         })
     }
 }
@@ -233,7 +229,7 @@ fn depth(root: SharedStr, data: &BTreeMap<String, String>) -> AResult<MindElixir
             let mut children = vec![];
             for ele in v {
                 let child = depth(ele, data)?;
-                children.push(child.into());
+                children.push(child);
             }
             Some(children)
         }
@@ -241,7 +237,7 @@ fn depth(root: SharedStr, data: &BTreeMap<String, String>) -> AResult<MindElixir
     };
     Ok(MindElixirNode {
         others: d.others.clone(),
-        children: children,
+        children,
     })
 }
 
@@ -288,10 +284,10 @@ impl TryFrom<MindElixirDataV1Po> for MindElixirDataV2Dto {
         };
 
         Ok(Self(MindElixirDataV1 {
-            others: others,
+            others,
             node_data: depth(meta.node_data.into(), &data)?,
-            arrows: arrows,
-            summaries: summaries,
+            arrows,
+            summaries,
         }))
     }
 }

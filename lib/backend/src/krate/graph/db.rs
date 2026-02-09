@@ -58,7 +58,7 @@ impl KDbExecutor<'_> {
 
     pub async fn excalidraw_commit(&self, po: ExcalidrawDataV2Po, otid: TID) -> EResult {
         self.po_insert_graph_meta(GraphMeta {
-            otid: otid,
+            otid,
             // TODO
             archor: false,
             kind: super::GraphKind::ExcalidrawV2,
@@ -156,10 +156,7 @@ impl GraphMapper for KDb {
         }
 
         Ok(ExcalidrawFetchRsp {
-            data: Some(ExcalidrawDataV2Dto(ExcalidrawDataV2 {
-                others,
-                elements: elements,
-            })),
+            data: Some(ExcalidrawDataV2Dto(ExcalidrawDataV2 { others, elements })),
         })
     }
 
@@ -167,7 +164,7 @@ impl GraphMapper for KDb {
         &self,
         req: KReq<super::ExcalidrawCommitReq>,
     ) -> chin_tools::AResult<super::ExcalidrawCommitRsp> {
-        let otid = req.otid.clone();
+        let otid = req.otid;
         let po: ExcalidrawDataV2Po = req.body.data.try_into()?;
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
@@ -207,14 +204,14 @@ impl GraphMapper for KDb {
         &self,
         req: KReq<super::MindElixirCommitReq>,
     ) -> chin_tools::AResult<super::MindElixirCommitRsp> {
-        let otid = req.otid.clone();
+        let otid = req.otid;
         let po: MindElixirDataV1Po = req.body.data.try_into()?;
 
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
         tx.as_executor()
             .po_insert_graph_meta(GraphMeta {
-                otid: otid,
+                otid,
                 // TODO
                 archor: false,
                 kind: super::GraphKind::MindElixirV1,

@@ -22,8 +22,8 @@ macro_rules! sid_enum_to_generic {
     ($table_type:expr, $invoke:ident) => {{
         use $crate::model::SidTableEnum;
         match $table_type {
-            SidTableEnum::InlineKFile => $invoke! {crate::krate::kfile::InlineKFile},
-            SidTableEnum::GraphData => $invoke! {crate::krate::graph::GraphData},
+            SidTableEnum::InlineKFile => $invoke! {$crate::krate::kfile::InlineKFile},
+            SidTableEnum::GraphData => $invoke! {$crate::krate::graph::GraphData},
         }
     }};
 }

@@ -165,11 +165,11 @@ pub(super) async fn kfile_asset_chunk_upload(
                 content_type: content_type.try_into()?,
                 filesize,
                 sid: sid.to_string().try_into()?,
-                inline: inline,
+                inline,
                 archor: false,
                 filename: filename.try_into()?,
                 last_modified: last_modified.try_into()?,
-                binaryp: binaryp,
+                binaryp,
             };
 
             mapper.po_insert_kfile_meta(kfile.clone()).await?;

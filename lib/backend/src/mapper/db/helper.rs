@@ -1,10 +1,7 @@
-use chin_sql::{ChinSqlError, CreateTableSqlOwned, SqlBuilder, SqlDeleter, Wheres};
-use chin_tools::{AResult, EResult};
+use chin_sql::{ChinSqlError, CreateTableSqlOwned};
+use chin_tools::EResult;
 
-use crate::{
-    mapper::db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver},
-    model::OtidTableSupport,
-};
+use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver};
 
 pub(crate) async fn create_tables(cts: Ddls, kdb: &KDb) -> EResult {
     let sqls: Result<Vec<Vec<String>>, ChinSqlError> = cts

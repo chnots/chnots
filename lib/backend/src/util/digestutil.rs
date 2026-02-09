@@ -32,7 +32,7 @@ pub(crate) fn gzip_base64_blake3(bytes: Bytes) -> AResult<GzipdBase64Blake3> {
     let b64 = base64::Engine::encode(&BASE64_STANDARD, compressed_bytes);
 
     let mut hasher = blake3::Hasher::new();
-    let hasher = hasher.update(&b64.as_bytes());
+    let hasher = hasher.update(b64.as_bytes());
     let hash = hasher.finalize().to_string();
 
     Ok(GzipdBase64Blake3 { blake3: hash, b64 })
@@ -69,7 +69,7 @@ pub(crate) fn blake3_sum<const LEN: usize>(s: &[u8]) -> AResult<String> {
 
     let mut output = [0u8; LEN];
 
-    reader.read(&mut output)?;
+    reader.read_exact(&mut output)?;
     let ohex = hex::encode(output);
 
     Ok(ohex)

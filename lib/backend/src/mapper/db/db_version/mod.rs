@@ -14,8 +14,8 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutor, KDbExecutorBehaiver,
-            KDbRow, KDbRowBehavier,
+            KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow,
+            KDbRowBehavier,
             helper::{Ddls, create_tables},
             kdb::KDbTransactionBehaiver,
         },
@@ -177,19 +177,18 @@ impl KDbExecutor<'_> {
                 if let Some(version_str) = filename
                     .strip_prefix('v')
                     .and_then(|version| version.strip_suffix(suffix))
+                    && let Ok(version) = version_str.parse::<i64>()
                 {
-                    if let Ok(version) = version_str.parse::<i64>() {
-                        let embedded_file = MigrationSqls::get(&file).ok_or_else(|| {
-                            anyhow::anyhow!("Unable to find embedded file: {:?}", file)
-                        })?;
+                    let embedded_file = MigrationSqls::get(&file).ok_or_else(|| {
+                        anyhow::anyhow!("Unable to find embedded file: {:?}", file)
+                    })?;
 
-                        let sql = match embedded_file.data {
-                            Cow::Borrowed(bytes) => String::from_utf8_lossy(bytes).to_string(),
-                            Cow::Owned(bytes) => String::from_utf8(bytes)?,
-                        };
+                    let sql = match embedded_file.data {
+                        Cow::Borrowed(bytes) => String::from_utf8_lossy(bytes).to_string(),
+                        Cow::Owned(bytes) => String::from_utf8(bytes)?,
+                    };
 
-                        sqls.insert(version, sql);
-                    }
+                    sqls.insert(version, sql);
                 }
             }
         }

@@ -610,7 +610,7 @@ impl ChnotMapper for KDb {
         .wheres(Wheres::and([
             cm.kspace().v_in(req.get_spaces()),
             Wheres::transform(req.kinds.clone(), |kinds| {
-                if kinds.len() > 0 {
+                if !kinds.is_empty() {
                     cm.kind().v_in(req.kinds.clone())
                 } else {
                     Wheres::None

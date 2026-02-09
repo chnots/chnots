@@ -3,7 +3,7 @@ use chin_sql::{
     str_type::{Text, Varchar},
     time_type::TID,
 };
-use chin_tools::{AResult, EResult};
+use chin_tools::EResult;
 
 use crate::{
     krate::{

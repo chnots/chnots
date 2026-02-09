@@ -7,9 +7,8 @@ use crate::krate::sync::controller::{
 };
 use crate::krate::sync::dto::*;
 use crate::krate::sync::dto::{
-    SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncOtidTIDListReq, SyncPageDto, SyncShakeArg,
-    SyncShakeDto, SyncSidPoCommitReq, SyncSidPoEnumDto, SyncSidPoGenericDto, SyncSidPoListReq,
-    SyncTIDListArg,
+    SyncDataDto, SyncDataReqRsp, SyncOtidTIDListReq, SyncPageDto, SyncShakeArg, SyncShakeDto,
+    SyncSidPoCommitReq, SyncSidPoEnumDto, SyncSidPoGenericDto, SyncSidPoListReq, SyncTIDListArg,
 };
 use crate::krate::sync::po::SyncLogTransient;
 use crate::model::otid_table::OtidWithGeneric;

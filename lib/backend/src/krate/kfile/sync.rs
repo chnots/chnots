@@ -90,7 +90,7 @@ impl KFileAssetWorker {
             }
         }
 
-        if inline_metas.len() > 0 {
+        if !inline_metas.is_empty() {
             let data = self
                 .app
                 .sync_sid_po_list_tx::<100, InlineKFile>(
@@ -155,7 +155,7 @@ impl KFileAssetWorker {
             }
         }
 
-        if inline_metas.len() > 0 {
+        if !inline_metas.is_empty() {
             let data: Vec<InlineKFile> = self
                 .app
                 .po_sid_sync_list(inline_metas.iter().map(|e| e.sid.clone()).collect())

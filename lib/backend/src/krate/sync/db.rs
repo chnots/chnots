@@ -1,5 +1,5 @@
 use anyhow::Context;
-use chin_sql::{OnConflict, SqlBuilder, SqlReader, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 use log::{debug, info};
@@ -279,7 +279,7 @@ impl SyncMapper for KDb {
             }
         }
 
-        if to_omit_tids.len() > 0 {
+        if !to_omit_tids.is_empty() {
             self.conn()
                 .await?
                 .as_executor()
@@ -287,7 +287,7 @@ impl SyncMapper for KDb {
                 .await?;
         }
 
-        if pull_hist_pos.len() > 0 {
+        if !pull_hist_pos.is_empty() {
             let c = self
                 .conn()
                 .await?
@@ -303,7 +303,7 @@ impl SyncMapper for KDb {
             );
         }
 
-        if pull_cur_tids.len() > 0 {
+        if !pull_cur_tids.is_empty() {
             let c = self
                 .conn()
                 .await?
@@ -422,13 +422,11 @@ impl KDb {
                     tid: r.try_get(C_TID)?,
                     lstate: {
                         let c: i32 = r.try_get(C_LSTATE)?;
-                        let c: i32 = c.clamp(0, 100).try_into()?;
-                        c.try_into()?
+                        c.clamp(0, 100).try_into()?
                     },
                     rstate: {
                         let c: i32 = r.try_get(C_RSTATE)?;
-                        let c: i32 = c.clamp(0, 100).try_into()?;
-                        c.try_into()?
+                        c.clamp(0, 100).try_into()?
                     },
                 })
             })
