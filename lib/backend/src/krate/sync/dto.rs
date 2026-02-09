@@ -21,12 +21,6 @@ pub struct SyncInfo<T> {
     pub pantient: bool,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum SyncSingleStep {
-    Omit,
-    Data,
-}
-
 impl<T: OtidTableSupport> SyncInfo<T> {
     pub fn to_table_name(&self) -> String {
         format!(
@@ -38,14 +32,13 @@ impl<T: OtidTableSupport> SyncInfo<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncPageInfo<T> {
+pub struct SyncPageDto<T> {
     pub sync_info: SyncInfo<T>,
     pub page_size: usize,
     pub start_ex: TID,
-    pub sync_step: SyncSingleStep,
 }
 
-impl<T: OtidTableSupport> Deref for SyncPageInfo<T> {
+impl<T: OtidTableSupport> Deref for SyncPageDto<T> {
     type Target = SyncInfo<T>;
 
     fn deref(&self) -> &Self::Target {
@@ -130,10 +123,7 @@ macro_rules! sync_cmds_json_to_st {
                     }
                     $crate::krate::sync::dto::SyncDataOperation::Push { data, hist } => {
                         SyncDataOperation::Push {
-                            data: {
-                                let c: $st = serde_json::from_str::<$st>(&data)?;
-                                c
-                            },
+                            data: serde_json::from_str::<$st>(&data)?,
                             hist,
                         }
                     }

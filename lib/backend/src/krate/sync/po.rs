@@ -2,7 +2,7 @@ use chin_sql::{GenerateTableSchema, str_type::Varchar, time_type::TID};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, GenerateTableSchema)]
-pub struct SyncLogTransientCommit {
+pub struct SyncLogTransient {
     pub(crate) remote_id: Varchar<100>,
     pub(crate) table_name: Varchar<100>,
     #[gts_type = "i64"]

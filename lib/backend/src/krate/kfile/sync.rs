@@ -113,7 +113,12 @@ impl KFileAssetWorker {
                 inline_metas.push(kfm);
             } else {
                 let path = self.app.config.attachment.get_sid_path(kfm.sid.as_str());
-                let file_size = path.metadata()?.len();
+                log::info!("upload file {}", path.as_os_str().to_string_lossy());
+
+                let Ok(meta) = path.metadata() else {
+                    continue;
+                };
+                let file_size = meta.len();
                 // https://stackoverflow.com/questions/65814450/how-to-post-a-file-using-reqwest
                 let file = match File::open(&path).await {
                     Ok(file) => file,
@@ -166,7 +171,7 @@ impl KFileAssetWorker {
 }
 
 impl OtidRelatedWorker<KFileMeta> for KFileAssetWorker {
-    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<KFileMeta>) -> EResult {
+    async fn before_push(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<KFileMeta>) -> EResult {
         let mut metas = vec![];
         for ele in &arg.cmds {
             if let crate::krate::sync::dto::SyncDataOperation::Push { data, hist: _ } = ele {
@@ -178,7 +183,7 @@ impl OtidRelatedWorker<KFileMeta> for KFileAssetWorker {
         Ok(())
     }
 
-    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<KFileMeta>) -> EResult {
+    async fn before_pull(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<KFileMeta>) -> EResult {
         let mut metas = vec![];
         for ele in &arg.cmds {
             if let crate::krate::sync::dto::SyncDataOperation::Push { data, hist: _ } = ele {

@@ -5,15 +5,15 @@ use crate::krate::sync::controller::{
     SYNC_DATA_PATH, SYNC_LOG_COMMIT_PATH, SYNC_SID_PO_COMMIT_PATH, SYNC_SID_PO_LIST_PATH,
     SYNC_TID_LIST_PATH,
 };
+use crate::krate::sync::dto::*;
 use crate::krate::sync::dto::{
-    SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncOtidTIDListReq, SyncPageInfo, SyncShakeArg,
+    SyncDataDto, SyncDataOperation, SyncDataReqRsp, SyncOtidTIDListReq, SyncPageDto, SyncShakeArg,
     SyncShakeDto, SyncSidPoCommitReq, SyncSidPoEnumDto, SyncSidPoGenericDto, SyncSidPoListReq,
     SyncTIDListArg,
 };
-use crate::krate::sync::po::SyncLogTransientCommit;
+use crate::krate::sync::po::SyncLogTransient;
 use crate::model::otid_table::OtidWithGeneric;
 use crate::model::{OtidTableSupport, SidTableSupport};
-use crate::sync_cmds_st_to_json;
 use crate::{
     app::ShareAppState,
     krate::sync::{
@@ -23,9 +23,12 @@ use crate::{
     },
     magics::DB_VERSION,
 };
+use crate::{sync_cmds_json_to_st, sync_cmds_st_to_json};
 use chin_sql::str_type::Varchar;
+use chin_sql::time_type::TID;
 use chin_tools::{AResult, EResult};
 use log::info;
+use reqwest::StatusCode;
 
 use super::po::SyncEndpoint;
 
@@ -158,15 +161,15 @@ impl ShareAppState {
     pub(crate) async fn sync_otid_data_tx<T, W>(
         &self,
         endpoint: &SyncEndpoint,
-        sync_info: &SyncPageInfo<T>,
+        sync_info: &SyncPageDto<T>,
         otid_related_worker: &W,
     ) -> AResult<SyncDataDto<T>>
     where
         W: OtidRelatedWorker<T>,
-        T: OtidTableSupport,
+        T: OtidTableSupport + Sized,
     {
-        let dto: SyncDataDto<T> = self.mapper.sync_fetch_operations(sync_info).await?;
-        otid_related_worker.before_send(endpoint, &dto).await?;
+        let dto: SyncDataDto<T> = self.mapper.sync_operation_list(sync_info).await?;
+        otid_related_worker.before_push(endpoint, &dto).await?;
 
         let client = reqwest::Client::builder().build()?;
 
@@ -181,34 +184,14 @@ impl ShareAppState {
                 },
             })
             .send()
-            .await?
-            .json::<SyncDataReqRsp>()
             .await?;
-        let cmds: Result<Vec<SyncDataOperation<T>>, serde_json::Error> = rsp
-            .dto
-            .cmds
-            .into_iter()
-            .map(|s| {
-                let c = match s {
-                    crate::krate::sync::dto::SyncDataOperation::Omit(tid) => {
-                        SyncDataOperation::Omit(tid)
-                    }
-                    crate::krate::sync::dto::SyncDataOperation::Pull { tid, hist } => {
-                        SyncDataOperation::Pull { tid, hist }
-                    }
-                    crate::krate::sync::dto::SyncDataOperation::Push { data, hist } => {
-                        SyncDataOperation::Push {
-                            data: {
-                                let c: T = serde_json::from_str(&data)?;
-                                c
-                            },
-                            hist,
-                        }
-                    }
-                };
-                Ok(c)
-            })
-            .collect();
+        if rsp.status() != StatusCode::OK {
+            log::error!("sync rsp with wrong status {}", rsp.status());
+        }
+        let rsp = rsp.json::<SyncDataReqRsp>().await?;
+        let cmds = rsp.dto.cmds;
+
+        let cmds = sync_cmds_json_to_st! {T, cmds};
 
         Ok(SyncDataDto {
             cmds: cmds?,
@@ -227,7 +210,7 @@ impl ShareAppState {
     async fn sync_insert_sync_log_tx(
         &self,
         endpoint: &SyncEndpoint,
-        log: &SyncLogTransientCommit,
+        log: &SyncLogTransient,
     ) -> EResult {
         let client = reqwest::Client::builder().build()?;
 
@@ -240,7 +223,7 @@ impl ShareAppState {
         Ok(())
     }
 
-    pub async fn sync_insert_sync_log_rx(&self, log: SyncLogTransientCommit) -> EResult {
+    pub async fn sync_insert_sync_log_rx(&self, log: SyncLogTransient) -> EResult {
         self.sync_log_transient_commit(log).await
     }
 
@@ -323,10 +306,6 @@ impl ShareAppState {
         T: OtidTableSupport,
         W: OtidRelatedWorker<T>,
     {
-        use crate::krate::sync::dto::*;
-        use crate::krate::sync::mapper::SyncMapper as _;
-        use chin_sql::time_type::TID;
-
         info!("sync one otid table: {:?}", T::get_otid_enum());
         let page_size = 100;
         let shake_rsp = self.sync_shake_tx::<T>(endpoint).await?;
@@ -385,7 +364,7 @@ impl ShareAppState {
             if let Some(cstart_ex) = c_sync_time {
                 start_ex = *cstart_ex;
             }
-            self.sync_otid_merge_tids(result, hist, sync_info.clone())
+            self.sync_otid_build_tid_operations(result, hist, sync_info.clone())
                 .await?;
             if result_len < page_size {
                 if hist {
@@ -398,13 +377,11 @@ impl ShareAppState {
         }
 
         let mut start_ex = sync_info.start_ex;
-        let mut sync_step = SyncSingleStep::Omit;
         loop {
-            let sync_page = SyncPageInfo {
+            let sync_page = SyncPageDto {
                 sync_info: sync_info.clone(),
                 page_size,
                 start_ex,
-                sync_step,
             };
 
             let rsp: SyncDataDto<T> = self
@@ -412,27 +389,19 @@ impl ShareAppState {
                 .await?;
             let nomore = rsp.nomore;
 
-            otid_related_worker.before_merge(endpoint, &rsp).await?;
+            otid_related_worker.before_pull(endpoint, &rsp).await?;
 
             start_ex = rsp.max_tid;
 
             self.sync_otid_merge_operations(rsp).await?;
             if nomore {
-                match sync_step {
-                    SyncSingleStep::Omit => {
-                        sync_step = SyncSingleStep::Data;
-                        start_ex = sync_info.start_ex;
-                    }
-                    SyncSingleStep::Data => {
-                        break;
-                    }
-                }
+                break;
             }
         }
 
         // self.sync_drop_tmp_table(&sync_info).await?;
 
-        let remote_log = SyncLogTransientCommit {
+        let remote_log = SyncLogTransient {
             remote_id: self.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
@@ -441,7 +410,7 @@ impl ShareAppState {
         };
         self.sync_insert_sync_log_tx(endpoint, &remote_log).await?;
 
-        let local_log: SyncLogTransientCommit = SyncLogTransientCommit {
+        let local_log: SyncLogTransient = SyncLogTransient {
             remote_id: sync_info.instance_id.to_string().try_into()?,
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
@@ -455,19 +424,19 @@ impl ShareAppState {
 }
 
 pub(crate) trait OtidRelatedWorker<T: OtidTableSupport> {
-    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<T>) -> EResult;
-    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<T>) -> EResult;
+    async fn before_push(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<T>) -> EResult;
+    async fn before_pull(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<T>) -> EResult;
 }
 
 struct SimpleOtidRelatedWorker;
 impl<T: OtidTableSupport> OtidRelatedWorker<T> for SimpleOtidRelatedWorker {
     #[inline]
-    async fn before_send(&self, _: &SyncEndpoint, _: &SyncDataDto<T>) -> EResult {
+    async fn before_push(&self, _: &SyncEndpoint, _: &SyncDataDto<T>) -> EResult {
         Ok(())
     }
 
     #[inline]
-    async fn before_merge(&self, _: &SyncEndpoint, _: &SyncDataDto<T>) -> EResult {
+    async fn before_pull(&self, _: &SyncEndpoint, _: &SyncDataDto<T>) -> EResult {
         Ok(())
     }
 }

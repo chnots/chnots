@@ -10,7 +10,7 @@ use log::info;
 use crate::{
     app::ShareAppState,
     controller::KResponse,
-    krate::sync::{dto::*, po::SyncLogTransientCommit},
+    krate::sync::{dto::*, po::SyncLogTransient},
     model::otid_table::OtidWithEnum,
     otid_enum_generic_invoke, otid_enum_to_generic, sid_enum_to_generic,
 };
@@ -152,6 +152,7 @@ async fn sync_data(
     state: State<ShareAppState>,
     Json(req): Json<SyncDataReqRsp>,
 ) -> KResponse<SyncDataReqRsp> {
+    log::info!("received sync data req with {:?}", req.table_type);
     async fn sync_data_inner(
         state: State<ShareAppState>,
         req: SyncDataReqRsp,
@@ -195,7 +196,7 @@ async fn sync_data(
 
 async fn sync_log_transient_commit(
     state: State<ShareAppState>,
-    Json(req): Json<SyncLogTransientCommit>,
+    Json(req): Json<SyncLogTransient>,
 ) -> KResponse<()> {
     state.sync_insert_sync_log_rx(req).await.into()
 }

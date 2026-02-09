@@ -1,5 +1,5 @@
 use anyhow::Context;
-use chin_sql::{OnConflict, SqlBuilder, Wheres, str_type::Varchar, time_type::TID};
+use chin_sql::{OnConflict, SqlBuilder, SqlReader, Wheres, str_type::Varchar, time_type::TID};
 use chin_tools::{AResult, EResult};
 use itertools::Itertools;
 use log::{debug, info};
@@ -7,11 +7,11 @@ use log::{debug, info};
 use crate::{
     krate::sync::{
         dto::{
-            SyncDataDto, SyncDataOperation, SyncInfo, SyncOtidTIDListRsp, SyncPageInfo,
+            SyncDataDto, SyncDataOperation, SyncInfo, SyncOtidTIDListRsp, SyncPageDto,
             SyncTIDListArg, SyncTIDListPage,
         },
         mapper::{Dumper, SyncMapper},
-        po::SyncLogTransientCommit,
+        po::SyncLogTransient,
     },
     mapper::db::{
         KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -26,9 +26,6 @@ use super::po::{RecordState, TidCompare};
 const C_TID: &str = "tid";
 const C_LSTATE: &str = "lstate";
 const C_RSTATE: &str = "rstate";
-const C_STATE_CUR: i32 = 1;
-const C_STATE_HIST: i32 = 2;
-const C_STATE_ABSENT: i32 = 0;
 const C_MIN_SYNC: &str = "min_sync";
 
 impl Dumper for KDb {
@@ -65,14 +62,14 @@ impl Dumper for KDb {
 impl SyncMapper for KDb {
     async fn ensure_sync_table(&self) -> EResult {
         print_ddls(
-            Ddls::new().with_ddl(SyncLogTransientCommit::create_sql().to_owned_sql()),
+            Ddls::new().with_ddl(SyncLogTransient::create_sql().to_owned_sql()),
             self,
         )
         .await?;
         Ok(())
     }
 
-    async fn sync_log_transient_commit(&self, log: SyncLogTransientCommit) -> EResult {
+    async fn sync_log_transient_commit(&self, log: SyncLogTransient) -> EResult {
         self.conn().await?.exec(log.to_sql_inserter()).await?;
         Ok(())
     }
@@ -82,17 +79,17 @@ impl SyncMapper for KDb {
         table_name: Varchar<100>,
         remote_id: Varchar<100>,
     ) -> AResult<TID> {
-        let last_sync = SqlBuilder::read_all(SyncLogTransientCommit::TABLE)
+        let last_sync = SqlBuilder::read_all(SyncLogTransient::TABLE)
             .r#where(Wheres::and([
-                Wheres::equal(SyncLogTransientCommit::TABLE_NAME, table_name.clone()),
-                Wheres::equal(SyncLogTransientCommit::REMOTE_ID, remote_id),
+                Wheres::equal(SyncLogTransient::TABLE_NAME, table_name.clone()),
+                Wheres::equal(SyncLogTransient::REMOTE_ID, remote_id),
             ]))
             .seg("order by")
-            .seg(SyncLogTransientCommit::SYNC_FINISH_TID)
+            .seg(SyncLogTransient::SYNC_FINISH_TID)
             .seg("desc")
             .limit(1);
 
-        let sync: Option<SyncLogTransientCommit> = self
+        let sync: Option<SyncLogTransient> = self
             .conn()
             .await?
             .qry_opt(last_sync, |row| (&row).try_into())
@@ -105,25 +102,17 @@ impl SyncMapper for KDb {
         };
 
         let sql = SqlBuilder::read(
-            SyncLogTransientCommit::TABLE,
-            &[format!(
-                "min({}) as {C_MIN_SYNC}",
-                SyncLogTransientCommit::START_TID_EX
-            )
-            .as_str()],
+            SyncLogTransient::TABLE,
+            &[format!("min({}) as {C_MIN_SYNC}", SyncLogTransient::START_TID_EX).as_str()],
         )
         .r#where(Wheres::and([
-            Wheres::equal(SyncLogTransientCommit::TABLE_NAME, table_name.clone()),
+            Wheres::equal(SyncLogTransient::TABLE_NAME, table_name.clone()),
             Wheres::compare(
-                SyncLogTransientCommit::SYNC_FINISH_TID,
+                SyncLogTransient::SYNC_FINISH_TID,
                 ">",
                 sync_log.sync_finish_tid.as_num(),
             ),
-            Wheres::compare(
-                SyncLogTransientCommit::START_TID_EX,
-                "<",
-                sync_log.end_sync_in,
-            ),
+            Wheres::compare(SyncLogTransient::START_TID_EX, "<", sync_log.end_sync_in),
         ]));
 
         let s: Option<Option<TID>> = self
@@ -158,7 +147,7 @@ impl SyncMapper for KDb {
                 page_size,
             } => {
                 format!(
-                    "select {C_TID} from {table_name} where {C_TID} > {start_ex} and {C_TID} < {end_in} order by {C_TID} asc limit {page_size}"
+                    "select {C_TID} from {table_name} where {C_TID} > {start_ex} and {C_TID} <= {end_in} order by {C_TID} asc limit {page_size}"
                 )
             }
         };
@@ -171,21 +160,22 @@ impl SyncMapper for KDb {
         Ok(SyncOtidTIDListRsp { data })
     }
 
-    async fn sync_otid_merge_tids<T: OtidTableSupport>(
+    async fn sync_otid_build_tid_operations<T: OtidTableSupport>(
         &self,
         rsp: SyncOtidTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
+        if rsp.data.is_empty() {
+            return Ok(());
+        }
+
         let table_name = sync_info.to_table_name();
         let dtype = if hist {
             RecordState::Hist
         } else {
             RecordState::Cur
         };
-        if rsp.data.is_empty() {
-            return Ok(());
-        }
 
         let data = rsp
             .data
@@ -202,9 +192,9 @@ impl SyncMapper for KDb {
         Ok(())
     }
 
-    async fn sync_fetch_operations<T: OtidTableSupport>(
+    async fn sync_operation_list<T: OtidTableSupport>(
         &self,
-        sync_page: &SyncPageInfo<T>,
+        sync_page: &SyncPageDto<T>,
     ) -> AResult<SyncDataDto<T>> {
         let tids = self.sync_otid_fetch_tid_compares(sync_page).await?;
         let mut cmds = vec![];
@@ -212,8 +202,8 @@ impl SyncMapper for KDb {
 
         let nomore = tids.len() < sync_page.page_size;
 
-        let mut hist_pos = vec![];
         let mut cur_tids = vec![];
+        let mut hist_tids = vec![];
         let mut to_omit_tids = vec![];
 
         for tc in tids.iter() {
@@ -231,7 +221,7 @@ impl SyncMapper for KDb {
             } else if matches!(l, RecordState::Cur) && matches!(r, RecordState::Absent) {
                 cur_tids.push(tid);
             } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Absent) {
-                hist_pos.push(tid);
+                hist_tids.push(tid);
             } else if matches!(l, RecordState::Cur) && matches!(r, RecordState::Hist) {
                 to_omit_tids.push(tid);
             } else if matches!(l, RecordState::Hist) && matches!(r, RecordState::Cur) {
@@ -243,7 +233,7 @@ impl SyncMapper for KDb {
             data: e,
             hist: false,
         }));
-        let rec = self.sync_otid_fetch_records(true, hist_pos).await?;
+        let rec = self.sync_otid_fetch_records(true, hist_tids).await?;
         cmds.extend(rec.into_iter().map(|e| SyncDataOperation::Push {
             data: e,
             hist: true,
@@ -271,35 +261,62 @@ impl SyncMapper for KDb {
             nomore: _,
         } = req;
         let mut rsp_cmds = vec![];
+        let mut to_omit_tids = vec![];
+        let mut pull_hist_pos = vec![];
+        let mut pull_cur_tids = vec![];
         for ele in cmds {
             match ele {
                 SyncDataOperation::Omit(tid) => {
-                    self.conn()
-                        .await?
-                        .as_executor()
-                        .omit_rows::<T>(Wheres::equal(C_TID, tid))
-                        .await?;
+                    to_omit_tids.push(tid);
                 }
-                SyncDataOperation::Pull { tid, hist } => {
-                    let c = self
-                        .conn()
-                        .await?
-                        .qry_opt(
-                            format!(
-                                "select * from {} where {C_TID} = {tid}",
-                                T::table_name(hist)
-                            ),
-                            move |c| T::try_from_kdb_row(&c),
-                        )
-                        .await?;
-                    if let Some(data) = c {
-                        rsp_cmds.push(SyncDataOperation::Push { data, hist });
-                    }
-                }
+                SyncDataOperation::Pull { tid, hist } => match hist {
+                    true => pull_hist_pos.push(tid),
+                    false => pull_cur_tids.push(tid),
+                },
                 SyncDataOperation::Push { data, hist } => {
                     self.sync_merge_one_record(data, hist).await?;
                 }
             }
+        }
+
+        if to_omit_tids.len() > 0 {
+            self.conn()
+                .await?
+                .as_executor()
+                .omit_rows::<T>(Wheres::r#in(C_TID, to_omit_tids))
+                .await?;
+        }
+
+        if pull_hist_pos.len() > 0 {
+            let c = self
+                .conn()
+                .await?
+                .qry_list(
+                    SqlBuilder::read_all(T::table_name(true))
+                        .r#where(Wheres::r#in(C_TID, pull_hist_pos)),
+                    move |c| T::try_from_kdb_row(&c),
+                )
+                .await?;
+            rsp_cmds.extend(
+                c.into_iter()
+                    .map(|data| SyncDataOperation::Push { data, hist: true }),
+            );
+        }
+
+        if pull_cur_tids.len() > 0 {
+            let c = self
+                .conn()
+                .await?
+                .qry_list(
+                    SqlBuilder::read_all(T::table_name(false))
+                        .r#where(Wheres::r#in(C_TID, pull_cur_tids)),
+                    move |c| T::try_from_kdb_row(&c),
+                )
+                .await?;
+            rsp_cmds.extend(
+                c.into_iter()
+                    .map(|data| SyncDataOperation::Push { data, hist: false }),
+            );
         }
 
         Ok(SyncDataDto {
@@ -367,16 +384,16 @@ impl SyncMapper for KDb {
     }
 }
 
-impl TryFrom<&KDbRow> for SyncLogTransientCommit {
+impl TryFrom<&KDbRow> for SyncLogTransient {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
-        let sl = SyncLogTransientCommit {
-            remote_id: value.try_get(SyncLogTransientCommit::REMOTE_ID)?,
-            table_name: value.try_get(SyncLogTransientCommit::TABLE_NAME)?,
-            end_sync_in: value.try_get(SyncLogTransientCommit::END_SYNC_IN)?,
-            start_tid_ex: value.try_get(SyncLogTransientCommit::START_TID_EX)?,
-            sync_finish_tid: value.try_get(SyncLogTransientCommit::SYNC_FINISH_TID)?,
+        let sl = SyncLogTransient {
+            remote_id: value.try_get(SyncLogTransient::REMOTE_ID)?,
+            table_name: value.try_get(SyncLogTransient::TABLE_NAME)?,
+            end_sync_in: value.try_get(SyncLogTransient::END_SYNC_IN)?,
+            start_tid_ex: value.try_get(SyncLogTransient::START_TID_EX)?,
+            sync_finish_tid: value.try_get(SyncLogTransient::SYNC_FINISH_TID)?,
         };
 
         Ok(sl)
@@ -386,24 +403,13 @@ impl TryFrom<&KDbRow> for SyncLogTransientCommit {
 impl KDb {
     async fn sync_otid_fetch_tid_compares<T: OtidTableSupport>(
         &self,
-        sync_page: &SyncPageInfo<T>,
+        sync_page: &SyncPageDto<T>,
     ) -> AResult<Vec<TidCompare>> {
         let tn = sync_page.to_table_name();
         let reader = SqlBuilder::read_all(&tn)
             .r#where(Wheres::and([
                 Wheres::compare(C_TID, ">", sync_page.start_ex),
                 Wheres::compare_str(C_LSTATE, "<>", C_RSTATE),
-                match sync_page.sync_step {
-                    super::dto::SyncSingleStep::Omit => Wheres::and([
-                        Wheres::compare_str(C_LSTATE, "<>", C_RSTATE),
-                        Wheres::r#in(C_LSTATE, [&C_STATE_CUR, &C_STATE_HIST].to_vec()),
-                        Wheres::r#in(C_RSTATE, [&C_STATE_CUR, &C_STATE_HIST].to_vec()),
-                    ]),
-                    super::dto::SyncSingleStep::Data => Wheres::or([
-                        Wheres::equal(C_LSTATE, C_STATE_ABSENT),
-                        Wheres::equal(C_RSTATE, C_STATE_ABSENT),
-                    ]),
-                },
             ]))
             .seg("order by tid asc")
             .limit(sync_page.page_size);
@@ -415,12 +421,12 @@ impl KDb {
                 Ok(TidCompare {
                     tid: r.try_get(C_TID)?,
                     lstate: {
-                        let c: i64 = r.try_get(C_LSTATE)?;
+                        let c: i32 = r.try_get(C_LSTATE)?;
                         let c: i32 = c.clamp(0, 100).try_into()?;
                         c.try_into()?
                     },
                     rstate: {
-                        let c: i64 = r.try_get(C_RSTATE)?;
+                        let c: i32 = r.try_get(C_RSTATE)?;
                         let c: i32 = c.clamp(0, 100).try_into()?;
                         c.try_into()?
                     },
@@ -435,6 +441,9 @@ impl KDb {
         hist: bool,
         tids: Vec<TID>,
     ) -> AResult<Vec<T>> {
+        if tids.is_empty() {
+            return Ok(vec![]);
+        }
         let res = self
             .conn()
             .await?

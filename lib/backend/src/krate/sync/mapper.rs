@@ -7,10 +7,10 @@ use crate::{
         kkv::{KKVTransient, mapper::KKVMapper},
         sync::{
             dto::{
-                SyncDataDto, SyncEndpointCommitRsp, SyncInfo, SyncOtidTIDListRsp, SyncPageInfo,
+                SyncDataDto, SyncEndpointCommitRsp, SyncInfo, SyncOtidTIDListRsp, SyncPageDto,
                 SyncTIDListArg, SyncTIDListPage,
             },
-            po::{SyncAllEndpoints, SyncLogTransientCommit},
+            po::{SyncAllEndpoints, SyncLogTransient},
         },
     },
     magics::ALL_ENDPOINTS_KEY,
@@ -37,7 +37,7 @@ impl Dumper for MapperType {
 
 pub trait SyncMapper {
     async fn ensure_sync_table(&self) -> EResult;
-    async fn sync_log_transient_commit(&self, log: SyncLogTransientCommit) -> EResult;
+    async fn sync_log_transient_commit(&self, log: SyncLogTransient) -> EResult;
     async fn sync_get_sync_time(
         &self,
         table_name: Varchar<100>,
@@ -47,15 +47,15 @@ pub trait SyncMapper {
         &self,
         req: SyncTIDListArg<T>,
     ) -> AResult<SyncOtidTIDListRsp>;
-    async fn sync_otid_merge_tids<T: OtidTableSupport>(
+    async fn sync_otid_build_tid_operations<T: OtidTableSupport>(
         &self,
         data: SyncOtidTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult;
-    async fn sync_fetch_operations<T: OtidTableSupport>(
+    async fn sync_operation_list<T: OtidTableSupport>(
         &self,
-        sync_info: &SyncPageInfo<T>,
+        sync_info: &SyncPageDto<T>,
     ) -> AResult<SyncDataDto<T>>;
     async fn sync_otid_merge_operations<T: OtidTableSupport>(
         &self,
@@ -84,7 +84,7 @@ impl SyncMapper for MapperType {
         expand_mt_branch!(self.ensure_sync_table())
     }
 
-    async fn sync_log_transient_commit(&self, log: SyncLogTransientCommit) -> EResult {
+    async fn sync_log_transient_commit(&self, log: SyncLogTransient) -> EResult {
         expand_mt_branch!(self.sync_log_transient_commit(log))
     }
 
@@ -103,20 +103,20 @@ impl SyncMapper for MapperType {
         expand_mt_branch!(self.sync_otid_tid_list(req))
     }
 
-    async fn sync_otid_merge_tids<T: OtidTableSupport>(
+    async fn sync_otid_build_tid_operations<T: OtidTableSupport>(
         &self,
         data: SyncOtidTIDListRsp,
         hist: bool,
         sync_info: SyncInfo<T>,
     ) -> EResult {
-        expand_mt_branch!(self.sync_otid_merge_tids(data, hist, sync_info))
+        expand_mt_branch!(self.sync_otid_build_tid_operations(data, hist, sync_info))
     }
 
-    async fn sync_fetch_operations<T: OtidTableSupport>(
+    async fn sync_operation_list<T: OtidTableSupport>(
         &self,
-        sync_info: &SyncPageInfo<T>,
+        sync_info: &SyncPageDto<T>,
     ) -> AResult<SyncDataDto<T>> {
-        expand_mt_branch!(self.sync_fetch_operations(sync_info))
+        expand_mt_branch!(self.sync_operation_list(sync_info))
     }
 
     async fn sync_otid_merge_operations<T: OtidTableSupport>(

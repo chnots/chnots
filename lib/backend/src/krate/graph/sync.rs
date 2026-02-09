@@ -20,7 +20,7 @@ struct GraphDataSyncWorker {
     app: ShareAppState,
 }
 impl OtidRelatedWorker<GraphMeta> for GraphDataSyncWorker {
-    async fn before_send(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<GraphMeta>) -> EResult {
+    async fn before_push(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<GraphMeta>) -> EResult {
         let mut metas: Vec<Varchar<100>> = vec![];
         for ele in &arg.cmds {
             if let crate::krate::sync::dto::SyncDataOperation::Push { data, hist: _ } = ele {
@@ -41,7 +41,7 @@ impl OtidRelatedWorker<GraphMeta> for GraphDataSyncWorker {
         Ok(())
     }
 
-    async fn before_merge(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<GraphMeta>) -> EResult {
+    async fn before_pull(&self, endpoint: &SyncEndpoint, arg: &SyncDataDto<GraphMeta>) -> EResult {
         let mut metas: Vec<Varchar<100>> = vec![];
         for ele in &arg.cmds {
             if let crate::krate::sync::dto::SyncDataOperation::Push { data, hist: _ } = ele {

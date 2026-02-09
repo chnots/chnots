@@ -6,7 +6,7 @@ use chin_tools::EResult;
 use crate::{
     app::ShareAppState,
     krate::{
-        chnot::ChnotThreadMeta,
+        chnot::{ChnotMeta, ChnotThreadMeta, ChnotThreadOrder},
         sync::{filedumper::StartType, po::SyncEndpoint},
     },
 };
@@ -24,6 +24,9 @@ impl ShareAppState {
 
     pub async fn sync_chnots(&self, endpoint: &SyncEndpoint) -> EResult {
         self.sync_one_otid_table_only::<ChnotThreadMeta>(endpoint)
+            .await?;
+        self.sync_one_otid_table_only::<ChnotMeta>(endpoint).await?;
+        self.sync_one_otid_table_only::<ChnotThreadOrder>(endpoint)
             .await?;
         Ok(())
     }
