@@ -95,7 +95,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         .filter((e) => e.saved);
       if (
         !arraysAreEqual(
-          chnotOrders.filter((e) => e.type === OrderType.Manual),
+          toSaveChnotOrderOtids,
           savedChnotOrdersRef.current,
           (v1, v2) => {
             return (

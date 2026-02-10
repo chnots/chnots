@@ -27,6 +27,7 @@ import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import type { ChnotKind } from "../po";
 import { ChnotKindIcon } from "./kind-icon";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -88,9 +89,10 @@ const ChnotSidebarItem = React.forwardRef(
   ) => {
     const { isMobile } = useSidebar();
 
-    const title = item.title?.startsWith("# ")
-      ? item.title.split("\n")[0].substring(2)
-      : (item.title?.substring(0, 500) ?? "<unknown>");
+    let title = item.title?.replace(GEN_TITLE, "");
+    title = title?.startsWith("# ")
+      ? title.split("\n")[0].substring(2)
+      : (title?.substring(0, 500) ?? "<unknown>");
 
     return (
       <SidebarMenuItem key={item.meta.otid}>

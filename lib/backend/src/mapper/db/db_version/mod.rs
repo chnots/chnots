@@ -204,6 +204,7 @@ struct MigrationSqls;
 #[test]
 fn print_ddls() {
     for db_type in [DbType::Postgres, DbType::Sqlite] {
+        use crate::mapper::db::HistCreateSql;
         let ddls = Ddls::new()
             .with_ddls(crate::krate::kspace::KSpace::ddls())
             .with_ddls(crate::krate::graph::GraphMeta::ddls())

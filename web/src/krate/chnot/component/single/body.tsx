@@ -19,6 +19,7 @@ import RichMdwt from "../rich-chnot/rich-mdwt";
 import TableChnot from "../rich-chnot/table";
 import MindMapChnot from "../rich-chnot/mindmap";
 import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
 
 const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -52,10 +53,14 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         kspace: kspace,
         tid: genTID(),
       };
-      let title = "";
-      if (arg.title !== titleRef.current) {
-        title = arg.title ?? "";
-        titleRef.current = title;
+      let title ;
+      if (
+        arg.title &&
+        arg.title.length > 0 &&
+        arg.title !== titleRef.current &&
+        (!titleRef.current || titleRef.current.startsWith(GEN_TITLE))
+      ) {
+        title = GEN_TITLE + arg.title;
         if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
@@ -66,8 +71,9 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         }
         overwrite({
           meta: meta,
-          title: titleRef.current ?? undefined,
+          title: title,
         });
+        titleRef.current = title;
       }
       if (
         saveStateRef.current === SaveState.Initial &&
@@ -76,10 +82,6 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       ) {
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
-        overwrite({
-          meta: meta,
-          title: titleRef.current ?? undefined,
-        });
         setCurOtid(otid);
       }
     },

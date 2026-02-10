@@ -101,6 +101,7 @@ interface State<T extends StateChnotLike> {
 
   getMeta(otid: TID): T | undefined;
   overwrite(chnot: T): void;
+  overwritePart(otid: TID, chnot: Partial<T>): void;
   setCurOtid(cutOtid?: TID): void;
   unvalidate(toRemoves: TID[]): void;
 
@@ -180,6 +181,28 @@ export const createChnotStore = <T extends StateChnotLike>(
             hasMore: cmm.hasMore,
           },
         };
+      });
+    },
+
+    overwritePart: (otid: TID, chnot: Partial<T>) => {
+      set((state) => {
+        const cmm = state.mapByOtid;
+        const dbCache = cmm.cache;
+        const meta = dbCache.get(otid);
+        if (meta) {
+          dbCache.set(otid, { ...meta, ...chnot });
+          return {
+            ...state,
+            mapByOtid: {
+              cache: dbCache,
+              nextStartIn: cmm.nextStartIn + 1,
+              pageSize: cmm.pageSize,
+              hasMore: cmm.hasMore,
+            },
+          };
+        } else {
+          return state;
+        }
       });
     },
 

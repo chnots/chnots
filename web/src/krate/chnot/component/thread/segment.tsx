@@ -17,10 +17,13 @@ import TableChnot from "../rich-chnot/table";
 import { Agent } from "http";
 import { chnotShortDate } from "@/lib/date-utils";
 import ReadableTID from "@/common/component/chnot-read-tid";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
+import MdwtChnot from "../rich-chnot/mdwt";
 
 const SortableRichChnot = ({
   otid,
   index,
+  content,
   closed: initialClosed,
   onPostSave,
   onAddBlock: handleAddBlock,
@@ -65,25 +68,36 @@ const SortableRichChnot = ({
   }, [onToggleClosed, closed, index]);
 
   const handlePostSave = useCallback(
-    async (arg: PostSaveArg) => {
+    async (arg: PostSaveArg, manualSaveTitle?: boolean) => {
       const meta = {
         otid: arg.otid,
         kind: arg.kind,
         kspace: kspace,
         tid: genTID(),
       };
-      let title = "";
-      if (arg.title !== titleRef.current) {
-        title = arg.title ?? "";
-        titleRef.current = title;
+      if (manualSaveTitle && arg.title) {
+        await mdwtCommit({
+          mdwt: {
+            otid: arg.otid,
+            content: arg.title,
+          },
+        });
+      } else if (
+        arg.title &&
+        arg.title.length > 0 &&
+        arg.title !== titleRef.current &&
+        (!titleRef.current || titleRef.current.startsWith(GEN_TITLE))
+      ) {
+        const title = GEN_TITLE + arg.title;
         if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
-              otid: otid,
+              otid: arg.otid,
               content: title,
             },
           });
         }
+        titleRef.current = title;
       }
       if (
         saveStateRef.current === SaveState.Initial &&
@@ -100,7 +114,6 @@ const SortableRichChnot = ({
   );
 
   const props = useMemo(() => {
-    console.log("props changed");
     return {
       otid: otid,
       readonly: true,
@@ -110,6 +123,8 @@ const SortableRichChnot = ({
       showEditWhenEmpty: true,
     };
   }, [fullscreen, otid]);
+
+  const savePh = useCallback(() => {}, []);
 
   return (
     <div
@@ -209,6 +224,18 @@ const SortableRichChnot = ({
           <Icon.Plus className="w-4 h-4" />
         </button>
       </div>
+      {kind !== ChnotKind.MDWT && (
+        <div className="w-full ml-4">
+          <MdwtChnot
+            otid={props.otid}
+            fullscreen={false}
+            onPostSave={(arg) => {
+              handlePostSave({ ...arg, kind: kind }, true);
+            }}
+            content={content.replace(GEN_TITLE, "")}
+          />
+        </div>
+      )}
       {closed || (
         <div className="w-full ml-4">
           <RichChnotMemo props={props} kind={kind} />
