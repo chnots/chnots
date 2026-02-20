@@ -6,25 +6,17 @@ import type {
   ChnotMetaListReq,
   ChnotMetaListRsp,
   ChnotSearchReq,
-  ChnotSearchRspSingle,
-  ChnotThreadMetaCommitReq,
-  ChnotThreadMetaCommitRsp,
+  ChnotSearchRspData,
   ChnotThreadMetaFetchReq,
   ChnotThreadMetaFetchRsp,
   ChnotThreadOrderCommitReq,
   ChnotThreadOrderCommitRsp,
 } from "./dto";
 
-export const chnotThreadSearch = async (
+export const chnotSearch = async (
   req: ChnotSearchReq,
-): Promise<PageRsp<ChnotSearchRspSingle>> => {
-  return await request.postJson(`api/v1/chnot-thread-search`, req);
-};
-
-export const chnotSingleSearch = async (
-  req: ChnotSearchReq,
-): Promise<PageRsp<ChnotSearchRspSingle>> => {
-  return await request.postJson(`api/v1/chnot-single-search`, req);
+): Promise<PageRsp<ChnotSearchRspData>> => {
+  return await request.postJson(`api/v1/chnot-search`, req);
 };
 
 export async function chnotMetaCommit(
@@ -39,7 +31,6 @@ export async function chnotMetaList(
   if (req.otids.length === 0) {
     return { metas: [] };
   }
-
   return await request.postJson(`api/v1/chnot-meta-list`, req);
 }
 
@@ -53,10 +44,4 @@ export const chnotThreadMetaFetch = async (
   req: ChnotThreadMetaFetchReq,
 ): Promise<ChnotThreadMetaFetchRsp> => {
   return await request.postJson(`api/v1/chnot-thread-meta-fetch`, req);
-};
-
-export const chnotThreadMetaOverwrite = async (
-  req: ChnotThreadMetaCommitReq,
-): Promise<ChnotThreadMetaCommitRsp> => {
-  return await request.postJson(`api/v1/chnot-thread-meta-commit`, req);
 };

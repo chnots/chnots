@@ -18,6 +18,8 @@ export const ChnotKindIcon = ({
     <Icon.Bot {...rest} />
   ) : kind === ChnotKind.MindMapV1 ? (
     <Icon.Brain {...rest} />
+  ) : kind === ChnotKind.ThreadV1 ? (
+    <Icon.LineSquiggle {...rest} />
   ) : (
     <Icon.TextCursor {...rest} />
   );

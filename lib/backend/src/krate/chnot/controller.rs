@@ -11,10 +11,6 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         .route("/api/v1/chnot-meta-commit", post(chnot_meta_commit))
         .route("/api/v1/chnot-meta-list", post(chnot_meta_list))
         .route(
-            "/api/v1/chnot-thread-meta-commit",
-            post(chnot_thread_meta_commit),
-        )
-        .route(
             "/api/v1/chnot-thread-meta-fetch",
             post(chnot_thread_meta_fetch),
         )
@@ -22,8 +18,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/chnot-thread-order-commit",
             post(chnot_thread_order_commit),
         )
-        .route("/api/v1/chnot-thread-search", post(chnot_thread_search))
-        .route("/api/v1/chnot-single-search", post(chnot_single_search))
+        .route("/api/v1/chnot-search", post(chnot_search))
 }
 
 async fn chnot_thread_order_commit(
@@ -53,31 +48,12 @@ async fn chnot_meta_list(
     state.chnot_meta_list(kreq(headers, req)).await.into()
 }
 
-async fn chnot_thread_meta_commit(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<ChnotThreadMetaCommitReq>,
-) -> KResponse<ChnotThreadMetaCommitRsp> {
-    state
-        .chnot_thread_meta_commit(kreq(headers, req))
-        .await
-        .into()
-}
-
-async fn chnot_thread_search(
+async fn chnot_search(
     headers: HeaderMap,
     state: State<ShareAppState>,
     Json(req): Json<ChnotSearchReq>,
-) -> KResponse<PageRsp<ChnotSearchRspThread>> {
-    state.chnot_thread_search(kreq(headers, req)).await.into()
-}
-
-async fn chnot_single_search(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<ChnotSearchReq>,
-) -> KResponse<PageRsp<ChnotSearchRspSingle>> {
-    state.chnot_single_search(kreq(headers, req)).await.into()
+) -> KResponse<PageRsp<ChnotSearchRspData>> {
+    state.chnot_search(kreq(headers, req)).await.into()
 }
 
 async fn chnot_thread_meta_fetch(

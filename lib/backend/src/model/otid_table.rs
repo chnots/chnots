@@ -16,7 +16,6 @@ use crate::{
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Sequence)]
 pub enum OtidTableEnum {
     MdwtRecord,
-    ChnotThreadMeta,
     ChnotThreadOrder,
     MdwtTag,
     ChnotMeta,
@@ -42,7 +41,6 @@ macro_rules! otid_enum_to_generic {
         use $crate::model::otid_table::OtidTableEnum;
         match $table_type {
             OtidTableEnum::MdwtRecord => $invoke! {$crate::krate::mdwt::MdwtRecord},
-            OtidTableEnum::ChnotThreadMeta => $invoke! {$crate::krate::chnot::ChnotThreadMeta},
             OtidTableEnum::MdwtTag => $invoke! {$crate::krate::mdwt::MdwtTag},
             OtidTableEnum::LLMChatBot => $invoke! {$crate::krate::llmchat::LLMChatBot},
             OtidTableEnum::LLMChatRecord => $invoke! {$crate::krate::llmchat::LLMChatRecord},

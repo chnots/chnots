@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use super::*;
-use crate::krate::chnot::ChnotThreadMeta;
 use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
 use crate::krate::toent::logic::EventBuilder;
@@ -15,9 +14,7 @@ use crate::model::dto::KReq;
 use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::{
-    ChinSqlError, GroupBy, Having, SqlBuilder, SqlReader, SqlTable, SqlTypedField, SubQueryTable,
-};
+use chin_sql::{ChinSqlError, GroupBy, Having, SqlBuilder, SqlReader, SqlTypedField};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
@@ -170,7 +167,7 @@ impl<'a> MdwtOtidInTags<'a> {
         &'a self,
         tags: Option<MdwtTagSearchType>,
         kspaces: Vec<Varchar<40>>,
-    ) -> Option<SubQueryTable<'a>> {
+    ) -> Option<SqlReader<'a>> {
         let tags = tags.map(|s| match s {
             MdwtTagSearchType::Inset(items) => items,
         })?;
@@ -180,26 +177,22 @@ impl<'a> MdwtOtidInTags<'a> {
             return None;
         };
 
-        let reader = SqlReader::builder(
-            [self.mdwt_otid().erased()],
-            chin_sql::Froms::Table {
-                table_name: self.mt.table(),
-                alias: self.mt.alias(),
-            },
-        )
-        .wheres(Wheres::and([
-            self.mt.kspace().v_in(kspaces),
-            self.mt
-                .tag()
-                .v_in(tags.iter().map(Varchar::limit).collect()),
-        ]))
-        .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
-        .having(Having::Custom(
-            format!("COUNT(DISTINCT {}) = {}", MdwtTag::TAG, len).into(),
-        ))
-        .build();
+        let reader = SqlReader::read(self.mdwt_otid(), &self.mt)
+            .wheres(Wheres::and([
+                self.mt.kspace().v_in(kspaces),
+                self.mt.tag().v_in(
+                    tags.iter()
+                        .map(Varchar::<800>::limit)
+                        .collect::<Vec<Varchar<800>>>(),
+                ),
+            ]))
+            .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
+            .having(Having::Custom(
+                format!("COUNT(DISTINCT {}) = {}", MdwtTag::TAG, len).into(),
+            ))
+            .build();
 
-        Some(SubQueryTable { reader })
+        Some(reader.into())
     }
 }
 
@@ -228,7 +221,7 @@ impl KDb {
                 |sqt, this| {
                     let f1 = otids.mdwt_otid().twn().to_string();
                     this.seg("right join")
-                        .merge(sqt.reader)
+                        .merge(&sqt)
                         .seg("on")
                         .seg(f1)
                         .seg("=")
@@ -300,17 +293,7 @@ impl MdwtMapper for KDb {
     }
 
     async fn mdwt_tag_refresh(&self, kspace: Varchar<40>) -> EResult {
-        let get_all = SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT, MdwtRecord::OTID])
-            .r#where(Wheres::and([Wheres::compare_str(
-                MdwtRecord::OTID,
-                "in",
-                format!(
-                    "(select {} from {} where kspace = '{}')",
-                    ChnotThreadMeta::OTID,
-                    ChnotThreadMeta::TABLE,
-                    kspace.as_str().replace("'", "<quote>")
-                ),
-            )]));
+        let get_all = SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT, MdwtRecord::OTID]);
 
         let kspace = kspace.to_owned();
         let mut conn = self.conn().await?;

@@ -8,13 +8,11 @@ import ErrorPage from "@/common/pages/error-page";
 import SettingsPage from "@/common/pages/settings-page";
 import ToentPage from "@/common/pages/toent-page";
 import ChnotPage from "@/krate/chnot/page/chnot-page";
-import { ChnotViewType } from "./krate/chnot/store";
 import FullScreenTimer from "./krate/timer/timer";
 
 export enum RoutePaths {
   ROOT = "/",
   Chnots = "/chnots",
-  ChnotThread = "/chnot-thread",
   Toents = "/toents",
   LLMChat = "/llmchat",
   Settings = "/settings",
@@ -40,14 +38,6 @@ const routes: RouteObject[] = [
         element: <Navigate to={RoutePaths.Chnots} replace />,
       },
       {
-        path: RoutePaths.Chnots,
-        element: <ChnotPage viewType={ChnotViewType.Single} />,
-      },
-      {
-        path: RoutePaths.ChnotThread,
-        element: <ChnotPage viewType={ChnotViewType.Thread} />,
-      },
-      {
         path: RoutePaths.Toents,
         element: <ToentPage />,
       },
@@ -58,6 +48,10 @@ const routes: RouteObject[] = [
       {
         path: RoutePaths.Timer,
         element: <FullScreenTimer />,
+      },
+      {
+        path: RoutePaths.Chnots,
+        element: <ChnotPage />,
       },
       /*       {
         path: RoutePaths.Pad,

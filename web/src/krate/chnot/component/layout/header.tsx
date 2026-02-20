@@ -4,7 +4,7 @@ import { SidebarTrigger } from "@/common/component/ui/sidebar";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import { ChnotKind } from "../../po";
-import { useChnotSingleStore } from "../../store";
+import { useChnotStore } from "../../store";
 import { ChnotKindIcon } from "../kind-icon";
 import { useRef } from "react";
 import { mdwtCommit } from "@/krate/mdwt/service";
@@ -15,7 +15,7 @@ import {
 } from "@/common/component/ui/popover";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 
-const ChnotSingleHeadbar = ({
+const ChnotHeadbar = ({
   otid,
   onNew,
   setKind,
@@ -26,7 +26,7 @@ const ChnotSingleHeadbar = ({
   setKind: (kind: ChnotKind) => void;
   className?: string;
 }) => {
-  const { getMeta, overwritePart } = useChnotSingleStore((s) => {
+  const { getMeta, overwritePart } = useChnotStore((s) => {
     return {
       getMeta: s.getMeta,
       overwritePart: s.overwritePart,
@@ -100,4 +100,4 @@ const ChnotSingleHeadbar = ({
   );
 };
 
-export default ChnotSingleHeadbar;
+export default ChnotHeadbar;

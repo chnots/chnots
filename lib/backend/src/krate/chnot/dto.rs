@@ -6,28 +6,9 @@ use crate::krate::mdwt::MdwtTagSearchType;
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotSearchRspThread {
-    pub meta: ChnotThreadMeta,
-    pub title: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotSearchRspSingle {
+pub struct ChnotSearchRspData {
     pub title: Option<String>,
     pub meta: ChnotMeta,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadMetaCommitReq {
-    pub meta_otid: TID,
-    pub kspace: Option<Varchar<40>>,
-    pub pinned: Option<bool>,
-    pub archive: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChnotThreadMetaCommitRsp {
-    pub meta: ChnotThreadMeta,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,16 +62,27 @@ pub struct ChnotSearchReq {
     pub tags: Option<MdwtTagSearchType>,
     pub kinds: Vec<ChnotKind>,
 
-    pub with_archive: Option<bool>,
+    with_archive: Option<bool>,
+    hide_thread: Option<bool>,
 
     // Paging
     pub start_index: usize,
     pub page_size: usize,
 }
 
+impl ChnotSearchReq {
+    pub fn with_archive(&self) -> bool {
+        self.with_archive.unwrap_or(false)
+    }
+
+    pub fn hide_thread(&self) -> bool {
+        self.hide_thread.unwrap_or(true)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchReq {
-    pub thread_otid: TID,
+    pub otid: TID,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,6 +93,5 @@ pub struct ChnotThreadMetaFetchRspData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchRsp {
-    pub thread_meta: Option<ChnotThreadMeta>,
     pub chnot_meta_sorted: Vec<ChnotThreadMetaFetchRspData>,
 }

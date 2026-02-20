@@ -9,10 +9,10 @@ import {
 } from "@/common/component/ui/command";
 
 import type { TID } from "@/lib/id_util";
-import type { ChnotSearchReq, ChnotSearchRspSingle } from "../../dto";
-import { chnotSingleSearch } from "../../service";
+import type { ChnotSearchReq, ChnotSearchRspData } from "../../dto";
 import { ChnotKindIcon } from "../kind-icon";
 import type { ChnotKind } from "../../po";
+import { chnotSearch } from "../../service";
 
 const MdwtChnotSelector = ({
   onSelect,
@@ -20,7 +20,7 @@ const MdwtChnotSelector = ({
   onSelect: (otid: TID, kind: ChnotKind) => void;
 }) => {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ChnotSearchRspSingle[]>([]);
+  const [results, setResults] = useState<ChnotSearchRspData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -35,12 +35,11 @@ const MdwtChnotSelector = ({
       const req: ChnotSearchReq = {
         query: searchQuery,
         kinds: [],
-        with_archive: false,
         start_index: 0,
         page_size: 20,
       };
 
-      const response = await chnotSingleSearch(req);
+      const response = await chnotSearch(req);
       console.log("data: ", response.data);
       setResults(response.data);
     } catch (error) {

@@ -23,7 +23,7 @@ import {
   todoHighlightPlugin,
 } from "./codemirror/mdwt-extension";
 import { createCodemirrorTheme } from "./codemirror/theme";
-import { chnotSingleSearch } from "@/krate/chnot/service";
+import { chnotSearch } from "@/krate/chnot/service";
 import { toentTodoEventGuess } from "@/krate/toent/service";
 import { chnotTagNameList } from "../service";
 
@@ -121,7 +121,7 @@ const chnotCompletions = async (
   } else if (word.text.startsWith("[[")) {
     // [{ label: `[[backlink-ph]]`, type: "backlink" }]
     options = (
-      await chnotSingleSearch({
+      await chnotSearch({
         query: word.text.substring(3),
         start_index: 0,
         page_size: 10,

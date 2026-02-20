@@ -13,31 +13,6 @@ use crate::mapper::Curd;
 use crate::mapper::db::KDbRow;
 use crate::mapper::db::KDbRowBehavier;
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub struct ChnotThreadMeta {
-    #[gts_primary]
-    #[gts_type = "i64"]
-    pub otid: TID,
-    pub kspace: Varchar<40>,
-    #[gts_type = "i64"]
-    pub pin_tid: Option<TID>,
-    #[gts_type = "i64"]
-    pub archive_tid: Option<TID>,
-    #[gts_unique]
-    #[gts_type = "i64"]
-    pub tid: TID,
-}
-
-impl Curd for ChnotThreadMeta {
-    fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.otid)
-    }
-    fn tid(&self) -> TID {
-        self.tid
-    }
-}
-impl_otid_support! {ChnotThreadMeta}
-
 #[derive(Debug, Clone, Sequence)]
 pub enum ChnotKind {
     MarkdownWithToent,
@@ -46,6 +21,7 @@ pub enum ChnotKind {
     KTabV1,
     LLMChat,
     MindMapV1,
+    ThreadV1,
 }
 
 impl ChnotKind {
@@ -57,6 +33,7 @@ impl ChnotKind {
             ChnotKind::KTabV1 => "ktabv1",
             ChnotKind::LLMChat => "llm_chat",
             ChnotKind::MindMapV1 => "mindmapv1",
+            ChnotKind::ThreadV1 => "threadv1",
         }
     }
 }

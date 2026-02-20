@@ -8,15 +8,8 @@ export enum ChnotKind {
   KTab = "ktabv1",
   LLMChat = "llm_chat",
   MindMapV1 = "mindmapv1",
+  ThreadV1 = "threadv1",
 }
-
-export type ChnotThreadMeta = {
-  otid: TID;
-  kspace: Varchar<40>;
-  pin_tid?: TID;
-  archive_tid?: TID;
-  tid: TID;
-};
 
 export type ChnotMeta = {
   otid: TID;

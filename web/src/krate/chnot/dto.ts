@@ -1,25 +1,12 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
 import type { TodoEvent } from "../toent/po";
-import type { ChnotKind, ChnotMeta, ChnotThreadMeta } from "./po";
+import type { ChnotKind, ChnotMeta } from "./po";
 
 export type MdwtTagSearchType = {
   Inset: string[];
 };
 
-export type ChnotSearchRspThread = {
-  meta: ChnotThreadMeta;
-  title?: string;
-};
-export type ChnotThreadMetaCommitReq = {
-  meta_otid: TID;
-  kspace?: Varchar<40>;
-  pinned?: boolean;
-  archive?: boolean;
-};
-export type ChnotThreadMetaCommitRsp = {
-  meta: ChnotThreadMeta;
-};
 export type MdwtCommitReqData = {
   otid: TID;
   content: DbText;
@@ -28,24 +15,17 @@ export type ChnotThreadOrderCommitReqData = {
   otid: TID;
   closed: boolean;
 };
-export type ChnotThreadArchiveReq = {
-  thread_otid: TID;
-  logic: boolean;
-};
-export type ChnotThreadArchiveRsp = object;
 export type ChnotSearchReq = {
   query?: string;
   tags?: MdwtTagSearchType;
   kinds: ChnotKind[];
-  with_archive?: boolean;
   start_index: number;
   page_size: number;
 };
 export type ChnotThreadMetaFetchReq = {
-  thread_otid: TID;
+  otid: TID;
 };
 export type ChnotThreadMetaFetchRsp = {
-  thread_meta?: ChnotThreadMeta;
   chnot_meta_sorted: ChnotThreadMetaFetchRspData[];
 };
 
@@ -80,12 +60,12 @@ export type ChnotMetaListRsp = {
   metas: ChnotMeta[];
 };
 
-export type ChnotSearchRspSingle = {
-  title?: string;
-  meta: ChnotMeta;
-};
-
 export type ChnotThreadMetaFetchRspData = {
   meta: ChnotMeta;
   closed: boolean;
+};
+
+export type ChnotSearchRspData = {
+  title?: string;
+  meta: ChnotMeta;
 };
