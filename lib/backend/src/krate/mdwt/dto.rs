@@ -41,6 +41,14 @@ pub enum MdwtTagSearchType {
     Inset(Vec<String>),
 }
 
+impl MdwtTagSearchType {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            MdwtTagSearchType::Inset(items) => items.is_empty(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MdwtTagListReq {
     pub query: Option<String>,

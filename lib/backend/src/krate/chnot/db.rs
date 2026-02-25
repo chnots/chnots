@@ -89,48 +89,6 @@ impl<'a> QueryContentTable<'a> {
     }
 }
 
-/// ```emacs-lisp
-/// (let ((ctm ChnotThreadMeta)
-///       (cto ChnotThreadOrder)
-///       (cm  ChnotMeta)
-///       (mr MdwtRecord)
-///       (lcr LLMChatRecord)
-///       (cotid (if with-thread cto.otid cm.otid)) ; chnot otid
-///       (kspace (if with-thread ctm.kspace cm.otid))
-///       )
-///   (select (if with-thread
-///               ())
-///           (from (if with-thread
-///                     (join ctm
-///                           (left-join cto (ctm.otid cto.thread_otid))
-///                           (when with-tag (inner-join mt (mt.otid cto.otid))))
-///                   (join cm
-///                         (when with-tag (inner-join mt (mt.otid cm.otid)))))
-///
-///
-///                 ;; query part
-///                 (when query
-///                   (inner-join
-///                    (union (select (content, chnot_otid)
-///                                   mr
-///                                   (where (ilike content query)))
-///                           (select (content, chnot_otid)
-///                                   lcr
-///                                   (where (ilike content query))))))
-///                 ;; used for the title
-///                 (left-join mr (cm.otid mr.otid)))
-///           (where
-///            (when with-thread
-///              (= cto.korder 0))
-///            (in kspace kspaces))
-///           (order
-///            (if with-thread
-///                ((desc ctm.pin_tid)
-///                 (desc ctm.otid)
-///                 (asc cto.korder))
-///              ((desc cm.pin_tid)
-///               (desc cm.otid))))))
-/// ``
 impl ChnotMapper for KDb {
     async fn ensure_table_chnot(&self) -> EResult {
         print_ddls(
@@ -340,87 +298,63 @@ impl ChnotMapper for KDb {
         let query_constraint = QueryContentTable::new("query");
         let mr = MdwtRecordTable::new("mr");
         let cto = ChnotThreadOrderTable::new("cto");
+        // search every chnot
+        let search_every_chnot = req.query.as_ref().is_some_and(|s| s.len() > 0)
+            || req.tags.as_ref().is_some_and(|s| !s.is_empty())
+            || !req.kinds.is_empty();
 
-        let (joins, where_clause) = if req.query.is_some() {
-            let joins = Joins::new((&cm).into())
-                .join_some(
-                    tag_constraint.sub_query_table(req.tags.clone(), req.get_spaces()),
-                    |v| JoinTable {
-                        join_type: JoinType::InnerJoin,
-                        table: Froms::SubQuery {
-                            table: v.into(),
-                            alias: &tag_constraint.alias,
-                        },
-                        conds: [(tag_constraint.mdwt_otid(), cm.otid()).into()].into(),
+        let joins = Joins::new((&cm).into())
+            .join_some(
+                tag_constraint.sub_query_table(req.tags.clone(), req.get_spaces()),
+                |v| JoinTable {
+                    join_type: JoinType::InnerJoin,
+                    table: Froms::SubQuery {
+                        table: v.into(),
+                        alias: &tag_constraint.alias,
                     },
-                )
-                .join_some(
-                    QueryContentTable::sub_query_table(req.query.as_deref()),
-                    |v| JoinTable {
-                        join_type: JoinType::InnerJoin,
-                        table: Froms::SubQuery {
-                            table: v.into(),
-                            alias: query_constraint.alias,
-                        },
-                        conds: [(query_constraint.chnot_otid(), cm.otid()).into()].into(),
+                    conds: [(tag_constraint.mdwt_otid(), cm.otid()).into()].into(),
+                },
+            )
+            .join_some(
+                QueryContentTable::sub_query_table(req.query.as_deref()),
+                |v| JoinTable {
+                    join_type: JoinType::InnerJoin,
+                    table: Froms::SubQuery {
+                        table: v.into(),
+                        alias: query_constraint.alias,
                     },
-                )
-                .join(JoinTable {
-                    join_type: JoinType::LeftJoin,
-                    table: (&mr).into(),
-                    conds: [(mr.otid(), cm.otid()).into()].into(),
-                });
-
-            let where_clause = Wheres::and([
-                cm.kspace().v_in(req.get_spaces()),
-                Wheres::transform(req.kinds.clone(), |kinds| {
-                    if !kinds.is_empty() {
-                        cm.kind().v_in(req.kinds.clone())
-                    } else {
-                        Wheres::None
-                    }
-                }),
-            ]);
-
-            (joins, where_clause)
-        } else {
-            let joins = Joins::new((&cm).into())
-                .join_some(
-                    tag_constraint.sub_query_table(req.tags.clone(), req.get_spaces()),
-                    |v| JoinTable {
-                        join_type: JoinType::InnerJoin,
-                        table: Froms::SubQuery {
-                            table: v.into(),
-                            alias: &tag_constraint.alias,
-                        },
-                        conds: [(tag_constraint.mdwt_otid(), cm.otid()).into()].into(),
-                    },
-                )
-                .join(JoinTable {
+                    conds: [(query_constraint.chnot_otid(), cm.otid()).into()].into(),
+                },
+            )
+            .join(JoinTable {
+                join_type: JoinType::LeftJoin,
+                table: (&mr).into(),
+                conds: [(mr.otid(), cm.otid()).into()].into(),
+            })
+            .join_if(
+                !search_every_chnot,
+                JoinTable {
                     join_type: JoinType::LeftJoin,
                     table: (&cto).into(),
                     conds: [(cto.otid(), cm.otid()).into()].into(),
-                })
-                .join(JoinTable {
-                    join_type: JoinType::LeftJoin,
-                    table: (&mr).into(),
-                    conds: [(mr.otid(), cm.otid()).into()].into(),
-                })
-                .into();
+                },
+            );
 
-            let where_clause = Wheres::and([
-                cm.kspace().v_in(req.get_spaces()),
-                Wheres::transform(req.kinds.clone(), |kinds| {
-                    if !kinds.is_empty() {
-                        cm.kind().v_in(req.kinds.clone())
-                    } else {
-                        Wheres::None
-                    }
-                }),
-            ]);
-
-            (joins, where_clause)
-        };
+        let where_clause = Wheres::and([
+            cm.kspace().v_in(req.get_spaces()),
+            Wheres::transform(req.kinds.clone(), |kinds| {
+                if !kinds.is_empty() {
+                    cm.kind().v_in(req.kinds.clone())
+                } else {
+                    Wheres::None
+                }
+            }),
+            if !search_every_chnot {
+                cto.otid().v_is_null()
+            } else {
+                Wheres::None
+            },
+        ]);
 
         let sr = SqlReader::read((cm.all_fields(), mr.content()), joins)
             .wheres(where_clause)
