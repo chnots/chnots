@@ -166,11 +166,14 @@ impl KDbExecutor<'_> {
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .ok_or_else(|| anyhow::anyhow!("Invalid filename: {:?}", file))?;
-                let suffix = match db_type {
+                let mut suffix = match db_type {
                     DbType::Sqlite => "-sqlite",
                     DbType::Postgres => "-postgres",
                 };
-                if !filename.ends_with(suffix) {
+
+                if filename.ends_with("-all") {
+                    suffix = "-all";
+                } else if !filename.ends_with(suffix) {
                     continue;
                 }
 
