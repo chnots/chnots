@@ -74,5 +74,4 @@ where
 pub struct MdwtTagUpdateReq {
     pub content: Text,
     pub mdwt_otid: TID,
-    pub kspace: Varchar<40>,
 }

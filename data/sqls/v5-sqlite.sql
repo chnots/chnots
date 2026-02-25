@@ -1,0 +1,1 @@
+ALTER TABLE mdwt_tag DROP COLUMN kspace;

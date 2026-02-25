@@ -24,3 +24,7 @@ export const chnotTagNameList = async (
 ): Promise<MdwtTagListRsp<string>> => {
   return await request.postJson(`api/v1/mdwt-tag-name-list`, req);
 };
+
+export const allMdwtTagRefresh = async (): Promise<void> => {
+  return await request.postJson(`api/v1/all-mdwt-tag-refresh`);
+};

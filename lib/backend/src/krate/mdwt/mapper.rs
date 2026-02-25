@@ -8,7 +8,7 @@ use super::*;
 pub trait MdwtMapper {
     async fn mdwt_commit(&self, req: KReq<MdwtCommitReq>) -> AResult<MdwtCommitRsp>;
 
-    async fn mdwt_tag_refresh(&self, kspace: Varchar<40>) -> EResult;
+    async fn mdwt_tag_refresh(&self) -> EResult;
     async fn mdwt_tag_list(&self, req: KReq<MdwtTagListReq>) -> AResult<MdwtTagListRsp<MdwtTag>>;
     async fn mdwt_tag_name_list(
         &self,
@@ -40,8 +40,8 @@ impl MdwtMapper for MapperType {
         expand_mt_branch!(self.mdwt_tag_name_list(req))
     }
 
-    async fn mdwt_tag_refresh(&self, kspace: Varchar<40>) -> EResult {
-        expand_mt_branch!(self.mdwt_tag_refresh(kspace))
+    async fn mdwt_tag_refresh(&self) -> EResult {
+        expand_mt_branch!(self.mdwt_tag_refresh())
     }
 
     async fn mdwt_list(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp> {

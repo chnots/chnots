@@ -50,7 +50,6 @@ pub struct MdwtTag {
     #[gts_primary]
     #[gts_type = "i64"]
     pub mdwt_otid: TID,
-    pub kspace: Varchar<40>,
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
