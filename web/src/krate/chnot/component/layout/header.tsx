@@ -26,14 +26,14 @@ const ChnotHeadbar = ({
   setKind: (kind: ChnotKind) => void;
   className?: string;
 }) => {
-  const { getMeta, overwritePart } = useChnotStore((s) => {
+  const { overwritePart, mapByOtid } = useChnotStore((s) => {
     return {
-      getMeta: s.getMeta,
       overwritePart: s.overwritePart,
+      mapByOtid: s.mapByOtid,
     };
   });
 
-  const meta = otid ? getMeta(otid) : undefined;
+  const meta = otid ? mapByOtid.cache.get(otid) : undefined;
   const titleRef = useRef<string>(meta?.title);
 
   return (

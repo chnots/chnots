@@ -139,7 +139,6 @@ export const unionFileSaved = async (
   }
 };
 export const saveExcalidraw = async (props: SaveExcalidrawProps) => {
-  console.log("begin to save excalidraw");
   const { state, onSuccess, onFail, savedFilesRef } = props;
 
   const { elements, appState, files } = state;

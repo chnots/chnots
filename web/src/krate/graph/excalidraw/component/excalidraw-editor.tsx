@@ -93,7 +93,6 @@ const ExcalidrawEditor = ({
         }
       }}
       onChange={(elements, appState, files) => {
-        console.log("on change");
         toSaveExcalidrawStateRef.current = {
           otid,
           elements: [...elements],

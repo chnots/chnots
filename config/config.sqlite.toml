@@ -3,7 +3,7 @@ type = "sqlite"
 filepath = "./transient/sqlite/chnots.db"
 
 [server]
-port = 3014
+port = 3012
 tls_key = "./transient/tls.key"
 tls_cert = "./transient/tls.crt"
 

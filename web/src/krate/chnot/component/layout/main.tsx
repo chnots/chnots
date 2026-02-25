@@ -7,10 +7,11 @@ import { ChnotBodyMemo } from "./body";
 import ChnotHeadbar from "./header";
 
 const ChnotSingleMain = ({ className }: { className?: string }) => {
-  const { getMeta, setChangeCompCurOtid } = useChnotStore((s) => {
+  const { getMeta, setChangeCompCurOtid, setCurOtid } = useChnotStore((s) => {
     return {
       getMeta: s.getMeta,
       setChangeCompCurOtid: s.setChangeCompCurOtid,
+      setCurOtid: s.setCurOtid,
     };
   });
 
@@ -27,7 +28,8 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
     } else {
       setKind(undefined);
     }
-  }, [otid, getMeta]);
+    setCurOtid(otid);
+  }, [otid]);
 
   return (
     <main className={cn("relative flex flex-col overflow-y-auto", className)}>

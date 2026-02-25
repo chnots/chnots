@@ -24,7 +24,6 @@ import { ChnotThreadMemo } from "../rich-chnot/thread";
 
 const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
-  const titleRef = useRef<string | null>(null);
 
   const { kspace } = useKSpaceStore((s) => {
     return {
@@ -41,7 +40,8 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   });
 
   useEffect(() => {
-    if (getMeta(otid)) {
+    const meta = getMeta(otid);
+    if (meta) {
       saveStateRef.current = SaveState.Saved;
     }
   }, [getMeta, otid]);
@@ -54,14 +54,16 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         kspace: kspace,
         tid: genTID(),
       };
-      let title: string | undefined;
+      const savedMeta = getMeta(otid);
+      const savedTitle = savedMeta?.title;
+
       if (
         arg.title &&
         arg.title.length > 0 &&
-        arg.title !== titleRef.current &&
-        (!titleRef.current || titleRef.current.startsWith(GEN_TITLE))
+        arg.title !== savedTitle &&
+        (!savedTitle || savedTitle.startsWith(GEN_TITLE))
       ) {
-        title = GEN_TITLE + arg.title;
+        const title = GEN_TITLE + arg.title;
         if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
@@ -74,7 +76,6 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
           meta: meta,
           title: title,
         });
-        titleRef.current = title;
       }
       if (
         saveStateRef.current === SaveState.Initial &&
