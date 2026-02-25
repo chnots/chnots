@@ -166,11 +166,14 @@ impl KDbExecutor<'_> {
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .ok_or_else(|| anyhow::anyhow!("Invalid filename: {:?}", file))?;
-                let suffix = match db_type {
+                let mut suffix = match db_type {
                     DbType::Sqlite => "-sqlite",
                     DbType::Postgres => "-postgres",
                 };
-                if !filename.ends_with(suffix) {
+
+                if filename.ends_with("-all") {
+                    suffix = "-all";
+                } else if !filename.ends_with(suffix) {
                     continue;
                 }
 
@@ -204,15 +207,12 @@ struct MigrationSqls;
 #[test]
 fn print_ddls() {
     for db_type in [DbType::Postgres, DbType::Sqlite] {
+        use crate::mapper::db::HistCreateSql;
         let ddls = Ddls::new()
             .with_ddls(crate::krate::kspace::KSpace::ddls())
             .with_ddls(crate::krate::graph::GraphMeta::ddls())
             .with_ddls(crate::krate::kkv::KKV::ddls())
             .with_ddls(crate::krate::chnot::ChnotThreadOrder::ddls())
-            .with_ddls(crate::krate::chnot::ChnotThreadMeta::ddls())
-            .with_ddls(crate::krate::chnot::ChnotMeta::ddls())
-            .with_ddls(crate::krate::chnot::ChnotThreadOrder::ddls())
-            .with_ddls(crate::krate::chnot::ChnotThreadMeta::ddls())
             .with_ddls(crate::krate::chnot::ChnotMeta::ddls())
             .with_ddls(crate::krate::kfile::KFileMeta::ddls())
             .with_ddls(crate::krate::llmchat::LLMChatBot::ddls())

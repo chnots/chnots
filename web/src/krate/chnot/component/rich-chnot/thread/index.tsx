@@ -21,18 +21,13 @@ import type { MdwtRecord } from "@/krate/mdwt/po";
 import { mdwtRecordList } from "@/krate/mdwt/service";
 import { arraysAreEqual } from "@/lib/col-util";
 import { genTID, type TID } from "@/lib/id_util";
-import type { ChnotThreadMetaCommitReq } from "../../dto";
-import type { ChnotKind, ChnotThreadMeta } from "../../po";
-import {
-  chnotThreadMetaFetch,
-  chnotThreadMetaOverwrite,
-  chnotThreadOrderCommit,
-} from "../../service";
-import { useChnotThreadStore } from "../../store";
-import MdwtChnot from "../rich-chnot/mdwt";
-import MdwtChnotSelector from "../rich-chnot/mdwt-chnot-selector";
-import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
-import SortableRichMdwtMemo from "./segment";
+import { ChnotKind } from "../../../po";
+import { chnotThreadMetaFetch, chnotThreadOrderCommit } from "../../../service";
+import MdwtChnot from "../mdwt";
+import MdwtChnotSelector from "../mdwt-chnot-selector";
+import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
+import SortableRichMdwtMemo from "./block";
+import { useKSpaceStore } from "@/krate/kspace/store";
 
 enum OrderType {
   Manual,
@@ -66,21 +61,18 @@ type ChnotOrder = ManualChnotOrder | { type: OrderType.Search; otid: string };
  * - Maintain State
  *   - Just edit and save that chnot.
  */
-const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
+const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
   const savedChnotOrdersRef = useRef<ManualChnotOrder[]>([]);
-  const savedChnotThreadMetaRef = useRef<ChnotThreadMeta>(undefined);
   const [chnotOrders, setChnotOrders] = useState<ChnotOrder[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [activeId, setActiveId] = useState<TID | string | null>(null);
   const [overId, setOverId] = useState<TID | string | null>(null);
-
-  const { overwrite } = useChnotThreadStore((store) => {
+  const { currentKSpace } = useKSpaceStore((s) => {
     return {
-      overwrite: store.overwrite,
+      currentKSpace: s.currentKSpace,
     };
   });
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -95,7 +87,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         .filter((e) => e.saved);
       if (
         !arraysAreEqual(
-          chnotOrders.filter((e) => e.type === OrderType.Manual),
+          toSaveChnotOrderOtids,
           savedChnotOrdersRef.current,
           (v1, v2) => {
             return (
@@ -106,9 +98,13 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
           },
         )
       ) {
-        await handleSaveThreadMeta();
+        await handlePostSave({
+          otid: otid,
+          saveState: SaveState.Saved,
+          kind: ChnotKind.ThreadV1,
+        });
         await chnotThreadOrderCommit({
-          thread_otid: threadMeta.otid,
+          thread_otid: otid,
           orders: toSaveChnotOrderOtids.map((e) => {
             return { otid: e.otid, closed: e.closed };
           }),
@@ -116,7 +112,14 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         savedChnotOrdersRef.current = toSaveChnotOrderOtids;
       }
     })();
-  }, [threadMeta, chnotOrders]);
+  }, [otid, chnotOrders]);
+
+  const handlePostSave = useCallback(
+    async (arg: PostSaveArg, title?: string) => {
+      await onPostSave({ ...arg, kind: ChnotKind.ThreadV1, title: title });
+    },
+    [onPostSave],
+  );
 
   const handleDragStart = useCallback((event: DragEndEvent) => {
     setActiveId(event.active.id as TID | string);
@@ -179,12 +182,8 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     (async () => {
       try {
         const rsp = await chnotThreadMetaFetch({
-          thread_otid: threadMeta.otid,
+          otid: otid,
         });
-
-        if (rsp.thread_meta) {
-          savedChnotThreadMetaRef.current = rsp.thread_meta;
-        }
 
         const chnotOtids: SavedChnotOrder[] = rsp.chnot_meta_sorted.map(
           (cm) => {
@@ -203,10 +202,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         }));
 
         const mdwtMap = await mdwtRecordList({
-          mdwt_otids: [
-            ...savedChnotOrdersRef.current.map((e) => e.otid),
-            threadMeta.otid,
-          ],
+          mdwt_otids: [...savedChnotOrdersRef.current.map((e) => e.otid), otid],
         });
         if (chnotOtids.length > 0) {
           setChnotOrders(savedChnotOrdersRef.current);
@@ -225,7 +221,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         setLoading(false);
       }
     })();
-  }, [threadMeta]);
+  }, [otid]);
 
   const handleSearchAdd = useCallback(
     async (old: string, otid: TID, kind: ChnotKind) => {
@@ -255,17 +251,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
     [],
   );
 
-  const handleSaveThreadMeta = useCallback(async () => {
-    if (!savedChnotThreadMetaRef.current) {
-      const req: ChnotThreadMetaCommitReq = {
-        meta_otid: threadMeta.otid,
-        kspace: threadMeta.kspace,
-      };
-      const rsp = await chnotThreadMetaOverwrite(req);
-      savedChnotThreadMetaRef.current = rsp.meta;
-    }
-  }, []);
-
   const handlePostSaveOnChnot = useCallback(
     async (arg: PostSaveArg) => {
       if (arg.saveState !== SaveState.Saved) {
@@ -282,25 +267,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
         }),
       );
     },
-    [chnotOrders, threadMeta],
-  );
-
-  const titleRef = useRef<string>(null);
-  const handleTitleSave = useCallback(
-    async (arg: PostSaveArg) => {
-      const meta = threadMeta;
-      await handleSaveThreadMeta();
-      if (arg.title !== titleRef.current) {
-        const title = arg.title ?? "";
-        titleRef.current = title;
-
-        overwrite({
-          meta: meta,
-          title: titleRef.current ?? undefined,
-        });
-      }
-    },
-    [threadMeta],
+    [chnotOrders, otid],
   );
 
   const handleToggleClosed = useCallback(
@@ -329,10 +296,10 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
               <Icon.Heading className="w-6 h-6" />
             </div>
             <MdwtChnot
-              otid={threadMeta.otid}
+              otid={otid}
               fullscreen={false}
-              onPostSave={handleTitleSave}
-              content={mdwtMap[threadMeta.otid]?.content ?? ""}
+              onPostSave={handlePostSave}
+              content={mdwtMap[otid]?.content ?? ""}
               placeholder="Thread Title"
             />
           </div>
@@ -361,7 +328,7 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
                         kind={order.chnotKind}
                         onPostSave={handlePostSaveOnChnot}
                         content={mdwtMap[order.otid]?.content ?? ""}
-                        kspace={threadMeta.kspace}
+                        kspace={currentKSpace}
                         onAddBlock={handleAddBlock}
                         onRemoveBlock={handleRemoveBlock}
                         isDragging={activeId === order.otid}
@@ -429,6 +396,6 @@ const ChnotThreadBody = ({ threadMeta }: { threadMeta: ChnotThreadMeta }) => {
   );
 };
 
-export const ChnotThreadBodyMemo = React.memo(ChnotThreadBody);
+export const ChnotThreadMemo = React.memo(ChnotThread);
 
-export default ChnotThreadBody;
+export default ChnotThread;

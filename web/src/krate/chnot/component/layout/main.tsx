@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { genTID, type TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import { ChnotKind } from "../../po";
-import { useChnotSingleStore } from "../../store";
-import { ChnotSingleBodyMemo } from "./body";
-import ChnotSingleHeadbar from "./header";
+import { useChnotStore } from "../../store";
+import { ChnotBodyMemo } from "./body";
+import ChnotHeadbar from "./header";
 
 const ChnotSingleMain = ({ className }: { className?: string }) => {
-  const { getMeta, setChangeCompCurOtid } = useChnotSingleStore((s) => {
+  const { getMeta, setChangeCompCurOtid } = useChnotStore((s) => {
     return {
       getMeta: s.getMeta,
       setChangeCompCurOtid: s.setChangeCompCurOtid,
@@ -31,7 +31,7 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
 
   return (
     <main className={cn("relative flex flex-col overflow-y-auto", className)}>
-      <ChnotSingleHeadbar
+      <ChnotHeadbar
         className={"sticky top-0 left-0"}
         onNew={() => {
           setOtid(genTID());
@@ -42,11 +42,7 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
         otid={otid}
       />
       {otid && (
-        <ChnotSingleBodyMemo
-          key={otid}
-          otid={otid}
-          kind={kind ?? ChnotKind.MDWT}
-        />
+        <ChnotBodyMemo key={otid} otid={otid} kind={kind ?? ChnotKind.MDWT} />
       )}
     </main>
   );

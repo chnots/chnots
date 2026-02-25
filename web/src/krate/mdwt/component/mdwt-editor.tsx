@@ -1,5 +1,6 @@
 import {
   autocompletion,
+  type Completion,
   type CompletionContext,
   type CompletionResult,
 } from "@codemirror/autocomplete";
@@ -22,6 +23,9 @@ import {
   todoHighlightPlugin,
 } from "./codemirror/mdwt-extension";
 import { createCodemirrorTheme } from "./codemirror/theme";
+import { chnotSearch } from "@/krate/chnot/service";
+import { toentTodoEventGuess } from "@/krate/toent/service";
+import { chnotTagNameList } from "../service";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -97,12 +101,63 @@ const eventHandlers = EditorView.domEventHandlers({
   },
 });
 
+const chnotCompletions = async (
+  context: CompletionContext,
+): Promise<CompletionResult | null> => {
+  const word = context.matchBefore(/#[^# ]*|^#* \[|^[ ]*- \[|\[\[/);
+  let options: Completion[];
+  if (!word || (word?.from === word?.to && !context.explicit)) {
+    return null;
+  } else if (word.text.startsWith("#")) {
+    options = (
+      await chnotTagNameList({
+        query: word.text,
+        start_index: 0,
+        page_size: 20,
+      })
+    ).data.map((name) => {
+      return { label: name, type: "hashtag" };
+    });
+  } else if (word.text.startsWith("[[")) {
+    // [{ label: `[[backlink-ph]]`, type: "backlink" }]
+    options = (
+      await chnotSearch({
+        query: word.text.substring(3),
+        start_index: 0,
+        page_size: 10,
+        kinds: [],
+      })
+    ).data.map((chnot) => {
+      return {
+        label: chnot.title ?? "",
+        apply: `[[${chnot.meta.otid}]]`,
+        type: "backlink",
+      };
+    });
+  } else if (word.text.includes("# [") || word.text.includes("- [")) {
+    options = (
+      await toentTodoEventGuess({ input: word.text.replace(/.*\[/, "") })
+    ).toents.map((toent) => {
+      return { label: `{${toent}}`, type: "toent" };
+    });
+  } else {
+    return null;
+  }
+
+  options.sort((e1, e2) => e1.label.length - e2.label.length);
+
+  return {
+    from: word.from,
+    options: options,
+    filter: false,
+  };
+};
+
 const MdwtEditor = ({
   content,
   foldGutter,
   height,
   onContentChange,
-  autoCompletion,
   placeholder,
   setCodeMirrorRef: setCMRef,
 }: {
@@ -111,9 +166,6 @@ const MdwtEditor = ({
   height?: number;
   placeholder?: string;
   onContentChange: (content: string) => void;
-  autoCompletion: (
-    context: CompletionContext,
-  ) => Promise<CompletionResult | null>;
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
@@ -147,7 +199,7 @@ const MdwtEditor = ({
 
     indentOnInput(),
     autocompletion({
-      override: [(context) => autoCompletion(context)],
+      override: [chnotCompletions],
     }),
   ];
 

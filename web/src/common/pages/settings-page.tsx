@@ -3,6 +3,7 @@ import type React from "react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import KSpaceSettings from "@/krate/kspace/component/settings";
+import FixDb from "@/krate/mdwt/component/fix-db";
 import { EndpointSettings } from "@/krate/sync/component/settings";
 import { RoutePaths } from "@/router";
 import Icon from "../component/icon";
@@ -23,6 +24,7 @@ import {
 enum SettingsEnum {
   Endpoint = "Endpoint Settings",
   KSpace = "KSpace Settings",
+  FixDb = "Fix Database",
 }
 
 const SettingsItem = ({
@@ -53,11 +55,15 @@ const Settings = () => {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader className="w-full justify-between items-center flex flex-row p-4">
-          <div></div>
-          <NavLink to={RoutePaths.Chnots} id={"chnot"}>
-            <Icon.Brain className="w-4 h-4" />
-          </NavLink>
+        <SidebarHeader className="text-sm">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-1">
+              <div className="w-8 h-8 flex items-center justify-center" />
+            </div>
+            <NavLink to={RoutePaths.Chnots} id={"chnot"}>
+              <Icon.Brain className="w-4 h-4" />
+            </NavLink>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -88,6 +94,20 @@ const Settings = () => {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SettingsItem
+                  onClick={() => setSettingsEnum(SettingsEnum.FixDb)}
+                  focused={settingsEnum === SettingsEnum.FixDb}
+                >
+                  <Icon.RefreshCw className="w-4 h-4" />
+                  <span>Fix Database</span>
+                </SettingsItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
       </Sidebar>
       <SidebarInset className="flex flex-col w-full items-center">
@@ -98,8 +118,10 @@ const Settings = () => {
         <div className="m-8 max-w-4xl">
           {settingsEnum === SettingsEnum.KSpace ? (
             <KSpaceSettings />
+          ) : settingsEnum === SettingsEnum.Endpoint ? (
+            <EndpointSettings />
           ) : (
-            settingsEnum === SettingsEnum.Endpoint && <EndpointSettings />
+            settingsEnum === SettingsEnum.FixDb && <FixDb />
           )}
         </div>
       </SidebarInset>

@@ -17,8 +17,8 @@ use chin_tools::EResult;
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
 use chin_sql::{
-    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, Wheres, str_type::Varchar,
-    time_type::TID,
+    LimitOffset, OnConflict, OrderBy, SqlBuilder, SqlField, SqlReader, SqlTable, Wheres,
+    str_type::Varchar, time_type::TID,
 };
 
 impl TryFrom<&KDbRow> for InlineKFile {
@@ -80,29 +80,20 @@ impl KDbExecutor<'_> {
     }
 
     async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp> {
-        let sb: SqlBuilder = if req.history_and_archor.unwrap_or(false) {
-            SqlReader::builder(
-                [SqlField {
-                    alias: None,
-                    table_alias: "kfm",
-                    field_name: "*",
-                }],
-                chin_sql::Froms::Table {
-                    table_name: KFileMeta::HIST_TABLE,
-                    alias: "kfm",
-                },
-            )
-            .wheres(Wheres::and([
-                Wheres::equal(KFileMeta::ARCHOR, true),
-                match req.req_id {
-                    KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_cond(tid),
-                    KfileMetaFetchReqId::Id(id) => KFileMeta::unikey_id_cond(id),
-                },
-            ]))
-            .order_by([OrderBy::Desc(KFileMeta::TID.into())])
-            .limit(LimitOffset::new(1))
-            .build()
-            .into()
+        let kfm = KFileMetaTable::new("kfm");
+        let sb: SqlReader = if req.history_and_archor.unwrap_or(false) {
+            SqlReader::read(kfm.all_fields(), &kfm)
+                .wheres(Wheres::and([
+                    kfm.archor().v_eq(true),
+                    match req.req_id {
+                        KfileMetaFetchReqId::Otid(tid) => kfm.otid().v_eq(tid),
+                        KfileMetaFetchReqId::Id(id) => kfm.id().v_eq(id),
+                    },
+                ]))
+                .order_by([OrderBy::Desc(KFileMeta::TID.into())])
+                .limit(LimitOffset::new(1))
+                .build()
+                .into()
         } else {
             match req.req_id {
                 KfileMetaFetchReqId::Otid(tid) => KFileMeta::pkey_reader(tid),

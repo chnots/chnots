@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use super::*;
-use crate::krate::chnot::ChnotThreadMeta;
+use crate::krate::chnot::ChnotMetaTable;
 use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
 use crate::krate::toent::logic::EventBuilder;
@@ -16,7 +16,8 @@ use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{
-    ChinSqlError, GroupBy, Having, SqlBuilder, SqlReader, SqlTable, SqlTypedField, SubQueryTable,
+    ChinSqlError, GroupBy, Having, JoinTable, Joins, SqlBuilder, SqlField, SqlReader, SqlTable,
+    SqlTypedField,
 };
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
@@ -36,7 +37,6 @@ impl<'a> KDbTx<'a> {
         let MdwtTagUpdateReq {
             content: _,
             mdwt_otid,
-            kspace,
         } = req;
 
         let tags: Result<Vec<Varchar<800>>, ChinSqlError> = chnot_parser
@@ -65,7 +65,6 @@ impl<'a> KDbTx<'a> {
                 .exec(
                     MdwtTag {
                         tid: TID::default(),
-                        kspace: kspace.to_owned(),
                         tag: tag.to_owned(),
                         mdwt_otid,
                     }
@@ -151,14 +150,17 @@ impl<'a> KDbTx<'a> {
 pub(crate) struct MdwtOtidInTags<'a> {
     pub alias: Cow<'a, str>,
     mt: MdwtTagTable<'a>,
+    cr: ChnotMetaTable<'a>,
 }
 
 impl<'a> MdwtOtidInTags<'a> {
     pub fn new(alias: &'a str) -> Self {
-        let mt: MdwtTagTable<'static> = MdwtTagTable::new("mt");
+        let mt = MdwtTagTable::new("mt");
+        let cr = ChnotMetaTable::new("cr");
         Self {
             alias: alias.into(),
             mt,
+            cr,
         }
     }
 
@@ -170,7 +172,7 @@ impl<'a> MdwtOtidInTags<'a> {
         &'a self,
         tags: Option<MdwtTagSearchType>,
         kspaces: Vec<Varchar<40>>,
-    ) -> Option<SubQueryTable<'a>> {
+    ) -> Option<SqlReader<'a>> {
         let tags = tags.map(|s| match s {
             MdwtTagSearchType::Inset(items) => items,
         })?;
@@ -180,18 +182,21 @@ impl<'a> MdwtOtidInTags<'a> {
             return None;
         };
 
-        let reader = SqlReader::builder(
-            [self.mdwt_otid().erased()],
-            chin_sql::Froms::Table {
-                table_name: self.mt.table(),
-                alias: self.mt.alias(),
-            },
+        let reader = SqlReader::read(
+            self.mt.mdwt_otid(),
+            Joins::new((&self.mt).into()).join(JoinTable {
+                join_type: chin_sql::JoinType::LeftJoin,
+                table: (&self.cr).into(),
+                conds: [(self.mt.mdwt_otid(), self.cr.otid()).into()].into(),
+            }),
         )
         .wheres(Wheres::and([
-            self.mt.kspace().v_in(kspaces),
-            self.mt
-                .tag()
-                .v_in(tags.iter().map(Varchar::limit).collect()),
+            self.mt.tag().v_in(
+                tags.iter()
+                    .map(Varchar::<800>::limit)
+                    .collect::<Vec<Varchar<800>>>(),
+            ),
+            self.cr.kspace().v_in(kspaces),
         ]))
         .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
         .having(Having::Custom(
@@ -199,7 +204,7 @@ impl<'a> MdwtOtidInTags<'a> {
         ))
         .build();
 
-        Some(SubQueryTable { reader })
+        Some(reader.into())
     }
 }
 
@@ -214,33 +219,33 @@ impl KDb {
         F: Fn(KDbRow) -> AResult<T> + Send + 'static,
         T: Serialize + Clone + Send + 'static + AsRef<str>,
     {
-        let field = if name_only { "distinct tag" } else { "*" };
+        let field_name = if name_only { "distinct tag" } else { "*" };
         let otids = MdwtOtidInTags::new("otids");
+        let mt = MdwtTagTable::new("tags");
 
-        let sql = SqlBuilder::new()
-            .seg("select")
-            .seg(field)
-            .seg("from")
-            .seg(MdwtTag::TABLE)
-            .seg("as tags")
-            .some_then(
+        let sql = SqlReader::read(
+            SqlField {
+                alias: None,
+                inner: chin_sql::SqlFieldInner::Raw { expr: field_name },
+            },
+            Joins::new((&mt).into()).join_some(
                 otids.sub_query_table(req.tags.clone(), req.get_spaces()),
-                |sqt, this| {
-                    let f1 = otids.mdwt_otid().twn().to_string();
-                    this.seg("right join")
-                        .merge(sqt.reader)
-                        .seg("on")
-                        .seg(f1)
-                        .seg("=")
-                        .seg("tags.")
-                        .seg(MdwtTag::MDWT_OTID)
+                |v| JoinTable {
+                    join_type: chin_sql::JoinType::RightJoin,
+                    table: chin_sql::Froms::SubQuery {
+                        table: v.into(),
+                        alias: &otids.alias,
+                    },
+                    conds: [(otids.mdwt_otid(), mt.mdwt_otid()).into()].into(),
                 },
-            )
-            .r#where(Wheres::and([Wheres::r#in(
-                MdwtTag::KSPACE,
-                req.get_spaces(),
-            )]))
-            .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index));
+            ),
+        )
+        .wheres(Wheres::and([Wheres::if_some(req.query.clone(), |v| {
+            mt.tag().v_ilike(v, chin_sql::ILikeType::Fuzzy)
+        })]))
+        .limit(LimitOffset::new(req.page_size).offset(req.start_index))
+        .build();
+
         let data = self.conn().await?.qry_list(sql, mapper).await?;
 
         Ok(MdwtTagListRsp {
@@ -299,27 +304,16 @@ impl MdwtMapper for KDb {
         Ok(result)
     }
 
-    async fn mdwt_tag_refresh(&self, kspace: Varchar<40>) -> EResult {
-        let get_all = SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT, MdwtRecord::OTID])
-            .r#where(Wheres::and([Wheres::compare_str(
-                MdwtRecord::OTID,
-                "in",
-                format!(
-                    "(select {} from {} where kspace = '{}')",
-                    ChnotThreadMeta::OTID,
-                    ChnotThreadMeta::TABLE,
-                    kspace.as_str().replace("'", "<quote>")
-                ),
-            )]));
+    async fn mdwt_tag_refresh(&self) -> EResult {
+        let mr = MdwtRecordTable::new("mr");
+        let get_all = SqlReader::read(mr.all_fields(), Joins::new((&mr).into())).build();
 
-        let kspace = kspace.to_owned();
         let mut conn = self.conn().await?;
         let chnots = conn
             .qry_list(get_all, move |e| {
                 Ok(MdwtTagUpdateReq {
                     content: e.try_get(MdwtRecord::CONTENT)?,
                     mdwt_otid: e.try_get(MdwtRecord::OTID)?,
-                    kspace: kspace.to_owned(),
                 })
             })
             .await?;
@@ -391,7 +385,6 @@ impl TryFrom<&KDbRow> for MdwtTag {
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let obj = MdwtTag {
             tid: value.try_get(MdwtTag::TID)?,
-            kspace: value.try_get(MdwtTag::KSPACE)?,
             tag: value.try_get(MdwtTag::TAG)?,
             mdwt_otid: value.try_get(MdwtTag::MDWT_OTID)?,
         };

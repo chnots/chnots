@@ -12,12 +12,11 @@ import { Toggle } from "@/common/component/ui/toggle";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { RoutePaths } from "@/router";
-import { type ChnotViewType, useChnotHeadStore } from "../../store";
+import { useChnotStore } from "../../store";
 import { ChnotKindSelect } from "./chnot-kind-select";
-import ChnotThreadSwitch from "./chnot-thread-switch";
 
 const TagsView = () => {
-  const { setTagsInset, tags } = useChnotHeadStore((store) => {
+  const { setTagsInset, tags } = useChnotStore((store) => {
     return {
       setTagsInset: store.setTagsInset,
       tags: store.tags,
@@ -26,12 +25,12 @@ const TagsView = () => {
 
   return (
     <div className="w-full flex-row space-x-1 items-center inline">
-      {tags ? (
-        tags.Inset.map((tag) => (
+      {tags?.id === "Inset" ? (
+        tags.data.map((tag) => (
           <Button
             key={tag}
             onClick={() => {
-              setTagsInset([...new Set(tags.Inset.filter((e) => e !== tag))]);
+              setTagsInset([...new Set(tags.data.filter((e) => e !== tag))]);
             }}
           >
             {tag}
@@ -44,8 +43,8 @@ const TagsView = () => {
   );
 };
 
-const Header = ({ viewType }: { viewType: ChnotViewType }) => {
-  const { tags, setTagsInset } = useChnotHeadStore((store) => {
+const Header = () => {
+  const { tags, setTagsInset } = useChnotStore((store) => {
     return {
       tags: store.tags,
       setTagsInset: store.setTagsInset,
@@ -59,7 +58,7 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
     };
   });
 
-  const { changeSearchStr } = useChnotHeadStore((store) => {
+  const { changeSearchStr } = useChnotStore((store) => {
     return {
       changeSearchStr: store.changeSearchStr,
     };
@@ -90,14 +89,9 @@ const Header = ({ viewType }: { viewType: ChnotViewType }) => {
             <Icon.Hash />
           </Toggle>
         </div>
-        <div className="flex">
-          <ChnotThreadSwitch viewType={viewType} />
-          <NavLink to={RoutePaths.Settings} id={"Settings"}>
-            <div>
-              <Icon.Settings className="w-4 h-4 mx-2" />
-            </div>
-          </NavLink>
-        </div>
+        <NavLink to={RoutePaths.Settings} id={"settings"}>
+          <Icon.Settings className="w-4 h-4" />
+        </NavLink>
       </div>
       <TagsView />
       <form>

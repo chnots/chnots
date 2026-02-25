@@ -7,20 +7,22 @@ import React, {
 } from "react";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
 import { mdwtCommit } from "@/krate/mdwt/service";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../po";
 import { chnotMetaCommit } from "../../service";
-import { useChnotSingleStore } from "../../store";
+import { useChnotStore } from "../../store";
 import ExcalidrawChnot from "../rich-chnot/excalidraw";
 import KFileChnot from "../rich-chnot/kfile";
 import LLMChatChnot from "../rich-chnot/llmchat";
-import RichMdwt from "../rich-chnot/rich-mdwt";
-import TableChnot from "../rich-chnot/table";
 import MindMapChnot from "../rich-chnot/mindmap";
+import RichMdwt from "../rich-chnot/rich-mdwt";
 import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
+import TableChnot from "../rich-chnot/table";
+import { ChnotThreadMemo } from "../rich-chnot/thread";
 
-const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
+const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
   const titleRef = useRef<string | null>(null);
 
@@ -30,7 +32,7 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     };
   });
 
-  const { overwrite, setCurOtid, getMeta } = useChnotSingleStore((s) => {
+  const { overwrite, setCurOtid, getMeta } = useChnotStore((s) => {
     return {
       overwrite: s.overwrite,
       setCurOtid: s.setCurOtid,
@@ -52,10 +54,14 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         kspace: kspace,
         tid: genTID(),
       };
-      let title = "";
-      if (arg.title !== titleRef.current) {
-        title = arg.title ?? "";
-        titleRef.current = title;
+      let title: string | undefined;
+      if (
+        arg.title &&
+        arg.title.length > 0 &&
+        arg.title !== titleRef.current &&
+        (!titleRef.current || titleRef.current.startsWith(GEN_TITLE))
+      ) {
+        title = GEN_TITLE + arg.title;
         if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
@@ -66,8 +72,9 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         }
         overwrite({
           meta: meta,
-          title: titleRef.current ?? undefined,
+          title: title,
         });
+        titleRef.current = title;
       }
       if (
         saveStateRef.current === SaveState.Initial &&
@@ -76,10 +83,6 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       ) {
         await chnotMetaCommit({ metas: [meta] });
         saveStateRef.current = arg.saveState;
-        overwrite({
-          meta: meta,
-          title: titleRef.current ?? undefined,
-        });
         setCurOtid(otid);
       }
     },
@@ -114,6 +117,10 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     <div className="flex flex-col w-full items-center m-0 p-1 h-full">
       <MindMapChnot {...props} />
     </div>
+  ) : kind === ChnotKind.ThreadV1 ? (
+    <div className="w-full h-full">
+      <ChnotThreadMemo {...props} />
+    </div>
   ) : (
     <div className="flex flex-col w-full items-center m-0 p-1 h-full">
       <RichMdwt {...props} />
@@ -121,6 +128,6 @@ const ChnotSingleBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   );
 };
 
-export const ChnotSingleBodyMemo = React.memo(ChnotSingleBody);
+export const ChnotBodyMemo = React.memo(ChnotBody);
 
-export default ChnotSingleBody;
+export default ChnotBody;

@@ -48,8 +48,5 @@ async fn mdwt_tag_name_list(
 }
 
 async fn mdwt_tag_refresh(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
-    state
-        .mdwt_tag_refresh(read_kspace_from_header(&headers))
-        .await
-        .into()
+    state.mdwt_tag_refresh().await.into()
 }

@@ -1,7 +1,6 @@
-// components/EndpointSettings.tsx
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/common/component/ui/button";
-import { Card } from "@/common/component/ui/card";
 import { Input } from "@/common/component/ui/input";
 import { Label } from "@/common/component/ui/label";
 import {
@@ -68,11 +67,11 @@ export const EndpointSettings = () => {
   };
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
-        <div className="flex items-end gap-4">
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
+        <form className="flex items-end gap-4">
           <div className="flex-1 space-y-2">
-            <Label htmlFor="endpoint-url">IP</Label>
+            <Label htmlFor="endpoint-ip">IP</Label>
             <Input
               id="endpoint-ip"
               value={newEndpoint.ip}
@@ -83,7 +82,7 @@ export const EndpointSettings = () => {
             />
           </div>
           <div className="flex-1 space-y-2">
-            <Label htmlFor="endpoint-url">Port</Label>
+            <Label htmlFor="endpoint-port">Port</Label>
             <Input
               id="endpoint-port"
               type="number"
@@ -98,46 +97,66 @@ export const EndpointSettings = () => {
             />
           </div>
 
-          <Button onClick={handleAddEndpoint}>Add Endpoint</Button>
-        </div>
+          <Button
+            type="button"
+            onClick={handleAddEndpoint}
+            disabled={!newEndpoint.ip || !newEndpoint.port}
+          >
+            Add Endpoint
+          </Button>
+        </form>
+      </div>
 
+      <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>IP</TableHead>
               <TableHead>Port</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {endpoints.map((endpoint) => (
-              <TableRow key={endpoint.ip + endpoint.port}>
-                <TableCell>{endpoint.ip}</TableCell>
-                <TableCell>{endpoint.port}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSyncNow(endpoint.ip, endpoint.port)}
-                    >
-                      Sync Now
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() =>
-                        handleDeleteEndpoint(endpoint.ip, endpoint.port)
-                      }
-                    >
-                      Delete
-                    </Button>
-                  </div>
+            {endpoints.length > 0 ? (
+              endpoints.map((endpoint) => (
+                <TableRow key={endpoint.ip + endpoint.port}>
+                  <TableCell>{endpoint.ip}</TableCell>
+                  <TableCell>{endpoint.port}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleSyncNow(endpoint.ip, endpoint.port)
+                        }
+                      >
+                        Sync Now
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() =>
+                          handleDeleteEndpoint(endpoint.ip, endpoint.port)
+                        }
+                        aria-label={`Delete endpoint ${endpoint.ip}:${endpoint.port}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="h-24 text-center">
+                  No endpoints found
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
-    </Card>
+    </div>
   );
 };

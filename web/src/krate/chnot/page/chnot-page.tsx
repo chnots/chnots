@@ -1,10 +1,7 @@
 import { SidebarProvider } from "@/common/component/ui/sidebar";
 import UnderConstructionPage from "@/common/pages/under-construction-page";
-import ChnotThreadSidebar from "@/krate/chnot/component/thread/sidebar";
-import { ChnotViewType } from "@/krate/chnot/store";
-import ChnotSingleMain from "../component/single/main";
-import ChnotSingleSidebar from "../component/single/sidebar";
-import ChnotThreadMain from "../component/thread/main";
+import ChnotSingleMain from "../component/layout/main";
+import ChnotSidebar from "../component/layout/sidebar";
 
 /**
  * Page for chnots, which is left and right layouted.
@@ -12,24 +9,11 @@ import ChnotThreadMain from "../component/thread/main";
  * Current there is only one chnot editor in the page, use multi webpages.
  * @returns ChnotSearchRspThread Page
  */
-const ChnotPage = ({ viewType }: { viewType: ChnotViewType }) => {
+const ChnotPage = () => {
   return (
     <SidebarProvider>
-      {viewType === ChnotViewType.Single ? (
-        <>
-          <ChnotSingleSidebar />
-          <ChnotSingleMain className="w-full h-screen" />
-        </>
-      ) : viewType === ChnotViewType.Thread ? (
-        <>
-          <ChnotThreadSidebar />
-          <main className="w-full h-screen">
-            <ChnotThreadMain />
-          </main>
-        </>
-      ) : (
-        <UnderConstructionPage />
-      )}
+      <ChnotSidebar />
+      <ChnotSingleMain className="w-full h-screen" />
     </SidebarProvider>
   );
 };

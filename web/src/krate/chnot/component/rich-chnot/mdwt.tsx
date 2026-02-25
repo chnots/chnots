@@ -1,8 +1,3 @@
-import type {
-  Completion,
-  CompletionContext,
-  CompletionResult,
-} from "@codemirror/autocomplete";
 import {
   EditorSelection,
   type ReactCodeMirrorRef,
@@ -20,67 +15,9 @@ import { SaveState } from "@/common/types";
 import useDebounce from "@/hooks/use-debounce";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import type { MdwtCommitReq } from "@/krate/mdwt/dto";
-import {
-  chnotTagNameList,
-  mdwtCommit,
-  mdwtRecordList,
-} from "@/krate/mdwt/service";
-import { toentTodoEventGuess } from "@/krate/toent/service";
-import { chnotSingleSearch } from "../../service";
+import { mdwtCommit, mdwtRecordList } from "@/krate/mdwt/service";
 import type { RichPropProps } from "./rich-mdwt-side";
 import { ChnotKind } from "../../po";
-
-const chnotCompletions = async (
-  context: CompletionContext,
-): Promise<CompletionResult | null> => {
-  const word = context.matchBefore(/#[^# ]*|^#* \[|^[ ]*- \[|\[\[/);
-  let options: Completion[];
-  if (!word || (word?.from === word?.to && !context.explicit)) {
-    return null;
-  } else if (word.text.startsWith("#")) {
-    options = (
-      await chnotTagNameList({
-        query: word.text,
-        start_index: 0,
-        page_size: 20,
-      })
-    ).data.map((name) => {
-      return { label: name, type: "hashtag" };
-    });
-  } else if (word.text.startsWith("[[")) {
-    // [{ label: `[[backlink-ph]]`, type: "backlink" }]
-    options = (
-      await chnotSingleSearch({
-        query: word.text.substring(3),
-        start_index: 0,
-        page_size: 10,
-        kinds: [],
-      })
-    ).data.map((chnot) => {
-      return {
-        label: chnot.title ?? "",
-        apply: `[[${chnot.meta.otid}]]`,
-        type: "backlink",
-      };
-    });
-  } else if (word.text.includes("# [") || word.text.includes("- [")) {
-    options = (
-      await toentTodoEventGuess({ input: word.text.replace(/.*\[/, "") })
-    ).toents.map((toent) => {
-      return { label: `{${toent}}`, type: "toent" };
-    });
-  } else {
-    return null;
-  }
-
-  options.sort((e1, e2) => e1.label.length - e2.label.length);
-
-  return {
-    from: word.from,
-    options: options,
-    filter: false,
-  };
-};
 
 const MarkdownViewer = ({
   content: initialContent,
@@ -138,7 +75,7 @@ const MdwtChnot = ({
         } else {
           setContent("");
         }
-        if (onContentChange && mdwt.content) {
+        if (onContentChange && mdwt?.content) {
           onContentChange(mdwt.content);
         }
         cachedContentRef.current = mdwt?.content;
@@ -215,7 +152,6 @@ const MdwtChnot = ({
           placeholder={placeholder}
           content={content}
           onContentChange={handleContentChange}
-          autoCompletion={chnotCompletions}
           foldGutter={false}
           setCodeMirrorRef={setCodeMirrorRef}
         />

@@ -4,23 +4,24 @@ import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
 import { mdwtCommit } from "@/krate/mdwt/service";
 import { genTID, type TID } from "@/lib/id_util";
-import { ChnotKind } from "../../po";
-import { chnotMetaCommit } from "../../service";
-import { ChnotKindIcon } from "../kind-icon";
-import ExcalidrawChnot from "../rich-chnot/excalidraw";
-import KFileChnot from "../rich-chnot/kfile";
-import LLMChatChnot from "../rich-chnot/llmchat";
-import MindMapChnot from "../rich-chnot/mindmap";
-import RichMdwt from "../rich-chnot/rich-mdwt";
-import type { PostSaveArg, RichPropProps } from "../rich-chnot/rich-mdwt-side";
-import TableChnot from "../rich-chnot/table";
-import { Agent } from "http";
-import { chnotShortDate } from "@/lib/date-utils";
+import { ChnotKind } from "../../../po";
+import { chnotMetaCommit } from "../../../service";
+import { ChnotKindIcon } from "../../kind-icon";
+import ExcalidrawChnot from "../excalidraw";
+import KFileChnot from "../kfile";
+import LLMChatChnot from "../llmchat";
+import MindMapChnot from "../mindmap";
+import RichMdwt from "../rich-mdwt";
+import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
+import TableChnot from "../table";
 import ReadableTID from "@/common/component/chnot-read-tid";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
+import MdwtChnot from "../mdwt";
 
-const SortableRichChnot = ({
+const SortableRichBlock = ({
   otid,
   index,
+  content,
   closed: initialClosed,
   onPostSave,
   onAddBlock: handleAddBlock,
@@ -65,25 +66,36 @@ const SortableRichChnot = ({
   }, [onToggleClosed, closed, index]);
 
   const handlePostSave = useCallback(
-    async (arg: PostSaveArg) => {
+    async (arg: PostSaveArg, manualSaveTitle?: boolean) => {
       const meta = {
         otid: arg.otid,
         kind: arg.kind,
         kspace: kspace,
         tid: genTID(),
       };
-      let title = "";
-      if (arg.title !== titleRef.current) {
-        title = arg.title ?? "";
-        titleRef.current = title;
+      if (manualSaveTitle && arg.title) {
+        await mdwtCommit({
+          mdwt: {
+            otid: arg.otid,
+            content: arg.title,
+          },
+        });
+      } else if (
+        arg.title &&
+        arg.title.length > 0 &&
+        arg.title !== titleRef.current &&
+        (!titleRef.current || titleRef.current.startsWith(GEN_TITLE))
+      ) {
+        const title = GEN_TITLE + arg.title;
         if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
-              otid: otid,
+              otid: arg.otid,
               content: title,
             },
           });
         }
+        titleRef.current = title;
       }
       if (
         saveStateRef.current === SaveState.Initial &&
@@ -100,7 +112,6 @@ const SortableRichChnot = ({
   );
 
   const props = useMemo(() => {
-    console.log("props changed");
     return {
       otid: otid,
       readonly: true,
@@ -110,6 +121,8 @@ const SortableRichChnot = ({
       showEditWhenEmpty: true,
     };
   }, [fullscreen, otid]);
+
+  const savePh = useCallback(() => {}, []);
 
   return (
     <div
@@ -150,14 +163,18 @@ const SortableRichChnot = ({
             >
               <Icon.Hand className="w-4 h-4" />
             </div>
-            {Object.values(ChnotKind).map((e) => (
-              <ChnotKindIcon
-                className="w-4 h-4 mx-1 hover:cursor-pointer"
-                kind={e}
-                key={e}
-                onClick={() => setKind(e)}
-              />
-            ))}
+            <div className="flex border p-0.5 rounded text-gray-600">
+              {Object.values(ChnotKind).map((e) =>
+                e !== ChnotKind.ThreadV1 ? (
+                  <ChnotKindIcon
+                    className="w-4 h-4 mx-1 hover:cursor-pointer"
+                    kind={e}
+                    key={e}
+                    onClick={() => setKind(e)}
+                  />
+                ) : undefined,
+              )}
+            </div>
           </>
         )}
         <button
@@ -168,7 +185,7 @@ const SortableRichChnot = ({
         >
           <Icon.Edit className="w-4 h-4 cursor-pointer" />
         </button>
-        {saveState && (
+        {!!saveState && (
           <span className="p-1 rounded">
             {saveState === SaveState.Saved ? (
               <Icon.CloudCheck className="w-4 h-4" />
@@ -209,6 +226,18 @@ const SortableRichChnot = ({
           <Icon.Plus className="w-4 h-4" />
         </button>
       </div>
+      {kind !== ChnotKind.MDWT && (
+        <div className="w-full ml-4">
+          <MdwtChnot
+            otid={props.otid}
+            fullscreen={false}
+            onPostSave={(arg) => {
+              handlePostSave({ ...arg, kind: kind }, true);
+            }}
+            content={content.replace(GEN_TITLE, "")}
+          />
+        </div>
+      )}
       {closed || (
         <div className="w-full ml-4">
           <RichChnotMemo props={props} kind={kind} />
@@ -242,4 +271,4 @@ const RichChnotMemo = memo(
   },
 );
 
-export default SortableRichChnot;
+export default SortableRichBlock;

@@ -1,6 +1,6 @@
 [package]
 name = "chnots-tauri"
-version = "0.0.100"
+version = "0.0.111"
 description = "Chnots"
 authors = [ "org.codeberg.wangzh",]
 license = ""

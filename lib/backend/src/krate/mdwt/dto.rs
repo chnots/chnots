@@ -37,8 +37,17 @@ pub struct MdwtRecordsRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "id", content = "data")]
 pub enum MdwtTagSearchType {
     Inset(Vec<String>),
+}
+
+impl MdwtTagSearchType {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            MdwtTagSearchType::Inset(items) => items.is_empty(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,5 +74,4 @@ where
 pub struct MdwtTagUpdateReq {
     pub content: Text,
     pub mdwt_otid: TID,
-    pub kspace: Varchar<40>,
 }

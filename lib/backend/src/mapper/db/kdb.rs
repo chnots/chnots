@@ -450,7 +450,7 @@ impl PageReader for KDbConn {
         F: Fn(KDbRow) -> AResult<T> + Send + 'static,
         T: Send + 'static,
     {
-        let sb: SqlBuilder<'_> = sr.limit(limit).into();
+        let sb: SqlReader<'_> = sr.limit(limit);
         let data = self.qry_list(sb, map).await?;
         Ok(PageRsp {
             has_next: limit.limit <= data.len(),

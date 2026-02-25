@@ -9,16 +9,12 @@ import {
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
 import type { TID } from "@/lib/id_util";
-import {
-  ChnotViewType,
-  useChnotHeadStore,
-  useChnotThreadStore,
-} from "../../store";
 import Header from "../header/chnot-sidebar-header";
 import { ChnotSidebarItemMemo, ChnotSidebarTagItem } from "../sidebar-item";
-import { chnotThreadMetaOverwrite } from "../../service";
+import { chnotMetaCommit } from "../../service";
+import { useChnotStore } from "../../store";
 
-const ChnotThreadSidebar = () => {
+const ChnotSidebar = () => {
   const {
     curOtid,
     isFetchingNextPage,
@@ -28,7 +24,7 @@ const ChnotThreadSidebar = () => {
     setCurOtid,
     changeCompCurOtid,
     unvalidate,
-  } = useChnotThreadStore((store) => {
+  } = useChnotStore((store) => {
     return {
       curOtid: store.curOtid,
       isFetchingNextPage: store.isFetchingNextPage,
@@ -41,16 +37,14 @@ const ChnotThreadSidebar = () => {
     };
   });
 
-  const { tags, setTagsInset, kinds, searchStr } = useChnotHeadStore(
-    (store) => {
-      return {
-        tags: store.tags,
-        setTagsInset: store.setTagsInset,
-        kinds: store.kinds,
-        searchStr: store.searchStr,
-      };
-    },
-  );
+  const { tags, setTagsInset, kinds, searchStr } = useChnotStore((store) => {
+    return {
+      tags: store.tags,
+      setTagsInset: store.setTagsInset,
+      kinds: store.kinds,
+      searchStr: store.searchStr,
+    };
+  });
 
   const [tagList, setTagList] = useState<string[]>();
 
@@ -83,9 +77,13 @@ const ChnotThreadSidebar = () => {
     async (otid: TID) => {
       const meta = mapByOtid.cache.get(otid)?.meta;
       if (meta) {
-        chnotThreadMetaOverwrite({
-          meta_otid: otid,
-          pinned: !!meta.pin_tid && meta.pin_tid > 0,
+        chnotMetaCommit({
+          metas: [
+            {
+              ...meta,
+              pin_it: !meta.pin_tid,
+            },
+          ],
         });
       }
     },
@@ -96,10 +94,15 @@ const ChnotThreadSidebar = () => {
     async (otid: TID) => {
       const meta = mapByOtid.cache.get(otid)?.meta;
       if (meta) {
-        chnotThreadMetaOverwrite({
-          meta_otid: otid,
-          archive: true,
+        chnotMetaCommit({
+          metas: [
+            {
+              ...meta,
+              archive: !meta.archive_tid,
+            },
+          ],
         });
+        unvalidate([meta.otid]);
       }
     },
     [mapByOtid],
@@ -109,10 +112,15 @@ const ChnotThreadSidebar = () => {
     async (otid: TID, kspace: string) => {
       const meta = mapByOtid.cache.get(otid)?.meta;
       if (meta) {
-        chnotThreadMetaOverwrite({
-          meta_otid: otid,
-          kspace: kspace,
+        chnotMetaCommit({
+          metas: [
+            {
+              ...meta,
+              kspace: kspace,
+            },
+          ],
         });
+        unvalidate([meta.otid]);
       }
     },
     [mapByOtid],
@@ -131,10 +139,11 @@ const ChnotThreadSidebar = () => {
   const handleUnvalidate = useCallback((toRemoves: TID[]) => {
     unvalidate(toRemoves);
   }, []);
+
   return (
     <Sidebar>
       <SidebarHeader className="text-sm">
-        <Header viewType={ChnotViewType.Thread} />
+        <Header />
       </SidebarHeader>
       <SidebarSeparator className="mx-0" />
       <SidebarContent>
@@ -147,7 +156,7 @@ const ChnotThreadSidebar = () => {
                   tag={tagName}
                   onClick={() => {
                     setTagsInset([
-                      ...new Set([...(tags?.Inset ?? []), tagName]),
+                      ...new Set([...(tags?.data ?? []), tagName]),
                     ]);
                   }}
                 />
@@ -163,6 +172,7 @@ const ChnotThreadSidebar = () => {
               <ChnotSidebarItemMemo
                 item={chnot}
                 key={chnot.meta.otid}
+                kind={chnot.meta.kind}
                 showKSpace={mkspaces.length > 0}
                 isCurrent={curOtid === chnot.meta.otid}
                 setCurOtid={handleSetCurOtid}
@@ -179,4 +189,4 @@ const ChnotThreadSidebar = () => {
   );
 };
 
-export default ChnotThreadSidebar;
+export default ChnotSidebar;

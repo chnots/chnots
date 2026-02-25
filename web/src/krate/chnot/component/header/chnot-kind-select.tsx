@@ -10,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/common/component/ui/dropdown-menu";
 import { ChnotKind } from "../../po";
-import { useChnotHeadStore } from "../../store";
+import { useChnotStore } from "../../store";
 import { ChnotKindIcon } from "../kind-icon";
 
 export const ChnotKindSelect = () => {
-  const { kinds, setChnotKinds } = useChnotHeadStore((s) => {
+  const { kinds, setChnotKinds } = useChnotStore((s) => {
     return {
       kinds: s.kinds,
       setChnotKinds: s.setChnotKinds,

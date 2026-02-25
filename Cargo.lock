@@ -1016,7 +1016,7 @@ checksum = "7588475145507237ded760e52bf2f1085495245502033756d28ea72ade0e498b"
 
 [[package]]
 name = "chnots-core"
-version = "0.0.99"
+version = "0.0.111"
 dependencies = [
  "actor-sqlite",
  "anyhow",
@@ -1068,7 +1068,7 @@ dependencies = [
 
 [[package]]
 name = "chnots-server"
-version = "0.0.99"
+version = "0.0.111"
 dependencies = [
  "chnots-core",
  "clap",
@@ -1082,7 +1082,7 @@ dependencies = [
 
 [[package]]
 name = "chnots-tauri"
-version = "0.0.99"
+version = "0.0.111"
 dependencies = [
  "chnots-core",
  "log",
