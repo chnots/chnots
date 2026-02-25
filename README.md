@@ -20,23 +20,12 @@
   <img src="./docs/_asset/excalidraw.png">
 </p>
 
-### File Page
+### Thread Page
 
 <p align="center">
-  <img src="./docs/_asset/kfile.png">
+  <img src="./docs/_asset/thread.png">
 </p>
 
-### Table View Page
-
-<p align="center">
-  <img src="./docs/_asset/ktab.png">
-</p>
-
-### LLMChat Page
-
-<p align="center">
-  <img src="./docs/_asset/llmchat.png">
-</p>
 
 ## Features
 
