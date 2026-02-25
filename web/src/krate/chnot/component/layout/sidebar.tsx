@@ -102,6 +102,7 @@ const ChnotSidebar = () => {
             },
           ],
         });
+        unvalidate([meta.otid]);
       }
     },
     [mapByOtid],
@@ -119,6 +120,7 @@ const ChnotSidebar = () => {
             },
           ],
         });
+        unvalidate([meta.otid]);
       }
     },
     [mapByOtid],

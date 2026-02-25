@@ -197,11 +197,12 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
   unvalidate: (toRemoves: TID[]) => {
     const cmm = get().mapByOtid;
     const dbCacheMap = cmm.cache;
+    const curKSpace = kspaceStore.getState().currentKSpace;
 
     const toRemove2 = Array.from(
       [...dbCacheMap.values()]
         .filter((e) => {
-          const result = e.meta.kspace === kspaceStore.getState().currentKSpace;
+          const result = e.meta.kspace === curKSpace;
           return !result;
         })
         .map((e) => e.meta.otid),
