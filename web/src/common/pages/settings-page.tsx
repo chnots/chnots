@@ -53,11 +53,15 @@ const Settings = () => {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader className="w-full justify-between items-center flex flex-row p-4">
-          <div></div>
-          <NavLink to={RoutePaths.Chnots} id={"chnot"}>
-            <Icon.Brain className="w-4 h-4" />
-          </NavLink>
+        <SidebarHeader className="text-sm">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-1">
+              <div className="w-8 h-8 flex items-center justify-center" />
+            </div>
+            <NavLink to={RoutePaths.Chnots} id={"chnot"}>
+              <Icon.Brain className="w-4 h-4" />
+            </NavLink>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>

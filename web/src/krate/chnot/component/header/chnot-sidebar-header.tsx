@@ -11,6 +11,7 @@ import {
 import { Toggle } from "@/common/component/ui/toggle";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
+import { RoutePaths } from "@/router";
 import { useChnotStore } from "../../store";
 import { ChnotKindSelect } from "./chnot-kind-select";
 
@@ -88,6 +89,9 @@ const Header = () => {
             <Icon.Hash />
           </Toggle>
         </div>
+        <NavLink to={RoutePaths.Settings} id={"settings"}>
+          <Icon.Settings className="w-4 h-4" />
+        </NavLink>
       </div>
       <TagsView />
       <form>
