@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use super::*;
+use crate::krate::chnot::{ChnotMeta, ChnotMetaTable};
 use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
 use crate::krate::toent::logic::EventBuilder;
@@ -14,7 +15,10 @@ use crate::model::dto::KReq;
 use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
-use chin_sql::{ChinSqlError, GroupBy, Having, SqlBuilder, SqlReader, SqlTypedField};
+use chin_sql::{
+    ChinSqlError, GroupBy, Having, JoinTable, Joins, SqlBuilder, SqlField, SqlFieldTrait,
+    SqlReader, SqlTable, SqlTypedField,
+};
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
 use chrono::TimeDelta;
@@ -177,7 +181,7 @@ impl<'a> MdwtOtidInTags<'a> {
             return None;
         };
 
-        let reader = SqlReader::read(self.mdwt_otid(), &self.mt)
+        let reader = SqlReader::read(self.mt.mdwt_otid(), &self.mt)
             .wheres(Wheres::and([
                 self.mt.kspace().v_in(kspaces),
                 self.mt.tag().v_in(
@@ -207,33 +211,36 @@ impl KDb {
         F: Fn(KDbRow) -> AResult<T> + Send + 'static,
         T: Serialize + Clone + Send + 'static + AsRef<str>,
     {
-        let field = if name_only { "distinct tag" } else { "*" };
+        let field_name = if name_only { "distinct tag" } else { "*" };
         let otids = MdwtOtidInTags::new("otids");
+        let mt = MdwtTagTable::new("tags");
 
-        let sql = SqlBuilder::new()
-            .seg("select")
-            .seg(field)
-            .seg("from")
-            .seg(MdwtTag::TABLE)
-            .seg("as tags")
-            .some_then(
+        let sql = SqlReader::read(
+            SqlField {
+                alias: None,
+                inner: chin_sql::SqlFieldInner::Raw { expr: field_name },
+            },
+            Joins::new((&mt).into()).join_some(
                 otids.sub_query_table(req.tags.clone(), req.get_spaces()),
-                |sqt, this| {
-                    let f1 = otids.mdwt_otid().twn().to_string();
-                    this.seg("right join")
-                        .merge(&sqt)
-                        .seg("on")
-                        .seg(f1)
-                        .seg("=")
-                        .seg("tags.")
-                        .seg(MdwtTag::MDWT_OTID)
+                |v| JoinTable {
+                    join_type: chin_sql::JoinType::RightJoin,
+                    table: chin_sql::Froms::SubQuery {
+                        table: v.into(),
+                        alias: &otids.alias,
+                    },
+                    conds: [(otids.mdwt_otid(), mt.mdwt_otid()).into()].into(),
                 },
-            )
-            .r#where(Wheres::and([Wheres::r#in(
-                MdwtTag::KSPACE,
-                req.get_spaces(),
-            )]))
-            .limit_offset(LimitOffset::new(req.page_size).offset(req.start_index));
+            ),
+        )
+        .wheres(Wheres::and([
+            mt.kspace().v_in(req.get_spaces()),
+            Wheres::if_some(req.query.clone(), |v| {
+                mt.tag().v_ilike(v, chin_sql::ILikeType::Fuzzy)
+            }),
+        ]))
+        .limit(LimitOffset::new(req.page_size).offset(req.start_index))
+        .build();
+
         let data = self.conn().await?.qry_list(sql, mapper).await?;
 
         Ok(MdwtTagListRsp {
@@ -293,9 +300,19 @@ impl MdwtMapper for KDb {
     }
 
     async fn mdwt_tag_refresh(&self, kspace: Varchar<40>) -> EResult {
-        let get_all = SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT, MdwtRecord::OTID]);
+        let mr = MdwtRecordTable::new("mr");
+        let cm = ChnotMetaTable::new("cm");
+        let get_all = SqlReader::read(
+            mr.all_fields(),
+            Joins::new((&mr).into()).join(JoinTable {
+                join_type: chin_sql::JoinType::LeftJoin,
+                table: (&cm).into(),
+                conds: [(mr.otid(), cm.otid()).into()].into(),
+            }),
+        )
+        .wheres(cm.kspace().v_eq(kspace.clone()))
+        .build();
 
-        let kspace = kspace.to_owned();
         let mut conn = self.conn().await?;
         let chnots = conn
             .qry_list(get_all, move |e| {

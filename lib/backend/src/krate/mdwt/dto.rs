@@ -37,6 +37,7 @@ pub struct MdwtRecordsRsp {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "id", content = "data")]
 pub enum MdwtTagSearchType {
     Inset(Vec<String>),
 }

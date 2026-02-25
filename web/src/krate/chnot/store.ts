@@ -88,10 +88,10 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
     }));
   },
 
-  setTagsInset: (newType: string[] | undefined) => {
+  setTagsInset: (tags: string[] | undefined) => {
     set((prev) => ({
       ...prev,
-      tags: newType ? { Inset: newType } : undefined,
+      tags: tags ? { id: "Inset", data: tags } : undefined,
     }));
   },
 

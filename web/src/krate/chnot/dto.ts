@@ -4,7 +4,8 @@ import type { TodoEvent } from "../toent/po";
 import type { ChnotKind, ChnotMeta } from "./po";
 
 export type MdwtTagSearchType = {
-  Inset: string[];
+  id: "Inset";
+  data: string[];
 };
 
 export type MdwtCommitReqData = {

@@ -75,7 +75,7 @@ const MdwtChnot = ({
         } else {
           setContent("");
         }
-        if (onContentChange && mdwt.content) {
+        if (onContentChange && mdwt?.content) {
           onContentChange(mdwt.content);
         }
         cachedContentRef.current = mdwt?.content;

@@ -154,7 +154,7 @@ const ChnotSidebar = () => {
                   tag={tagName}
                   onClick={() => {
                     setTagsInset([
-                      ...new Set([...(tags?.Inset ?? []), tagName]),
+                      ...new Set([...(tags?.data ?? []), tagName]),
                     ]);
                   }}
                 />

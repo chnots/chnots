@@ -11,7 +11,7 @@ import {
 import { Toggle } from "@/common/component/ui/toggle";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import {  useChnotStore } from "../../store";
+import { useChnotStore } from "../../store";
 import { ChnotKindSelect } from "./chnot-kind-select";
 
 const TagsView = () => {
@@ -24,12 +24,12 @@ const TagsView = () => {
 
   return (
     <div className="w-full flex-row space-x-1 items-center inline">
-      {tags ? (
-        tags.Inset.map((tag) => (
+      {tags?.id === "Inset" ? (
+        tags.data.map((tag) => (
           <Button
             key={tag}
             onClick={() => {
-              setTagsInset([...new Set(tags.Inset.filter((e) => e !== tag))]);
+              setTagsInset([...new Set(tags.data.filter((e) => e !== tag))]);
             }}
           >
             {tag}
