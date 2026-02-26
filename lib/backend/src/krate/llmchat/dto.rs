@@ -69,7 +69,7 @@ pub struct LLMChatUpdateSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionRecordTruncateReq {
-    pub remove_rid_included: TID,
+    pub remove_otid_included: TID,
     pub session_otid: TID,
 }
 

@@ -45,16 +45,15 @@ impl<'a> KDbTx<'a> {
             .map(|t| t.to_string().try_into())
             .collect();
         let mut tags = tags?;
-        self.as_executor()
-            .omit_rows::<MdwtTag>(Wheres::and([
-                Wheres::equal(MdwtTag::MDWT_OTID, mdwt_otid),
-                if tags.is_empty() {
-                    Wheres::None
-                } else {
-                    Wheres::not(Wheres::r#in(MdwtTag::TAG, tags.clone()))
-                },
-            ]))
-            .await?;
+        self.omit_rows::<MdwtTag>(Wheres::and([
+            Wheres::equal(MdwtTag::MDWT_OTID, mdwt_otid),
+            if tags.is_empty() {
+                Wheres::None
+            } else {
+                Wheres::not(Wheres::r#in(MdwtTag::TAG, tags.clone()))
+            },
+        ]))
+        .await?;
         let executor = self.as_executor();
         if tags.is_empty() {
             tags.push(UNTAGGED_TAG.try_into()?);
@@ -129,7 +128,7 @@ impl<'a> KDbTx<'a> {
             archor,
         };
 
-        self.as_executor().po_otid_insert([rec]).await?;
+        self.po_otid_insert([rec]).await?;
 
         Ok(())
     }

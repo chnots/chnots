@@ -9,7 +9,8 @@ use itertools::Itertools;
 use crate::mapper::Curd;
 use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
-    HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+    HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
+    KDbTransactionBehaiver,
 };
 use crate::model::dto::KReq;
 
@@ -232,12 +233,12 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatBotArchiveReq>,
     ) -> AResult<LLMChatBotArchiveRsp> {
-        self.conn()
-            .await?
-            .as_executor()
-            .omit_rows::<LLMChatBot>(LLMChatBot::pkey_cond(req.bot_otid))
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.omit_rows::<LLMChatBot>(LLMChatBot::pkey_cond(req.bot_otid))
             .await?;
 
+        tx.cmt().await?;
         Ok(LLMChatBotArchiveRsp {})
     }
 
@@ -245,12 +246,12 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatTemplateArchiveReq>,
     ) -> AResult<LLMChatTemplateArchiveRsp> {
-        self.conn()
-            .await?
-            .as_executor()
-            .omit_rows::<LLMChatTemplate>(LLMChatTemplate::pkey_cond(req.template_otid))
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.omit_rows::<LLMChatTemplate>(LLMChatTemplate::pkey_cond(req.template_otid))
             .await?;
 
+        tx.cmt().await?;
         Ok(LLMChatTemplateArchiveRsp {})
     }
 
@@ -258,11 +259,11 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatSessionArchiveReq>,
     ) -> AResult<LLMChatSessionArchiveRsp> {
-        self.conn()
-            .await?
-            .as_executor()
-            .omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(req.session_otid))
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.omit_rows::<LLMChatSession>(LLMChatSession::pkey_cond(req.session_otid))
             .await?;
+        tx.cmt().await?;
 
         Ok(LLMChatSessionArchiveRsp {})
     }
@@ -301,9 +302,9 @@ impl LLMChatMapper for KDb {
             }
         }
 
-        let mut to_omit_ids: Vec<TID> = vec![req.remove_rid_included];
+        let mut to_omit_ids: Vec<TID> = vec![req.remove_otid_included];
         let vec = vec![];
-        let mut queue: Vec<TID> = map.get(&req.remove_rid_included).unwrap_or(&vec).to_vec();
+        let mut queue: Vec<TID> = map.get(&req.remove_otid_included).unwrap_or(&vec).to_vec();
 
         loop {
             if queue.is_empty() {
@@ -320,14 +321,14 @@ impl LLMChatMapper for KDb {
             queue = tmp;
         }
 
-        self.conn()
-            .await?
-            .as_executor()
-            .omit_rows::<LLMChatRecord>(Wheres::and([Wheres::r#in(
-                LLMChatRecord::OTID,
-                to_omit_ids,
-            )]))
-            .await?;
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.omit_rows::<LLMChatRecord>(Wheres::and([Wheres::r#in(
+            LLMChatRecord::OTID,
+            to_omit_ids,
+        )]))
+        .await?;
+        tx.cmt().await?;
 
         Ok(LLMChatSessionRecordTruncateRsp { count: 0 })
     }

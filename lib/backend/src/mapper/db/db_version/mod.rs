@@ -15,7 +15,7 @@ use crate::{
         Curd,
         db::{
             KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow,
-            KDbRowBehavier,
+            KDbRowBehavier, KDbTx,
             helper::{Ddls, create_tables},
             kdb::KDbTransactionBehaiver,
         },
@@ -62,15 +62,14 @@ impl KDb {
     pub async fn sync_db_version(&self) -> EResult {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor()
-            .migrate_db(i64::from_str_radix(DB_VERSION, 10)?, self.get_db_type())
+        tx.migrate_db(i64::from_str_radix(DB_VERSION, 10)?, self.get_db_type())
             .await?;
         tx.cmt().await?;
         Ok(())
     }
 }
 
-impl KDbExecutor<'_> {
+impl KDbTx<'_> {
     async fn get_current_version(&self) -> AResult<Option<i64>> {
         let result = self
             .qry_opt(

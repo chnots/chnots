@@ -238,11 +238,10 @@ impl SyncMapper for KDb {
             data: e,
             hist: true,
         }));
-        self.conn()
-            .await?
-            .as_executor()
-            .omit_rows::<T>(Wheres::r#in(C_TID, to_omit_tids))
-            .await?;
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.omit_rows::<T>(Wheres::r#in(C_TID, to_omit_tids)).await?;
+        tx.cmt().await?;
 
         Ok(SyncDataDto {
             cmds,
@@ -280,11 +279,10 @@ impl SyncMapper for KDb {
         }
 
         if !to_omit_tids.is_empty() {
-            self.conn()
-                .await?
-                .as_executor()
-                .omit_rows::<T>(Wheres::r#in(C_TID, to_omit_tids))
-                .await?;
+            let mut conn = self.conn().await?;
+            let tx = conn.tx().await?;
+            tx.omit_rows::<T>(Wheres::r#in(C_TID, to_omit_tids)).await?;
+            tx.cmt().await?;
         }
 
         if !pull_hist_pos.is_empty() {
@@ -491,7 +489,7 @@ impl KDb {
                     )
                     .await?;
                 } else if db_tid < data.tid() {
-                    tx.as_executor().po_otid_insert([data]).await?;
+                    tx.po_otid_insert([data]).await?;
                 }
             }
         }

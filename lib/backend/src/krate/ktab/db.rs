@@ -32,8 +32,7 @@ impl KDb {
                     .field($table::TID, $c.tid);
                 let mut conn = self.conn().await?;
                 let tx = conn.tx().await?;
-                tx.as_executor()
-                    .omit_rows::<$table>($table::pkey_cond($c.table_otid, $c.col_otid, $c.row_otid))
+                tx.omit_rows::<$table>($table::pkey_cond($c.table_otid, $c.col_otid, $c.row_otid))
                     .await?;
                 tx.exec(csql).await?;
                 tx.cmt().await?;
@@ -85,9 +84,7 @@ impl KTabMapper for KDb {
             .on_conflict(chin_sql::OnConflict::Replace([KTabMeta::OTID].join(", ")));
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor()
-            .omit_rows::<KTabMeta>(KTabMeta::pkey_cond(*otid))
-            .await?;
+        tx.omit_rows::<KTabMeta>(KTabMeta::pkey_cond(*otid)).await?;
         tx.exec(insert_sql).await?;
         tx.cmt().await?;
 

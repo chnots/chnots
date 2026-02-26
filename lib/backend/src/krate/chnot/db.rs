@@ -161,8 +161,7 @@ impl ChnotMapper for KDb {
             }
         });
 
-        tx.as_executor()
-            .omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
+        tx.omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
             .await?;
 
         let mut metas = vec![];
@@ -265,7 +264,7 @@ impl ChnotMapper for KDb {
 
             result_metas.push(rec.clone());
 
-            tx.as_executor().omit_rows::<ChnotMeta>(rec.pkey()).await?;
+            tx.omit_rows::<ChnotMeta>(rec.pkey()).await?;
             tx.exec(rec.to_sql_inserter()).await?;
         }
 

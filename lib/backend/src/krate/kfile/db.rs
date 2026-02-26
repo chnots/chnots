@@ -5,7 +5,7 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver,
+            HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver, KDbTx,
             helper::{Ddls, print_ddls},
         },
     },
@@ -52,9 +52,10 @@ impl TryFrom<&KDbRow> for KFileMeta {
     }
 }
 
-impl KDbExecutor<'_> {
+impl KDbTx<'_> {
     async fn po_insert_kfile_meta(&self, mut meta: KFileMeta) -> EResult {
         let old_meta = self
+            .as_executor()
             .query_kfile_meta(KfileMetaFetchReq {
                 req_id: KfileMetaFetchReqId::Otid(meta.otid),
                 history_and_archor: true.into(),
@@ -78,7 +79,9 @@ impl KDbExecutor<'_> {
 
         Ok(())
     }
+}
 
+impl KDbExecutor<'_> {
     async fn query_kfile_meta(&self, req: KfileMetaFetchReq) -> anyhow::Result<KfileMetaFetchRsp> {
         let kfm = KFileMetaTable::new("kfm");
         let sb: SqlReader = if req.history_and_archor.unwrap_or(false) {
@@ -121,7 +124,7 @@ impl KFileMapper for KDb {
     async fn po_insert_kfile_meta(&self, meta: KFileMeta) -> EResult {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor().po_insert_kfile_meta(meta).await?;
+        tx.po_insert_kfile_meta(meta).await?;
         tx.cmt().await
     }
 
@@ -154,7 +157,7 @@ impl KFileMapper for KDb {
             otid: req.otid,
             binaryp: req.binaryp,
         };
-        tx.as_executor().po_insert_kfile_meta(meta).await?;
+        tx.po_insert_kfile_meta(meta).await?;
         tx.exec(
             req.body
                 .res

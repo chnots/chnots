@@ -10,12 +10,12 @@ use crate::{
         kfile::{InlineKFile, KFileMeta},
         llmchat::LLMChatRecord,
     },
-    mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRowBehavier},
+    mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRowBehavier, KDbTx},
     model::OtidTableSupport,
 };
 
 // move excalidraw files to graph
-impl KDbExecutor<'_> {
+impl KDbTx<'_> {
     async fn sync_llm_chat_record(&self, history: bool) -> EResult {
         struct ParseType {
             rec: LLMChatRecord,

@@ -9,7 +9,7 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver,
+            HistCreateSql, KDbConnBehaiver, KDbExecutor, KDbRow, KDbTransactionBehaiver, KDbTx,
             helper::{Ddls, print_ddls},
         },
     },
@@ -23,24 +23,11 @@ use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 use chin_sql::{SqlBuilder, Wheres, time_type::TID};
 
 impl KDbExecutor<'_> {
-    async fn po_insert_graph_meta(&self, graph: GraphMeta) -> anyhow::Result<()> {
-        self.po_otid_insert([graph]).await?;
-        Ok(())
-    }
     async fn po_query_graph_meta(&self, otid: TID) -> anyhow::Result<Option<GraphMeta>> {
         let c = self
             .qry_opt(GraphMeta::pkey_reader(otid), |e| (&e).try_into())
             .await?;
         Ok(c)
-    }
-    async fn po_insert_graph_data(&self, graph: GraphData) -> anyhow::Result<()> {
-        self.exec(
-            graph
-                .to_sql_inserter()
-                .on_conflict(chin_sql::OnConflict::Ignore),
-        )
-        .await?;
-        Ok(())
     }
     async fn query_graph_data(
         &self,
@@ -54,6 +41,23 @@ impl KDbExecutor<'_> {
             .await?;
         let c = c.into_iter().map(|e| (e.sid.to_string(), e)).collect();
         Ok(c)
+    }
+}
+
+impl KDbTx<'_> {
+    async fn po_insert_graph_meta(&self, graph: GraphMeta) -> anyhow::Result<()> {
+        self.po_otid_insert([graph]).await?;
+        Ok(())
+    }
+
+    async fn po_insert_graph_data(&self, graph: GraphData) -> anyhow::Result<()> {
+        self.exec(
+            graph
+                .to_sql_inserter()
+                .on_conflict(chin_sql::OnConflict::Ignore),
+        )
+        .await?;
+        Ok(())
     }
 
     pub async fn excalidraw_commit(&self, po: ExcalidrawDataV2Po, otid: TID) -> EResult {
@@ -120,7 +124,7 @@ impl GraphMapper for KDb {
         &self,
         req: KReq<super::ExcalidrawFetchReq>,
     ) -> chin_tools::AResult<super::ExcalidrawFetchRsp> {
-        let conn = self.conn().await?;
+        let mut conn = self.conn().await?;
         let meta = conn.as_executor().po_query_graph_meta(req.otid).await?;
         let Some(meta) = meta else {
             return Ok(ExcalidrawFetchRsp { data: None });
@@ -168,7 +172,7 @@ impl GraphMapper for KDb {
         let po: ExcalidrawDataV2Po = req.body.data.try_into()?;
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor().excalidraw_commit(po, otid).await?;
+        tx.excalidraw_commit(po, otid).await?;
         tx.cmt().await?;
 
         Ok(super::ExcalidrawCommitRsp {})
@@ -209,24 +213,22 @@ impl GraphMapper for KDb {
 
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.as_executor()
-            .po_insert_graph_meta(GraphMeta {
-                otid,
-                // TODO
-                archor: false,
-                kind: super::GraphKind::MindElixirV1,
-                content: serde_json::to_string(&po.meta)?.into(),
-                tid: TID::default(),
+        tx.po_insert_graph_meta(GraphMeta {
+            otid,
+            // TODO
+            archor: false,
+            kind: super::GraphKind::MindElixirV1,
+            content: serde_json::to_string(&po.meta)?.into(),
+            tid: TID::default(),
+        })
+        .await?;
+        for (k, v) in po.data {
+            tx.po_insert_graph_data(GraphData {
+                sid: k.try_into()?,
+                tid: Default::default(),
+                content: v.into(),
             })
             .await?;
-        for (k, v) in po.data {
-            tx.as_executor()
-                .po_insert_graph_data(GraphData {
-                    sid: k.try_into()?,
-                    tid: Default::default(),
-                    content: v.into(),
-                })
-                .await?;
         }
         tx.cmt().await?;
 

@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     mapper::{
         Curd,
-        db::{KDb, KDbBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbTransactionBehaiver},
+        db::{
+            KDb, KDbBehaiver, KDbConn, KDbExecutor, KDbExecutorBehaiver, KDbTransactionBehaiver,
+            KDbTx,
+        },
     },
     model::KSerde,
 };
@@ -157,45 +160,37 @@ pub enum OtidSearchType {
     Both,
 }
 
-impl KDbExecutor<'_> {
+impl KDbConn {
+    #[inline]
+    pub(crate) async fn omit_rows<T: OtidTableSupport>(
+        &mut self,
+        condition: Wheres<'_>,
+    ) -> AResult<usize> {
+        let tx = self.transaction().await?;
+        tx.omit_rows::<T>(condition).await
+    }
+}
+
+impl KDbTx<'_> {
     #[inline]
     pub(crate) async fn omit_rows<T: OtidTableSupport>(
         &self,
         condition: Wheres<'_>,
     ) -> AResult<usize> {
-        let count = self.copy_into_omit_table::<T>(condition.clone()).await?;
         if condition.empty() {
             return Ok(0);
         }
+        let count = self
+            .as_executor()
+            .copy_into_omit_table::<T>(condition.clone())
+            .await?;
+
         if count > 0 {
             let delete_sql = SqlDeleter::new(T::table_name(false)).r#where(condition);
             self.exec(delete_sql).await
         } else {
             Ok(0)
         }
-    }
-
-    #[inline]
-    pub(crate) async fn copy_into_omit_table<T: OtidTableSupport>(
-        &self,
-        condition: Wheres<'_>,
-    ) -> AResult<usize> {
-        if condition.empty() {
-            return Ok(0);
-        }
-        let fields_comma = T::all_columns().join(",");
-        let insert_sql = SqlBuilder::new()
-            .seg(format!(
-                "insert into {}({}) select {} from {}",
-                T::table_name(true),
-                &fields_comma,
-                &fields_comma,
-                T::table_name(false)
-            ))
-            .r#where(condition.clone());
-
-        let count = self.exec(insert_sql).await?;
-        Ok(count)
     }
 
     #[inline]
@@ -216,6 +211,31 @@ impl KDbExecutor<'_> {
                 .await?;
         }
 
+        Ok(count)
+    }
+}
+
+impl KDbExecutor<'_> {
+    #[inline]
+    pub(crate) async fn copy_into_omit_table<T: OtidTableSupport>(
+        &self,
+        condition: Wheres<'_>,
+    ) -> AResult<usize> {
+        if condition.empty() {
+            return Ok(0);
+        }
+        let fields_comma = T::all_columns().join(",");
+        let insert_sql = SqlBuilder::new()
+            .seg(format!(
+                "insert into {}({}) select {} from {}",
+                T::table_name(true),
+                &fields_comma,
+                &fields_comma,
+                T::table_name(false)
+            ))
+            .r#where(condition.clone());
+
+        let count = self.exec(insert_sql).await?;
         Ok(count)
     }
 
@@ -269,14 +289,18 @@ impl KDb {
     {
         let pos = pos.into();
         let mut count = 0;
+        let mut conn = self.conn().await?;
         if pos.len() == 1 {
-            count = self.conn().await?.as_executor().po_otid_insert(pos).await?;
+            let tx: KDbTx<'_> = conn.transaction().await?;
+
+            count = tx.po_otid_insert(pos).await?;
+            tx.cmt().await?;
         } else if !pos.is_empty() {
-            let mut conn = self.conn().await?;
-            let tx = conn.transaction().await?;
-            count = tx.as_executor().po_otid_insert(pos).await?;
+            let tx: KDbTx<'_> = conn.transaction().await?;
+            count = tx.po_otid_insert(pos).await?;
             tx.cmt().await?;
         }
+
         Ok(count)
     }
 
