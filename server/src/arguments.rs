@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser, Default, Debug, Clone)]
-#[command(author = "aeghn", version = "0.1", about = "chnots server")]
+#[command(author = "wzhchin", version = include_str!("../../data/app.version"), about = "chnots server")]
 pub(crate) struct Arguments {
     #[clap(long, short, help = "Config file to read")]
     pub(crate) config: String,
