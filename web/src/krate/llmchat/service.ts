@@ -1,5 +1,7 @@
 import request from "@/lib/request";
 import type {
+  LLMChatBotArchiveReq,
+  LLMChatBotArchiveRsp,
   LLMChatBotListRsp,
   LLMChatSessionCommitReq,
   LLMChatSessionListRsp,
@@ -11,6 +13,12 @@ import type {
 } from "./dto";
 import type { LLMChatBot, LLMChatTemplate } from "./po";
 import type { LLMChatRecordVO, LLMChatSessionRecordFetchRspVO } from "./vo";
+
+export const llmchatBotArchive = async (
+  req: LLMChatBotArchiveReq,
+): Promise<LLMChatBotArchiveRsp> => {
+  return await request.postJson("api/v1/llmchat-bot-archive", req);
+};
 
 export const llmchatBotList = async (): Promise<LLMChatBotListRsp> => {
   return await request.postJson("api/v1/llmchat-bot-list");
@@ -32,9 +40,9 @@ export const llmchatTemplateCommit = async (template: LLMChatTemplate) => {
 };
 
 export const llmchatTemplateArchive = async (
-  template: LLMChatTemplateArchiveReq,
+  req: LLMChatTemplateArchiveReq,
 ) => {
-  return await request.postJson("api/v1/llmchat-template-archive", template);
+  return await request.postJson("api/v1/llmchat-template-archive", req);
 };
 
 export const llmchatBotCommit = async (bot: LLMChatBot) => {

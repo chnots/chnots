@@ -41,7 +41,6 @@ pub struct LLMChatSession {
     pub otid: TID,
     #[gts_type = "i64"]
     pub template_otid: TID,
-    pub title: Varchar<500>,
     pub update_time: Option<DateTime<FixedOffset>>,
     #[gts_unique]
     #[gts_type = "i64"]

@@ -11,6 +11,10 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.47",
+    "@ai-sdk/google": "^3.0.31",
+    "@ai-sdk/openai": "^3.0.34",
+    "@ai-sdk/openai-compatible": "^2.0.30",
     "@codemirror/autocomplete": "catalog:",
     "@codemirror/commands": "catalog:",
     "@codemirror/lang-css": "^6.3.1",
@@ -60,6 +64,7 @@
     "@tauri-apps/plugin-opener": "catalog:",
     "@uiw/react-codemirror": "^4.24.2",
     "@zumer/snapdom": "^1.9.14",
+    "ai": "^6.0.101",
     "axios": "^1.11.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

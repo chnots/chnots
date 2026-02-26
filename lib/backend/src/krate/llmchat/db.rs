@@ -73,7 +73,6 @@ impl TryFrom<&KDbRow> for LLMChatSession {
         let obj = LLMChatSession {
             otid: value.try_get(LLMChatSession::OTID)?,
             template_otid: value.try_get(LLMChatSession::TEMPLATE_OTID)?,
-            title: value.try_get(LLMChatSession::TITLE)?,
             update_time: value.try_get(LLMChatSession::UPDATE_TIME)?,
             tid: value.try_get(LLMChatBot::TID)?,
         };
@@ -104,9 +103,7 @@ impl LLMChatMapper for KDb {
         &self,
         req: KReq<LLMChatSessionCommitReq>,
     ) -> AResult<LLMChatSessionCommitRsp> {
-        let mut session = req.body.session;
-        let s: String = session.title.to_string().chars().take(199).collect();
-        session.title = s.try_into()?;
+        let session = req.body.session;
         self.po_otid_insert([session]).await?;
 
         Ok(LLMChatSessionCommitRsp {})

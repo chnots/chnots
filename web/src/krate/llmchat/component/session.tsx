@@ -14,6 +14,7 @@ import {
   llmchatRecordCommit,
   llmchatSessionCommit,
   llmchatSessionRecordTruncate,
+  llmchatTemplateArchive,
   llmchatTemplateCommit,
 } from "@/krate/llmchat/service";
 import { useLLMChatStore } from "@/krate/llmchat/store";
@@ -52,7 +53,7 @@ export type LLMChatContextState = {
 } & LLMChatContextProps;
 
 function createLLMChatStore(props: LLMChatContextProps) {
-  return createStore<LLMChatContextState>()((set) => ({
+  return createStore<LLMChatContextState>()((set, get) => ({
     ...props,
     responsing: false,
     setSession: (session: LLMChatSession) => {
@@ -108,17 +109,18 @@ function createLLMChatStore(props: LLMChatContextProps) {
       });
     },
     async regenrate(recordOtid) {
-      const session = this.session;
-      if (session && this.records) {
-        if (this.persistedIds.current?.has(recordOtid)) {
+      const self = get();
+      const session = self.session;
+      if (session && self.records) {
+        if (self.persistedIds.current?.has(recordOtid)) {
           await llmchatSessionRecordTruncate({
             session_otid: session.otid,
-            remove_rid_included: recordOtid,
+            remove_otid_included: recordOtid,
           });
         }
         const newRecs: LLMChatRecordVO[] = [];
-        if (this.records) {
-          for (const rec of this.records) {
+        if (self.records) {
+          for (const rec of self.records) {
             if (rec.otid === recordOtid) {
               break;
             }
@@ -126,7 +128,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
           }
         }
         set((prev) => {
-          return { ...prev, responsing: true };
+          return { ...prev, records: newRecs, responsing: true };
         });
       }
     },
@@ -243,6 +245,10 @@ const SessionContainer = ({
   });
 
   const { refreshTemplates, refreshBots } = useLLMChatStore();
+  const [editingTemplate, setEditingTemplate] = useState<
+    LLMChatTemplate | undefined
+  >(undefined);
+
   useEffect(() => {
     refreshTemplates();
     refreshBots();
@@ -395,7 +401,20 @@ const SessionContainer = ({
                 setTemplate(template);
               }}
               onNew={(): void => {
+                setEditingTemplate(undefined);
                 setShowTemplateForm(true);
+              }}
+              onEditTemplate={(template) => {
+                setEditingTemplate(template);
+                setShowTemplateForm(true);
+              }}
+              onDeleteTemplate={async (template) => {
+                if (confirm("Are you sure you want to delete this template?")) {
+                  await llmchatTemplateArchive({
+                    template_otid: template.otid,
+                  });
+                  await refreshTemplates();
+                }
               }}
             />
           </div>
@@ -411,6 +430,7 @@ const SessionContainer = ({
       )}
       {showTemplateForm && (
         <TemplateForm
+          template={editingTemplate}
           onSubmit={async (data: LLMChatTemplate): Promise<boolean> => {
             try {
               const _ = await llmchatTemplateCommit(data);
@@ -419,10 +439,12 @@ const SessionContainer = ({
               return false;
             } finally {
               setShowTemplateForm(false);
+              setEditingTemplate(undefined);
             }
           }}
           onClose={() => {
             setShowTemplateForm(false);
+            setEditingTemplate(undefined);
           }}
         />
       )}

@@ -25,7 +25,7 @@ export type LLMChatSessionRecordFetchRsp = {
 
 export type LLMChatSessionTruncateReq = {
   session_otid: TID;
-  remove_rid_included: TID;
+  remove_otid_included: TID;
 };
 
 export type LLMChatBotCommitReq = {
@@ -61,7 +61,7 @@ export type LLMChatSessionListReq = {
 };
 
 export type LLMChatSessionRecordTruncateReq = {
-  remove_rid_included: TID;
+  remove_otid_included: TID;
   session_otid: TID;
 };
 

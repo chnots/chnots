@@ -1,12 +1,12 @@
-import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { streamText } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type {
-  LLMChatBot,
-  LLMChatBotBodyOpenAIV1,
-  LLMChatSession,
-} from "@/krate/llmchat/po";
+import type { LLMChatBot, LLMChatSession } from "@/krate/llmchat/po";
+import {
+  createLLMProvider,
+  parseBotBody,
+} from "@/krate/llmchat/provider-manager";
 import type { LLMChatRecordVO } from "@/krate/llmchat/vo";
 import { genTID, type TID } from "@/lib/id_util";
 
@@ -61,7 +61,7 @@ export const useLLMResponse = ({
   const [responseState, setResponseState] = useState<ResponseState>(
     emptyResponse(session, bot),
   );
-  const abortSignal = useRef<AbortController>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const doPostResponse = useCallback(async () => {
     if (
@@ -71,7 +71,6 @@ export const useLLMResponse = ({
       return;
     }
 
-    // Work for some local llm service, like Ollama, VLLM
     let ended = false;
     if (responseState.reasoningContent.length === 0) {
       const content = responseState.content;
@@ -110,11 +109,13 @@ export const useLLMResponse = ({
   }, [responseState]);
 
   const doAbort = useCallback(() => {
-    abortSignal.current?.abort();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setResponseState((prev) => {
       return { ...prev, step: ResponseStep.Aborted };
     });
   }, []);
+
   useEffect(() => {
     return () => {
       doAbort();
@@ -125,80 +126,104 @@ export const useLLMResponse = ({
     setResponseState((prev) => {
       return { ...prev, step: ResponseStep.Answering };
     });
-    const ctrl = new AbortController();
-    abortSignal.current?.abort();
-    abortSignal.current = ctrl;
 
-    const config = JSON.parse(bot.body) as LLMChatBotBodyOpenAIV1;
-    const body = {
-      model: config.model_name,
-      messages: records.map((r) => {
-        return { role: r.role, content: r.body };
-      }),
-      stream: true,
+    abortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const config = parseBotBody(bot.body);
+    const model = createLLMProvider(config);
+
+    const messages = records.map((r) => {
+      let content = r.body;
+      if (r.thinking) {
+        content = `<think${r.thinking}</think${r.body}`;
+      }
+      return {
+        role: r.role as "system" | "user" | "assistant",
+        content,
+      };
+    });
+
+    const runStream = async () => {
+      try {
+        const result = streamText({
+          model,
+          messages,
+          abortSignal: abortController.signal,
+          onError: (error) => {
+            toast.error(`LLM Error: ${error.error}`);
+            setResponseState((prev) => {
+              return {
+                ...prev,
+                step: ResponseStep.Error,
+                reasoningContent: prev.reasoningContent + String(error.error),
+              };
+            });
+          },
+        });
+
+        for await (const part of result.fullStream) {
+          if (abortController.signal.aborted) {
+            break;
+          }
+
+          switch (part.type) {
+            case "text-delta": {
+              setResponseState((prev) => {
+                return {
+                  ...prev,
+                  content: prev.content + part.text,
+                };
+              });
+              break;
+            }
+            case "reasoning-delta": {
+              setResponseState((prev) => {
+                return {
+                  ...prev,
+                  reasoningContent: prev.reasoningContent + part.text,
+                };
+              });
+              break;
+            }
+            case "error": {
+              setResponseState((prev) => {
+                return {
+                  ...prev,
+                  step: ResponseStep.Error,
+                  reasoningContent: prev.reasoningContent + String(part.error),
+                };
+              });
+              break;
+            }
+          }
+        }
+
+        if (!abortController.signal.aborted) {
+          setResponseState((prev) => {
+            return {
+              ...prev,
+              step: ResponseStep.Answered,
+            };
+          });
+        }
+      } catch (err) {
+        if (!abortController.signal.aborted) {
+          toast.error(`Error when ask for llm result. \n ${err}`);
+          setResponseState((prev) => {
+            return {
+              ...prev,
+              step: ResponseStep.Error,
+              reasoningContent: prev.reasoningContent,
+            };
+          });
+        }
+      }
     };
 
-    fetchEventSource(config.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.token}`,
-      },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
-      openWhenHidden: true,
-      onmessage: (msg) => {
-        const text = msg.data;
-        if (text === "[DONE]") {
-          return;
-        }
-        if (text.trim().length === 0) {
-          return;
-        }
-
-        const json = JSON.parse(text);
-        const choices = json.choices as Array<{
-          delta: {
-            content: string | null;
-            reasoning_content: string | undefined | null;
-          };
-        }>;
-        const delta = choices.at(0)?.delta;
-        const content = delta?.content;
-        const reasoningContent = delta?.reasoning_content;
-
-        setResponseState((prev) => {
-          return {
-            ...prev,
-            content: content ? prev.content + content : prev.content,
-            reasoningContent: reasoningContent
-              ? prev.reasoningContent + reasoningContent
-              : prev.reasoningContent,
-          };
-        });
-      },
-      onclose() {
-        setResponseState((prev) => {
-          return {
-            ...prev,
-            step: ResponseStep.Answered,
-          };
-        });
-      },
-      onerror(err) {
-        throw err;
-      },
-    }).catch((err) => {
-      setResponseState((prev) => {
-        return {
-          ...prev,
-          step: ResponseStep.Error,
-          reasoningContent: prev.reasoningContent + err,
-        };
-      });
-      toast.error(`Error when ask for llm result. \n ${err}`);
-    });
-  }, [bot.body, records.map]);
+    runStream();
+  }, [bot.body, records]);
 
   useEffect(() => {
     if (

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot } from "@/krate/llmchat/po";
-import { llmchatBotCommit } from "@/krate/llmchat/service";
+import { llmchatBotArchive, llmchatBotCommit } from "@/krate/llmchat/service";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import type { TID } from "@/lib/id_util";
 import BotForm from "./bot-form";
@@ -23,14 +23,12 @@ const BotComponent = ({
     };
   });
 
-
   const handleSelect = (tid: TID) => {
     const bot = bots.get(tid);
     if (bot) {
       setBot(bot);
     }
   };
-
 
   return (
     <div
@@ -58,7 +56,6 @@ const BotComponent = ({
   );
 };
 
-
 const LLMChatBotSelect = () => {
   const [showBotForm, setShowBotForm] = useState(false);
   const selectedBotRef = useRef<LLMChatBot>(undefined);
@@ -70,7 +67,6 @@ const LLMChatBotSelect = () => {
       setBot: store.setBot,
     };
   });
-
 
   useEffect(() => {
     if (!bot) {
@@ -84,7 +80,7 @@ const LLMChatBotSelect = () => {
     return (
       <div
         role="none"
-        className="w-full flex justify-between text-xs border py-1 px-2 items-center rounded-md cursor-pointer"
+        className="w-full flex justify-start text-xs border py-1 px-2 items-center rounded-md cursor-pointer"
         onClick={() => {
           selectedBotRef.current = undefined;
           setShowBotForm(true);
@@ -96,10 +92,18 @@ const LLMChatBotSelect = () => {
     );
   };
 
-
   const handleSubmit = useCallback(
     async (bot: LLMChatBot) => {
       await llmchatBotCommit(bot);
+      await refreshBots();
+      return true;
+    },
+    [refreshBots],
+  );
+
+  const handleDelete = useCallback(
+    async (bot: LLMChatBot) => {
+      await llmchatBotArchive({ bot_otid: bot.otid });
       await refreshBots();
       return true;
     },
@@ -146,6 +150,7 @@ const LLMChatBotSelect = () => {
         <BotForm
           onSubmit={handleSubmit}
           onClose={handleClose}
+          onDelete={handleDelete}
           bot={selectedBotRef.current}
         />
       )}
