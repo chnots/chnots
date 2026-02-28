@@ -127,6 +127,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
             newRecs.push(rec);
           }
         }
+        console.log("regenerate: ", newRecs);
         set((prev) => {
           return { ...prev, records: newRecs, responsing: true };
         });

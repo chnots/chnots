@@ -46,11 +46,6 @@ export const RecordAnswering = ({
     records,
   });
 
-  const onAbort =
-    response.step === ResponseStep.Answering
-      ? () => setAnswerCtl(ResponseCtl.Abort)
-      : undefined;
-
   useEffect(() => {
     if (setResponsing) {
       setResponsing((response && response.step !== ResponseStep.End) ?? false);
@@ -127,17 +122,19 @@ export const RecordAnswering = ({
         viewMode={false}
         isAnimating={true}
       />
-      <div className="flex justify-center">
-        <KButton
-          onClick={onAbort}
-          className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors flex mb-6"
-          aria-label="Abort"
-          tabIndex={0}
-        >
-          <Icon.Square className="h-4 w-4 text-gray-700" />
-          <span>Stop Generate</span>
-        </KButton>
-      </div>
+      {response.step === ResponseStep.Answering && (
+        <div className="flex justify-center">
+          <KButton
+            onClick={() => setAnswerCtl(ResponseCtl.Abort)}
+            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors flex mb-6"
+            aria-label="Abort"
+            tabIndex={0}
+          >
+            <Icon.Square className="h-4 w-4 text-gray-700" />
+            <span>Stop Generate</span>
+          </KButton>
+        </div>
+      )}
     </>
   );
 };

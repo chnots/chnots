@@ -2,7 +2,11 @@ import { streamText } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { LLMChatBot, LLMChatSession } from "@/krate/llmchat/po";
+import type {
+  LLMChatBot,
+  LLMChatRecord,
+  LLMChatSession,
+} from "@/krate/llmchat/po";
 import {
   createLLMProvider,
   parseBotBody,
@@ -34,11 +38,15 @@ export type ResponseState = {
   content: string;
 };
 
-const emptyResponse = (session: LLMChatSession, bot: LLMChatBot) => {
+const emptyResponse = (
+  session: LLMChatSession,
+  bot: LLMChatBot,
+  records: LLMChatRecordVO[],
+) => {
   return {
     tid: genTID(),
     step: ResponseStep.Initial,
-    prevRecordId: session.otid,
+    prevRecordId: records.at(-1)?.otid ?? undefined,
     sessionId: session.otid,
     roleId: bot.otid,
     content: "",
@@ -59,7 +67,7 @@ export const useLLMResponse = ({
     undefined,
   );
   const [responseState, setResponseState] = useState<ResponseState>(
-    emptyResponse(session, bot),
+    emptyResponse(session, bot, records),
   );
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -165,7 +173,7 @@ export const useLLMResponse = ({
 
         for await (const part of result.fullStream) {
           if (abortController.signal.aborted) {
-            break;
+            return;
           }
 
           switch (part.type) {
@@ -235,11 +243,11 @@ export const useLLMResponse = ({
       answerCtl === ResponseCtl.Trigger &&
       responseState.step !== ResponseStep.Answering
     ) {
-      setResponseState(emptyResponse(session, bot));
+      setResponseState(emptyResponse(session, bot, records));
       doResponse();
     }
     setAnswerCtl(undefined);
-  }, [session, bot, answerCtl, responseState, doAbort, doResponse]);
+  }, [session, bot, records, answerCtl, responseState, doAbort, doResponse]);
 
   useEffect(() => {
     if (
