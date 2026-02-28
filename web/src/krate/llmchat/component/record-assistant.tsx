@@ -1,7 +1,12 @@
+import { code } from "@streamdown/code";
+import { createMathPlugin } from "@streamdown/math";
 import type React from "react";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Streamdown } from "streamdown";
+import "katex/dist/katex.min.css";
+
+const math = createMathPlugin({ singleDollarTextMath: true });
+
 import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot, LLMChatTemplate } from "@/krate/llmchat/po";
@@ -20,6 +25,7 @@ const RecordCommon = ({
   buttons,
   limitHeight,
   viewMode,
+  isAnimating,
 }: {
   timestamp: string;
   name: string;
@@ -27,6 +33,7 @@ const RecordCommon = ({
   buttons?: React.ReactNode;
   limitHeight?: boolean;
   viewMode: boolean;
+  isAnimating?: boolean;
 } & Omit<LLMChatRecordVO, "role">) => {
   const onCopy = () => {
     navigator.clipboard.writeText(body);
@@ -49,9 +56,12 @@ const RecordCommon = ({
               "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2 p-2 border rounded-tr-2xl my-2 text-sm kc-inactive"
             }
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <Streamdown
+              plugins={{ code, math }}
+              isAnimating={isAnimating ?? false}
+            >
               {thinking}
-            </ReactMarkdown>
+            </Streamdown>
           </div>
         )}
         <div
@@ -59,7 +69,12 @@ const RecordCommon = ({
             "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
           }
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+          <Streamdown
+            plugins={{ code, math }}
+            isAnimating={isAnimating ?? false}
+          >
+            {body}
+          </Streamdown>
         </div>
       </div>
     </RecordFrame>
@@ -156,10 +171,12 @@ const RecordAssistant = ({
   session_otid,
   tid,
   viewMode,
+  isAnimating,
 }: {
   logo?: string;
   timestamp: string;
   viewMode: boolean;
+  isAnimating?: boolean;
 } & Omit<LLMChatRecordVO, "role">) => {
   const { bots } = useLLMChatStore();
   const { onRegenrate } = useLLMChatComStore((store) => {
@@ -195,6 +212,7 @@ const RecordAssistant = ({
       body={body}
       thinking={thinking}
       tid={tid}
+      isAnimating={isAnimating}
       buttons={
         <RecordButton
           onClick={(): void => {

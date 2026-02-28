@@ -125,6 +125,7 @@ export const RecordAnswering = ({
         tid={genTID()}
         timestamp={new Date(otid.current / 1e3).toISOString()}
         viewMode={false}
+        isAnimating={true}
       />
       <div className="flex justify-center">
         <KButton
