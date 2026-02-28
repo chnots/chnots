@@ -38,12 +38,7 @@ pub fn run() {
             }
 
             tauri::async_runtime::spawn(async move {
-                match chnots_core::run(config).await {
-                    Ok(_) => {}
-                    Err(err) => {
-                        println!("unable to start {err:?}")
-                    }
-                }
+                chnots_core::run(config).await.unwrap();
             });
             Ok(())
         })
