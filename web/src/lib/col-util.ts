@@ -8,7 +8,7 @@ export function arraysAreEqual<T>(
   }
 
   for (let i = 0; i < arr1.length; i++) {
-    if (arr1[i] !== arr2[i] || (compare && compare(arr1[i], arr2[i]))) {
+    if (compare ? !compare(arr1[i], arr2[i]) : arr1[i] !== arr2[i]) {
       return false;
     }
   }

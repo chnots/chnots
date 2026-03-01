@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/common/component/ui/sidebar";
 import UnderConstructionPage from "@/common/pages/under-construction-page";
-import ChnotSingleMain from "../component/layout/main";
+import ChnotMain from "../component/layout/main";
 import ChnotSidebar from "../component/layout/sidebar";
 
 /**
@@ -13,7 +13,7 @@ const ChnotPage = () => {
   return (
     <SidebarProvider>
       <ChnotSidebar />
-      <ChnotSingleMain className="w-full h-screen" />
+      <ChnotMain className="w-full h-screen" />
     </SidebarProvider>
   );
 };

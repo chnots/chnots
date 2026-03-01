@@ -22,7 +22,11 @@ import { mdwtRecordList } from "@/krate/mdwt/service";
 import { arraysAreEqual } from "@/lib/col-util";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../../po";
-import { chnotThreadMetaFetch, chnotThreadOrderArchive, chnotThreadOrderCommit } from "../../../service";
+import {
+  chnotThreadMetaFetch,
+  chnotThreadOrderArchive,
+  chnotThreadOrderCommit,
+} from "../../../service";
 import MdwtChnot from "../mdwt";
 import MdwtChnotSelector from "../mdwt-chnot-selector";
 import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
@@ -82,6 +86,54 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
 
   useEffect(() => {
     (async () => {
+      try {
+        const rsp = await chnotThreadMetaFetch({
+          otid: threadOtid,
+        });
+
+        const chnotOtids: SavedChnotOrder[] = rsp.chnot_meta_sorted.map(
+          (cm) => {
+            return {
+              otid: cm.meta.otid,
+              chnotKind: cm.meta.kind,
+              closed: cm.closed,
+              type: OrderType.Manual,
+            };
+          },
+        );
+
+        savedChnotOrdersRef.current = chnotOtids.map((e) => ({
+          ...e,
+          saved: true,
+        }));
+
+        const mdwtMap = await mdwtRecordList({
+          mdwt_otids: [
+            ...savedChnotOrdersRef.current.map((e) => e.otid),
+            threadOtid,
+          ],
+        });
+        if (chnotOtids.length > 0) {
+          setChnotOrders(savedChnotOrdersRef.current);
+          setMdwtMap(mdwtMap.mdwt_map);
+        } else {
+          setChnotOrders([
+            {
+              otid: genTID(),
+              type: OrderType.Manual,
+              closed: false,
+              saved: false,
+            },
+          ]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [threadOtid]);
+
+  useEffect(() => {
+    (async () => {
       const toSaveChnotOrderOtids: ManualChnotOrder[] = chnotOrders
         .filter((e) => e.type === OrderType.Manual)
         .filter((e) => e.saved);
@@ -116,8 +168,8 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
-      await onPostSave({ ...arg, kind: ChnotKind.ThreadV1,  });
-      console.debug("thread post save", arg.otid);
+      console.info("thread post save", arg.otid);
+      await onPostSave({ ...arg, kind: ChnotKind.ThreadV1 });
     },
     [onPostSave],
   );
@@ -172,63 +224,21 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
     });
   }, []);
 
-  const handleRemoveBlock = useCallback(async (otid: TID | string) => {
-    if (typeof otid === "number") {
-      await chnotThreadOrderArchive({
+  const handleRemoveBlock = useCallback(
+    async (otid: TID | string) => {
+      if (typeof otid === "number") {
+        await chnotThreadOrderArchive({
           thread_otid: threadOtid,
-          otids: [otid]
-      });
-    }
-    setChnotOrders((prev) => {
-      const retained = prev.filter((e) => e.otid !== otid);
-      return retained;
-    });
-  }, [threadOtid]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const rsp = await chnotThreadMetaFetch({
-          otid: threadOtid,
+          otids: [otid],
         });
-
-        const chnotOtids: SavedChnotOrder[] = rsp.chnot_meta_sorted.map(
-          (cm) => {
-            return {
-              otid: cm.meta.otid,
-              chnotKind: cm.meta.kind,
-              closed: cm.closed,
-              type: OrderType.Manual,
-            };
-          },
-        );
-
-        savedChnotOrdersRef.current = chnotOtids.map((e) => ({
-          ...e,
-          saved: true,
-        }));
-
-        const mdwtMap = await mdwtRecordList({
-          mdwt_otids: [...savedChnotOrdersRef.current.map((e) => e.otid), threadOtid],
-        });
-        if (chnotOtids.length > 0) {
-          setChnotOrders(savedChnotOrdersRef.current);
-          setMdwtMap(mdwtMap.mdwt_map);
-        } else {
-          setChnotOrders([
-            {
-              otid: genTID(),
-              type: OrderType.Manual,
-              closed: false,
-              saved: false,
-            },
-          ]);
-        }
-      } finally {
-        setLoading(false);
       }
-    })();
-  }, [threadOtid]);
+      setChnotOrders((prev) => {
+        const retained = prev.filter((e) => e.otid !== otid);
+        return retained;
+      });
+    },
+    [threadOtid],
+  );
 
   const handleSearchAdd = useCallback(
     async (old: string, otid: TID, kind: ChnotKind) => {

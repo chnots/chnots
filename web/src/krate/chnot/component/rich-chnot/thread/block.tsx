@@ -61,9 +61,13 @@ const SortableRichBlock = ({
     opacity: isDragging || isItemDragging ? 0.5 : 1,
   };
 
-  useEffect(() => {
-    onToggleClosed(index, closed);
-  }, [onToggleClosed, closed, index]);
+  const handleToggleCloses = useCallback(
+    (closed: boolean) => {
+      setClosed(closed);
+      onToggleClosed(index, closed);
+    },
+    [onToggleClosed, index],
+  );
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg, manualSaveTitle?: boolean) => {
@@ -143,7 +147,7 @@ const SortableRichBlock = ({
             </div>
             <button
               type="button"
-              onClick={() => setClosed((prev) => !prev)}
+              onClick={() => handleToggleCloses(!closed)}
               className="p-1  hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
               title="Remove"
             >

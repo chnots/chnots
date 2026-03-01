@@ -112,6 +112,8 @@ impl ChnotMapper for KDb {
             remove_others,
         } = req.body;
 
+        let remove_others = remove_others.unwrap_or_default();
+
         let cto = ChnotThreadOrderTable::new("cto");
         let cto_otid = cto.otid().field_name();
         let korder_name = cto.korder().field_name();
@@ -155,17 +157,17 @@ impl ChnotMapper for KDb {
         let mut to_remove_list: Vec<TID> = vec![];
         saved_orders.into_iter().for_each(|saved_otid_and_order| {
             let to_save_otid_and_order = to_save_map.get(&saved_otid_and_order.otid);
-            if to_save_otid_and_order.is_none_or(|data| data != &saved_otid_and_order) {
+            if to_save_otid_and_order.is_some_and(|data| data != &saved_otid_and_order) {
+                to_remove_list.push(saved_otid_and_order.otid);
+            } else if to_save_otid_and_order.is_none() && remove_others {
                 to_remove_list.push(saved_otid_and_order.otid);
             } else {
                 to_save_map.remove(&saved_otid_and_order.otid);
             }
         });
 
-        if remove_others.unwrap_or_default() {
-            tx.omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
-                .await?;
-        }
+        tx.omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
+            .await?;
 
         let mut metas = vec![];
 

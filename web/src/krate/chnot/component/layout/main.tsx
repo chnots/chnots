@@ -6,7 +6,7 @@ import { useChnotStore } from "../../store";
 import { ChnotBodyMemo } from "./body";
 import ChnotHeadbar from "./header";
 
-const ChnotSingleMain = ({ className }: { className?: string }) => {
+const ChnotMain = ({ className }: { className?: string }) => {
   const { getMeta, setChangeCompCurOtid, setCurOtid } = useChnotStore((s) => {
     return {
       getMeta: s.getMeta,
@@ -50,4 +50,4 @@ const ChnotSingleMain = ({ className }: { className?: string }) => {
   );
 };
 
-export default ChnotSingleMain;
+export default ChnotMain;
