@@ -377,7 +377,11 @@ impl ChnotMapper for KDb {
             } else {
                 Wheres::None
             },
-            cm.archive_tid().v_is_null(),
+            if !req.with_archive() {
+                cm.archive_tid().v_is_null()
+            } else {
+                Wheres::None
+            },
         ]);
 
         let sr = SqlReader::read(cm.all_fields(), joins)
