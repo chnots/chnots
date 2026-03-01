@@ -59,6 +59,7 @@
     "@replit/codemirror-indentation-markers": "^6.5.3",
     "@streamdown/code": "^1.0.3",
     "@streamdown/math": "^1.0.2",
+    "@streamdown/mermaid": "^1.0.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/postcss": "^4.1.11",
     "@tanstack/react-table": "^8.21.3",

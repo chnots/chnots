@@ -1,5 +1,6 @@
 import { code } from "@streamdown/code";
 import { createMathPlugin } from "@streamdown/math";
+import { mermaid } from "@streamdown/mermaid";
 import type React from "react";
 import { useState } from "react";
 import { Streamdown } from "streamdown";
@@ -57,7 +58,7 @@ const RecordCommon = ({
             }
           >
             <Streamdown
-              plugins={{ code, math }}
+              plugins={{ code, math, mermaid }}
               isAnimating={isAnimating ?? false}
             >
               {thinking}
@@ -70,7 +71,7 @@ const RecordCommon = ({
           }
         >
           <Streamdown
-            plugins={{ code, math }}
+            plugins={{ code, math, mermaid }}
             isAnimating={isAnimating ?? false}
           >
             {body}
