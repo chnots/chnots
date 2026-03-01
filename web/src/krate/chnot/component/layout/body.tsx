@@ -31,9 +31,9 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     };
   });
 
-  const { overwrite, setCurOtid, getMeta } = useChnotStore((s) => {
+  const { overwritePart, setCurOtid, getMeta } = useChnotStore((s) => {
     return {
-      overwrite: s.overwrite,
+      overwritePart: s.overwritePart,
       setCurOtid: s.setCurOtid,
       getMeta: s.getMeta,
     };
@@ -57,14 +57,15 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       const savedMeta = getMeta(otid);
       const savedTitle = savedMeta?.title;
 
+      let title ;
       if (
         arg.title &&
-        arg.title.length > 0 &&
-        arg.title !== savedTitle &&
-        (!savedTitle || savedTitle.startsWith(GEN_TITLE))
+          arg.title.length > 0 &&
+          arg.title !== savedTitle &&
+          (!savedTitle || savedTitle.startsWith(GEN_TITLE))
       ) {
-        const title = GEN_TITLE + arg.title;
-        if (arg.kind !== ChnotKind.MDWT) {
+        title = GEN_TITLE + arg.title;
+        if (arg.kind !== ChnotKind.MDWT && arg.kind !== ChnotKind.ThreadV1) {
           await mdwtCommit({
             mdwt: {
               otid: arg.otid,
@@ -72,22 +73,21 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
             },
           });
         }
-        overwrite({
-          meta: meta,
-          title: title,
-        });
       }
+
       if (
-        saveStateRef.current === SaveState.Initial &&
-        arg.kind &&
         arg.saveState === SaveState.Saved
       ) {
         await chnotMetaCommit({ metas: [meta] });
+        overwritePart(meta.otid, {
+          meta: meta,
+          title: savedMeta ? title : title ? title : "<undefined>"
+        })
         saveStateRef.current = arg.saveState;
         setCurOtid(otid);
       }
     },
-    [kspace, overwrite, setCurOtid],
+    [kspace, overwritePart, setCurOtid],
   );
 
   const props = useMemo(() => {

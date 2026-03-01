@@ -51,7 +51,6 @@ interface ChnotStore {
   changeCompCurOtid?: (otid?: TID) => void;
 
   getMeta(otid: TID): ChnotSearchRspData | undefined;
-  overwrite(chnot: ChnotSearchRspData): void;
   overwritePart(otid: TID, chnot: Partial<ChnotSearchRspData>): void;
   setCurOtid(cutOtid?: TID): void;
   unvalidate(toRemoves: TID[]): void;
@@ -138,11 +137,10 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
   overwrite: (chnot: ChnotSearchRspData) => {
     set((state) => {
       const cmm = state.mapByOtid;
-      let dbCache = cmm.cache;
+      const dbCache = cmm.cache;
       if (dbCache.has(chnot.meta.otid)) {
         dbCache.set(chnot.meta.otid, chnot);
       } else {
-        dbCache = insertMapAtIndex(0, chnot.meta.otid, chnot, dbCache);
       }
       return {
         ...state,
@@ -160,13 +158,31 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
     set((state) => {
       const cmm = state.mapByOtid;
       const dbCache = cmm.cache;
-      const meta = dbCache.get(otid);
-      if (meta) {
-        dbCache.set(otid, { ...meta, ...chnot });
+      const saved = dbCache.get(otid);
+      if (saved) {
+        if (!chnot.title && chnot.meta) {
+          dbCache.set(otid, { ...saved, meta: chnot.meta });
+        } else if (!chnot.meta && chnot.title) {
+          dbCache.set(otid, { ...saved, title: chnot.title });
+        } else if (chnot.meta && chnot.title) {
+          dbCache.set(otid, { title: chnot.title, meta: chnot.meta });
+        }
+
         return {
           ...state,
           mapByOtid: {
             cache: dbCache,
+            nextStartIn: cmm.nextStartIn,
+            pageSize: cmm.pageSize,
+            hasMore: cmm.hasMore,
+          },
+        };
+      } else if (chnot.meta && chnot.title) {
+        const cache = insertMapAtIndex(0, chnot.meta.otid, { meta: chnot.meta, title: chnot.title }, dbCache);
+        return {
+          ...state,
+          mapByOtid: {
+            cache: cache,
             nextStartIn: cmm.nextStartIn + 1,
             pageSize: cmm.pageSize,
             hasMore: cmm.hasMore,
@@ -202,9 +218,9 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
     const toRemove2 = Array.from(
       [...dbCacheMap.values()]
         .filter((e) => {
-          const result = e.meta.kspace === curKSpace;
-          return !result;
-        })
+        const result = e.meta.kspace === curKSpace;
+        return !result;
+      })
         .map((e) => e.meta.otid),
     );
 
@@ -222,7 +238,7 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
       ...prev,
       mapByOtid: cmm,
       curOtid:
-        prev.curOtid && dbCacheMap.has(prev.curOtid) ? prev.curOtid : undefined,
+                prev.curOtid && dbCacheMap.has(prev.curOtid) ? prev.curOtid : undefined,
     }));
   },
 }));

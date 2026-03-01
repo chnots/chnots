@@ -115,8 +115,9 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
   }, [otid, chnotOrders]);
 
   const handlePostSave = useCallback(
-    async (arg: PostSaveArg, title?: string) => {
-      await onPostSave({ ...arg, kind: ChnotKind.ThreadV1, title: title });
+    async (arg: PostSaveArg) => {
+      await onPostSave({ ...arg, kind: ChnotKind.ThreadV1,  });
+      console.debug("thread post save", arg.otid);
     },
     [onPostSave],
   );

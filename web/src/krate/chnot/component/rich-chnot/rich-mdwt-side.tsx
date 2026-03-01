@@ -27,7 +27,7 @@ export type RichPropProps = {
   readonly?: boolean;
   fullscreen: boolean;
   onSetFullscreen?: (flag: boolean) => void;
-  onPostSave: (arg: PostSaveArg) => void;
+  onPostSave: (arg: PostSaveArg) => Promise<void>;
 };
 
 const ChnotKindSelector = ({
