@@ -9,6 +9,12 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .build(),
+            )?;
+
             let dir = app
                 .path()
                 .app_data_dir()
@@ -28,12 +34,6 @@ pub fn run() {
                     base_dir: dir.join("attach").to_string_lossy().to_string().into(),
                 },
             };
-
-            app.handle().plugin(
-                tauri_plugin_log::Builder::default()
-                    .level(log::LevelFilter::Info)
-                    .build(),
-            )?;
 
             tauri::async_runtime::spawn(async move {
                 chnots_core::run(config).await.unwrap();
