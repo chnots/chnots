@@ -427,13 +427,13 @@ impl ChnotMapper for KDb {
         &self,
         req: KReq<ChnotThreadOrderArchiveReq>,
     ) -> AResult<ChnotThreadOrderArchiveRsp> {
-        let cto = ChnotThreadOrderTable::new("cto");
-        let mut conn = self.conn().await?;
-        conn.omit_rows::<ChnotThreadOrder>(Wheres::and([
-            cto.thread_otid().v_eq(req.thread_otid),
-            cto.otid().v_in(req.body.otids),
-        ]))
-        .await?;
+        self.conn()
+            .await?
+            .omit_rows::<ChnotThreadOrder>(Wheres::and([
+                Wheres::equal(ChnotThreadOrder::THREAD_OTID, req.thread_otid),
+                Wheres::r#in(ChnotThreadOrder::OTID, req.body.otids),
+            ]))
+            .await?;
 
         Ok(ChnotThreadOrderArchiveRsp {})
     }
