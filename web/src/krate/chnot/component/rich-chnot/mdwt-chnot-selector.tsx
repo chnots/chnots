@@ -16,13 +16,18 @@ import { chnotSearch } from "../../service";
 
 const MdwtChnotSelector = ({
   onSelect,
+  excludeList,
 }: {
   onSelect: (otid: TID, kind: ChnotKind) => void;
+  excludeList: { otid: TID }[];
 }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ChnotSearchRspData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const excludeOtids = useRef<Set<TID>>(
+    new Set(excludeList.map((e) => e.otid)),
+  );
 
   const handleSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
@@ -40,8 +45,10 @@ const MdwtChnotSelector = ({
       };
 
       const response = await chnotSearch(req);
-      console.log("data: ", response.data);
-      setResults(response.data);
+
+      setResults(
+        response.data.filter((e) => !excludeOtids.current.has(e.meta.otid)),
+      );
     } catch (error) {
       console.error("Error searching chnots:", error);
       setResults([]);

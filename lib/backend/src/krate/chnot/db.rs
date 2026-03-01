@@ -50,7 +50,7 @@ impl<'a> QueryContentTable<'a> {
 
             let llmchat = SqlReader::read(
                 (
-                    lcr.otid().with_alias(QueryContent::CHNOT_OTID),
+                    lcr.session_otid().with_alias(QueryContent::CHNOT_OTID),
                     lcr.content().with_alias(QueryContent::CONTENT),
                 ),
                 &lcr,
@@ -354,11 +354,6 @@ impl ChnotMapper for KDb {
                     conds: [(query_constraint.chnot_otid(), cm.otid()).into()].into(),
                 },
             )
-            .join(JoinTable {
-                join_type: JoinType::LeftJoin,
-                table: (&mr).into(),
-                conds: [(mr.otid(), cm.otid()).into()].into(),
-            })
             .join_if(
                 !search_every_chnot,
                 JoinTable {
@@ -378,14 +373,14 @@ impl ChnotMapper for KDb {
                 }
             }),
             if !search_every_chnot {
-                cto.otid().v_is_null()
+                Wheres::or([cto.otid().v_is_null(), cm.kind().v_eq(ChnotKind::ThreadV1)])
             } else {
                 Wheres::None
             },
             cm.archive_tid().v_is_null(),
         ]);
 
-        let sr = SqlReader::read((cm.all_fields(), mr.content()), joins)
+        let sr = SqlReader::read(cm.all_fields(), joins)
             .wheres(where_clause)
             .order_by([
                 OrderBy::Desc(
@@ -400,7 +395,8 @@ impl ChnotMapper for KDb {
             ])
             .build2();
 
-        self.conn()
+        let metas: PageRsp<ChnotMeta> = self
+            .conn()
             .await?
             .page_read(
                 sr,
@@ -409,20 +405,52 @@ impl ChnotMapper for KDb {
                     offset: req.start_index.into(),
                 },
                 |row| {
-                    Ok(ChnotSearchRspData {
-                        meta: ChnotMeta {
-                            otid: row.try_get(ChnotMeta::OTID)?,
-                            kspace: row.try_get(ChnotMeta::KSPACE)?,
-                            pin_tid: row.try_get(ChnotMeta::PIN_TID)?,
-                            archive_tid: row.try_get(ChnotMeta::ARCHIVE_TID)?,
-                            tid: row.try_get(ChnotMeta::TID)?,
-                            kind: row.try_get(ChnotMeta::KIND)?,
-                        },
-                        title: row.try_get(MdwtRecord::CONTENT)?,
+                    Ok(ChnotMeta {
+                        otid: row.try_get(ChnotMeta::OTID)?,
+                        kspace: row.try_get(ChnotMeta::KSPACE)?,
+                        pin_tid: row.try_get(ChnotMeta::PIN_TID)?,
+                        archive_tid: row.try_get(ChnotMeta::ARCHIVE_TID)?,
+                        tid: row.try_get(ChnotMeta::TID)?,
+                        kind: row.try_get(ChnotMeta::KIND)?,
                     })
                 },
             )
-            .await
+            .await?;
+
+        let titles: Vec<(TID, String)> = if metas.data.len() > 0 {
+            self.conn()
+                .await?
+                .qry_list(
+                    SqlReader::read((mr.content(), mr.otid()), &mr)
+                        .wheres(
+                            mr.otid()
+                                .v_in(metas.data.iter().map(|e| e.otid).collect::<Vec<_>>()),
+                        )
+                        .build2(),
+                    |row| {
+                        let otid = row.try_get(MdwtRecord::OTID)?;
+                        let content = row.try_get(MdwtRecord::CONTENT)?;
+                        Ok((otid, content))
+                    },
+                )
+                .await?
+        } else {
+            vec![]
+        };
+        let mut titiles: HashMap<TID, String> = titles.into_iter().collect();
+
+        Ok(PageRsp {
+            data: metas
+                .data
+                .into_iter()
+                .map(|m| ChnotSearchRspData {
+                    title: titiles.remove(&m.otid),
+                    meta: m,
+                })
+                .collect(),
+            has_next: metas.has_next,
+            next_start: metas.next_start,
+        })
     }
 
     async fn chnot_thread_order_archive(

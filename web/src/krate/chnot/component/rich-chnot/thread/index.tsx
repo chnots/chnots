@@ -374,6 +374,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                           typeof order.otid === "string" &&
                           handleSearchAdd(order.otid, tOtid, kind)
                         }
+                        excludeList={savedChnotOrdersRef.current}
                       />
                     </React.Fragment>
                   );
