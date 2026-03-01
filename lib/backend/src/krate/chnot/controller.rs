@@ -18,6 +18,10 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/chnot-thread-order-commit",
             post(chnot_thread_order_commit),
         )
+        .route(
+            "/api/v1/chnot-thread-order-archive",
+            post(chnot_thread_order_archive),
+        )
         .route("/api/v1/chnot-search", post(chnot_search))
 }
 
@@ -27,11 +31,21 @@ async fn chnot_thread_order_commit(
     Json(req): Json<ChnotThreadOrderCommitReq>,
 ) -> KResponse<ChnotThreadOrderCommitRsp> {
     state
-        .chnot_overwrite_thread_orders(kreq(headers, req))
+        .chnot_thread_order_commit(kreq(headers, req))
         .await
         .into()
 }
 
+async fn chnot_thread_order_archive(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ChnotThreadOrderArchiveReq>,
+) -> KResponse<ChnotThreadOrderArchiveRsp> {
+    state
+        .chnot_thread_order_archive(kreq(headers, req))
+        .await
+        .into()
+}
 async fn chnot_meta_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,

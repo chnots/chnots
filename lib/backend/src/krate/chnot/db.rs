@@ -11,8 +11,8 @@ use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier, KDbTransactionBehaiver,
     PageReader,
 };
-use crate::model::KSerde;
 use crate::model::dto::{KReq, PageRsp};
+use crate::model::{KSerde, OtidTableSupport};
 use crate::util::string_util::StringUtils;
 use chin_sql::str_type::Text;
 use chin_sql::time_type::TID;
@@ -100,7 +100,7 @@ impl ChnotMapper for KDb {
         .await
     }
 
-    async fn chnot_overwrite_thread_orders(
+    async fn chnot_thread_order_commit(
         &self,
         req: KReq<ChnotThreadOrderCommitReq>,
     ) -> AResult<ChnotThreadOrderCommitRsp> {
@@ -109,6 +109,7 @@ impl ChnotMapper for KDb {
         let ChnotThreadOrderCommitReq {
             thread_otid,
             orders,
+            remove_others,
         } = req.body;
 
         let cto = ChnotThreadOrderTable::new("cto");
@@ -161,8 +162,10 @@ impl ChnotMapper for KDb {
             }
         });
 
-        tx.omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
-            .await?;
+        if remove_others.unwrap_or_default() {
+            tx.omit_rows::<ChnotThreadOrder>(Wheres::r#in(ChnotThreadOrder::OTID, to_remove_list))
+                .await?;
+        }
 
         let mut metas = vec![];
 
@@ -190,7 +193,7 @@ impl ChnotMapper for KDb {
     ) -> AResult<ChnotThreadMetaFetchRsp> {
         let conn = self.conn().await?;
 
-        let metas = conn
+        let mut metas = conn
             .qry_list(
                 SqlBuilder::read(
                     ChnotMeta::TABLE,
@@ -220,15 +223,39 @@ impl ChnotMapper for KDb {
                 },
             )
             .await?;
-        /*         let toents = conn
-        .qry_list(
-        SqlBuilder::read_all(MdwtToent::TABLE).r#where(Wheres::equal(
-        MdwtToent::CHNOT_OTID,
-        req.chnot_meta_otid,
-        )),
-        |row| MdwtToent::try_from(&row),
-         )
-         .await?; */
+        if req.include_hist.unwrap_or_default() {
+            let metas_hist = conn
+                .qry_list(
+                    SqlBuilder::read(
+                        ChnotMeta::TABLE,
+                        &[
+                            format!("{}.*", ChnotMeta::TABLE).as_str(),
+                            ChnotThreadOrder::CLOSED,
+                        ],
+                    )
+                    .seg(format!(
+                        " left join {} on {}.{} = {}.{} ",
+                        ChnotThreadOrder::table_name(true),
+                        ChnotMeta::TABLE,
+                        ChnotMeta::OTID,
+                        ChnotThreadOrder::table_name(true),
+                        ChnotThreadOrder::OTID
+                    ))
+                    .r#where(Wheres::and([Wheres::equal(
+                        ChnotThreadOrder::THREAD_OTID.prefix_with_sep(ChnotThreadOrder::TABLE, "."),
+                        req.otid,
+                    )]))
+                    .order_by([OrderBy::Asc(ChnotThreadOrder::KORDER.into())]),
+                    |row| {
+                        Ok(ChnotThreadMetaFetchRspData {
+                            meta: ChnotMeta::try_from(&row)?,
+                            closed: row.try_get(ChnotThreadOrder::CLOSED)?,
+                        })
+                    },
+                )
+                .await?;
+            metas.extend(metas_hist)
+        }
 
         Ok(ChnotThreadMetaFetchRsp {
             chnot_meta_sorted: metas,
@@ -394,5 +421,20 @@ impl ChnotMapper for KDb {
                 },
             )
             .await
+    }
+
+    async fn chnot_thread_order_archive(
+        &self,
+        req: KReq<ChnotThreadOrderArchiveReq>,
+    ) -> AResult<ChnotThreadOrderArchiveRsp> {
+        let cto = ChnotThreadOrderTable::new("cto");
+        let conn = self.conn().await?;
+        conn.omit_rows::<ChnotThreadOrder>(Wheres::and([
+            cto.thread_otid().v_eq(req.thread_otid),
+            cto.otid().v_in(req.body.otids),
+        ]))
+        .await?;
+
+        Ok(ChnotThreadOrderArchiveRsp {})
     }
 }

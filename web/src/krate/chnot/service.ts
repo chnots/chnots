@@ -9,6 +9,8 @@ import type {
   ChnotSearchRspData,
   ChnotThreadMetaFetchReq,
   ChnotThreadMetaFetchRsp,
+  ChnotThreadOrderArchiveReq,
+  ChnotThreadOrderArchiveRsp,
   ChnotThreadOrderCommitReq,
   ChnotThreadOrderCommitRsp,
 } from "./dto";
@@ -38,6 +40,13 @@ export async function chnotThreadOrderCommit(
   req: ChnotThreadOrderCommitReq,
 ): Promise<ChnotThreadOrderCommitRsp> {
   return await request.postJson(`api/v1/chnot-thread-order-commit`, req);
+}
+
+
+export async function chnotThreadOrderArchive(
+  req: ChnotThreadOrderArchiveReq,
+): Promise<ChnotThreadOrderArchiveRsp> {
+  return await request.postJson(`api/v1/chnot-thread-order-archive`, req);
 }
 
 export const chnotThreadMetaFetch = async (

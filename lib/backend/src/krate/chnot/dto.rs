@@ -21,6 +21,7 @@ pub struct ChnotThreadOrderCommitReqData {
 pub struct ChnotThreadOrderCommitReq {
     pub thread_otid: TID,
     pub orders: Vec<ChnotThreadOrderCommitReqData>,
+    pub remove_others: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,6 +84,7 @@ impl ChnotSearchReq {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchReq {
     pub otid: TID,
+    pub include_hist: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -94,4 +96,13 @@ pub struct ChnotThreadMetaFetchRspData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChnotThreadMetaFetchRsp {
     pub chnot_meta_sorted: Vec<ChnotThreadMetaFetchRspData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotThreadOrderArchiveRsp {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChnotThreadOrderArchiveReq {
+    pub thread_otid: TID,
+    pub otids: Vec<TID>,
 }

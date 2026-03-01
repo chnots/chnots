@@ -22,7 +22,7 @@ import { mdwtRecordList } from "@/krate/mdwt/service";
 import { arraysAreEqual } from "@/lib/col-util";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../../po";
-import { chnotThreadMetaFetch, chnotThreadOrderCommit } from "../../../service";
+import { chnotThreadMetaFetch, chnotThreadOrderArchive, chnotThreadOrderCommit } from "../../../service";
 import MdwtChnot from "../mdwt";
 import MdwtChnotSelector from "../mdwt-chnot-selector";
 import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
@@ -61,7 +61,7 @@ type ChnotOrder = ManualChnotOrder | { type: OrderType.Search; otid: string };
  * - Maintain State
  *   - Just edit and save that chnot.
  */
-const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
+const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
   const savedChnotOrdersRef = useRef<ManualChnotOrder[]>([]);
   const [chnotOrders, setChnotOrders] = useState<ChnotOrder[]>([]);
   const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
@@ -99,12 +99,12 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
         )
       ) {
         await handlePostSave({
-          otid: otid,
+          otid: threadOtid,
           saveState: SaveState.Saved,
           kind: ChnotKind.ThreadV1,
         });
         await chnotThreadOrderCommit({
-          thread_otid: otid,
+          thread_otid: threadOtid,
           orders: toSaveChnotOrderOtids.map((e) => {
             return { otid: e.otid, closed: e.closed };
           }),
@@ -112,7 +112,7 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
         savedChnotOrdersRef.current = toSaveChnotOrderOtids;
       }
     })();
-  }, [otid, chnotOrders]);
+  }, [threadOtid, chnotOrders]);
 
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
@@ -172,18 +172,24 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
     });
   }, []);
 
-  const handleRemoveBlock = useCallback((otid: TID | string) => {
+  const handleRemoveBlock = useCallback(async (otid: TID | string) => {
+    if (typeof otid === "number") {
+      await chnotThreadOrderArchive({
+          thread_otid: threadOtid,
+          otids: [otid]
+      });
+    }
     setChnotOrders((prev) => {
-      const removed = prev.filter((e) => e.otid !== otid);
-      return removed;
+      const retained = prev.filter((e) => e.otid !== otid);
+      return retained;
     });
-  }, []);
+  }, [threadOtid]);
 
   useEffect(() => {
     (async () => {
       try {
         const rsp = await chnotThreadMetaFetch({
-          otid: otid,
+          otid: threadOtid,
         });
 
         const chnotOtids: SavedChnotOrder[] = rsp.chnot_meta_sorted.map(
@@ -203,7 +209,7 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
         }));
 
         const mdwtMap = await mdwtRecordList({
-          mdwt_otids: [...savedChnotOrdersRef.current.map((e) => e.otid), otid],
+          mdwt_otids: [...savedChnotOrdersRef.current.map((e) => e.otid), threadOtid],
         });
         if (chnotOtids.length > 0) {
           setChnotOrders(savedChnotOrdersRef.current);
@@ -222,7 +228,7 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
         setLoading(false);
       }
     })();
-  }, [otid]);
+  }, [threadOtid]);
 
   const handleSearchAdd = useCallback(
     async (old: string, otid: TID, kind: ChnotKind) => {
@@ -268,7 +274,7 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
         }),
       );
     },
-    [chnotOrders, otid],
+    [chnotOrders, threadOtid],
   );
 
   const handleToggleClosed = useCallback(
@@ -297,10 +303,10 @@ const ChnotThread = ({ otid, onPostSave }: RichPropProps) => {
               <Icon.Heading className="w-6 h-6" />
             </div>
             <MdwtChnot
-              otid={otid}
+              otid={threadOtid}
               fullscreen={false}
               onPostSave={handlePostSave}
-              content={mdwtMap[otid]?.content ?? ""}
+              content={mdwtMap[threadOtid]?.content ?? ""}
               placeholder="Thread Title"
             />
           </div>

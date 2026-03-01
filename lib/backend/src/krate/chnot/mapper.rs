@@ -10,7 +10,7 @@ use super::*;
 pub trait ChnotMapper {
     async fn chnot_meta_commit(&self, req: KReq<ChnotMetaCommitReq>)
     -> AResult<ChnotMetaCommitRsp>;
-    async fn chnot_overwrite_thread_orders(
+    async fn chnot_thread_order_commit(
         &self,
         req: KReq<ChnotThreadOrderCommitReq>,
     ) -> AResult<ChnotThreadOrderCommitRsp>;
@@ -22,6 +22,11 @@ pub trait ChnotMapper {
         &self,
         req: KReq<ChnotThreadMetaFetchReq>,
     ) -> AResult<ChnotThreadMetaFetchRsp>;
+
+    async fn chnot_thread_order_archive(
+        &self,
+        req: KReq<ChnotThreadOrderArchiveReq>,
+    ) -> AResult<ChnotThreadOrderArchiveRsp>;
 
     async fn ensure_table_chnot(&self) -> EResult;
     async fn chnot_meta_list(&self, req: KReq<ChnotMetaListReq>) -> AResult<ChnotMetaListRsp>;
@@ -46,11 +51,11 @@ impl ChnotMapper for MapperType {
         expand_mt_branch!(self.chnot_thread_meta_fetch(req))
     }
 
-    async fn chnot_overwrite_thread_orders(
+    async fn chnot_thread_order_commit(
         &self,
         req: KReq<ChnotThreadOrderCommitReq>,
     ) -> AResult<ChnotThreadOrderCommitRsp> {
-        expand_mt_branch!(self.chnot_overwrite_thread_orders(req))
+        expand_mt_branch!(self.chnot_thread_order_commit(req))
     }
 
     async fn chnot_meta_commit(
@@ -62,5 +67,12 @@ impl ChnotMapper for MapperType {
 
     async fn chnot_meta_list(&self, req: KReq<ChnotMetaListReq>) -> AResult<ChnotMetaListRsp> {
         expand_mt_branch!(self.chnot_meta_list(req))
+    }
+
+    async fn chnot_thread_order_archive(
+        &self,
+        req: KReq<ChnotThreadOrderArchiveReq>,
+    ) -> AResult<ChnotThreadOrderArchiveRsp> {
+        expand_mt_branch!(self.chnot_thread_order_archive(req))
     }
 }
