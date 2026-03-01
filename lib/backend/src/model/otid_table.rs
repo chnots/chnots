@@ -167,7 +167,9 @@ impl KDbConn {
         condition: Wheres<'_>,
     ) -> AResult<usize> {
         let tx = self.transaction().await?;
-        tx.omit_rows::<T>(condition).await
+        let c = tx.omit_rows::<T>(condition).await?;
+        tx.cmt().await?;
+        Ok(c)
     }
 }
 
