@@ -1,12 +1,19 @@
 import { SaveState } from "@/common/types";
-import { CommonKFile } from "@/krate/kfile/components/common-kfile";
-import type { RichPropProps } from "./rich-mdwt-side";
+import { KFileViewer } from "@/krate/kfile/components";
 import { ChnotKind } from "../../po";
+import type { RichPropProps } from "./rich-mdwt-side";
+import Fullscreen from "./fullscreen";
 
-const KFileChnot = ({ otid, onPostSave }: RichPropProps) => {
+const KFileChnot = ({
+  otid,
+  fullscreen,
+  readonly,
+  onPostSave,
+  onSetFullscreen,
+}: RichPropProps) => {
   return (
     <div>
-      <CommonKFile
+      <KFileViewer
         otid={otid}
         onPostSave={(f) => {
           onPostSave({
@@ -17,6 +24,21 @@ const KFileChnot = ({ otid, onPostSave }: RichPropProps) => {
           });
         }}
       />
+      {fullscreen && (
+        <Fullscreen onSetFullscreen={onSetFullscreen}>
+          <KFileViewer
+            otid={otid}
+            onPostSave={(f) => {
+              onPostSave({
+                otid,
+                saveState: SaveState.Saved,
+                title: f.filename,
+                kind: ChnotKind.KFileV1,
+              });
+            }}
+          />
+        </Fullscreen>
+      )}
     </div>
   );
 };

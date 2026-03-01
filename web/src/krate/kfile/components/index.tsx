@@ -1,0 +1,153 @@
+import { useCallback, useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { kfileMetaFetch, kfileUpload } from "@/krate/kfile/service";
+import { genUID, type TID } from "@/lib/id_util";
+import type { KFileMeta } from "../po";
+import { CommonKFile } from "./common-kfile";
+import { ImageKFile, isImageFile } from "./image-kfile";
+
+type KFileViewerProps = {
+  otid: TID;
+  onPostSave?: (r: KFileMeta) => void;
+};
+
+export const KFileViewer = ({ otid, onPostSave }: KFileViewerProps) => {
+  const [progress, setProgress] = useState(0);
+  const [uploadFile, setUploadFile] = useState<File | undefined>(undefined);
+  const [kfile, setKFile] = useState<KFileMeta | undefined>(undefined);
+  const [isDragging, setIsDragging] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (otid) {
+      kfileMetaFetch({ req_id: { Otid: otid } }).then(({ meta }) => {
+        setKFile(meta);
+      });
+    }
+  }, [otid]);
+
+  const uploadFileInChunks = async () => {
+    if (!uploadFile) {
+      alert("Please select a file to upload");
+      return;
+    }
+
+    const chunkSize = 1 * 1024 * 1024;
+    const totalChunks = Math.ceil(uploadFile.size / chunkSize);
+    let currentChunk = Number(localStorage.getItem(uploadFile.name)) || 0;
+    const uploadId = genUID();
+
+    setProgress(0);
+
+    while (currentChunk < totalChunks) {
+      const start = currentChunk * chunkSize;
+      const end = Math.min(start + chunkSize, uploadFile.size);
+      const chunk = uploadFile.slice(start, end);
+
+      try {
+        const { kfile } = await kfileUpload({
+          upload_id: uploadId,
+          chunk,
+          filename: uploadFile.name,
+          chunk_no: currentChunk,
+          total_chunks: totalChunks,
+          meta_id: uploadId,
+          content_type: uploadFile.type,
+          filesize: uploadFile.size,
+          last_modified: uploadFile.lastModified,
+          otid: otid,
+          binaryp: true,
+        });
+
+        if (kfile) {
+          if (onPostSave) {
+            onPostSave(kfile);
+          }
+          setKFile(kfile);
+          setUploadFile(undefined);
+        }
+
+        currentChunk++;
+        localStorage.setItem(uploadFile.name, currentChunk.toString());
+        setProgress(
+          parseInt(((currentChunk / totalChunks) * 100).toFixed(0), 10),
+        );
+      } catch (_error) {
+        alert("An error occurred during upload.");
+        return;
+      }
+    }
+
+    localStorage.removeItem(uploadFile.name);
+  };
+
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        setUploadFile(file);
+        setProgress(0);
+      }
+    },
+    [],
+  );
+
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(true);
+    },
+    [],
+  );
+
+  const handleDragLeave = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(false);
+    },
+    [],
+  );
+
+  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      setUploadFile(file);
+      setProgress(0);
+    }
+  }, []);
+
+  const handleSelectFile = useCallback(() => {
+    document.getElementById("file-input")?.click();
+  }, []);
+
+  if (kfile && isImageFile(kfile.filename, kfile.content_type)) {
+    return (
+      <>
+        <input
+          id="file-input"
+          type="file"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <ImageKFile kfile={kfile} onReplace={handleSelectFile} />
+      </>
+    );
+  }
+
+  return (
+    <CommonKFile
+      kfile={kfile}
+      uploadFile={uploadFile}
+      progress={progress}
+      isDragging={isDragging}
+      isMobile={isMobile}
+      onFileChange={handleFileChange}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onUpload={uploadFileInChunks}
+    />
+  );
+};
