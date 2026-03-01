@@ -7,9 +7,9 @@ import SessionContainer, {
 import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import type { TID } from "@/lib/id_util";
+import { ChnotKind } from "../../po";
 import Fullscreen from "./fullscreen";
 import type { RichPropProps } from "./rich-mdwt-side";
-import { ChnotKind } from "../../po";
 
 const LLMChatChnot = ({
   otid,
@@ -67,11 +67,10 @@ const LLMChatChnot = ({
         {fullscreen ? (
           <Fullscreen onSetFullscreen={onSetFullscreen}>
             <SessionContainer
-              onPostSave={(s) => {
-                onPostSave({
+              onPostSave={async (s) => {
+                await onPostSave({
                   otid,
                   saveState: SaveState.Saved,
-                  title: s.title,
                   kind: ChnotKind.LLMChat,
                 });
               }}
@@ -85,11 +84,10 @@ const LLMChatChnot = ({
             ) : (
               <SessionContainer
                 readonly={false}
-                onPostSave={(s) => {
-                  onPostSave({
+                onPostSave={async (s) => {
+                  await onPostSave({
                     otid,
                     saveState: SaveState.Saved,
-                    title: s.title,
                     kind: ChnotKind.LLMChat,
                   });
                 }}

@@ -148,7 +148,6 @@ export const newTemplateSession = (
   const session: LLMChatSession = {
     otid: sessionOtid || genTID(),
     template_otid: template.otid,
-    title: "Untitled",
     tid: genTID(),
   };
 
@@ -278,8 +277,6 @@ const SessionContainer = ({
       ) {
         const pids = persistedIds.current;
         if (!pids.has(session.otid)) {
-          // As the first record is always system template.
-          session.title = records[1].body.substring(0, 400);
           await llmchatSessionCommit({
             session: session,
           });

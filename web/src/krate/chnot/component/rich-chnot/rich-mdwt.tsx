@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useStateWithRef } from "@/hooks/use-state-ref";
 import { cachedChnotMapByOtid } from "@/krate/chnot/store";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { arraysAreEqual } from "@/lib/col-util";
@@ -7,7 +8,6 @@ import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import { chnotMetaList } from "../../service";
 import MdwtChnot from "./mdwt";
-import { useStateWithRef } from "@/hooks/use-state-ref";
 import RichChnot, { type PostSaveArg } from "./rich-mdwt-side";
 
 const parseChnotsFromContent = (content: string): TID[] => {
@@ -30,7 +30,7 @@ const RichMdwt = ({
   readonly,
   content: initialContent,
 }: {
-  onPostSave: (arg: PostSaveArg) => void;
+  onPostSave: (arg: PostSaveArg) => Promise<void>;
   otid: TID;
   readonly?: boolean;
   content?: string;

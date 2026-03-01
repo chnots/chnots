@@ -1,7 +1,9 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReadableTID from "@/common/component/chnot-read-tid";
 import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
 import { mdwtCommit } from "@/krate/mdwt/service";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../../po";
@@ -10,13 +12,11 @@ import { ChnotKindIcon } from "../../kind-icon";
 import ExcalidrawChnot from "../excalidraw";
 import KFileChnot from "../kfile";
 import LLMChatChnot from "../llmchat";
+import MdwtChnot from "../mdwt";
 import MindMapChnot from "../mindmap";
 import RichMdwt from "../rich-mdwt";
 import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
 import TableChnot from "../table";
-import ReadableTID from "@/common/component/chnot-read-tid";
-import { GEN_TITLE } from "@/krate/mdwt/constaints";
-import MdwtChnot from "../mdwt";
 
 const SortableRichBlock = ({
   otid,
@@ -41,7 +41,7 @@ const SortableRichBlock = ({
   saveState?: SaveState;
   onAddBlock: (position: number, find: boolean) => void;
   onRemoveBlock: (otid: string | TID) => void;
-  onPostSave: (arg: PostSaveArg) => void;
+  onPostSave: (arg: PostSaveArg) => Promise<void>;
   onToggleClosed: (index: number, closed: boolean) => void;
   isDragging?: boolean;
 }) => {
@@ -231,8 +231,8 @@ const SortableRichBlock = ({
           <MdwtChnot
             otid={props.otid}
             fullscreen={false}
-            onPostSave={(arg) => {
-              handlePostSave({ ...arg, kind: kind }, true);
+            onPostSave={async (arg) => {
+              await handlePostSave({ ...arg, kind: kind }, true);
             }}
             content={content.replace(GEN_TITLE, "")}
           />

@@ -12,8 +12,8 @@ import ExcalidrawChnot from "./excalidraw";
 import KFileChnot from "./kfile";
 import LLMChatChnot from "./llmchat";
 import MdwtChnot from "./mdwt";
-import TableChnot from "./table";
 import MindMapChnot from "./mindmap";
+import TableChnot from "./table";
 
 export type PostSaveArg = {
   otid: TID;
@@ -86,8 +86,8 @@ const RichChnot = ({
     otid: otid,
     readonly: readonly,
     fullscreen,
-    onPostSave: (arg: PostSaveArg) => {
-      handlePostSave(arg);
+    onPostSave: async (arg: PostSaveArg) => {
+      await handlePostSave(arg);
     },
     onSetFullscreen: (flag: boolean) => {
       setFullscreen(flag);

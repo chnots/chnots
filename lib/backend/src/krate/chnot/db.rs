@@ -428,7 +428,7 @@ impl ChnotMapper for KDb {
         req: KReq<ChnotThreadOrderArchiveReq>,
     ) -> AResult<ChnotThreadOrderArchiveRsp> {
         let cto = ChnotThreadOrderTable::new("cto");
-        let conn = self.conn().await?;
+        let mut conn = self.conn().await?;
         conn.omit_rows::<ChnotThreadOrder>(Wheres::and([
             cto.thread_otid().v_eq(req.thread_otid),
             cto.otid().v_in(req.body.otids),
