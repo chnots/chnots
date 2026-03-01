@@ -1,7 +1,7 @@
 use crate::app::ShareAppState;
 use crate::controller::KResponse;
 use crate::krate::mdwt::mapper::MdwtMapper;
-use crate::model::dto::{kreq, read_kspace_from_header};
+use crate::model::dto::kreq;
 use axum::{Json, Router, extract::State, http::HeaderMap, routing::post};
 
 use super::*;
@@ -47,6 +47,6 @@ async fn mdwt_tag_name_list(
     state.mdwt_tag_name_list(kreq(headers, req)).await.into()
 }
 
-async fn mdwt_tag_refresh(headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
+async fn mdwt_tag_refresh(_headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state.mdwt_tag_refresh().await.into()
 }

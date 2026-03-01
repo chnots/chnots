@@ -124,7 +124,7 @@ impl GraphMapper for KDb {
         &self,
         req: KReq<super::ExcalidrawFetchReq>,
     ) -> chin_tools::AResult<super::ExcalidrawFetchRsp> {
-        let mut conn = self.conn().await?;
+        let conn = self.conn().await?;
         let meta = conn.as_executor().po_query_graph_meta(req.otid).await?;
         let Some(meta) = meta else {
             return Ok(ExcalidrawFetchRsp { data: None });

@@ -14,8 +14,7 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutor, KDbExecutorBehaiver, KDbRow,
-            KDbRowBehavier, KDbTx,
+            KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier, KDbTx,
             helper::{Ddls, create_tables},
             kdb::KDbTransactionBehaiver,
         },

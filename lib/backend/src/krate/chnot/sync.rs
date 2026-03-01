@@ -12,7 +12,11 @@ use crate::{
 };
 
 impl ShareAppState {
-    pub async fn dump_chnot_to_file(&self, start_type: StartType, backup_dir: &PathBuf) -> EResult {
+    pub async fn dump_chnot_to_file(
+        &self,
+        _start_type: StartType,
+        _backup_dir: &PathBuf,
+    ) -> EResult {
         Ok(())
     }
 

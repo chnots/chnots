@@ -10,7 +10,7 @@ use crate::{
         kfile::{InlineKFile, KFileMeta},
         llmchat::LLMChatRecord,
     },
-    mapper::db::{KDbExecutor, KDbExecutorBehaiver, KDbRowBehavier, KDbTx},
+    mapper::db::{KDbExecutorBehaiver, KDbRowBehavier, KDbTx},
     model::OtidTableSupport,
 };
 

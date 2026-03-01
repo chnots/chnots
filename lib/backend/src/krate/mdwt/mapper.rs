@@ -1,4 +1,3 @@
-use chin_sql::str_type::Varchar;
 use chin_tools::{AResult, EResult};
 
 use crate::{MapperType, expand_mt_branch, model::dto::KReq};
