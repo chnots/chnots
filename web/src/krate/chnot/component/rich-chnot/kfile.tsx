@@ -23,6 +23,7 @@ const KFileChnot = ({
             kind: ChnotKind.KFileV1,
           });
         }}
+        readonly={true}
       />
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>

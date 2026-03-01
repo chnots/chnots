@@ -5,15 +5,19 @@ import { genUID, type TID } from "@/lib/id_util";
 import type { KFileMeta } from "../po";
 import { CommonKFile } from "./common-kfile";
 import { ImageKFile, isImageFile } from "./image-kfile";
-import MermaidKFile, { isMermaidFile } from "./mermaid-kfile";
-import TextKFile from "./text-kfile";
+import TextKFile, { isMermaidFile } from "./text-kfile";
 
 type KFileViewerProps = {
   otid: TID;
   onPostSave?: (r: KFileMeta) => void;
+  readonly?: boolean;
 };
 
-export const KFileViewer = ({ otid, onPostSave }: KFileViewerProps) => {
+export const KFileViewer = ({
+  otid,
+  onPostSave,
+  readonly,
+}: KFileViewerProps) => {
   const [progress, setProgress] = useState(0);
   const [uploadFile, setUploadFile] = useState<File | undefined>(undefined);
   const [kfile, setKFile] = useState<KFileMeta | undefined>(undefined);
@@ -149,32 +153,19 @@ export const KFileViewer = ({ otid, onPostSave }: KFileViewerProps) => {
           onPostSave(kfile);
         }
         setKFile(kfile);
-        setIsTextMode(false);
       }
     },
     [otid, onPostSave],
   );
 
-  if (isTextMode) {
+  if (isTextMode || kfile?.content_type.startsWith("text/")) {
     return (
       <TextKFile
+        kfile={kfile}
         onUpload={handleTextUpload}
         onBack={() => setIsTextMode(false)}
+        readonly={readonly}
       />
-    );
-  }
-
-  if (kfile && isMermaidFile(kfile.content_type)) {
-    return (
-      <>
-        <input
-          id="file-input"
-          type="file"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <MermaidKFile kfile={kfile} onReplace={handleSelectFile} />
-      </>
     );
   }
 
