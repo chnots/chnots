@@ -7,10 +7,7 @@ import { humanFileSize } from "@/lib/unit-utils";
 import type { KFileMeta } from "../po";
 import { handleDownloadUrl } from "./download";
 
-export const isImageFile = (filename: string, contentType?: string) => {
-  const imageExtensions = ["png", "jpg", "jpeg", "gif", "svg", "webp", "bmp"];
-  const extension = filename.split(".").pop()?.toLowerCase() || "";
-  if (imageExtensions.includes(extension)) return true;
+export const isImageFile = (contentType?: string) => {
   if (contentType?.startsWith("image/")) return true;
   return false;
 };
@@ -45,7 +42,7 @@ export const ImageKFile = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  if (!isImageFile(kfile.filename, kfile.content_type)) {
+  if (!isImageFile(kfile.content_type)) {
     return null;
   }
 

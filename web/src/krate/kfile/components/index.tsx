@@ -5,6 +5,8 @@ import { genUID, type TID } from "@/lib/id_util";
 import type { KFileMeta } from "../po";
 import { CommonKFile } from "./common-kfile";
 import { ImageKFile, isImageFile } from "./image-kfile";
+import MermaidKFile, { isMermaidFile } from "./mermaid-kfile";
+import TextKFile from "./text-kfile";
 
 type KFileViewerProps = {
   otid: TID;
@@ -16,6 +18,7 @@ export const KFileViewer = ({ otid, onPostSave }: KFileViewerProps) => {
   const [uploadFile, setUploadFile] = useState<File | undefined>(undefined);
   const [kfile, setKFile] = useState<KFileMeta | undefined>(undefined);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTextMode, setIsTextMode] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -122,7 +125,60 @@ export const KFileViewer = ({ otid, onPostSave }: KFileViewerProps) => {
     document.getElementById("file-input")?.click();
   }, []);
 
-  if (kfile && isImageFile(kfile.filename, kfile.content_type)) {
+  const handleTextUpload = useCallback(
+    async (content: string, contentType: string) => {
+      const uploadId = genUID();
+      const blob = new Blob([content], { type: contentType });
+
+      const { kfile } = await kfileUpload({
+        upload_id: uploadId,
+        chunk: blob,
+        filename: contentType === "text/mermaid" ? "diagram.mmd" : "text.txt",
+        chunk_no: 0,
+        total_chunks: 1,
+        meta_id: uploadId,
+        content_type: contentType,
+        filesize: blob.size,
+        last_modified: Date.now(),
+        otid: otid,
+        binaryp: false,
+      });
+
+      if (kfile) {
+        if (onPostSave) {
+          onPostSave(kfile);
+        }
+        setKFile(kfile);
+        setIsTextMode(false);
+      }
+    },
+    [otid, onPostSave],
+  );
+
+  if (isTextMode) {
+    return (
+      <TextKFile
+        onUpload={handleTextUpload}
+        onBack={() => setIsTextMode(false)}
+      />
+    );
+  }
+
+  if (kfile && isMermaidFile(kfile.content_type)) {
+    return (
+      <>
+        <input
+          id="file-input"
+          type="file"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <MermaidKFile kfile={kfile} onReplace={handleSelectFile} />
+      </>
+    );
+  }
+
+  if (kfile && isImageFile(kfile.content_type)) {
     return (
       <>
         <input
@@ -148,6 +204,7 @@ export const KFileViewer = ({ otid, onPostSave }: KFileViewerProps) => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onUpload={uploadFileInChunks}
+      onTextMode={() => setIsTextMode(true)}
     />
   );
 };

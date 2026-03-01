@@ -4,6 +4,7 @@ import { humanFileSize } from "@/lib/unit-utils";
 import type { KFileMeta } from "../po";
 import { handleDownloadKfile } from "./download";
 import FileNameToIcon from "./filename-to-icon";
+import { FileTextIcon, TypeIcon } from "lucide-react";
 
 type FileLike = {
   name: string;
@@ -39,6 +40,7 @@ type CommonKFileProps = {
   onDragLeave: (event: React.DragEvent<HTMLDivElement>) => void;
   onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   onUpload: () => void;
+  onTextMode?: () => void;
 };
 
 export const CommonKFile = ({
@@ -52,6 +54,7 @@ export const CommonKFile = ({
   onDragLeave,
   onDrop,
   onUpload,
+  onTextMode,
 }: CommonKFileProps) => {
   return (
     <div
@@ -92,6 +95,19 @@ export const CommonKFile = ({
           />
         </div>
       </div>
+      {!kfile && !uploadFile && (
+        <div className="flex flexcol justify-center align-middle h-full border-l pl-5">
+          <div
+            className={
+              "relative group border-1 border-dashed rounded-xl p-8 text-center transition-all duration-300 ease-out cursor-pointer"
+            }
+            role="none"
+            onClick={onTextMode}
+          >
+            <TypeIcon className="w-14 h-14" strokeWidth={1} />
+          </div>
+        </div>
+      )}
 
       {uploadFile && (
         <div className="space-y-2 max-w-1/2 flex flex-col border p-4 rounded-2xl">

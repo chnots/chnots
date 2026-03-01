@@ -430,6 +430,9 @@ importers:
       marked:
         specifier: ^17.0.1
         version: 17.0.1
+      mermaid:
+        specifier: ^11.12.3
+        version: 11.12.3
       mind-elixir:
         specifier: workspace:*
         version: link:../lib/mind-elixir-core
