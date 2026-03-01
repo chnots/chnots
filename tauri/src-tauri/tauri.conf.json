@@ -1,6 +1,6 @@
 {
   "productName": "Chnots",
-  "version": "0.0.115",
+  "version": "0.0.116",
   "identifier": "org.codeberg.wangzh.chnots",
   "build": {
     "frontendDist": "../../web-dist"
