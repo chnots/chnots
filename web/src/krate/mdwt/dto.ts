@@ -21,7 +21,6 @@ export type MdwtTagListReq = {
 export type MdwtTagUpdateReq = {
   content: DbText;
   mdwt_otid: TID;
-  kspace: Varchar<40>;
 };
 
 export type MdwtTagListRsp<T> = {

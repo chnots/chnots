@@ -61,7 +61,6 @@ export type LLMChatTemplate = {
 export type LLMChatSession = {
   otid: TID;
   template_otid: TID;
-  title: Varchar<500>;
   update_time?: Date;
   tid: TID;
 };
