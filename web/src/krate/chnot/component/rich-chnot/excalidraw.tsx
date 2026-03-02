@@ -1,4 +1,7 @@
+import { exportToBlob, exportToSvg } from "@excalidraw/excalidraw";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
 import { SaveState } from "@/common/types";
 import ExcalidrawEditor from "@/krate/graph/excalidraw/component/excalidraw-editor";
 import ExcalidrawPreview from "@/krate/graph/excalidraw/component/excalidraw-preview";
@@ -9,10 +12,10 @@ import {
   saveExcalidraw,
   unionFileSaved,
 } from "@/krate/graph/excalidraw/service";
+import { ChnotKind } from "../../po";
+import { chnotHeadStore } from "../../store";
 import Fullscreen from "./fullscreen";
 import type { RichPropProps } from "./rich-mdwt-side";
-import { ChnotKind } from "../../po";
-import { Button } from "@/common/component/ui/button";
 
 const ExcalidrawChnot = ({
   otid,
@@ -72,6 +75,71 @@ const ExcalidrawChnot = ({
     },
     [otid, onPostSave],
   );
+
+  const handleExportSvg = useCallback(async () => {
+    if (!state?.elements) return;
+    const svg = await exportToSvg({
+      elements: state.elements,
+      appState: state.appState,
+      files: state.files,
+    });
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "excalidraw.svg";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [state]);
+
+  const handleExportPng = useCallback(async () => {
+    if (!state?.elements) return;
+    const blob = await exportToBlob({
+      elements: state.elements,
+      appState: { ...state.appState, exportBackground: true },
+      files: state.files,
+      mimeType: "image/png",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "excalidraw.png";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [state]);
+
+  useEffect(() => {
+    const key = `excalidraw-${otid}`;
+    const headerActions = (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleExportSvg}
+          disabled={!state?.elements}
+          title="Export SVG"
+        >
+          <Icon.FileImage />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleExportPng}
+          disabled={!state?.elements}
+          title="Export PNG"
+        >
+          <Icon.Image />
+        </Button>
+      </>
+    );
+
+    chnotHeadStore.getState().registerHeaderActions(key, headerActions);
+
+    return () => {
+      chnotHeadStore.getState().unregisterHeaderActions(key);
+    };
+  }, [otid, state, handleExportSvg, handleExportPng]);
 
   return (
     <div className="w-full flex flex-col">

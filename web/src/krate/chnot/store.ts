@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { create, useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import type { DbCache } from "@/common/store";
@@ -27,6 +28,11 @@ export interface StateChnotLike {
   };
 }
 
+export type HeaderAction = {
+  key: string;
+  actions: ReactNode;
+};
+
 interface ChnotStore {
   /**
    * Current Query Input
@@ -39,6 +45,13 @@ interface ChnotStore {
   setChnotKinds(changeKinds: (kinds?: ChnotKind[]) => ChnotKind[]): void;
   setTagsInset(newType: string[] | undefined): void;
   curOtid?: TID;
+
+  /**
+   * Header Actions - allow child components to register actions in header
+   */
+  headerActions: HeaderAction[];
+  registerHeaderActions: (key: string, actions: ReactNode) => void;
+  unregisterHeaderActions: (key: string) => void;
 
   /**
    * Map by Otid
@@ -67,10 +80,36 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
   kinds: undefined,
   isFetchingNextPage: false,
   curOtid: undefined,
+  headerActions: [],
 
   mapByOtid: emptyCacheMap(),
 
   changeCompCurOtid: undefined,
+
+  registerHeaderActions: (key: string, actions: ReactNode) => {
+    set((state) => {
+      const existing = state.headerActions.find((a) => a.key === key);
+      if (existing) {
+        return {
+          ...state,
+          headerActions: state.headerActions.map((a) =>
+            a.key === key ? { key, actions } : a,
+          ),
+        };
+      }
+      return {
+        ...state,
+        headerActions: [...state.headerActions, { key, actions }],
+      };
+    });
+  },
+
+  unregisterHeaderActions: (key: string) => {
+    set((state) => ({
+      ...state,
+      headerActions: state.headerActions.filter((a) => a.key !== key),
+    }));
+  },
 
   changeSearchStr: async (query?: string) => {
     set((state) => ({ ...state, searchStr: query }));
@@ -178,7 +217,12 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
           },
         };
       } else if (chnot.meta && chnot.title) {
-        const cache = insertMapAtIndex(0, chnot.meta.otid, { meta: chnot.meta, title: chnot.title }, dbCache);
+        const cache = insertMapAtIndex(
+          0,
+          chnot.meta.otid,
+          { meta: chnot.meta, title: chnot.title },
+          dbCache,
+        );
         return {
           ...state,
           mapByOtid: {
@@ -218,9 +262,9 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
     const toRemove2 = Array.from(
       [...dbCacheMap.values()]
         .filter((e) => {
-        const result = e.meta.kspace === curKSpace;
-        return !result;
-      })
+          const result = e.meta.kspace === curKSpace;
+          return !result;
+        })
         .map((e) => e.meta.otid),
     );
 
@@ -238,7 +282,7 @@ export const chnotHeadStore = create<ChnotStore>((set, get) => ({
       ...prev,
       mapByOtid: cmm,
       curOtid:
-                prev.curOtid && dbCacheMap.has(prev.curOtid) ? prev.curOtid : undefined,
+        prev.curOtid && dbCacheMap.has(prev.curOtid) ? prev.curOtid : undefined,
     }));
   },
 }));
@@ -250,4 +294,13 @@ export function useChnotStore<S>(selector: (state: ChnotStore) => S) {
       return selector(store);
     }),
   );
+}
+
+export function useRegisterHeaderActions(key: string, actions: ReactNode) {
+  const registerHeaderActions = useChnotStore((s) => s.registerHeaderActions);
+  const unregisterHeaderActions = useChnotStore(
+    (s) => s.unregisterHeaderActions,
+  );
+
+  return { registerHeaderActions, unregisterHeaderActions };
 }

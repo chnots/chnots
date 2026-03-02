@@ -1,19 +1,19 @@
+import { useRef } from "react";
 import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
-import { SidebarTrigger } from "@/common/component/ui/sidebar";
-import type { TID } from "@/lib/id_util";
-import { cn } from "@/lib/utils";
-import { ChnotKind } from "../../po";
-import { useChnotStore } from "../../store";
-import { ChnotKindIcon } from "../kind-icon";
-import { useRef } from "react";
-import { mdwtCommit } from "@/krate/mdwt/service";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/common/component/ui/popover";
+import { SidebarTrigger } from "@/common/component/ui/sidebar";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
+import { mdwtCommit } from "@/krate/mdwt/service";
+import type { TID } from "@/lib/id_util";
+import { cn } from "@/lib/utils";
+import { ChnotKind } from "../../po";
+import { useChnotStore } from "../../store";
+import { ChnotKindIcon } from "../kind-icon";
 
 const ChnotHeadbar = ({
   otid,
@@ -26,10 +26,11 @@ const ChnotHeadbar = ({
   setKind: (kind: ChnotKind) => void;
   className?: string;
 }) => {
-  const { overwritePart, mapByOtid } = useChnotStore((s) => {
+  const { overwritePart, mapByOtid, headerActions } = useChnotStore((s) => {
     return {
       overwritePart: s.overwritePart,
       mapByOtid: s.mapByOtid,
+      headerActions: s.headerActions,
     };
   });
 
@@ -96,6 +97,9 @@ const ChnotHeadbar = ({
           </PopoverContent>
         </Popover>
       )}
+      {headerActions.map((ha) => (
+        <div key={ha.key}>{ha.actions}</div>
+      ))}
     </div>
   );
 };

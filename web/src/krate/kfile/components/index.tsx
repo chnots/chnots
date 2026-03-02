@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { chnotHeadStore } from "@/krate/chnot/store";
 import { kfileMetaFetch, kfileUpload } from "@/krate/kfile/service";
 import { genUID, type TID } from "@/lib/id_util";
 import type { KFileMeta } from "../po";
 import { CommonKFile } from "./common-kfile";
+import { handleDownloadKfile } from "./download";
 import { ImageKFile, isImageFile } from "./image-kfile";
 import TextKFile, { isMermaidFile } from "./text-kfile";
 
@@ -158,6 +162,63 @@ export const KFileViewer = ({
     [otid, onPostSave],
   );
 
+  useEffect(() => {
+    const key = `kfile-${otid}`;
+    const headerActions = (
+      <>
+        <input
+          id="file-input-header"
+          type="file"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => document.getElementById("file-input-header")?.click()}
+          title="Upload file"
+        >
+          <Icon.Upload />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsTextMode(true)}
+          title="Text mode"
+        >
+          <Icon.FileText />
+        </Button>
+        {kfile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDownloadKfile(kfile)}
+            title="Download"
+          >
+            <Icon.Download />
+          </Button>
+        )}
+        {uploadFile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={uploadFileInChunks}
+            disabled={!uploadFile}
+            title="Upload"
+          >
+            <Icon.Save />
+          </Button>
+        )}
+      </>
+    );
+
+    chnotHeadStore.getState().registerHeaderActions(key, headerActions);
+
+    return () => {
+      chnotHeadStore.getState().unregisterHeaderActions(key);
+    };
+  }, [otid, kfile, uploadFile, handleFileChange, uploadFileInChunks]);
+
   if (isTextMode || kfile?.content_type.startsWith("text/")) {
     return (
       <TextKFile
@@ -172,12 +233,6 @@ export const KFileViewer = ({
   if (kfile && isImageFile(kfile.content_type)) {
     return (
       <>
-        <input
-          id="file-input"
-          type="file"
-          onChange={handleFileChange}
-          className="hidden"
-        />
         <ImageKFile kfile={kfile} onReplace={handleSelectFile} />
       </>
     );
@@ -196,6 +251,7 @@ export const KFileViewer = ({
       onDrop={handleDrop}
       onUpload={uploadFileInChunks}
       onTextMode={() => setIsTextMode(true)}
+      hideActionButtons
     />
   );
 };

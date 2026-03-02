@@ -1,10 +1,10 @@
+import { FileTextIcon, TypeIcon } from "lucide-react";
 import RelativeTime from "@/common/component/relative-time";
 import { Button, Button as KButton } from "@/common/component/ui/button";
 import { humanFileSize } from "@/lib/unit-utils";
 import type { KFileMeta } from "../po";
 import { handleDownloadKfile } from "./download";
 import FileNameToIcon from "./filename-to-icon";
-import { FileTextIcon, TypeIcon } from "lucide-react";
 
 type FileLike = {
   name: string;
@@ -41,6 +41,7 @@ type CommonKFileProps = {
   onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   onUpload: () => void;
   onTextMode?: () => void;
+  hideActionButtons?: boolean;
 };
 
 export const CommonKFile = ({
@@ -55,18 +56,21 @@ export const CommonKFile = ({
   onDrop,
   onUpload,
   onTextMode,
+  hideActionButtons = false,
 }: CommonKFileProps) => {
   return (
     <div
       className={`flex ${isMobile ? "flex-col space-y-6" : "flex-row space-x-6"}  p-4 w-full justify-center items-center`}
     >
-      <input
-        id="file-input"
-        type="file"
-        onChange={onFileChange}
-        className="hidden"
-        aria-describedby="file-input-help"
-      />
+      {!hideActionButtons && (
+        <input
+          id="file-input"
+          type="file"
+          onChange={onFileChange}
+          className="hidden"
+          aria-describedby="file-input-help"
+        />
+      )}
 
       <div className="flex flexcol justify-center align-middle h-full">
         <div
@@ -83,9 +87,13 @@ export const CommonKFile = ({
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           role="none"
-          onClick={() => document.getElementById("file-input")?.click()}
+          onClick={() =>
+            !hideActionButtons && document.getElementById("file-input")?.click()
+          }
           onKeyDown={(e) =>
-            e.key === "Enter" && document.getElementById("file-input")?.click()
+            e.key === "Enter" &&
+            !hideActionButtons &&
+            document.getElementById("file-input")?.click()
           }
         >
           <FileNameToIcon
@@ -95,7 +103,7 @@ export const CommonKFile = ({
           />
         </div>
       </div>
-      {!kfile && !uploadFile && (
+      {!kfile && !uploadFile && !hideActionButtons && (
         <div className="flex flexcol justify-center align-middle h-full border-l pl-5">
           <div
             className={
@@ -109,7 +117,7 @@ export const CommonKFile = ({
         </div>
       )}
 
-      {uploadFile && (
+      {uploadFile && !hideActionButtons && (
         <div className="space-y-2 max-w-1/2 flex flex-col border p-4 rounded-2xl">
           <FileInfo
             file={{
@@ -160,7 +168,7 @@ export const CommonKFile = ({
         </div>
       )}
 
-      {kfile && (
+      {kfile && !hideActionButtons && (
         <div className="space-y-2 max-w-1/2 flex flex-row p-4">
           <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">
             <FileInfo

@@ -1,24 +1,26 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Fullscreen from "./fullscreen";
+import { SaveState } from "@/common/types";
 import {
   fetchMindExilir,
   type MindElixirChnotData,
   saveMindExilir,
 } from "@/krate/graph/mind-elixir/service";
-import { SaveState } from "@/common/types";
+import Fullscreen from "./fullscreen";
 import "mind-elixir/style.css";
+import Icon from "@/common/component/icon";
+import { Button } from "@/common/component/ui/button";
 import MindElixirReact, {
-  type MindElixirReactProps,
   type MindElixirData,
+  type MindElixirReactProps,
   type MindElixirReactRef,
 } from "@/krate/graph/mind-elixir";
-import { BASE_URL } from "@/lib/request";
+import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
 import { kfileUpload } from "@/krate/kfile/service";
 import { genTID, genUID } from "@/lib/id_util";
-import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
-import type { RichPropProps } from "./rich-mdwt-side";
+import { BASE_URL } from "@/lib/request";
 import { ChnotKind } from "../../po";
-import { Button } from "@/common/component/ui/button";
+import { chnotHeadStore } from "../../store";
+import type { RichPropProps } from "./rich-mdwt-side";
 
 const MindMapChnot = ({
   otid,
@@ -95,6 +97,64 @@ const MindMapChnot = ({
     },
     [onSetFullscreen],
   );
+
+  const handleExportPng = useCallback(() => {
+    const instance = mindELixirRef.current?.instance;
+    if (!instance) return;
+    instance.exportPng().then((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mindmap.png";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }, []);
+
+  const handleExportSvg = useCallback(() => {
+    const instance = mindELixirRef.current?.instance;
+    if (!instance) return;
+    const blob = instance.exportSvg();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mindmap.svg";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  useEffect(() => {
+    const key = `mindmap-${otid}`;
+    const headerActions = (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleExportSvg}
+          disabled={!data}
+          title="Export SVG"
+        >
+          <Icon.FileImage />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleExportPng}
+          disabled={!data}
+          title="Export PNG"
+        >
+          <Icon.Image />
+        </Button>
+      </>
+    );
+
+    chnotHeadStore.getState().registerHeaderActions(key, headerActions);
+
+    return () => {
+      chnotHeadStore.getState().unregisterHeaderActions(key);
+    };
+  }, [otid, data, handleExportSvg, handleExportPng]);
 
   const options = useMemo<MindElixirReactProps>(() => {
     return {
