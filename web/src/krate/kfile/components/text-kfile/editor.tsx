@@ -1,6 +1,7 @@
 import { EditorView } from "@codemirror/view";
+import useResizeObserver from "@react-hook/resize-observer";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { forwardRef } from "react";
+import { forwardRef, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type TextEditorProps = {
@@ -22,45 +23,38 @@ export const TextEditor = forwardRef<ReactCodeMirrorRef, TextEditorProps>(
     },
     ref,
   ) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [height, setHeight] = useState<number | undefined>(undefined);
+
+    useLayoutEffect(() => {
+      if (containerRef.current) {
+        setHeight(containerRef.current.clientHeight);
+      }
+    }, []);
+
+    useResizeObserver(containerRef, (entry) => {
+      setHeight(entry.contentRect.height);
+    });
+
     return (
-      <>
-        <CodeMirror
-          value={value}
-          extensions={[EditorView.lineWrapping]}
-          onChange={onChange}
-          ref={ref}
-          basicSetup={{
-            lineNumbers: showLineNumbers,
-            highlightActiveLineGutter: showLineNumbers,
-            foldGutter: true,
-            closeBrackets: true,
-          }}
-          placeholder={placeholder}
-          className={cn("flex-shrink-0", className)}
-        />
-        <div
-          role="none"
-          className="flex-grow cursor-text min-h-0 p-0 m-0"
-          onClick={() => {
-            if (ref && "current" in ref && ref?.current) {
-              const editorView = ref.current.view;
-              if (editorView) {
-                const docLength = editorView.state.doc.length;
-                editorView.dispatch({
-                  selection: { anchor: docLength },
-                  scrollIntoView: true,
-                });
-                editorView.focus();
-              }
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-            }
-          }}
-        />
-      </>
+      <div ref={containerRef} className={cn("h-full", className)}>
+        {height !== undefined && (
+          <CodeMirror
+            value={value}
+            height={`${height}px`}
+            extensions={[EditorView.lineWrapping]}
+            onChange={onChange}
+            ref={ref}
+            basicSetup={{
+              lineNumbers: showLineNumbers,
+              highlightActiveLineGutter: showLineNumbers,
+              foldGutter: true,
+              closeBrackets: true,
+            }}
+            placeholder={placeholder}
+          />
+        )}
+      </div>
     );
   },
 );

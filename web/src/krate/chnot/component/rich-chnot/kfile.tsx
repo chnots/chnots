@@ -12,7 +12,7 @@ const KFileChnot = ({
   onSetFullscreen,
 }: RichPropProps) => {
   return (
-    <div>
+    <div className="w-full h-full">
       <KFileViewer
         otid={otid}
         onPostSave={(f) => {
@@ -23,7 +23,7 @@ const KFileChnot = ({
             kind: ChnotKind.KFileV1,
           });
         }}
-        readonly={true}
+        readonly={readonly}
       />
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>

@@ -157,17 +157,18 @@ export const MermaidText = ({
   }
 
   return (
-    <div className="flex h-full">
-      <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <div className="grid grid-cols-2 h-full min-h-0 divide-x divide-gray-200 dark:divide-gray-700">
+      <div className="min-h-0">
         <TextEditor
           value={content}
           onChange={handleContentChange}
           placeholder="Enter your Mermaid diagram code..."
           ref={codeMirrorRef}
+          className="h-full"
         />
       </div>
 
-      <div className="w-1/2">
+      <div className="min-h-0 overflow-hidden">
         {error ? (
           <div className="h-full overflow-auto p-4">
             <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50 dark:bg-red-900/20 dark:border-red-800">
