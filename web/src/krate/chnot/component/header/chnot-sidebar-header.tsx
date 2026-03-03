@@ -1,7 +1,6 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Search } from "lucide-react";
+import { Hash, Search, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import {
   SidebarGroup,
@@ -86,11 +85,11 @@ const Header = () => {
               }
             }}
           >
-            <Icon.Hash />
+            <Hash />
           </Toggle>
         </div>
         <NavLink to={RoutePaths.Settings} id={"settings"}>
-          <Icon.Settings className="w-4 h-4" />
+          <Settings className="w-4 h-4" />
         </NavLink>
       </div>
       <TagsView />

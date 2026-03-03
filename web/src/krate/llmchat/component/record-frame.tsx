@@ -1,7 +1,7 @@
 import clsx from "clsx";
+import { Copy, Ellipsis } from "lucide-react";
 import type React from "react";
 import { useCallback, useRef, useState } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 
 export const RecordButton = ({
@@ -90,7 +90,7 @@ const RecordFrame = ({
                   });
                 }}
               >
-                <Icon.Ellipsis className="h-4 w-4 text-gray-700" />
+                <Ellipsis className="h-4 w-4 text-gray-700" />
               </RecordButton>
             )}
             <RecordButton
@@ -98,7 +98,7 @@ const RecordFrame = ({
                 handleCopy();
               }}
             >
-              <Icon.Copy />
+              <Copy />
             </RecordButton>
           </div>
         )}

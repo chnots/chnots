@@ -1,5 +1,5 @@
+import { BadgePlus, Captions } from "lucide-react";
 import { useRef } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import {
   Popover,
@@ -47,7 +47,7 @@ const ChnotHeadbar = ({
       <SidebarTrigger />
       <div className="m-1">
         <Button onClick={onNew}>
-          <Icon.BadgePlusIcon />
+          <BadgePlus />
         </Button>
       </div>
       {!meta && (
@@ -83,7 +83,7 @@ const ChnotHeadbar = ({
         >
           <PopoverTrigger asChild>
             <Button>
-              <Icon.Captions />
+              <Captions />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-2" align="start">

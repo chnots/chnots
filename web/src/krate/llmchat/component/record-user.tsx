@@ -1,5 +1,5 @@
+import { Edit3, Save } from "lucide-react";
 import { useState } from "react";
-import Icon from "@/common/component/icon";
 import { Textarea } from "@/common/component/ui/textarea";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
@@ -33,7 +33,7 @@ const RecordUser = ({
               setEditing((prev) => !prev);
             }}
           >
-            <Icon.Edit3 className="h-4 w-4 text-gray-700" />
+            <Edit3 className="h-4 w-4 text-gray-700" />
           </RecordButton>
           {editing && (
             <RecordButton
@@ -45,7 +45,7 @@ const RecordUser = ({
                 });
               }}
             >
-              <Icon.Save className="h-4 w-4 text-gray-700" />
+              <Save className="h-4 w-4 text-gray-700" />
             </RecordButton>
           )}
         </>

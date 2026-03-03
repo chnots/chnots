@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Brain, Earth, Network, RefreshCw } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
@@ -6,7 +7,6 @@ import KSpaceSettings from "@/krate/kspace/component/settings";
 import FixDb from "@/krate/mdwt/component/fix-db";
 import { EndpointSettings } from "@/krate/sync/component/settings";
 import { RoutePaths } from "@/router";
-import Icon from "../component/icon";
 import {
   Sidebar,
   SidebarContent,
@@ -61,7 +61,7 @@ const Settings = () => {
               <div className="w-8 h-8 flex items-center justify-center" />
             </div>
             <NavLink to={RoutePaths.Chnots} id={"chnot"}>
-              <Icon.Brain className="w-4 h-4" />
+              <Brain className="w-4 h-4" />
             </NavLink>
           </div>
         </SidebarHeader>
@@ -74,7 +74,7 @@ const Settings = () => {
                   onClick={() => setSettingsEnum(SettingsEnum.KSpace)}
                   focused={settingsEnum === SettingsEnum.KSpace}
                 >
-                  <Icon.Earth className="w-4 h-4" />
+                  <Earth className="w-4 h-4" />
                   <span>KSpace</span>
                 </SettingsItem>
               </SidebarMenu>
@@ -88,7 +88,7 @@ const Settings = () => {
                   onClick={() => setSettingsEnum(SettingsEnum.Endpoint)}
                   focused={settingsEnum === SettingsEnum.Endpoint}
                 >
-                  <Icon.Network className="w-4 h-4" />
+                  <Network className="w-4 h-4" />
                   <span>Endpoints</span>
                 </SettingsItem>
               </SidebarMenu>
@@ -102,7 +102,7 @@ const Settings = () => {
                   onClick={() => setSettingsEnum(SettingsEnum.FixDb)}
                   focused={settingsEnum === SettingsEnum.FixDb}
                 >
-                  <Icon.RefreshCw className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4" />
                   <span>Fix Database</span>
                 </SettingsItem>
               </SidebarMenu>

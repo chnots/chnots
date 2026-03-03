@@ -1,6 +1,5 @@
-import { MoreHorizontal } from "lucide-react";
+import { Hash, MoreHorizontal, Pin, Trash2, Warehouse } from "lucide-react";
 import React, { type ForwardedRef, memo } from "react";
-import Icon from "@/common/component/icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,12 +21,12 @@ import {
   KSpaceIcon,
   KSpaceSelectDropDownGroup,
 } from "@/krate/kspace/component/kspace-select";
+import { GEN_TITLE } from "@/krate/mdwt/constaints";
 import { chnotShortDate } from "@/lib/date-utils";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import type { ChnotKind } from "../po";
 import { ChnotKindIcon } from "./kind-icon";
-import { GEN_TITLE } from "@/krate/mdwt/constaints";
 
 const ChnotSidebarTagItem = React.forwardRef(
   (
@@ -48,7 +47,7 @@ const ChnotSidebarTagItem = React.forwardRef(
         >
           <div>
             <div className="flex flex-row text-xs m-2 space-x-2">
-              <Icon.Hash className="h-4 w-4 min-w-4 text-green-600" />
+              <Hash className="h-4 w-4 min-w-4 text-green-600" />
               <div className="relative text-xs line-clamp-1 break-all">
                 {tag.replace(/#/, "")}
               </div>
@@ -124,9 +123,7 @@ const ChnotSidebarItem = React.forwardRef(
                 className="h-3.5 w-3.5 text-muted-foreground/60"
               />
             )}
-            {item.meta.pin_tid && (
-              <Icon.Pin className="h-3.5 w-3.5 text-red-900" />
-            )}
+            {item.meta.pin_tid && <Pin className="h-3.5 w-3.5 text-red-900" />}
           </div>
 
           <h3
@@ -153,16 +150,16 @@ const ChnotSidebarItem = React.forwardRef(
             align={isMobile ? "end" : "start"}
           >
             <DropdownMenuItem onClick={() => onTogglePin(item.meta.otid)}>
-              <Icon.Pin className="text-muted-foreground" />
+              <Pin className="text-muted-foreground" />
               <span>Pin</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onArchive(item.meta.otid)}>
-              <Icon.Trash2 className="text-muted-foreground" />
+              <Trash2 className="text-muted-foreground" />
               <span>Archive</span>
             </DropdownMenuItem>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="space-x-2">
-                <Icon.Warehouse className="text-muted-foreground w-4 h-4" />
+                <Warehouse className="text-muted-foreground w-4 h-4" />
                 <span>Workspace</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>

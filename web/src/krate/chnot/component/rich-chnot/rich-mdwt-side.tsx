@@ -1,5 +1,5 @@
+import { Fullscreen } from "lucide-react";
 import { useCallback, useState } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import { SaveState } from "@/common/types";
 import { chnotMetaCommit } from "@/krate/chnot/service";
@@ -107,7 +107,7 @@ const RichChnot = ({
             {chnotShortDate(new Date(otid / 1e3))}
           </time>
         </div>
-        <Icon.Fullscreen
+        <Fullscreen
           className="w-4 h-4 cursor-pointer"
           onClick={() => setFullscreen(true)}
         />

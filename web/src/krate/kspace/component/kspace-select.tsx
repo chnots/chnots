@@ -1,5 +1,12 @@
+import {
+  BookKey,
+  BookLock,
+  BriefcaseBusiness,
+  CircleCheckBig,
+  Dice1,
+  PlusCircle,
+} from "lucide-react";
 import React, { useEffect } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import {
   DropdownMenu,
@@ -21,13 +28,13 @@ export const KSpaceIcon = ({
   className?: string;
 }) => {
   if (name === "public") {
-    return <Icon.BookKey className={className} />;
+    return <BookKey className={className} />;
   } else if (name === "work") {
-    return <Icon.BriefcaseBusiness className={className} />;
+    return <BriefcaseBusiness className={className} />;
   } else if (name === "private") {
-    return <Icon.BookLock className={className} />;
+    return <BookLock className={className} />;
   } else {
-    return <Icon.Dice1 className={className} />;
+    return <Dice1 className={className} />;
   }
 };
 
@@ -120,9 +127,9 @@ export const KSpaceSelect = ({
               aria-label={`Add ${e.name} to mkspace`}
             >
               {currentKSpace === e.name || mkspaces.includes(e.name) ? (
-                <Icon.CircleCheckBig />
+                <CircleCheckBig />
               ) : (
-                <Icon.PlusCircle />
+                <PlusCircle />
               )}
             </Button>
           )}

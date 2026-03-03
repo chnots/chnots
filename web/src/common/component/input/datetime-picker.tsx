@@ -34,6 +34,7 @@ import {
   subMonths,
 } from "date-fns";
 import {
+  CalendarIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -53,7 +54,6 @@ import {
 } from "@/common/component/ui/popover";
 import { ScrollArea } from "@/common/component/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import Icon from "../icon";
 
 export type CalendarProps = Omit<
   React.ComponentProps<typeof DayPicker>,
@@ -262,7 +262,7 @@ export function DateTimePicker({
             )}
           >
             <div className="flex-grow flex items-center">
-              <Icon.CalendarIcon className="mr-2 size-4" />
+              <CalendarIcon className="mr-2 size-4" />
               {dislayFormat}
             </div>
             {clearable && value && (

@@ -1,6 +1,6 @@
 import clsx from "clsx";
+import { Search } from "lucide-react";
 import { useCommonStore } from "@/common/store";
-import Icon from "./icon";
 
 const SearchButton = () => {
   const { toggleNaviSearch, getNaviSearch } = useCommonStore();
@@ -16,7 +16,7 @@ const SearchButton = () => {
         getNaviSearch() ? "bg-white border-gray-400" : "border-gray-100",
       )}
     >
-      <Icon.Search />
+      <Search />
     </button>
   );
 };

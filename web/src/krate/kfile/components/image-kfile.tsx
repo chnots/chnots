@@ -1,5 +1,5 @@
+import { DownloadIcon, InfoIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
-import Icon from "@/common/component/icon";
 import RelativeTime from "@/common/component/relative-time";
 import { Button } from "@/common/component/ui/button";
 import { getResouceDownloadUrl } from "@/krate/kfile/service";
@@ -65,7 +65,7 @@ export const ImageKFile = ({
             onClick={onReplace}
             title="Replace file"
           >
-            <Icon.RefreshCwIcon className="w-4 h-4" />
+            <RefreshCwIcon className="w-4 h-4" />
           </Button>
         )}
 
@@ -76,7 +76,7 @@ export const ImageKFile = ({
           onClick={() => setShowDetails(!showDetails)}
           title="Show details"
         >
-          <Icon.InfoIcon className="w-4 h-4" />
+          <InfoIcon className="w-4 h-4" />
         </Button>
 
         <Button
@@ -86,7 +86,7 @@ export const ImageKFile = ({
           onClick={onIconClick || (() => handleDownloadUrl(imageUrl))}
           title="Download"
         >
-          <Icon.DownloadIcon className="w-4 h-4" />
+          <DownloadIcon className="w-4 h-4" />
         </Button>
       </div>
 

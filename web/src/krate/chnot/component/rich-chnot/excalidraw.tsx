@@ -1,6 +1,6 @@
 import { exportToBlob, exportToSvg } from "@excalidraw/excalidraw";
+import { FileImage, Image } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import { SaveState } from "@/common/types";
 import ExcalidrawEditor from "@/krate/graph/excalidraw/component/excalidraw-editor";
@@ -120,7 +120,7 @@ const ExcalidrawChnot = ({
           disabled={!state?.elements}
           title="Export SVG"
         >
-          <Icon.FileImage />
+          <FileImage />
         </Button>
         <Button
           variant="ghost"
@@ -129,7 +129,7 @@ const ExcalidrawChnot = ({
           disabled={!state?.elements}
           title="Export PNG"
         >
-          <Icon.Image />
+          <Image />
         </Button>
       </>
     );

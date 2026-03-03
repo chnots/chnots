@@ -1,5 +1,14 @@
 import type { LucideProps } from "lucide-react";
-import Icon from "@/common/component/icon";
+import {
+  Bot,
+  Brain,
+  File,
+  Flower,
+  LineSquiggle,
+  Table,
+  Text,
+  TextCursor,
+} from "lucide-react";
 import { ChnotKind } from "../po";
 
 export const ChnotKindIcon = ({
@@ -7,20 +16,20 @@ export const ChnotKindIcon = ({
   ...rest
 }: { kind: ChnotKind } & LucideProps) => {
   return kind === ChnotKind.MDWT ? (
-    <Icon.Text {...rest} />
+    <Text {...rest} />
   ) : kind === ChnotKind.ExcalidrawV1 ? (
-    <Icon.Flower {...rest} />
+    <Flower {...rest} />
   ) : kind === ChnotKind.KFileV1 ? (
-    <Icon.File {...rest} />
+    <File {...rest} />
   ) : kind === ChnotKind.KTab ? (
-    <Icon.Table {...rest} />
+    <Table {...rest} />
   ) : kind === ChnotKind.LLMChat ? (
-    <Icon.Bot {...rest} />
+    <Bot {...rest} />
   ) : kind === ChnotKind.MindMapV1 ? (
-    <Icon.Brain {...rest} />
+    <Brain {...rest} />
   ) : kind === ChnotKind.ThreadV1 ? (
-    <Icon.LineSquiggle {...rest} />
+    <LineSquiggle {...rest} />
   ) : (
-    <Icon.TextCursor {...rest} />
+    <TextCursor {...rest} />
   );
 };

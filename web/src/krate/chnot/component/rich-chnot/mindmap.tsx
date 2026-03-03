@@ -1,3 +1,4 @@
+import { FileImage, Image } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SaveState } from "@/common/types";
 import {
@@ -7,7 +8,6 @@ import {
 } from "@/krate/graph/mind-elixir/service";
 import Fullscreen from "./fullscreen";
 import "mind-elixir/style.css";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import MindElixirReact, {
   type MindElixirData,
@@ -135,7 +135,7 @@ const MindMapChnot = ({
           disabled={!data}
           title="Export SVG"
         >
-          <Icon.FileImage />
+          <FileImage />
         </Button>
         <Button
           variant="ghost"
@@ -144,7 +144,7 @@ const MindMapChnot = ({
           disabled={!data}
           title="Export PNG"
         >
-          <Icon.Image />
+          <Image />
         </Button>
       </>
     );

@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/useHookAtTopLevel: fully tested */
+
+import { Square } from "lucide-react";
 import { useEffect, useRef } from "react";
-import Icon from "@/common/component/icon";
 import { Button as KButton } from "@/common/component/ui/button";
 
 import {
@@ -130,7 +131,7 @@ export const RecordAnswering = ({
             aria-label="Abort"
             tabIndex={0}
           >
-            <Icon.Square className="h-4 w-4 text-gray-700" />
+            <Square className="h-4 w-4 text-gray-700" />
             <span>Stop Generate</span>
           </KButton>
         </div>

@@ -1,5 +1,5 @@
+import { Download, FileText, Save, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { chnotHeadStore } from "@/krate/chnot/store";
@@ -178,7 +178,7 @@ export const KFileViewer = ({
           onClick={() => document.getElementById("file-input-header")?.click()}
           title="Upload file"
         >
-          <Icon.Upload />
+          <Upload />
         </Button>
         <Button
           variant="ghost"
@@ -186,7 +186,7 @@ export const KFileViewer = ({
           onClick={() => setIsTextMode(true)}
           title="Text mode"
         >
-          <Icon.FileText />
+          <FileText />
         </Button>
         {kfile && (
           <Button
@@ -195,7 +195,7 @@ export const KFileViewer = ({
             onClick={() => handleDownloadKfile(kfile)}
             title="Download"
           >
-            <Icon.Download />
+            <Download />
           </Button>
         )}
         {uploadFile && (
@@ -206,7 +206,7 @@ export const KFileViewer = ({
             disabled={!uploadFile}
             title="Upload"
           >
-            <Icon.Save />
+            <Save />
           </Button>
         )}
       </>
