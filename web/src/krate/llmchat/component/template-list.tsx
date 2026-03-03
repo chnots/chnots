@@ -1,4 +1,4 @@
-import Icon from "@/common/component/icon";
+import { BadgePlus, MessageCircle, Pencil, Trash } from "lucide-react";
 import KSVG from "@/common/component/svg";
 import { Button } from "@/common/component/ui/button";
 import {
@@ -39,7 +39,7 @@ const LLMChatTemplateList = ({
               {item.svg_logo ? (
                 <KSVG src={item.svg_logo} className="w-4 h-4" />
               ) : (
-                <Icon.MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4" />
               )}
               <span>{item.name}</span>
             </Button>
@@ -50,7 +50,7 @@ const LLMChatTemplateList = ({
                 onEditTemplate?.(item);
               }}
             >
-              <Icon.Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-4 w-4" />
               Edit
             </ContextMenuItem>
             <ContextMenuItem
@@ -59,7 +59,7 @@ const LLMChatTemplateList = ({
                 onDeleteTemplate?.(item);
               }}
             >
-              <Icon.Trash className="mr-2 h-4 w-4" />
+              <Trash className="mr-2 h-4 w-4" />
               Delete
             </ContextMenuItem>
           </ContextMenuContent>
@@ -72,7 +72,7 @@ const LLMChatTemplateList = ({
           onNew();
         }}
       >
-        <Icon.BadgePlus />
+        <BadgePlus />
       </Button>
     </div>
   );

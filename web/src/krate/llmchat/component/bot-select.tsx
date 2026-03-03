@@ -1,6 +1,6 @@
 import * as RadixDropmenu from "@radix-ui/react-dropdown-menu";
+import { Bot, PlusCircle, SettingsIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Icon from "@/common/component/icon";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot } from "@/krate/llmchat/po";
 import { llmchatBotArchive, llmchatBotCommit } from "@/krate/llmchat/service";
@@ -42,12 +42,12 @@ const BotComponent = ({
         {bot.svg_logo ? (
           <KSVG src={bot.svg_logo} className="w-4 h-4" />
         ) : (
-          <Icon.Bot className="w-4 h-4" />
+          <Bot className="w-4 h-4" />
         )}
         <span>{bot.name}</span>
       </div>
       {settings && (
-        <Icon.SettingsIcon
+        <SettingsIcon
           onClick={settings}
           className="size-4 hover:animate-spin"
         />
@@ -86,7 +86,7 @@ const LLMChatBotSelect = () => {
           setShowBotForm(true);
         }}
       >
-        <Icon.PlusCircle className="w-4 h-4" />
+        <PlusCircle className="w-4 h-4" />
         <span className="ml-1">Add Bot</span>
       </div>
     );

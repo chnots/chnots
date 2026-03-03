@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Bot, BrainCircuit, Settings, Sidebar, Timer } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useCommonStore } from "@/common/store";
 import useParamState from "@/hooks/use-param-state";
@@ -6,7 +7,6 @@ import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { useTranslate } from "@/lib/i18n";
 import { RoutePaths } from "@/router";
-import Icon from "./icon";
 import { Button } from "./ui/button";
 
 interface NavLinkItem {
@@ -36,13 +36,13 @@ const Navigation = ({
     tid: "header-chnots",
     path: RoutePaths.Chnots,
     title: t("Chnots"),
-    icon: <Icon.BrainCircuit className="w-6 h-auto opacity-70 shrink-0" />,
+    icon: <BrainCircuit className="w-6 h-auto opacity-70 shrink-0" />,
   };
   const llmChatNavLink: NavLinkItem = {
     tid: "header-llmchat",
     path: RoutePaths.LLMChat,
     title: t("LLM Chat"),
-    icon: <Icon.Bot className="w-6 h-auto opacity-70 shrink-0" />,
+    icon: <Bot className="w-6 h-auto opacity-70 shrink-0" />,
   };
   /*   const toentNavLink: NavLinkItem = {
     tid: "header-toent",
@@ -56,13 +56,13 @@ const Navigation = ({
     tid: "header-settings",
     path: RoutePaths.Settings,
     title: t("Settings"),
-    icon: <Icon.Settings className="w-6 h-auto opacity-70 shrink-0" />,
+    icon: <Settings className="w-6 h-auto opacity-70 shrink-0" />,
   };
   const timerNavLink: NavLinkItem = {
     tid: "header-timer",
     path: RoutePaths.Timer,
     title: t("Timer"),
-    icon: <Icon.Timer className="w-6 h-auto opacity-70 shrink-0" />,
+    icon: <Timer className="w-6 h-auto opacity-70 shrink-0" />,
   };
 
   const navLinks: NavLinkItem[] = [
@@ -85,7 +85,7 @@ const Navigation = ({
         }}
         className="p-2 hover:cursor-pointer rounded-xl"
       >
-        <Icon.Sidebar />
+        <Sidebar />
       </Button>
       <KSpaceSelect
         onSelect={(ns) => {

@@ -1,4 +1,4 @@
-import Icon from "@/common/component/icon";
+import { Squirrel, Target } from "lucide-react";
 import { Button } from "@/common/component/ui/button";
 import {
   DropdownMenu,
@@ -30,7 +30,7 @@ export const ChnotKindSelect = () => {
               return <ChnotKindIcon kind={kind} key={kind} />;
             })
           ) : (
-            <Icon.Squirrel />
+            <Squirrel />
           )}
         </Button>
       </DropdownMenuTrigger>
@@ -42,7 +42,7 @@ export const ChnotKindSelect = () => {
             key={"all"}
             onClick={() => setChnotKinds((_) => [])}
           >
-            <Icon.Squirrel />
+            <Squirrel />
             <span>all</span>
           </DropdownMenuItem>
           {Object.values(ChnotKind).map((e) => (
@@ -76,7 +76,7 @@ export const ChnotKindSelect = () => {
                   }}
                   aria-label={`Add ${e} to mkspace`}
                 >
-                  <Icon.Target />
+                  <Target />
                 </Button>
               </div>
             </DropdownMenuItem>

@@ -1,7 +1,18 @@
 import { useSortable } from "@dnd-kit/sortable";
+import {
+  CloudAlert,
+  CloudCheck,
+  CloudDrizzle,
+  Edit,
+  Eye,
+  EyeClosed,
+  Hand,
+  LinkIcon,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReadableTID from "@/common/component/chnot-read-tid";
-import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
 import { GEN_TITLE } from "@/krate/mdwt/constaints";
 import { mdwtCommit } from "@/krate/mdwt/service";
@@ -152,9 +163,9 @@ const SortableRichBlock = ({
               title="Remove"
             >
               {closed ? (
-                <Icon.EyeClosed className="w-4 h-4 cursor-pointer" />
+                <EyeClosed className="w-4 h-4 cursor-pointer" />
               ) : (
-                <Icon.Eye className="w-4 h-4 cursor-pointer" />
+                <Eye className="w-4 h-4 cursor-pointer" />
               )}
             </button>
           </>
@@ -165,7 +176,7 @@ const SortableRichBlock = ({
               className="p-1 cursor-grab active:cursor-grabbing hover:bg-gray-100 rounded transition-colors"
               title="Drag Handler"
             >
-              <Icon.Hand className="w-4 h-4" />
+              <Hand className="w-4 h-4" />
             </div>
             <div className="flex border p-0.5 rounded text-gray-600">
               {Object.values(ChnotKind).map((e) =>
@@ -187,16 +198,16 @@ const SortableRichBlock = ({
           className="p-1 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
           title="Edit"
         >
-          <Icon.Edit className="w-4 h-4 cursor-pointer" />
+          <Edit className="w-4 h-4 cursor-pointer" />
         </button>
         {!!saveState && (
           <span className="p-1 rounded">
             {saveState === SaveState.Saved ? (
-              <Icon.CloudCheck className="w-4 h-4" />
+              <CloudCheck className="w-4 h-4" />
             ) : saveState === SaveState.Dirty ? (
-              <Icon.CloudDrizzle className="w-4 h-4" />
+              <CloudDrizzle className="w-4 h-4" />
             ) : (
-              <Icon.CloudAlert className="w-4 h-4" />
+              <CloudAlert className="w-4 h-4" />
             )}
           </span>
         )}
@@ -211,7 +222,7 @@ const SortableRichBlock = ({
           className="p-1  hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
           title="Remove"
         >
-          <Icon.Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" />
         </button>
         <button
           type="button"
@@ -219,7 +230,7 @@ const SortableRichBlock = ({
           className="p-1  hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
           title="Search And Add"
         >
-          <Icon.LinkIcon className="w-4 h-4" />
+          <LinkIcon className="w-4 h-4" />
         </button>
         <button
           type="button"
@@ -227,7 +238,7 @@ const SortableRichBlock = ({
           className="p-1  hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
           title="Add"
         >
-          <Icon.Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" />
         </button>
       </div>
       {kind !== ChnotKind.MDWT && (

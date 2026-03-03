@@ -1,5 +1,5 @@
+import { Fullscreen as FullscreenIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 
 const Fullscreen = ({
@@ -16,7 +16,7 @@ const Fullscreen = ({
           onClick={() => onSetFullscreen(false)}
           className="absolute top-1 right-1 z-49"
         >
-          <Icon.Fullscreen />
+          <FullscreenIcon />
         </Button>
       )}
       {children}

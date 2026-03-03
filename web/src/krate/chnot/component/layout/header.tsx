@@ -1,19 +1,19 @@
-import Icon from "@/common/component/icon";
-import { Button } from "@/common/component/ui/button";
-import { SidebarTrigger } from "@/common/component/ui/sidebar";
-import type { TID } from "@/lib/id_util";
-import { cn } from "@/lib/utils";
-import { ChnotKind } from "../../po";
-import { useChnotStore } from "../../store";
-import { ChnotKindIcon } from "../kind-icon";
+import { BadgePlus, Captions } from "lucide-react";
 import { useRef } from "react";
-import { mdwtCommit } from "@/krate/mdwt/service";
+import { Button } from "@/common/component/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/common/component/ui/popover";
+import { SidebarTrigger } from "@/common/component/ui/sidebar";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
+import { mdwtCommit } from "@/krate/mdwt/service";
+import type { TID } from "@/lib/id_util";
+import { cn } from "@/lib/utils";
+import { ChnotKind } from "../../po";
+import { useChnotStore } from "../../store";
+import { ChnotKindIcon } from "../kind-icon";
 
 const ChnotHeadbar = ({
   otid,
@@ -46,7 +46,7 @@ const ChnotHeadbar = ({
       <SidebarTrigger />
       <div className="m-1">
         <Button onClick={onNew}>
-          <Icon.BadgePlusIcon />
+          <BadgePlus />
         </Button>
       </div>
       {!meta && (
@@ -82,7 +82,7 @@ const ChnotHeadbar = ({
         >
           <PopoverTrigger asChild>
             <Button>
-              <Icon.Captions />
+              <Captions />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-2" align="start">

@@ -8,7 +8,7 @@ import "katex/dist/katex.min.css";
 
 const math = createMathPlugin({ singleDollarTextMath: true });
 
-import Icon from "@/common/component/icon";
+import { Bot, Glasses, RotateCw, Sparkles } from "lucide-react";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot, LLMChatTemplate } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
@@ -119,7 +119,7 @@ export const RecordSystem = ({
   ) : tmpl?.svg_logo ? (
     <KSVG src={tmpl.svg_logo} />
   ) : (
-    <Icon.Sparkles />
+    <Sparkles />
   );
 
   return (
@@ -143,7 +143,7 @@ export const RecordSystem = ({
                 setShowTemplates((prev) => !prev);
               }}
             >
-              <Icon.Glasses />
+              <Glasses />
             </RecordButton>
           )
         }
@@ -199,7 +199,7 @@ const RecordAssistant = ({
   ) : bt?.svg_logo ? (
     <KSVG src={bt.svg_logo} />
   ) : (
-    <Icon.Bot />
+    <Bot />
   );
 
   return (
@@ -220,7 +220,7 @@ const RecordAssistant = ({
             onRegenrate(otid);
           }}
         >
-          <Icon.RotateCw />
+          <RotateCw />
         </RecordButton>
       }
     />

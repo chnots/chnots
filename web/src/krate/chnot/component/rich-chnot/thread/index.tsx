@@ -14,9 +14,10 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { Heading, LinkIcon, Plus, Unlink } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import Icon from "@/common/component/icon";
 import { SaveState } from "@/common/types";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import type { MdwtRecord } from "@/krate/mdwt/po";
 import { mdwtRecordList } from "@/krate/mdwt/service";
 import { arraysAreEqual } from "@/lib/col-util";
@@ -31,7 +32,6 @@ import MdwtChnot from "../mdwt";
 import MdwtChnotSelector from "../mdwt-chnot-selector";
 import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
 import SortableRichMdwtMemo from "./block";
-import { useKSpaceStore } from "@/krate/kspace/store";
 
 enum OrderType {
   Manual,
@@ -310,7 +310,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
         <div className="flex flex-col p-4 m-2 w-full items-center max-w-4xl">
           <div className="flex w-full">
             <div className="py-2 pr-2">
-              <Icon.Heading className="w-6 h-6" />
+              <Heading className="w-6 h-6" />
             </div>
             <MdwtChnot
               otid={threadOtid}
@@ -365,7 +365,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                           className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                           title="Stop Find"
                         >
-                          <Icon.LucideUnlink className="w-4 h-4" />
+                          <Unlink className="w-4 h-4" />
                         </button>
                       </div>
                       <MdwtChnotSelector
@@ -387,7 +387,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                     className="p-1 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
                     title="Add"
                   >
-                    <Icon.LinkIcon className="w-4 h-4" />
+                    <LinkIcon className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
@@ -397,7 +397,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                     className="p-1 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
                     title="Add"
                   >
-                    <Icon.Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </SortableContext>

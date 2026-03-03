@@ -1,5 +1,5 @@
+import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import Icon from "@/common/component/icon";
 import { Button } from "@/common/component/ui/button";
 import LLMChatBotSelect from "./bot-select";
 
@@ -63,7 +63,7 @@ const UserInput = ({
             }}
             disabled={disabled}
           >
-            <Icon.Send className="w-4 h-4" />
+            <Send className="w-4 h-4" />
           </Button>
         </div>
       </div>
