@@ -1,79 +1,18 @@
-/// Toent: todo and event
-///
-/// The file mainly contains models related to todos and events.
-/// Many tools attempt to handle todos and events separately,
-/// but I prefer treating them as one thing.
-///
-/// I merged them into the word "toent."
 use chin_sql::{
-    GenerateTableSchema, SqlValue,
+    GenerateTableSchema,
     str_type::{Text, Varchar},
     time_type::TID,
 };
-
-use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    enum_common_funcs, impl_otid_support,
-    krate::toent::logic::{
-        EventBuilder,
-        todoevent::{TodoEvent, TodoPriorityEnum, TodoStateEnum},
-    },
+    impl_otid_support,
+    krate::toent::logic::todoevent::{TodoPriorityEnum, TodoStateEnum},
     mapper::{
         Curd,
         db::{KDbRow, KDbRowBehavier},
     },
 };
-
-#[derive(Debug, Clone, Sequence)]
-pub(crate) enum TimeEventAction {
-    Skip,
-}
-
-impl TimeEventAction {
-    pub(crate) fn as_static_str(&self) -> &'static str {
-        match self {
-            TimeEventAction::Skip => "skip",
-        }
-    }
-}
-
-enum_common_funcs! {TimeEventAction}
-
-fn time_event_action_to_sql(this: TimeEventAction) -> Varchar<40> {
-    this.as_static_str().try_into().unwrap()
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct ToentTimeEventInst {
-    #[gts_key]
-    #[gts_type = "i64"]
-    chnot_otid: TID,
-
-    #[gts_primary]
-    chnot_block_id: Varchar<100>,
-
-    #[gts_primary]
-    target_time_utc: i64,
-
-    alert_time_utc: i64,
-
-    #[gts_type = "Varchar<40>"]
-    #[gts_tosql = "time_event_action_to_sql"]
-    action: TimeEventAction,
-
-    #[gts_unique]
-    #[gts_type = "i64"]
-    tid: TID,
-}
-
-impl<'a> From<TodoEvent> for SqlValue<'a> {
-    fn from(val: TodoEvent) -> Self {
-        let s = val.standard_string().to_string();
-        SqlValue::Str(s.into())
-    }
-}
 
 fn todo_state_enum_to_sql(this: Option<TodoStateEnum>) -> Option<String> {
     this.map(|e| e.as_static_str().into())
@@ -84,46 +23,43 @@ fn todo_priority_enum_to_sql(this: Option<TodoPriorityEnum>) -> Option<i64> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct MdwtToent {
+pub(crate) struct ToentTodo {
     #[gts_primary]
     #[gts_type = "i64"]
-    pub mdwt_otid: TID,
-
-    #[gts_type = "Varchar<30>"]
-    #[gts_tosql = "todo_state_enum_to_sql"]
-    pub todo_state: Option<TodoStateEnum>,
+    pub otid: TID,
 
     #[gts_type = "i64"]
     #[gts_tosql = "todo_priority_enum_to_sql"]
     pub todo_priority: Option<TodoPriorityEnum>,
 
-    pub todo_closed: bool,
+    #[gts_type = "Varchar<30>"]
+    #[gts_tosql = "todo_state_enum_to_sql"]
+    pub todo_state: Option<TodoStateEnum>,
 
-    pub note: Option<Text>,
+    pub todo_closed: bool,
 
     #[gts_unique]
     #[gts_type = "i64"]
     pub tid: TID,
 }
 
-impl TryFrom<&KDbRow> for MdwtToent {
+impl TryFrom<&KDbRow> for ToentTodo {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         Ok(Self {
-            mdwt_otid: value.try_get(Self::MDWT_OTID)?,
+            otid: value.try_get(Self::OTID)?,
             tid: value.try_get(Self::TID)?,
             todo_state: value.via_str_opt(Self::TODO_STATE)?,
             todo_priority: value.via_i64_opt(Self::TODO_PRIORITY)?,
             todo_closed: value.try_get(Self::TODO_CLOSED)?,
-            note: value.try_get(Self::NOTE)?,
         })
     }
 }
 
-impl Curd for MdwtToent {
+impl Curd for ToentTodo {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.mdwt_otid)
+        Self::pkey_cond(self.otid)
     }
 
     fn tid(&self) -> TID {
@@ -131,4 +67,102 @@ impl Curd for MdwtToent {
     }
 }
 
-impl_otid_support! {MdwtToent}
+impl_otid_support! {ToentTodo}
+
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+pub(crate) struct ToentEvent {
+    #[gts_primary]
+    #[gts_key]
+    #[gts_type = "i64"]
+    pub otid: TID,
+
+    pub event_defi: Text,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
+}
+
+impl TryFrom<&KDbRow> for ToentEvent {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            otid: value.try_get(Self::OTID)?,
+            event_defi: value.try_get(Self::EVENT_DEFI)?,
+            tid: value.try_get(Self::TID)?,
+        })
+    }
+}
+
+impl Curd for ToentEvent {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.otid)
+    }
+
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+
+impl_otid_support! {ToentEvent}
+
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+pub(crate) struct TodoInst {
+    #[gts_primary]
+    #[gts_key]
+    #[gts_type = "i64"]
+    pub otid: TID,
+
+    #[gts_type = "Varchar<10>"]
+    pub timezone: Option<Varchar<10>>,
+
+    #[gts_type = "Varchar<30>"]
+    pub naive_time: Varchar<30>,
+
+    #[gts_type = "Varchar<30>"]
+    #[gts_tosql = "todo_state_enum_to_sql"]
+    pub target_status: Option<TodoStateEnum>,
+
+    pub note: Option<Text>,
+
+    #[gts_type = "i64"]
+    pub alert_tid: Option<TID>,
+
+    #[gts_primary]
+    #[gts_type = "i64"]
+    pub target_tid: TID,
+
+    #[gts_unique]
+    #[gts_type = "i64"]
+    pub tid: TID,
+}
+
+impl TryFrom<&KDbRow> for TodoInst {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            otid: value.try_get(Self::OTID)?,
+            timezone: value.try_get(Self::TIMEZONE)?,
+            naive_time: value.try_get(Self::NAIVE_TIME)?,
+            target_status: value.via_str_opt(Self::TARGET_STATUS)?,
+            note: value.try_get(Self::NOTE)?,
+            alert_tid: value.try_get(Self::ALERT_TID)?,
+            target_tid: value.try_get(Self::TARGET_TID)?,
+            tid: value.try_get(Self::TID)?,
+        })
+    }
+}
+
+impl Curd for TodoInst {
+    fn pkey(&self) -> chin_sql::Wheres<'_> {
+        Self::pkey_cond(self.otid, self.target_tid)
+    }
+
+    fn tid(&self) -> TID {
+        self.tid
+    }
+}
+
+impl_otid_support! {TodoInst}

@@ -6,6 +6,11 @@ use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
 use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::krate::toent::mapper::ToentMapper;
+use crate::krate::toent::{
+    EventDefi, parse_mdwt_toent,
+    po::{ToentEvent, ToentTodo},
+};
 use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -136,8 +141,33 @@ impl<'a> KDbTx<'a> {
     pub(super) async fn mdwt_commit(&self, req: KReq<MdwtCommitReq>) -> AResult<MdwtCommitRsp> {
         let MdwtCommitReq { mdwt } = req.body;
         let title = mdwt.content.as_str().split('\n').take(1).join("");
+        let toent = parse_mdwt_toent(mdwt.content.as_str());
+        let otid = mdwt.otid;
 
         self.overwrite_mdwt_record(mdwt).await?;
+
+        if toent.todo_state.is_some() || toent.todo_priority.is_some() {
+            self.upsert_toent_todo(ToentTodo {
+                otid,
+                todo_priority: toent.todo_priority,
+                todo_state: toent.todo_state,
+                todo_closed: toent.todo_closed,
+                tid: TID::default(),
+            })
+            .await?;
+        }
+
+        let event_defi = EventDefi {
+            events: toent.events.clone(),
+        };
+        self.upsert_toent_event(ToentEvent {
+            otid,
+            event_defi: serde_json::to_string(&event_defi)?.into(),
+            tid: TID::default(),
+        })
+        .await?;
+        self.rebuild_todo_inst(otid, None, toent.todo_state, toent.events)
+            .await?;
 
         Ok(MdwtCommitRsp {
             todo_event: None,
