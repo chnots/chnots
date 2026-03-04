@@ -35,6 +35,25 @@ pub struct ExcalidrawFetchRsp {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ExcalidrawLibraryCommitReq {
+    pub otid: TID,
+    pub data: Value,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ExcalidrawLibraryCommitRsp {}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ExcalidrawLibraryFetchReq {
+    pub otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ExcalidrawLibraryFetchRsp {
+    pub data: Option<Value>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct MindElixirCommitReq {
     pub otid: TID,
     pub data: MindElixirDataV2Dto,

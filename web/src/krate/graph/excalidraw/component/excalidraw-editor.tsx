@@ -11,9 +11,14 @@ import type {
 } from "@excalidraw/excalidraw/element/types";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { useCallbackRefState } from "@/hooks/use-callback-ref-state";
-import { genUID, type TID } from "@/lib/id_util";
-import { type ExcalidrawChnotState, fetchExcalidraw } from "../service";
 import useDebounce from "@/hooks/use-debounce";
+import type { TID } from "@/lib/id_util";
+import {
+  type ExcalidrawChnotState,
+  fetchExcalidraw,
+  fetchExcalidrawLibrary,
+  saveExcalidrawLibrary,
+} from "../service";
 
 const ExcalidrawEditor = ({
   otid,
@@ -85,12 +90,28 @@ const ExcalidrawEditor = ({
     <Excalidraw
       excalidrawAPI={excalidrawRefCallback}
       initialData={async () => {
-        const rsp = await fetchExcalidraw(otid);
+        const [rsp, libraryData] = await Promise.all([
+          fetchExcalidraw(otid),
+          fetchExcalidrawLibrary(),
+        ]);
+        const libraryItems = Array.isArray(libraryData)
+          ? [...libraryData]
+          : undefined;
         if (rsp) {
-          return rsp;
-        } else {
-          return null;
+          return {
+            ...rsp,
+            libraryItems,
+          };
         }
+        if (libraryItems) {
+          return {
+            elements: [],
+            appState: {},
+            files: {},
+            libraryItems,
+          };
+        }
+        return null;
       }}
       onChange={(elements, appState, files) => {
         toSaveExcalidrawStateRef.current = {
@@ -100,6 +121,9 @@ const ExcalidrawEditor = ({
           files: { ...files },
         };
         debounceSave();
+      }}
+      onLibraryChange={(items) => {
+        void saveExcalidrawLibrary(items as object);
       }}
       viewModeEnabled={viewModeEnabled}
       zenModeEnabled={zenModeEnabled}

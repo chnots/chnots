@@ -1,5 +1,5 @@
 import { serializeAsJSON } from "@excalidraw/excalidraw";
-
+import type { ImportedDataState } from "@excalidraw/excalidraw/data/types";
 import type {
   ExcalidrawElement,
   FileId,
@@ -19,8 +19,28 @@ import type {
   ExcalidrawCommitRsp,
   ExcalidrawFetchReq,
   ExcalidrawFetchRsp,
+  ExcalidrawLibraryCommitReq,
+  ExcalidrawLibraryCommitRsp,
+  ExcalidrawLibraryDataV1Dto,
+  ExcalidrawLibraryFetchReq,
+  ExcalidrawLibraryFetchRsp,
 } from "../dto";
-import type { ImportedDataState } from "@excalidraw/excalidraw/data/types";
+
+const EXCALIDRAW_LIBRARY_OTID_KEY = "excalidraw-library-otid-v1";
+
+const getExcalidrawLibraryOtid = (): TID => {
+  if (typeof window === "undefined") {
+    return genTID();
+  }
+  const raw = window.localStorage.getItem(EXCALIDRAW_LIBRARY_OTID_KEY);
+  const otid = Number(raw);
+  if (Number.isFinite(otid) && otid > 0) {
+    return otid;
+  }
+  const next = genTID();
+  window.localStorage.setItem(EXCALIDRAW_LIBRARY_OTID_KEY, String(next));
+  return next;
+};
 
 export type ExcalidrawChnotState = {
   otid: TID;
@@ -40,6 +60,42 @@ export const excalidrawCommitInner = async (
   req: ExcalidrawCommitReq,
 ): Promise<ExcalidrawCommitRsp> => {
   return await request.postJson(`api/v1/excalidraw-commit`, req);
+};
+
+export const excalidrawLibraryFetchInner = async (
+  req: ExcalidrawLibraryFetchReq,
+): Promise<ExcalidrawLibraryFetchRsp> => {
+  return await request.postJson(`api/v1/excalidraw-library-fetch`, req);
+};
+
+export const excalidrawLibraryCommitInner = async (
+  req: ExcalidrawLibraryCommitReq,
+): Promise<ExcalidrawLibraryCommitRsp> => {
+  return await request.postJson(`api/v1/excalidraw-library-commit`, req);
+};
+
+export const fetchExcalidrawLibrary = async (): Promise<
+  ExcalidrawLibraryDataV1Dto | undefined
+> => {
+  try {
+    const rsp = await excalidrawLibraryFetchInner({
+      otid: getExcalidrawLibraryOtid(),
+    });
+    return rsp.data;
+  } catch (_err) {
+    return undefined;
+  }
+};
+
+export const saveExcalidrawLibrary = async (
+  data: ExcalidrawLibraryDataV1Dto,
+): Promise<void> => {
+  try {
+    await excalidrawLibraryCommitInner({
+      otid: getExcalidrawLibraryOtid(),
+      data,
+    });
+  } catch (_err) {}
 };
 
 export const fetchExcalidraw = async (

@@ -2,9 +2,9 @@ use std::collections::BTreeMap;
 
 use crate::{
     krate::graph::{
-        ExcalidrawDataV2, ExcalidrawDataV2Dto, ExcalidrawDataV2Po, ExcalidrawFetchRsp, GetKeys,
-        GraphData, GraphMeta, MindElixirDataV1Po, MindElixirDataV1PoMeta, MindElixirLoadRsp,
-        mapper::GraphMapper,
+        ExcalidrawDataV2, ExcalidrawDataV2Dto, ExcalidrawDataV2Po, ExcalidrawFetchRsp,
+        ExcalidrawLibraryFetchRsp, ExcalidrawLibraryMetaV1, GetKeys, GraphData, GraphMeta,
+        MindElixirDataV1Po, MindElixirDataV1PoMeta, MindElixirLoadRsp, mapper::GraphMapper,
     },
     mapper::{
         Curd,
@@ -17,6 +17,8 @@ use crate::{
 };
 use chin_tools::EResult;
 use serde_json::Value;
+
+use crate::util::digestutil::blake3_sum16;
 
 use crate::mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier};
 
@@ -78,6 +80,30 @@ impl KDbTx<'_> {
             })
             .await?;
         }
+        Ok(())
+    }
+
+    async fn excalidraw_library_commit(&self, otid: TID, data: Value) -> EResult {
+        let content = serde_json::to_string(&data)?;
+        let sid = blake3_sum16(content.as_bytes())?;
+        let meta = ExcalidrawLibraryMetaV1 { sid };
+
+        self.po_insert_graph_meta(GraphMeta {
+            otid,
+            archor: false,
+            kind: super::GraphKind::ExcalidrawLibraryV1,
+            content: serde_json::to_string(&meta)?.into(),
+            tid: TID::default(),
+        })
+        .await?;
+
+        self.po_insert_graph_data(GraphData {
+            sid: meta.sid.try_into()?,
+            tid: Default::default(),
+            content: content.into(),
+        })
+        .await?;
+
         Ok(())
     }
 }
@@ -176,6 +202,47 @@ impl GraphMapper for KDb {
         tx.cmt().await?;
 
         Ok(super::ExcalidrawCommitRsp {})
+    }
+
+    async fn excalidraw_library_fetch(
+        &self,
+        req: KReq<super::ExcalidrawLibraryFetchReq>,
+    ) -> chin_tools::AResult<super::ExcalidrawLibraryFetchRsp> {
+        let conn = self.conn().await?;
+        let meta = conn.as_executor().po_query_graph_meta(req.otid).await?;
+        let Some(meta) = meta else {
+            return Ok(ExcalidrawLibraryFetchRsp { data: None });
+        };
+        if !matches!(meta.kind, super::GraphKind::ExcalidrawLibraryV1) {
+            return Ok(ExcalidrawLibraryFetchRsp { data: None });
+        }
+
+        let meta: ExcalidrawLibraryMetaV1 = serde_json::from_str(meta.content.as_str())?;
+        let data = conn
+            .as_executor()
+            .query_graph_data(vec![meta.sid.as_str()])
+            .await?;
+
+        let Some(data) = data.get(meta.sid.as_str()) else {
+            return Ok(ExcalidrawLibraryFetchRsp { data: None });
+        };
+
+        Ok(ExcalidrawLibraryFetchRsp {
+            data: Some(serde_json::from_str(data.content.as_str())?),
+        })
+    }
+
+    async fn excalidraw_library_commit(
+        &self,
+        req: KReq<super::ExcalidrawLibraryCommitReq>,
+    ) -> chin_tools::AResult<super::ExcalidrawLibraryCommitRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.excalidraw_library_commit(req.otid, req.body.data)
+            .await?;
+        tx.cmt().await?;
+
+        Ok(super::ExcalidrawLibraryCommitRsp {})
     }
 
     async fn mind_elixir_fetch(

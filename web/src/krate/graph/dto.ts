@@ -1,5 +1,5 @@
-import type { TID } from "@/lib/id_util";
 import type { MindElixirData } from "mind-elixir";
+import type { TID } from "@/lib/id_util";
 
 type Value = Object;
 type MindElixirDataV2Dto = MindElixirData;
@@ -15,6 +15,18 @@ export type ExcalidrawFetchReq = {
 };
 export type ExcalidrawFetchRsp = {
   data?: ExcalidrawDataV2Dto;
+};
+export type ExcalidrawLibraryDataV1Dto = object;
+export type ExcalidrawLibraryCommitReq = {
+  otid: TID;
+  data: ExcalidrawLibraryDataV1Dto;
+};
+export type ExcalidrawLibraryCommitRsp = object;
+export type ExcalidrawLibraryFetchReq = {
+  otid: TID;
+};
+export type ExcalidrawLibraryFetchRsp = {
+  data?: ExcalidrawLibraryDataV1Dto;
 };
 export type MindElixirCommitReq = {
   otid: TID;

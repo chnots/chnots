@@ -6,7 +6,7 @@ use chin_sql::{GenerateTableSchema, str_type::Text};
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 
-use crate::krate::graph::{ExcalidrawDataV2, MindElixirDataV1PoMeta};
+use crate::krate::graph::{ExcalidrawDataV2, ExcalidrawLibraryMetaV1, MindElixirDataV1PoMeta};
 use crate::mapper::Curd;
 use crate::mapper::db::{KDbRow, KDbRowBehavier};
 use crate::model::sid_table::SidTableSupport;
@@ -20,12 +20,14 @@ pub trait GetKeys {
 pub enum GraphKind {
     ExcalidrawV2,
     MindElixirV1,
+    ExcalidrawLibraryV1,
 }
 
 #[derive(Debug, Clone)]
 pub enum GraphMetaEnum {
     ExcalidrawV2(ExcalidrawDataV2<String>),
     MindElixirV1(MindElixirDataV1PoMeta),
+    ExcalidrawLibraryV1(ExcalidrawLibraryMetaV1),
 }
 
 impl GraphKind {
@@ -33,6 +35,7 @@ impl GraphKind {
         match self {
             GraphKind::ExcalidrawV2 => "exdrv2",
             GraphKind::MindElixirV1 => "mielixirv1",
+            GraphKind::ExcalidrawLibraryV1 => "exdrlibv1",
         }
     }
 }
@@ -97,6 +100,9 @@ impl TryFrom<&GraphMeta> for GraphMetaEnum {
             GraphKind::MindElixirV1 => Ok(GraphMetaEnum::MindElixirV1(serde_json::from_str(
                 value.content.as_str(),
             )?)),
+            GraphKind::ExcalidrawLibraryV1 => Ok(GraphMetaEnum::ExcalidrawLibraryV1(
+                serde_json::from_str(value.content.as_str())?,
+            )),
         }
     }
 }
@@ -106,6 +112,7 @@ impl GetKeys for GraphMetaEnum {
         match self {
             GraphMetaEnum::ExcalidrawV2(d) => d.get_keys(),
             GraphMetaEnum::MindElixirV1(d) => d.keys.clone(),
+            GraphMetaEnum::ExcalidrawLibraryV1(d) => vec![d.sid.clone()],
         }
     }
 }

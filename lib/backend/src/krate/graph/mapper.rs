@@ -10,6 +10,16 @@ pub trait GraphMapper {
         req: KReq<ExcalidrawCommitReq>,
     ) -> AResult<ExcalidrawCommitRsp>;
 
+    async fn excalidraw_library_fetch(
+        &self,
+        req: KReq<ExcalidrawLibraryFetchReq>,
+    ) -> AResult<ExcalidrawLibraryFetchRsp>;
+
+    async fn excalidraw_library_commit(
+        &self,
+        req: KReq<ExcalidrawLibraryCommitReq>,
+    ) -> AResult<ExcalidrawLibraryCommitRsp>;
+
     async fn mind_elixir_fetch(&self, req: KReq<MindElixirLoadReq>) -> AResult<MindElixirLoadRsp>;
 
     async fn mind_elixir_commit(
@@ -39,6 +49,24 @@ impl GraphMapper for MapperType {
     async fn mind_elixir_fetch(&self, req: KReq<MindElixirLoadReq>) -> AResult<MindElixirLoadRsp> {
         match self {
             MapperType::KDb(kdb) => kdb.mind_elixir_fetch(req).await,
+        }
+    }
+
+    async fn excalidraw_library_fetch(
+        &self,
+        req: KReq<ExcalidrawLibraryFetchReq>,
+    ) -> AResult<ExcalidrawLibraryFetchRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.excalidraw_library_fetch(req).await,
+        }
+    }
+
+    async fn excalidraw_library_commit(
+        &self,
+        req: KReq<ExcalidrawLibraryCommitReq>,
+    ) -> AResult<ExcalidrawLibraryCommitRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.excalidraw_library_commit(req).await,
         }
     }
 

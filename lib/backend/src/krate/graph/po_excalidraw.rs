@@ -17,6 +17,11 @@ pub struct ExcalidrawDataV2Po {
     pub data: BTreeMap<String, String>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ExcalidrawLibraryMetaV1 {
+    pub sid: String,
+}
+
 impl GetKeys for ExcalidrawDataV2<String> {
     fn get_keys(&self) -> Vec<String> {
         let mut keys = vec![];

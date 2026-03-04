@@ -28,6 +28,30 @@ async fn excalidraw_fetch(
         .into()
 }
 
+async fn excalidraw_library_commit(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ExcalidrawLibraryCommitReq>,
+) -> KResponse<ExcalidrawLibraryCommitRsp> {
+    state
+        .mapper
+        .excalidraw_library_commit(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn excalidraw_library_fetch(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<ExcalidrawLibraryFetchReq>,
+) -> KResponse<ExcalidrawLibraryFetchRsp> {
+    state
+        .mapper
+        .excalidraw_library_fetch(kreq(headers, req))
+        .await
+        .into()
+}
+
 async fn mind_elixir_commit(
     headers: HeaderMap,
     state: State<ShareAppState>,
@@ -56,6 +80,14 @@ pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/excalidraw-commit", post(excalidraw_commit))
         .route("/api/v1/excalidraw-fetch", post(excalidraw_fetch))
+        .route(
+            "/api/v1/excalidraw-library-commit",
+            post(excalidraw_library_commit),
+        )
+        .route(
+            "/api/v1/excalidraw-library-fetch",
+            post(excalidraw_library_fetch),
+        )
         .route("/api/v1/mind-elixir-commit", post(mind_elixir_commit))
         .route("/api/v1/mind-elixir-fetch", post(mind_elixir_fetch))
 }

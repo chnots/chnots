@@ -4,6 +4,7 @@ import type { DbText, Varchar } from "@/lib/types";
 export enum GraphKind {
   ExcalidrawV2 = "exdrv2",
   MindElixirV1 = "mielixirv1",
+  ExcalidrawLibraryV1 = "exdrlibv1",
 }
 
 export type GraphMeta = {
