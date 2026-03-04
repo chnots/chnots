@@ -134,6 +134,7 @@ const SortableRichBlock = ({
       onPostSave: handlePostSave,
       onSetFullscreen: setFullscreen,
       showEditWhenEmpty: true,
+      disableHeaderActions: true,
     };
   }, [fullscreen, otid]);
 

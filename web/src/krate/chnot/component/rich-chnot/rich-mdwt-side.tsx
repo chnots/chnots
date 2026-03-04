@@ -28,6 +28,7 @@ export type RichPropProps = {
   fullscreen: boolean;
   onSetFullscreen?: (flag: boolean) => void;
   onPostSave: (arg: PostSaveArg) => Promise<void>;
+  disableHeaderActions?: boolean;
 };
 
 const ChnotKindSelector = ({

@@ -15,12 +15,14 @@ type KFileViewerProps = {
   otid: TID;
   onPostSave?: (r: KFileMeta) => void;
   readonly?: boolean;
+  disableHeaderActions?: boolean;
 };
 
 export const KFileViewer = ({
   otid,
   onPostSave,
   readonly,
+  disableHeaderActions,
 }: KFileViewerProps) => {
   const [progress, setProgress] = useState(0);
   const [uploadFile, setUploadFile] = useState<File | undefined>(undefined);
@@ -163,6 +165,9 @@ export const KFileViewer = ({
   );
 
   useEffect(() => {
+    if (disableHeaderActions) {
+      return;
+    }
     const key = `kfile-${otid}`;
     const headerActions = (
       <>
@@ -217,7 +222,14 @@ export const KFileViewer = ({
     return () => {
       chnotHeadStore.getState().unregisterHeaderActions(key);
     };
-  }, [otid, kfile, uploadFile, handleFileChange, uploadFileInChunks]);
+  }, [
+    otid,
+    kfile,
+    uploadFile,
+    handleFileChange,
+    uploadFileInChunks,
+    disableHeaderActions,
+  ]);
 
   if (isTextMode || kfile?.content_type.startsWith("text/")) {
     return (

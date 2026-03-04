@@ -24,6 +24,7 @@ const ExcalidrawChnot = ({
   onPostSave,
   onSetFullscreen,
   showEditWhenEmpty,
+  disableHeaderActions,
 }: RichPropProps & {
   showEditWhenEmpty: boolean;
 }) => {
@@ -110,6 +111,9 @@ const ExcalidrawChnot = ({
   }, [state]);
 
   useEffect(() => {
+    if (disableHeaderActions) {
+      return;
+    }
     const key = `excalidraw-${otid}`;
     const headerActions = (
       <>
@@ -139,7 +143,7 @@ const ExcalidrawChnot = ({
     return () => {
       chnotHeadStore.getState().unregisterHeaderActions(key);
     };
-  }, [otid, state, handleExportSvg, handleExportPng]);
+  }, [otid, state, handleExportSvg, handleExportPng, disableHeaderActions]);
 
   return (
     <div className="w-full flex flex-col">

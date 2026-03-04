@@ -1,8 +1,8 @@
 import { SaveState } from "@/common/types";
 import { KFileViewer } from "@/krate/kfile/components";
 import { ChnotKind } from "../../po";
-import type { RichPropProps } from "./rich-mdwt-side";
 import Fullscreen from "./fullscreen";
+import type { RichPropProps } from "./rich-mdwt-side";
 
 const KFileChnot = ({
   otid,
@@ -10,6 +10,7 @@ const KFileChnot = ({
   readonly,
   onPostSave,
   onSetFullscreen,
+  disableHeaderActions,
 }: RichPropProps) => {
   return (
     <div className="w-full h-full">
@@ -24,6 +25,7 @@ const KFileChnot = ({
           });
         }}
         readonly={readonly}
+        disableHeaderActions={disableHeaderActions}
       />
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>
@@ -37,6 +39,7 @@ const KFileChnot = ({
                 kind: ChnotKind.KFileV1,
               });
             }}
+            disableHeaderActions={disableHeaderActions}
           />
         </Fullscreen>
       )}

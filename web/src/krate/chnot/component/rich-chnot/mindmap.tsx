@@ -29,6 +29,7 @@ const MindMapChnot = ({
   onPostSave,
   onSetFullscreen,
   showEditWhenEmpty,
+  disableHeaderActions,
 }: RichPropProps & { showEditWhenEmpty?: boolean }) => {
   const [data, setData] = useState<MindElixirData>();
   const savingFlag = useRef<boolean>(false);
@@ -125,6 +126,9 @@ const MindMapChnot = ({
   }, []);
 
   useEffect(() => {
+    if (disableHeaderActions) {
+      return;
+    }
     const key = `mindmap-${otid}`;
     const headerActions = (
       <>
@@ -154,7 +158,7 @@ const MindMapChnot = ({
     return () => {
       chnotHeadStore.getState().unregisterHeaderActions(key);
     };
-  }, [otid, data, handleExportSvg, handleExportPng]);
+  }, [otid, data, handleExportSvg, handleExportPng, disableHeaderActions]);
 
   const options = useMemo<MindElixirReactProps>(() => {
     return {
