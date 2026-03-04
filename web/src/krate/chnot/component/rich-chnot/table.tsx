@@ -10,9 +10,9 @@ import {
   ktabMetaFetch,
 } from "@/krate/ktab/service";
 import { genTID, genUID } from "@/lib/id_util";
+import { ChnotKind } from "../../po";
 import Fullscreen from "./fullscreen";
 import type { RichPropProps } from "./rich-mdwt-side";
-import { ChnotKind } from "../../po";
 
 const TableChnot = ({
   otid,

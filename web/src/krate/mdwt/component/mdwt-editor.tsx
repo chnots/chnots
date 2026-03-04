@@ -14,8 +14,11 @@ import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { decoratorExtension } from "jolpin-codemirror";
 import React, { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { chnotSearch } from "@/krate/chnot/service";
 import { generateKeybinding } from "@/krate/mdwt/component/codemirror/keybinding";
+import { toentTodoEventGuess } from "@/krate/toent/service";
 import { html2mdAsync } from "@/lib/markdown-utils";
+import { chnotTagNameList } from "../service";
 import {
   Backlink,
   ChnotProps,
@@ -23,9 +26,6 @@ import {
   todoHighlightPlugin,
 } from "./codemirror/mdwt-extension";
 import { createCodemirrorTheme } from "./codemirror/theme";
-import { chnotSearch } from "@/krate/chnot/service";
-import { toentTodoEventGuess } from "@/krate/toent/service";
-import { chnotTagNameList } from "../service";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {

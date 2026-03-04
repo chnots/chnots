@@ -10,9 +10,9 @@ import {
 
 import type { TID } from "@/lib/id_util";
 import type { ChnotSearchReq, ChnotSearchRspData } from "../../dto";
-import { ChnotKindIcon } from "../kind-icon";
 import type { ChnotKind } from "../../po";
 import { chnotSearch } from "../../service";
+import { ChnotKindIcon } from "../kind-icon";
 
 const MdwtChnotSelector = ({
   onSelect,

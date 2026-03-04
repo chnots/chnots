@@ -166,7 +166,7 @@ impl<'a> KDbTx<'a> {
             tid: TID::default(),
         })
         .await?;
-        self.rebuild_todo_inst(otid, None, toent.todo_state, toent.events)
+        self.rebuild_toent_inst(otid, None, toent.todo_state, toent.events)
             .await?;
 
         Ok(MdwtCommitRsp {

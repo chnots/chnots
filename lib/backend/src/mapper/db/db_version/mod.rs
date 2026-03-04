@@ -61,7 +61,7 @@ impl KDb {
     pub async fn sync_db_version(&self) -> EResult {
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.migrate_db(i64::from_str_radix(DB_VERSION, 10)?, self.get_db_type())
+        tx.migrate_db(DB_VERSION.trim().parse::<i64>()?, self.get_db_type())
             .await?;
         tx.cmt().await?;
         Ok(())
@@ -221,7 +221,7 @@ fn print_ddls() {
             .with_ddls(crate::krate::mdwt::MdwtTag::ddls())
             .with_ddls(crate::krate::toent::po::ToentTodo::ddls())
             .with_ddls(crate::krate::toent::po::ToentEvent::ddls())
-            .with_ddls(crate::krate::toent::po::TodoInst::ddls())
+            .with_ddls(crate::krate::toent::po::ToentInst::ddls())
             .with_ddls(crate::krate::ktab::KTabMeta::ddls())
             .with_ddls(crate::krate::ktab::KTabCellText::ddls())
             .with_ddls(crate::krate::ktab::KTabCellDecimal::ddls())

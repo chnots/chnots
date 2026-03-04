@@ -1,5 +1,10 @@
 import request from "@/lib/request";
-import type { ToentGuessReq, ToentGuessRsp } from "./dto";
+import type {
+  ToentGuessReq,
+  ToentGuessRsp,
+  ToentInstListReq,
+  ToentInstListRsp,
+} from "./dto";
 import type { TodoEvent, ToentTimeEvent } from "./po";
 
 export const toentTimeEventGuess = async (
@@ -12,4 +17,10 @@ export const toentTodoEventGuess = async (
   req: ToentGuessReq,
 ): Promise<ToentGuessRsp<TodoEvent>> => {
   return await request.postJson(`api/v1/toent-todoevent-guess`, req);
+};
+
+export const toentInstList = async (
+  req: ToentInstListReq,
+): Promise<ToentInstListRsp> => {
+  return await request.postJson(`api/v1/toent-inst-list`, req);
 };

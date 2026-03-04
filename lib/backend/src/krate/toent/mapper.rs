@@ -1,25 +1,37 @@
 use chin_sql::{Wheres, time_type::TID};
-use chin_tools::EResult;
+use chin_tools::{AResult, EResult};
 use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, Utc};
 
 use crate::{
+    MapperType, expand_mt_branch,
     krate::toent::{
-        EventDefi, EventDefiItem,
-        po::{TodoInst, ToentEvent, ToentTodo},
+        EventDefi, EventDefiItem, ToentInstListReq, ToentInstListRsp,
+        po::{ToentEvent, ToentInst, ToentTodo},
     },
     mapper::db::KDbTx,
+    model::dto::KReq,
 };
 
 pub(crate) trait ToentMapper {
     async fn upsert_toent_todo(&self, todo: ToentTodo) -> EResult;
     async fn upsert_toent_event(&self, event: ToentEvent) -> EResult;
-    async fn rebuild_todo_inst(
+    async fn rebuild_toent_inst(
         &self,
         otid: TID,
         timezone: Option<String>,
         target_status: Option<crate::krate::toent::logic::todoevent::TodoStateEnum>,
         events: Vec<EventDefiItem>,
     ) -> EResult;
+}
+
+pub(crate) trait ToentReadMapper {
+    async fn toent_inst_list(&self, req: KReq<ToentInstListReq>) -> AResult<ToentInstListRsp>;
+}
+
+impl ToentReadMapper for MapperType {
+    async fn toent_inst_list(&self, req: KReq<ToentInstListReq>) -> AResult<ToentInstListRsp> {
+        expand_mt_branch!(self.toent_inst_list(req))
+    }
 }
 
 impl ToentMapper for KDbTx<'_> {
@@ -33,7 +45,7 @@ impl ToentMapper for KDbTx<'_> {
         Ok(())
     }
 
-    async fn rebuild_todo_inst(
+    async fn rebuild_toent_inst(
         &self,
         otid: TID,
         timezone: Option<String>,
@@ -42,7 +54,7 @@ impl ToentMapper for KDbTx<'_> {
     ) -> EResult {
         let now = Utc::now();
         let window_end = now + Duration::days(30);
-        self.omit_rows::<TodoInst>(Wheres::equal(TodoInst::OTID, otid))
+        self.omit_rows::<ToentInst>(Wheres::equal(ToentInst::OTID, otid))
             .await?;
 
         let mut insts = Vec::new();
@@ -54,13 +66,9 @@ impl ToentMapper for KDbTx<'_> {
                 continue;
             }
             let target_tid: TID = parsed.utc.timestamp_millis().try_into()?;
-            insts.push(TodoInst {
+            insts.push(ToentInst {
                 otid,
-                timezone: parsed
-                    .timezone
-                    .or_else(|| timezone.clone())
-                    .map(|e| e.try_into())
-                    .transpose()?,
+                timezone: parsed.timezone.or_else(|| timezone.clone()),
                 naive_time: parsed.naive_time.try_into()?,
                 target_status,
                 note: None,
@@ -96,7 +104,7 @@ impl EventDefi {
 
         let naive_dt = NaiveDateTime::parse_from_str(naive.as_str(), "%Y-%m-%d %H:%M:%S").ok()?;
         let utc = if let Some(tz) = timezone.clone() {
-            let fixed = FixedOffset::parse_from_str(tz.as_str(), "%:z").ok()?;
+            let fixed = tz.parse::<FixedOffset>().ok()?;
             naive_dt.and_local_timezone(fixed).single()?.to_utc()
         } else {
             naive_dt.and_utc()

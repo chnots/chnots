@@ -108,14 +108,14 @@ impl Curd for ToentEvent {
 impl_otid_support! {ToentEvent}
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
-pub(crate) struct TodoInst {
+pub(crate) struct ToentInst {
     #[gts_primary]
     #[gts_key]
     #[gts_type = "i64"]
     pub otid: TID,
 
     #[gts_type = "Varchar<10>"]
-    pub timezone: Option<Varchar<10>>,
+    pub timezone: Option<String>,
 
     #[gts_type = "Varchar<30>"]
     pub naive_time: Varchar<30>,
@@ -138,7 +138,7 @@ pub(crate) struct TodoInst {
     pub tid: TID,
 }
 
-impl TryFrom<&KDbRow> for TodoInst {
+impl TryFrom<&KDbRow> for ToentInst {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
@@ -155,7 +155,7 @@ impl TryFrom<&KDbRow> for TodoInst {
     }
 }
 
-impl Curd for TodoInst {
+impl Curd for ToentInst {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
         Self::pkey_cond(self.otid, self.target_tid)
     }
@@ -165,4 +165,4 @@ impl Curd for TodoInst {
     }
 }
 
-impl_otid_support! {TodoInst}
+impl_otid_support! {ToentInst}

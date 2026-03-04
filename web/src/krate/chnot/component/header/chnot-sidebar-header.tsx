@@ -1,5 +1,5 @@
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Hash, Search, Settings } from "lucide-react";
+import { Hash, ListTodo, Search, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/common/component/ui/button";
 import {
@@ -88,9 +88,14 @@ const Header = () => {
             <Hash />
           </Toggle>
         </div>
-        <NavLink to={RoutePaths.Settings} id={"settings"}>
-          <Settings className="w-4 h-4" />
-        </NavLink>
+        <div className="flex items-center space-x-2">
+          <NavLink to={RoutePaths.Toents} id={"toents"}>
+            <ListTodo className="w-4 h-4" />
+          </NavLink>
+          <NavLink to={RoutePaths.Settings} id={"settings"}>
+            <Settings className="w-4 h-4" />
+          </NavLink>
+        </div>
       </div>
       <TagsView />
       <form>

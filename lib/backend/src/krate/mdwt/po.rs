@@ -11,7 +11,14 @@ use crate::mapper::Curd;
 
 fn opt_todo_tosql<'a>(opt: Option<TodoEvent>) -> SqlValue<'a> {
     match opt {
-        Some(te) => te.into(),
+        Some(te) => {
+            let state = te.state.as_static_str();
+            let value = match te.priority {
+                Some(priority) => format!("{state} !{}", priority.as_static_str()),
+                None => state.to_string(),
+            };
+            value.into()
+        }
         None => SqlValue::Null(chin_sql::LogicFieldType::Varchar(20)),
     }
 }

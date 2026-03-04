@@ -26,5 +26,25 @@ export const chnotShortDate = (date?: Date) => {
   return dayjs(date ?? new Date()).format("YYMM-DD");
 };
 
+export const parseNaiveDateTime = (value?: string): Date | undefined => {
+  if (!value) {
+    return undefined;
+  }
 
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})\s(\d{2}):(\d{2}):(\d{2})$/,
+  );
+  if (!match) {
+    return undefined;
+  }
 
+  const [, y, m, d, hh, mm, ss] = match;
+  return new Date(
+    Number(y),
+    Number(m) - 1,
+    Number(d),
+    Number(hh),
+    Number(mm),
+    Number(ss),
+  );
+};

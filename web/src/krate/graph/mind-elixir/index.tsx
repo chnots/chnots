@@ -1,15 +1,15 @@
-import React, {
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  type CSSProperties,
-} from "react";
 import MindElixir, {
   type MindElixirData,
   type MindElixirInstance,
   type Options,
 } from "mind-elixir";
+import React, {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import "mind-elixir/style.css";
 
 type MindElixirPlugin = (instance: MindElixirInstance) => void;

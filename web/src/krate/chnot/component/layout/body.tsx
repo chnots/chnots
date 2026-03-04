@@ -57,12 +57,12 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       const savedMeta = getMeta(otid);
       const savedTitle = savedMeta?.title;
 
-      let title ;
+      let title;
       if (
         arg.title &&
-          arg.title.length > 0 &&
-          arg.title !== savedTitle &&
-          (!savedTitle || savedTitle.startsWith(GEN_TITLE))
+        arg.title.length > 0 &&
+        arg.title !== savedTitle &&
+        (!savedTitle || savedTitle.startsWith(GEN_TITLE))
       ) {
         title = GEN_TITLE + arg.title;
         if (arg.kind !== ChnotKind.MDWT && arg.kind !== ChnotKind.ThreadV1) {
@@ -75,14 +75,12 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         }
       }
 
-      if (
-        arg.saveState === SaveState.Saved
-      ) {
+      if (arg.saveState === SaveState.Saved) {
         await chnotMetaCommit({ metas: [meta] });
         overwritePart(meta.otid, {
           meta: meta,
-          title: savedMeta ? title : title ? title : "<undefined>"
-        })
+          title: savedMeta ? title : title ? title : "<undefined>",
+        });
         saveStateRef.current = arg.saveState;
         setCurOtid(otid);
       }

@@ -1,5 +1,8 @@
+use chin_sql::time_type::TID;
 use chin_tools::score::PossibleScore;
 use serde::{Deserialize, Serialize};
+
+use crate::krate::toent::logic::todoevent::{TodoPriorityEnum, TodoStateEnum};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ToentGuessReq {
@@ -34,4 +37,67 @@ where
         toent: value.toent.into(),
         score: value.score,
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentInstListReq {
+    pub start_date: String,
+    pub end_date: String,
+    pub start_index: usize,
+    pub page_size: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentInstListRsp {
+    pub items: Vec<ToentScheduleItemDto>,
+    pub has_next: bool,
+    pub next_start: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentScheduleItemDto {
+    pub inst: TodoInstDto,
+    pub todo: Option<ToentTodoDto>,
+    pub event: Option<ToentEventDto>,
+    pub title: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentTodoDto {
+    pub otid: TID,
+    pub todo_priority: Option<TodoPriorityEnum>,
+    pub todo_state: Option<TodoStateEnum>,
+    pub todo_closed: bool,
+    pub tid: TID,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentEventDefiItemDto {
+    pub raw: String,
+    pub standard: Option<String>,
+    pub timezone: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentEventDefiDto {
+    pub events: Vec<ToentEventDefiItemDto>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentEventDto {
+    pub otid: TID,
+    pub event_defi: ToentEventDefiDto,
+    pub tid: TID,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct TodoInstDto {
+    pub otid: TID,
+    pub timezone: Option<String>,
+    pub naive_time: String,
+    pub target_status: Option<TodoStateEnum>,
+    pub note: Option<String>,
+    pub alert_tid: Option<TID>,
+    pub target_tid: TID,
+    pub tid: TID,
 }

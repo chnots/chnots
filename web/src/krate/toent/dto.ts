@@ -1,7 +1,6 @@
 import type { TID } from "@/lib/id_util";
-import type { MdwtToent } from "./po";
+import type { MdwtToent, ToentScheduleItem } from "./po";
 
-type PossibleToent = object;
 type PossibleScore = number;
 
 export type ToentGuessReq = {
@@ -18,4 +17,17 @@ export type ToentGuessRsp<T> = {
 
 export type Toents = {
   toent_inst_map: Record<TID, MdwtToent[]>;
+};
+
+export type ToentInstListReq = {
+  start_date: string;
+  end_date: string;
+  start_index: number;
+  page_size: number;
+};
+
+export type ToentInstListRsp = {
+  items: ToentScheduleItem[];
+  has_next: boolean;
+  next_start: number;
 };

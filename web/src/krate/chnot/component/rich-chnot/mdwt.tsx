@@ -16,8 +16,8 @@ import useDebounce from "@/hooks/use-debounce";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import type { MdwtCommitReq } from "@/krate/mdwt/dto";
 import { mdwtCommit, mdwtRecordList } from "@/krate/mdwt/service";
-import type { RichPropProps } from "./rich-mdwt-side";
 import { ChnotKind } from "../../po";
+import type { RichPropProps } from "./rich-mdwt-side";
 
 const MarkdownViewer = ({
   content: initialContent,

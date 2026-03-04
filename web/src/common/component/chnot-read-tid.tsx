@@ -1,5 +1,5 @@
-import type { TID } from "@/lib/id_util";
 import dayjs from "dayjs";
+import type { TID } from "@/lib/id_util";
 
 const ReadableTID = ({ tid }: { tid: TID }) => {
   const date = new Date(tid / 1000);

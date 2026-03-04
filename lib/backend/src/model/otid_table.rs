@@ -24,7 +24,7 @@ pub enum OtidTableEnum {
     ChnotMeta,
     ToentTodo,
     ToentEvent,
-    TodoInst,
+    ToentInst,
     LLMChatBot,
     LLMChatRecord,
     LLMChatTemplate,
@@ -61,7 +61,7 @@ macro_rules! otid_enum_to_generic {
             OtidTableEnum::ChnotMeta => $invoke! {$crate::krate::chnot::ChnotMeta},
             OtidTableEnum::ToentTodo => $invoke! {$crate::krate::toent::po::ToentTodo},
             OtidTableEnum::ToentEvent => $invoke! {$crate::krate::toent::po::ToentEvent},
-            OtidTableEnum::TodoInst => $invoke! {$crate::krate::toent::po::TodoInst},
+            OtidTableEnum::ToentInst => $invoke! {$crate::krate::toent::po::ToentInst},
             OtidTableEnum::ChnotThreadOrder => $invoke! {$crate::krate::chnot::ChnotThreadOrder},
             OtidTableEnum::GraphMeta => $invoke! {$crate::krate::graph::GraphMeta},
         }

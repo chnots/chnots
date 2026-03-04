@@ -1,14 +1,14 @@
+import type { MindElixirData } from "mind-elixir";
 import type { KfileMetaFetchReqId } from "@/krate/kfile/dto";
 import { inlineKFileDownload, inlineKFileUpload } from "@/krate/kfile/service";
 import { genTID, genUID, type TID } from "@/lib/id_util";
-import type { MindElixirData } from "mind-elixir";
+import request from "@/lib/request";
 import type {
   MindElixirCommitReq,
   MindElixirCommitRsp,
   MindElixirLoadReq,
   MindElixirLoadRsp,
 } from "../dto";
-import request from "@/lib/request";
 
 export type MindElixirChnotData = {
   otid: TID;

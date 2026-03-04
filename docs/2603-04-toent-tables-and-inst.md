@@ -4,7 +4,7 @@
 
 - 当前 Toent 功能未闭环：`mdwt_commit` 只写 `MdwtRecord`，未稳定写入 toent 定义与实例。
 - 旧设计里存在 `chnot_block` 语义，现已不适用；本任务统一为 `otid`（即 `chnot.otid`）单层模型。
-- 已确认目标表结构：`toent_todo`、`toent_event`、`todo_inst`。
+- 已确认目标表结构：`toent_todo`、`toent_event`、`toent_inst`。
 
 ## Goals
 
@@ -18,26 +18,31 @@
   - 新增表结构与迁移脚本：
     - `toent_todo(otid, todo_priority, todo_state, todo_closed, tid)`
     - `toent_event(otid, event_defi, tid)`，其中 `event_defi` 为 JSON 文本，使用对象数组：`{"events": [{...}]}`
-    - `todo_inst(otid, timezone, naive_time, target_status, note, alert_tid, target_tid, tid)`
+    - `toent_inst(otid, timezone, naive_time, target_status, note, alert_tid, target_tid, tid)`
   - `mdwt_commit` 链路接入 toent 解析与写入。
   - 按 `otid` 重建未来窗口实例（MVP 默认 30 天）。
-   - `todo_inst.naive_time` 使用字符串格式 `YYYY-MM-DD HH:MM:SS`。
-   - `todo_inst` 增加 `alert_tid`、`target_tid` 用于提醒触发与目标执行追踪。
+  - `toent_inst.naive_time` 使用字符串格式 `YYYY-MM-DD HH:MM:SS`。
+  - `toent_inst` 增加 `alert_tid`、`target_tid` 用于提醒触发与目标执行追踪。
+  - 前端 Toent MVP 页面：
+    - `Toent` 日程页支持 `列表/周/月` 三视图切换。
+    - 周视图以周一作为一周起始。
+    - 月视图展示按天聚合的 `toent_inst` 摘要（超出折叠为 `+N`）。
+    - 解析并展示 `toent_inst.naive_time(YYYY-MM-DD HH:MM:SS)`，完成按天分桶与排序。
 - Out of scope:
-  - 前端 Toent 页面实现。
+  - Toent 前端高级交互（拖拽改期、批量编辑、复杂筛选持久化）。
   - 完整动作系统（通知、多类型执行器）与复杂调度策略。
   - 多 definition 模型（本期固定 1 otid 1 份 todo/event 定义）。
 
 ## Technical Plan
 
 1. 数据模型与迁移
-   - 重构 `lib/backend/src/krate/toent/po.rs` 为 `ToentTodo`、`ToentEvent`、`TodoInst`。
+   - 重构 `lib/backend/src/krate/toent/po.rs` 为 `ToentTodo`、`ToentEvent`、`ToentInst`。
    - 为三个 PO 补齐 `GenerateTableSchema`、`TryFrom<&KDbRow>`、`Curd`、`impl_otid_support!`。
    - 新增 `data/sqls/v7-all.sql` 创建主表与 hist 表。
    - 更新 `data/db.version` 到 `7`。
 
 2. Toent 持久层能力
-   - 扩展 `lib/backend/src/krate/toent/mapper.rs`：upsert todo/event、重建 todo_inst。
+   - 扩展 `lib/backend/src/krate/toent/mapper.rs`：upsert todo/event、重建 toent_inst。
    - 实现 `lib/backend/src/krate/toent/db.rs` 对应逻辑。
    - 幂等策略：按 `otid` 删除未来窗口实例后重建。
 
@@ -53,7 +58,7 @@
 
 4. 实例生成
    - 从 `toent_event.event_defi.events` 展开未来窗口（优先使用对象内 `standard` 字段）。
-   - 写入 `todo_inst`：
+   - 写入 `toent_inst`：
      - `timezone`：从事件偏移提取（如 `+8:00`）。
      - `naive_time`：无时区字符串时间。
      - `target_status`：初始取 `toent_todo.todo_state`。
@@ -61,7 +66,13 @@
      - `alert_tid`：提醒触发时间（`TID`，可空）。
      - `target_tid`：目标执行时间（`TID`，不可空）。
 
-5. 枚举与同步纳管
+5. 前端日程视图（MVP）
+   - 在 `web/src/common/pages/toent-page.tsx` 落地 `列表/周/月` 视图切换。
+   - 周视图：周一开周，支持上一周/下一周/回到今天。
+   - 月视图：标准月历网格，按天聚合实例并展示状态/优先级标签。
+   - 时间处理：为 `YYYY-MM-DD HH:MM:SS` 提供前端 parse 适配，保证排序和分组一致。
+
+6. 枚举与同步纳管
    - 更新 `lib/backend/src/model/otid_table.rs`，加入新表映射。
    - 校正旧 `MdwtToent` 占位映射，避免误同步。
 
@@ -76,9 +87,11 @@
 
 - [ ] 提交包含 `[TODO]` 的 mdwt 内容后，可写入或更新 `toent_todo`。
 - [ ] 提交包含多个 `; EVENT:` 的 mdwt 内容后，`toent_event.event_defi` 可写入对象数组 JSON：`{"events": [{"raw":"...","standard":"...","timezone":"+8:00"}]}`。
-- [ ] 提交后可为该 `otid` 生成 `todo_inst`，且 `naive_time` 格式统一为 `YYYY-MM-DD HH:MM:SS`。
+- [ ] 提交后可为该 `otid` 生成 `toent_inst`，且 `naive_time` 格式统一为 `YYYY-MM-DD HH:MM:SS`。
 - [ ] 同一内容重复提交不产生重复实例。
 - [ ] 修改 EVENT 定义后，实例按新定义重建。
+- [ ] Toent 页面提供 `列表/周/月` 三视图切换，周视图以周一为起始。
+- [ ] 月视图可按天看到 `toent_inst` 聚合结果，且同日实例按时间升序展示。
 
 ## Execution Checklist
 

@@ -42,7 +42,6 @@ export async function chnotThreadOrderCommit(
   return await request.postJson(`api/v1/chnot-thread-order-commit`, req);
 }
 
-
 export async function chnotThreadOrderArchive(
   req: ChnotThreadOrderArchiveReq,
 ): Promise<ChnotThreadOrderArchiveRsp> {
