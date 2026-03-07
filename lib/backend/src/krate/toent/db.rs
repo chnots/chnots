@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
-use chin_sql::{OrderBy, SqlBuilder, Wheres, time_type::TID};
+use anyhow::Context;
+use chin_sql::{ILikeType, OrderBy, SqlBuilder, SqlReader, Wheres, time_type::TID};
 use chin_tools::AResult;
 use lazy_regex::Lazy;
 use regex::Regex;
@@ -8,10 +9,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     krate::{
-        mdwt::MdwtRecord,
+        chnot::{ChnotKind, ChnotMeta, ChnotMetaTable},
+        mdwt::db::MdwtOtidInTags,
+        mdwt::{MdwtCommitReq, MdwtCommitReqData, MdwtRecord, MdwtTag, mapper::MdwtMapper},
+        mdwt::{MdwtRecordTable, MdwtTagSearchType},
         toent::{
-            TodoInstDto, ToentEventDefiDto, ToentEventDefiItemDto, ToentEventDto, ToentInstListRsp,
-            ToentScheduleItemDto, ToentTodoDto,
+            TodoInstDto, ToentEventDefiDto, ToentEventDefiItemDto, ToentEventDto,
+            ToentInstCountRsp, ToentInstListRsp, ToentScheduleItemDto, ToentSearchReq,
+            ToentTodoDto, ToentTodoStateCommitReq, ToentTodoStateCommitRsp,
             mapper::ToentReadMapper,
             po::{ToentEvent, ToentInst, ToentTodo},
         },
@@ -103,16 +108,134 @@ fn extract_timezone(input: &str) -> Option<String> {
     }
 }
 
+fn rewrite_todo_state(content: &str, todo_state: TodoStateEnum) -> AResult<String> {
+    let caps = TODO_EVENT_REGEX
+        .captures(content)
+        .context("unable to find todo marker from mdwt content")?;
+    let priority = caps
+        .get(2)
+        .map(|p| format!(" !{}", p.as_str()))
+        .unwrap_or_default();
+    let replacement = format!("[{}{}]", todo_state.as_static_str(), priority);
+    Ok(TODO_EVENT_REGEX
+        .replacen(content, 1, replacement.as_str())
+        .to_string())
+}
+
 impl ToentReadMapper for KDb {
+    async fn toent_inst_count(
+        &self,
+        req: KReq<crate::krate::toent::ToentInstCountReq>,
+    ) -> AResult<ToentInstCountRsp> {
+        let all_filtered_insts = self
+            .load_filtered_insts(
+                req.start_date.as_str(),
+                req.end_date.as_str(),
+                req.include_completed,
+                req.include_uncompleted,
+                None,
+                None,
+                req.get_spaces(),
+            )
+            .await?;
+
+        Ok(ToentInstCountRsp {
+            total: all_filtered_insts.len(),
+        })
+    }
+
     async fn toent_inst_list(
         &self,
         req: KReq<crate::krate::toent::ToentInstListReq>,
     ) -> AResult<ToentInstListRsp> {
-        let start_bound = normalize_start(req.start_date.as_str());
-        let end_bound = normalize_end(req.end_date.as_str());
+        let all_filtered_insts = self
+            .load_filtered_insts(
+                req.start_date.as_str(),
+                req.end_date.as_str(),
+                req.include_completed,
+                req.include_uncompleted,
+                None,
+                None,
+                req.get_spaces(),
+            )
+            .await?;
+
+        self.build_inst_list_rsp(all_filtered_insts, req.start_index, req.page_size)
+            .await
+    }
+
+    async fn toent_search(&self, req: KReq<ToentSearchReq>) -> AResult<ToentInstListRsp> {
+        let all_filtered_insts = self
+            .load_filtered_insts(
+                req.start_date.as_str(),
+                req.end_date.as_str(),
+                req.include_completed,
+                req.include_uncompleted,
+                req.query.clone(),
+                req.tags.clone(),
+                req.get_spaces(),
+            )
+            .await?;
+
+        self.build_inst_list_rsp(all_filtered_insts, req.start_index, req.page_size)
+            .await
+    }
+
+    async fn toent_todo_state_commit(
+        &self,
+        req: KReq<ToentTodoStateCommitReq>,
+    ) -> AResult<ToentTodoStateCommitRsp> {
+        let content: String = self
+            .conn()
+            .await?
+            .qry_opt(
+                SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT])
+                    .r#where(Wheres::equal(MdwtRecord::OTID, req.otid)),
+                |row| -> AResult<String> { row.try_get(MdwtRecord::CONTENT) },
+            )
+            .await?
+            .context(format!("unable to find mdwt by otid {}", req.otid))?;
+
+        let next_content = rewrite_todo_state(content.as_str(), req.todo_state)?;
+
+        self.mdwt_commit(req.frame(MdwtCommitReq {
+            mdwt: MdwtCommitReqData {
+                otid: req.otid,
+                content: next_content.into(),
+            },
+        }))
+        .await?;
+
+        Ok(ToentTodoStateCommitRsp {
+            otid: req.otid,
+            todo_state: req.todo_state,
+        })
+    }
+}
+
+impl KDb {
+    async fn load_filtered_insts(
+        &self,
+        start_date: &str,
+        end_date: &str,
+        include_completed: bool,
+        include_uncompleted: bool,
+        query: Option<String>,
+        tags: Option<MdwtTagSearchType>,
+        kspaces: Vec<chin_sql::str_type::Varchar<40>>,
+    ) -> AResult<Vec<ToentInst>> {
+        if !include_completed && !include_uncompleted {
+            return Ok(vec![]);
+        }
+
+        let start_bound = normalize_start(start_date);
+        let end_bound = normalize_end(end_date);
+        let searchable_otids = self
+            .load_searchable_mdwt_otids(query, tags, kspaces)
+            .await?;
 
         let conn = self.conn().await?;
-        let all_filtered_insts: Vec<ToentInst> = conn
+        let all_filtered_insts = conn
             .qry_list(
                 SqlBuilder::read_all(ToentInst::TABLE)
                     .order_by([OrderBy::Asc(ToentInst::NAIVE_TIME.into())]),
@@ -121,22 +244,101 @@ impl ToentReadMapper for KDb {
             .await?
             .into_iter()
             .filter(|inst: &ToentInst| {
-                let naive = inst.naive_time.as_str();
-                naive >= start_bound.as_str() && naive <= end_bound.as_str()
+                searchable_otids.contains(&inst.otid)
+                    && inst_match(
+                        inst,
+                        start_bound.as_str(),
+                        end_bound.as_str(),
+                        include_completed,
+                        include_uncompleted,
+                    )
             })
             .collect();
 
+        Ok(all_filtered_insts)
+    }
+
+    async fn load_searchable_mdwt_otids(
+        &self,
+        query: Option<String>,
+        tags: Option<MdwtTagSearchType>,
+        kspaces: Vec<chin_sql::str_type::Varchar<40>>,
+    ) -> AResult<HashSet<TID>> {
+        let conn = self.conn().await?;
+        let cm = ChnotMetaTable::new("cm");
+
+        let base_otids: HashSet<TID> = conn
+            .qry_list(
+                SqlReader::read(cm.otid(), &cm)
+                    .wheres(Wheres::and([
+                        cm.kspace().v_in(kspaces.clone()),
+                        cm.kind().v_eq(ChnotKind::MarkdownWithToent),
+                    ]))
+                    .build2(),
+                |row| -> AResult<TID> { row.try_get(ChnotMeta::OTID) },
+            )
+            .await?
+            .into_iter()
+            .collect();
+
+        if base_otids.is_empty() {
+            return Ok(base_otids);
+        }
+
+        let mut result_otids = base_otids;
+
+        if let Some(tag_constraint) =
+            MdwtOtidInTags::new("toent_tag_constraint").sub_query_table(tags, kspaces)
+        {
+            let tag_otids: HashSet<TID> = conn
+                .qry_list(tag_constraint, |row| -> AResult<TID> {
+                    row.try_get(MdwtTag::MDWT_OTID)
+                })
+                .await?
+                .into_iter()
+                .collect();
+            result_otids.retain(|otid| tag_otids.contains(otid));
+        }
+
+        if let Some(query) = query.as_ref().map(|v| v.trim()).filter(|v| !v.is_empty()) {
+            let mr = MdwtRecordTable::new("mr");
+            let query_otids: HashSet<TID> = conn
+                .qry_list(
+                    SqlReader::read(mr.otid(), &mr)
+                        .wheres(Wheres::and([
+                            mr.otid()
+                                .v_in(result_otids.iter().copied().collect::<Vec<_>>()),
+                            mr.content().v_ilike(query, ILikeType::Fuzzy),
+                        ]))
+                        .build2(),
+                    |row| -> AResult<TID> { row.try_get(MdwtRecord::OTID) },
+                )
+                .await?
+                .into_iter()
+                .collect();
+            result_otids.retain(|otid| query_otids.contains(otid));
+        }
+
+        Ok(result_otids)
+    }
+
+    async fn build_inst_list_rsp(
+        &self,
+        all_filtered_insts: Vec<ToentInst>,
+        start_index: usize,
+        page_size: usize,
+    ) -> AResult<ToentInstListRsp> {
         if all_filtered_insts.is_empty() {
             return Ok(ToentInstListRsp {
                 items: vec![],
                 has_next: false,
-                next_start: req.start_index,
+                next_start: start_index,
             });
         }
 
-        let page_size = req.page_size.max(1);
+        let page_size = page_size.max(1);
         let total = all_filtered_insts.len();
-        let start = req.start_index.min(total);
+        let start = start_index.min(total);
         let end = (start + page_size).min(total);
         let has_next = end < total;
         let next_start = end;
@@ -149,6 +351,7 @@ impl ToentReadMapper for KDb {
         }
         let otids: Vec<_> = otids.into_iter().collect();
 
+        let conn = self.conn().await?;
         let todos: HashMap<_, _> = conn
             .qry_list(
                 SqlBuilder::read_all(ToentTodo::TABLE)
@@ -180,8 +383,8 @@ impl ToentReadMapper for KDb {
             .into_iter()
             .map(|event: ToentEvent| {
                 let otid = event.otid;
-                let parsed: EventDefi = serde_json::from_str(event.event_defi.as_str())
-                    .unwrap_or(EventDefi { events: vec![] });
+                let parsed: EventDefi =
+                    serde_json::from_str(event.event_defi.as_str()).unwrap_or_default();
                 let dto = ToentEventDto {
                     otid,
                     event_defi: ToentEventDefiDto {
@@ -245,6 +448,26 @@ impl ToentReadMapper for KDb {
             next_start,
         })
     }
+}
+
+fn is_done(state: Option<TodoStateEnum>) -> bool {
+    matches!(state, Some(TodoStateEnum::Done))
+}
+
+fn inst_match(
+    inst: &ToentInst,
+    start_bound: &str,
+    end_bound: &str,
+    include_completed: bool,
+    include_uncompleted: bool,
+) -> bool {
+    let naive = inst.naive_time.as_str();
+    if naive < start_bound || naive > end_bound {
+        return false;
+    }
+
+    let done = is_done(inst.target_status);
+    (done && include_completed) || (!done && include_uncompleted)
 }
 
 fn normalize_start(input: &str) -> String {
