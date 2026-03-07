@@ -5,7 +5,8 @@ use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, Utc};
 use crate::{
     MapperType, expand_mt_branch,
     krate::toent::{
-        EventDefi, EventDefiItem, ToentInstListReq, ToentInstListRsp,
+        EventDefi, EventDefiItem, ToentInstCountReq, ToentInstCountRsp, ToentInstListReq,
+        ToentInstListRsp, ToentSearchReq, ToentTodoStateCommitReq, ToentTodoStateCommitRsp,
         po::{ToentEvent, ToentInst, ToentTodo},
     },
     mapper::db::KDbTx,
@@ -26,11 +27,32 @@ pub(crate) trait ToentMapper {
 
 pub(crate) trait ToentReadMapper {
     async fn toent_inst_list(&self, req: KReq<ToentInstListReq>) -> AResult<ToentInstListRsp>;
+    async fn toent_inst_count(&self, req: KReq<ToentInstCountReq>) -> AResult<ToentInstCountRsp>;
+    async fn toent_search(&self, req: KReq<ToentSearchReq>) -> AResult<ToentInstListRsp>;
+    async fn toent_todo_state_commit(
+        &self,
+        req: KReq<ToentTodoStateCommitReq>,
+    ) -> AResult<ToentTodoStateCommitRsp>;
 }
 
 impl ToentReadMapper for MapperType {
     async fn toent_inst_list(&self, req: KReq<ToentInstListReq>) -> AResult<ToentInstListRsp> {
         expand_mt_branch!(self.toent_inst_list(req))
+    }
+
+    async fn toent_inst_count(&self, req: KReq<ToentInstCountReq>) -> AResult<ToentInstCountRsp> {
+        expand_mt_branch!(self.toent_inst_count(req))
+    }
+
+    async fn toent_search(&self, req: KReq<ToentSearchReq>) -> AResult<ToentInstListRsp> {
+        expand_mt_branch!(self.toent_search(req))
+    }
+
+    async fn toent_todo_state_commit(
+        &self,
+        req: KReq<ToentTodoStateCommitReq>,
+    ) -> AResult<ToentTodoStateCommitRsp> {
+        expand_mt_branch!(self.toent_todo_state_commit(req))
     }
 }
 

@@ -2,6 +2,7 @@ use chin_sql::time_type::TID;
 use chin_tools::score::PossibleScore;
 use serde::{Deserialize, Serialize};
 
+use crate::krate::mdwt::MdwtTagSearchType;
 use crate::krate::toent::logic::todoevent::{TodoPriorityEnum, TodoStateEnum};
 
 #[derive(Clone, Debug, Deserialize)]
@@ -11,7 +12,7 @@ pub struct ToentGuessReq {
 
 #[derive(Clone, Debug)]
 pub struct GuessElem<T> {
-    pub toent: T,
+    pub timestamp: T,
     pub score: PossibleScore,
 }
 
@@ -23,7 +24,7 @@ pub struct ToentGuessRsp<T> {
 impl<T> From<(T, PossibleScore)> for GuessElem<T> {
     fn from(value: (T, PossibleScore)) -> Self {
         GuessElem {
-            toent: value.0,
+            timestamp: value.0,
             score: value.1,
         }
     }
@@ -34,7 +35,7 @@ where
     E: Into<V>,
 {
     GuessElem {
-        toent: value.toent.into(),
+        timestamp: value.timestamp.into(),
         score: value.score,
     }
 }
@@ -43,8 +44,42 @@ where
 pub struct ToentInstListReq {
     pub start_date: String,
     pub end_date: String,
+    pub include_completed: bool,
+    pub include_uncompleted: bool,
     pub start_index: usize,
     pub page_size: usize,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentInstCountReq {
+    pub start_date: String,
+    pub end_date: String,
+    pub include_completed: bool,
+    pub include_uncompleted: bool,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentSearchReq {
+    pub start_date: String,
+    pub end_date: String,
+    pub include_completed: bool,
+    pub include_uncompleted: bool,
+    pub query: Option<String>,
+    pub tags: Option<MdwtTagSearchType>,
+    pub start_index: usize,
+    pub page_size: usize,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentTodoStateCommitReq {
+    pub otid: TID,
+    pub todo_state: TodoStateEnum,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentTodoStateCommitRsp {
+    pub otid: TID,
+    pub todo_state: TodoStateEnum,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -52,6 +87,11 @@ pub struct ToentInstListRsp {
     pub items: Vec<ToentScheduleItemDto>,
     pub has_next: bool,
     pub next_start: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentInstCountRsp {
+    pub total: usize,
 }
 
 #[derive(Clone, Debug, Serialize)]
