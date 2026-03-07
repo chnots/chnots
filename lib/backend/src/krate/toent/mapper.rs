@@ -1,13 +1,12 @@
-use chin_sql::{Wheres, time_type::TID};
 use chin_tools::{AResult, EResult};
-use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, Utc};
+use chrono::{DateTime, FixedOffset, NaiveDateTime, Utc};
 
 use crate::{
     MapperType, expand_mt_branch,
     krate::toent::{
         EventDefi, EventDefiItem, ToentInstCountReq, ToentInstCountRsp, ToentInstListReq,
         ToentInstListRsp, ToentSearchReq, ToentTodoStateCommitReq, ToentTodoStateCommitRsp,
-        po::{ToentEvent, ToentInst, ToentTodo},
+        po::{ToentEvent, ToentTodo},
     },
     mapper::db::KDbTx,
     model::dto::KReq,
@@ -16,13 +15,6 @@ use crate::{
 pub(crate) trait ToentMapper {
     async fn upsert_toent_todo(&self, todo: ToentTodo) -> EResult;
     async fn upsert_toent_event(&self, event: ToentEvent) -> EResult;
-    async fn rebuild_toent_inst(
-        &self,
-        otid: TID,
-        timezone: Option<String>,
-        target_status: Option<crate::krate::toent::logic::todoevent::TodoStateEnum>,
-        events: Vec<EventDefiItem>,
-    ) -> EResult;
 }
 
 pub(crate) trait ToentReadMapper {
@@ -64,46 +56,6 @@ impl ToentMapper for KDbTx<'_> {
 
     async fn upsert_toent_event(&self, event: ToentEvent) -> EResult {
         self.po_otid_insert([event]).await?;
-        Ok(())
-    }
-
-    async fn rebuild_toent_inst(
-        &self,
-        otid: TID,
-        timezone: Option<String>,
-        target_status: Option<crate::krate::toent::logic::todoevent::TodoStateEnum>,
-        events: Vec<EventDefiItem>,
-    ) -> EResult {
-        let now = Utc::now();
-        let window_end = now + Duration::days(30);
-        self.omit_rows::<ToentInst>(Wheres::equal(ToentInst::OTID, otid))
-            .await?;
-
-        let mut insts = Vec::new();
-        for event in events {
-            let Some(parsed) = EventDefi::resolve_to_target(event) else {
-                continue;
-            };
-            if parsed.utc < now || parsed.utc > window_end {
-                continue;
-            }
-            let target_tid: TID = parsed.utc.timestamp_millis().try_into()?;
-            insts.push(ToentInst {
-                otid,
-                timezone: parsed.timezone.or_else(|| timezone.clone()),
-                naive_time: parsed.naive_time.try_into()?,
-                target_status,
-                note: None,
-                alert_tid: None,
-                target_tid,
-                tid: TID::default(),
-            });
-        }
-
-        if !insts.is_empty() {
-            self.po_otid_insert(insts).await?;
-        }
-
         Ok(())
     }
 }

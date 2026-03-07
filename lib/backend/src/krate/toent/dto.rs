@@ -105,9 +105,13 @@ pub struct ToentScheduleItemDto {
 #[derive(Clone, Debug, Serialize)]
 pub struct ToentTodoDto {
     pub otid: TID,
-    pub todo_priority: Option<TodoPriorityEnum>,
     pub todo_state: Option<TodoStateEnum>,
-    pub todo_closed: bool,
+    pub todo_priority: Option<TodoPriorityEnum>,
+    pub alert_tid: Option<TID>,
+    pub start_tid: Option<TID>,
+    pub end_tid: Option<TID>,
+    pub timezone: Option<isize>,
+    pub closed: Option<bool>,
     pub tid: TID,
 }
 
@@ -127,6 +131,10 @@ pub struct ToentEventDefiDto {
 pub struct ToentEventDto {
     pub otid: TID,
     pub event_defi: ToentEventDefiDto,
+    pub start_time: Option<TID>,
+    pub start_timezone: Option<isize>,
+    pub end_time: Option<TID>,
+    pub end_timezone: Option<isize>,
     pub tid: TID,
 }
 

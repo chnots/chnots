@@ -14,9 +14,13 @@ export type ToentTimeEventInst = object;
 
 export type ToentTodo = {
   otid: TID;
-  todo_priority?: TodoPriorityEnum;
   todo_state?: TodoStateEnum;
-  todo_closed: boolean;
+  todo_priority?: TodoPriorityEnum;
+  alert_tid?: TID;
+  start_tid?: TID;
+  end_tid?: TID;
+  timezone?: number;
+  closed?: boolean;
   tid: TID;
 };
 
@@ -33,10 +37,14 @@ export type ToentEventDefi = {
 export type ToentEvent = {
   otid: TID;
   event_defi: ToentEventDefi;
+  start_time?: TID;
+  start_timezone?: number;
+  end_time?: TID;
+  end_timezone?: number;
   tid: TID;
 };
 
-export type ToentInst = {
+export type TodoInst = {
   otid: TID;
   timezone?: string;
   naive_time: string;
@@ -48,7 +56,7 @@ export type ToentInst = {
 };
 
 export type ToentScheduleItem = {
-  inst: ToentInst;
+  inst: TodoInst;
   todo?: ToentTodo;
   event?: ToentEvent;
   title?: DbText;
@@ -58,7 +66,7 @@ export type MdwtToent = {
   mdwt_otid: TID;
   todo_state?: TodoStateEnum;
   todo_priority?: TodoPriorityEnum;
-  todo_closed: boolean;
+  closed?: boolean;
   note?: DbText;
   tid: TID;
 };

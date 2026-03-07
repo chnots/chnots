@@ -146,13 +146,24 @@ impl<'a> KDbTx<'a> {
 
         self.overwrite_mdwt_record(mdwt).await?;
 
-        if toent.todo_state.is_some() || toent.todo_priority.is_some() {
+        if toent.todo_state.is_some()
+            || toent.todo_priority.is_some()
+            || toent.alert_tid.is_some()
+            || toent.start_tid.is_some()
+            || toent.end_tid.is_some()
+            || toent.timezone.is_some()
+        {
             self.upsert_toent_todo(ToentTodo {
                 otid,
-                todo_priority: toent.todo_priority,
                 todo_state: toent.todo_state,
-                todo_closed: toent.todo_closed,
+                todo_priority: toent.todo_priority,
+                alert_tid: toent.alert_tid,
+                start_tid: toent.start_tid,
+                end_tid: toent.end_tid,
+                timezone: toent.timezone,
+                closed: toent.closed,
                 tid: TID::default(),
+                note: None,
             })
             .await?;
         }
@@ -163,12 +174,13 @@ impl<'a> KDbTx<'a> {
         self.upsert_toent_event(ToentEvent {
             otid,
             event_defi: serde_json::to_string(&event_defi)?.into(),
+            start_time: toent.start_time,
+            start_timezone: toent.start_timezone,
+            end_time: toent.end_time,
+            end_timezone: toent.end_timezone,
             tid: TID::default(),
         })
         .await?;
-        self.rebuild_toent_inst(otid, None, toent.todo_state, toent.events)
-            .await?;
-
         Ok(MdwtCommitRsp {
             todo_event: None,
             title: title.into(),

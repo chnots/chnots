@@ -1,8 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use anyhow::Context;
-use chin_sql::{ILikeType, OrderBy, SqlBuilder, SqlReader, Wheres, time_type::TID};
+use chin_sql::{ILikeType, SqlBuilder, SqlReader, Wheres, time_type::TID};
 use chin_tools::AResult;
+use chrono::{FixedOffset, NaiveDateTime};
 use lazy_regex::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -18,7 +19,7 @@ use crate::{
             ToentInstCountRsp, ToentInstListRsp, ToentScheduleItemDto, ToentSearchReq,
             ToentTodoDto, ToentTodoStateCommitReq, ToentTodoStateCommitRsp,
             mapper::ToentReadMapper,
-            po::{ToentEvent, ToentInst, ToentTodo},
+            po::{ToentEvent, ToentTodo},
         },
     },
     mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier},
@@ -49,7 +50,15 @@ pub(crate) struct EventDefiItem {
 pub(crate) struct ToentExtract {
     pub(crate) todo_priority: Option<TodoPriorityEnum>,
     pub(crate) todo_state: Option<TodoStateEnum>,
-    pub(crate) todo_closed: bool,
+    pub(crate) alert_tid: Option<TID>,
+    pub(crate) start_tid: Option<TID>,
+    pub(crate) end_tid: Option<TID>,
+    pub(crate) timezone: Option<isize>,
+    pub(crate) closed: Option<bool>,
+    pub(crate) start_time: Option<TID>,
+    pub(crate) start_timezone: Option<isize>,
+    pub(crate) end_time: Option<TID>,
+    pub(crate) end_timezone: Option<isize>,
     pub(crate) events: Vec<EventDefiItem>,
 }
 
@@ -80,15 +89,25 @@ pub(crate) fn parse_mdwt_toent(content: &str) -> ToentExtract {
         }
     }
 
-    let todo_closed = matches!(
+    let closed = Some(matches!(
         todo_state,
         Some(TodoStateEnum::Done | TodoStateEnum::Cancel)
-    );
+    ));
+    let (start_tid, start_timezone, end_tid, end_timezone, alert_tid) =
+        extract_event_time_meta(&events);
 
     ToentExtract {
         todo_priority: priority,
         todo_state,
-        todo_closed,
+        alert_tid,
+        start_tid,
+        end_tid,
+        timezone: start_timezone,
+        closed,
+        start_time: start_tid,
+        start_timezone,
+        end_time: end_tid,
+        end_timezone,
         events,
     }
 }
@@ -106,6 +125,86 @@ fn extract_timezone(input: &str) -> Option<String> {
     } else {
         Some(tz.to_string())
     }
+}
+
+fn extract_event_time_meta(
+    events: &[EventDefiItem],
+) -> (
+    Option<TID>,
+    Option<isize>,
+    Option<TID>,
+    Option<isize>,
+    Option<TID>,
+) {
+    let mut starts = Vec::new();
+    for event in events {
+        let source = event.standard.as_ref().unwrap_or(&event.raw);
+        let naive = extract_naive_time(source.as_str()).or_else(|| extract_naive_time(&event.raw));
+        let timezone_text = extract_timezone(source.as_str())
+            .or_else(|| event.timezone.clone())
+            .or_else(|| extract_timezone(&event.raw));
+        if let Some(naive) = naive
+            && let Some(start_tid) =
+                parse_tid_with_timezone(naive.as_str(), timezone_text.as_deref())
+        {
+            let timezone = timezone_text
+                .as_deref()
+                .and_then(timezone_to_offset_minutes);
+            starts.push((start_tid, timezone));
+        }
+    }
+
+    if starts.is_empty() {
+        return (None, None, None, None, None);
+    }
+
+    starts.sort_by_key(|(tid, _)| *tid);
+    let (start_tid, start_timezone) = starts[0];
+    let (end_tid, end_timezone) = starts[starts.len() - 1];
+    (
+        Some(start_tid),
+        start_timezone,
+        Some(end_tid),
+        end_timezone,
+        None,
+    )
+}
+
+fn parse_tid_with_timezone(naive: &str, timezone: Option<&str>) -> Option<TID> {
+    let naive_dt = NaiveDateTime::parse_from_str(naive, "%Y-%m-%d %H:%M:%S").ok()?;
+    let timestamp = if let Some(tz) = timezone {
+        let fixed = normalize_timezone_text(tz)?.parse::<FixedOffset>().ok()?;
+        naive_dt
+            .and_local_timezone(fixed)
+            .single()?
+            .timestamp_millis()
+    } else {
+        naive_dt.and_utc().timestamp_millis()
+    };
+    timestamp.try_into().ok()
+}
+
+fn timezone_to_offset_minutes(timezone: &str) -> Option<isize> {
+    let fixed = normalize_timezone_text(timezone)?
+        .parse::<FixedOffset>()
+        .ok()?;
+    Some((fixed.local_minus_utc() / 60) as isize)
+}
+
+fn normalize_timezone_text(timezone: &str) -> Option<String> {
+    let bytes = timezone.as_bytes();
+    if bytes.len() == 5 && (bytes[0] == b'+' || bytes[0] == b'-') {
+        return Some(format!(
+            "{}{}:{}",
+            &timezone[0..1],
+            &timezone[1..3],
+            &timezone[3..5]
+        ));
+    }
+    if bytes.len() == 6 && (bytes[0] == b'+' || bytes[0] == b'-') && bytes[3] == b':' {
+        return Some(timezone.to_string());
+    }
+    None
 }
 
 fn rewrite_todo_state(content: &str, todo_state: TodoStateEnum) -> AResult<String> {
@@ -223,7 +322,7 @@ impl KDb {
         query: Option<String>,
         tags: Option<MdwtTagSearchType>,
         kspaces: Vec<chin_sql::str_type::Varchar<40>>,
-    ) -> AResult<Vec<ToentInst>> {
+    ) -> AResult<Vec<TodoInstDto>> {
         if !include_completed && !include_uncompleted {
             return Ok(vec![]);
         }
@@ -233,27 +332,68 @@ impl KDb {
         let searchable_otids = self
             .load_searchable_mdwt_otids(query, tags, kspaces)
             .await?;
+        if searchable_otids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let otids: Vec<_> = searchable_otids.iter().copied().collect();
 
         let conn = self.conn().await?;
-        let all_filtered_insts = conn
+        let todos: HashMap<_, _> = conn
             .qry_list(
-                SqlBuilder::read_all(ToentInst::TABLE)
-                    .order_by([OrderBy::Asc(ToentInst::NAIVE_TIME.into())]),
-                |row| -> AResult<ToentInst> { (&row).try_into() },
+                SqlBuilder::read_all(ToentTodo::TABLE)
+                    .r#where(Wheres::r#in(ToentTodo::OTID, otids.clone())),
+                |row| (&row).try_into(),
             )
             .await?
             .into_iter()
-            .filter(|inst: &ToentInst| {
-                searchable_otids.contains(&inst.otid)
-                    && inst_match(
-                        inst,
-                        start_bound.as_str(),
-                        end_bound.as_str(),
-                        include_completed,
-                        include_uncompleted,
-                    )
-            })
+            .map(|todo: ToentTodo| (todo.otid, todo))
             .collect();
+
+        let mut all_filtered_insts: Vec<TodoInstDto> = Vec::new();
+        let events: Vec<ToentEvent> = conn
+            .qry_list(
+                SqlBuilder::read_all(ToentEvent::TABLE)
+                    .r#where(Wheres::r#in(ToentEvent::OTID, otids)),
+                |row| (&row).try_into(),
+            )
+            .await?;
+
+        for event in events {
+            let todo = todos.get(&event.otid);
+            let target_status = todo.and_then(|t| t.todo_state);
+            let note = todo.and_then(|t| t.note.as_ref().map(|n| n.to_string()));
+            let alert_tid = todo.and_then(|t| t.alert_tid);
+            let parsed: EventDefi =
+                serde_json::from_str(event.event_defi.as_str()).unwrap_or_default();
+
+            for item in parsed.events {
+                let Some(target) = EventDefi::resolve_to_target(item) else {
+                    continue;
+                };
+                let inst = TodoInstDto {
+                    otid: event.otid,
+                    timezone: target.timezone,
+                    naive_time: target.naive_time,
+                    target_status,
+                    note: note.clone(),
+                    alert_tid,
+                    target_tid: target.utc.timestamp_millis().try_into()?,
+                    tid: event.tid,
+                };
+                if inst_match(
+                    &inst,
+                    start_bound.as_str(),
+                    end_bound.as_str(),
+                    include_completed,
+                    include_uncompleted,
+                ) {
+                    all_filtered_insts.push(inst);
+                }
+            }
+        }
+
+        all_filtered_insts.sort_by(|a, b| a.naive_time.cmp(&b.naive_time));
 
         Ok(all_filtered_insts)
     }
@@ -324,7 +464,7 @@ impl KDb {
 
     async fn build_inst_list_rsp(
         &self,
-        all_filtered_insts: Vec<ToentInst>,
+        all_filtered_insts: Vec<TodoInstDto>,
         start_index: usize,
         page_size: usize,
     ) -> AResult<ToentInstListRsp> {
@@ -364,9 +504,13 @@ impl KDb {
                 let otid = todo.otid;
                 let dto = ToentTodoDto {
                     otid,
-                    todo_priority: todo.todo_priority,
                     todo_state: todo.todo_state,
-                    todo_closed: todo.todo_closed,
+                    todo_priority: todo.todo_priority,
+                    alert_tid: todo.alert_tid,
+                    start_tid: todo.start_tid,
+                    end_tid: todo.end_tid,
+                    timezone: todo.timezone,
+                    closed: todo.closed,
                     tid: todo.tid,
                 };
                 (otid, dto)
@@ -398,6 +542,10 @@ impl KDb {
                             })
                             .collect(),
                     },
+                    start_time: event.start_time,
+                    start_timezone: event.start_timezone,
+                    end_time: event.end_time,
+                    end_timezone: event.end_timezone,
                     tid: event.tid,
                 };
                 (otid, dto)
@@ -425,16 +573,7 @@ impl KDb {
             .map(|inst| {
                 let inst_otid = inst.otid;
                 ToentScheduleItemDto {
-                    inst: TodoInstDto {
-                        otid: inst_otid,
-                        timezone: inst.timezone,
-                        naive_time: inst.naive_time.to_string(),
-                        target_status: inst.target_status,
-                        note: inst.note.map(|n| n.to_string()),
-                        alert_tid: inst.alert_tid,
-                        target_tid: inst.target_tid,
-                        tid: inst.tid,
-                    },
+                    inst,
                     todo: todos.get(&inst_otid).cloned(),
                     event: events.get(&inst_otid).cloned(),
                     title: titles.get(&inst_otid).cloned(),
@@ -455,7 +594,7 @@ fn is_done(state: Option<TodoStateEnum>) -> bool {
 }
 
 fn inst_match(
-    inst: &ToentInst,
+    inst: &TodoInstDto,
     start_bound: &str,
     end_bound: &str,
     include_completed: bool,

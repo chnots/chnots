@@ -221,7 +221,6 @@ fn print_ddls() {
             .with_ddls(crate::krate::mdwt::MdwtTag::ddls())
             .with_ddls(crate::krate::toent::po::ToentTodo::ddls())
             .with_ddls(crate::krate::toent::po::ToentEvent::ddls())
-            .with_ddls(crate::krate::toent::po::ToentInst::ddls())
             .with_ddls(crate::krate::ktab::KTabMeta::ddls())
             .with_ddls(crate::krate::ktab::KTabCellText::ddls())
             .with_ddls(crate::krate::ktab::KTabCellDecimal::ddls())
