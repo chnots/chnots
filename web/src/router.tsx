@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 import App from "@/app";
 import ErrorPage from "@/common/pages/error-page";
 import SettingsPage from "@/common/pages/settings-page";
-import ToentPage from "@/common/pages/toent-page";
+import ToentPage from "@/krate/toent/component/toent-page";
 import ChnotPage from "@/krate/chnot/page/chnot-page";
 import FullScreenTimer from "./krate/timer/timer";
 

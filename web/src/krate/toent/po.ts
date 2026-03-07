@@ -3,7 +3,6 @@ import type { DbText } from "@/lib/types";
 
 export type Toent = object;
 
-
 export type TodoEvent = "TODO" | "DONE" | "WAIT" | "CANCEL" | "DOING";
 
 export type ToentTimeEvent = object;
