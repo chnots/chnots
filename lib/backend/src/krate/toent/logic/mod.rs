@@ -3,6 +3,7 @@ use std::ops::Deref;
 pub(crate) mod timeevent;
 pub(crate) mod todoevent;
 use chin_tools::{AResult, wrapper::score::PossibleScore};
+use itertools::Itertools;
 
 use crate::krate::toent::dto::GuessElem;
 
@@ -65,6 +66,17 @@ impl<'a> Words<'a> {
             original: "",
             words: vec![],
         }
+    }
+
+    pub fn filterd(&self) -> String {
+        self.words.iter().map(|e| e.text).join(" ")
+    }
+
+    pub fn sub1(&self, nth: usize) -> Option<Self> {
+        self.words.get(nth).map(|n| Self {
+            original: self.original,
+            words: vec![n.clone()],
+        })
     }
 }
 

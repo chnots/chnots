@@ -27,9 +27,14 @@ impl RepeatType {
         match self {
             RepeatType::Once => ".",
             RepeatType::RepeatEvent => "*",
-            RepeatType::RepeatTodo => ".*",
+            RepeatType::RepeatTodo => "**",
         }
     }
+}
+
+pub enum Repeat {
+    Interval(TimeInterval),
+    // TODO, m3d4,w1,H3M4S10
 }
 
 enum_common_funcs!(RepeatType);
@@ -65,7 +70,7 @@ pub(crate) struct Repeater {
 
 impl Repeater {
     pub(crate) fn interval_start(seg: &str) -> bool {
-        starts_any(seg, &[".", ".*", "*"])
+        starts_any(seg, &["**", "*"])
     }
 
     pub(crate) fn alter_start(seg: &str) -> bool {

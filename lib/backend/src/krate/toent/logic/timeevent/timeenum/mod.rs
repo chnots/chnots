@@ -31,6 +31,12 @@ impl From<ChnTime> for TimeEnum {
     }
 }
 
+impl From<WesTime> for TimeEnum {
+    fn from(value: WesTime) -> Self {
+        Self::Wes(value)
+    }
+}
+
 impl EventBuilder for TimeEnum {
     fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         let mut result: Vec<GuessElem<TimeEnum>> = vec![];
@@ -42,7 +48,12 @@ impl EventBuilder for TimeEnum {
         if let Some(vs) = WesTime::guess(gt) {
             let wes: Vec<GuessElem<Self>> = vs
                 .into_iter()
-                .map(|GuessElem { toent: v, score: p }| (TimeEnum::Wes(v), p).into())
+                .map(
+                    |GuessElem {
+                         timestamp: v,
+                         score: p,
+                     }| (TimeEnum::Wes(v), p).into(),
+                )
                 .collect();
             result.extend(wes);
         }
@@ -50,7 +61,12 @@ impl EventBuilder for TimeEnum {
         if let Some(vs) = ChnTime::guess(gt) {
             let chn: Vec<GuessElem<Self>> = vs
                 .into_iter()
-                .map(|GuessElem { toent: v, score: p }| (TimeEnum::Chn(v), p).into())
+                .map(
+                    |GuessElem {
+                         timestamp: v,
+                         score: p,
+                     }| (TimeEnum::Chn(v), p).into(),
+                )
                 .collect();
 
             result.extend(chn);

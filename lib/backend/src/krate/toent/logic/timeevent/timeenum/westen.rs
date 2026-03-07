@@ -7,9 +7,10 @@ use regex::Regex;
 use super::PossibleScore;
 use super::{
     Timestamp,
-    base::{BaseTime, convert_time_to_secs},
+    base::{BaseDateTime, convert_time_to_secs},
 };
 use crate::krate::toent::dto::GuessElem;
+use crate::krate::toent::timeevent::timeenum::base::{BaseDate, BaseTime};
 use crate::krate::toent::{EventBuilder, Words, timeevent::equals_any};
 
 pub(crate) const CAL_TYPE: &str = "wes";
@@ -17,19 +18,19 @@ pub(crate) const CAL_TYPE: &str = "wes";
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct WesTime {
     pub(crate) offset: Option<FixedOffset>,
-    pub(crate) timestamp: BaseTime,
+    pub(crate) timestamp: BaseDateTime,
 }
 
 impl Deref for WesTime {
-    type Target = BaseTime;
+    type Target = BaseDateTime;
 
     fn deref(&self) -> &Self::Target {
         &self.timestamp
     }
 }
 
-impl From<BaseTime> for WesTime {
-    fn from(value: BaseTime) -> Self {
+impl From<BaseDateTime> for WesTime {
+    fn from(value: BaseDateTime) -> Self {
         WesTime {
             offset: None,
             timestamp: value,
@@ -91,7 +92,7 @@ impl EventBuilder for WesTime {
                 original: gt.original,
                 words: ts_segs,
             };
-            let timestamp = BaseTime::try_from_standard(&sub)?;
+            let timestamp = BaseDateTime::try_from_standard(&sub)?;
 
             Ok(WesTime { offset, timestamp })
         }
@@ -126,13 +127,17 @@ impl Timestamp for WesTime {
         let time = Local::now().naive_local();
         WesTime {
             offset: Default::default(),
-            timestamp: BaseTime {
-                year: time.year().into(),
-                month: time.month().into(),
-                day: time.day().into(),
-                hour: time.hour().into(),
-                minute: time.minute().into(),
-                second: time.second().into(),
+            timestamp: BaseDateTime {
+                date: BaseDate {
+                    year: time.year().into(),
+                    month: time.month().into(),
+                    day: time.day().into(),
+                },
+                time: BaseTime {
+                    hour: time.hour().into(),
+                    minute: time.minute().into(),
+                    second: time.second().into(),
+                },
             },
         }
     }
@@ -141,10 +146,12 @@ impl Timestamp for WesTime {
         let time = Local::now().naive_local();
         WesTime {
             offset: Default::default(),
-            timestamp: BaseTime {
-                year: time.year().into(),
-                month: time.month().into(),
-                day: time.day().into(),
+            timestamp: BaseDateTime {
+                date: BaseDate {
+                    year: time.year().into(),
+                    month: time.month().into(),
+                    day: time.day().into(),
+                },
                 ..Default::default()
             },
         }
@@ -156,19 +163,27 @@ mod test {
 
     use chrono::FixedOffset;
 
-    use crate::krate::toent::{EventBuilder, logic::timeevent::timeenum::base::BaseTime};
+    use crate::krate::toent::{
+        EventBuilder,
+        logic::timeevent::timeenum::base::BaseDateTime,
+        timeevent::timeenum::base::{BaseDate, BaseTime},
+    };
 
     use super::WesTime;
 
     #[test]
     fn from_test() {
-        let ymdhms = BaseTime {
-            year: 2020.into(),
-            month: 12.into(),
-            day: 12.into(),
-            hour: 12.into(),
-            minute: 12.into(),
-            second: 12.into(),
+        let ymdhms = BaseDateTime {
+            date: BaseDate {
+                year: 2020.into(),
+                month: 12.into(),
+                day: 12.into(),
+            },
+            time: BaseTime {
+                hour: 12.into(),
+                minute: 12.into(),
+                second: 12.into(),
+            },
         };
 
         let guesses = WesTime::guess(&"2020-12-12 12:12:12 +8:00".into()).unwrap();
@@ -178,7 +193,7 @@ mod test {
             WesTime {
                 offset: FixedOffset::east_opt(8 * 3600),
                 timestamp: ymdhms.clone()
-            } == guessed.toent
+            } == guessed.timestamp
         );
 
         let guesses = WesTime::guess(&"2020-12-12 12:12:12".into()).unwrap();
@@ -188,7 +203,7 @@ mod test {
             WesTime {
                 offset: None,
                 timestamp: ymdhms.clone()
-            } == guessed.toent
+            } == guessed.timestamp
         );
     }
 }

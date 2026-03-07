@@ -9,16 +9,16 @@ use super::PossibleScore;
 use crate::krate::toent::{
     EventBuilder, Words,
     dto::GuessElem,
-    timeevent::timeenum::base::{BaseTime, NoneOrI32},
+    timeevent::timeenum::base::{BaseDateTime, NoneOrI32},
 };
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct TimeInterval {
-    base: BaseTime,
-    week: NoneOrI32,
+    pub(crate) base: BaseDateTime,
+    pub(crate) week: NoneOrI32,
 }
 
 impl Deref for TimeInterval {
-    type Target = BaseTime;
+    type Target = BaseDateTime;
 
     fn deref(&self) -> &Self::Target {
         &self.base
@@ -50,27 +50,27 @@ impl EventBuilder for TimeInterval {
             match c {
                 '0'..='9' => num.push(c),
                 'y' => {
-                    interval.year = num.parse::<i32>()?.into();
+                    interval.date.year = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'm' => {
-                    interval.month = num.parse::<i32>()?.into();
+                    interval.date.month = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'd' => {
-                    interval.day = num.parse::<i32>()?.into();
+                    interval.date.day = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'H' => {
-                    interval.hour = num.parse::<i32>()?.into();
+                    interval.time.hour = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'M' => {
-                    interval.minute = num.parse::<i32>()?.into();
+                    interval.time.minute = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'S' => {
-                    interval.second = num.parse::<i32>()?.into();
+                    interval.time.second = num.parse::<i32>()?.into();
                     num = String::new();
                 }
                 'w' => {
@@ -99,13 +99,13 @@ impl EventBuilder for TimeInterval {
             }
         };
 
-        push_func(&self.year, 'y');
-        push_func(&self.month, 'm');
+        push_func(&self.date.year, 'y');
+        push_func(&self.date.month, 'm');
         push_func(&self.week, 'w');
-        push_func(&self.day, 'd');
-        push_func(&self.hour, 'H');
-        push_func(&self.minute, 'M');
-        push_func(&self.second, 'S');
+        push_func(&self.date.day, 'd');
+        push_func(&self.time.hour, 'H');
+        push_func(&self.time.minute, 'M');
+        push_func(&self.time.second, 'S');
 
         result
     }

@@ -10,13 +10,19 @@ pub(crate) struct Times {
     count: u32,
 }
 
+impl Times {
+    pub(crate) fn new(count: u32) -> Self {
+        Self { count }
+    }
+}
+
 static TIMES_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\d+)t$");
 
 impl EventBuilder for Times {
     fn guess(gt: &Words) -> Option<Vec<GuessElem<Self>>> {
         match Self::try_from_standard(gt) {
             Ok(v) => Some(vec![GuessElem {
-                toent: v,
+                timestamp: v,
                 score: PossibleScore::Likely(100),
             }]),
             Err(_) => None,

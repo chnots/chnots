@@ -3,14 +3,15 @@ use chinese_lunisolar_calendar::LunisolarDate;
 use chrono::{DateTime, Local, Timelike};
 use num_traits::ToPrimitive;
 
-use super::{Timestamp, base::BaseTime};
+use super::Timestamp;
 use crate::krate::toent::dto::GuessElem;
+use crate::krate::toent::timeevent::timeenum::base::{BaseDate, BaseDateTime, BaseTime};
 use crate::krate::toent::{EventBuilder, Words, timeevent::contains_any};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub(crate) struct ChnTime {
     leap_month: bool,
-    timestamp: BaseTime,
+    timestamp: BaseDateTime,
 }
 
 impl Timestamp for ChnTime {
@@ -26,13 +27,17 @@ impl Timestamp for ChnTime {
         let now: DateTime<Local> = Local::now();
 
         let date = LunisolarDate::from_date(now).unwrap();
-        let ts = BaseTime {
-            year: date.to_solar_year().to_i32().into(),
-            month: date.to_lunar_month().to_u8().to_i32().unwrap().into(),
-            day: date.to_lunar_day().to_u8().to_i32().unwrap().into(),
-            hour: now.hour().into(),
-            minute: now.minute().into(),
-            second: now.second().into(),
+        let ts = BaseDateTime {
+            date: BaseDate {
+                year: date.to_solar_year().to_i32().into(),
+                month: date.to_lunar_month().to_u8().to_i32().unwrap().into(),
+                day: date.to_lunar_day().to_u8().to_i32().unwrap().into(),
+            },
+            time: BaseTime {
+                hour: now.hour().into(),
+                minute: now.minute().into(),
+                second: now.second().into(),
+            },
         };
         Self {
             leap_month: date.to_lunar_month().to_u8_raw() > 100,
@@ -44,12 +49,23 @@ impl Timestamp for ChnTime {
         let now = Self::now_time();
         Self {
             leap_month: now.leap_month,
-            timestamp: BaseTime {
-                hour: Default::default(),
-                minute: Default::default(),
-                second: Default::default(),
+            timestamp: BaseDateTime {
+                time: BaseTime {
+                    hour: Default::default(),
+                    minute: Default::default(),
+                    second: Default::default(),
+                },
                 ..now.timestamp
             },
+        }
+    }
+}
+
+impl ChnTime {
+    pub(crate) fn new(leap_month: bool, timestamp: BaseDateTime) -> Self {
+        Self {
+            leap_month,
+            timestamp,
         }
     }
 }
@@ -68,28 +84,28 @@ impl EventBuilder for ChnTime {
             leap_month = true;
         }
 
-        let bases = BaseTime::guess(
+        let bases = BaseDateTime::guess(
             &gt.filter(|e| !contains_any(e, &["闰", "run", "ns", "农", "nong", "ns"])),
-        );
-        println!(
-            "bases: {:?}, {:?}",
-            gt.filter(|e| !contains_any(e, &["闰", "run", "ns", "农", "nong", "ns"])),
-            bases.as_ref().map(|e| e.len())
         );
 
         if let Some(bases) = bases {
             let v = bases
                 .into_iter()
-                .map(|GuessElem { toent: t, score }| {
-                    (
-                        ChnTime {
-                            leap_month,
-                            timestamp: t,
-                        },
-                        score.merge(base_score),
-                    )
-                        .into()
-                })
+                .map(
+                    |GuessElem {
+                         timestamp: toent,
+                         score,
+                     }| {
+                        (
+                            ChnTime {
+                                leap_month,
+                                timestamp: toent,
+                            },
+                            score.merge(base_score),
+                        )
+                            .into()
+                    },
+                )
                 .collect();
             Some(v)
         } else {
@@ -117,7 +133,7 @@ impl EventBuilder for ChnTime {
             }
 
             let start = if leap_month { 2 } else { 1 };
-            let timestamp = BaseTime::try_from_standard(&gt.sub_start(start))?;
+            let timestamp = BaseDateTime::try_from_standard(&gt.sub_start(start))?;
 
             Ok(ChnTime {
                 leap_month,
@@ -138,8 +154,9 @@ impl EventBuilder for ChnTime {
 #[cfg(test)]
 mod test {
     use crate::krate::toent::{
-        EventBuilder, logic::timeevent::timeenum::base::BaseTime,
-        timeevent::timeenum::chinese::ChnTime,
+        EventBuilder,
+        logic::timeevent::timeenum::base::BaseTime,
+        timeevent::timeenum::{base::BaseDateTime, chinese::ChnTime},
     };
 
     #[test]
@@ -147,12 +164,12 @@ mod test {
         let r = ChnTime::guess(&"农 2023-12-12".into()).unwrap();
         let chn = ChnTime {
             leap_month: false,
-            timestamp: BaseTime::default()
+            timestamp: BaseDateTime::default()
                 .with_year(2023)
                 .with_month(12)
                 .with_day(12),
         };
         println!("guessed: {:?}", r);
-        assert!(r.first().unwrap().toent == chn);
+        assert!(r.first().unwrap().timestamp == chn);
     }
 }
