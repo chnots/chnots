@@ -1,17 +1,21 @@
 use std::{
-    ops::{Deref, DerefMut},
+    ops::{Add, Deref, DerefMut},
     vec,
 };
 
 use chin_tools::AResult;
+use serde::{Deserialize, Serialize};
 
 use super::PossibleScore;
 use crate::krate::toent::{
     EventBuilder, Words,
     dto::GuessElem,
-    timeevent::timeenum::base::{BaseDateTime, NoneOrI32},
+    timeevent::timeenum::{
+        base::{BaseDateTime, NoneOrI32},
+        westen::WesTime,
+    },
 };
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct TimeInterval {
     pub(crate) base: BaseDateTime,
     pub(crate) week: NoneOrI32,

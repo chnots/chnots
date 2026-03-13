@@ -332,17 +332,16 @@ impl ChnotMapper for KDb {
             || !req.kinds.is_empty();
 
         let joins = Joins::new((&cm).into())
-            .join_some(
-                tag_constraint.sub_query_table(req.tags.clone(), req.get_spaces()),
-                |v| JoinTable {
+            .join_some(tag_constraint.sub_query_table(req.tags.clone()), |v| {
+                JoinTable {
                     join_type: JoinType::InnerJoin,
                     table: Froms::SubQuery {
                         table: v.into(),
                         alias: &tag_constraint.alias,
                     },
                     conds: [(tag_constraint.mdwt_otid(), cm.otid()).into()].into(),
-                },
-            )
+                }
+            })
             .join_some(
                 QueryContentTable::sub_query_table(req.query.as_deref()),
                 |v| JoinTable {

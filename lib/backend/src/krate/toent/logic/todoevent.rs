@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize, de};
 
 use super::{EventBuilder, Words};
 
-#[derive(Clone, Copy, Debug, PartialEq, Sequence, Default)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq, Sequence)]
 pub(crate) enum TodoStateEnum {
     #[default]
     Todo,
@@ -26,7 +26,7 @@ impl PartialOrd for TodoStateEnum {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Sequence, Default)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq, Sequence)]
 pub(crate) enum TodoPriorityEnum {
     A,
     B,
@@ -53,7 +53,7 @@ impl TryFrom<i64> for TodoPriorityEnum {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct TodoEvent {
     pub state: TodoStateEnum,
     pub priority: Option<TodoPriorityEnum>,
@@ -261,7 +261,6 @@ impl Serialize for TodoEvent {
 
 #[cfg(test)]
 mod test {
-
     use crate::krate::toent::EventBuilder;
 
     use super::TodoEvent;

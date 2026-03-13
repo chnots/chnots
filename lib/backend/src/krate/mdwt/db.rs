@@ -5,12 +5,8 @@ use crate::krate::chnot::ChnotMetaTable;
 use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
 use crate::krate::toent::logic::EventBuilder;
-use crate::krate::toent::logic::todoevent::TodoEvent;
-use crate::krate::toent::mapper::ToentMapper;
-use crate::krate::toent::{
-    EventDefi, parse_mdwt_toent,
-    po::{ToentEvent, ToentTodo},
-};
+use crate::krate::toent::logic::todoevent::{TodoEvent, TodoStateEnum};
+use crate::krate::toent::po::{ToentDefi, ToentEventDefi, ToentInst};
 use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -141,48 +137,25 @@ impl<'a> KDbTx<'a> {
     pub(super) async fn mdwt_commit(&self, req: KReq<MdwtCommitReq>) -> AResult<MdwtCommitRsp> {
         let MdwtCommitReq { mdwt } = req.body;
         let title = mdwt.content.as_str().split('\n').take(1).join("");
-        let toent = parse_mdwt_toent(mdwt.content.as_str());
+        let mdwt_parser = MdwtParser::new(mdwt.content.as_str());
+        let todo_event = mdwt_parser.get_outer_todo_event();
+        let time_events = mdwt_parser.get_outer_time_events();
         let otid = mdwt.otid;
 
         self.overwrite_mdwt_record(mdwt).await?;
-
-        if toent.todo_state.is_some()
-            || toent.todo_priority.is_some()
-            || toent.alert_tid.is_some()
-            || toent.start_tid.is_some()
-            || toent.end_tid.is_some()
-            || toent.timezone.is_some()
-        {
-            self.upsert_toent_todo(ToentTodo {
-                otid,
-                todo_state: toent.todo_state,
-                todo_priority: toent.todo_priority,
-                alert_tid: toent.alert_tid,
-                start_tid: toent.start_tid,
-                end_tid: toent.end_tid,
-                timezone: toent.timezone,
-                closed: toent.closed,
-                tid: TID::default(),
-                note: None,
-            })
-            .await?;
-        }
-
-        let event_defi = EventDefi {
-            events: toent.events.clone(),
-        };
-        self.upsert_toent_event(ToentEvent {
+        self.toent_commit(
             otid,
-            event_defi: serde_json::to_string(&event_defi)?.into(),
-            start_time: toent.start_time,
-            start_timezone: toent.start_timezone,
-            end_time: toent.end_time,
-            end_timezone: toent.end_timezone,
-            tid: TID::default(),
-        })
+            &todo_event,
+            &ToentEventDefi {
+                data: time_events.into_iter().collect(),
+            }
+            .into(),
+            None,
+        )
         .await?;
+
         Ok(MdwtCommitRsp {
-            todo_event: None,
+            todo_event,
             title: title.into(),
         })
     }
@@ -191,17 +164,14 @@ impl<'a> KDbTx<'a> {
 pub(crate) struct MdwtOtidInTags<'a> {
     pub alias: Cow<'a, str>,
     mt: MdwtTagTable<'a>,
-    cr: ChnotMetaTable<'a>,
 }
 
 impl<'a> MdwtOtidInTags<'a> {
     pub fn new(alias: &'a str) -> Self {
         let mt = MdwtTagTable::new("mt");
-        let cr = ChnotMetaTable::new("cr");
         Self {
             alias: alias.into(),
             mt,
-            cr,
         }
     }
 
@@ -209,11 +179,7 @@ impl<'a> MdwtOtidInTags<'a> {
         SqlTypedField::new(&self.alias, MdwtTag::MDWT_OTID)
     }
 
-    pub fn sub_query_table(
-        &'a self,
-        tags: Option<MdwtTagSearchType>,
-        kspaces: Vec<Varchar<40>>,
-    ) -> Option<SqlReader<'a>> {
+    pub fn sub_query_table(&'a self, tags: Option<MdwtTagSearchType>) -> Option<SqlReader<'a>> {
         let tags = tags.map(|s| match s {
             MdwtTagSearchType::Inset(items) => items,
         })?;
@@ -223,27 +189,17 @@ impl<'a> MdwtOtidInTags<'a> {
             return None;
         };
 
-        let reader = SqlReader::read(
-            self.mt.mdwt_otid(),
-            Joins::new((&self.mt).into()).join(JoinTable {
-                join_type: chin_sql::JoinType::LeftJoin,
-                table: (&self.cr).into(),
-                conds: [(self.mt.mdwt_otid(), self.cr.otid()).into()].into(),
-            }),
-        )
-        .wheres(Wheres::and([
-            self.mt.tag().v_in(
+        let reader = SqlReader::read(self.mt.mdwt_otid(), &self.mt)
+            .wheres(Wheres::and([self.mt.tag().v_in(
                 tags.iter()
                     .map(Varchar::<800>::limit)
                     .collect::<Vec<Varchar<800>>>(),
-            ),
-            self.cr.kspace().v_in(kspaces),
-        ]))
-        .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
-        .having(Having::Custom(
-            format!("COUNT(DISTINCT {}) = {}", MdwtTag::TAG, len).into(),
-        ))
-        .build();
+            )]))
+            .group_by(GroupBy::Plain([MdwtTag::MDWT_OTID.into()].into()))
+            .having(Having::Custom(
+                format!("COUNT(DISTINCT {}) = {}", MdwtTag::TAG, len).into(),
+            ))
+            .build();
 
         Some(reader.into())
     }
@@ -269,17 +225,16 @@ impl KDb {
                 alias: None,
                 inner: chin_sql::SqlFieldInner::Raw { expr: field_name },
             },
-            Joins::new((&mt).into()).join_some(
-                otids.sub_query_table(req.tags.clone(), req.get_spaces()),
-                |v| JoinTable {
+            Joins::new((&mt).into()).join_some(otids.sub_query_table(req.tags.clone()), |v| {
+                JoinTable {
                     join_type: chin_sql::JoinType::RightJoin,
                     table: chin_sql::Froms::SubQuery {
                         table: v.into(),
                         alias: &otids.alias,
                     },
                     conds: [(otids.mdwt_otid(), mt.mdwt_otid()).into()].into(),
-                },
-            ),
+                }
+            }),
         )
         .wheres(Wheres::and([Wheres::if_some(req.query.clone(), |v| {
             mt.tag().v_ilike(v, chin_sql::ILikeType::Fuzzy)

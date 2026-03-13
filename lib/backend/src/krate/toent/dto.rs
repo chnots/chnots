@@ -1,9 +1,13 @@
+use std::collections::HashMap;
+
 use chin_sql::time_type::TID;
 use chin_tools::score::PossibleScore;
 use serde::{Deserialize, Serialize};
 
 use crate::krate::mdwt::MdwtTagSearchType;
-use crate::krate::toent::logic::todoevent::{TodoPriorityEnum, TodoStateEnum};
+use crate::krate::toent::logic::todoevent::TodoStateEnum;
+use crate::krate::toent::po::{ToentEventDefi, ToentInst};
+use crate::krate::toent::todoevent::TodoPriorityEnum;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ToentGuessReq {
@@ -41,29 +45,34 @@ where
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct ToentInstListReq {
-    pub start_date: String,
-    pub end_date: String,
+pub struct ToentInstCountReq {
+    pub start_tid: TID,
+    pub end_tid: TID,
     pub include_completed: bool,
     pub include_uncompleted: bool,
-    pub start_index: usize,
-    pub page_size: usize,
+    #[serde(default)]
+    pub include_no_time_todo: bool,
+    #[serde(default)]
+    pub ranges: Vec<ToentInstCountRangeReq>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct ToentInstCountReq {
-    pub start_date: String,
-    pub end_date: String,
-    pub include_completed: bool,
-    pub include_uncompleted: bool,
+pub struct ToentInstCountRangeReq {
+    pub key: String,
+    pub start_tid: TID,
+    pub end_tid: TID,
+    #[serde(default)]
+    pub include_no_time_todo: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ToentSearchReq {
-    pub start_date: String,
-    pub end_date: String,
+    pub start_tid: TID,
+    pub end_tid: TID,
     pub include_completed: bool,
     pub include_uncompleted: bool,
+    #[serde(default)]
+    pub include_no_time_todo: bool,
     pub query: Option<String>,
     pub tags: Option<MdwtTagSearchType>,
     pub start_index: usize,
@@ -83,8 +92,8 @@ pub struct ToentTodoStateCommitRsp {
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct ToentInstListRsp {
-    pub items: Vec<ToentScheduleItemDto>,
+pub struct ToentSearchRsp {
+    pub items: Vec<ToentSearchRspData>,
     pub has_next: bool,
     pub next_start: usize,
 }
@@ -92,60 +101,12 @@ pub struct ToentInstListRsp {
 #[derive(Clone, Debug, Serialize)]
 pub struct ToentInstCountRsp {
     pub total: usize,
+    pub totals: HashMap<String, usize>,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub struct ToentScheduleItemDto {
-    pub inst: TodoInstDto,
-    pub todo: Option<ToentTodoDto>,
-    pub event: Option<ToentEventDto>,
-    pub title: Option<String>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct ToentTodoDto {
-    pub otid: TID,
-    pub todo_state: Option<TodoStateEnum>,
-    pub todo_priority: Option<TodoPriorityEnum>,
-    pub alert_tid: Option<TID>,
-    pub start_tid: Option<TID>,
-    pub end_tid: Option<TID>,
-    pub timezone: Option<isize>,
-    pub closed: Option<bool>,
-    pub tid: TID,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct ToentEventDefiItemDto {
-    pub raw: String,
-    pub standard: Option<String>,
-    pub timezone: Option<String>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct ToentEventDefiDto {
-    pub events: Vec<ToentEventDefiItemDto>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct ToentEventDto {
-    pub otid: TID,
-    pub event_defi: ToentEventDefiDto,
-    pub start_time: Option<TID>,
-    pub start_timezone: Option<isize>,
-    pub end_time: Option<TID>,
-    pub end_timezone: Option<isize>,
-    pub tid: TID,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct TodoInstDto {
-    pub otid: TID,
-    pub timezone: Option<String>,
-    pub naive_time: String,
-    pub target_status: Option<TodoStateEnum>,
-    pub note: Option<String>,
-    pub alert_tid: Option<TID>,
-    pub target_tid: TID,
-    pub tid: TID,
+pub struct ToentSearchRspData {
+    pub inst: ToentInst,
+    pub defi: Option<ToentEventDefi>,
+    pub title: String,
 }

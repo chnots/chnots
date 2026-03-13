@@ -1,55 +1,73 @@
-CREATE TABLE
-    toent_todo (
-        otid BIGINT NOT NULL,
-        todo_state VARCHAR(30),
-        todo_priority BIGINT,
-        alert_tid BIGINT,
-        start_tid BIGINT,
-        end_tid BIGINT,
-        timezone BIGINT,
-        closed BOOLEAN,
-        tid BIGINT NOT NULL,
+create table
+    toent_inst_hist (
+        otid INT8 not null,
+        todo_state Varchar(30),
+        todo_priority INT8,
+        alert_tid INT8,
+        start_tid INT8 default -404 not null,
+        end_tid INT8,
+        finished_count INT8 not null,
+        is_lunar BOOL not null,
+        timezone INT8,
+        closed BOOL,
+        tid INT8 not null,
+        note TEXT
+    );
+
+create unique index toent_inst_hist_ukey_tid on toent_inst_hist (tid);
+
+create index toent_inst_hist_otid on toent_inst_hist (otid);
+
+create index toent_inst_hist_start_tid on toent_inst_hist (start_tid);
+
+create table
+    toent_inst (
+        otid INT8 not null,
+        todo_state Varchar(30),
+        todo_priority INT8,
+        alert_tid INT8,
+        start_tid INT8 default -404 not null,
+        end_tid INT8,
+        finished_count INT8 not null,
+        is_lunar BOOL not null,
+        timezone INT8,
+        closed BOOL,
+        tid INT8 not null,
         note TEXT,
-        PRIMARY KEY (otid),
-        UNIQUE (tid)
+        primary key (otid, start_tid)
     );
 
-CREATE TABLE
-    toent_todo_hist (
-        otid BIGINT NOT NULL,
-        todo_state VARCHAR(30),
-        todo_priority BIGINT,
-        alert_tid BIGINT,
-        start_tid BIGINT,
-        end_tid BIGINT,
-        timezone BIGINT,
-        closed BOOLEAN,
-        tid BIGINT NOT NULL,
-        note TEXT,
-        UNIQUE (tid)
+create unique index toent_inst_ukey_tid on toent_inst (tid);
+
+create table
+    toent_defi_hist (
+        otid INT8 not null,
+        event_defi TEXT,
+        todo_flag BOOL not null,
+        start_tid INT8,
+        start_timezone INT8,
+        end_tid INT8,
+        end_timezone INT8,
+        total_count INT8,
+        tid INT8 not null
     );
 
-CREATE TABLE
-    toent_event (
-        otid BIGINT NOT NULL,
-        event_defi TEXT NOT NULL,
-        start_time BIGINT,
-        start_timezone BIGINT,
-        end_time BIGINT,
-        end_timezone BIGINT,
-        tid BIGINT NOT NULL,
-        PRIMARY KEY (otid),
-        UNIQUE (tid)
+create unique index toent_defi_hist_ukey_tid on toent_defi_hist (tid);
+
+create index toent_defi_hist_otid on toent_defi_hist (otid);
+
+create table
+    toent_defi (
+        otid INT8 not null,
+        event_defi TEXT,
+        todo_flag BOOL not null,
+        start_tid INT8,
+        start_timezone INT8,
+        end_tid INT8,
+        end_timezone INT8,
+        total_count INT8,
+        tid INT8 not null,
+        primary key (otid)
     );
 
-CREATE TABLE
-    toent_event_hist (
-        otid BIGINT NOT NULL,
-        event_defi TEXT NOT NULL,
-        start_time BIGINT,
-        start_timezone BIGINT,
-        end_time BIGINT,
-        end_timezone BIGINT,
-        tid BIGINT NOT NULL,
-        UNIQUE (tid)
-    );
+create unique index toent_defi_ukey_tid on toent_defi (tid);

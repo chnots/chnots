@@ -1,16 +1,25 @@
 pub(crate) mod base;
 pub(crate) mod chinese;
+pub(crate) mod chinese_cal_calc;
 pub(crate) mod westen;
 
-use chin_tools::AResult;
-use chrono::{DateTime, Utc};
+use std::ops::Add;
 
-use self::{chinese::ChnTime, westen::WesTime};
+use chin_sql::time_type::TID;
+use chin_tools::AResult;
+use chrono::Local;
+use serde::{Deserialize, Serialize};
+
+use self::westen::WesTime;
 use super::PossibleScore;
-use crate::krate::toent::{EventBuilder, Words, dto::GuessElem};
+use crate::krate::toent::{
+    EventBuilder, Words,
+    dto::GuessElem,
+    timeevent::{repeater::interval::TimeInterval, timeenum::chinese::ChnTime},
+};
 
 pub(crate) trait Timestamp {
-    fn to_utc_timestamp(&self) -> DateTime<Utc>;
+    fn to_utc_timestamp(&self) -> AResult<UtcWithOffsetType>;
 
     fn calender_type(&self) -> &'static str;
 
@@ -18,11 +27,75 @@ pub(crate) trait Timestamp {
     fn now_date() -> Self;
 }
 
-#[derive(Clone, Debug, PartialEq)]
-
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) enum TimeEnum {
     Wes(WesTime),
     Chn(ChnTime),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct UtcWithOffset {
+    utc: TID,
+    local_minus_utc: i32,
+}
+
+pub enum UtcWithOffsetType {
+    Period {
+        start: UtcWithOffset,
+        end: UtcWithOffset,
+    },
+    Point(UtcWithOffset),
+}
+
+impl UtcWithOffsetType {
+    pub fn start(&self) -> UtcWithOffset {
+        match self {
+            UtcWithOffsetType::Period { start, end: _ } => *start,
+            UtcWithOffsetType::Point(utc_with_offset) => *utc_with_offset,
+        }
+    }
+}
+
+impl UtcWithOffsetType {
+    pub fn end(&self) -> UtcWithOffset {
+        match self {
+            UtcWithOffsetType::Period { start: _, end } => *end,
+            UtcWithOffsetType::Point(utc_with_offset) => *utc_with_offset,
+        }
+    }
+}
+
+impl UtcWithOffset {
+    pub(crate) fn new(utc: TID, local_minus_utc: i32) -> Self {
+        Self {
+            utc,
+            local_minus_utc,
+        }
+    }
+
+    pub fn from_utc(tid: TID) -> Self {
+        Self {
+            utc: tid,
+            local_minus_utc: Local::now().offset().local_minus_utc(),
+        }
+    }
+
+    pub(crate) fn utc(&self) -> TID {
+        self.utc
+    }
+
+    pub(crate) fn local_minus_utc(&self) -> i32 {
+        self.local_minus_utc
+    }
+}
+
+impl TimeEnum {
+    pub fn to_utc_timestamp(&self) -> AResult<UtcWithOffsetType> {
+        match self {
+            TimeEnum::Wes(wes_time) => wes_time.to_utc_timestamp(),
+            TimeEnum::Chn(chn_time) => chn_time.to_utc_timestamp(),
+        }
+    }
 }
 
 impl From<ChnTime> for TimeEnum {
@@ -34,6 +107,17 @@ impl From<ChnTime> for TimeEnum {
 impl From<WesTime> for TimeEnum {
     fn from(value: WesTime) -> Self {
         Self::Wes(value)
+    }
+}
+
+impl Add<TimeInterval> for TimeEnum {
+    type Output = TimeEnum;
+
+    fn add(self, rhs: TimeInterval) -> Self::Output {
+        match self {
+            TimeEnum::Wes(wes_time) => TimeEnum::Wes(wes_time + rhs),
+            TimeEnum::Chn(chn_time) => TimeEnum::Chn(chn_time + rhs),
+        }
     }
 }
 

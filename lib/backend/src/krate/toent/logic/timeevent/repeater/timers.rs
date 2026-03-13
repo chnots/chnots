@@ -1,10 +1,11 @@
 use chin_tools::{AResult, score::PossibleScore};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 use crate::krate::toent::{EventBuilder, Words, dto::GuessElem};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 
 pub(crate) struct Times {
     count: u32,
@@ -13,6 +14,10 @@ pub(crate) struct Times {
 impl Times {
     pub(crate) fn new(count: u32) -> Self {
         Self { count }
+    }
+
+    pub(crate) fn count(&self) -> u32 {
+        self.count
     }
 }
 

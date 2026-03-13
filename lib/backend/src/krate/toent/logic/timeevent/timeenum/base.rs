@@ -1,14 +1,25 @@
-use std::{fmt::Display, ops::Deref};
+use std::{
+    fmt::{Debug, Display},
+    ops::Deref,
+};
 
+use anyhow::{anyhow, bail};
+use chin_sql::time_type::TID;
 use chin_tools::AResult;
-use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
-use crate::krate::toent::{EventBuilder, Words, dto::GuessElem};
+use crate::krate::toent::{
+    EventBuilder, Words,
+    dto::GuessElem,
+    timeevent::timeenum::{UtcWithOffset, UtcWithOffsetType},
+};
 
 use super::PossibleScore;
+use crate::all_none;
+use crate::all_some;
 
-#[derive(Copy, Clone, Deserialize, Serialize, Default, Debug, PartialEq)]
+#[derive(Default, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct NoneOrI32(Option<i32>);
 
 impl Display for NoneOrI32 {
@@ -20,6 +31,16 @@ impl Display for NoneOrI32 {
             None => {
                 write!(f, "?")
             }
+        }
+    }
+}
+
+impl Debug for NoneOrI32 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Ni32:")?;
+        match self.0 {
+            Some(c) => f.write_fmt(format_args!("{}", c)),
+            None => f.write_str("nil"),
         }
     }
 }
@@ -69,21 +90,27 @@ impl Deref for NoneOrI32 {
         &self.0
     }
 }
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct BaseDate {
     pub(crate) year: NoneOrI32,
     pub(crate) month: NoneOrI32,
     pub(crate) day: NoneOrI32,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+impl BaseDate {
+    pub fn all_some(&self) -> bool {
+        self.year.is_some() && self.month.is_some() && self.day.is_some()
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct BaseTime {
     pub(crate) hour: NoneOrI32,
     pub(crate) minute: NoneOrI32,
     pub(crate) second: NoneOrI32,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct BaseDateTime {
     pub date: BaseDate,
     pub time: BaseTime,
@@ -123,6 +150,65 @@ impl BaseDateTime {
                 minute: minute.into(),
                 second: sec.into(),
             },
+        }
+    }
+
+    pub fn is_seq_some(&self) -> bool {
+        let date = self.date;
+        let time = self.time;
+        (all_some!(date.year)
+            && all_none!(date.month, date.day, time.hour, time.minute, time.second))
+            || (all_some!(date.year, date.month)
+                && all_none!(date.day, time.hour, time.minute, time.second))
+            || (all_some!(date.year, date.month, date.day)
+                && all_none!(time.hour, time.minute, time.second))
+            || (all_some!(date.year, date.month, date.day, time.hour)
+                && all_none!(time.minute, time.second))
+            || all_some!(date.year, date.month, date.day, time.hour, time.minute)
+    }
+
+    pub fn to_utc_timestamp(&self, local_minus_utc: i32) -> AResult<UtcWithOffsetType> {
+        if !self.is_seq_some() {
+            bail!("BaseDateTime sequence is invalid ");
+        }
+        let y = self.date.year.0.ok_or_else(|| anyhow!("Year missing"))?;
+        let m = self.date.month.unwrap_or(1) as u32;
+        let d = self.date.day.unwrap_or(1) as u32;
+        let hh = self.time.hour.unwrap_or(0) as u32;
+        let mm = self.time.minute.unwrap_or(0) as u32;
+        let ss = self.time.second.unwrap_or(0) as u32;
+        let start_nd = NaiveDate::from_ymd_opt(y, m, d).ok_or_else(|| anyhow!("Invalid Date"))?;
+        let start_nt =
+            NaiveTime::from_hms_opt(hh, mm, ss).ok_or_else(|| anyhow!("Invalid Time"))?;
+        let start_ndt = NaiveDateTime::new(start_nd, start_nt);
+        let to_utc_obj = |ndt: NaiveDateTime| -> AResult<UtcWithOffset> {
+            let ts = ndt.and_utc().timestamp() - (local_minus_utc as i64);
+            Ok(UtcWithOffset {
+                utc: (ts * 1_000_000).try_into()?,
+                local_minus_utc,
+            })
+        };
+        if self.time.second.is_some() {
+            Ok(UtcWithOffsetType::Point(to_utc_obj(start_ndt)?))
+        } else {
+            let end_ndt = if self.time.minute.is_some() {
+                start_ndt + Duration::minutes(1)
+            } else if self.time.hour.is_some() {
+                start_ndt + Duration::hours(1)
+            } else if self.date.day.is_some() {
+                start_ndt + Duration::days(1)
+            } else if self.date.month.is_some() {
+                let (next_y, next_m) = if m == 12 { (y + 1, 1) } else { (y, m + 1) };
+                let d = NaiveDate::from_ymd_opt(next_y, next_m, 1).unwrap();
+                NaiveDateTime::new(d, NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+            } else {
+                let d = NaiveDate::from_ymd_opt(y + 1, 1, 1).unwrap();
+                NaiveDateTime::new(d, NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+            };
+            Ok(UtcWithOffsetType::Period {
+                start: to_utc_obj(start_ndt)?,
+                end: to_utc_obj(end_ndt - Duration::seconds(1))?,
+            })
         }
     }
 
@@ -177,6 +263,7 @@ impl BaseDateTime {
     }
 }
 
+#[macro_export]
 macro_rules! all_some {
     () => {
         true
@@ -187,6 +274,7 @@ macro_rules! all_some {
     };
 }
 
+#[macro_export]
 macro_rules! all_none {
     () => {
         true
@@ -462,5 +550,119 @@ mod test {
         // - mm-dd
         // - hh:mm
         // - hh:mm:ss
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn create_datetime(
+        y: Option<i32>,
+        m: Option<i32>,
+        d: Option<i32>,
+        hh: Option<i32>,
+        mm: Option<i32>,
+        ss: Option<i32>,
+    ) -> BaseDateTime {
+        BaseDateTime {
+            date: BaseDate {
+                year: NoneOrI32(y),
+                month: NoneOrI32(m),
+                day: NoneOrI32(d),
+            },
+            time: BaseTime {
+                hour: NoneOrI32(hh),
+                minute: NoneOrI32(mm),
+                second: NoneOrI32(ss),
+            },
+        }
+    }
+
+    const OFFSET_P8: i32 = 28800;
+    #[test]
+    fn test_precision_year() {
+        let dt = create_datetime(Some(2023), None, None, None, None, None);
+        let res = dt.to_utc_timestamp(OFFSET_P8).unwrap();
+
+        if let UtcWithOffsetType::Period { start, end } = res {
+            assert_eq!(start.utc.as_num(), 167250240_0000000);
+            assert_eq!(end.utc.as_num(), (1704038400 - 1) * 1000000);
+        } else {
+            panic!("Should be a Period");
+        }
+    }
+    #[test]
+    fn test_precision_month() {
+        let dt = create_datetime(Some(2023), Some(2), None, None, None, None);
+        let res = dt.to_utc_timestamp(OFFSET_P8).unwrap();
+
+        if let UtcWithOffsetType::Period { start, end } = res {
+            assert_eq!(start.utc.as_num(), 1675180800_000000);
+            assert_eq!(end.utc.as_num(), 1677599999000000);
+        } else {
+            panic!("Should be a Period");
+        }
+    }
+    #[test]
+    fn test_precision_day() {
+        let dt = create_datetime(Some(2023), Some(10), Some(27), None, None, None);
+        let res = dt.to_utc_timestamp(OFFSET_P8).unwrap();
+
+        if let UtcWithOffsetType::Period { start, end } = res {
+            assert_eq!(start.utc.as_num(), 1698336000_000000);
+            assert_eq!(end.utc.as_num(), 1698422399_000000);
+        } else {
+            panic!("Should be a Period");
+        }
+    }
+    #[test]
+    fn test_precision_minute() {
+        let dt = create_datetime(Some(2023), Some(10), Some(27), Some(10), Some(30), None);
+        let res = dt.to_utc_timestamp(OFFSET_P8).unwrap();
+
+        if let UtcWithOffsetType::Period { start, end } = res {
+            assert_eq!(start.utc.as_num(), 1698373800_000000);
+            assert_eq!(end.utc.as_num(), 1698373859_000000);
+        } else {
+            panic!("Should be a Period");
+        }
+    }
+    #[test]
+    fn test_precision_second_point() {
+        let dt = create_datetime(Some(2023), Some(10), Some(27), Some(10), Some(30), Some(45));
+        let res = dt.to_utc_timestamp(OFFSET_P8).unwrap();
+
+        match res {
+            UtcWithOffsetType::Point(pt) => {
+                assert_eq!(pt.utc.as_num(), 1698373845_000000);
+                assert_eq!(pt.local_minus_utc, OFFSET_P8);
+            }
+            _ => panic!("Should be a Point"),
+        }
+    }
+    #[test]
+    fn test_invalid_sequence() {
+        let dt = create_datetime(Some(2023), None, Some(27), None, None, None);
+        let res = dt.to_utc_timestamp(OFFSET_P8);
+        assert!(res.is_err());
+    }
+    #[test]
+    fn test_leap_year_rollover() {
+        let dt = create_datetime(Some(2024), Some(2), None, None, None, None);
+        let res = dt.to_utc_timestamp(0).unwrap();
+        if let UtcWithOffsetType::Period { start, end } = res {
+            let diff = end.utc.as_num() - start.utc.as_num();
+            assert_eq!(diff, (29 * 24 * 3600 - 1) * 1000000);
+        }
+    }
+    #[test]
+    fn test_year_end_rollover() {
+        let dt = create_datetime(Some(2023), Some(12), None, None, None, None);
+        let res = dt.to_utc_timestamp(0).unwrap();
+
+        if let UtcWithOffsetType::Period { start, end } = res {
+            assert_eq!(start.utc.as_num(), 1701388800000000);
+            assert_eq!(end.utc.as_num(), 1704067199000000);
+        }
     }
 }

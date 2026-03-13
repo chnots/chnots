@@ -1,5 +1,6 @@
 use chin_tools::AResult;
 use enum_iterator::Sequence;
+use serde::{Deserialize, Serialize};
 
 pub(crate) mod endconditon;
 pub(crate) mod interval;
@@ -14,7 +15,7 @@ use crate::{
 
 use super::starts_any;
 
-#[derive(Clone, Debug, Default, PartialEq, Sequence)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq, Sequence)]
 pub(crate) enum RepeatType {
     #[default]
     Once,
@@ -61,7 +62,7 @@ impl TryFrom<Option<&str>> for RepeatType {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct Repeater {
     interval: Option<(TimeInterval, RepeatType)>,
     alert: Option<TimeInterval>,

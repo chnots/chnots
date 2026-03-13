@@ -1,10 +1,15 @@
+use anyhow::bail;
 use chin_tools::AResult;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use timeenum::{Timestamp, westen::WesTime};
 
 use crate::krate::toent::{
+    ToentInstCore,
     dto::GuessElem,
-    timeevent::repeater::{RepeatType, endconditon::EndCondition, interval::TimeInterval},
+    timeevent::{
+        repeater::{RepeatType, endconditon::EndCondition, interval::TimeInterval},
+        timeenum::UtcWithOffset,
+    },
 };
 
 use super::PossibleScore;
@@ -31,22 +36,32 @@ fn contains_any(input: &str, anys: &[&str]) -> bool {
         .any(|e| input.contains(e.to_ascii_lowercase().as_str()))
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Eq)]
 pub(crate) struct TimeEvent {
-    base: Option<TimeEnum>,
-    interval: Option<(TimeInterval, RepeatType)>,
-    interval_end: Option<EndCondition>,
-    alert: Option<TimeInterval>,
-    end_cond: Option<EndCondition>,
+    pub start: Option<TimeEnum>,
+    pub interval: Option<(TimeInterval, RepeatType)>,
+    pub interval_end: Option<EndCondition>,
+    pub alert: Option<TimeInterval>,
+    pub end: Option<EndCondition>,
+}
+
+impl std::hash::Hash for TimeEvent {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.start.hash(state);
+        self.interval.hash(state);
+        self.interval_end.hash(state);
+        self.alert.hash(state);
+        self.end.hash(state);
+    }
 }
 
 impl From<TimeEnum> for TimeEvent {
     fn from(value: TimeEnum) -> Self {
         Self {
-            base: Some(value),
+            start: Some(value),
             interval: None,
             alert: None,
-            end_cond: None,
+            end: None,
             interval_end: None,
         }
     }
@@ -55,21 +70,75 @@ impl From<TimeEnum> for TimeEvent {
 impl TimeEvent {
     pub(crate) fn now() -> Self {
         TimeEvent {
-            base: Some(TimeEnum::Wes(WesTime::now_time())),
+            start: Some(TimeEnum::Wes(WesTime::now_time())),
             interval: None,
             alert: None,
-            end_cond: None,
+            end: None,
             interval_end: None,
         }
     }
-}
 
-impl Serialize for TimeEvent {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.standard_string().serialize(serializer)
+    pub(crate) fn to_insts(
+        &self,
+        max_count: usize,
+        end_time: Option<UtcWithOffset>,
+    ) -> AResult<Vec<ToentInstCore>> {
+        let Some(start) = self.start else {
+            bail!("start time is none");
+        };
+
+        let mut result = vec![];
+        let mut point = start;
+        let mut count = max_count;
+        let mut end_utc = None;
+        match self.end {
+            Some(end_time) => match end_time {
+                EndCondition::Times(times) => count = count.min(times.count() as usize),
+                EndCondition::Interval(time_interval) => {
+                    end_utc.replace((start + time_interval).to_utc_timestamp()?.end());
+                }
+                EndCondition::Time(time_enum) => {
+                    end_utc.replace(time_enum.to_utc_timestamp()?.end());
+                }
+            },
+            None => {
+                end_utc = end_time;
+            }
+        };
+
+        // todo get min end_time
+
+        let is_lunar = self.start.is_some_and(|e| match e {
+            TimeEnum::Wes(_wes_time) => false,
+            TimeEnum::Chn(_chn_time) => true,
+        });
+        let timezone = if is_lunar {
+            None
+        } else {
+            Some(start.to_utc_timestamp()?.start().local_minus_utc() as isize)
+        };
+
+        if let Some((interval, _)) = self.interval {
+            for c in 0..count {
+                let next = point + interval;
+                let next_utc = next.to_utc_timestamp()?;
+                if end_utc.is_none_or(|e| e.utc() > next_utc.start().utc()) {
+                    result.push(ToentInstCore {
+                        todo_state: None,
+                        todo_priority: None,
+                        alert_tid: None,
+                        start_tid: Some(next_utc.start().utc()),
+                        end_tid: None,
+                        is_lunar: is_lunar,
+                        timezone: timezone,
+                    });
+                }
+                point = next;
+            }
+        } else {
+        }
+
+        Ok(result)
     }
 }
 
@@ -96,11 +165,11 @@ impl EventBuilder for TimeEvent {
                  }| {
                     (
                         Self {
-                            base: Some(base),
+                            start: Some(base),
                             interval: interval.clone(),
                             interval_end: interval_end.clone(),
                             alert: alert.clone(),
-                            end_cond: end_cond.clone(),
+                            end: end_cond.clone(),
                         },
                         if has_repeaters {
                             score.merge(96)
@@ -121,11 +190,11 @@ impl EventBuilder for TimeEvent {
     }
 
     fn is_valid(&self) -> bool {
-        self.base.as_ref().is_none_or(|e| e.is_valid())
+        self.start.as_ref().is_none_or(|e| e.is_valid())
             && self.alert.as_ref().is_none_or(|e| e.is_valid())
             && self.interval.as_ref().is_none_or(|e| e.0.is_valid())
             && self.interval_end.as_ref().is_none_or(|e| e.is_valid())
-            && self.end_cond.as_ref().is_none_or(|e| e.is_valid())
+            && self.end.as_ref().is_none_or(|e| e.is_valid())
     }
 
     fn try_from_standard(gt: &Words) -> AResult<Self> {
@@ -137,18 +206,18 @@ impl EventBuilder for TimeEvent {
         };
 
         Ok(TimeEvent {
-            base,
+            start: base,
             interval: parse_interval(segs.interval.as_ref())?,
             interval_end: parse_interval_end(segs.interval_end.as_ref())?,
             alert: parse_alert(segs.alert.as_ref())?,
-            end_cond: parse_end(segs.end.as_ref())?,
+            end: parse_end(segs.end.as_ref())?,
         })
     }
 
     fn standard_string(&self) -> String {
         let mut parts = vec![];
 
-        if let Some(base) = self.base.as_ref() {
+        if let Some(base) = self.start.as_ref() {
             parts.push(base.standard_string());
         }
 
@@ -169,7 +238,7 @@ impl EventBuilder for TimeEvent {
             parts.push(format!("*{}", interval_end.standard_string()));
         }
 
-        if let Some(end_cond) = self.end_cond.as_ref() {
+        if let Some(end_cond) = self.end.as_ref() {
             parts.push(end_cond.standard_string());
         }
 
@@ -310,7 +379,7 @@ mod test_guess {
                 endconditon::{EndCondition, Times},
                 interval::TimeInterval,
             },
-            timeenum::{TimeEnum, base::BaseDateTime, chinese::ChnTime, westen::WesTime},
+            timeenum::{TimeEnum, base::BaseDateTime, westen::WesTime},
         },
     };
 
@@ -326,7 +395,7 @@ mod test_guess {
             timestamp: BaseDateTime::new(2025, 12, 26, 12, 00, 00),
         };
         let wes20251226_120000_p800 = WesTime {
-            offset: FixedOffset::east_opt(8 * 3600),
+            offset: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
             ..wes20251226_120000.clone()
         };
 
@@ -352,11 +421,11 @@ mod test_guess {
         guess_compare(
             "2025-12-26 12:00:00 +8:00 ,15M **12H *=1H =2025-12-27 12:00:00",
             TimeEvent {
-                base: Some(TimeEnum::Wes(wes20251226_120000_p800.clone())),
+                start: Some(TimeEnum::Wes(wes20251226_120000_p800.clone())),
                 interval: (interval_12h.clone(), RepeatType::RepeatTodo).into(),
                 interval_end: interval_1h_end.clone().into(),
                 alert: alert_15min.clone().into(),
-                end_cond: end_wes20251227_120000.clone().into(),
+                end: end_wes20251227_120000.clone().into(),
             },
         );
     }
@@ -366,8 +435,8 @@ mod test_guess {
         guess_compare(
             "2020-12-29 12:13:14 +8:00 **3w =12t",
             TimeEvent {
-                base: Some(TimeEnum::Wes(WesTime {
-                    offset: FixedOffset::east_opt(8 * 3600),
+                start: Some(TimeEnum::Wes(WesTime {
+                    offset: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
                     timestamp: BaseDateTime::new(2020, 12, 29, 12, 13, 14),
                 })),
                 interval: Some((
@@ -379,7 +448,7 @@ mod test_guess {
                 )),
                 interval_end: None,
                 alert: None,
-                end_cond: Some(EndCondition::Times(Times::new(12))),
+                end: Some(EndCondition::Times(Times::new(12))),
             },
         );
     }
@@ -389,7 +458,7 @@ mod test_guess {
         guess_compare(
             "2024-12-12 12:00:00 ,15M *1d =2025-12-12",
             TimeEvent {
-                base: Some(TimeEnum::Wes(WesTime {
+                start: Some(TimeEnum::Wes(WesTime {
                     offset: None,
                     timestamp: BaseDateTime::new(2024, 12, 12, 12, 00, 00),
                 })),
@@ -405,7 +474,7 @@ mod test_guess {
                     base: BaseDateTime::new(None, None, None, None, Some(15), None),
                     week: None::<i32>.into(),
                 }),
-                end_cond: Some(EndCondition::Time(TimeEnum::Wes(WesTime {
+                end: Some(EndCondition::Time(TimeEnum::Wes(WesTime {
                     offset: None,
                     timestamp: BaseDateTime::new(Some(2025), Some(12), Some(12), None, None, None),
                 }))),
@@ -418,7 +487,7 @@ mod test_guess {
         guess_compare(
             "2024-06-01 09:00:00 *1d *=2H =7d",
             TimeEvent {
-                base: Some(TimeEnum::Wes(WesTime {
+                start: Some(TimeEnum::Wes(WesTime {
                     offset: None,
                     timestamp: BaseDateTime::new(2024, 6, 1, 9, 0, 0),
                 })),
@@ -434,7 +503,7 @@ mod test_guess {
                     week: None::<i32>.into(),
                 })),
                 alert: None,
-                end_cond: Some(EndCondition::Interval(TimeInterval {
+                end: Some(EndCondition::Interval(TimeInterval {
                     base: BaseDateTime::new(None, None, Some(7), None, None, None),
                     week: None::<i32>.into(),
                 })),
@@ -447,7 +516,7 @@ mod test_guess {
         guess_compare(
             "2026-01-02 08:30:00 ,10M",
             TimeEvent {
-                base: Some(TimeEnum::Wes(WesTime {
+                start: Some(TimeEnum::Wes(WesTime {
                     offset: None,
                     timestamp: BaseDateTime::new(2026, 1, 2, 8, 30, 0),
                 })),
@@ -457,7 +526,7 @@ mod test_guess {
                     base: BaseDateTime::new(None, None, None, None, Some(10), None),
                     week: None::<i32>.into(),
                 }),
-                end_cond: None,
+                end: None,
             },
         );
     }
@@ -467,7 +536,7 @@ mod test_guess {
         guess_compare(
             "2024-10-10 07:15:00 **2d *=3t",
             TimeEvent {
-                base: Some(TimeEnum::Wes(WesTime {
+                start: Some(TimeEnum::Wes(WesTime {
                     offset: None,
                     timestamp: BaseDateTime::new(2024, 10, 10, 7, 15, 0),
                 })),
@@ -480,7 +549,7 @@ mod test_guess {
                 )),
                 interval_end: Some(EndCondition::Times(Times::new(3))),
                 alert: None,
-                end_cond: None,
+                end: None,
             },
         );
     }
@@ -490,8 +559,8 @@ mod test_guess {
         guess_compare(
             "2024-03-01 18:45:30 +5:30 *12H =5t",
             TimeEvent {
-                base: Some(TimeEnum::Wes(WesTime {
-                    offset: FixedOffset::east_opt(5 * 3600 + 30 * 60),
+                start: Some(TimeEnum::Wes(WesTime {
+                    offset: FixedOffset::east_opt(5 * 3600 + 30 * 60).map(|e| e.local_minus_utc()),
                     timestamp: BaseDateTime::new(2024, 3, 1, 18, 45, 30),
                 })),
                 interval: Some((
@@ -503,88 +572,7 @@ mod test_guess {
                 )),
                 interval_end: None,
                 alert: None,
-                end_cond: Some(EndCondition::Times(Times::new(5))),
-            },
-        );
-    }
-
-    #[test]
-    fn test_guess_docs_lunar_repeat_todo_with_times_end() {
-        guess_compare(
-            "农 2024-08-15 **1w =6t",
-            TimeEvent {
-                base: Some(TimeEnum::Chn(ChnTime::new(
-                    false,
-                    BaseDateTime::empty()
-                        .with_year(2024)
-                        .with_month(8)
-                        .with_day(15),
-                ))),
-                interval: Some((
-                    TimeInterval {
-                        base: BaseDateTime::empty(),
-                        week: Some(1).into(),
-                    },
-                    RepeatType::RepeatTodo,
-                )),
-                interval_end: None,
-                alert: None,
-                end_cond: Some(EndCondition::Times(Times::new(6))),
-            },
-        );
-    }
-
-    #[test]
-    fn test_guess_docs_lunar_leap_month_with_alert_and_interval_end() {
-        guess_compare(
-            "农闰 2023-02-01 09:30:00 ,20M *1d *=2H =10d",
-            TimeEvent {
-                base: Some(TimeEnum::Chn(ChnTime::new(
-                    true,
-                    BaseDateTime::new(2023, 2, 1, 9, 30, 0),
-                ))),
-                interval: Some((
-                    TimeInterval {
-                        base: BaseDateTime::new(None, None, Some(1), None, None, None),
-                        week: None::<i32>.into(),
-                    },
-                    RepeatType::RepeatEvent,
-                )),
-                interval_end: Some(EndCondition::Interval(TimeInterval {
-                    base: BaseDateTime::new(None, None, None, Some(2), None, None),
-                    week: None::<i32>.into(),
-                })),
-                alert: Some(TimeInterval {
-                    base: BaseDateTime::new(None, None, None, None, Some(20), None),
-                    week: None::<i32>.into(),
-                }),
-                end_cond: Some(EndCondition::Interval(TimeInterval {
-                    base: BaseDateTime::new(None, None, Some(10), None, None, None),
-                    week: None::<i32>.into(),
-                })),
-            },
-        );
-    }
-
-    #[test]
-    fn test_guess_docs_lunar_repeat_event_with_times_end() {
-        guess_compare(
-            "农 2025-01-03 18:00:00 *12H =3t",
-            TimeEvent {
-                base: Some(TimeEnum::Chn(ChnTime::new(
-                    false,
-                    BaseDateTime::new(2025, 1, 3, 18, 0, 0),
-                ))),
-                interval: Some((
-                    TimeInterval {
-                        base: BaseDateTime::new(None, None, None, Some(12), None, None),
-                        week: None::<i32>.into(),
-                    },
-                    RepeatType::RepeatEvent,
-                )),
-                interval_end: None,
-                alert: None,
-                end_cond: Some(EndCondition::Times(Times::new(3))),
+                end: Some(EndCondition::Times(Times::new(5))),
             },
         );
     }

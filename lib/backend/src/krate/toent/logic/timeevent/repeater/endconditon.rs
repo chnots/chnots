@@ -1,4 +1,5 @@
 use chin_tools::AResult;
+use serde::{Deserialize, Serialize};
 
 use super::interval::TimeInterval;
 pub(crate) use super::timers::Times;
@@ -8,7 +9,7 @@ use crate::krate::toent::{
     timeevent::timeenum::TimeEnum,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) enum EndCondition {
     Times(Times),
     Interval(TimeInterval),

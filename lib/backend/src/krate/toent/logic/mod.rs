@@ -2,12 +2,16 @@ use std::ops::Deref;
 
 pub(crate) mod timeevent;
 pub(crate) mod todoevent;
+use chin_sql::time_type::TID;
 use chin_tools::{AResult, wrapper::score::PossibleScore};
 use itertools::Itertools;
 
-use crate::krate::toent::dto::GuessElem;
+use crate::krate::toent::{
+    dto::GuessElem,
+    todoevent::{TodoPriorityEnum, TodoStateEnum},
+};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct Word<'a> {
     text: &'a str,
     start_in: usize,
@@ -27,6 +31,17 @@ impl<'a> Deref for Word<'a> {
 pub(crate) struct Words<'a> {
     pub(crate) original: &'a str,
     pub(crate) words: Vec<Word<'a>>,
+}
+
+#[derive(Clone, Debug, Hash)]
+pub struct ToentInstCore {
+    pub todo_state: Option<TodoStateEnum>,
+    pub todo_priority: Option<TodoPriorityEnum>,
+    pub alert_tid: Option<TID>,
+    pub start_tid: Option<TID>,
+    pub end_tid: Option<TID>,
+    pub is_lunar: bool,
+    pub timezone: Option<isize>,
 }
 
 impl<'a> Words<'a> {

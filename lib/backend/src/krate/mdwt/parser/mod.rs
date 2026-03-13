@@ -23,7 +23,7 @@ enum ChnotBlockEnum {
 #[derive(Debug, Clone)]
 enum PropsEnum {
     ID(String),
-    ToentEvent(TimeEvent),
+    ToentDefi(TimeEvent),
     ToentState { state: String, time: NaiveDateTime },
 }
 
@@ -171,6 +171,7 @@ static LISTITEM_TOENT_TODO_REGEX: Lazy<Regex> =
     lazy_regex::lazy_regex!(r"\s*- +\[([A-Z]+( ![A-Z])?)\]");
 
 static PROPS_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r";+ +([^ :]+): (.*)");
+static EVENT_PROP_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"(?i)^\s*;+\s*EVENT:\s*(.*?)\s*$");
 
 static HASHTAG_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"#([^\s#\[\]]+)");
 static BACKLINK_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"\[\[([0-9a-zA-Z]+)]]");
@@ -201,7 +202,7 @@ impl<'a> MdwtParser<'a> {
     fn parse<'b>(&mut self, root: &'b Node<'b, RefCell<Ast>>) {
         #[derive(Default)]
         struct ChnotBlockGather {
-            time_event: Vec<WithPos<TimeEvent>>,
+            timeevents: Vec<WithPos<TimeEvent>>,
             backlinks: Vec<WithPos<String>>,
             hashtags: Vec<WithPos<String>>,
             props: Vec<WithPos<Props>>,
@@ -366,7 +367,7 @@ impl<'a> MdwtParser<'a> {
                 .cloned()
                 .collect();
             let timeevents = spans
-                .time_event
+                .timeevents
                 .iter()
                 .filter(|s| s.start_in.offset >= start.offset && s.end_ex.offset < end_ex)
                 .cloned()
@@ -409,17 +410,22 @@ impl<'a> MdwtParser<'a> {
     }
 
     pub fn get_outer_todo_event(&self) -> Option<TodoEvent> {
-        let te: Vec<TodoEvent> = self
-            .chnot_map
+        self.chnot_map
             .values()
-            .filter_map(|c| c.todo_event.as_ref().map(|te| te.data))
-            .collect();
+            .filter_map(|c| c.todo_event.as_ref())
+            .min_by_key(|te| te.start_in.offset)
+            .map(|te| te.data)
+    }
 
-        if te.is_empty() {
-            return None;
-        }
-
-        None
+    pub fn get_outer_time_events(&self) -> Vec<TimeEvent> {
+        self.original
+            .lines()
+            .filter_map(|line| {
+                let caps = EVENT_PROP_REGEX.captures(line)?;
+                let raw = caps.get(1)?.as_str().trim();
+                TimeEvent::try_from_standrd_str(raw).ok()
+            })
+            .collect()
     }
 }
 
