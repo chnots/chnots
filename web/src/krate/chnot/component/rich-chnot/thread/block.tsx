@@ -1,5 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import {
+  Captions,
   CloudAlert,
   CloudCheck,
   CloudDrizzle,
@@ -13,12 +14,20 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReadableTID from "@/common/component/chnot-read-tid";
+import { Button } from "@/common/component/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/common/component/ui/popover";
 import { SaveState } from "@/common/types";
+import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import { GEN_TITLE } from "@/krate/mdwt/constaints";
 import { mdwtCommit } from "@/krate/mdwt/service";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../../po";
 import { chnotMetaCommit } from "../../../service";
+import { chnotHeadStore } from "../../../store";
 import { ChnotKindIcon } from "../../kind-icon";
 import ExcalidrawChnot from "../excalidraw";
 import KFileChnot from "../kfile";
@@ -58,6 +67,7 @@ const SortableRichBlock = ({
 }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
   const titleRef = useRef<string | null>(null);
+  const captionRef = useRef<string>(content.replace(GEN_TITLE, ""));
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: otid,
   });
@@ -95,6 +105,8 @@ const SortableRichBlock = ({
             content: arg.title,
           },
         });
+        titleRef.current = arg.title;
+        captionRef.current = arg.title;
       } else if (
         arg.title &&
         arg.title.length > 0 &&
@@ -111,6 +123,7 @@ const SortableRichBlock = ({
           });
         }
         titleRef.current = title;
+        captionRef.current = arg.title;
       }
       if (
         saveStateRef.current === SaveState.Initial &&
@@ -126,6 +139,67 @@ const SortableRichBlock = ({
     [kspace],
   );
 
+  useEffect(() => {
+    const normalizedTitle = content.replace(GEN_TITLE, "");
+    captionRef.current = normalizedTitle;
+    if (content.startsWith(GEN_TITLE)) {
+      titleRef.current = content;
+    } else if (!titleRef.current) {
+      titleRef.current = normalizedTitle;
+    }
+  }, [content]);
+
+  useEffect(() => {
+    if (!fullscreen || kind === ChnotKind.MDWT) {
+      return;
+    }
+
+    const savedTitle = content.replace(GEN_TITLE, "");
+    const key = `thread-caption-${otid}`;
+    const headerActions = (
+      <Popover
+        onOpenChange={async (open) => {
+          if (open) {
+            return;
+          }
+          const nextTitle = (titleRef.current ?? "").trim();
+          if (nextTitle !== savedTitle) {
+            await mdwtCommit({
+              mdwt: {
+                otid,
+                content: nextTitle,
+              },
+            });
+            titleRef.current = nextTitle;
+            captionRef.current = nextTitle;
+          }
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" title="Change caption">
+            <Captions />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2" align="start">
+          <MdwtEditorMemo
+            content={captionRef.current}
+            foldGutter={false}
+            onContentChange={(newTitle: string): void => {
+              titleRef.current = newTitle;
+              captionRef.current = newTitle;
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    );
+
+    chnotHeadStore.getState().registerHeaderActions(key, headerActions);
+
+    return () => {
+      chnotHeadStore.getState().unregisterHeaderActions(key);
+    };
+  }, [fullscreen, kind, otid, content]);
+
   const props = useMemo(() => {
     return {
       otid: otid,
@@ -134,11 +208,9 @@ const SortableRichBlock = ({
       onPostSave: handlePostSave,
       onSetFullscreen: setFullscreen,
       showEditWhenEmpty: true,
-      disableHeaderActions: true,
+      disableHeaderActions: !fullscreen,
     };
-  }, [fullscreen, otid]);
-
-  const savePh = useCallback(() => {}, []);
+  }, [fullscreen, otid, handlePostSave]);
 
   return (
     <div
