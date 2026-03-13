@@ -157,18 +157,21 @@ const MdwtEditor = ({
   content,
   foldGutter,
   height,
+  fillParentHeight,
   onContentChange,
   placeholder,
   setCodeMirrorRef: setCMRef,
 }: {
   content?: string;
   foldGutter: boolean;
-  height?: number;
+  height?: number | string;
+  fillParentHeight?: boolean;
   placeholder?: string;
   onContentChange: (content: string) => void;
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
+
   useEffect(() => {
     if (setCMRef) {
       setCMRef(codeMirror);
@@ -201,15 +204,43 @@ const MdwtEditor = ({
     autocompletion({
       override: [chnotCompletions],
     }),
+    ...(fillParentHeight
+      ? [
+          EditorView.theme({
+            "&": {
+              height: "100%",
+            },
+            "&.cm-editor": {
+              height: "100%",
+            },
+            ".cm-scroller": {
+              height: "100%",
+              overflow: "auto",
+            },
+            ".cm-content": {
+              minHeight: "100%",
+            },
+          }),
+        ]
+      : []),
   ];
 
   return (
     <CodeMirror
-      height={height ? `${height}px` : undefined}
+      height={
+        fillParentHeight
+          ? "100%"
+          : typeof height === "number"
+            ? `${height}px`
+            : typeof height === "string"
+              ? height
+              : undefined
+      }
       extensions={extensions}
       ref={codeMirror}
       style={{
         font: "sans-serif",
+        height: "100%",
       }}
       value={content}
       basicSetup={{

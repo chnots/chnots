@@ -1,14 +1,4 @@
-import {
-  EditorSelection,
-  type ReactCodeMirrorRef,
-} from "@uiw/react-codemirror";
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SaveState } from "@/common/types";
@@ -52,16 +42,16 @@ const MdwtChnot = ({
   onPostSave,
   onContentChange,
   content: initialContent,
+  fillParentHeight,
 }: RichPropProps & {
   placeholder?: string;
   content?: string;
   onContentChange?: (content: string) => void;
+  fillParentHeight?: boolean;
 }) => {
   // use RefObject to avoid rerender
   const cachedContentRef = useRef<string | undefined>(initialContent);
   const toSaveArg = useRef<MdwtCommitReq>(null);
-  const [codeMirrorRef, setCodeMirrorRef] =
-    useState<RefObject<ReactCodeMirrorRef | null>>();
   const [content, setContent] = useState<string | undefined>(initialContent);
 
   useEffect(() => {
@@ -144,40 +134,25 @@ const MdwtChnot = ({
   ) : (
     content !== undefined && (
       <div
-        className="flex flex-col w-full h-full break-all"
+        className="flex flex-col w-full h-full min-h-0 break-all"
         onBlur={() => directlySave()}
         role="none"
       >
-        <MdwtEditorMemo
-          placeholder={placeholder}
-          content={content}
-          onContentChange={handleContentChange}
-          foldGutter={false}
-          setCodeMirrorRef={setCodeMirrorRef}
-        />
-        {/* dirty: fix codemirror height */}
         <div
-          role="none"
-          className="flex-grow cursor-text min-h-0 p-0 m-0"
-          onClick={() => {
-            if (codeMirrorRef?.current) {
-              const editorView = codeMirrorRef.current.view;
-              if (editorView) {
-                const docLength = editorView.state.doc.length;
-                editorView.dispatch({
-                  selection: EditorSelection.cursor(docLength),
-                  scrollIntoView: true,
-                });
-                editorView.focus();
-              }
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-            }
-          }}
-        ></div>
+          className={
+            fillParentHeight
+              ? "flex-1 min-h-0 h-full overflow-hidden"
+              : undefined
+          }
+        >
+          <MdwtEditorMemo
+            placeholder={placeholder}
+            content={content}
+            onContentChange={handleContentChange}
+            foldGutter={false}
+            fillParentHeight={fillParentHeight}
+          />
+        </div>
       </div>
     )
   );

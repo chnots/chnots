@@ -41,7 +41,6 @@ const RichMdwt = ({
     };
   });
 
-  console.log("content", initialContent);
   const [chnots, setChnots, chnotsRef] = useStateWithRef<TID[]>(
     initialContent ? parseChnotsFromContent(initialContent) : [],
   );
@@ -71,15 +70,23 @@ const RichMdwt = ({
           : "grid grid-cols-2 divide-x",
       )}
     >
-      <MdwtChnot
-        otid={otid}
-        readonly={readonly}
-        onPostSave={onPostSave}
-        content={initialContent}
-        fullscreen={false}
-        onSetFullscreen={() => {}}
-        onContentChange={handleContentChange}
-      />
+      <div
+        className={cn(
+          "min-h-0 overflow-hidden",
+          isMobile || chnots.length === 0 ? "flex-1" : "h-full",
+        )}
+      >
+        <MdwtChnot
+          otid={otid}
+          readonly={readonly}
+          onPostSave={onPostSave}
+          content={initialContent}
+          fillParentHeight={true}
+          fullscreen={false}
+          onSetFullscreen={() => {}}
+          onContentChange={handleContentChange}
+        />
+      </div>
       {chnots.length > 0 && (
         <div className="space-y-2 rounded-none" ref={bodyRef}>
           {[...new Set(chnots)].map((otid) => (
