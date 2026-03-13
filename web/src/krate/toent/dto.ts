@@ -21,8 +21,8 @@ export type Toents = {
 };
 
 export type ToentInstListReq = {
-  start_date: string;
-  end_date: string;
+  start_tid: number;
+  end_tid: number;
   include_completed: boolean;
   include_uncompleted: boolean;
   start_index: number;
@@ -30,17 +30,27 @@ export type ToentInstListReq = {
 };
 
 export type ToentInstCountReq = {
-  start_date: string;
-  end_date: string;
+  start_tid: number;
+  end_tid: number;
   include_completed: boolean;
   include_uncompleted: boolean;
+  include_no_time_todo?: boolean;
+  ranges?: ToentInstCountRangeReq[];
+};
+
+export type ToentInstCountRangeReq = {
+  key: string;
+  start_tid: number;
+  end_tid: number;
+  include_no_time_todo?: boolean;
 };
 
 export type ToentSearchReq = {
-  start_date: string;
-  end_date: string;
+  start_tid: number;
+  end_tid: number;
   include_completed: boolean;
   include_uncompleted: boolean;
+  include_no_time_todo?: boolean;
   query?: string;
   tags?: MdwtTagSearchType;
   start_index: number;
@@ -55,6 +65,7 @@ export type ToentInstListRsp = {
 
 export type ToentInstCountRsp = {
   total: number;
+  totals: Record<string, number>;
 };
 
 export type ToentTodoStateCommitReq = {

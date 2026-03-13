@@ -48,3 +48,17 @@ export const parseNaiveDateTime = (value?: string): Date | undefined => {
     Number(ss),
   );
 };
+
+export const tidToDate = (tid?: number): Date | undefined => {
+  if (tid === undefined || Number.isNaN(tid)) {
+    return undefined;
+  }
+
+  const abs = Math.abs(tid);
+  const millis = abs >= 1_000_000_000_000_000 ? tid / 1000 : tid;
+  const date = new Date(millis);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  return date;
+};

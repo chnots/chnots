@@ -24,12 +24,6 @@ export const toentTodoEventGuess = async (
   return await request.postJson(`api/v1/toent-todoevent-guess`, req);
 };
 
-export const toentInstList = async (
-  req: ToentInstListReq,
-): Promise<ToentInstListRsp> => {
-  return await request.postJson(`api/v1/toent-inst-list`, req);
-};
-
 export const toentInstCount = async (
   req: ToentInstCountReq,
 ): Promise<ToentInstCountRsp> => {

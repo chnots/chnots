@@ -5,36 +5,32 @@ export type Toent = object;
 
 export type TodoEvent = "TODO" | "DONE" | "WAIT" | "CANCEL" | "DOING";
 
-export type ToentTimeEvent = object;
+export type ToentTimeEvent = string;
 
 export type TodoStateEnum = "TODO" | "DONE" | "DOING" | "WAIT" | "CANCEL";
 export type TodoPriorityEnum = "A" | "B" | "C" | "D" | "E";
 
 export type ToentTimeEventInst = object;
 
-export type ToentTodo = {
+export type ToentInst = {
   otid: TID;
   todo_state?: TodoStateEnum;
   todo_priority?: TodoPriorityEnum;
   alert_tid?: TID;
   start_tid?: TID;
   end_tid?: TID;
+  finished_count: number;
   timezone?: number;
   closed?: boolean;
+  note?: DbText;
   tid: TID;
 };
 
-export type ToentEventDefiItem = {
-  raw: string;
-  standard?: string;
-  timezone?: string;
-};
-
 export type ToentEventDefi = {
-  events: ToentEventDefiItem[];
+  events: ToentTimeEvent[];
 };
 
-export type ToentEvent = {
+export type ToentDefi = {
   otid: TID;
   event_defi: ToentEventDefi;
   start_time?: TID;
@@ -44,22 +40,9 @@ export type ToentEvent = {
   tid: TID;
 };
 
-export type TodoInst = {
-  otid: TID;
-  timezone?: string;
-  naive_time: string;
-  target_status?: TodoStateEnum;
-  note?: string;
-  alert_tid?: TID;
-  target_tid: TID;
-  tid: TID;
-};
-
 export type ToentScheduleItem = {
-  inst: TodoInst;
-  todo?: ToentTodo;
-  event?: ToentEvent;
-  title?: DbText;
+  inst: ToentInst;
+  title: string;
 };
 
 export type MdwtToent = {
