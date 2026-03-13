@@ -32,7 +32,12 @@ const ChnotMain = ({ className }: { className?: string }) => {
   }, [otid]);
 
   return (
-    <main className={cn("relative flex flex-col overflow-y-auto", className)}>
+    <main
+      className={cn(
+        "relative flex flex-col min-h-0 overflow-hidden",
+        className,
+      )}
+    >
       <ChnotHeadbar
         className={"sticky top-0 left-0"}
         onNew={() => {
@@ -43,9 +48,11 @@ const ChnotMain = ({ className }: { className?: string }) => {
         }}
         otid={otid}
       />
-      {otid && (
-        <ChnotBodyMemo key={otid} otid={otid} kind={kind ?? ChnotKind.MDWT} />
-      )}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {otid && (
+          <ChnotBodyMemo key={otid} otid={otid} kind={kind ?? ChnotKind.MDWT} />
+        )}
+      </div>
     </main>
   );
 };

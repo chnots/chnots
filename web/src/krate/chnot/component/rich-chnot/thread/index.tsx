@@ -303,7 +303,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
   );
 
   return (
-    <div className="flex flex-col w-full items-center overflow-y-auto">
+    <div className="flex flex-col w-full h-full min-h-0 items-center overflow-y-auto">
       {loading ? (
         <div />
       ) : (
