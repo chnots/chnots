@@ -67,7 +67,7 @@ export function ToentWeekView({
                         item.inst.tid,
                       )}
                       compact={true}
-                      timeFormat="HH:mm"
+                      showTime={false}
                     />
                   );
                 })

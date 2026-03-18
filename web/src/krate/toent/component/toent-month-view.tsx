@@ -8,7 +8,6 @@ import {
   dateToDayKey,
   formatLunarDate,
   getItemState,
-  isSpanItem,
   TODO_STATE_COLOR,
 } from "./toent-page-shared";
 
@@ -93,26 +92,22 @@ export function ToentMonthView({
                 {visible.map((item) => {
                   const state = getItemState(item);
                   const priority = item.inst.todo_priority;
-                  const timeText = isSpanItem(item)
-                    ? `${dayjs(item.parsedTime).format("MM/DD HH:mm")}-${dayjs(item.parsedEndTime).format("MM/DD HH:mm")}`
-                    : dayjs(item.parsedTime).format("HH:mm");
                   return (
                     <div
                       key={item.inst.tid}
-                      className="rounded-md bg-muted px-2 py-1 text-xs"
+                      className="min-w-0 rounded-md bg-muted px-2 py-1 text-xs"
                     >
                       <span className="inline-flex items-center gap-1">
                         <span
                           className={`size-1.5 rounded-full ${TODO_STATE_COLOR[state].dot}`}
                         />
-                        {timeText}
+                        {priority ? (
+                          <span className="text-muted-foreground">
+                            P{priority}
+                          </span>
+                        ) : null}
                       </span>
-                      {priority ? (
-                        <span className="ml-1 text-muted-foreground">
-                          P{priority}
-                        </span>
-                      ) : null}
-                      <span className="ml-1 truncate">
+                      <span className="ml-1 break-all">
                         {item.title ?? `#${item.inst.otid}`}
                       </span>
                     </div>
@@ -154,6 +149,7 @@ export function ToentMonthView({
                       item.inst.tid,
                     )}
                     compact={true}
+                    showTime={false}
                   />
                 );
               })

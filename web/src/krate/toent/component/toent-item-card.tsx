@@ -20,10 +20,12 @@ import {
 export function StateInlineSelect({
   state,
   disabled,
+  compact,
   onChange,
 }: {
   state: TodoStateEnum;
   disabled?: boolean;
+  compact?: boolean;
   onChange: (state: TodoStateEnum) => void;
 }) {
   return (
@@ -33,7 +35,7 @@ export function StateInlineSelect({
       disabled={disabled}
     >
       <SelectTrigger
-        className={`h-7 w-[98px] px-2 text-xs font-medium ${TODO_STATE_COLOR[state].select}`}
+        className={`${compact ? "h-6 w-full min-w-0 max-w-full gap-1 px-1.5 text-[11px] [&_svg]:size-3" : "h-7 w-[98px] px-2"} text-xs font-medium ${TODO_STATE_COLOR[state].select}`}
       >
         <SelectValue placeholder="State" />
       </SelectTrigger>
@@ -71,6 +73,7 @@ export function ToentItemCard({
   stateUpdating,
   compact = false,
   timeFormat,
+  showTime = true,
 }: {
   item: NormalizedScheduleItem;
   onOpen: (item: NormalizedScheduleItem) => void;
@@ -81,64 +84,74 @@ export function ToentItemCard({
   stateUpdating: boolean;
   compact?: boolean;
   timeFormat?: string;
+  showTime?: boolean;
 }) {
   const state = getItemState(item);
   const priority = item.inst.todo_priority;
   const title = getItemTitle(item);
   const done = state === "DONE";
-  const timeText = isSpanItem(item)
-    ? `${dayjs(item.parsedTime).format("YYYY-MM-DD HH:mm")} - ${dayjs(item.parsedEndTime).format("YYYY-MM-DD HH:mm")}`
-    : dayjs(item.parsedTime).format(timeFormat ?? "YYYY-MM-DD HH:mm:ss");
+  const timeText = !item.inst.start_tid
+    ? "No schedule time"
+    : isSpanItem(item)
+      ? compact
+        ? `${dayjs(item.parsedTime).format("MM/DD HH:mm")} - ${dayjs(item.parsedEndTime).format("MM/DD HH:mm")}`
+        : `${dayjs(item.parsedTime).format("YYYY-MM-DD HH:mm")} - ${dayjs(item.parsedEndTime).format("YYYY-MM-DD HH:mm")}`
+      : dayjs(item.parsedTime).format(timeFormat ?? "YYYY-MM-DD HH:mm:ss");
 
   return (
     <div
       className={
         compact
-          ? "rounded-md border p-2"
+          ? "w-full rounded-md border p-2"
           : "flex w-full flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
       }
     >
       <div
         className={
-          compact ? "flex items-start gap-2" : "flex items-start gap-2.5"
+          compact ? "flex flex-col gap-1.5" : "flex items-start gap-2.5"
         }
       >
         <StateInlineSelect
           state={state}
           disabled={stateUpdating}
+          compact={compact}
           onChange={(nextState) => onStateChange(item, nextState)}
         />
         <div className="min-w-0">
-          <div className="mb-1 flex items-center gap-2">
-            {priority ? <PriorityBadge priority={priority} /> : null}
-          </div>
+          {priority ? (
+            <div className="mb-1 flex items-center gap-2">
+              <PriorityBadge priority={priority} />
+            </div>
+          ) : null}
           <button
             type="button"
             onClick={() => onOpen(item)}
-            className="min-w-0 text-left"
+            className="w-full min-w-0 text-left"
           >
             <p
               className={
                 done
                   ? compact
-                    ? "truncate text-xs font-medium text-slate-500 line-through"
+                    ? "break-all text-xs font-medium text-slate-500 line-through"
                     : "font-medium text-slate-500 line-through"
                   : compact
-                    ? "truncate text-xs font-medium"
+                    ? "break-all text-xs font-medium"
                     : "font-medium"
               }
             >
               {title}
             </p>
-            <p
-              className={
-                compact
-                  ? "text-xs text-muted-foreground"
-                  : "text-sm text-muted-foreground"
-              }
-            >
-              {timeText}
-            </p>
+            {showTime ? (
+              <p
+                className={
+                  compact
+                    ? "text-xs text-muted-foreground"
+                    : "text-sm text-muted-foreground"
+                }
+              >
+                {timeText}
+              </p>
+            ) : null}
           </button>
         </div>
       </div>
