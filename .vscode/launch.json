@@ -16,7 +16,7 @@
         "cwd": "${workspaceFolder}/server",
         "args": ["build"]
       },
-      "args": ["--config", "../config/config.sqlite.toml"]
+      "args": ["--config", "../config/config.postgres.toml"]
     },
     {
       "name": "chnots web dev",
