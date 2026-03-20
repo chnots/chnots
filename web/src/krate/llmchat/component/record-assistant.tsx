@@ -70,12 +70,14 @@ const RecordCommon = ({
             "prose prose-code:text-wrap prose-code:break-all prose-code:overflow-x-hidden prose-code:!p-2"
           }
         >
-          <Streamdown
-            plugins={{ code, math, mermaid }}
-            isAnimating={isAnimating ?? false}
-          >
-            {body}
-          </Streamdown>
+          <span className={isAnimating ? "typing-cursor" : ""}>
+            <Streamdown
+              plugins={{ code, math, mermaid }}
+              isAnimating={isAnimating ?? false}
+            >
+              {body}
+            </Streamdown>
+          </span>
         </div>
       </div>
     </RecordFrame>
