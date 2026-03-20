@@ -38,7 +38,14 @@ const ChnotSidebarTagItem = React.forwardRef(
     ref: ForwardedRef<HTMLLIElement>,
   ) => {
     return (
-      <SidebarMenuItem onClick={onClick} ref={ref}>
+      <SidebarMenuItem
+        onClick={onClick}
+        ref={ref}
+        style={{
+          animation: "slideUpAndFade 0.25s ease-out forwards",
+          opacity: 0,
+        }}
+      >
         <SidebarMenuButton
           size="lg"
           asChild
@@ -94,7 +101,13 @@ const ChnotSidebarItem = React.forwardRef(
       : (title?.substring(0, 500) ?? "<unknown>");
 
     return (
-      <SidebarMenuItem key={item.meta.otid}>
+      <SidebarMenuItem
+        key={item.meta.otid}
+        style={{
+          animation: "slideUpAndFade 0.25s ease-out forwards",
+          opacity: 0,
+        }}
+      >
         <a
           href={`#${item.meta.otid}`}
           key={item.meta.otid}
