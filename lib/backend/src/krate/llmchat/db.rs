@@ -127,7 +127,7 @@ impl LLMChatMapper for KDb {
             LLMChatRecord::ROLE_ID,
             LLMChatRecord::TABLE,
             LLMChatBot::TID,
-            TID::default().as_num() - 14 * 24 * 3600 * 1000000,
+            TID::now().as_num() - 14 * 24 * 3600 * 1000000,
             LLMChatRecord::ROLE_ID,
             LLMChatBot::OTID,
             LLMChatRecord::ROLE_ID

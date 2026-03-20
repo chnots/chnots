@@ -19,14 +19,14 @@ export type ExcalidrawFetchRsp = {
 export type ExcalidrawLibraryDataV1Dto = object;
 export type ExcalidrawLibraryCommitReq = {
   otid: TID;
-  data: ExcalidrawLibraryDataV1Dto;
+  data: Value;
 };
 export type ExcalidrawLibraryCommitRsp = object;
 export type ExcalidrawLibraryFetchReq = {
   otid: TID;
 };
 export type ExcalidrawLibraryFetchRsp = {
-  data?: ExcalidrawLibraryDataV1Dto;
+  data?: Value;
 };
 export type MindElixirCommitReq = {
   otid: TID;

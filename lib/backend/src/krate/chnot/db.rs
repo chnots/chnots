@@ -174,7 +174,7 @@ impl ChnotMapper for KDb {
         for oao in to_save_map.values() {
             let rec = ChnotThreadOrder {
                 otid: oao.otid,
-                tid: TID::default(),
+                tid: TID::now(),
                 thread_otid,
                 korder: oao.korder,
                 closed: oao.closed,
@@ -276,16 +276,16 @@ impl ChnotMapper for KDb {
         for b in metas {
             let rec = ChnotMeta {
                 otid: b.otid,
-                tid: TID::default(),
+                tid: TID::now(),
                 kind: b.kind,
                 kspace: b.kspace,
                 archive_tid: if b.archive.is_some_and(|v| v) {
-                    Some(TID::default())
+                    Some(TID::now())
                 } else {
                     None
                 },
                 pin_tid: if b.pin_it.is_some_and(|v| v) {
-                    Some(TID::default())
+                    Some(TID::now())
                 } else {
                     None
                 },

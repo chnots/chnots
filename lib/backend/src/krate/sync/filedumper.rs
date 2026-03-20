@@ -108,7 +108,7 @@ impl MapperType {
     ) -> EResult {
         let fd = FileDumper {
             backup_dir,
-            end_in: TID::default(),
+            end_in: TID::now(),
             start_type,
             _table_type: PhantomData::<E>,
         };
@@ -141,7 +141,7 @@ impl<P: AsRef<Path>, T: OtidTableSupport> FileDumper<P, T> {
             .join(backup_file.to_file_name());
 
         let mut last = start_ex;
-        let end = TID::default();
+        let end = TID::now();
         loop {
             let c = mapper_type
                 .dump::<T>(

@@ -198,7 +198,7 @@ impl KDbTx<'_> {
     }
 
     #[inline]
-    pub async fn po_otid_insert<T, S>(&self, pos: S) -> AResult<usize>
+    pub async fn po_otid_commit<T, S>(&self, pos: S) -> AResult<usize>
     where
         T: OtidTableSupport,
         S: Into<Vec<T>>,
@@ -297,11 +297,11 @@ impl KDb {
         if pos.len() == 1 {
             let tx: KDbTx<'_> = conn.transaction().await?;
 
-            count = tx.po_otid_insert(pos).await?;
+            count = tx.po_otid_commit(pos).await?;
             tx.cmt().await?;
         } else if !pos.is_empty() {
             let tx: KDbTx<'_> = conn.transaction().await?;
-            count = tx.po_otid_insert(pos).await?;
+            count = tx.po_otid_commit(pos).await?;
             tx.cmt().await?;
         }
 

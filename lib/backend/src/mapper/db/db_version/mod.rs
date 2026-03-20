@@ -88,7 +88,7 @@ impl KDbTx<'_> {
         self.exec(
             DbVersionTransient {
                 version,
-                tid: TID::default(),
+                tid: TID::now(),
             }
             .to_sql_inserter(),
         )

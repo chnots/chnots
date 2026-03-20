@@ -16,6 +16,7 @@ TYPE_MAP = {
     "String": "string",
     "i64": "number",
     "i32": "number",
+    "isize": "number",
     "usize": "number",
     "Text": "DbText",
     "SharedStr": "string",
@@ -194,7 +195,7 @@ def get_ts_type(rust_type: str):
 
     if outer == "Option":
         return get_ts_type(inner) + "| undefined"
-    elif outer == "Vec":
+    elif outer == "Vec" or outer == "HashSet":
         return get_ts_type(inner) + "[]"
     else:
         if "(" in inner:

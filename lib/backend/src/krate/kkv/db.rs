@@ -42,7 +42,7 @@ impl KDbExecutor<'_> {
             }))
             .await?;
         let old_tid = old.tid.unwrap_or(0.try_into()?).as_utc();
-        let now_tid = TID::default();
+        let now_tid = TID::now();
         let archor = now_tid.as_utc().signed_duration_since(old_tid).abs() > TimeDelta::hours(1);
         let inserter = KKV {
             key: req.key.clone(),
@@ -87,7 +87,7 @@ impl KDbExecutor<'_> {
             KKVTransient {
                 key,
                 value: serde_json::to_string(&value)?.into(),
-                tid: TID::default(),
+                tid: TID::now(),
             }
             .to_sql_inserter()
             .on_conflict(on_conflict),

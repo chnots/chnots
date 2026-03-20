@@ -489,7 +489,7 @@ impl KDb {
                     )
                     .await?;
                 } else if db_tid < data.tid() {
-                    tx.po_otid_insert([data]).await?;
+                    tx.po_otid_commit([data]).await?;
                 }
             }
         }

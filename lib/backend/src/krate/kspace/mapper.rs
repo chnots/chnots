@@ -40,7 +40,7 @@ pub trait KSpaceMapper {
                         name: data.0.try_into()?,
                         color: data.1.try_into()?,
                         managers: data.2.iter().map(|s| s.to_string()).collect(),
-                        tid: TID::default(),
+                        tid: TID::now(),
                         public_access: false,
                     },
                 }))

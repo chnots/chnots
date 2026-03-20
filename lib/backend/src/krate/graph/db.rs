@@ -48,7 +48,7 @@ impl KDbExecutor<'_> {
 
 impl KDbTx<'_> {
     async fn po_insert_graph_meta(&self, graph: GraphMeta) -> anyhow::Result<()> {
-        self.po_otid_insert([graph]).await?;
+        self.po_otid_commit([graph]).await?;
         Ok(())
     }
 
@@ -69,7 +69,7 @@ impl KDbTx<'_> {
             archor: false,
             kind: super::GraphKind::ExcalidrawV2,
             content: serde_json::to_string(&po.meta)?.into(),
-            tid: TID::default(),
+            tid: TID::now(),
         })
         .await?;
         for (k, v) in po.data {
@@ -93,7 +93,7 @@ impl KDbTx<'_> {
             archor: false,
             kind: super::GraphKind::ExcalidrawLibraryV1,
             content: serde_json::to_string(&meta)?.into(),
-            tid: TID::default(),
+            tid: TID::now(),
         })
         .await?;
 
@@ -286,7 +286,7 @@ impl GraphMapper for KDb {
             archor: false,
             kind: super::GraphKind::MindElixirV1,
             content: serde_json::to_string(&po.meta)?.into(),
-            tid: TID::default(),
+            tid: TID::now(),
         })
         .await?;
         for (k, v) in po.data {

@@ -326,7 +326,7 @@ impl ShareAppState {
         let sync_info = SyncInfo {
             instance_id: shake_rsp.instance_id.clone(),
             start_ex: sync_time,
-            end_in: TID::default(),
+            end_in: TID::now(),
             table_type: std::marker::PhantomData,
             pantient: true,
         };
@@ -405,7 +405,7 @@ impl ShareAppState {
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
             start_tid_ex: sync_info.start_ex,
-            sync_finish_tid: TID::default(),
+            sync_finish_tid: TID::now(),
         };
         self.sync_insert_sync_log_tx(endpoint, &remote_log).await?;
 
@@ -414,7 +414,7 @@ impl ShareAppState {
             table_name: T::table_name(false).try_into()?,
             end_sync_in: sync_info.end_in,
             start_tid_ex: sync_info.start_ex,
-            sync_finish_tid: TID::default(),
+            sync_finish_tid: TID::now(),
         };
         self.sync_log_transient_commit(local_log).await?;
 

@@ -75,7 +75,7 @@ impl KDbTx<'_> {
                 meta.archor = true;
             }
         }
-        self.po_otid_insert([meta]).await?;
+        self.po_otid_commit([meta]).await?;
 
         Ok(())
     }
@@ -142,7 +142,7 @@ impl KFileMapper for KDb {
         req.body.res.sid = sid.clone();
 
         let meta = KFileMeta {
-            tid: TID::default(),
+            tid: TID::now(),
             archor: false,
             inline: true,
             sid: sid.clone(),
@@ -150,9 +150,9 @@ impl KFileMapper for KDb {
             filename: req
                 .filename
                 .clone()
-                .unwrap_or(format!("inline-kfile-{}", &TID::default().as_num()).try_into()?),
+                .unwrap_or(format!("inline-kfile-{}", &TID::now().as_num()).try_into()?),
             content_type: req.content_type.clone(),
-            last_modified: TID::default(),
+            last_modified: TID::now(),
             filesize: bytes.len() as i64,
             otid: req.otid,
             binaryp: req.binaryp,

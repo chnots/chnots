@@ -121,7 +121,7 @@ pub(super) async fn kfile_asset_chunk_upload(
         mapper
             .po_inline_kfile_commit(vec![InlineKFile {
                 sid: gbb.blake3.clone().try_into()?,
-                tid: TID::default(),
+                tid: TID::now(),
                 content: gbb.b64.into(),
             }])
             .await?;
@@ -157,7 +157,7 @@ pub(super) async fn kfile_asset_chunk_upload(
 
     let kfile = match sid {
         Some(sid) => {
-            let tid = TID::default();
+            let tid = TID::now();
             let kfile = KFileMeta {
                 otid: otid.try_into()?,
                 id: meta_id.try_into()?,

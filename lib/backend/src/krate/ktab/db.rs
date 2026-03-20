@@ -76,7 +76,7 @@ impl KTabMapper for KDb {
 
         let insert_sql = SqlInserter::new(KTabMeta::TABLE)
             .field(KTabMeta::OTID, *otid)
-            .field(KTabMeta::TID, TID::default())
+            .field(KTabMeta::TID, TID::now())
             .field(KTabMeta::COLUMNS, serde_json::to_string(&columns)?)
             .field(KTabMeta::TABLE_NAME, table_name.clone())
             .field(KTabMeta::TABLE_COMMENT, table_comment.clone())
@@ -125,7 +125,7 @@ impl KTabMapper for KDb {
                     col_otid: column_index,
                     row_otid: ele.row_tid,
                     cell_data: v,
-                    tid: TID::default(),
+                    tid: TID::now(),
                 })
                 .await?;
             }
