@@ -25,19 +25,25 @@ const KPageList = ({
       {children}
       <div className="flex justify-center">
         {isFetchingNextPage ? (
-          <div className="flex items-center gap-1 py-3">
+          <div
+            className="my-2 inline-flex items-center gap-2 rounded-full border border-sidebar-border/60 bg-sidebar-accent/30 px-3 py-1.5"
+            aria-live="polite"
+          >
             <span
-              className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce"
-              style={{ animationDelay: "0ms", animationDuration: "0.6s" }}
+              className="h-1.5 w-1.5 rounded-full bg-muted-foreground/90 animate-bounce"
+              style={{ animationDelay: "0ms", animationDuration: "0.9s" }}
             />
             <span
-              className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce"
-              style={{ animationDelay: "150ms", animationDuration: "0.6s" }}
+              className="h-1.5 w-1.5 rounded-full bg-muted-foreground/80 animate-bounce"
+              style={{ animationDelay: "120ms", animationDuration: "0.9s" }}
             />
             <span
-              className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce"
-              style={{ animationDelay: "300ms", animationDuration: "0.6s" }}
+              className="h-1.5 w-1.5 rounded-full bg-muted-foreground/70 animate-bounce"
+              style={{ animationDelay: "240ms", animationDuration: "0.9s" }}
             />
+            <span className="text-[0.68rem] text-muted-foreground">
+              Loading
+            </span>
           </div>
         ) : hasNextPage ? (
           <button

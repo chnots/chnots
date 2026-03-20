@@ -115,9 +115,11 @@ const ChnotSidebarItem = React.forwardRef(
             setCurOtid(item.meta.otid);
           }}
           className={cn(
-            "group flex items-start gap-2 p-2 rounded-md transition-colors duration-150",
-            "hover:shadow-xs border",
-            isCurrent ? "bg-background" : "bg-transparent border-transparent",
+            "group flex items-start gap-2 rounded-md border p-2 transition-colors duration-150",
+            "hover:border-sidebar-ring/40 hover:bg-sidebar-accent/40",
+            isCurrent
+              ? "border-sidebar-ring/55 bg-sidebar-accent/50"
+              : "border-transparent bg-transparent",
           )}
           tabIndex={0}
           aria-label={`Navigate to ${title}`}
