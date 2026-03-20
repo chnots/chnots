@@ -40,7 +40,7 @@ const ChnotHeadbar = ({
   return (
     <div
       className={cn(
-        "w-full flex align-center items-center p-1 space-x-1",
+        "flex h-14 w-full items-center gap-1 border-b px-4",
         className,
       )}
     >

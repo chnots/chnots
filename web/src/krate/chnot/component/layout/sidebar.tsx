@@ -141,7 +141,7 @@ const ChnotSidebar = () => {
   }, []);
 
   return (
-    <Sidebar>
+    <Sidebar variant="inset">
       <SidebarHeader className="text-sm">
         <Header />
       </SidebarHeader>

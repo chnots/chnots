@@ -14,10 +14,10 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarSeparator,
   SidebarTrigger,
 } from "../component/ui/sidebar";
 
@@ -54,7 +54,7 @@ const Settings = () => {
   );
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar variant="inset">
         <SidebarHeader className="text-sm">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-1">
@@ -65,6 +65,7 @@ const Settings = () => {
             </NavLink>
           </div>
         </SidebarHeader>
+        <SidebarSeparator className="mx-0" />
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel>Function</SidebarGroupLabel>
@@ -110,21 +111,23 @@ const Settings = () => {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <SidebarInset className="flex flex-col w-full items-center">
-        <div className="w-full m-4 items-center flex pl-10">
+      <main className="flex h-svh w-full flex-col overflow-hidden border-l bg-background">
+        <header className="flex h-14 items-center gap-2 border-b px-4">
           <SidebarTrigger />
-          <h2 className="text-xl">{settingsEnum}</h2>
+          <h2 className="text-base font-medium">{settingsEnum}</h2>
+        </header>
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="mx-auto w-full max-w-4xl">
+            {settingsEnum === SettingsEnum.KSpace ? (
+              <KSpaceSettings />
+            ) : settingsEnum === SettingsEnum.Endpoint ? (
+              <EndpointSettings />
+            ) : (
+              settingsEnum === SettingsEnum.FixDb && <FixDb />
+            )}
+          </div>
         </div>
-        <div className="m-8 max-w-4xl">
-          {settingsEnum === SettingsEnum.KSpace ? (
-            <KSpaceSettings />
-          ) : settingsEnum === SettingsEnum.Endpoint ? (
-            <EndpointSettings />
-          ) : (
-            settingsEnum === SettingsEnum.FixDb && <FixDb />
-          )}
-        </div>
-      </SidebarInset>
+      </main>
     </SidebarProvider>
   );
 };

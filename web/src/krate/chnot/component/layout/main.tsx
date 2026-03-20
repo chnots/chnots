@@ -34,7 +34,7 @@ const ChnotMain = ({ className }: { className?: string }) => {
   return (
     <main
       className={cn(
-        "relative flex flex-col min-h-0 overflow-hidden",
+        "relative flex min-h-0 flex-col overflow-hidden border-l bg-background",
         className,
       )}
     >
@@ -48,7 +48,7 @@ const ChnotMain = ({ className }: { className?: string }) => {
         }}
         otid={otid}
       />
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-hidden">
         {otid && (
           <ChnotBodyMemo key={otid} otid={otid} kind={kind ?? ChnotKind.MDWT} />
         )}
