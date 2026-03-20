@@ -179,11 +179,6 @@ import type { ChnotMeta } from "./dto";
 - Test files: `tests/*.rs` or `mod.rs` with `#[cfg(test)]`
 - Use `#[tokio::test]` for async tests
 
-### TypeScript Tests
-
-- Playwright tests in `lib/mind-elixir-core/tests/`
-- Run: `cd lib/mind-elixir-core && pnpm test`
-
 ## Important Notes
 
 - **No root package.json** - Run commands in respective directories
@@ -194,3 +189,6 @@ import type { ChnotMeta } from "./dto";
 - **Tailwind 4.0** - Utility-first CSS with Emotion
 - **Biome** - Linter/formatter (replaces ESLint/Prettier)
 
+## Docs
+- `docs/features` for the app features.
+- `docs/impl-spec` for the app impl logic.
