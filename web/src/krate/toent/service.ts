@@ -6,9 +6,8 @@ import type {
   ToentInstCommitRsp,
   ToentInstCountReq,
   ToentInstCountRsp,
-  ToentInstListReq,
-  ToentInstListRsp,
   ToentSearchReq,
+  ToentSearchRsp,
   ToentTodoStateCommitReq,
   ToentTodoStateCommitRsp,
 } from "./dto";
@@ -34,7 +33,7 @@ export const toentInstCount = async (
 
 export const toentSearch = async (
   req: ToentSearchReq,
-): Promise<ToentInstListRsp> => {
+): Promise<ToentSearchRsp> => {
   return await request.postJson(`api/v1/toent-search`, req);
 };
 

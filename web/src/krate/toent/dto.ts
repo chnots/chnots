@@ -88,11 +88,7 @@ export type ToentTodoStateCommitRsp = {
 };
 
 export type ToentInstCommitReq = {
-  chnot_otid: TID;
-  otid: TID;
-  start_tid: TID;
-  note: DbText;
-  todo_state?: TodoStateEnum;
+  inst: ToentInst;
 };
 
 export type ToentSearchRsp = {

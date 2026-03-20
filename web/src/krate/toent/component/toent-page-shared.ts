@@ -60,8 +60,11 @@ export const FILTER_META: Record<
   SidebarMode,
   { title: string; description: string }
 > = {
-  today: { title: "Today", description: "Only reminders for today" },
-  all: { title: "All items", description: "All reminders in current range" },
+  today: {
+    title: "Today",
+    description: "Today's reminders",
+  },
+  all: { title: "All items", description: "All reminders (no time window)" },
   month: { title: "Month", description: "View reminders by month" },
   week: { title: "Week", description: "View reminders by week" },
 };
@@ -74,7 +77,8 @@ export type NormalizedScheduleItem = ToentScheduleItem & {
 };
 
 export type ToentEditorTarget = {
-  otid: TID;
+  chnotOtid: TID;
+  instOtid: TID;
   title: string;
   dateText: string;
   state: TodoStateEnum;
@@ -87,6 +91,14 @@ export function getItemState(item: NormalizedScheduleItem): TodoStateEnum {
 
 export function getItemTitle(item: NormalizedScheduleItem): string {
   return item.title ?? `Toent #${item.inst.otid}`;
+}
+
+export function toentInstOtid(chnotOtid: TID, startTid?: TID): TID {
+  if (!startTid) {
+    return chnotOtid;
+  }
+
+  return Number(BigInt(chnotOtid) & BigInt(startTid));
 }
 
 export function dateToDayKey(date: Date): string {
@@ -155,10 +167,9 @@ export function getQueryRange(
     };
   }
 
-  const base = startOfDay(cursorDate);
   return {
-    startDate: dayjs(addDays(base, -45)).format("YYYY-MM-DD"),
-    endDate: dayjs(addDays(base, 90)).format("YYYY-MM-DD"),
+    startDate: "",
+    endDate: "",
   };
 }
 

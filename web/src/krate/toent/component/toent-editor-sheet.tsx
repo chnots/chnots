@@ -51,7 +51,7 @@ export function ToentEditorSheet({
             <div className="min-h-0 flex-1 overflow-auto p-2">
               <div className="h-full min-h-[55vh]">
                 <MdwtChnot
-                  otid={editorTarget.otid}
+                  otid={editorTarget.chnotOtid}
                   readonly={false}
                   fullscreen={false}
                   onPostSave={async (arg) => {

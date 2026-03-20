@@ -46,7 +46,7 @@ import {
   toentTodoStateCommit,
 } from "@/krate/toent/service";
 import { tidToDate } from "@/lib/date-utils";
-import type { TID } from "@/lib/id_util";
+import { genTID, type TID } from "@/lib/id_util";
 import { RoutePaths } from "@/router";
 import { ToentEditorSheet } from "./toent-editor-sheet";
 import { ToentListView } from "./toent-list-view";
@@ -70,11 +70,33 @@ import {
   TODO_STATES,
   type ToentEditorTarget,
   type ToentViewMode,
+  toentInstOtid,
 } from "./toent-page-shared";
 import { ToentFilterSummaryBar, ToentViewToolbar } from "./toent-page-toolbar";
 import { ToentWeekView } from "./toent-week-view";
 
 function queryDateToTidRange(startDate: string, endDate: string) {
+  if (!startDate && !endDate) {
+    return {
+      startTid: dayjs("1900-01-01 00:00:00").valueOf() * 1000,
+      endTid: dayjs("2200-01-01 00:00:00").valueOf() * 1000,
+    };
+  }
+
+  if (!startDate) {
+    return {
+      startTid: dayjs("1900-01-01 00:00:00").valueOf() * 1000,
+      endTid: dayjs(`${endDate} 23:59:59.999`).valueOf() * 1000,
+    };
+  }
+
+  if (!endDate) {
+    return {
+      startTid: dayjs(`${startDate} 00:00:00`).valueOf() * 1000,
+      endTid: dayjs("2200-01-01 00:00:00").valueOf() * 1000,
+    };
+  }
+
   return {
     startTid: dayjs(`${startDate} 00:00:00`).valueOf() * 1000,
     endTid: dayjs(`${endDate} 23:59:59.999`).valueOf() * 1000,
@@ -262,7 +284,17 @@ function ToentPage() {
             start_index: startIndex,
             page_size: pageSize,
           });
-          mergedItems.push(...rsp.items);
+          mergedItems.push(
+            ...rsp.items.flatMap((entry) =>
+              entry.inst.map((inst) => ({
+                inst: {
+                  ...inst,
+                  otid: toentInstOtid(inst.chnot_otid, inst.start_tid),
+                },
+                title: entry.title,
+              })),
+            ),
+          );
           hasNext = rsp.has_next;
           startIndex = rsp.next_start;
         }
@@ -305,17 +337,20 @@ function ToentPage() {
   const normalizedItems = useMemo<NormalizedScheduleItem[]>(() => {
     return scheduleItems
       .map((item) => {
-        const parsedTime = tidToDate(item.inst.start_tid);
+        const parsedTime = tidToDate(item.inst.start_tid ?? item.inst.tid);
         if (!parsedTime) {
           return undefined;
         }
 
-        const parsedEndTime = tidToDate(item.inst.end_tid) ?? parsedTime;
+        const parsedEndTime =
+          tidToDate(item.inst.end_tid ?? item.inst.start_tid) ?? parsedTime;
         const fixedEndTime =
           parsedEndTime.getTime() >= parsedTime.getTime()
             ? parsedEndTime
             : parsedTime;
-        const dayKeys = getDayKeysBetween(parsedTime, fixedEndTime);
+        const dayKeys = item.inst.start_tid
+          ? getDayKeysBetween(parsedTime, fixedEndTime)
+          : [];
 
         return {
           ...item,
@@ -351,7 +386,38 @@ function ToentPage() {
     });
   }, [normalizedItems, enabledStates]);
 
-  const searchedItems = stateFilteredItems;
+  const weekStart = getWeekStartMonday(cursorDate);
+  const weekDates = useMemo(() => {
+    return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  }, [weekStart]);
+
+  const monthStart = startOfMonth(cursorDate);
+  const monthGridStart = getWeekStartMonday(monthStart);
+  const monthDates = useMemo(() => {
+    return Array.from({ length: 42 }, (_, index) =>
+      addDays(monthGridStart, index),
+    );
+  }, [monthGridStart]);
+
+  const searchedItems = useMemo(() => {
+    if (activeMode === "all") {
+      return stateFilteredItems;
+    }
+
+    if (activeMode === "today") {
+      return stateFilteredItems;
+    }
+
+    const dayKeys =
+      activeMode === "week"
+        ? weekDates.map((date) => dateToDayKey(date))
+        : monthDates.map((date) => dateToDayKey(date));
+
+    const dayKeySet = new Set(dayKeys);
+    return stateFilteredItems.filter((item) =>
+      item.dayKeys.some((dayKey) => dayKeySet.has(dayKey)),
+    );
+  }, [activeMode, monthDates, stateFilteredItems, weekDates]);
 
   const groupedByDay = useMemo(() => {
     const group: Record<string, NormalizedScheduleItem[]> = {};
@@ -372,19 +438,6 @@ function ToentPage() {
     }
     return groups.sort((a, b) => a.dayKey.localeCompare(b.dayKey));
   }, [groupedByDay]);
-
-  const weekStart = getWeekStartMonday(cursorDate);
-  const weekDates = useMemo(() => {
-    return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
-  }, [weekStart]);
-
-  const monthStart = startOfMonth(cursorDate);
-  const monthGridStart = getWeekStartMonday(monthStart);
-  const monthDates = useMemo(() => {
-    return Array.from({ length: 42 }, (_, index) =>
-      addDays(monthGridStart, index),
-    );
-  }, [monthGridStart]);
 
   useEffect(() => {
     if (viewMode !== "month") {
@@ -439,13 +492,16 @@ function ToentPage() {
   const activeMeta = FILTER_META[activeMode];
 
   const openItemEditor = (item: NormalizedScheduleItem) => {
+    const hasTime = Boolean(item.inst.start_tid);
     setEditorTarget({
-      otid: item.inst.otid,
+      chnotOtid: item.inst.chnot_otid,
+      instOtid: toentInstOtid(item.inst.chnot_otid, item.inst.start_tid),
       title: getItemTitle(item),
-      dateText:
-        item.parsedEndTime.getTime() !== item.parsedTime.getTime()
+      dateText: hasTime
+        ? item.parsedEndTime.getTime() !== item.parsedTime.getTime()
           ? `${dayjs(item.parsedTime).format("YYYY-MM-DD HH:mm:ss")} - ${dayjs(item.parsedEndTime).format("YYYY-MM-DD HH:mm:ss")}`
-          : dayjs(item.parsedTime).format("YYYY-MM-DD HH:mm:ss"),
+          : dayjs(item.parsedTime).format("YYYY-MM-DD HH:mm:ss")
+        : "No schedule time",
       state: getItemState(item),
       priority: item.inst.todo_priority,
     });
@@ -463,11 +519,11 @@ function ToentPage() {
     try {
       if (item.inst.start_tid) {
         await toentInstCommit({
-          chnot_otid: item.inst.chnot_otid,
-          otid: item.inst.otid,
-          start_tid: item.inst.start_tid,
-          todo_state: nextState,
-          note: item.inst.note ?? "",
+          inst: {
+            ...item.inst,
+            todo_state: nextState,
+            tid: genTID(),
+          },
         });
       } else {
         await toentTodoStateCommit({
@@ -725,7 +781,7 @@ function ToentPage() {
                   <ToentListView
                     listDayGroups={listDayGroups}
                     listItems={searchedItems}
-                    groupByDay={activeMode !== "all"}
+                    groupByDay={activeMode !== "all" && activeMode !== "today"}
                     onOpen={openItemEditor}
                     onStateChange={updateItemTodoState}
                     statusUpdatingTid={statusUpdatingTid}

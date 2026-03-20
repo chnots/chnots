@@ -59,5 +59,5 @@ export type MdwtToent = {
 };
 
 export type TimeEventField = {
-  time_events: ToentTimeEvent[];
+  time_events: TimeEvent[];
 };
