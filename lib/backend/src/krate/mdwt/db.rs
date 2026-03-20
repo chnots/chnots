@@ -1,12 +1,12 @@
 use std::borrow::Cow;
 
 use super::*;
-use crate::krate::chnot::ChnotMetaTable;
 use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::krate::mdwt::parser::MdwtParser;
+use crate::krate::toent::ToentDefiCommitReq;
 use crate::krate::toent::logic::EventBuilder;
-use crate::krate::toent::logic::todoevent::{TodoEvent, TodoStateEnum};
-use crate::krate::toent::po::{ToentDefi, ToentEventDefi, ToentInst};
+use crate::krate::toent::logic::todoevent::TodoEvent;
+use crate::krate::toent::po::TimeEventField;
 use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -64,7 +64,7 @@ impl<'a> KDbTx<'a> {
             executor
                 .exec(
                     MdwtTag {
-                        tid: TID::default(),
+                        tid: TID::now(),
                         tag: tag.to_owned(),
                         mdwt_otid,
                     }
@@ -91,7 +91,7 @@ impl<'a> KDbTx<'a> {
 
         // TODO: parse content and backlinks
         let _mdwt_parser = MdwtParser::new(block.content.as_str());
-        let rec_tid: TID = TID::default();
+        let rec_tid: TID = TID::now();
 
         // Query for existing record
         let query_old_rec =
@@ -129,7 +129,7 @@ impl<'a> KDbTx<'a> {
             archor,
         };
 
-        self.po_otid_insert([rec]).await?;
+        self.po_otid_commit([rec]).await?;
 
         Ok(())
     }
@@ -143,15 +143,14 @@ impl<'a> KDbTx<'a> {
         let otid = mdwt.otid;
 
         self.overwrite_mdwt_record(mdwt).await?;
-        self.toent_commit(
+        self.toent_defi_commit(&ToentDefiCommitReq {
             otid,
-            &todo_event,
-            &ToentEventDefi {
-                data: time_events.into_iter().collect(),
+            todo_event,
+            time_event_field: TimeEventField {
+                time_events: time_events.into_iter().collect(),
             }
             .into(),
-            None,
-        )
+        })
         .await?;
 
         Ok(MdwtCommitRsp {
@@ -223,7 +222,9 @@ impl KDb {
         let sql = SqlReader::read(
             SqlField {
                 alias: None,
-                inner: chin_sql::SqlFieldInner::Raw { expr: field_name },
+                inner: chin_sql::SqlFieldInner::Raw {
+                    expr: field_name.into(),
+                },
             },
             Joins::new((&mt).into()).join_some(otids.sub_query_table(req.tags.clone()), |v| {
                 JoinTable {

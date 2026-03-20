@@ -1,6 +1,14 @@
 import type { TID } from "@/lib/id_util";
+import type { DbText } from "@/lib/types";
 import type { MdwtTagSearchType } from "../chnot/dto";
-import type { MdwtToent, TodoStateEnum, ToentScheduleItem } from "./po";
+import type {
+  MdwtToent,
+  TimeEventField,
+  TodoEvent,
+  TodoStateEnum,
+  ToentInst,
+  ToentScheduleItem,
+} from "./po";
 
 type PossibleScore = number;
 
@@ -9,7 +17,7 @@ export type ToentGuessReq = {
 };
 
 export type GuessElem<T> = {
-  toent: T;
+  timestamp: T;
   score: PossibleScore;
 };
 export type ToentGuessRsp<T> = {
@@ -30,27 +38,28 @@ export type ToentInstListReq = {
 };
 
 export type ToentInstCountReq = {
-  start_tid: number;
-  end_tid: number;
+  start_tid: TID;
+  end_tid: TID;
   include_completed: boolean;
   include_uncompleted: boolean;
-  include_no_time_todo?: boolean;
-  ranges?: ToentInstCountRangeReq[];
+  include_no_time_todo: boolean;
+  ranges: ToentInstCountRangeReq[];
 };
 
 export type ToentInstCountRangeReq = {
   key: string;
-  start_tid: number;
-  end_tid: number;
-  include_no_time_todo?: boolean;
+  start_tid: TID;
+  end_tid: TID;
+  include_no_time_todo: boolean;
 };
 
 export type ToentSearchReq = {
-  start_tid: number;
-  end_tid: number;
+  start_tid: TID;
+  end_tid: TID;
   include_completed: boolean;
   include_uncompleted: boolean;
-  include_no_time_todo?: boolean;
+  chnot_otids?: TID[];
+  include_no_time_todo: boolean;
   query?: string;
   tags?: MdwtTagSearchType;
   start_index: number;
@@ -76,4 +85,33 @@ export type ToentTodoStateCommitReq = {
 export type ToentTodoStateCommitRsp = {
   otid: TID;
   todo_state: TodoStateEnum;
+};
+
+export type ToentInstCommitReq = {
+  chnot_otid: TID;
+  otid: TID;
+  start_tid: TID;
+  note: DbText;
+  todo_state?: TodoStateEnum;
+};
+
+export type ToentSearchRsp = {
+  items: ToentSearchRspData[];
+  has_next: boolean;
+  next_start: number;
+};
+export type ToentSearchRspData = {
+  inst: ToentInst[];
+  defi?: TimeEventField;
+  title: string;
+};
+
+export type ToentDefiCommitReq = {
+  otid: TID;
+  todo_event?: TodoEvent;
+  time_event_field?: TimeEventField;
+};
+export type ToentDefiCommitRsp = object;
+export type ToentInstCommitRsp = {
+  updated_insts: ToentInst[];
 };

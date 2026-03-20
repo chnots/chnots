@@ -37,7 +37,7 @@ pub(crate) fn read_kspace_from_header(headers: &HeaderMap) -> Varchar<40> {
         .unwrap_or(Varchar::try_from("<absent>").unwrap())
 }
 
-pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
+pub(crate) fn read_mkspace_from_header(headers: &HeaderMap) -> Vec<Varchar<40>> {
     let mkspaces: Vec<Varchar<40>> = headers
         .get("K-mkspaces")
         .and_then(|v| v.to_str().ok())
@@ -47,7 +47,11 @@ pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body
         .filter(|s| !s.is_empty())
         .map(|c| c.try_into().unwrap())
         .collect();
+    mkspaces
+}
 
+pub(crate) fn kreq<E: Debug + Clone + DeserializeOwned>(headers: HeaderMap, body: E) -> KReq<E> {
+    let mkspaces = read_mkspace_from_header(&headers);
     KReq {
         body,
         kspace: read_kspace_from_header(&headers),

@@ -2,6 +2,8 @@ import request from "@/lib/request";
 import type {
   ToentGuessReq,
   ToentGuessRsp,
+  ToentInstCommitReq,
+  ToentInstCommitRsp,
   ToentInstCountReq,
   ToentInstCountRsp,
   ToentInstListReq,
@@ -40,4 +42,10 @@ export const toentTodoStateCommit = async (
   req: ToentTodoStateCommitReq,
 ): Promise<ToentTodoStateCommitRsp> => {
   return await request.postJson(`api/v1/toent-todo-state-commit`, req);
+};
+
+export const toentInstCommit = async (
+  req: ToentInstCommitReq,
+): Promise<ToentInstCommitRsp> => {
+  return await request.postJson(`api/v1/toent-inst-commit`, req);
 };

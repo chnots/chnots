@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
+use chin_sql::str_type::Text;
 use chin_sql::time_type::TID;
 use chin_tools::score::PossibleScore;
 use serde::{Deserialize, Serialize};
 
 use crate::krate::mdwt::MdwtTagSearchType;
 use crate::krate::toent::logic::todoevent::TodoStateEnum;
-use crate::krate::toent::po::{ToentEventDefi, ToentInst};
-use crate::krate::toent::todoevent::TodoPriorityEnum;
+use crate::krate::toent::po::{TimeEventField, ToentInst};
+use crate::krate::toent::todoevent::TodoEvent;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ToentGuessReq {
@@ -71,6 +72,7 @@ pub struct ToentSearchReq {
     pub end_tid: TID,
     pub include_completed: bool,
     pub include_uncompleted: bool,
+    pub chnot_otids: Option<Vec<TID>>,
     #[serde(default)]
     pub include_no_time_todo: bool,
     pub query: Option<String>,
@@ -91,6 +93,30 @@ pub struct ToentTodoStateCommitRsp {
     pub todo_state: TodoStateEnum,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentDefiCommitReq {
+    pub otid: TID,
+    pub todo_event: Option<TodoEvent>,
+    pub time_event_field: Option<TimeEventField>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ToentDefiCommitRsp {}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ToentInstCommitReq {
+    pub chnot_otid: TID,
+    pub otid: TID,
+    pub start_tid: TID,
+    pub note: Text,
+    pub todo_state: Option<TodoStateEnum>,
+}
+
+#[derive(Clone, Debug, Serialize, Default)]
+pub struct ToentInstCommitRsp {
+    pub updated_insts: Vec<ToentInst>,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct ToentSearchRsp {
     pub items: Vec<ToentSearchRspData>,
@@ -106,7 +132,7 @@ pub struct ToentInstCountRsp {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ToentSearchRspData {
-    pub inst: ToentInst,
-    pub defi: Option<ToentEventDefi>,
+    pub inst: Vec<ToentInst>,
+    pub defi: Option<TimeEventField>,
     pub title: String,
 }

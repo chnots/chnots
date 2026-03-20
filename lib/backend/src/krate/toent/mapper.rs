@@ -1,32 +1,25 @@
 use anyhow::bail;
-use chin_tools::{AResult, EResult};
+use chin_sql::str_type::Varchar;
+use chin_tools::AResult;
 
 use crate::{
     MapperType, expand_mt_branch,
     krate::toent::{
-        ToentInstCountReq, ToentInstCountRsp, ToentSearchReq, ToentSearchRsp,
-        ToentTodoStateCommitReq, ToentTodoStateCommitRsp,
-        po::{ToentDefi, ToentInst},
+        ToentInstCommitReq, ToentInstCommitRsp, ToentInstCountReq, ToentInstCountRsp,
+        ToentSearchReq, ToentSearchRsp,
     },
-    mapper::db::KDbTx,
     model::dto::KReq,
 };
 
 pub(crate) trait ToentMapper {
-    async fn toent_inst_count(&self, _req: KReq<ToentInstCountReq>) -> AResult<ToentInstCountRsp> {
-        bail!("toent_inst_count is unsupported")
-    }
-
-    async fn toent_search(&self, _req: KReq<ToentSearchReq>) -> AResult<ToentSearchRsp> {
-        bail!("toent_search is unsupported")
-    }
-
-    async fn toent_todo_state_commit(
+    async fn toent_inst_count(&self, req: KReq<ToentInstCountReq>) -> AResult<ToentInstCountRsp>;
+    async fn toent_search(
         &self,
-        _req: KReq<ToentTodoStateCommitReq>,
-    ) -> AResult<ToentTodoStateCommitRsp> {
-        bail!("toent_todo_state_commit is unsupported")
-    }
+        req: ToentSearchReq,
+        spaces: Vec<Varchar<40>>,
+    ) -> AResult<ToentSearchRsp>;
+    async fn toent_inst_commit(&self, req: KReq<ToentInstCommitReq>)
+    -> AResult<ToentInstCommitRsp>;
 }
 
 impl ToentMapper for MapperType {
@@ -34,14 +27,18 @@ impl ToentMapper for MapperType {
         expand_mt_branch!(self.toent_inst_count(req))
     }
 
-    async fn toent_search(&self, req: KReq<ToentSearchReq>) -> AResult<ToentSearchRsp> {
-        expand_mt_branch!(self.toent_search(req))
+    async fn toent_search(
+        &self,
+        req: ToentSearchReq,
+        spaces: Vec<Varchar<40>>,
+    ) -> AResult<ToentSearchRsp> {
+        expand_mt_branch!(self.toent_search(req, spaces))
     }
 
-    async fn toent_todo_state_commit(
+    async fn toent_inst_commit(
         &self,
-        req: KReq<ToentTodoStateCommitReq>,
-    ) -> AResult<ToentTodoStateCommitRsp> {
-        expand_mt_branch!(self.toent_todo_state_commit(req))
+        req: KReq<ToentInstCommitReq>,
+    ) -> AResult<ToentInstCommitRsp> {
+        expand_mt_branch!(self.toent_inst_commit(req))
     }
 }

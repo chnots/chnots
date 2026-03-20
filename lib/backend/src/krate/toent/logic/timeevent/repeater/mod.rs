@@ -18,7 +18,6 @@ use super::starts_any;
 #[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq, Sequence)]
 pub(crate) enum RepeatType {
     #[default]
-    Once,
     RepeatEvent,
     RepeatTodo,
 }
@@ -26,7 +25,6 @@ pub(crate) enum RepeatType {
 impl RepeatType {
     pub fn as_static_str(&self) -> &'static str {
         match self {
-            RepeatType::Once => ".",
             RepeatType::RepeatEvent => "*",
             RepeatType::RepeatTodo => "**",
         }
@@ -45,9 +43,7 @@ impl TryFrom<Option<&str>> for RepeatType {
 
     fn try_from(s: Option<&str>) -> Result<Self, Self::Error> {
         if let Some(s) = s {
-            let r = if s == RepeatType::Once.as_ref() {
-                RepeatType::Once
-            } else if s == RepeatType::RepeatEvent.as_ref() {
+            let r = if s == RepeatType::RepeatEvent.as_ref() {
                 RepeatType::RepeatEvent
             } else if s == RepeatType::RepeatTodo.as_ref() {
                 RepeatType::RepeatTodo

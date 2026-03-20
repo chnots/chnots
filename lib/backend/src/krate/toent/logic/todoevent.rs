@@ -59,6 +59,12 @@ pub(crate) struct TodoEvent {
     pub priority: Option<TodoPriorityEnum>,
 }
 
+#[derive(Clone, Debug, Hash)]
+pub struct TodoEventInst {
+    pub todo_state: Option<TodoStateEnum>,
+    pub todo_priority: Option<TodoPriorityEnum>,
+}
+
 impl PartialOrd for TodoEvent {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match self.state.partial_cmp(&other.state) {

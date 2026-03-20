@@ -1,8 +1,10 @@
-use crate::app::ShareAppState;
 use crate::controller::KResponse;
 use crate::krate::mdwt::mapper::MdwtMapper;
+use crate::krate::toent::ToentSearchReq;
 use crate::model::dto::kreq;
+use crate::{app::ShareAppState, krate::toent::cache::ToentCache};
 use axum::{Json, Router, extract::State, http::HeaderMap, routing::post};
+use chin_sql::time_type::TID;
 
 use super::*;
 
@@ -20,7 +22,20 @@ async fn mdwt_commit(
     state: State<ShareAppState>,
     Json(req): Json<MdwtCommitReq>,
 ) -> KResponse<MdwtCommitRsp> {
-    state.mdwt_commit(kreq(headers, req)).await.into()
+    let otid = req.mdwt.otid;
+    let req = kreq(headers, req);
+    let rsp = state.mdwt_commit(req.clone()).await;
+
+    match rsp {
+        Ok(rsp) => {
+            match ToentCache::refresh_chnots(&state, vec![otid]).await {
+                Ok(_) => {}
+                Err(err) => return Err(err).into(),
+            }
+            Ok(rsp).into()
+        }
+        Err(err) => Err(err).into(),
+    }
 }
 
 async fn mdwt_list(

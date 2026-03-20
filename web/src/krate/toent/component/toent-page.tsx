@@ -40,6 +40,7 @@ import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
 import type { TodoStateEnum, ToentScheduleItem } from "@/krate/toent/po";
 import {
+  toentInstCommit,
   toentInstCount,
   toentSearch,
   toentTodoStateCommit,
@@ -460,10 +461,20 @@ function ToentPage() {
     }
     setStatusUpdatingTid(item.inst.tid);
     try {
-      await toentTodoStateCommit({
-        otid: item.inst.otid,
-        todo_state: nextState,
-      });
+      if (item.inst.start_tid) {
+        await toentInstCommit({
+          chnot_otid: item.inst.chnot_otid,
+          otid: item.inst.otid,
+          start_tid: item.inst.start_tid,
+          todo_state: nextState,
+          note: item.inst.note ?? "",
+        });
+      } else {
+        await toentTodoStateCommit({
+          otid: item.inst.otid,
+          todo_state: nextState,
+        });
+      }
       setLoadError(undefined);
       setRefreshTick((prev) => prev + 1);
       toast.success(`State updated: ${currentState} -> ${nextState}`);

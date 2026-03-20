@@ -10,10 +10,7 @@ use super::PossibleScore;
 use crate::krate::toent::{
     EventBuilder, Words,
     dto::GuessElem,
-    timeevent::timeenum::{
-        base::{BaseDateTime, NoneOrI32},
-        westen::WesTime,
-    },
+    timeevent::timeenum::base::{BaseDateTime, NoneOrI32},
 };
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct TimeInterval {
@@ -112,6 +109,20 @@ impl EventBuilder for TimeInterval {
         push_func(&self.time.second, 'S');
 
         result
+    }
+}
+
+const MICROS_PER_SECOND: i64 = 1_000_000;
+const SECONDS_PER_DAY: i64 = 24 * 60 * 60;
+
+impl TimeInterval {
+    pub fn to_micros(week: i64, day: i64, hour: i64, minute: i64, second: i64) -> i64 {
+        let total_seconds = i64::from(day) * SECONDS_PER_DAY
+            + i64::from(week) * 7 * SECONDS_PER_DAY
+            + i64::from(hour) * 3600
+            + i64::from(minute) * 60
+            + i64::from(second);
+        total_seconds * MICROS_PER_SECOND
     }
 }
 

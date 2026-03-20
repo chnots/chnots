@@ -1,3 +1,4 @@
+pub mod cache;
 pub(crate) mod controller;
 mod db;
 pub(crate) mod dto;

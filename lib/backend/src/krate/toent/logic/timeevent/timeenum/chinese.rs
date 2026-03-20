@@ -31,10 +31,34 @@ impl ChnTime {
 }
 
 impl Add<TimeInterval> for ChnTime {
-    type Output = ChnTime;
+    type Output = Option<ChnTime>;
 
     fn add(self, rhs: TimeInterval) -> Self::Output {
-        self.add_duration(rhs).unwrap_or(self)
+        self.add_duration(rhs).ok()
+    }
+}
+
+impl From<UtcWithOffset> for ChnTime {
+    fn from(value: UtcWithOffset) -> Self {
+        let dt = DateTime::from_timestamp_micros(value.utc.as_num()).unwrap();
+        let date = LunisolarDate::from_date(dt).unwrap();
+        let ts = BaseDateTime {
+            date: BaseDate {
+                year: date.to_solar_year().to_i32().into(),
+                month: date.to_lunar_month().to_u8().to_i32().unwrap().into(),
+                day: date.to_lunar_day().to_u8().to_i32().unwrap().into(),
+            },
+            time: BaseTime {
+                hour: dt.hour().to_i32().unwrap().into(),
+                minute: dt.minute().to_i32().unwrap().into(),
+                second: dt.second().to_i32().unwrap().into(),
+            },
+        };
+
+        Self {
+            leap_month: date.to_lunar_month().is_leap_month(),
+            timestamp: ts,
+        }
     }
 }
 

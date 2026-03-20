@@ -4,7 +4,10 @@ use config::Config;
 use log::info;
 use mapper::MapperType;
 
-use crate::{krate::sync::filedumper::StartType, magics::CLIENT_ID_KEY};
+use crate::{
+    krate::{sync::filedumper::StartType, toent::cache::ToentCache},
+    magics::CLIENT_ID_KEY,
+};
 
 pub(crate) mod app;
 pub mod config;
@@ -38,9 +41,15 @@ pub async fn run(config: Config) -> EResult {
         config: config.clone(),
         mapper,
         instance_id: instance_id.into(),
+        toent_cache: Default::default(),
     };
 
     let state: ShareAppState = state.into();
+
+    if let Err(err) = ToentCache::refresh(&state).await {
+        log::warn!("unable to warm up toent daily cache on startup: {err}");
+    }
+
     {
         let state = state.clone();
         tokio::spawn(async move {

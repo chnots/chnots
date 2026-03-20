@@ -1,13 +1,15 @@
 use std::{ops::Deref, sync::Arc};
 
 use chin_tools::SharedStr;
+use tokio::sync::RwLock;
 
-use crate::{config::Config, mapper::MapperType};
+use crate::{config::Config, krate::toent::cache::ToentCache, mapper::MapperType};
 
 pub struct AppState {
     pub(crate) mapper: MapperType,
     pub(crate) config: Config,
     pub instance_id: SharedStr,
+    pub(crate) toent_cache: RwLock<ToentCache>,
 }
 
 impl Deref for AppState {

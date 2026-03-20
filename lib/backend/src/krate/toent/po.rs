@@ -1,7 +1,9 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use chin_sql::{GenerateTableSchema, str_type::Text, time_type::TID};
+use chin_tools::AResult;
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,13 +11,14 @@ use crate::{
     krate::toent::{
         logic::todoevent::{TodoPriorityEnum, TodoStateEnum},
         timeevent::{
-            TimeEvent,
+            TimeEvent, TimeEventInst,
             repeater::interval::TimeInterval,
             timeenum::{
-                Timestamp, UtcWithOffset, UtcWithOffsetType, chinese::ChnTimeCalculator,
+                TimeEnum, Timestamp, UtcWithOffset, UtcWithOffsetType, chinese::ChnTimeCalculator,
                 westen::WesTime,
             },
         },
+        todoevent::TodoEvent,
     },
     mapper::{
         Curd,
@@ -35,18 +38,23 @@ fn timezone_to_sql(this: Option<isize>) -> Option<i64> {
     this.map(|e| e as i64)
 }
 
-fn timeevent_to_sql(this: Option<ToentEventDefi>) -> Option<Text> {
+fn timeevent_to_sql(this: Option<TimeEventField>) -> Option<Text> {
     match this {
         Some(this) => serde_json::to_string(&this).ok().map(|e| e.into()),
         None => None,
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, PartialEq)]
 pub(crate) struct ToentInst {
-    #[gts_primary]
+    // start_tid, because part of primary must not by null.
     #[gts_type = "i64"]
+    #[gts_primary]
     pub otid: TID,
+
+    #[gts_key]
+    #[gts_type = "i64"]
+    pub chnot_otid: TID,
 
     #[gts_type = "Varchar<30>"]
     #[gts_tosql = "todo_state_enum_to_sql"]
@@ -60,7 +68,6 @@ pub(crate) struct ToentInst {
     pub alert_tid: Option<TID>,
 
     #[gts_type = "i64"]
-    #[gts_primary]
     #[gts_key]
     pub start_tid: Option<TID>,
 
@@ -84,13 +91,54 @@ pub(crate) struct ToentInst {
     pub note: Option<Text>,
 }
 
+impl ToentInst {
+    pub(crate) fn pure_todo(chnot_otid: TID, todo_event: TodoEvent, finished_count: i64) -> Self {
+        ToentInst {
+            chnot_otid,
+            todo_state: Some(todo_event.state),
+            todo_priority: todo_event.priority,
+            alert_tid: None,
+            start_tid: None,
+            end_tid: None,
+            timezone: None,
+            closed: None,
+            tid: TID::now(),
+            note: None,
+            finished_count,
+            is_lunar: false,
+            otid: chnot_otid,
+        }
+    }
+}
+
+impl ToentDefi {
+    pub(crate) fn from_todo(
+        otid: TID,
+        todo_state: TodoStateEnum,
+        todo_priority: Option<TodoPriorityEnum>,
+    ) -> Option<ToentDefi> {
+        Some(ToentDefi {
+            otid: otid,
+            event_defi: None,
+            todo_state: Some(todo_state),
+            start_tid: None,
+            start_timezone: None,
+            end_tid: None,
+            end_timezone: None,
+            total_count: None,
+            tid: TID::now(),
+            todo_priority,
+        })
+    }
+}
+
 impl TryFrom<&KDbRow> for ToentInst {
     type Error = anyhow::Error;
 
     fn try_from(value: &KDbRow) -> Result<Self, Self::Error> {
         let timezone: Option<i64> = value.try_get(Self::TIMEZONE)?;
         Ok(Self {
-            otid: value.try_get(Self::OTID)?,
+            chnot_otid: value.try_get(Self::CHNOT_OTID)?,
             tid: value.try_get(Self::TID)?,
             todo_state: value.via_str_opt(Self::TODO_STATE)?,
             todo_priority: value.via_i64_opt(Self::TODO_PRIORITY)?,
@@ -102,13 +150,14 @@ impl TryFrom<&KDbRow> for ToentInst {
             note: value.try_get(Self::NOTE)?,
             finished_count: value.try_get(Self::FINISHED_COUNT)?,
             is_lunar: value.try_get(Self::IS_LUNAR)?,
+            otid: value.try_get(Self::OTID)?,
         })
     }
 }
 
 impl Curd for ToentInst {
     fn pkey(&self) -> chin_sql::Wheres<'_> {
-        Self::pkey_cond(self.otid, self.start_tid)
+        Self::pkey_cond(self.otid)
     }
 
     fn tid(&self) -> TID {
@@ -126,9 +175,15 @@ pub(crate) struct ToentDefi {
 
     #[gts_type = "Text"]
     #[gts_tosql = "timeevent_to_sql"]
-    pub event_defi: Option<ToentEventDefi>,
+    pub event_defi: Option<TimeEventField>,
 
-    pub todo_flag: bool,
+    #[gts_type = "Varchar<30>"]
+    #[gts_tosql = "todo_state_enum_to_sql"]
+    pub todo_state: Option<TodoStateEnum>,
+
+    #[gts_type = "i64"]
+    #[gts_tosql = "todo_priority_enum_to_sql"]
+    pub todo_priority: Option<TodoPriorityEnum>,
 
     #[gts_type = "i64"]
     #[gts_key]
@@ -154,13 +209,13 @@ pub(crate) struct ToentDefi {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub(crate) struct ToentEventDefi {
-    pub data: HashSet<TimeEvent>,
+pub(crate) struct TimeEventField {
+    pub time_events: HashSet<TimeEvent>,
 }
 
-impl ToentEventDefi {
+impl TimeEventField {
     pub(crate) fn start_time(&self) -> Option<UtcWithOffset> {
-        self.data
+        self.time_events
             .iter()
             .filter_map(|event| {
                 let start = event.start?;
@@ -179,7 +234,7 @@ impl ToentEventDefi {
     }
 
     pub(crate) fn end_time(&self) -> Option<UtcWithOffset> {
-        self.data
+        self.time_events
             .iter()
             .filter_map(|event| match event.end {
                 Some(end_cond) => match end_cond {
@@ -209,7 +264,12 @@ impl ToentEventDefi {
             .max()
     }
 
-    pub(crate) fn to_po(&self, otid: TID, todo_flag: bool) -> ToentDefi {
+    pub(crate) fn to_po(
+        &self,
+        otid: TID,
+        todo_state: Option<TodoStateEnum>,
+        todo_priority: Option<TodoPriorityEnum>,
+    ) -> ToentDefi {
         let start = self.start_time();
         let end = self.end_time().or(start);
 
@@ -229,27 +289,63 @@ impl ToentEventDefi {
             end_tid: Some(end_tid),
             end_timezone,
             total_count: None,
-            tid: TID::default(),
-            todo_flag: todo_flag,
+            tid: TID::now(),
+            todo_state,
+            todo_priority,
         }
     }
-}
 
-pub(crate) fn toent_defi_by_todo(otid: TID, todo_flag: bool) -> Option<ToentDefi> {
-    if todo_flag {
-        Some(ToentDefi {
-            otid: otid,
-            event_defi: None,
-            todo_flag,
-            start_tid: None,
-            start_timezone: None,
-            end_tid: None,
-            end_timezone: None,
-            total_count: None,
-            tid: TID::default(),
-        })
-    } else {
-        None
+    pub(crate) fn generate(
+        &self,
+        otid: TID,
+        todo_flag: bool,
+        todo_priority: Option<TodoPriorityEnum>,
+        max_count: usize,
+        last_finish_uwo: Option<UtcWithOffset>,
+        window_start_uwo: Option<UtcWithOffset>,
+        window_end_uwo: Option<UtcWithOffset>,
+    ) -> AResult<Vec<ToentInst>> {
+        let generated: Vec<TimeEventInst> = self
+            .time_events
+            .iter()
+            .map(|ti| ti.generate(max_count, last_finish_uwo, window_start_uwo, window_end_uwo))
+            .collect::<AResult<Vec<_>>>()?
+            .into_iter()
+            .flat_map(|ti| ti)
+            .sorted_by(|e1, e2| e1.start_tid.cmp(&e2.start_tid))
+            .collect();
+        let todo_state = if todo_flag {
+            Some(TodoStateEnum::Wait)
+        } else {
+            None
+        };
+        let mut hists = HashMap::new();
+        for (id, inst) in generated.into_iter().enumerate() {
+            if id < max_count {
+                hists.entry(inst.start_tid).or_insert(ToentInst {
+                    chnot_otid: otid,
+                    todo_state,
+                    todo_priority,
+                    alert_tid: inst.alert_tid,
+                    start_tid: inst.start_tid,
+                    otid: inst.start_tid.unwrap_or_default(),
+                    end_tid: inst.end_tid,
+                    finished_count: 0,
+                    is_lunar: inst.is_lunar,
+                    timezone: inst.timezone,
+                    closed: None,
+                    tid: TID::now(),
+                    note: None,
+                });
+            }
+        }
+        Ok(hists.values().map(|e| e.clone()).collect())
+    }
+
+    pub fn has_lunar_timeevent(&self) -> bool {
+        self.time_events
+            .iter()
+            .any(|event| matches!(event.start, Some(TimeEnum::Chn(_))))
     }
 }
 
@@ -346,7 +442,8 @@ impl TryFrom<&KDbRow> for ToentDefi {
             end_timezone: end_timezone.map(|v| v as isize),
             tid: value.try_get(Self::TID)?,
             total_count: value.try_get(Self::TOTAL_COUNT)?,
-            todo_flag: value.try_get(Self::TODO_FLAG)?,
+            todo_state: value.via_str_opt(Self::TODO_STATE)?,
+            todo_priority: value.via_i64_opt(Self::TODO_PRIORITY)?,
         })
     }
 }

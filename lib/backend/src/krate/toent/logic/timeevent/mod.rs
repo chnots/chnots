@@ -1,14 +1,14 @@
-use anyhow::bail;
+use anyhow::{anyhow, bail};
+use chin_sql::time_type::TID;
 use chin_tools::AResult;
 use serde::{Deserialize, Serialize};
 use timeenum::{Timestamp, westen::WesTime};
 
 use crate::krate::toent::{
-    ToentInstCore,
     dto::GuessElem,
     timeevent::{
         repeater::{RepeatType, endconditon::EndCondition, interval::TimeInterval},
-        timeenum::UtcWithOffset,
+        timeenum::{UtcWithOffset, chinese::ChnTime},
     },
 };
 
@@ -40,9 +40,18 @@ fn contains_any(input: &str, anys: &[&str]) -> bool {
 pub(crate) struct TimeEvent {
     pub start: Option<TimeEnum>,
     pub interval: Option<(TimeInterval, RepeatType)>,
-    pub interval_end: Option<EndCondition>,
+    pub interval_end: Option<TimeInterval>,
     pub alert: Option<TimeInterval>,
     pub end: Option<EndCondition>,
+}
+
+#[derive(Clone, Debug, Hash)]
+pub struct TimeEventInst {
+    pub alert_tid: Option<TID>,
+    pub start_tid: Option<TID>,
+    pub end_tid: Option<TID>,
+    pub is_lunar: bool,
+    pub timezone: Option<isize>,
 }
 
 impl std::hash::Hash for TimeEvent {
@@ -78,35 +87,83 @@ impl TimeEvent {
         }
     }
 
-    pub(crate) fn to_insts(
+    pub(crate) fn generate(
         &self,
         max_count: usize,
-        end_time: Option<UtcWithOffset>,
-    ) -> AResult<Vec<ToentInstCore>> {
-        let Some(start) = self.start else {
-            bail!("start time is none");
+        last_finish_uwo: Option<UtcWithOffset>,
+        window_start: Option<UtcWithOffset>, // window start
+        window_end: Option<UtcWithOffset>,   // window end
+    ) -> AResult<Vec<TimeEventInst>> {
+        let is_chinese = self.start.is_some_and(|e| matches!(e, TimeEnum::Chn(_)))
+            || self
+                .end
+                .is_some_and(|e| matches!(e, EndCondition::Time(TimeEnum::Chn(_))));
+
+        // get start time
+        let start: TimeEnum = match (last_finish_uwo, self.start) {
+            (None, None) => bail!("empty start time"),
+            (None, Some(start)) => start,
+            (Some(start), None) => {
+                if is_chinese {
+                    TimeEnum::Chn(start.into())
+                } else {
+                    TimeEnum::Wes(start.into())
+                }
+            }
+            (Some(s1), Some(s2)) => match self.interval.as_ref().map(|s| s.1) {
+                Some(RepeatType::RepeatTodo) => {
+                    if is_chinese {
+                        TimeEnum::Chn(s1.into())
+                    } else {
+                        TimeEnum::Wes(s1.into())
+                    }
+                }
+                _ => {
+                    if s1.utc().cmp(&s2.to_utc_timestamp()?.start().utc()).is_le() {
+                        if is_chinese {
+                            TimeEnum::Chn(s1.into())
+                        } else {
+                            TimeEnum::Wes(s1.into())
+                        }
+                    } else {
+                        s2
+                    }
+                }
+            },
         };
 
-        let mut result = vec![];
-        let mut point = start;
-        let mut count = max_count;
+        // get end condition
+        let mut end_count = max_count;
         let mut end_utc = None;
-        match self.end {
-            Some(end_time) => match end_time {
-                EndCondition::Times(times) => count = count.min(times.count() as usize),
+
+        if let Some(end_time) = self.end {
+            match end_time {
+                EndCondition::Times(times) => end_count = end_count.min(times.count() as usize),
                 EndCondition::Interval(time_interval) => {
-                    end_utc.replace((start + time_interval).to_utc_timestamp()?.end());
+                    end_utc.replace(
+                        (self
+                            .start
+                            .ok_or(anyhow!("end with time_interval but no start_time"))?
+                            + time_interval)
+                            .ok_or(anyhow!("unable to compute the end time"))?
+                            .to_utc_timestamp()?
+                            .end(),
+                    );
                 }
                 EndCondition::Time(time_enum) => {
                     end_utc.replace(time_enum.to_utc_timestamp()?.end());
                 }
-            },
-            None => {
-                end_utc = end_time;
             }
+        }
+        end_utc = match (end_utc, window_end) {
+            (None, None) => None,
+            (None, Some(e2)) => e2.into(),
+            (Some(e1), None) => e1.into(),
+            (Some(s1), Some(e3)) => s1.min(e3).into(),
         };
 
-        // todo get min end_time
+        let mut result = vec![];
+        let mut point = start;
 
         let is_lunar = self.start.is_some_and(|e| match e {
             TimeEnum::Wes(_wes_time) => false,
@@ -119,23 +176,103 @@ impl TimeEvent {
         };
 
         if let Some((interval, _)) = self.interval {
-            for c in 0..count {
-                let next = point + interval;
-                let next_utc = next.to_utc_timestamp()?;
-                if end_utc.is_none_or(|e| e.utc() > next_utc.start().utc()) {
-                    result.push(ToentInstCore {
-                        todo_state: None,
-                        todo_priority: None,
-                        alert_tid: None,
-                        start_tid: Some(next_utc.start().utc()),
-                        end_tid: None,
+            for c in 0..end_count {
+                let point_utc = point.to_utc_timestamp()?;
+                // TODO
+                let alert_tid = if let Some(interval) = self.alert {
+                    Some(
+                        (point_utc.start() - interval)
+                            .ok_or(anyhow!("unable to  get alert tid"))?
+                            .utc(),
+                    )
+                } else {
+                    None
+                };
+                let end_tid = if let Some(interval) = self.interval_end {
+                    Some(
+                        (point_utc.start() + interval)
+                            .ok_or(anyhow!("unable to  get interval end tid"))?
+                            .utc(),
+                    )
+                } else {
+                    None
+                };
+                match end_utc {
+                    Some(end_utc) => {
+                        if end_utc.utc() > point_utc.start().utc() {
+                            result.push(TimeEventInst {
+                                alert_tid: alert_tid,
+                                start_tid: Some(point_utc.start().utc()),
+                                end_tid: end_tid,
+                                is_lunar: is_lunar,
+                                timezone: timezone,
+                            });
+                        } else {
+                            break;
+                        }
+                    }
+                    None => {
+                        result.push(TimeEventInst {
+                            alert_tid: alert_tid,
+                            start_tid: Some(point_utc.start().utc()),
+                            end_tid: end_tid,
+                            is_lunar: is_lunar,
+                            timezone: timezone,
+                        });
+                    }
+                }
+
+                point = (point + interval).ok_or(anyhow!("time is to big"))?;
+            }
+        } else {
+            let point_utc = point.to_utc_timestamp()?;
+            // TODO
+            let alert_tid = if let Some(interval) = self.alert {
+                Some(
+                    (point_utc.start() - interval)
+                        .ok_or(anyhow!("unable to  get alert tid"))?
+                        .utc(),
+                )
+            } else {
+                None
+            };
+            let end_tid = if let Some(interval) = self.end {
+                match interval {
+                    EndCondition::Times(_) => None,
+                    EndCondition::Interval(time_interval) => Some(
+                        (point_utc.start() + time_interval)
+                            .ok_or(anyhow!("unable to  get interval end tid"))?
+                            .utc(),
+                    ),
+                    EndCondition::Time(time_enum) => {
+                        Some(time_enum.to_utc_timestamp()?.end().utc())
+                    }
+                }
+            } else {
+                None
+            };
+            match end_utc {
+                Some(end_utc) => {
+                    if end_utc.utc() > point_utc.start().utc() {
+                        result.push(TimeEventInst {
+                            alert_tid: alert_tid,
+                            start_tid: Some(point_utc.start().utc()),
+                            end_tid: end_tid,
+                            is_lunar: is_lunar,
+                            timezone: timezone,
+                        });
+                    }
+                }
+                None => {
+                    result.push(TimeEventInst {
+                        alert_tid: alert_tid,
+                        start_tid: Some(point_utc.start().utc()),
+                        end_tid: end_tid,
                         is_lunar: is_lunar,
                         timezone: timezone,
                     });
                 }
-                point = next;
             }
-        } else {
         }
 
         Ok(result)
@@ -229,7 +366,6 @@ impl EventBuilder for TimeEvent {
             let marker = match repeat_type {
                 RepeatType::RepeatTodo => "**",
                 RepeatType::RepeatEvent => "*",
-                RepeatType::Once => ".",
             };
             parts.push(format!("{marker}{}", interval.standard_string()));
         }
@@ -349,10 +485,10 @@ fn parse_alert(input: Option<&Words>) -> AResult<Option<TimeInterval>> {
     }
 }
 
-fn parse_interval_end(input: Option<&Words>) -> AResult<Option<EndCondition>> {
+fn parse_interval_end(input: Option<&Words>) -> AResult<Option<TimeInterval>> {
     if let Some(seg) = input {
-        Ok(Some(EndCondition::try_from_standard(
-            &seg.remove_first_prefix("*"),
+        Ok(Some(TimeInterval::try_from_standard(
+            &seg.remove_first_prefix("*="),
         )?))
     } else {
         Ok(None)
@@ -391,11 +527,11 @@ mod test_guess {
     #[test]
     fn test_guess_full() {
         let wes20251226_120000 = WesTime {
-            offset: None,
+            local_minus_utc: None,
             timestamp: BaseDateTime::new(2025, 12, 26, 12, 00, 00),
         };
         let wes20251226_120000_p800 = WesTime {
-            offset: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
+            local_minus_utc: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
             ..wes20251226_120000.clone()
         };
 
@@ -408,13 +544,13 @@ mod test_guess {
             base: BaseDateTime::new(None, None, None, Some(12), None, None),
             week: None::<i32>.into(),
         };
-        let interval_1h_end = EndCondition::Interval(TimeInterval {
+        let interval_1h_end = TimeInterval {
             base: BaseDateTime::new(None, None, None, Some(1), None, None),
             week: None::<i32>.into(),
-        });
+        };
 
         let end_wes20251227_120000 = EndCondition::Time(TimeEnum::Wes(WesTime {
-            offset: None,
+            local_minus_utc: None,
             timestamp: BaseDateTime::new(2025, 12, 27, 12, 00, 00),
         }));
 
@@ -436,7 +572,7 @@ mod test_guess {
             "2020-12-29 12:13:14 +8:00 **3w =12t",
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
-                    offset: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
+                    local_minus_utc: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
                     timestamp: BaseDateTime::new(2020, 12, 29, 12, 13, 14),
                 })),
                 interval: Some((
@@ -459,7 +595,7 @@ mod test_guess {
             "2024-12-12 12:00:00 ,15M *1d =2025-12-12",
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
-                    offset: None,
+                    local_minus_utc: None,
                     timestamp: BaseDateTime::new(2024, 12, 12, 12, 00, 00),
                 })),
                 interval: Some((
@@ -475,7 +611,7 @@ mod test_guess {
                     week: None::<i32>.into(),
                 }),
                 end: Some(EndCondition::Time(TimeEnum::Wes(WesTime {
-                    offset: None,
+                    local_minus_utc: None,
                     timestamp: BaseDateTime::new(Some(2025), Some(12), Some(12), None, None, None),
                 }))),
             },
@@ -488,7 +624,7 @@ mod test_guess {
             "2024-06-01 09:00:00 *1d *=2H =7d",
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
-                    offset: None,
+                    local_minus_utc: None,
                     timestamp: BaseDateTime::new(2024, 6, 1, 9, 0, 0),
                 })),
                 interval: Some((
@@ -498,10 +634,10 @@ mod test_guess {
                     },
                     RepeatType::RepeatEvent,
                 )),
-                interval_end: Some(EndCondition::Interval(TimeInterval {
+                interval_end: Some(TimeInterval {
                     base: BaseDateTime::new(None, None, None, Some(2), None, None),
                     week: None::<i32>.into(),
-                })),
+                }),
                 alert: None,
                 end: Some(EndCondition::Interval(TimeInterval {
                     base: BaseDateTime::new(None, None, Some(7), None, None, None),
@@ -517,7 +653,7 @@ mod test_guess {
             "2026-01-02 08:30:00 ,10M",
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
-                    offset: None,
+                    local_minus_utc: None,
                     timestamp: BaseDateTime::new(2026, 1, 2, 8, 30, 0),
                 })),
                 interval: None,
@@ -532,35 +668,13 @@ mod test_guess {
     }
 
     #[test]
-    fn test_guess_repeat_todo_with_interval_end_times() {
-        guess_compare(
-            "2024-10-10 07:15:00 **2d *=3t",
-            TimeEvent {
-                start: Some(TimeEnum::Wes(WesTime {
-                    offset: None,
-                    timestamp: BaseDateTime::new(2024, 10, 10, 7, 15, 0),
-                })),
-                interval: Some((
-                    TimeInterval {
-                        base: BaseDateTime::new(None, None, Some(2), None, None, None),
-                        week: None::<i32>.into(),
-                    },
-                    RepeatType::RepeatTodo,
-                )),
-                interval_end: Some(EndCondition::Times(Times::new(3))),
-                alert: None,
-                end: None,
-            },
-        );
-    }
-
-    #[test]
     fn test_guess_with_timezone_and_times_end() {
         guess_compare(
             "2024-03-01 18:45:30 +5:30 *12H =5t",
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
-                    offset: FixedOffset::east_opt(5 * 3600 + 30 * 60).map(|e| e.local_minus_utc()),
+                    local_minus_utc: FixedOffset::east_opt(5 * 3600 + 30 * 60)
+                        .map(|e| e.local_minus_utc()),
                     timestamp: BaseDateTime::new(2024, 3, 1, 18, 45, 30),
                 })),
                 interval: Some((

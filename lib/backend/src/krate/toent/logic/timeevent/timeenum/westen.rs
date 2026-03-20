@@ -1,7 +1,9 @@
-use std::ops::{Add, Deref};
+use std::ops::{Add, Deref, Sub};
 
 use chin_tools::AResult;
-use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, Offset, Timelike, Utc};
+use chrono::{
+    DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Offset, Timelike, Utc,
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -13,13 +15,14 @@ use super::{
 use crate::krate::toent::dto::GuessElem;
 use crate::krate::toent::timeevent::repeater::interval::TimeInterval;
 use crate::krate::toent::timeevent::timeenum::base::{BaseDate, BaseTime};
+use crate::krate::toent::timeevent::timeenum::{UtcWithOffset, naive_datetime_add_interval};
 use crate::krate::toent::{EventBuilder, Words, timeevent::equals_any};
 
 pub(crate) const CAL_TYPE: &str = "wes";
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct WesTime {
-    pub(crate) offset: Option<i32>, // local_minus_utc
+    pub(crate) local_minus_utc: Option<i32>, // local_minus_utc
     pub(crate) timestamp: BaseDateTime,
 }
 
@@ -34,8 +37,29 @@ impl Deref for WesTime {
 impl From<BaseDateTime> for WesTime {
     fn from(value: BaseDateTime) -> Self {
         WesTime {
-            offset: None,
+            local_minus_utc: None,
             timestamp: value,
+        }
+    }
+}
+
+impl From<UtcWithOffset> for WesTime {
+    fn from(value: UtcWithOffset) -> Self {
+        let dt = DateTime::from_timestamp_micros(value.utc.as_num()).unwrap();
+        WesTime {
+            local_minus_utc: value.local_minus_utc.into(),
+            timestamp: BaseDateTime {
+                date: BaseDate {
+                    year: dt.year().into(),
+                    month: dt.month().into(),
+                    day: dt.day().into(),
+                },
+                time: BaseTime {
+                    hour: dt.hour().into(),
+                    minute: dt.minute().into(),
+                    second: dt.second().into(),
+                },
+            },
         }
     }
 }
@@ -97,7 +121,7 @@ impl EventBuilder for WesTime {
             let timestamp = BaseDateTime::try_from_standard(&sub)?;
 
             Ok(WesTime {
-                offset: offset.map(|e| e.local_minus_utc()),
+                local_minus_utc: offset.map(|e| e.local_minus_utc()),
                 timestamp,
             })
         }
@@ -106,7 +130,7 @@ impl EventBuilder for WesTime {
     fn standard_string(&self) -> String {
         let mut base = self.timestamp.standard_string();
 
-        if let Some(offset) = self.offset {
+        if let Some(offset) = self.local_minus_utc {
             base.push(' ');
             base.push_str(&offset.to_string());
         }
@@ -127,7 +151,7 @@ impl Timestamp for WesTime {
     fn now_time() -> Self {
         let time = Local::now().naive_local();
         WesTime {
-            offset: Default::default(),
+            local_minus_utc: Default::default(),
             timestamp: BaseDateTime {
                 date: BaseDate {
                     year: time.year().into(),
@@ -146,7 +170,7 @@ impl Timestamp for WesTime {
     fn now_date() -> Self {
         let time = Local::now().naive_local();
         WesTime {
-            offset: Default::default(),
+            local_minus_utc: Default::default(),
             timestamp: BaseDateTime {
                 date: BaseDate {
                     year: time.year().into(),
@@ -160,70 +184,28 @@ impl Timestamp for WesTime {
 
     fn to_utc_timestamp(&self) -> AResult<super::UtcWithOffsetType> {
         self.timestamp.to_utc_timestamp(
-            self.offset
+            self.local_minus_utc
                 .unwrap_or(Local::now().fixed_offset().offset().fix().local_minus_utc()),
         )
     }
 }
 
 impl Add<TimeInterval> for WesTime {
-    type Output = WesTime;
+    type Output = Option<WesTime>;
 
     fn add(self, rhs: TimeInterval) -> Self::Output {
         let start = match self.to_utc_timestamp() {
             Ok(v) => v.start(),
-            Err(_) => return self,
+            Err(_) => return None,
         };
+        let ndt = DateTime::from_timestamp_micros(start.utc().as_num()).map(|e| e.naive_utc());
+        let ndt = naive_datetime_add_interval(ndt, rhs);
 
-        let offset = start.local_minus_utc();
-        let utc_dt = start.utc().as_utc().naive_utc();
-        let local_dt = utc_dt + Duration::seconds(i64::from(offset));
-
-        let with_ym = match add_gregorian_year_month(
-            local_dt,
-            rhs.date.year.unwrap_or(0),
-            rhs.date.month.unwrap_or(0),
-        ) {
-            Some(v) => v,
-            None => return self,
-        };
-
-        let day_offset =
-            i64::from(rhs.date.day.unwrap_or(0)) + i64::from(rhs.week.unwrap_or(0)) * 7;
-        let result = with_ym
-            + Duration::days(day_offset)
-            + Duration::hours(i64::from(rhs.time.hour.unwrap_or(0)))
-            + Duration::minutes(i64::from(rhs.time.minute.unwrap_or(0)))
-            + Duration::seconds(i64::from(rhs.time.second.unwrap_or(0)));
-
-        WesTime {
-            timestamp: result.into(),
-            ..self
-        }
+        ndt.map(|ndt| WesTime {
+            local_minus_utc: self.local_minus_utc,
+            timestamp: ndt.into(),
+        })
     }
-}
-
-fn add_gregorian_year_month(
-    base: chrono::NaiveDateTime,
-    years: i32,
-    months: i32,
-) -> Option<chrono::NaiveDateTime> {
-    let total_month = base.year() * 12 + (base.month() as i32 - 1) + years * 12 + months;
-    let target_year = total_month.div_euclid(12);
-    let target_month = total_month.rem_euclid(12) + 1;
-
-    let mut day = base.day();
-    while day >= 1 {
-        if let Some(date) = chrono::NaiveDate::from_ymd_opt(target_year, target_month as u32, day)
-            && let Some(time) =
-                chrono::NaiveTime::from_hms_opt(base.hour(), base.minute(), base.second())
-        {
-            return Some(chrono::NaiveDateTime::new(date, time));
-        }
-        day -= 1;
-    }
-
-    None
 }
 
 #[cfg(test)]
@@ -259,7 +241,7 @@ mod test {
         println!("{:?}", guessed);
         assert!(
             WesTime {
-                offset: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
+                local_minus_utc: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
                 timestamp: ymdhms.clone()
             } == guessed.timestamp
         );
@@ -269,7 +251,7 @@ mod test {
         println!("{:?}", guessed);
         assert!(
             WesTime {
-                offset: None,
+                local_minus_utc: None,
                 timestamp: ymdhms.clone()
             } == guessed.timestamp
         );

@@ -2,14 +2,10 @@ use std::ops::Deref;
 
 pub(crate) mod timeevent;
 pub(crate) mod todoevent;
-use chin_sql::time_type::TID;
 use chin_tools::{AResult, wrapper::score::PossibleScore};
 use itertools::Itertools;
 
-use crate::krate::toent::{
-    dto::GuessElem,
-    todoevent::{TodoPriorityEnum, TodoStateEnum},
-};
+use crate::krate::toent::dto::GuessElem;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Hash, Eq)]
 pub(crate) struct Word<'a> {
@@ -33,22 +29,23 @@ pub(crate) struct Words<'a> {
     pub(crate) words: Vec<Word<'a>>,
 }
 
-#[derive(Clone, Debug, Hash)]
-pub struct ToentInstCore {
-    pub todo_state: Option<TodoStateEnum>,
-    pub todo_priority: Option<TodoPriorityEnum>,
-    pub alert_tid: Option<TID>,
-    pub start_tid: Option<TID>,
-    pub end_tid: Option<TID>,
-    pub is_lunar: bool,
-    pub timezone: Option<isize>,
-}
-
 impl<'a> Words<'a> {
     pub(crate) fn sub_start(&self, start: usize) -> Words<'a> {
         Words {
             original: self.original,
             words: self.words.as_slice()[start..].into(),
+        }
+    }
+
+    pub(crate) fn sub_range(&self, start: usize, end: usize) -> Self {
+        Words {
+            original: self.original,
+            words: self
+                .words
+                .iter()
+                .filter(|s| s.start_in >= start && s.end_ex <= end)
+                .copied()
+                .collect(),
         }
     }
 
@@ -64,26 +61,14 @@ impl<'a> Words<'a> {
         other
     }
 
-    pub(crate) fn sub_range(&self, start: usize, end: usize) -> Self {
-        Words {
-            original: self.original,
-            words: self
-                .words
-                .iter()
-                .filter(|s| s.start_in >= start && s.end_ex <= end)
-                .copied()
-                .collect(),
-        }
-    }
-
-    pub fn empty() -> Self {
+    pub(crate) fn empty() -> Self {
         Self {
             original: "",
             words: vec![],
         }
     }
 
-    pub fn filterd(&self) -> String {
+    pub(crate) fn filterd(&self) -> String {
         self.words.iter().map(|e| e.text).join(" ")
     }
 

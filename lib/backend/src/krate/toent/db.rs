@@ -1,184 +1,36 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use anyhow::{Context, bail};
+use anyhow::bail;
 use chin_sql::{
-    Froms, ILikeType, JoinTable, Joins, LimitOffset, SqlBuilder, SqlReader, SqlTable, Wheres,
-    str_type::Text, time_type::TID,
+    Froms, GroupBy, ILikeType, JoinCond, JoinTable, Joins, LimitOffset, OrderBy, SqlField,
+    SqlReader, SqlTable, Wheres,
+    str_type::{Text, Varchar},
+    time_type::TID,
 };
-use chin_tools::{AResult, EResult};
-use chrono::Utc;
-use lazy_regex::Lazy;
-use regex::Regex;
+use chin_tools::AResult;
+use itertools::Itertools;
 
 use crate::{
     krate::{
         chnot::ChnotMetaTable,
-        mdwt::{
-            MdwtCommitReq, MdwtCommitReqData, MdwtRecord, MdwtRecordTable, db::MdwtOtidInTags,
-            mapper::MdwtMapper,
-        },
+        mdwt::{MdwtRecord, MdwtRecordTable, db::MdwtOtidInTags},
         toent::{
-            ToentInstCountReq, ToentInstCountRsp, ToentSearchReq, ToentSearchRsp,
-            ToentSearchRspData, ToentTodoStateCommitReq, ToentTodoStateCommitRsp,
-            logic::timeevent::{
-                TimeEvent,
-                repeater::{RepeatType, endconditon::EndCondition, interval::TimeInterval},
-                timeenum::{TimeEnum, UtcWithOffsetType},
-            },
+            ToentDefiCommitReq, ToentInstCommitReq, ToentInstCommitRsp, ToentInstCountReq,
+            ToentInstCountRsp, ToentSearchReq, ToentSearchRsp, ToentSearchRspData,
             mapper::ToentMapper,
-            po::{
-                ToentDefi, ToentDefiTable, ToentEventDefi, ToentInst, ToentInstTable,
-                toent_defi_by_todo,
-            },
+            po::{ToentDefi, ToentDefiTable, ToentInst, ToentInstTable},
+            timeevent::timeenum::UtcWithOffset,
             todoevent::TodoEvent,
         },
     },
-    mapper::db::{KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRowBehavier, KDbTx},
+    mapper::db::{
+        KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRowBehavier,
+        KDbTransactionBehaiver, KDbTx,
+    },
     model::{KSerde, dto::KReq},
 };
 
 use crate::krate::toent::logic::todoevent::TodoStateEnum;
-
-static TODO_EVENT_REGEX: Lazy<Regex> = lazy_regex::lazy_regex!(r"\[([A-Z]+)(?: !([A-Z]))?\]");
-const MICROS_PER_SECOND: i64 = 1_000_000;
-const SECONDS_PER_DAY: i64 = 24 * 60 * 60;
-
-fn current_tid() -> Option<TID> {
-    Utc::now().timestamp_micros().try_into().ok()
-}
-
-fn time_interval_step_micros(interval: &TimeInterval) -> Option<i64> {
-    let years = interval.date.year.unwrap_or(0);
-    let months = interval.date.month.unwrap_or(0);
-    if years != 0 || months != 0 {
-        return None;
-    }
-
-    let total_seconds = i64::from(interval.date.day.unwrap_or(0)) * SECONDS_PER_DAY
-        + i64::from(interval.week.unwrap_or(0)) * 7 * SECONDS_PER_DAY
-        + i64::from(interval.time.hour.unwrap_or(0)) * 3600
-        + i64::from(interval.time.minute.unwrap_or(0)) * 60
-        + i64::from(interval.time.second.unwrap_or(0));
-
-    (total_seconds > 0).then_some(total_seconds * MICROS_PER_SECOND)
-}
-
-fn rewrite_todo_state(content: &str, todo_state: TodoStateEnum) -> AResult<String> {
-    let caps = TODO_EVENT_REGEX
-        .captures(content)
-        .context("unable to find todo marker from mdwt content")?;
-    let priority = caps
-        .get(2)
-        .map(|p| format!(" !{}", p.as_str()))
-        .unwrap_or_default();
-    let replacement = format!("[{}{}]", todo_state.as_static_str(), priority);
-    Ok(TODO_EVENT_REGEX
-        .replacen(content, 1, replacement.as_str())
-        .to_string())
-}
-
-fn repeat_todo_step_micros(defi: &ToentEventDefi) -> Option<i64> {
-    defi.data.iter().find_map(|item| {
-        let (interval, repeat_type) = item.interval?;
-        if repeat_type != RepeatType::RepeatTodo {
-            return None;
-        }
-        time_interval_step_micros(&interval)
-    })
-}
-
-#[derive(Clone)]
-struct RepeatPlan {
-    repeat_type: RepeatType,
-    step_micros: i64,
-    start_tid: TID,
-    total_count: Option<u32>,
-}
-
-fn first_event_start_tid(event: &TimeEvent) -> Option<TID> {
-    let start = event.start?;
-    let ts = start.to_utc_timestamp().ok()?;
-    match ts {
-        UtcWithOffsetType::Point(point) => Some(point.utc()),
-        UtcWithOffsetType::Period { start, .. } => Some(start.utc()),
-    }
-}
-
-fn event_total_count(event: &TimeEvent) -> Option<u32> {
-    fn extract(cond: Option<EndCondition>) -> Option<u32> {
-        match cond {
-            Some(EndCondition::Times(times)) => Some(times.count()),
-            _ => None,
-        }
-    }
-
-    extract(event.end).or_else(|| extract(event.interval_end))
-}
-
-fn build_repeat_plan(defi: &ToentEventDefi) -> Option<RepeatPlan> {
-    defi.data.iter().find_map(|event| {
-        let (interval, repeat_type) = event.interval?;
-        if !matches!(
-            repeat_type,
-            RepeatType::RepeatEvent | RepeatType::RepeatTodo
-        ) {
-            return None;
-        }
-        let step_micros = time_interval_step_micros(&interval)?;
-        let start_tid = first_event_start_tid(event)?;
-
-        Some(RepeatPlan {
-            repeat_type,
-            step_micros,
-            start_tid,
-            total_count: event_total_count(event),
-        })
-    })
-}
-
-fn has_lunar_timeevent(defi: &ToentEventDefi) -> bool {
-    defi.data
-        .iter()
-        .any(|event| matches!(event.start, Some(TimeEnum::Chn(_))))
-}
-
-fn in_search_window(inst: &ToentInst, req: &ToentSearchReq) -> bool {
-    let in_time = match (inst.start_tid, inst.end_tid) {
-        (Some(start), Some(end)) => {
-            end.as_num() > req.start_tid.as_num() && start.as_num() < req.end_tid.as_num()
-        }
-        (Some(start), None) => start.as_num() < req.end_tid.as_num(),
-        (None, Some(end)) => end.as_num() > req.start_tid.as_num(),
-        (None, None) => req.include_no_time_todo,
-    };
-
-    let done = is_done(inst.todo_state);
-    in_time && ((done && req.include_completed) || (!done && req.include_uncompleted))
-}
-
-fn generated_inst(
-    template: &ToentInst,
-    start_tid: TID,
-    repeat_type: RepeatType,
-    seq: i64,
-) -> ToentInst {
-    let mut next = template.clone();
-    if let Some(base_start) = template.start_tid {
-        if let (Some(base_end), Some(delta)) = (
-            template.end_tid,
-            template.end_tid.and_then(|e| e.checked_sub(*base_start)),
-        ) {
-            let _ = base_end;
-            next.end_tid = start_tid.add_micros(delta);
-        }
-    }
-    next.start_tid = Some(start_tid);
-    if repeat_type == RepeatType::RepeatTodo {
-        next.todo_state = Some(TodoStateEnum::Todo);
-    }
-    next.tid = start_tid.add_micros(seq).unwrap_or_default();
-    next
-}
 
 impl ToentMapper for KDb {
     async fn toent_inst_count(&self, req: KReq<ToentInstCountReq>) -> AResult<ToentInstCountRsp> {
@@ -194,6 +46,7 @@ impl ToentMapper for KDb {
             tags: None,
             start_index: 0,
             page_size: 500,
+            chnot_otids: None,
         };
         let total = self.count_search_total(req.frame(base_req)).await?;
 
@@ -208,6 +61,7 @@ impl ToentMapper for KDb {
                 tags: None,
                 start_index: 0,
                 page_size: 500,
+                chnot_otids: None,
             };
             let count = self.count_search_total(req.frame(count_req)).await?;
             totals.insert(range.key.clone(), count);
@@ -216,7 +70,12 @@ impl ToentMapper for KDb {
         Ok(ToentInstCountRsp { total, totals })
     }
 
-    async fn toent_search(&self, req: KReq<ToentSearchReq>) -> AResult<ToentSearchRsp> {
+    async fn toent_search(
+        &self,
+        req: ToentSearchReq,
+        spaces: Vec<Varchar<40>>,
+    ) -> AResult<ToentSearchRsp> {
+        // If both switches are off, caller explicitly asks for no todo states.
         if !req.include_completed && !req.include_uncompleted {
             return Ok(ToentSearchRsp {
                 items: vec![],
@@ -226,7 +85,6 @@ impl ToentMapper for KDb {
         }
 
         let tags_req = req.tags.clone();
-        let mkspaces = req.get_spaces();
 
         let tag_otids = MdwtOtidInTags::new("tag_otids");
         let tags = tag_otids.sub_query_table(tags_req);
@@ -238,6 +96,7 @@ impl ToentMapper for KDb {
             toent_defi: ToentDefi,
         }
 
+        // Base search joins meta + mdwt + toent definition, then optional tag subquery filtering.
         let joins = Joins::new((&cm).into())
             .join(JoinTable {
                 join_type: chin_sql::JoinType::LeftJoin,
@@ -261,13 +120,13 @@ impl ToentMapper for KDb {
         let sr = SqlReader::read((mr.content(), td.all_fields()), joins)
             .wheres(Wheres::and([
                 Wheres::or([
-                    Wheres::and([
+                    Wheres::or([
                         td.end_tid().v_cmp(">", req.start_tid),
                         td.start_tid().v_cmp("<", req.end_tid),
                     ]),
                     Wheres::if_some(req.include_no_time_todo.then_some(()), |_| {
                         Wheres::and([
-                            td.todo_flag().v_eq(true),
+                            td.todo_state().v_is_not_null(),
                             Wheres::or([
                                 Wheres::and([td.start_tid().v_is_null(), td.end_tid().v_is_null()]),
                                 Wheres::and([
@@ -281,7 +140,7 @@ impl ToentMapper for KDb {
                 Wheres::if_some(req.query.clone(), |e| {
                     mr.content().v_ilike(e, ILikeType::Fuzzy)
                 }),
-                cm.kspace().v_in(mkspaces),
+                Wheres::if_when(spaces.len() > 0, cm.kspace().v_in(spaces)),
                 td.otid().v_is_not_null(),
                 mr.content().v_is_not_null(),
             ]))
@@ -302,6 +161,7 @@ impl ToentMapper for KDb {
             })
             .await?;
 
+        // Use page_size + 1 to detect "has_next" without an extra count query.
         let has_next = defis.len() > req.page_size;
         if has_next {
             defis.truncate(req.page_size);
@@ -318,134 +178,124 @@ impl ToentMapper for KDb {
 
         let otids: Vec<TID> = defis.iter().map(|e| e.toent_defi.otid).collect();
         let ti = ToentInstTable::new("ti");
+        // Fetch persisted instances in the requested time window for current page otids.
         let ti_sql = SqlReader::read(ti.all_fields(), &ti)
-            .wheres(ti.otid().v_in(otids))
+            .wheres(Wheres::and([
+                ti.chnot_otid().v_in(otids),
+                Wheres::or([
+                    Wheres::and([
+                        ti.end_tid().v_cmp(">", req.start_tid),
+                        ti.start_tid().v_cmp("<", req.end_tid),
+                    ]),
+                    if req.include_no_time_todo {
+                        ti.start_tid().v_is_null()
+                    } else {
+                        Wheres::None
+                    },
+                ]),
+            ]))
             .build2();
+        let conn = self.conn().await?;
 
-        let insts: Vec<ToentInst> = self
-            .conn()
-            .await?
+        let db_insts: Vec<ToentInst> = conn
             .qry_list(ti_sql, |row| ToentInst::try_from_kdb_row(&row))
             .await?;
 
-        let dm: HashMap<TID, EventDefiAndContent> =
-            defis.into_iter().map(|d| (d.toent_defi.otid, d)).collect();
-        let mut inst_group: HashMap<TID, Vec<ToentInst>> = HashMap::new();
-        for inst in insts {
-            inst_group.entry(inst.otid).or_default().push(inst);
-        }
+        let otid_name = ti.chnot_otid().twn();
+        let tid_name = ti.tid().twn();
+
+        let last_finished_utcs: HashMap<TID, TID> = conn
+            .qry_list(
+                SqlReader::read(
+                    ti.all_fields(),
+                    Joins::new((&ti).into()).join(JoinTable {
+                        join_type: chin_sql::JoinType::RightJoin,
+                        table: Froms::SubQuery {
+                            table: SqlReader::read(
+                                SqlField {
+                                    alias: Some("max_tid"),
+                                    inner: chin_sql::SqlFieldInner::Raw {
+                                        expr: format!("max({})", tid_name).into(),
+                                    },
+                                },
+                                &ti,
+                            )
+                            .wheres(Wheres::and([
+                                ti.chnot_otid()
+                                    .v_in(defis.iter().map(|e| e.toent_defi.otid).collect_vec()),
+                                Wheres::equal(
+                                    ti.todo_state().twn(),
+                                    TodoStateEnum::Done.as_static_str(),
+                                ),
+                            ]))
+                            .group_by(GroupBy::Plain(vec![ti.chnot_otid().twn()]))
+                            .build2()
+                            .into(),
+                            alias: "mtid",
+                        },
+                        conds: [JoinCond {
+                            l_table: "mtid",
+                            l_field: "max_tid",
+                            r_table: "ti",
+                            r_field: "tid",
+                        }]
+                        .into(),
+                    }),
+                )
+                .build2(),
+                move |row| {
+                    let cotid: TID = row.try_get(&otid_name)?;
+                    let tid: TID = row.try_get(&tid_name)?;
+                    Ok((cotid, tid))
+                },
+            )
+            .await?
+            .into_iter()
+            .map(|(otid, tid)| (otid, tid))
+            .collect();
 
         let mut items: Vec<ToentSearchRspData> = vec![];
-        for (otid, md) in dm {
-            let mut current = inst_group.remove(&otid).unwrap_or_default();
-            let title = first_non_empty_line(md.content.as_str());
+        for defi in defis {
+            let mut hists: HashMap<Option<TID>, ToentInst> = db_insts
+                .iter()
+                .filter(|e| e.chnot_otid == defi.toent_defi.otid)
+                .map(|e| (e.start_tid, e.clone()))
+                .collect();
+            let title = first_non_empty_line(defi.content.as_str());
+            let last_finished_time = last_finished_utcs
+                .get(&defi.toent_defi.otid)
+                .map(|e| (*e).into());
 
-            let start_set: HashSet<TID> =
-                current.iter().filter_map(|inst| inst.start_tid).collect();
-
-            let mut generated: Vec<ToentInst> = vec![];
-            if let Some(defi) = &md.toent_defi.event_defi
-                && let Some(plan) = build_repeat_plan(defi)
-            {
-                let event_end_tid = defi.end_time().map(|end| end.utc());
-                let limit_tid = event_end_tid
-                    .map(|end| end.min(req.end_tid))
-                    .unwrap_or(req.end_tid);
-
-                let latest_inst = current.iter().cloned().max_by(|left, right| {
-                    let left_key = left.start_tid.unwrap_or_default().as_num();
-                    let right_key = right.start_tid.unwrap_or_default().as_num();
-                    left_key
-                        .cmp(&right_key)
-                        .then_with(|| left.tid.as_num().cmp(&right.tid.as_num()))
-                });
-
-                let base = match plan.repeat_type {
-                    RepeatType::RepeatEvent => Some(plan.start_tid),
-                    RepeatType::RepeatTodo => latest_inst
-                        .as_ref()
-                        .and_then(|inst| inst.start_tid)
-                        .or(Some(plan.start_tid)),
-                    RepeatType::Once => None,
-                };
-
-                let template = latest_inst.unwrap_or(ToentInst {
-                    otid,
-                    todo_state: Some(TodoStateEnum::Todo),
-                    todo_priority: None,
-                    alert_tid: None,
-                    start_tid: Some(plan.start_tid),
-                    end_tid: Some(plan.start_tid),
-                    finished_count: 0,
-                    timezone: None,
-                    closed: None,
-                    tid: TID::default(),
-                    note: None,
-                    is_lunar: false,
-                });
-
-                let mut cursor = base;
-                let mut seq: i64 = 1;
-                let repeat_budget = if plan.repeat_type == RepeatType::RepeatTodo {
-                    plan.total_count.map(|total| {
-                        let finished = template.finished_count.max(0) as u32;
-                        total.saturating_sub(finished.saturating_add(1))
-                    })
-                } else {
-                    plan.total_count
-                };
-                let mut remain = repeat_budget;
-
-                while let Some(curr_start) = cursor {
-                    let Some(next_start) = curr_start.add_micros(plan.step_micros) else {
-                        break;
-                    };
-                    if next_start.as_num() > limit_tid.as_num() {
-                        break;
-                    }
-
-                    if remain.is_some_and(|count| count == 0) {
-                        break;
-                    }
-
-                    if !start_set.contains(&next_start) {
-                        let next = generated_inst(&template, next_start, plan.repeat_type, seq);
-                        generated.push(next);
-                    }
-
-                    if let Some(count) = remain.as_mut()
-                        && *count > 0
-                    {
-                        *count -= 1;
-                    }
-
-                    cursor = Some(next_start);
-                    seq += 1;
-                    if seq > 10_000 {
-                        break;
+            if req.include_uncompleted {
+                if let Some(ted) = &defi.toent_defi.event_defi {
+                    // Generate predicted upcoming instances from recurrence definition.
+                    let generated = ted.generate(
+                        defi.toent_defi.otid,
+                        defi.toent_defi.todo_state.is_some(),
+                        defi.toent_defi.todo_priority,
+                        999,
+                        last_finished_time,
+                        Some(req.start_tid.into()),
+                        Some(req.end_tid.into()),
+                    )?;
+                    for ele in generated.into_iter() {
+                        // Keep persisted records when keys collide; generated data fills missing slots only.
+                        hists.entry(ele.start_tid).or_insert(ele);
                     }
                 }
             }
+            hists.retain(|_, inst| match_toent_filters(inst, &req));
 
-            current.extend(generated);
-            for inst in current
-                .into_iter()
-                .filter(|inst| in_search_window(inst, &req))
-            {
-                items.push(ToentSearchRspData {
-                    inst,
-                    defi: md.toent_defi.event_defi.clone(),
-                    title: title.clone(),
-                });
-            }
+            items.push(ToentSearchRspData {
+                inst: hists
+                    .values()
+                    .map(|e| e.to_owned().to_owned())
+                    .sorted_by(|e1, e2| e1.start_tid.cmp(&e2.start_tid))
+                    .collect(),
+                defi: defi.toent_defi.event_defi.clone(),
+                title: title.clone(),
+            });
         }
-
-        items.sort_by(|left, right| {
-            let ls = left.inst.start_tid.unwrap_or_default().as_num();
-            let rs = right.inst.start_tid.unwrap_or_default().as_num();
-            ls.cmp(&rs)
-                .then_with(|| left.inst.tid.as_num().cmp(&right.inst.tid.as_num()))
-        });
 
         Ok(ToentSearchRsp {
             next_start,
@@ -454,35 +304,15 @@ impl ToentMapper for KDb {
         })
     }
 
-    async fn toent_todo_state_commit(
+    async fn toent_inst_commit(
         &self,
-        req: KReq<ToentTodoStateCommitReq>,
-    ) -> AResult<ToentTodoStateCommitRsp> {
-        let content: String = self
-            .conn()
-            .await?
-            .qry_opt(
-                SqlBuilder::read(MdwtRecord::TABLE, &[MdwtRecord::CONTENT])
-                    .r#where(Wheres::equal(MdwtRecord::OTID, req.otid)),
-                |row| -> AResult<String> { row.try_get(MdwtRecord::CONTENT) },
-            )
-            .await?
-            .context(format!("unable to find mdwt by otid {}", req.otid))?;
-
-        let next_content = rewrite_todo_state(content.as_str(), req.todo_state)?;
-
-        self.mdwt_commit(req.frame(MdwtCommitReq {
-            mdwt: MdwtCommitReqData {
-                otid: req.otid,
-                content: next_content.into(),
-            },
-        }))
-        .await?;
-
-        Ok(ToentTodoStateCommitRsp {
-            otid: req.otid,
-            todo_state: req.todo_state,
-        })
+        _req: KReq<ToentInstCommitReq>,
+    ) -> AResult<ToentInstCommitRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        let rsp = tx.toent_inst_commit(&_req.body).await?;
+        tx.cmt().await?;
+        Ok(rsp)
     }
 }
 
@@ -509,9 +339,10 @@ impl KDb {
                 tags: req.tags.clone(),
                 start_index,
                 page_size: req.page_size.max(1),
+                chnot_otids: None,
             };
 
-            let rsp = self.toent_search(req.frame(search_req)).await?;
+            let rsp = self.toent_search(search_req, req.get_spaces()).await?;
             total = total.saturating_add(rsp.items.len());
             has_next = rsp.has_next;
 
@@ -530,21 +361,13 @@ impl KDb {
 }
 
 impl<'a> KDbTx<'a> {
-    /// 首先判断之前 toent_inst 中是否存在实例。
-    /// - 如果不存在，直接写入新的，并且将 finished_count 标记为0
-    /// - 如果存在
-    ///   - 如果新的状态和之前的状态一样，不写入新数据
-    ///   - 如果新状态为 done，先写入一条新的 done 数据,且 finished_count + 1
-    ///     - 如果需要重复，并且还未结束
-    ///       - 写入一条新的 todo 数据
-    ///
-    pub(crate) async fn toent_commit(
-        &self,
-        otid: TID,
-        todo_event: &Option<TodoEvent>,
-        time_event_defi: &Option<ToentEventDefi>,
-        start_tid: Option<TID>,
-    ) -> EResult {
+    pub(crate) async fn toent_defi_commit(&self, req: &ToentDefiCommitReq) -> AResult<bool> {
+        let ToentDefiCommitReq {
+            otid,
+            todo_event,
+            time_event_field,
+        } = &req;
+        let otid = *otid;
         let td = ToentDefiTable::new("td");
         let saved_defi: Option<ToentDefi> = self
             .qry_opt(
@@ -555,133 +378,226 @@ impl<'a> KDbTx<'a> {
             )
             .await?;
 
-        let next_event_po = match time_event_defi {
-            Some(defi) if !defi.data.is_empty() => Some(defi.to_po(otid, todo_event.is_some())),
+        let todo_priority = todo_event.and_then(|e| e.priority);
+        let to_save_defi = match time_event_field {
+            Some(defi) if !defi.time_events.is_empty() => {
+                Some(defi.to_po(otid, todo_event.as_ref().map(|e| e.state), todo_priority))
+            }
             _ => todo_event
                 .as_ref()
-                .and_then(|_| toent_defi_by_todo(otid, true)),
+                .and_then(|te| ToentDefi::from_todo(otid, te.state, todo_priority)),
         };
-        match (&saved_defi, &next_event_po) {
+        let mut flag = true;
+        match (&saved_defi, &to_save_defi) {
             (Some(saved), Some(next))
-                if saved.event_defi != next.event_defi || saved.todo_flag != next.todo_flag =>
+                if saved.event_defi != next.event_defi || saved.todo_state != next.todo_state =>
             {
-                self.po_otid_insert([next.clone()]).await?;
+                self.po_otid_commit([next.clone()]).await?;
             }
             (None, Some(next)) => {
-                self.po_otid_insert([next.clone()]).await?;
+                self.po_otid_commit([next.clone()]).await?;
             }
             (Some(_), None) => {
                 self.omit_rows::<ToentDefi>(Wheres::equal(ToentDefi::OTID, otid))
                     .await?;
             }
-            _ => {}
+            _ => {
+                flag = false;
+            }
         }
+        Ok(flag)
+    }
+
+    pub(crate) async fn toent_inst_commit(
+        &self,
+        req: &ToentInstCommitReq,
+    ) -> AResult<ToentInstCommitRsp> {
+        let chnot_otid = req.chnot_otid;
+        let td = ToentDefiTable::new("td");
+        let toent_defi: Option<ToentDefi> = self
+            .qry_opt(
+                SqlReader::read(td.all_fields(), &td)
+                    .wheres(td.otid().v_eq(chnot_otid))
+                    .build2(),
+                |e| ToentDefi::try_from_kdb_row(&e),
+            )
+            .await?;
 
         let ti = ToentInstTable::new("ti");
-        let saved_inst: Option<ToentInst> = self
-            .qry_list(
+        let last_finished_inst: Option<ToentInst> = self
+            .qry_opt(
                 SqlReader::read(ti.all_fields(), &ti)
-                    .wheres(ti.otid().v_eq(otid))
+                    .wheres(Wheres::and([
+                        ti.chnot_otid().v_eq(chnot_otid),
+                        Wheres::equal(ti.todo_state().twn(), TodoStateEnum::Done.as_static_str()),
+                    ]))
+                    .order_by([OrderBy::Desc(ti.tid().twn())])
+                    .limit(LimitOffset::new(1))
                     .build2(),
                 |row| ToentInst::try_from_kdb_row(&row),
             )
-            .await?
-            .into_iter()
-            .max_by(|left, right| {
-                let left_start = left.start_tid.unwrap_or_default().as_num();
-                let right_start = right.start_tid.unwrap_or_default().as_num();
-                left_start
-                    .cmp(&right_start)
-                    .then_with(|| left.tid.as_num().cmp(&right.tid.as_num()))
-            });
+            .await?;
+        let finished_count = last_finished_inst
+            .as_ref()
+            .map(|e| e.finished_count)
+            .unwrap_or_default();
+        let last_finished_utc: Option<UtcWithOffset> =
+            last_finished_inst.as_ref().map(|e| e.tid).map(|e| e.into());
 
-        let prev_state = saved_inst.as_ref().and_then(|inst| inst.todo_state);
-        let mut finished_count = saved_inst
+        let s0_inst = self
+            .qry_opt(
+                SqlReader::read(ti.all_fields(), &ti)
+                    .wheres(ti.otid().v_eq(req.otid))
+                    .build2(),
+                |row| ToentInst::try_from_kdb_row(&row),
+            )
+            .await?;
+
+        let s0_state = s0_inst
             .as_ref()
-            .map(|inst| inst.finished_count)
-            .unwrap_or(0);
-        let repeat_todo_step = time_event_defi
-            .as_ref()
-            .and_then(|v| repeat_todo_step_micros(v));
-        if let Some(todo) = todo_event {
-            if saved_inst.is_some()
-                && prev_state != Some(todo.state)
-                && todo.state == TodoStateEnum::Done
-            {
-                finished_count += 1;
+            .and_then(|inst| inst.todo_state)
+            .or(toent_defi.as_ref().and_then(|defi| defi.todo_state));
+
+        // Request can omit todo_state; in that case keep previous state and only update note.
+        let s1_state = req.todo_state;
+
+        // Nothing to persist if there is no state and note is empty.
+        if s1_state.is_none() && req.note.as_str().trim().is_empty() {
+            return Ok(ToentInstCommitRsp::default());
+        }
+
+        // Build target instance in priority order:
+        // 1) mutate existing instance for this inst_tid,
+        // 2) derive from event definition,
+        // 3) fallback to pure todo instance.
+        let mut s1_inst = if let Some(s0_inst) = s0_inst.clone() {
+            ToentInst {
+                todo_state: s1_state,
+                note: Some(req.note.clone()),
+                tid: TID::now(),
+                ..s0_inst
+            }
+        } else if let Some(defi) = toent_defi.clone() {
+            if let Some(ted) = defi.event_defi {
+                let mut generated = ted.generate(
+                    chnot_otid,
+                    true,
+                    defi.todo_priority,
+                    1,
+                    last_finished_utc.into(),
+                    Some(req.start_tid.into()),
+                    None,
+                )?;
+                let Some(mut generated) = generated.pop() else {
+                    return Ok(ToentInstCommitRsp::default());
+                };
+                generated.todo_state = s1_state;
+                generated.note = Some(req.note.clone());
+                generated
+            } else {
+                let Some(state) = s1_state else {
+                    return Ok(ToentInstCommitRsp::default());
+                };
+                let mut inst = ToentInst::pure_todo(
+                    chnot_otid,
+                    TodoEvent {
+                        state,
+                        priority: defi.todo_priority,
+                    },
+                    finished_count,
+                );
+                inst.note = Some(req.note.clone());
+                inst
+            }
+        } else {
+            let Some(state) = s1_state else {
+                return Ok(ToentInstCommitRsp::default());
+            };
+            let mut inst = ToentInst::pure_todo(
+                chnot_otid,
+                TodoEvent {
+                    state,
+                    priority: None,
+                },
+                finished_count,
+            );
+            inst.note = Some(req.note.clone());
+            inst
+        };
+
+        // finished_count only increases on transition into Done.
+        let finished_count = calc_next_finished_count(s0_state, s1_state, finished_count);
+        s1_inst.finished_count = finished_count;
+        s1_inst.tid = TID::now();
+
+        // Avoid useless writes to keep history cleaner and reduce sync noise.
+        if let Some(s0_inst) = &s0_inst {
+            if s0_inst == &s1_inst {
+                return Ok(ToentInstCommitRsp::default());
             }
         }
 
-        let (event_start_tid, event_end_tid, event_timezone) = match next_event_po.as_ref() {
-            Some(po) => (
-                (po.start_tid.unwrap_or_default() != TID::never())
-                    .then_some(po.start_tid)
-                    .unwrap_or_default(),
-                (po.end_tid.unwrap_or_default() != TID::never())
-                    .then_some(po.end_tid)
-                    .unwrap_or_default(),
-                po.start_timezone,
-            ),
-            None => (None, None, None),
-        };
+        let mut updated_insts = vec![];
+        // Persist only meaningful todo/time instances.
+        if s1_inst.todo_state.is_some() || s1_inst.start_tid.is_some() || s1_inst.end_tid.is_some()
+        {
+            self.po_otid_commit([s1_inst.clone()]).await?;
+            updated_insts.push(s1_inst.clone());
+        }
 
-        let mut next_state = todo_event.as_ref().map(|todo| todo.state);
-        let mut next_start_tid = start_tid.or(event_start_tid);
-        let next_is_lunar = next_event_po
-            .as_ref()
-            .and_then(|po| po.event_defi.as_ref())
-            .is_some_and(has_lunar_timeevent);
-        if matches!(next_state, Some(TodoStateEnum::Done)) {
-            if let (Some(step), Some(now_tid)) = (repeat_todo_step, current_tid()) {
-                if let Some(next_num) = now_tid.as_num().checked_add(step) {
-                    if let Ok(next_tid) = TID::try_from(next_num) {
-                        next_start_tid = Some(next_tid);
-                        next_state = Some(TodoStateEnum::Todo);
-                    }
+        if s1_inst.todo_state.is_some_and(|s| s == TodoStateEnum::Done) {
+            if let Some(defi) = toent_defi.clone() {
+                if let Some(ted) = defi.event_defi {
+                    let mut generated = ted.generate(
+                        chnot_otid,
+                        true,
+                        defi.todo_priority,
+                        1,
+                        last_finished_utc,
+                        Some(req.start_tid.into()),
+                        None,
+                    )?;
+                    if let Some(mut s2_inst) = generated.pop() {
+                        s2_inst.todo_state = TodoStateEnum::Todo.into();
+                        s2_inst.note = None;
+                        updated_insts.push(s2_inst);
+                    };
                 }
             }
         }
 
-        let next_inst = ToentInst {
-            otid,
-            todo_state: next_state,
-            todo_priority: todo_event.as_ref().and_then(|todo| todo.priority),
-            alert_tid: saved_inst.as_ref().and_then(|inst| inst.alert_tid),
-            start_tid: next_start_tid,
-            end_tid: event_end_tid,
-            timezone: event_timezone,
-            closed: saved_inst.as_ref().and_then(|inst| inst.closed),
-            tid: TID::default(),
-            note: saved_inst.as_ref().and_then(|inst| inst.note.clone()),
-            finished_count,
-            is_lunar: next_is_lunar,
-        };
-
-        if let Some(saved) = &saved_inst {
-            if saved.todo_state == next_inst.todo_state
-                && saved.todo_priority == next_inst.todo_priority
-                && saved.start_tid == next_inst.start_tid
-                && saved.end_tid == next_inst.end_tid
-                && saved.timezone == next_inst.timezone
-                && saved.finished_count == next_inst.finished_count
-            {
-                return Ok(());
-            }
-        }
-
-        if next_inst.todo_state.is_some()
-            || next_inst.start_tid.is_some()
-            || next_inst.end_tid.is_some()
-        {
-            self.po_otid_insert([next_inst]).await?;
-        }
-
-        Ok(())
+        Ok(ToentInstCommitRsp { updated_insts })
     }
 }
 
-fn is_done(state: Option<TodoStateEnum>) -> bool {
-    matches!(state, Some(TodoStateEnum::Done))
+fn match_toent_filters(inst: &ToentInst, req: &ToentSearchReq) -> bool {
+    if !req.include_no_time_todo && inst.start_tid.is_none() {
+        return false;
+    }
+
+    let is_done = matches!(inst.todo_state, Some(TodoStateEnum::Done));
+    if is_done && !req.include_completed {
+        return false;
+    }
+    if !is_done && !req.include_uncompleted {
+        return false;
+    }
+
+    true
+}
+
+fn calc_next_finished_count(
+    prev_state: Option<TodoStateEnum>,
+    next_state: Option<TodoStateEnum>,
+    latest_finished_count: i64,
+) -> i64 {
+    if !matches!(prev_state, Some(TodoStateEnum::Done))
+        && matches!(next_state, Some(TodoStateEnum::Done))
+    {
+        return latest_finished_count + 1;
+    }
+
+    latest_finished_count
 }
 
 fn first_non_empty_line(content: &str) -> String {
@@ -695,8 +611,12 @@ fn first_non_empty_line(content: &str) -> String {
 mod toent_db {
     use crate::{
         krate::toent::po::{ToentDefi, ToentInst},
+        krate::toent::{ToentSearchReq, logic::todoevent::TodoStateEnum},
         mapper::db::HistCreateSql,
     };
+    use chin_sql::time_type::TID;
+
+    use super::{calc_next_finished_count, match_toent_filters};
 
     #[test]
     fn test_print_ddls() {
@@ -711,5 +631,65 @@ mod toent_db {
                 println!("{};", ele)
             }
         }
+    }
+
+    #[test]
+    fn test_calc_next_finished_count() {
+        assert_eq!(
+            calc_next_finished_count(None, Some(TodoStateEnum::Done), 0),
+            1
+        );
+        assert_eq!(
+            calc_next_finished_count(Some(TodoStateEnum::Wait), Some(TodoStateEnum::Done), 3),
+            4
+        );
+        assert_eq!(
+            calc_next_finished_count(Some(TodoStateEnum::Done), Some(TodoStateEnum::Done), 3),
+            3
+        );
+        assert_eq!(
+            calc_next_finished_count(Some(TodoStateEnum::Done), Some(TodoStateEnum::Wait), 3),
+            3
+        );
+    }
+
+    #[test]
+    fn test_match_toent_filters() {
+        let mut inst = ToentInst::pure_todo(
+            TID::now(),
+            crate::krate::toent::todoevent::TodoEvent {
+                state: TodoStateEnum::Wait,
+                priority: None,
+            },
+            0,
+        );
+        inst.start_tid = Some(TID::now());
+        inst.end_tid = Some(TID::now());
+        let req = ToentSearchReq {
+            start_tid: TID::never(),
+            end_tid: TID::now(),
+            include_completed: false,
+            include_uncompleted: true,
+            include_no_time_todo: false,
+            query: None,
+            tags: None,
+            start_index: 0,
+            page_size: 20,
+            chnot_otids: None,
+        };
+        assert!(match_toent_filters(&inst, &req));
+
+        let mut done_inst = inst.clone();
+        done_inst.todo_state = Some(TodoStateEnum::Done);
+        assert!(!match_toent_filters(&done_inst, &req));
+
+        let mut no_time_req = req.clone();
+        no_time_req.include_no_time_todo = false;
+        let mut no_time_inst = inst.clone();
+        no_time_inst.start_tid = None;
+        assert!(!match_toent_filters(&no_time_inst, &no_time_req));
+
+        no_time_req.include_no_time_todo = true;
+        assert!(match_toent_filters(&no_time_inst, &no_time_req));
     }
 }
