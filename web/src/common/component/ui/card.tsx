@@ -1,4 +1,6 @@
-import type * as React from "react";
+import { type HTMLMotionProps, motion } from "framer-motion";
+import { forwardRef } from "react";
+import { cardHover, defaultTransition } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
@@ -6,7 +8,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm transition-shadow duration-200",
         className,
       )}
       {...props}
@@ -80,6 +82,34 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+type MotionCardProps = HTMLMotionProps<"div"> & {
+  hoverEffect?: boolean;
+};
+
+const MotionCard = forwardRef<HTMLDivElement, MotionCardProps>(
+  ({ className, hoverEffect = true, children, ...props }, ref) => {
+    return (
+      <motion.div
+        ref={ref}
+        data-slot="card"
+        initial="rest"
+        whileHover={hoverEffect ? "hover" : undefined}
+        whileTap={hoverEffect ? "tap" : undefined}
+        variants={cardHover}
+        transition={defaultTransition}
+        className={cn(
+          "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </motion.div>
+    );
+  },
+);
+MotionCard.displayName = "MotionCard";
+
 export {
   Card,
   CardHeader,
@@ -88,4 +118,5 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  MotionCard,
 };

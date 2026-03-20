@@ -79,6 +79,7 @@
     "dayjs": "^1.11.13",
     "decimal.js": "^10.6.0",
     "detect-svg": "^0.9.1",
+    "framer-motion": "^12.38.0",
     "jolpin-codemirror": "workspace:*",
     "katex": "^0.16.33",
     "lucide-react": "0.575.0",
