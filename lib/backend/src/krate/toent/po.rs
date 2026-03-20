@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use chin_sql::{GenerateTableSchema, str_type::Text, time_type::TID};
 use chin_tools::AResult;
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveTime, Timelike, Utc};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +46,7 @@ fn timeevent_to_sql(this: Option<TimeEventField>) -> Option<Text> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, GenerateTableSchema, PartialEq)]
-pub(crate) struct ToentInst {
+pub struct ToentInst {
     // start_tid, because part of primary must not by null.
     #[gts_type = "i64"]
     #[gts_primary]
@@ -92,6 +92,14 @@ pub(crate) struct ToentInst {
 }
 
 impl ToentInst {
+    pub(crate) fn inst_otid(chnot_otid: TID, start_tid: Option<TID>) -> TID {
+        if let Some(start_tid) = start_tid {
+            TID::try_from(chnot_otid.as_num() & start_tid.as_num()).unwrap_or(TID::never())
+        } else {
+            chnot_otid
+        }
+    }
+
     pub(crate) fn pure_todo(chnot_otid: TID, todo_event: TodoEvent, finished_count: i64) -> Self {
         ToentInst {
             chnot_otid,
@@ -106,7 +114,7 @@ impl ToentInst {
             note: None,
             finished_count,
             is_lunar: false,
-            otid: chnot_otid,
+            otid: Self::inst_otid(chnot_otid, None),
         }
     }
 }
@@ -328,7 +336,7 @@ impl TimeEventField {
                     todo_priority,
                     alert_tid: inst.alert_tid,
                     start_tid: inst.start_tid,
-                    otid: inst.start_tid.unwrap_or_default(),
+                    otid: ToentInst::inst_otid(otid, inst.start_tid),
                     end_tid: inst.end_tid,
                     finished_count: 0,
                     is_lunar: inst.is_lunar,
@@ -383,7 +391,7 @@ fn calc_interval_end_time(
 fn calc_wes_interval_end_time(wes: &WesTime, interval: TimeInterval) -> Option<UtcWithOffset> {
     let start = first_utc(wes.to_utc_timestamp().ok()?);
     let offset = start.local_minus_utc();
-    let utc_dt = start.utc().as_utc().naive_utc();
+    let utc_dt = start.utc().as_utc();
     let local_dt = utc_dt + Duration::seconds(i64::from(offset));
 
     let with_ym = add_gregorian_year_month(
@@ -400,13 +408,13 @@ fn calc_wes_interval_end_time(wes: &WesTime, interval: TimeInterval) -> Option<U
         + Duration::minutes(i64::from(interval.time.minute.unwrap_or(0)))
         + Duration::seconds(i64::from(interval.time.second.unwrap_or(0)));
 
-    let end_utc_seconds = end_local.and_utc().timestamp() - i64::from(offset);
+    let end_utc_seconds = end_local.timestamp() - i64::from(offset);
     let end_utc = TID::try_from(end_utc_seconds * 1_000_000).ok()?;
 
     Some(UtcWithOffset::new(end_utc, offset))
 }
 
-fn add_gregorian_year_month(base: NaiveDateTime, years: i32, months: i32) -> Option<NaiveDateTime> {
+fn add_gregorian_year_month(base: DateTime<Utc>, years: i32, months: i32) -> Option<DateTime<Utc>> {
     let total_month = base.year() * 12 + (base.month() as i32 - 1) + years * 12 + months;
     let target_year = total_month.div_euclid(12);
     let target_month = total_month.rem_euclid(12) + 1;
@@ -416,7 +424,7 @@ fn add_gregorian_year_month(base: NaiveDateTime, years: i32, months: i32) -> Opt
         if let Some(date) = NaiveDate::from_ymd_opt(target_year, target_month as u32, day)
             && let Some(time) = NaiveTime::from_hms_opt(base.hour(), base.minute(), base.second())
         {
-            return Some(NaiveDateTime::new(date, time));
+            return Some(date.and_time(time).and_utc());
         }
         day -= 1;
     }

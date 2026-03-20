@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 
 use chin_sql::str_type::Text;
 use chin_sql::time_type::TID;
@@ -105,11 +106,15 @@ pub struct ToentDefiCommitRsp {}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ToentInstCommitReq {
-    pub chnot_otid: TID,
-    pub otid: TID,
-    pub start_tid: TID,
-    pub note: Text,
-    pub todo_state: Option<TodoStateEnum>,
+    pub inst: ToentInst,
+}
+
+impl Deref for ToentInstCommitReq {
+    type Target = ToentInst;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inst
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Default)]

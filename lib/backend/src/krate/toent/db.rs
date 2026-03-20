@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use anyhow::bail;
 use chin_sql::{
     Froms, GroupBy, ILikeType, JoinCond, JoinTable, Joins, LimitOffset, OrderBy, SqlField,
-    SqlReader, SqlTable, Wheres,
+    SqlFieldTrait, SqlReader, SqlTable, Wheres,
     str_type::{Text, Varchar},
     time_type::TID,
 };
 use chin_tools::AResult;
 use itertools::Itertools;
+use log::info;
 
 use crate::{
     krate::{
@@ -184,8 +185,11 @@ impl ToentMapper for KDb {
                 ti.chnot_otid().v_in(otids),
                 Wheres::or([
                     Wheres::and([
-                        ti.end_tid().v_cmp(">", req.start_tid),
-                        ti.start_tid().v_cmp("<", req.end_tid),
+                        Wheres::or([
+                            ti.end_tid().v_cmp(">=", req.start_tid),
+                            ti.end_tid().v_is_null(),
+                        ]),
+                        Wheres::or([ti.start_tid().v_cmp("<=", req.end_tid)]),
                     ]),
                     if req.include_no_time_todo {
                         ti.start_tid().v_is_null()
@@ -201,8 +205,9 @@ impl ToentMapper for KDb {
             .qry_list(ti_sql, |row| ToentInst::try_from_kdb_row(&row))
             .await?;
 
-        let otid_name = ti.chnot_otid().twn();
-        let tid_name = ti.tid().twn();
+        let tii = ToentInstTable::new("tii");
+        let otid_name = ti.chnot_otid().field_name();
+        let tid_name = ti.tid().field_name();
 
         let last_finished_utcs: HashMap<TID, TID> = conn
             .qry_list(
@@ -212,23 +217,26 @@ impl ToentMapper for KDb {
                         join_type: chin_sql::JoinType::RightJoin,
                         table: Froms::SubQuery {
                             table: SqlReader::read(
-                                SqlField {
-                                    alias: Some("max_tid"),
-                                    inner: chin_sql::SqlFieldInner::Raw {
-                                        expr: format!("max({})", tid_name).into(),
+                                (
+                                    SqlField {
+                                        alias: Some("max_tid"),
+                                        inner: chin_sql::SqlFieldInner::Raw {
+                                            expr: format!("max({})", tii.tid().twn()).into(),
+                                        },
                                     },
-                                },
-                                &ti,
+                                    tii.chnot_otid(),
+                                ),
+                                &tii,
                             )
                             .wheres(Wheres::and([
-                                ti.chnot_otid()
+                                tii.chnot_otid()
                                     .v_in(defis.iter().map(|e| e.toent_defi.otid).collect_vec()),
                                 Wheres::equal(
-                                    ti.todo_state().twn(),
+                                    tii.todo_state().twn(),
                                     TodoStateEnum::Done.as_static_str(),
                                 ),
                             ]))
-                            .group_by(GroupBy::Plain(vec![ti.chnot_otid().twn()]))
+                            .group_by(GroupBy::Plain(vec![tii.chnot_otid().twn()]))
                             .build2()
                             .into(),
                             alias: "mtid",
@@ -256,10 +264,10 @@ impl ToentMapper for KDb {
 
         let mut items: Vec<ToentSearchRspData> = vec![];
         for defi in defis {
-            let mut hists: HashMap<Option<TID>, ToentInst> = db_insts
+            let mut insts: HashMap<TID, ToentInst> = db_insts
                 .iter()
                 .filter(|e| e.chnot_otid == defi.toent_defi.otid)
-                .map(|e| (e.start_tid, e.clone()))
+                .map(|e| (e.otid, e.clone()))
                 .collect();
             let title = first_non_empty_line(defi.content.as_str());
             let last_finished_time = last_finished_utcs
@@ -278,18 +286,23 @@ impl ToentMapper for KDb {
                         Some(req.start_tid.into()),
                         Some(req.end_tid.into()),
                     )?;
-                    for ele in generated.into_iter() {
+                    for ti in generated.into_iter() {
                         // Keep persisted records when keys collide; generated data fills missing slots only.
-                        hists.entry(ele.start_tid).or_insert(ele);
+                        info!("{:?} {:?}", insts.get(&ti.otid), db_insts);
+                        insts.entry(ti.otid).or_insert(ti);
                     }
                 }
             }
-            hists.retain(|_, inst| match_toent_filters(inst, &req));
+            insts.retain(|_, inst| match_toent_filters(inst, &req));
 
             items.push(ToentSearchRspData {
-                inst: hists
+                inst: insts
                     .values()
-                    .map(|e| e.to_owned().to_owned())
+                    .map(|e| {
+                        let mut inst = e.to_owned();
+                        inst.otid = ToentInst::inst_otid(inst.chnot_otid, inst.start_tid);
+                        inst
+                    })
                     .sorted_by(|e1, e2| e1.start_tid.cmp(&e2.start_tid))
                     .collect(),
                 defi: defi.toent_defi.event_defi.clone(),
@@ -447,7 +460,13 @@ impl<'a> KDbTx<'a> {
         let s0_inst = self
             .qry_opt(
                 SqlReader::read(ti.all_fields(), &ti)
-                    .wheres(ti.otid().v_eq(req.otid))
+                    .wheres(Wheres::or([
+                        Wheres::and([
+                            ti.chnot_otid().v_eq(chnot_otid),
+                            ti.start_tid().v_eq(req.start_tid),
+                        ]),
+                        ti.otid().v_eq(req.otid),
+                    ]))
                     .build2(),
                 |row| ToentInst::try_from_kdb_row(&row),
             )
@@ -458,75 +477,10 @@ impl<'a> KDbTx<'a> {
             .and_then(|inst| inst.todo_state)
             .or(toent_defi.as_ref().and_then(|defi| defi.todo_state));
 
-        // Request can omit todo_state; in that case keep previous state and only update note.
-        let s1_state = req.todo_state;
-
-        // Nothing to persist if there is no state and note is empty.
-        if s1_state.is_none() && req.note.as_str().trim().is_empty() {
-            return Ok(ToentInstCommitRsp::default());
-        }
-
-        // Build target instance in priority order:
-        // 1) mutate existing instance for this inst_tid,
-        // 2) derive from event definition,
-        // 3) fallback to pure todo instance.
-        let mut s1_inst = if let Some(s0_inst) = s0_inst.clone() {
-            ToentInst {
-                todo_state: s1_state,
-                note: Some(req.note.clone()),
-                tid: TID::now(),
-                ..s0_inst
-            }
-        } else if let Some(defi) = toent_defi.clone() {
-            if let Some(ted) = defi.event_defi {
-                let mut generated = ted.generate(
-                    chnot_otid,
-                    true,
-                    defi.todo_priority,
-                    1,
-                    last_finished_utc.into(),
-                    Some(req.start_tid.into()),
-                    None,
-                )?;
-                let Some(mut generated) = generated.pop() else {
-                    return Ok(ToentInstCommitRsp::default());
-                };
-                generated.todo_state = s1_state;
-                generated.note = Some(req.note.clone());
-                generated
-            } else {
-                let Some(state) = s1_state else {
-                    return Ok(ToentInstCommitRsp::default());
-                };
-                let mut inst = ToentInst::pure_todo(
-                    chnot_otid,
-                    TodoEvent {
-                        state,
-                        priority: defi.todo_priority,
-                    },
-                    finished_count,
-                );
-                inst.note = Some(req.note.clone());
-                inst
-            }
-        } else {
-            let Some(state) = s1_state else {
-                return Ok(ToentInstCommitRsp::default());
-            };
-            let mut inst = ToentInst::pure_todo(
-                chnot_otid,
-                TodoEvent {
-                    state,
-                    priority: None,
-                },
-                finished_count,
-            );
-            inst.note = Some(req.note.clone());
-            inst
-        };
+        let mut s1_inst = req.inst.clone();
 
         // finished_count only increases on transition into Done.
-        let finished_count = calc_next_finished_count(s0_state, s1_state, finished_count);
+        let finished_count = calc_next_finished_count(s0_state, s1_inst.todo_state, finished_count);
         s1_inst.finished_count = finished_count;
         s1_inst.tid = TID::now();
 
@@ -538,6 +492,7 @@ impl<'a> KDbTx<'a> {
         }
 
         let mut updated_insts = vec![];
+
         // Persist only meaningful todo/time instances.
         if s1_inst.todo_state.is_some() || s1_inst.start_tid.is_some() || s1_inst.end_tid.is_some()
         {
@@ -554,7 +509,7 @@ impl<'a> KDbTx<'a> {
                         defi.todo_priority,
                         1,
                         last_finished_utc,
-                        Some(req.start_tid.into()),
+                        req.start_tid.map(|s| s.into()),
                         None,
                     )?;
                     if let Some(mut s2_inst) = generated.pop() {

@@ -1,20 +1,19 @@
-use std::ops::{Add, Deref, Sub};
+use std::ops::{Add, Deref};
 
 use chin_tools::AResult;
-use chrono::{
-    DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Offset, Timelike, Utc,
-};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, Offset, Timelike};
+use log::info;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use super::PossibleScore;
 use super::{
     Timestamp,
-    base::{BaseDateTime, convert_time_to_secs},
+    base::{DymdHMS, convert_time_to_secs},
 };
 use crate::krate::toent::dto::GuessElem;
 use crate::krate::toent::timeevent::repeater::interval::TimeInterval;
-use crate::krate::toent::timeevent::timeenum::base::{BaseDate, BaseTime};
+use crate::krate::toent::timeevent::timeenum::base::{DHMS, Dymd};
 use crate::krate::toent::timeevent::timeenum::{UtcWithOffset, naive_datetime_add_interval};
 use crate::krate::toent::{EventBuilder, Words, timeevent::equals_any};
 
@@ -23,19 +22,19 @@ pub(crate) const CAL_TYPE: &str = "wes";
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct WesTime {
     pub(crate) local_minus_utc: Option<i32>, // local_minus_utc
-    pub(crate) timestamp: BaseDateTime,
+    pub(crate) timestamp: DymdHMS,
 }
 
 impl Deref for WesTime {
-    type Target = BaseDateTime;
+    type Target = DymdHMS;
 
     fn deref(&self) -> &Self::Target {
         &self.timestamp
     }
 }
 
-impl From<BaseDateTime> for WesTime {
-    fn from(value: BaseDateTime) -> Self {
+impl From<DymdHMS> for WesTime {
+    fn from(value: DymdHMS) -> Self {
         WesTime {
             local_minus_utc: None,
             timestamp: value,
@@ -45,16 +44,17 @@ impl From<BaseDateTime> for WesTime {
 
 impl From<UtcWithOffset> for WesTime {
     fn from(value: UtcWithOffset) -> Self {
-        let dt = DateTime::from_timestamp_micros(value.utc.as_num()).unwrap();
+        let utc_dt = DateTime::from_timestamp_micros(value.utc.as_num()).unwrap();
+        let dt = utc_dt + Duration::seconds(i64::from(value.local_minus_utc));
         WesTime {
             local_minus_utc: value.local_minus_utc.into(),
-            timestamp: BaseDateTime {
-                date: BaseDate {
+            timestamp: DymdHMS {
+                date: Dymd {
                     year: dt.year().into(),
                     month: dt.month().into(),
                     day: dt.day().into(),
                 },
-                time: BaseTime {
+                time: DHMS {
                     hour: dt.hour().into(),
                     minute: dt.minute().into(),
                     second: dt.second().into(),
@@ -118,7 +118,7 @@ impl EventBuilder for WesTime {
                 original: gt.original,
                 words: ts_segs,
             };
-            let timestamp = BaseDateTime::try_from_standard(&sub)?;
+            let timestamp = DymdHMS::try_from_standard(&sub)?;
 
             Ok(WesTime {
                 local_minus_utc: offset.map(|e| e.local_minus_utc()),
@@ -152,13 +152,13 @@ impl Timestamp for WesTime {
         let time = Local::now().naive_local();
         WesTime {
             local_minus_utc: Default::default(),
-            timestamp: BaseDateTime {
-                date: BaseDate {
+            timestamp: DymdHMS {
+                date: Dymd {
                     year: time.year().into(),
                     month: time.month().into(),
                     day: time.day().into(),
                 },
-                time: BaseTime {
+                time: DHMS {
                     hour: time.hour().into(),
                     minute: time.minute().into(),
                     second: time.second().into(),
@@ -171,8 +171,8 @@ impl Timestamp for WesTime {
         let time = Local::now().naive_local();
         WesTime {
             local_minus_utc: Default::default(),
-            timestamp: BaseDateTime {
-                date: BaseDate {
+            timestamp: DymdHMS {
+                date: Dymd {
                     year: time.year().into(),
                     month: time.month().into(),
                     day: time.day().into(),
@@ -198,7 +198,9 @@ impl Add<TimeInterval> for WesTime {
             Ok(v) => v.start(),
             Err(_) => return None,
         };
-        let ndt = DateTime::from_timestamp_micros(start.utc().as_num()).map(|e| e.naive_utc());
+        let ndt = DateTime::from_timestamp_micros(start.utc().as_num())
+            .map(|e| e.naive_utc() + Duration::seconds(i64::from(start.local_minus_utc())));
+
         let ndt = naive_datetime_add_interval(ndt, rhs);
 
         ndt.map(|ndt| WesTime {
@@ -211,25 +213,64 @@ impl Add<TimeInterval> for WesTime {
 #[cfg(test)]
 mod test {
 
-    use chrono::FixedOffset;
+    use chrono::{FixedOffset, NaiveDate, NaiveTime};
 
     use crate::krate::toent::{
         EventBuilder,
-        logic::timeevent::timeenum::base::BaseDateTime,
-        timeevent::timeenum::base::{BaseDate, BaseTime},
+        logic::timeevent::timeenum::base::DymdHMS,
+        timeevent::{
+            repeater::interval::TimeInterval,
+            timeenum::{
+                base::{DHMS, Dymd},
+                naive_datetime_add_interval,
+            },
+        },
     };
 
     use super::WesTime;
 
     #[test]
+    fn add_test() {
+        let s: Option<chrono::NaiveDateTime> = naive_datetime_add_interval(
+            NaiveDate::from_ymd_opt(2026, 03, 17)
+                .unwrap()
+                .and_time(NaiveTime::from_hms_opt(12, 0, 0).unwrap())
+                .into(),
+            TimeInterval {
+                base: DymdHMS {
+                    date: Dymd {
+                        year: 0.into(),
+                        month: 0.into(),
+                        day: 1.into(),
+                    },
+                    time: DHMS {
+                        hour: 0.into(),
+                        minute: 0.into(),
+                        second: 0.into(),
+                    },
+                },
+                week: 0.into(),
+            },
+        );
+        assert_eq!(
+            s,
+            Some(
+                NaiveDate::from_ymd_opt(2026, 03, 18)
+                    .unwrap()
+                    .and_time(NaiveTime::from_hms_opt(12, 0, 0).unwrap())
+            )
+        )
+    }
+
+    #[test]
     fn from_test() {
-        let ymdhms = BaseDateTime {
-            date: BaseDate {
+        let ymdhms = DymdHMS {
+            date: Dymd {
                 year: 2020.into(),
                 month: 12.into(),
                 day: 12.into(),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: 12.into(),
                 minute: 12.into(),
                 second: 12.into(),
@@ -254,6 +295,21 @@ mod test {
                 local_minus_utc: None,
                 timestamp: ymdhms.clone()
             } == guessed.timestamp
+        );
+    }
+
+    #[test]
+    fn from_utc_with_offset_test() {
+        let utc_tid = (1735689600_i64 * 1_000_000).try_into().unwrap();
+        let wes: WesTime =
+            crate::krate::toent::timeevent::timeenum::UtcWithOffset::new(utc_tid, 8 * 3600).into();
+
+        assert_eq!(
+            wes,
+            WesTime {
+                local_minus_utc: Some(8 * 3600),
+                timestamp: DymdHMS::new(2025, 1, 1, 8, 0, 0),
+            }
         );
     }
 }

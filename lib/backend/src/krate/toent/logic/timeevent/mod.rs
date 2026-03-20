@@ -1,6 +1,7 @@
 use anyhow::{anyhow, bail};
 use chin_sql::time_type::TID;
 use chin_tools::AResult;
+use log::info;
 use serde::{Deserialize, Serialize};
 use timeenum::{Timestamp, westen::WesTime};
 
@@ -178,7 +179,6 @@ impl TimeEvent {
         if let Some((interval, _)) = self.interval {
             for c in 0..end_count {
                 let point_utc = point.to_utc_timestamp()?;
-                // TODO
                 let alert_tid = if let Some(interval) = self.alert {
                     Some(
                         (point_utc.start() - interval)
@@ -197,36 +197,39 @@ impl TimeEvent {
                 } else {
                     None
                 };
-                match end_utc {
-                    Some(end_utc) => {
-                        if end_utc.utc() > point_utc.start().utc() {
-                            result.push(TimeEventInst {
-                                alert_tid: alert_tid,
-                                start_tid: Some(point_utc.start().utc()),
-                                end_tid: end_tid,
-                                is_lunar: is_lunar,
-                                timezone: timezone,
-                            });
-                        } else {
-                            break;
-                        }
+
+                let matched = match (window_start, end_utc) {
+                    (None, None) => true,
+                    (None, Some(e)) => {
+                        point_utc.start().utc() <= e.utc()
+                            || alert_tid.is_some_and(|a| a <= e.utc())
                     }
-                    None => {
-                        result.push(TimeEventInst {
-                            alert_tid: alert_tid,
-                            start_tid: Some(point_utc.start().utc()),
-                            end_tid: end_tid,
-                            is_lunar: is_lunar,
-                            timezone: timezone,
-                        });
+                    (Some(s), None) => {
+                        s.utc() <= point_utc.end().utc() || alert_tid.is_some_and(|a| s.utc() <= a)
                     }
+                    (Some(s), Some(e)) => {
+                        (s.utc() <= point_utc.end().utc() && point_utc.end().utc() <= e.utc())
+                            || alert_tid.is_some_and(|a| s.utc() <= a && a <= e.utc())
+                    }
+                };
+
+                if matched {
+                    result.push(TimeEventInst {
+                        alert_tid: alert_tid,
+                        start_tid: Some(point_utc.start().utc()),
+                        end_tid: end_tid,
+                        is_lunar: is_lunar,
+                        timezone: timezone,
+                    });
+                }
+                if end_utc.is_some_and(|end_utc| end_utc.utc() < point_utc.start().utc()) {
+                    break;
                 }
 
                 point = (point + interval).ok_or(anyhow!("time is to big"))?;
             }
         } else {
             let point_utc = point.to_utc_timestamp()?;
-            // TODO
             let alert_tid = if let Some(interval) = self.alert {
                 Some(
                     (point_utc.start() - interval)
@@ -515,7 +518,7 @@ mod test_guess {
                 endconditon::{EndCondition, Times},
                 interval::TimeInterval,
             },
-            timeenum::{TimeEnum, base::BaseDateTime, westen::WesTime},
+            timeenum::{TimeEnum, base::DymdHMS, westen::WesTime},
         },
     };
 
@@ -528,7 +531,7 @@ mod test_guess {
     fn test_guess_full() {
         let wes20251226_120000 = WesTime {
             local_minus_utc: None,
-            timestamp: BaseDateTime::new(2025, 12, 26, 12, 00, 00),
+            timestamp: DymdHMS::new(2025, 12, 26, 12, 00, 00),
         };
         let wes20251226_120000_p800 = WesTime {
             local_minus_utc: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
@@ -536,22 +539,22 @@ mod test_guess {
         };
 
         let alert_15min = TimeInterval {
-            base: BaseDateTime::new(None, None, None, None, Some(15), None),
+            base: DymdHMS::new(None, None, None, None, Some(15), None),
             week: None::<i32>.into(),
         };
 
         let interval_12h = TimeInterval {
-            base: BaseDateTime::new(None, None, None, Some(12), None, None),
+            base: DymdHMS::new(None, None, None, Some(12), None, None),
             week: None::<i32>.into(),
         };
         let interval_1h_end = TimeInterval {
-            base: BaseDateTime::new(None, None, None, Some(1), None, None),
+            base: DymdHMS::new(None, None, None, Some(1), None, None),
             week: None::<i32>.into(),
         };
 
         let end_wes20251227_120000 = EndCondition::Time(TimeEnum::Wes(WesTime {
             local_minus_utc: None,
-            timestamp: BaseDateTime::new(2025, 12, 27, 12, 00, 00),
+            timestamp: DymdHMS::new(2025, 12, 27, 12, 00, 00),
         }));
 
         guess_compare(
@@ -573,11 +576,11 @@ mod test_guess {
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
                     local_minus_utc: FixedOffset::east_opt(8 * 3600).map(|e| e.local_minus_utc()),
-                    timestamp: BaseDateTime::new(2020, 12, 29, 12, 13, 14),
+                    timestamp: DymdHMS::new(2020, 12, 29, 12, 13, 14),
                 })),
                 interval: Some((
                     TimeInterval {
-                        base: BaseDateTime::empty(),
+                        base: DymdHMS::empty(),
                         week: Some(3).into(),
                     },
                     RepeatType::RepeatTodo,
@@ -596,23 +599,23 @@ mod test_guess {
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
                     local_minus_utc: None,
-                    timestamp: BaseDateTime::new(2024, 12, 12, 12, 00, 00),
+                    timestamp: DymdHMS::new(2024, 12, 12, 12, 00, 00),
                 })),
                 interval: Some((
                     TimeInterval {
-                        base: BaseDateTime::new(None, None, Some(1), None, None, None),
+                        base: DymdHMS::new(None, None, Some(1), None, None, None),
                         week: None::<i32>.into(),
                     },
                     RepeatType::RepeatEvent,
                 )),
                 interval_end: None,
                 alert: Some(TimeInterval {
-                    base: BaseDateTime::new(None, None, None, None, Some(15), None),
+                    base: DymdHMS::new(None, None, None, None, Some(15), None),
                     week: None::<i32>.into(),
                 }),
                 end: Some(EndCondition::Time(TimeEnum::Wes(WesTime {
                     local_minus_utc: None,
-                    timestamp: BaseDateTime::new(Some(2025), Some(12), Some(12), None, None, None),
+                    timestamp: DymdHMS::new(Some(2025), Some(12), Some(12), None, None, None),
                 }))),
             },
         );
@@ -625,22 +628,22 @@ mod test_guess {
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
                     local_minus_utc: None,
-                    timestamp: BaseDateTime::new(2024, 6, 1, 9, 0, 0),
+                    timestamp: DymdHMS::new(2024, 6, 1, 9, 0, 0),
                 })),
                 interval: Some((
                     TimeInterval {
-                        base: BaseDateTime::new(None, None, Some(1), None, None, None),
+                        base: DymdHMS::new(None, None, Some(1), None, None, None),
                         week: None::<i32>.into(),
                     },
                     RepeatType::RepeatEvent,
                 )),
                 interval_end: Some(TimeInterval {
-                    base: BaseDateTime::new(None, None, None, Some(2), None, None),
+                    base: DymdHMS::new(None, None, None, Some(2), None, None),
                     week: None::<i32>.into(),
                 }),
                 alert: None,
                 end: Some(EndCondition::Interval(TimeInterval {
-                    base: BaseDateTime::new(None, None, Some(7), None, None, None),
+                    base: DymdHMS::new(None, None, Some(7), None, None, None),
                     week: None::<i32>.into(),
                 })),
             },
@@ -654,12 +657,12 @@ mod test_guess {
             TimeEvent {
                 start: Some(TimeEnum::Wes(WesTime {
                     local_minus_utc: None,
-                    timestamp: BaseDateTime::new(2026, 1, 2, 8, 30, 0),
+                    timestamp: DymdHMS::new(2026, 1, 2, 8, 30, 0),
                 })),
                 interval: None,
                 interval_end: None,
                 alert: Some(TimeInterval {
-                    base: BaseDateTime::new(None, None, None, None, Some(10), None),
+                    base: DymdHMS::new(None, None, None, None, Some(10), None),
                     week: None::<i32>.into(),
                 }),
                 end: None,
@@ -675,11 +678,11 @@ mod test_guess {
                 start: Some(TimeEnum::Wes(WesTime {
                     local_minus_utc: FixedOffset::east_opt(5 * 3600 + 30 * 60)
                         .map(|e| e.local_minus_utc()),
-                    timestamp: BaseDateTime::new(2024, 3, 1, 18, 45, 30),
+                    timestamp: DymdHMS::new(2024, 3, 1, 18, 45, 30),
                 })),
                 interval: Some((
                     TimeInterval {
-                        base: BaseDateTime::new(None, None, None, Some(12), None, None),
+                        base: DymdHMS::new(None, None, None, Some(12), None, None),
                         week: None::<i32>.into(),
                     },
                     RepeatType::RepeatEvent,
@@ -689,5 +692,120 @@ mod test_guess {
                 end: Some(EndCondition::Times(Times::new(5))),
             },
         );
+    }
+}
+
+#[cfg(test)]
+mod test_generate {
+    use chin_sql::time_type::TID;
+    use chrono::{NaiveDate, NaiveTime};
+
+    use crate::krate::toent::{
+        EventBuilder,
+        logic::timeevent::{TimeEvent, TimeEventInst},
+        timeevent::{
+            repeater::{RepeatType, interval::TimeInterval},
+            timeenum::{
+                TimeEnum, UtcWithOffset,
+                base::{DHMS, Dymd, DymdHMS, NoneOrI32},
+                westen::WesTime,
+            },
+        },
+    };
+
+    #[test]
+    fn test_generate_interval_end_tid_not_shifted_by_timezone() {
+        let none = NoneOrI32::from(None::<i32>);
+        let event = TimeEvent {
+            start: Some(TimeEnum::Wes(WesTime {
+                local_minus_utc: None,
+                timestamp: DymdHMS {
+                    date: Dymd {
+                        year: 2026.into(),
+                        month: 3.into(),
+                        day: 17.into(),
+                    },
+                    time: DHMS {
+                        hour: 21.into(),
+                        minute: 0.into(),
+                        second: 0.into(),
+                    },
+                },
+            })),
+            interval: Some((
+                TimeInterval {
+                    base: DymdHMS {
+                        date: Dymd {
+                            year: none,
+                            month: none,
+                            day: 1.into(),
+                        },
+                        time: DHMS {
+                            hour: none,
+                            minute: none,
+                            second: none,
+                        },
+                    },
+                    week: none,
+                },
+                RepeatType::RepeatEvent,
+            )),
+            interval_end: None,
+            alert: Some(TimeInterval {
+                base: DymdHMS {
+                    date: Dymd {
+                        year: none,
+                        month: none,
+                        day: none,
+                    },
+                    time: DHMS {
+                        hour: none,
+                        minute: 15.into(),
+                        second: none,
+                    },
+                },
+                week: none,
+            }),
+            end: Some(
+                crate::krate::toent::timeevent::repeater::endconditon::EndCondition::Time(
+                    TimeEnum::Wes(WesTime {
+                        local_minus_utc: None,
+                        timestamp: DymdHMS {
+                            date: Dymd {
+                                year: 2026.into(),
+                                month: 3.into(),
+                                day: 20.into(),
+                            },
+                            time: DHMS {
+                                hour: none,
+                                minute: none,
+                                second: none,
+                            },
+                        },
+                    }),
+                ),
+            ),
+        };
+
+        let result = event
+            .generate(
+                100,
+                None,
+                Some(UtcWithOffset::from_utc(
+                    1773849600000000i64.try_into().unwrap(),
+                )),
+                Some(UtcWithOffset::from_utc(
+                    1773935999999000i64.try_into().unwrap(),
+                )),
+            )
+            .unwrap();
+
+        println!("{:?}", result);
+        assert!(
+            result.len() == 1
+                && result
+                    .iter()
+                    .any(|e| e.start_tid.is_some_and(|v| v.as_num() == 1773925200000000))
+        )
     }
 }

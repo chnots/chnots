@@ -6,7 +6,8 @@ use std::{
 use anyhow::{anyhow, bail};
 use chin_sql::time_type::TID;
 use chin_tools::AResult;
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike, Utc};
+use log::info;
 use serde::{Deserialize, Serialize};
 
 use crate::krate::toent::{
@@ -91,29 +92,29 @@ impl Deref for NoneOrI32 {
     }
 }
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
-pub(crate) struct BaseDate {
+pub(crate) struct Dymd {
     pub(crate) year: NoneOrI32,
     pub(crate) month: NoneOrI32,
     pub(crate) day: NoneOrI32,
 }
 
-impl BaseDate {
+impl Dymd {
     pub fn all_some(&self) -> bool {
         self.year.is_some() && self.month.is_some() && self.day.is_some()
     }
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
-pub(crate) struct BaseTime {
+pub(crate) struct DHMS {
     pub(crate) hour: NoneOrI32,
     pub(crate) minute: NoneOrI32,
     pub(crate) second: NoneOrI32,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
-pub(crate) struct BaseDateTime {
-    pub date: BaseDate,
-    pub time: BaseTime,
+pub(crate) struct DymdHMS {
+    pub date: Dymd,
+    pub time: DHMS,
 }
 
 pub(crate) enum TimeUnit {
@@ -126,7 +127,7 @@ pub(crate) enum TimeUnit {
     Week,
 }
 
-impl BaseDateTime {
+impl DymdHMS {
     pub fn empty() -> Self {
         Self::new(
             None::<i32>,
@@ -140,12 +141,12 @@ impl BaseDateTime {
 
     pub fn new<T: Into<NoneOrI32>>(y: T, m: T, d: T, hour: T, minute: T, sec: T) -> Self {
         Self {
-            date: BaseDate {
+            date: Dymd {
                 year: y.into(),
                 month: m.into(),
                 day: d.into(),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: hour.into(),
                 minute: minute.into(),
                 second: sec.into(),
@@ -180,9 +181,9 @@ impl BaseDateTime {
         let start_nd = NaiveDate::from_ymd_opt(y, m, d).ok_or_else(|| anyhow!("Invalid Date"))?;
         let start_nt =
             NaiveTime::from_hms_opt(hh, mm, ss).ok_or_else(|| anyhow!("Invalid Time"))?;
-        let start_ndt = NaiveDateTime::new(start_nd, start_nt);
-        let to_utc_obj = |ndt: NaiveDateTime| -> AResult<UtcWithOffset> {
-            let ts = ndt.and_utc().timestamp() - (local_minus_utc as i64);
+        let start_ndt = start_nd.and_time(start_nt).and_utc();
+        let to_utc_obj = |ndt: DateTime<Utc>| -> AResult<UtcWithOffset> {
+            let ts = ndt.timestamp() - (local_minus_utc as i64);
             Ok(UtcWithOffset {
                 utc: (ts * 1_000_000).try_into()?,
                 local_minus_utc,
@@ -200,10 +201,10 @@ impl BaseDateTime {
             } else if self.date.month.is_some() {
                 let (next_y, next_m) = if m == 12 { (y + 1, 1) } else { (y, m + 1) };
                 let d = NaiveDate::from_ymd_opt(next_y, next_m, 1).unwrap();
-                NaiveDateTime::new(d, NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+                d.and_hms_opt(0, 0, 0).unwrap().and_utc()
             } else {
                 let d = NaiveDate::from_ymd_opt(y + 1, 1, 1).unwrap();
-                NaiveDateTime::new(d, NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+                d.and_hms_opt(0, 0, 0).unwrap().and_utc()
             };
             Ok(UtcWithOffsetType::Period {
                 start: to_utc_obj(start_ndt)?,
@@ -247,14 +248,14 @@ impl BaseDateTime {
         hour: Option<i32>,
         minute: Option<i32>,
         second: Option<i32>,
-    ) -> BaseDateTime {
-        BaseDateTime {
-            date: BaseDate {
+    ) -> DymdHMS {
+        DymdHMS {
+            date: Dymd {
                 year: year.into(),
                 month: month.into(),
                 day: day.into(),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: hour.into(),
                 minute: minute.into(),
                 second: second.into(),
@@ -285,13 +286,13 @@ macro_rules! all_none {
     };
 }
 
-impl BaseDate {
+impl Dymd {
     fn is_none(&self) -> bool {
         self.day.is_none() && self.month.is_none() && self.year.is_none()
     }
 }
 
-impl EventBuilder for BaseDate {
+impl EventBuilder for Dymd {
     fn is_valid(&self) -> bool {
         all_some!(self.year, self.month, self.day)
     }
@@ -314,7 +315,7 @@ impl EventBuilder for BaseDate {
             }
         }
 
-        let bts = BaseDate {
+        let bts = Dymd {
             year: year.into(),
             month: month.into(),
             day: day.into(),
@@ -339,13 +340,13 @@ impl EventBuilder for BaseDate {
     }
 }
 
-impl BaseTime {
+impl DHMS {
     fn is_none(&self) -> bool {
         self.second.is_none() && self.minute.is_none() && self.hour.is_none()
     }
 }
 
-impl EventBuilder for BaseTime {
+impl EventBuilder for DHMS {
     fn is_valid(&self) -> bool {
         all_some!(self.hour, self.minute)
     }
@@ -368,7 +369,7 @@ impl EventBuilder for BaseTime {
                 }
             }
 
-            let bts = BaseTime {
+            let bts = DHMS {
                 hour: hour.into(),
                 minute: minute.into(),
                 second: second.into(),
@@ -398,7 +399,7 @@ impl EventBuilder for BaseTime {
     }
 }
 
-impl EventBuilder for BaseDateTime {
+impl EventBuilder for DymdHMS {
     fn is_valid(&self) -> bool {
         self.date.is_valid() && (self.time.is_valid() || self.time.is_none())
     }
@@ -406,16 +407,16 @@ impl EventBuilder for BaseDateTime {
     fn try_from_standard(gt: &Words) -> AResult<Self> {
         Ok(Self {
             date: match gt.sub1(0) {
-                Some(r) => BaseDate::try_from_standard(&r)?,
-                None => BaseDate {
+                Some(r) => Dymd::try_from_standard(&r)?,
+                None => Dymd {
                     year: Default::default(),
                     month: Default::default(),
                     day: Default::default(),
                 },
             },
             time: match gt.sub1(1) {
-                Some(r) => BaseTime::try_from_standard(&r)?,
-                None => BaseTime {
+                Some(r) => DHMS::try_from_standard(&r)?,
+                None => DHMS {
                     hour: Default::default(),
                     minute: Default::default(),
                     second: Default::default(),
@@ -444,27 +445,29 @@ impl EventBuilder for BaseDateTime {
     }
 }
 
-impl From<NaiveDateTime> for BaseDateTime {
+impl From<NaiveDateTime> for DymdHMS {
     fn from(value: NaiveDateTime) -> Self {
-        BaseDateTime {
-            date: BaseDate {
+        let c = DymdHMS {
+            date: Dymd {
                 year: value.year().into(),
                 month: value.month().into(),
                 day: value.day().into(),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: value.hour().into(),
                 minute: value.minute().into(),
                 second: value.second().into(),
             },
-        }
+        };
+
+        c
     }
 }
 
-impl From<NaiveDate> for BaseDateTime {
+impl From<NaiveDate> for DymdHMS {
     fn from(value: NaiveDate) -> Self {
-        BaseDateTime {
-            date: BaseDate {
+        DymdHMS {
+            date: Dymd {
                 year: value.year().into(),
                 month: value.month().into(),
                 day: value.day().into(),
@@ -474,10 +477,10 @@ impl From<NaiveDate> for BaseDateTime {
     }
 }
 
-impl From<NaiveTime> for BaseDateTime {
+impl From<NaiveTime> for DymdHMS {
     fn from(value: NaiveTime) -> Self {
-        BaseDateTime {
-            time: BaseTime {
+        DymdHMS {
+            time: DHMS {
                 hour: value.hour().into(),
                 minute: value.minute().into(),
                 second: value.second().into(),
@@ -502,41 +505,41 @@ pub(crate) fn convert_time_to_secs(input: &str, unit: TimeUnit) -> AResult<i32> 
 mod test {
     use crate::krate::toent::{
         EventBuilder,
-        timeevent::timeenum::base::{BaseDateTime, BaseTime},
+        timeevent::timeenum::base::{DHMS, DymdHMS},
     };
 
     fn n(n: i32) -> Option<i32> {
         Some(n)
     }
 
-    fn compare(guess: &str, time: BaseDateTime) {
+    fn compare(guess: &str, time: DymdHMS) {
         println!("guess: {}", guess);
-        let c: Vec<crate::krate::toent::dto::GuessElem<BaseDateTime>> =
-            BaseDateTime::guess(&guess.into()).unwrap();
+        let c: Vec<crate::krate::toent::dto::GuessElem<DymdHMS>> =
+            DymdHMS::guess(&guess.into()).unwrap();
         println!("guessed: {:?}", c);
         assert!(c.first().unwrap().timestamp == time);
     }
 
     #[test]
     fn test_all() {
-        let ymd = BaseDateTime::base_time2(n(2020), n(12), n(3), None, None, None);
-        let ymdh = BaseDateTime {
+        let ymd = DymdHMS::base_time2(n(2020), n(12), n(3), None, None, None);
+        let ymdh = DymdHMS {
             date: ymd.date,
-            time: BaseTime {
+            time: DHMS {
                 hour: 12.into(),
                 ..ymd.time
             },
         };
-        let ymdhm = BaseDateTime {
+        let ymdhm = DymdHMS {
             date: ymdh.date,
-            time: BaseTime {
+            time: DHMS {
                 minute: 12.into(),
                 ..ymdh.time
             },
         };
-        let ymdhms = BaseDateTime {
+        let ymdhms = DymdHMS {
             date: ymdhm.date,
-            time: BaseTime {
+            time: DHMS {
                 second: 12.into(),
                 ..ymdhm.time
             },
@@ -563,14 +566,14 @@ mod tests {
         hh: Option<i32>,
         mm: Option<i32>,
         ss: Option<i32>,
-    ) -> BaseDateTime {
-        BaseDateTime {
-            date: BaseDate {
+    ) -> DymdHMS {
+        DymdHMS {
+            date: Dymd {
                 year: NoneOrI32(y),
                 month: NoneOrI32(m),
                 day: NoneOrI32(d),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: NoneOrI32(hh),
                 minute: NoneOrI32(mm),
                 second: NoneOrI32(ss),

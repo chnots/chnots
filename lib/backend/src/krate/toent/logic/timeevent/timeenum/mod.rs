@@ -17,7 +17,7 @@ use crate::krate::toent::{
     dto::GuessElem,
     timeevent::{
         repeater::interval::TimeInterval,
-        timeenum::{base::BaseDateTime, chinese::ChnTime},
+        timeenum::{base::DymdHMS, chinese::ChnTime},
     },
 };
 
@@ -41,7 +41,7 @@ impl From<TID> for TimeEnum {
         let utc = tid.as_utc().naive_utc();
         TimeEnum::Wes(WesTime {
             local_minus_utc: None,
-            timestamp: BaseDateTime::from(utc),
+            timestamp: DymdHMS::from(utc),
         })
     }
 }
@@ -68,6 +68,7 @@ fn naive_datetime_add_interval(
     let Some(base) = base else {
         return None;
     };
+
     let years = interval.date.year.unwrap_or(0);
     let months = interval.date.month.unwrap_or(0);
 
@@ -141,8 +142,11 @@ impl Add<TimeInterval> for UtcWithOffset {
             None => return None,
         };
 
+        let utc_micros =
+            result.and_utc().timestamp_micros() - i64::from(self.local_minus_utc) * 1_000_000;
+
         Some(UtcWithOffset {
-            utc: match result.and_utc().timestamp_micros().try_into() {
+            utc: match utc_micros.try_into() {
                 Ok(v) => v,
                 Err(_) => return None,
             },
@@ -159,15 +163,18 @@ impl Sub<TimeInterval> for UtcWithOffset {
 
         let offset = start.local_minus_utc();
         let utc_dt = start.utc().as_utc().naive_utc();
-        let local_dt = utc_dt - Duration::seconds(i64::from(offset));
+        let local_dt = utc_dt + Duration::seconds(i64::from(offset));
 
         let result = match naive_datetime_sub_interval(Some(local_dt), rhs) {
             Some(v) => v,
             None => return None,
         };
 
+        let utc_micros =
+            result.and_utc().timestamp_micros() - i64::from(self.local_minus_utc) * 1_000_000;
+
         Some(UtcWithOffset {
-            utc: match result.and_utc().timestamp_micros().try_into() {
+            utc: match utc_micros.try_into() {
                 Ok(v) => v,
                 Err(_) => return None,
             },

@@ -3,7 +3,7 @@ use std::ops::Add;
 use anyhow::{anyhow, bail};
 use chin_tools::AResult;
 use chinese_lunisolar_calendar::LunisolarDate;
-use chrono::{DateTime, Duration, Local, NaiveDateTime, NaiveTime, Timelike};
+use chrono::{DateTime, Duration, Local, NaiveTime, Timelike, Utc};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 
@@ -12,17 +12,17 @@ use super::{Timestamp, UtcWithOffset, UtcWithOffsetType};
 use crate::krate::toent::dto::GuessElem;
 use crate::krate::toent::timeevent::contains_any;
 use crate::krate::toent::timeevent::repeater::interval::TimeInterval;
-use crate::krate::toent::timeevent::timeenum::base::{BaseDate, BaseDateTime, BaseTime};
+use crate::krate::toent::timeevent::timeenum::base::{DHMS, Dymd, DymdHMS};
 use crate::krate::toent::{EventBuilder, Words};
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct ChnTime {
     pub(crate) leap_month: bool,
-    pub(crate) timestamp: BaseDateTime,
+    pub(crate) timestamp: DymdHMS,
 }
 
 impl ChnTime {
-    pub(crate) fn new(leap_month: bool, timestamp: BaseDateTime) -> Self {
+    pub(crate) fn new(leap_month: bool, timestamp: DymdHMS) -> Self {
         Self {
             leap_month,
             timestamp,
@@ -42,13 +42,13 @@ impl From<UtcWithOffset> for ChnTime {
     fn from(value: UtcWithOffset) -> Self {
         let dt = DateTime::from_timestamp_micros(value.utc.as_num()).unwrap();
         let date = LunisolarDate::from_date(dt).unwrap();
-        let ts = BaseDateTime {
-            date: BaseDate {
+        let ts = DymdHMS {
+            date: Dymd {
                 year: date.to_solar_year().to_i32().into(),
                 month: date.to_lunar_month().to_u8().to_i32().unwrap().into(),
                 day: date.to_lunar_day().to_u8().to_i32().unwrap().into(),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: dt.hour().to_i32().unwrap().into(),
                 minute: dt.minute().to_i32().unwrap().into(),
                 second: dt.second().to_i32().unwrap().into(),
@@ -70,13 +70,13 @@ impl Timestamp for ChnTime {
     fn now_time() -> Self {
         let now: DateTime<Local> = Local::now();
         let date = LunisolarDate::from_date(now).unwrap();
-        let ts = BaseDateTime {
-            date: BaseDate {
+        let ts = DymdHMS {
+            date: Dymd {
                 year: date.to_solar_year().to_i32().into(),
                 month: date.to_lunar_month().to_u8().to_i32().unwrap().into(),
                 day: date.to_lunar_day().to_u8().to_i32().unwrap().into(),
             },
-            time: BaseTime {
+            time: DHMS {
                 hour: now.hour().to_i32().unwrap().into(),
                 minute: now.minute().to_i32().unwrap().into(),
                 second: now.second().to_i32().unwrap().into(),
@@ -93,8 +93,8 @@ impl Timestamp for ChnTime {
         let now = Self::now_time();
         Self {
             leap_month: now.leap_month,
-            timestamp: BaseDateTime {
-                time: BaseTime::default(),
+            timestamp: DymdHMS {
+                time: DHMS::default(),
                 ..now.timestamp
             },
         }
@@ -114,10 +114,10 @@ impl Timestamp for ChnTime {
         let start_time = NaiveTime::from_hms_opt(hour as u32, minute as u32, second as u32)
             .ok_or_else(|| anyhow!("Invalid time: {hour}:{minute}:{second}"))?;
 
-        let start_ndt = NaiveDateTime::new(start_date.to_naive_date(), start_time);
+        let start_ndt = start_date.to_naive_date().and_time(start_time).and_utc();
 
-        let to_utc_obj = |ndt: NaiveDateTime| -> AResult<UtcWithOffset> {
-            let ts = ndt.and_utc().timestamp() - (local_minus_utc as i64);
+        let to_utc_obj = |ndt: DateTime<Utc>| -> AResult<UtcWithOffset> {
+            let ts = ndt.timestamp() - (local_minus_utc as i64);
             Ok(UtcWithOffset {
                 utc: (ts * 1_000_000).try_into()?,
                 local_minus_utc,
@@ -135,16 +135,16 @@ impl Timestamp for ChnTime {
                 start_ndt + Duration::days(1)
             } else if self.timestamp.date.month.is_some() {
                 self.add_duration(TimeInterval {
-                    base: BaseDateTime::default().with_month(1),
+                    base: DymdHMS::default().with_month(1),
                     week: Default::default(),
                 })?
-                .timestamp_start_naive_datetime()?
+                .timestamp_start_utc_datetime()?
             } else {
                 self.add_duration(TimeInterval {
-                    base: BaseDateTime::default().with_year(1),
+                    base: DymdHMS::default().with_year(1),
                     week: Default::default(),
                 })?
-                .timestamp_start_naive_datetime()?
+                .timestamp_start_utc_datetime()?
             };
 
             Ok(UtcWithOffsetType::Period {
@@ -177,14 +177,14 @@ impl ChnTime {
         Ok((year, month, day, hour, minute, second))
     }
 
-    fn timestamp_start_naive_datetime(&self) -> AResult<NaiveDateTime> {
+    fn timestamp_start_utc_datetime(&self) -> AResult<DateTime<Utc>> {
         let (year, month, day, hour, minute, second) = self.extract_datetime_parts()?;
         let start_date =
             LunisolarDate::from_ymd(year as u16, month as u8, self.leap_month, day as u8)?;
         let start_time = NaiveTime::from_hms_opt(hour as u32, minute as u32, second as u32)
             .ok_or_else(|| anyhow!("Invalid time: {hour}:{minute}:{second}"))?;
 
-        Ok(NaiveDateTime::new(start_date.to_naive_date(), start_time))
+        Ok(start_date.to_naive_date().and_time(start_time).and_utc())
     }
 }
 
@@ -203,9 +203,8 @@ impl EventBuilder for ChnTime {
             leap_month = true;
         }
 
-        let bases = BaseDateTime::guess(
-            &gt.filter(|e| !contains_any(e, &["闰", "run", "ns", "农", "nong"])),
-        );
+        let bases =
+            DymdHMS::guess(&gt.filter(|e| !contains_any(e, &["闰", "run", "ns", "农", "nong"])));
 
         bases.map(|bases| {
             bases
@@ -253,7 +252,7 @@ impl EventBuilder for ChnTime {
         }
 
         let start = if leap_month { 2 } else { 1 };
-        let timestamp = BaseDateTime::try_from_standard(&gt.sub_start(start))?;
+        let timestamp = DymdHMS::try_from_standard(&gt.sub_start(start))?;
 
         Ok(ChnTime {
             leap_month,
@@ -273,7 +272,7 @@ impl EventBuilder for ChnTime {
 #[cfg(test)]
 mod test {
     use crate::krate::toent::{
-        EventBuilder, logic::timeevent::timeenum::base::BaseDateTime,
+        EventBuilder, logic::timeevent::timeenum::base::DymdHMS,
         timeevent::timeenum::chinese::ChnTime,
     };
 
@@ -282,7 +281,7 @@ mod test {
         let r = ChnTime::guess(&"农 2023-12-12".into()).unwrap();
         let chn = ChnTime {
             leap_month: false,
-            timestamp: BaseDateTime::default()
+            timestamp: DymdHMS::default()
                 .with_year(2023)
                 .with_month(12)
                 .with_day(12),

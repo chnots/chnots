@@ -1,11 +1,11 @@
 use anyhow::anyhow;
 use chin_tools::AResult;
 use chinese_lunisolar_calendar::LunisolarDate;
-use chrono::{Duration, Local, LocalResult, NaiveDateTime, NaiveTime, TimeZone, Timelike};
+use chrono::{DateTime, Duration, Local, LocalResult, NaiveTime, TimeZone, Timelike, Utc};
 use num_traits::ToPrimitive;
 
 use super::chinese::ChnTime;
-use crate::krate::toent::logic::timeevent::timeenum::base::{BaseDate, BaseDateTime, BaseTime};
+use crate::krate::toent::logic::timeevent::timeenum::base::{DHMS, Dymd, DymdHMS};
 use crate::krate::toent::timeevent::repeater::interval::TimeInterval;
 
 pub(crate) struct ChnTimeCalculator;
@@ -33,9 +33,10 @@ impl ChnTimeCalculator {
         }
 
         if duration != Duration::zero() {
-            let local_ndt =
-                lunar_to_local_naive_datetime(year, month, day, is_leap, hour, minute, second)?
+            let local_dt_utc =
+                lunar_to_local_utc_datetime(year, month, day, is_leap, hour, minute, second)?
                     + duration;
+            let local_ndt = local_dt_utc.naive_utc();
             let local_dt = match Local.from_local_datetime(&local_ndt) {
                 LocalResult::Single(v) => v,
                 LocalResult::Ambiguous(v, _) => v,
@@ -162,7 +163,7 @@ fn lunar_with_day_fallback(
     ))
 }
 
-fn lunar_to_local_naive_datetime(
+fn lunar_to_local_utc_datetime(
     year: i32,
     month: i32,
     day: i32,
@@ -170,7 +171,7 @@ fn lunar_to_local_naive_datetime(
     hour: i32,
     minute: i32,
     second: i32,
-) -> AResult<NaiveDateTime> {
+) -> AResult<DateTime<Utc>> {
     let y = u16::try_from(year).map_err(|_| anyhow!("invalid lunar year: {year}"))?;
     let m = u8::try_from(month).map_err(|_| anyhow!("invalid lunar month: {month}"))?;
     let d = u8::try_from(day).map_err(|_| anyhow!("invalid lunar day: {day}"))?;
@@ -179,7 +180,7 @@ fn lunar_to_local_naive_datetime(
     let time = NaiveTime::from_hms_opt(hour as u32, minute as u32, second as u32)
         .ok_or_else(|| anyhow!("invalid time: {hour}:{minute}:{second}"))?;
 
-    Ok(NaiveDateTime::new(lunar.to_naive_date(), time))
+    Ok(lunar.to_naive_date().and_time(time).and_utc())
 }
 
 fn rebuild_with_original_precision(
@@ -192,13 +193,13 @@ fn rebuild_with_original_precision(
     second: i32,
     leap_month: bool,
 ) -> ChnTime {
-    let ts = BaseDateTime {
-        date: BaseDate {
+    let ts = DymdHMS {
+        date: Dymd {
             year: year.into(),
             month: base.timestamp.date.month.as_ref().map(|_| month).into(),
             day: base.timestamp.date.day.as_ref().map(|_| day).into(),
         },
-        time: BaseTime {
+        time: DHMS {
             hour: base.timestamp.time.hour.as_ref().map(|_| hour).into(),
             minute: base.timestamp.time.minute.as_ref().map(|_| minute).into(),
             second: base.timestamp.time.second.as_ref().map(|_| second).into(),
@@ -214,7 +215,7 @@ fn rebuild_with_original_precision(
 #[cfg(test)]
 mod test {
     use super::ChnTimeCalculator;
-    use crate::krate::toent::logic::timeevent::timeenum::{base::BaseDateTime, chinese::ChnTime};
+    use crate::krate::toent::logic::timeevent::timeenum::{base::DymdHMS, chinese::ChnTime};
     use crate::krate::toent::timeevent::repeater::interval::TimeInterval;
     use chinese_lunisolar_calendar::LunisolarDate;
     use chrono::Duration;
@@ -223,7 +224,7 @@ mod test {
     fn chn(y: i32, m: i32, d: i32, leap: bool) -> ChnTime {
         ChnTime {
             leap_month: leap,
-            timestamp: BaseDateTime::default()
+            timestamp: DymdHMS::default()
                 .with_year(y)
                 .with_month(m)
                 .with_day(d)

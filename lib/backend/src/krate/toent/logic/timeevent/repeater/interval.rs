@@ -10,16 +10,16 @@ use super::PossibleScore;
 use crate::krate::toent::{
     EventBuilder, Words,
     dto::GuessElem,
-    timeevent::timeenum::base::{BaseDateTime, NoneOrI32},
+    timeevent::timeenum::base::{DymdHMS, NoneOrI32},
 };
 #[derive(Default, Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub(crate) struct TimeInterval {
-    pub(crate) base: BaseDateTime,
+    pub(crate) base: DymdHMS,
     pub(crate) week: NoneOrI32,
 }
 
 impl Deref for TimeInterval {
-    type Target = BaseDateTime;
+    type Target = DymdHMS;
 
     fn deref(&self) -> &Self::Target {
         &self.base
