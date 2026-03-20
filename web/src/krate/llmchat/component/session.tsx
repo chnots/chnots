@@ -52,6 +52,31 @@ export type LLMChatContextState = {
   setShowTemplateForm: (flag: boolean) => void;
 } & LLMChatContextProps;
 
+const buildSessionTitle = (records?: LLMChatRecordVO[]): string | undefined => {
+  if (!records || records.length === 0) {
+    return undefined;
+  }
+
+  const firstUserRecord = records
+    .toSorted((a, b) => {
+      return a.otid > b.otid ? 1 : -1;
+    })
+    .find((record) => {
+      return record.role === "user";
+    });
+
+  if (!firstUserRecord) {
+    return undefined;
+  }
+
+  const normalized = firstUserRecord.body.replaceAll(/\s+/g, " ").trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  return normalized.slice(0, 80);
+};
+
 function createLLMChatStore(props: LLMChatContextProps) {
   return createStore<LLMChatContextState>()((set, get) => ({
     ...props,
@@ -112,22 +137,23 @@ function createLLMChatStore(props: LLMChatContextProps) {
       const self = get();
       const session = self.session;
       if (session && self.records) {
+        const sortedRecords = self.records.toSorted((a, b) => {
+          return a.otid > b.otid ? 1 : -1;
+        });
+        const recordIndex = sortedRecords.findIndex((rec) => {
+          return rec.otid === recordOtid;
+        });
+        if (recordIndex < 0) {
+          return;
+        }
+
         if (self.persistedIds.current?.has(recordOtid)) {
           await llmchatSessionRecordTruncate({
             session_otid: session.otid,
             remove_otid_included: recordOtid,
           });
         }
-        const newRecs: LLMChatRecordVO[] = [];
-        if (self.records) {
-          for (const rec of self.records) {
-            if (rec.otid === recordOtid) {
-              break;
-            }
-            newRecs.push(rec);
-          }
-        }
-        console.log("regenerate: ", newRecs);
+        const newRecs = sortedRecords.slice(0, recordIndex);
         set((prev) => {
           return { ...prev, records: newRecs, responsing: true };
         });
@@ -207,7 +233,7 @@ const SessionContainer = ({
   onPostSave,
   readonly,
 }: {
-  onPostSave?: (session: LLMChatSession) => void;
+  onPostSave?: (session: LLMChatSession, title?: string) => void;
   readonly: boolean;
 }) => {
   const {
@@ -282,7 +308,7 @@ const SessionContainer = ({
           });
           pids.add(session.otid);
           if (onPostSave) {
-            onPostSave(session);
+            onPostSave(session, buildSessionTitle(records));
           }
         }
         for (const record of records) {

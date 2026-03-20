@@ -67,11 +67,12 @@ const LLMChatChnot = ({
         {fullscreen ? (
           <Fullscreen onSetFullscreen={onSetFullscreen}>
             <SessionContainer
-              onPostSave={async (s) => {
+              onPostSave={async (_session, title) => {
                 await onPostSave({
                   otid,
                   saveState: SaveState.Saved,
                   kind: ChnotKind.LLMChat,
+                  title,
                 });
               }}
               readonly={false}
@@ -84,11 +85,12 @@ const LLMChatChnot = ({
             ) : (
               <SessionContainer
                 readonly={false}
-                onPostSave={async (s) => {
+                onPostSave={async (_session, title) => {
                   await onPostSave({
                     otid,
                     saveState: SaveState.Saved,
                     kind: ChnotKind.LLMChat,
+                    title,
                   });
                 }}
               />

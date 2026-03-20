@@ -215,13 +215,15 @@ const RecordAssistant = ({
       tid={tid}
       isAnimating={isAnimating}
       buttons={
-        <RecordButton
-          onClick={(): void => {
-            onRegenrate(otid);
-          }}
-        >
-          <RotateCw />
-        </RecordButton>
+        !isAnimating && (
+          <RecordButton
+            onClick={(): void => {
+              onRegenrate(otid);
+            }}
+          >
+            <RotateCw />
+          </RecordButton>
+        )
       }
     />
   );
