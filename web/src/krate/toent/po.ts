@@ -1,16 +1,6 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText } from "@/lib/types";
-
-export type Toent = object;
-
-export type TodoEvent = "TODO" | "DONE" | "WAIT" | "CANCEL" | "DOING";
-
-export type ToentTimeEvent = string;
-
-export type TodoStateEnum = "TODO" | "DONE" | "DOING" | "WAIT" | "CANCEL";
-export type TodoPriorityEnum = "A" | "B" | "C" | "D" | "E";
-
-export type ToentTimeEventInst = object;
+import type { TodoStateEnum, TodoPriorityEnum, TimeEvent } from "./toent-model";
 
 export type ToentInst = {
   otid: TID;
@@ -26,10 +16,6 @@ export type ToentInst = {
   closed?: boolean;
   tid: TID;
   note?: DbText;
-};
-
-export type ToentEventDefi = {
-  events: ToentTimeEvent[];
 };
 
 export type ToentDefi = {
@@ -57,7 +43,6 @@ export type MdwtToent = {
   note?: DbText;
   tid: TID;
 };
-
 export type TimeEventField = {
   time_events: TimeEvent[];
 };

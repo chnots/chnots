@@ -1,10 +1,7 @@
 import dayjs from "dayjs";
-import type {
-  TodoPriorityEnum,
-  TodoStateEnum,
-  ToentScheduleItem,
-} from "@/krate/toent/po";
+import type { ToentScheduleItem } from "@/krate/toent/po";
 import type { TID } from "@/lib/id_util";
+import type { TodoStateEnum, TodoPriorityEnum } from "../toent-model";
 
 export type ToentViewMode = "list" | "week" | "month";
 export type SidebarMode = "month" | "week" | "today" | "all";

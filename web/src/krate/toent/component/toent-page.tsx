@@ -38,7 +38,7 @@ import type { MdwtTagSearchType } from "@/krate/chnot/dto";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
-import type { TodoStateEnum, ToentScheduleItem } from "@/krate/toent/po";
+import type {  ToentScheduleItem } from "@/krate/toent/po";
 import {
   toentInstCommit,
   toentInstCount,
@@ -74,6 +74,7 @@ import {
 } from "./toent-page-shared";
 import { ToentFilterSummaryBar, ToentViewToolbar } from "./toent-page-toolbar";
 import { ToentWeekView } from "./toent-week-view";
+import type { TodoStateEnum } from "../toent-model";
 
 function queryDateToTidRange(startDate: string, endDate: string) {
   if (!startDate && !endDate) {

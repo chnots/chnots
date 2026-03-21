@@ -11,7 +11,7 @@ import type {
   ToentTodoStateCommitReq,
   ToentTodoStateCommitRsp,
 } from "./dto";
-import type { TodoEvent, ToentTimeEvent } from "./po";
+import type { TodoEvent, ToentTimeEvent } from "./toent-model";
 
 export const toentTimeEventGuess = async (
   req: ToentGuessReq,

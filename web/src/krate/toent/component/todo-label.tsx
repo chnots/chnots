@@ -1,4 +1,4 @@
-import type { TodoEvent } from "../po";
+import type { TodoEvent } from "../toent-model";
 
 const TodoLabel = ({ todoEvent }: { todoEvent: TodoEvent }) => {
   switch (todoEvent) {

@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import { Badge } from "@/common/component/ui/badge";
-import type { TodoStateEnum } from "@/krate/toent/po";
 import type { TID } from "@/lib/id_util";
 import { isUpdatingTid, ToentItemCard } from "./toent-item-card";
 import type { NormalizedScheduleItem } from "./toent-page-shared";
@@ -10,6 +9,7 @@ import {
   getItemState,
   TODO_STATE_COLOR,
 } from "./toent-page-shared";
+import type { TodoStateEnum } from "../toent-model";
 
 export function ToentMonthView({
   monthDates,

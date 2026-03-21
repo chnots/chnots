@@ -1,14 +1,12 @@
 import type { TID } from "@/lib/id_util";
-import type { DbText } from "@/lib/types";
 import type { MdwtTagSearchType } from "../chnot/dto";
 import type {
   MdwtToent,
   TimeEventField,
-  TodoEvent,
-  TodoStateEnum,
   ToentInst,
   ToentScheduleItem,
 } from "./po";
+import type { TodoStateEnum, TodoEvent } from "./toent-model";
 
 type PossibleScore = number;
 
@@ -87,10 +85,6 @@ export type ToentTodoStateCommitRsp = {
   todo_state: TodoStateEnum;
 };
 
-export type ToentInstCommitReq = {
-  inst: ToentInst;
-};
-
 export type ToentSearchRsp = {
   items: ToentSearchRspData[];
   has_next: boolean;
@@ -102,12 +96,16 @@ export type ToentSearchRspData = {
   title: string;
 };
 
+export type ToentInstCommitReq = {
+  inst: ToentInst;
+};
+export type ToentInstCommitRsp = {
+  updated_insts: ToentInst[];
+};
+
 export type ToentDefiCommitReq = {
   otid: TID;
   todo_event?: TodoEvent;
   time_event_field?: TimeEventField;
 };
 export type ToentDefiCommitRsp = object;
-export type ToentInstCommitRsp = {
-  updated_insts: ToentInst[];
-};
