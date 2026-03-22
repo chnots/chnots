@@ -38,7 +38,7 @@ import type { MdwtTagSearchType } from "@/krate/chnot/dto";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";
-import type {  ToentScheduleItem } from "@/krate/toent/po";
+import type { ToentScheduleItem } from "@/krate/toent/po";
 import {
   toentInstCommit,
   toentInstCount,
@@ -48,12 +48,14 @@ import {
 import { tidToDate } from "@/lib/date-utils";
 import { genTID, type TID } from "@/lib/id_util";
 import { RoutePaths } from "@/router";
+import type { TodoStateEnum } from "../toent-model";
 import { ToentEditorSheet } from "./toent-editor-sheet";
 import { ToentListView } from "./toent-list-view";
 import { ToentMonthView } from "./toent-month-view";
 import {
   addDays,
   addMonths,
+  DEFAULT_ENABLED_TODO_STATES,
   dateToDayKey,
   FILTER_META,
   getDayKeysBetween,
@@ -74,7 +76,6 @@ import {
 } from "./toent-page-shared";
 import { ToentFilterSummaryBar, ToentViewToolbar } from "./toent-page-toolbar";
 import { ToentWeekView } from "./toent-week-view";
-import type { TodoStateEnum } from "../toent-model";
 
 function queryDateToTidRange(startDate: string, endDate: string) {
   if (!startDate && !endDate) {
@@ -105,7 +106,7 @@ function queryDateToTidRange(startDate: string, endDate: string) {
 }
 
 function ToentPage() {
-  const [activeMode, setActiveMode] = useState<SidebarMode>("month");
+  const [activeMode, setActiveMode] = useState<SidebarMode>("today");
   const [modeCounts, setModeCounts] = useState<Record<SidebarMode, number>>({
     month: 0,
     week: 0,
@@ -117,13 +118,7 @@ function ToentPage() {
   const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [enabledStates, setEnabledStates] = useState<
     Record<TodoStateEnum, boolean>
-  >({
-    TODO: true,
-    DOING: true,
-    WAIT: true,
-    DONE: true,
-    CANCEL: true,
-  });
+  >(DEFAULT_ENABLED_TODO_STATES);
   const [cursorDate, setCursorDate] = useState(() => startOfDay(new Date()));
   const [scheduleItems, setScheduleItems] = useState<ToentScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -545,8 +540,8 @@ function ToentPage() {
   const hasSearchOrTagFilter =
     searchTerm.trim().length > 0 ||
     (tags?.id === "Inset" && tags.data.length > 0);
-  const hasStateFilter = Object.values(enabledStates).some(
-    (enabled) => !enabled,
+  const hasStateFilter = TODO_STATES.some(
+    (state) => enabledStates[state] !== DEFAULT_ENABLED_TODO_STATES[state],
   );
 
   return (

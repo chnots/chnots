@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import type { ToentScheduleItem } from "@/krate/toent/po";
 import type { TID } from "@/lib/id_util";
-import type { TodoStateEnum, TodoPriorityEnum } from "../toent-model";
+import type { TodoPriorityEnum, TodoStateEnum } from "../toent-model";
 
 export type ToentViewMode = "list" | "week" | "month";
 export type SidebarMode = "month" | "week" | "today" | "all";
@@ -13,6 +13,14 @@ export const TODO_STATES: TodoStateEnum[] = [
   "DONE",
   "CANCEL",
 ];
+
+export const DEFAULT_ENABLED_TODO_STATES: Record<TodoStateEnum, boolean> = {
+  TODO: true,
+  DOING: true,
+  WAIT: true,
+  DONE: false,
+  CANCEL: false,
+};
 
 export const TODO_STATE_LABEL: Record<TodoStateEnum, string> = {
   TODO: "TODO",
