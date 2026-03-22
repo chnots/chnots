@@ -441,8 +441,11 @@ impl TryFrom<&KDbRow> for ToentDefi {
         Ok(Self {
             otid: value.try_get(Self::OTID)?,
             event_defi: {
-                let text: Text = value.try_get(Self::EVENT_DEFI)?;
-                serde_json::from_str(text.as_str())?
+                let text: Option<Text> = value.try_get(Self::EVENT_DEFI)?;
+                match text {
+                    Some(text) => serde_json::from_str(text.as_str())?,
+                    None => None,
+                }
             },
             start_tid: value.try_get(Self::START_TID)?,
             start_timezone: start_timezone.map(|v| v as isize),
