@@ -75,7 +75,7 @@ impl KDbTx<'_> {
         for (k, v) in po.data {
             self.po_insert_graph_data(GraphData {
                 sid: k.try_into()?,
-                tid: Default::default(),
+                tid: TID::now(),
                 content: v.into(),
             })
             .await?;
@@ -99,7 +99,7 @@ impl KDbTx<'_> {
 
         self.po_insert_graph_data(GraphData {
             sid: meta.sid.try_into()?,
-            tid: Default::default(),
+            tid: TID::now(),
             content: content.into(),
         })
         .await?;
@@ -292,7 +292,7 @@ impl GraphMapper for KDb {
         for (k, v) in po.data {
             tx.po_insert_graph_data(GraphData {
                 sid: k.try_into()?,
-                tid: Default::default(),
+                tid: TID::now(),
                 content: v.into(),
             })
             .await?;
