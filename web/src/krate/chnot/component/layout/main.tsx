@@ -2,11 +2,20 @@ import { useEffect, useState } from "react";
 import { genTID, type TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
 import { ChnotKind } from "../../po";
+import { chnotMetaList } from "../../service";
 import { useChnotStore } from "../../store";
 import { ChnotBodyMemo } from "./body";
 import ChnotHeadbar from "./header";
 
-const ChnotMain = ({ className }: { className?: string }) => {
+const ChnotMain = ({
+  className,
+  initialOtid,
+  hideSidebar = false,
+}: {
+  className?: string;
+  initialOtid?: TID;
+  hideSidebar?: boolean;
+}) => {
   const { getMeta, setChangeCompCurOtid, setCurOtid } = useChnotStore((s) => {
     return {
       getMeta: s.getMeta,
@@ -15,7 +24,9 @@ const ChnotMain = ({ className }: { className?: string }) => {
     };
   });
 
-  const [otid, setOtid] = useState<TID | undefined>(genTID());
+  const [otid, setOtid] = useState<TID | undefined>(
+    () => initialOtid ?? genTID(),
+  );
   const [kind, setKind] = useState<ChnotKind | undefined>(undefined);
 
   useEffect(() => {
@@ -23,18 +34,33 @@ const ChnotMain = ({ className }: { className?: string }) => {
   }, [setChangeCompCurOtid]);
 
   useEffect(() => {
+    let cancelled = false;
     if (otid) {
-      setKind(getMeta(otid)?.meta.kind);
+      const cached = getMeta(otid)?.meta.kind;
+      if (cached) {
+        setKind(cached);
+      } else {
+        setKind(undefined);
+        void chnotMetaList({ otids: [otid] }).then((rsp) => {
+          if (!cancelled) {
+            setKind(rsp.metas[0]?.kind);
+          }
+        });
+      }
     } else {
       setKind(undefined);
     }
     setCurOtid(otid);
-  }, [otid]);
+    return () => {
+      cancelled = true;
+    };
+  }, [getMeta, otid, setCurOtid]);
 
   return (
     <main
       className={cn(
-        "relative flex min-h-0 flex-col overflow-hidden border-l bg-background",
+        "relative flex min-h-0 flex-col overflow-hidden bg-background",
+        !hideSidebar && "border-l",
         className,
       )}
     >
@@ -47,6 +73,7 @@ const ChnotMain = ({ className }: { className?: string }) => {
           setKind(kind);
         }}
         otid={otid}
+        hideSidebar={hideSidebar}
       />
       <div className="min-h-0 flex-1 overflow-hidden">
         {otid && (

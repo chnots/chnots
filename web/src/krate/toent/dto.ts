@@ -6,7 +6,7 @@ import type {
   ToentInst,
   ToentScheduleItem,
 } from "./po";
-import type { TodoStateEnum, TodoEvent } from "./toent-model";
+import type { TodoEvent, TodoStateEnum } from "./toent-model";
 
 type PossibleScore = number;
 

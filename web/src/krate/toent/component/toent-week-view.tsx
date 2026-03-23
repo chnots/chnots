@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { Badge } from "@/common/component/ui/badge";
 import type { TID } from "@/lib/id_util";
+import type { TodoStateEnum } from "../toent-model";
 import { isUpdatingTid, ToentItemCard } from "./toent-item-card";
 import type { NormalizedScheduleItem } from "./toent-page-shared";
 import {
@@ -8,7 +9,6 @@ import {
   formatLunarDate,
   getWeekdayShort,
 } from "./toent-page-shared";
-import type { TodoStateEnum } from "../toent-model";
 
 export function ToentWeekView({
   weekDates,

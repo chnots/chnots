@@ -1,6 +1,6 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText } from "@/lib/types";
-import type { TodoStateEnum, TodoPriorityEnum, TimeEvent } from "./toent-model";
+import type { TimeEvent, TodoPriorityEnum, TodoStateEnum } from "./toent-model";
 
 export type ToentInst = {
   otid: TID;

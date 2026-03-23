@@ -1,5 +1,6 @@
-import { BadgePlus, Captions } from "lucide-react";
+import { BadgePlus, Captions, List } from "lucide-react";
 import { useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/common/component/ui/button";
 import {
   Popover,
@@ -11,6 +12,7 @@ import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import { mdwtCommit } from "@/krate/mdwt/service";
 import type { TID } from "@/lib/id_util";
 import { cn } from "@/lib/utils";
+import { RoutePaths } from "@/router";
 import { ChnotKind } from "../../po";
 import { useChnotStore } from "../../store";
 import { ChnotKindIcon } from "../kind-icon";
@@ -20,12 +22,21 @@ const ChnotHeadbar = ({
   onNew,
   setKind,
   className,
+  hideSidebar = false,
 }: {
   otid?: TID;
   onNew: () => void;
   setKind: (kind: ChnotKind) => void;
   className?: string;
+  hideSidebar?: boolean;
 }) => {
+  const location = useLocation();
+  const allChnotsSearch = (() => {
+    const params = new URLSearchParams(location.search);
+    params.delete("otid");
+    const search = params.toString();
+    return search.length > 0 ? `?${search}` : "";
+  })();
   const { overwritePart, mapByOtid, headerActions } = useChnotStore((s) => {
     return {
       overwritePart: s.overwritePart,
@@ -44,7 +55,15 @@ const ChnotHeadbar = ({
         className,
       )}
     >
-      <SidebarTrigger />
+      {hideSidebar ? (
+        <Button asChild variant="ghost" title="Show all chnots">
+          <Link to={{ pathname: RoutePaths.Chnots, search: allChnotsSearch }}>
+            <List />
+          </Link>
+        </Button>
+      ) : (
+        <SidebarTrigger />
+      )}
       <div className="m-1">
         <Button onClick={onNew}>
           <BadgePlus />

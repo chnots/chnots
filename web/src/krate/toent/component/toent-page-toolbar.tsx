@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/common/component/ui/badge";
 import { Button } from "@/common/component/ui/button";
 import type { MdwtTagSearchType } from "@/krate/chnot/dto";
-import { TODO_STATE_LABEL, type ToentViewMode } from "./toent-page-shared";
 import type { TodoStateEnum } from "../toent-model";
+import { TODO_STATE_LABEL, type ToentViewMode } from "./toent-page-shared";
 
 export function ToentViewToolbar({
   viewMode,

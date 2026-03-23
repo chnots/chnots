@@ -1,5 +1,6 @@
 import { Hash, MoreHorizontal, Pin, Trash2, Warehouse } from "lucide-react";
 import React, { type ForwardedRef, memo } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,11 +95,19 @@ const ChnotSidebarItem = React.forwardRef(
     _ref: ForwardedRef<HTMLLIElement>,
   ) => {
     const { isMobile } = useSidebar();
+    const location = useLocation();
 
     let title = item.title?.replace(GEN_TITLE, "");
     title = title?.startsWith("# ")
       ? title.split("\n")[0].substring(2)
       : (title?.substring(0, 500) ?? "<unknown>");
+
+    const itemSearch = (() => {
+      const params = new URLSearchParams(location.search);
+      params.delete("otid");
+      const search = params.toString();
+      return search.length > 0 ? `?${search}` : "";
+    })();
 
     return (
       <SidebarMenuItem
@@ -108,8 +117,8 @@ const ChnotSidebarItem = React.forwardRef(
           opacity: 0,
         }}
       >
-        <a
-          href={`#${item.meta.otid}`}
+        <Link
+          to={{ pathname: location.pathname, search: itemSearch }}
           key={item.meta.otid}
           onClick={() => {
             setCurOtid(item.meta.otid);
@@ -151,7 +160,7 @@ const ChnotSidebarItem = React.forwardRef(
           >
             {title}
           </h3>
-        </a>
+        </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction showOnHover>

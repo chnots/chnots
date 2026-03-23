@@ -1,7 +1,7 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
-import type { ChnotKind, ChnotMeta } from "./po";
 import type { TodoEvent } from "../toent/toent-model";
+import type { ChnotKind, ChnotMeta } from "./po";
 
 export type MdwtTagSearchType = {
   id: "Inset";

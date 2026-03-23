@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/common/component/ui/select";
 import type { TID } from "@/lib/id_util";
+import type { TodoPriorityEnum, TodoStateEnum } from "../toent-model";
 import {
   getItemState,
   getItemTitle,
@@ -15,7 +16,6 @@ import {
   type NormalizedScheduleItem,
   TODO_STATE_COLOR,
 } from "./toent-page-shared";
-import type { TodoStateEnum, TodoPriorityEnum } from "../toent-model";
 
 export function StateInlineSelect({
   state,

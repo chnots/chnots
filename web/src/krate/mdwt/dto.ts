@@ -1,8 +1,8 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
 import type { MdwtTagSearchType } from "../chnot/dto";
-import type { MdwtRecord } from "./po";
 import type { TodoEvent } from "../toent/toent-model";
+import type { MdwtRecord } from "./po";
 
 export type MdwtRecordsReq = {
   mdwt_otids: TID[];
