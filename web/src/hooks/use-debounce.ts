@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react";
+import type { TimeoutType } from "@/lib/types";
 
 type DebouncedFunction<T extends any[]> = (...args: T) => void;
 
@@ -13,7 +14,7 @@ const useDebounce = <T extends any[]>(
 ): DebouncedFunction<T> => {
   const { duration = 1000, executeOnUnmount = false } = options;
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<TimeoutType | null>(null);
   const argsRef = useRef<T | null>(null);
   const fnRef = useRef(fn);
 

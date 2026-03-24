@@ -9,6 +9,7 @@ import {
 } from "@/common/component/ui/command";
 
 import type { TID } from "@/lib/id_util";
+import type { TimeoutType } from "@/lib/types";
 import type { ChnotSearchReq, ChnotSearchRspData } from "../../dto";
 import type { ChnotKind } from "../../po";
 import { chnotSearch } from "../../service";
@@ -24,7 +25,7 @@ const MdwtChnotSelector = ({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ChnotSearchRspData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<TimeoutType | null>(null);
   const excludeOtids = useRef<Set<TID>>(
     new Set(excludeList.map((e) => e.otid)),
   );

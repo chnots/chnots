@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/common/component/ui/button";
 
+type IntervalId = ReturnType<typeof setInterval>;
+
 const Timer = () => {
   const [time, setTime] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -31,7 +33,7 @@ const Timer = () => {
 
   // 计时器逻辑
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: IntervalId;
 
     if (isRunning) {
       intervalId = setInterval(() => {

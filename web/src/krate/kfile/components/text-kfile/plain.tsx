@@ -1,6 +1,7 @@
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { TimeoutType } from "@/lib/types";
 import type { KFileMeta } from "../../po";
 import { inlineKFileDownload, inlineKFileUpload } from "../../service";
 import { TextEditor } from "./editor";
@@ -20,7 +21,7 @@ export const PlainText = ({
 }: PlainTextProps) => {
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(!!kfile);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<TimeoutType | null>(null);
   const codeMirrorRef = useRef<ReactCodeMirrorRef>(null);
 
   useEffect(() => {

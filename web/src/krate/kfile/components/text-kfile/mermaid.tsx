@@ -2,6 +2,7 @@ import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import mermaid from "mermaid";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { TimeoutType } from "@/lib/types";
 import type { KFileMeta } from "../../po";
 import { inlineKFileDownload, inlineKFileUpload } from "../../service";
 import { TextEditor } from "./editor";
@@ -30,7 +31,7 @@ export const MermaidText = ({
   const [svgContent, setSvgContent] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!kfile);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<TimeoutType | null>(null);
   const codeMirrorRef = useRef<ReactCodeMirrorRef>(null);
   const [readonly, setReadonly] = useState(initialReadonly);
 
