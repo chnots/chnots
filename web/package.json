@@ -82,7 +82,7 @@
     "framer-motion": "^12.38.0",
     "jolpin-codemirror": "workspace:*",
     "katex": "^0.16.33",
-    "lucide-react": "0.575.0",
+    "lucide-react": "1.0.1",
     "marked": "^17.0.1",
     "mermaid": "^11.12.3",
     "mind-elixir": "workspace:*",
