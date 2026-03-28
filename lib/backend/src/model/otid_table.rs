@@ -9,8 +9,8 @@ use crate::{
     mapper::{
         Curd,
         db::{
-            KDb, KDbBehaiver, KDbConn, KDbExecutor, KDbExecutorBehaiver, KDbTransactionBehaiver,
-            KDbTx,
+            KDb, KDbBehaiver, KDbConn, KDbExecutor, KDbExecutorBehaiver, KDbRowBehavier,
+            KDbTransactionBehaiver, KDbTx,
         },
     },
     model::KSerde,
@@ -90,6 +90,7 @@ pub(crate) trait OtidTableSupport: KSerde + Curd {
     fn get_otid_enum() -> OtidTableEnum;
     fn table_name(hist: bool) -> &'static str;
     fn all_columns() -> &'static [&'static str];
+    fn update_tid(&mut self);
 }
 
 #[macro_export]
@@ -121,6 +122,10 @@ macro_rules! impl_otid_support {
             }
             fn all_columns() -> &'static [&'static str] {
                 Self::all_field_names()
+            }
+
+            fn update_tid(&mut self) {
+                self.tid = TID::now();
             }
         }
 
@@ -217,6 +222,21 @@ impl KDbTx<'_> {
 
         Ok(count)
     }
+
+    #[inline]
+    pub async fn po_otid_commit_by_tid<T>(&self, tid: TID) -> AResult<T>
+    where
+        T: OtidTableSupport,
+    {
+        let mut res: T = self
+            .as_executor()
+            .po_otid_fetch_by_tid(tid, OtidSearchType::Hist)
+            .await?
+            .ok_or(anyhow::anyhow!("unable to search tid {}", tid))?;
+        res.update_tid();
+        self.po_otid_commit([res.clone()]).await?;
+        Ok(res)
+    }
 }
 
 impl KDbExecutor<'_> {
@@ -243,7 +263,53 @@ impl KDbExecutor<'_> {
         Ok(count)
     }
 
-    pub async fn po_otid_list<T, S>(&self, pos: S, search_type: OtidSearchType) -> AResult<Vec<T>>
+    pub async fn po_otid_fetch_by_tid<T>(
+        &self,
+        pos: TID,
+        search_type: OtidSearchType,
+    ) -> AResult<Option<T>>
+    where
+        T: OtidTableSupport,
+    {
+        let result = match search_type {
+            OtidSearchType::Both => {
+                self.qry_opt(
+                    SqlBuilder::new()
+                        .seg("select * from")
+                        .seg(T::table_name(true))
+                        .r#where(Wheres::equal("tid", pos))
+                        .seg("union")
+                        .seg("select * from")
+                        .seg(T::table_name(false))
+                        .r#where(Wheres::equal("tid", pos)),
+                    |row| T::try_from_kdb_row(&row),
+                )
+                .await?
+            }
+            _ => {
+                self.qry_opt(
+                    SqlBuilder::new()
+                        .seg("select * from")
+                        .seg(T::table_name(match search_type {
+                            OtidSearchType::Current => false,
+                            OtidSearchType::Hist => true,
+                            OtidSearchType::Both => unreachable!(),
+                        }))
+                        .r#where(Wheres::equal("tid", pos)),
+                    |row| T::try_from_kdb_row(&row),
+                )
+                .await?
+            }
+        };
+
+        Ok(result)
+    }
+
+    pub async fn po_otid_tid_list<T, S>(
+        &self,
+        pos: S,
+        search_type: OtidSearchType,
+    ) -> AResult<Vec<TID>>
     where
         T: OtidTableSupport,
         S: Into<Vec<TID>>,
@@ -254,14 +320,17 @@ impl KDbExecutor<'_> {
             OtidSearchType::Both => {
                 self.qry_list(
                     SqlBuilder::new()
-                        .seg("select * from")
+                        .seg("select tid from")
                         .seg(T::table_name(true))
                         .r#where(Wheres::r#in("otid", vs.clone()))
                         .seg("union")
                         .seg("select * from")
                         .seg(T::table_name(false))
                         .r#where(Wheres::r#in("otid", vs)),
-                    |row| T::try_from_kdb_row(&row),
+                    |row| {
+                        let tid: TID = row.try_get("tid")?;
+                        Ok(tid)
+                    },
                 )
                 .await?
             }
@@ -275,7 +344,10 @@ impl KDbExecutor<'_> {
                             OtidSearchType::Both => unreachable!(),
                         }))
                         .r#where(Wheres::r#in("otid", vs)),
-                    |row| T::try_from_kdb_row(&row),
+                    |row| {
+                        let tid: TID = row.try_get("tid")?;
+                        Ok(tid)
+                    },
                 )
                 .await?
             }
@@ -308,7 +380,26 @@ impl KDb {
         Ok(count)
     }
 
-    pub async fn po_otid_list<T, S>(&self, otids: S, search_type: OtidSearchType) -> AResult<Vec<T>>
+    pub async fn po_otid_fetch_by_tid<T>(
+        &self,
+        tid: TID,
+        search_type: OtidSearchType,
+    ) -> AResult<Option<T>>
+    where
+        T: OtidTableSupport,
+    {
+        self.conn()
+            .await?
+            .as_executor()
+            .po_otid_fetch_by_tid::<T>(tid, search_type)
+            .await
+    }
+
+    pub async fn po_otid_tid_list<T, S>(
+        &self,
+        otids: S,
+        search_type: OtidSearchType,
+    ) -> AResult<Vec<TID>>
     where
         T: OtidTableSupport,
         S: Into<Vec<TID>>,
@@ -316,7 +407,7 @@ impl KDb {
         self.conn()
             .await?
             .as_executor()
-            .po_otid_list(otids, search_type)
+            .po_otid_tid_list::<T, S>(otids, search_type)
             .await
     }
 }
