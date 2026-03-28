@@ -7,6 +7,12 @@ import type {
   InlineKFileUploadRsp,
   KFileUploadRsp,
   KfileAssetChunkUploadReq,
+  KfileHistoryApplyReq,
+  KfileHistoryApplyRsp,
+  KfileHistoryFetchReq,
+  KfileHistoryFetchRsp,
+  KfileHistoryListReq,
+  KfileHistoryListRsp,
   KfileMetaFetchReq,
   KfileMetaFetchRsp,
 } from "./dto";
@@ -65,4 +71,22 @@ export const inlineKFileDownload = async (
 
 export const getResouceDownloadUrl = (kfile: KFileMeta): string => {
   return `${BASE_URL}/api/v1/kfile-asset-download/${kfile.id}/${encodeURI(`${chnotShortDate()}-${kfile.filename}`)}`;
+};
+
+export const kfileHistoryList = async (
+  req: KfileHistoryListReq,
+): Promise<KfileHistoryListRsp> => {
+  return await request.postJson("api/v1/kfile-history-list", req);
+};
+
+export const kfileHistoryFetch = async (
+  req: KfileHistoryFetchReq,
+): Promise<KfileHistoryFetchRsp> => {
+  return await request.postJson("api/v1/kfile-history-fetch", req);
+};
+
+export const kfileHistoryApply = async (
+  req: KfileHistoryApplyReq,
+): Promise<KfileHistoryApplyRsp> => {
+  return await request.postJson("api/v1/kfile-history-apply", req);
 };

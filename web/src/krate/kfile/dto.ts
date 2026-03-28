@@ -42,6 +42,38 @@ export type KfileMetaFetchRsp = {
   meta?: KFileMeta;
 };
 
+export type KfileHistoryListReq = {
+  otid: TID;
+};
+
+export type KfileHistoryVersion = {
+  tid: TID;
+};
+
+export type KfileHistoryListRsp = {
+  versions: KfileHistoryVersion[];
+};
+
+export type KfileHistoryFetchReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type KfileHistoryFetchRsp = {
+  meta?: KFileMeta;
+  file?: InlineKFile;
+};
+
+export type KfileHistoryApplyReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type KfileHistoryApplyRsp = {
+  meta?: KFileMeta;
+  file?: InlineKFile;
+};
+
 export type InlineKFileUploadDirectlyReq = {
   file: InlineKFile;
 };

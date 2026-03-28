@@ -2,6 +2,12 @@ import request from "@/lib/request";
 import type { MdwtCommitRsp } from "../chnot/dto";
 import type {
   MdwtCommitReq,
+  MdwtHistoryApplyReq,
+  MdwtHistoryApplyRsp,
+  MdwtHistoryFetchReq,
+  MdwtHistoryFetchRsp,
+  MdwtHistoryListReq,
+  MdwtHistoryListRsp,
   MdwtRecordsReq,
   MdwtRecordsRsp,
   MdwtTagListReq,
@@ -27,4 +33,22 @@ export const chnotTagNameList = async (
 
 export const allMdwtTagRefresh = async (): Promise<void> => {
   return await request.postJson(`api/v1/all-mdwt-tag-refresh`);
+};
+
+export const mdwtHistoryList = async (
+  req: MdwtHistoryListReq,
+): Promise<MdwtHistoryListRsp> => {
+  return await request.postJson(`api/v1/mdwt-history-list`, req);
+};
+
+export const mdwtHistoryFetch = async (
+  req: MdwtHistoryFetchReq,
+): Promise<MdwtHistoryFetchRsp> => {
+  return await request.postJson(`api/v1/mdwt-history-fetch`, req);
+};
+
+export const mdwtHistoryApply = async (
+  req: MdwtHistoryApplyReq,
+): Promise<MdwtHistoryApplyRsp> => {
+  return await request.postJson(`api/v1/mdwt-history-apply`, req);
 };

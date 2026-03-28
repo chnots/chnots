@@ -19,11 +19,17 @@ import type {
   ExcalidrawCommitRsp,
   ExcalidrawFetchReq,
   ExcalidrawFetchRsp,
+  ExcalidrawHistoryApplyReq,
+  ExcalidrawHistoryApplyRsp,
+  ExcalidrawHistoryFetchReq,
+  ExcalidrawHistoryFetchRsp,
   ExcalidrawLibraryCommitReq,
   ExcalidrawLibraryCommitRsp,
   ExcalidrawLibraryDataV1Dto,
   ExcalidrawLibraryFetchReq,
   ExcalidrawLibraryFetchRsp,
+  GraphHistoryListReq,
+  GraphHistoryListRsp,
 } from "../dto";
 
 const EXCALIDRAW_LIBRARY_OTID_KEY = "excalidraw-library-otid-v1";
@@ -72,6 +78,24 @@ export const excalidrawLibraryCommitInner = async (
   req: ExcalidrawLibraryCommitReq,
 ): Promise<ExcalidrawLibraryCommitRsp> => {
   return await request.postJson(`api/v1/excalidraw-library-commit`, req);
+};
+
+export const excalidrawHistoryListInner = async (
+  req: GraphHistoryListReq,
+): Promise<GraphHistoryListRsp> => {
+  return await request.postJson(`api/v1/excalidraw-history-list`, req);
+};
+
+export const excalidrawHistoryFetchInner = async (
+  req: ExcalidrawHistoryFetchReq,
+): Promise<ExcalidrawHistoryFetchRsp> => {
+  return await request.postJson(`api/v1/excalidraw-history-fetch`, req);
+};
+
+export const excalidrawHistoryApplyInner = async (
+  req: ExcalidrawHistoryApplyReq,
+): Promise<ExcalidrawHistoryApplyRsp> => {
+  return await request.postJson(`api/v1/excalidraw-history-apply`, req);
 };
 
 export const fetchExcalidrawLibrary = async (): Promise<

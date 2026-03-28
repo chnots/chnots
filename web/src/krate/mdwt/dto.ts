@@ -40,3 +40,33 @@ export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
   title: string;
 };
+
+export type MdwtHistoryListReq = {
+  otid: TID;
+};
+
+export type MdwtHistoryVersion = {
+  tid: TID;
+};
+
+export type MdwtHistoryListRsp = {
+  versions: MdwtHistoryVersion[];
+};
+
+export type MdwtHistoryFetchReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type MdwtHistoryFetchRsp = {
+  content?: DbText;
+};
+
+export type MdwtHistoryApplyReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type MdwtHistoryApplyRsp = {
+  content?: DbText;
+};

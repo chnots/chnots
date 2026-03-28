@@ -39,3 +39,51 @@ export type MindElixirLoadReq = {
 export type MindElixirLoadRsp = {
   data?: MindElixirDataV2Dto;
 };
+
+export type GraphHistoryListReq = {
+  otid: TID;
+};
+
+export type GraphHistoryVersion = {
+  tid: TID;
+};
+
+export type GraphHistoryListRsp = {
+  versions: GraphHistoryVersion[];
+};
+
+export type ExcalidrawHistoryFetchReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type ExcalidrawHistoryFetchRsp = {
+  data?: ExcalidrawDataV2Dto;
+};
+
+export type ExcalidrawHistoryApplyReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type ExcalidrawHistoryApplyRsp = {
+  data?: ExcalidrawDataV2Dto;
+};
+
+export type MindElixirHistoryFetchReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type MindElixirHistoryFetchRsp = {
+  data?: MindElixirDataV2Dto;
+};
+
+export type MindElixirHistoryApplyReq = {
+  otid: TID;
+  tid: TID;
+};
+
+export type MindElixirHistoryApplyRsp = {
+  data?: MindElixirDataV2Dto;
+};
