@@ -315,6 +315,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
             <MdwtChnot
               otid={threadOtid}
               fullscreen={false}
+              disableHeaderActions={true}
               onPostSave={handlePostSave}
               content={mdwtMap[threadOtid]?.content ?? ""}
               placeholder="Thread Title"

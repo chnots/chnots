@@ -29,11 +29,13 @@ const RichMdwt = ({
   otid,
   readonly,
   content: initialContent,
+  disableHeaderActions,
 }: {
   onPostSave: (arg: PostSaveArg) => Promise<void>;
   otid: TID;
   readonly?: boolean;
   content?: string;
+  disableHeaderActions?: boolean;
 }) => {
   const { currentKSpace } = useKSpaceStore((e) => {
     return {
@@ -82,6 +84,7 @@ const RichMdwt = ({
           onPostSave={onPostSave}
           content={initialContent}
           fillParentHeight={true}
+          disableHeaderActions={disableHeaderActions}
           fullscreen={false}
           onSetFullscreen={() => {}}
           onContentChange={handleContentChange}

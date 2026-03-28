@@ -319,6 +319,7 @@ const SortableRichBlock = ({
           <MdwtChnot
             otid={props.otid}
             fullscreen={false}
+            disableHeaderActions={true}
             onPostSave={async (arg) => {
               await handlePostSave({ ...arg, kind: kind }, true);
             }}

@@ -1,14 +1,18 @@
+import dayjs from "dayjs";
 import { FileImage, Image } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/common/component/ui/button";
 import { SaveState } from "@/common/types";
 import {
   fetchMindExilir,
   type MindElixirChnotData,
+  mindElixirHistoryApplyInner,
+  mindElixirHistoryFetchInner,
+  mindElixirHistoryListInner,
   saveMindExilir,
 } from "@/krate/graph/mind-elixir/service";
 import Fullscreen from "./fullscreen";
 import "mind-elixir/style.css";
-import { Button } from "@/common/component/ui/button";
 import MindElixirReact, {
   type MindElixirData,
   type MindElixirReactProps,
@@ -16,10 +20,12 @@ import MindElixirReact, {
 } from "@/krate/graph/mind-elixir";
 import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
 import { kfileUpload } from "@/krate/kfile/service";
+import { tidToDate } from "@/lib/date-utils";
 import { genTID, genUID } from "@/lib/id_util";
 import { BASE_URL } from "@/lib/request";
 import { ChnotKind } from "../../po";
 import { chnotHeadStore } from "../../store";
+import HistoryHeaderActions from "../header/chnot-history-header-actions";
 import type { RichPropProps } from "./rich-mdwt-side";
 
 const MindMapChnot = ({
@@ -32,10 +38,19 @@ const MindMapChnot = ({
   disableHeaderActions,
 }: RichPropProps & { showEditWhenEmpty?: boolean }) => {
   const [data, setData] = useState<MindElixirData>();
+  const [historyVersions, setHistoryVersions] = useState<number[]>([]);
+  const [previewTid, setPreviewTid] = useState<number | undefined>(undefined);
+  const [previewData, setPreviewData] = useState<MindElixirData | undefined>(
+    undefined,
+  );
   const savingFlag = useRef<boolean>(false);
   const mindELixirRef = useRef<MindElixirReactRef>(null);
   const dataCacheRef = useRef<MindElixirData>(undefined);
   const [loading, setLoading] = useState<boolean>(false);
+  const formatTid = useCallback((tid: number) => {
+    const date = tidToDate(tid);
+    return date ? dayjs(date).format("YYMM-DD HH:mm:ss") : String(tid);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -125,13 +140,66 @@ const MindMapChnot = ({
     URL.revokeObjectURL(url);
   }, []);
 
+  const loadHistoryList = useCallback(async () => {
+    const rsp = await mindElixirHistoryListInner({ otid });
+    setHistoryVersions(rsp.versions.map((v) => v.tid));
+  }, [otid]);
+
+  const viewHistory = useCallback(
+    async (tid: number) => {
+      const rsp = await mindElixirHistoryFetchInner({ otid, tid });
+      if (!rsp.data) {
+        return;
+      }
+      setPreviewTid(tid);
+      setPreviewData(rsp.data);
+    },
+    [otid],
+  );
+
+  const leavePreview = useCallback(() => {
+    setPreviewTid(undefined);
+    setPreviewData(undefined);
+  }, []);
+
+  const applyHistory = useCallback(async () => {
+    if (!previewTid) {
+      return;
+    }
+    const rsp = await mindElixirHistoryApplyInner({
+      otid,
+      tid: previewTid,
+    });
+    if (rsp.data) {
+      setData(rsp.data);
+      dataCacheRef.current = rsp.data;
+    }
+    leavePreview();
+  }, [otid, previewTid, leavePreview]);
+
   useEffect(() => {
     if (disableHeaderActions) {
       return;
     }
     const key = `mindmap-${otid}`;
+    const historyActions = (
+      <HistoryHeaderActions
+        versions={historyVersions}
+        previewing={previewData !== undefined}
+        onOpenHistory={() => {
+          void loadHistoryList();
+        }}
+        formatVersion={(tid) => formatTid(tid)}
+        getVersionKey={(tid) => tid}
+        onViewVersion={(tid) => viewHistory(tid)}
+        onApply={applyHistory}
+        onLatest={leavePreview}
+      />
+    );
+
     const headerActions = (
       <>
+        {historyActions}
         <Button
           variant="ghost"
           size="icon"
@@ -158,7 +226,20 @@ const MindMapChnot = ({
     return () => {
       chnotHeadStore.getState().unregisterHeaderActions(key);
     };
-  }, [otid, data, handleExportSvg, handleExportPng, disableHeaderActions]);
+  }, [
+    otid,
+    data,
+    handleExportSvg,
+    handleExportPng,
+    disableHeaderActions,
+    previewData,
+    historyVersions,
+    formatTid,
+    loadHistoryList,
+    viewHistory,
+    applyHistory,
+    leavePreview,
+  ]);
 
   const options = useMemo<MindElixirReactProps>(() => {
     return {
@@ -223,7 +304,11 @@ const MindMapChnot = ({
   return (
     <div className="w-full flex flex-col h-full">
       {readonly ? (
-        data ? (
+        previewData ? (
+          <div className="flex h-full justify-center items-center w-full">
+            <MindElixirPreview data={previewData} />
+          </div>
+        ) : data ? (
           <div className="flex h-full justify-center items-center w-full">
             <MindElixirPreview data={data} />
           </div>
@@ -245,12 +330,18 @@ const MindMapChnot = ({
             </div>
           )
         )
+      ) : previewData ? (
+        <MindElixirPreview data={previewData} />
       ) : (
         <MindElixirReact {...options} />
       )}
       {fullscreen && (
         <Fullscreen onSetFullscreen={handleSetFullscreen}>
-          <MindElixirReact {...options} />
+          {previewData ? (
+            <MindElixirPreview data={previewData} />
+          ) : (
+            <MindElixirReact {...options} />
+          )}
         </Fullscreen>
       )}
     </div>

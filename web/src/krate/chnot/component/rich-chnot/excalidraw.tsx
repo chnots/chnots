@@ -1,4 +1,5 @@
 import { exportToBlob, exportToSvg } from "@excalidraw/excalidraw";
+import dayjs from "dayjs";
 import { FileImage, Image } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/common/component/ui/button";
@@ -7,14 +8,19 @@ import ExcalidrawEditor from "@/krate/graph/excalidraw/component/excalidraw-edit
 import ExcalidrawPreview from "@/krate/graph/excalidraw/component/excalidraw-preview";
 import {
   type ExcalidrawChnotState,
+  excalidrawHistoryApplyInner,
+  excalidrawHistoryFetchInner,
+  excalidrawHistoryListInner,
   fetchExcalidraw,
   type SaveFileCache,
   saveExcalidraw,
   unionFileSaved,
 } from "@/krate/graph/excalidraw/service";
+import { tidToDate } from "@/lib/date-utils";
 import { ChnotKind } from "../../po";
 import { chnotHeadStore } from "../../store";
 import Fullscreen from "./fullscreen";
+import HistoryHeaderActions from "../header/chnot-history-header-actions";
 import type { RichPropProps } from "./rich-mdwt-side";
 
 const ExcalidrawChnot = ({
@@ -29,7 +35,16 @@ const ExcalidrawChnot = ({
   showEditWhenEmpty: boolean;
 }) => {
   const [state, setState] = useState<ExcalidrawChnotState>();
+  const [historyVersions, setHistoryVersions] = useState<number[]>([]);
+  const [previewTid, setPreviewTid] = useState<number | undefined>(undefined);
+  const [previewState, setPreviewState] = useState<
+    ExcalidrawChnotState | undefined
+  >(undefined);
   const savedFilesRef = useRef(new Map<string, SaveFileCache>());
+  const formatTid = useCallback((tid: number) => {
+    const date = tidToDate(tid);
+    return date ? dayjs(date).format("YYMM-DD HH:mm:ss") : String(tid);
+  }, []);
 
   useEffect(() => {
     fetchExcalidraw(otid, savedFilesRef.current)
@@ -110,13 +125,71 @@ const ExcalidrawChnot = ({
     URL.revokeObjectURL(url);
   }, [state]);
 
+  const loadHistoryList = useCallback(async () => {
+    const rsp = await excalidrawHistoryListInner({ otid });
+    setHistoryVersions(rsp.versions.map((v) => v.tid));
+  }, [otid]);
+
+  const viewHistory = useCallback(
+    async (tid: number) => {
+      const rsp = await excalidrawHistoryFetchInner({ otid, tid });
+      if (!rsp.data) {
+        return;
+      }
+      setPreviewTid(tid);
+      setPreviewState({
+        otid,
+        elements: (rsp.data as any).elements,
+        appState: rsp.data as any,
+        files: undefined,
+      });
+    },
+    [otid],
+  );
+
+  const leavePreview = useCallback(() => {
+    setPreviewTid(undefined);
+    setPreviewState(undefined);
+  }, []);
+
+  const applyHistory = useCallback(async () => {
+    if (!previewTid) {
+      return;
+    }
+    await excalidrawHistoryApplyInner({
+      otid,
+      tid: previewTid,
+    });
+    const latest = await fetchExcalidraw(otid, savedFilesRef.current);
+    if (latest) {
+      setState(latest);
+    }
+    leavePreview();
+  }, [otid, previewTid, leavePreview]);
+
   useEffect(() => {
     if (disableHeaderActions) {
       return;
     }
     const key = `excalidraw-${otid}`;
+    const historyActions = (
+      <HistoryHeaderActions
+        versions={historyVersions}
+        previewing={previewState !== undefined}
+        onOpenHistory={() => {
+          void loadHistoryList();
+        }}
+        formatVersion={(tid) => formatTid(tid)}
+        getVersionKey={(tid) => tid}
+        onViewVersion={(tid) => viewHistory(tid)}
+        onApply={applyHistory}
+        onLatest={leavePreview}
+      />
+    );
+
     const headerActions = (
       <>
+        {historyActions}
         <Button
           variant="ghost"
           size="icon"
@@ -143,11 +216,28 @@ const ExcalidrawChnot = ({
     return () => {
       chnotHeadStore.getState().unregisterHeaderActions(key);
     };
-  }, [otid, state, handleExportSvg, handleExportPng, disableHeaderActions]);
+  }, [
+    otid,
+    state,
+    handleExportSvg,
+    handleExportPng,
+    disableHeaderActions,
+    previewState,
+    historyVersions,
+    formatTid,
+    loadHistoryList,
+    viewHistory,
+    applyHistory,
+    leavePreview,
+  ]);
 
   return (
     <div className="w-full flex flex-col">
-      {readonly ? (
+      {previewState ? (
+        <div className="flex h-auto justify-center items-center w-full">
+          <ExcalidrawPreview state={previewState} className="w-8/12" />
+        </div>
+      ) : readonly ? (
         state ? (
           <div className="flex h-auto justify-center items-center w-full">
             <ExcalidrawPreview state={state} className="w-8/12" />
@@ -171,11 +261,17 @@ const ExcalidrawChnot = ({
       )}
       {fullscreen && (
         <Fullscreen onSetFullscreen={onSetFullscreen}>
-          <ExcalidrawEditor
-            otid={otid}
-            readOnly={false}
-            onSave={directlySave}
-          />
+          {previewState ? (
+            <div className="flex h-auto justify-center items-center w-full">
+              <ExcalidrawPreview state={previewState} className="w-8/12" />
+            </div>
+          ) : (
+            <ExcalidrawEditor
+              otid={otid}
+              readOnly={false}
+              onSave={directlySave}
+            />
+          )}
         </Fullscreen>
       )}
     </div>

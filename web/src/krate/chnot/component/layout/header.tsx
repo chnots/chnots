@@ -116,9 +116,13 @@ const ChnotHeadbar = ({
           </PopoverContent>
         </Popover>
       )}
-      {headerActions.map((ha) => (
-        <div key={ha.key}>{ha.actions}</div>
-      ))}
+      {headerActions.length > 0 && (
+        <div className="ml-auto flex items-center gap-1">
+          {headerActions.map((ha) => (
+            <div key={ha.key}>{ha.actions}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
