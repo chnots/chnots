@@ -1,5 +1,6 @@
 # Chnot History Feature Plan
 
+
 ## Goal
 
 Add history browsing and version apply capability for `mdwt`, `excalidraw`, `mindmap`, and `kfile` in Chnot editing flows.
