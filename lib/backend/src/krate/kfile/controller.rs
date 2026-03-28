@@ -73,9 +73,48 @@ async fn kfile_inline_upload(
         .into()
 }
 
+async fn kfile_history_list(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<KfileHistoryListReq>,
+) -> KResponse<KfileHistoryListRsp> {
+    state
+        .mapper
+        .kfile_history_list(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn kfile_history_fetch(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<KfileHistoryFetchReq>,
+) -> KResponse<KfileHistoryFetchRsp> {
+    state
+        .mapper
+        .kfile_history_fetch(kreq(headers, req))
+        .await
+        .into()
+}
+
+async fn kfile_history_apply(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<KfileHistoryApplyReq>,
+) -> KResponse<KfileHistoryApplyRsp> {
+    state
+        .mapper
+        .kfile_history_apply(kreq(headers, req))
+        .await
+        .into()
+}
+
 pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/kfile-meta-fetch", post(kfile_meta_fetch))
+        .route("/api/v1/kfile-history-list", post(kfile_history_list))
+        .route("/api/v1/kfile-history-fetch", post(kfile_history_fetch))
+        .route("/api/v1/kfile-history-apply", post(kfile_history_apply))
         .route(
             "/api/v1/kfile-asset-chunk-upload",
             post(|headers, state, mp| async {

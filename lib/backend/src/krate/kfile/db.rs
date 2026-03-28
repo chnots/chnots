@@ -9,7 +9,7 @@ use crate::{
             helper::{Ddls, print_ddls},
         },
     },
-    model::dto::KReq,
+    model::{dto::KReq, otid_table::OtidSearchType},
     util::vec_util::RemoveNth,
 };
 use chin_tools::EResult;
@@ -234,6 +234,81 @@ impl KFileMapper for KDb {
 
     async fn po_inline_kfile_commit(&self, pos: Vec<InlineKFile>) -> chin_tools::AResult<usize> {
         self.po_sid_insert(pos).await
+    }
+
+    async fn kfile_history_list(
+        &self,
+        req: KReq<KfileHistoryListReq>,
+    ) -> chin_tools::AResult<KfileHistoryListRsp> {
+        let conn = self.conn().await?;
+        let versions = conn
+            .as_executor()
+            .po_otid_tid_list::<KFileMeta, _>([req.body.otid], OtidSearchType::Hist)
+            .await?
+            .iter()
+            .map(|e| KfileHistoryVersion { tid: *e })
+            .collect();
+
+        Ok(KfileHistoryListRsp { versions })
+    }
+
+    async fn kfile_history_fetch(
+        &self,
+        req: KReq<KfileHistoryFetchReq>,
+    ) -> chin_tools::AResult<KfileHistoryFetchRsp> {
+        let conn = self.conn().await?;
+        let meta = conn
+            .as_executor()
+            .po_otid_fetch_by_tid::<KFileMeta>(req.body.tid, OtidSearchType::Hist)
+            .await?;
+        let meta = meta.filter(|m| m.otid == req.body.otid);
+        let file = match &meta {
+            Some(meta) if meta.inline => {
+                conn.qry_opt(InlineKFile::pkey_reader(meta.sid.clone()), |row| {
+                    (&row).try_into()
+                })
+                .await?
+            }
+            _ => None,
+        };
+
+        Ok(KfileHistoryFetchRsp { meta, file })
+    }
+
+    async fn kfile_history_apply(
+        &self,
+        req: KReq<KfileHistoryApplyReq>,
+    ) -> chin_tools::AResult<KfileHistoryApplyRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        let meta = tx
+            .as_executor()
+            .po_otid_fetch_by_tid::<KFileMeta>(req.body.tid, OtidSearchType::Hist)
+            .await?;
+        let Some(meta) = meta.filter(|m| m.otid == req.body.otid) else {
+            return Ok(KfileHistoryApplyRsp {
+                meta: None,
+                file: None,
+            });
+        };
+
+        let file = if meta.inline {
+            tx.as_executor()
+                .qry_opt(InlineKFile::pkey_reader(meta.sid.clone()), |row| {
+                    (&row).try_into()
+                })
+                .await?
+        } else {
+            None
+        };
+
+        let meta = tx.po_otid_commit_by_tid::<KFileMeta>(meta.tid).await?;
+        tx.cmt().await?;
+
+        Ok(KfileHistoryApplyRsp {
+            meta: Some(meta),
+            file,
+        })
     }
 }
 

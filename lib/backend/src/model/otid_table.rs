@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, ops::Deref};
 
-use chin_sql::{SqlBuilder, SqlDeleter, Wheres, time_type::TID};
+use chin_sql::{OrderBy, SqlBuilder, SqlDeleter, Wheres, time_type::TID};
 use chin_tools::AResult;
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
@@ -326,7 +326,8 @@ impl KDbExecutor<'_> {
                         .seg("union")
                         .seg("select * from")
                         .seg(T::table_name(false))
-                        .r#where(Wheres::r#in("otid", vs)),
+                        .r#where(Wheres::r#in("otid", vs))
+                        .order_by(vec![OrderBy::Desc("tid".into())]),
                     |row| {
                         let tid: TID = row.try_get("tid")?;
                         Ok(tid)
@@ -343,7 +344,8 @@ impl KDbExecutor<'_> {
                             OtidSearchType::Hist => true,
                             OtidSearchType::Both => unreachable!(),
                         }))
-                        .r#where(Wheres::r#in("otid", vs)),
+                        .r#where(Wheres::r#in("otid", vs))
+                        .order_by(vec![OrderBy::Desc("tid".into())]),
                     |row| {
                         let tid: TID = row.try_get("tid")?;
                         Ok(tid)

@@ -3,8 +3,12 @@ use std::collections::BTreeMap;
 use crate::{
     krate::graph::{
         ExcalidrawDataV2, ExcalidrawDataV2Dto, ExcalidrawDataV2Po, ExcalidrawFetchRsp,
-        ExcalidrawLibraryFetchRsp, ExcalidrawLibraryMetaV1, GetKeys, GraphData, GraphMeta,
-        MindElixirDataV1Po, MindElixirDataV1PoMeta, MindElixirLoadRsp, mapper::GraphMapper,
+        ExcalidrawHistoryApplyReq, ExcalidrawHistoryApplyRsp, ExcalidrawHistoryFetchReq,
+        ExcalidrawHistoryFetchRsp, ExcalidrawLibraryFetchRsp, ExcalidrawLibraryMetaV1, GetKeys,
+        GraphData, GraphHistoryListReq, GraphHistoryListRsp, GraphHistoryVersion, GraphKind,
+        GraphMeta, MindElixirDataV1Po, MindElixirDataV1PoMeta, MindElixirHistoryApplyReq,
+        MindElixirHistoryApplyRsp, MindElixirHistoryFetchReq, MindElixirHistoryFetchRsp,
+        MindElixirLoadRsp, mapper::GraphMapper,
     },
     mapper::{
         Curd,
@@ -13,9 +17,9 @@ use crate::{
             helper::{Ddls, print_ddls},
         },
     },
-    model::dto::KReq,
+    model::{dto::KReq, otid_table::OtidSearchType},
 };
-use chin_tools::EResult;
+use chin_tools::{AResult, EResult};
 use serde_json::Value;
 
 use crate::util::digestutil::blake3_sum16;
@@ -44,6 +48,84 @@ impl KDbExecutor<'_> {
         let c = c.into_iter().map(|e| (e.sid.to_string(), e)).collect();
         Ok(c)
     }
+
+    async fn load_excalidraw_data_by_meta_content(
+        &self,
+        content: &str,
+    ) -> anyhow::Result<ExcalidrawDataV2Dto> {
+        let content: ExcalidrawDataV2<String> = serde_json::from_str(content)?;
+        let keys = content.get_keys();
+        let data = self
+            .query_graph_data(keys.iter().map(|e| e.as_str()).collect())
+            .await?;
+
+        let mut others: BTreeMap<String, Value> = BTreeMap::new();
+        for (k, v) in content.others {
+            others.insert(
+                k,
+                serde_json::from_str(
+                    data.get(&v)
+                        .ok_or(anyhow::anyhow!("unable to find {}", v))?
+                        .content
+                        .as_str(),
+                )?,
+            );
+        }
+
+        let mut elements = vec![];
+        for ele in content.elements {
+            elements.push(serde_json::from_str(
+                data.get(&ele)
+                    .ok_or(anyhow::anyhow!("unable to find {}", ele))?
+                    .content
+                    .as_str(),
+            )?);
+        }
+
+        Ok(ExcalidrawDataV2Dto(ExcalidrawDataV2 { others, elements }))
+    }
+
+    async fn load_mind_elixir_po_by_meta_content(
+        &self,
+        content: &str,
+    ) -> anyhow::Result<MindElixirDataV1Po> {
+        let meta: MindElixirDataV1PoMeta = serde_json::from_str(content)?;
+        let data = self
+            .query_graph_data(meta.keys.iter().map(|e| e.as_str()).collect())
+            .await?
+            .into_iter()
+            .map(|(k, v)| (k, v.content.into()))
+            .collect();
+
+        Ok(MindElixirDataV1Po { meta, data })
+    }
+
+    async fn query_graph_history_versions(&self, otid: TID) -> AResult<Vec<GraphHistoryVersion>> {
+        let versions = self
+            .po_otid_tid_list::<GraphMeta, _>([otid], OtidSearchType::Hist)
+            .await?
+            .into_iter()
+            .map(|e| GraphHistoryVersion { tid: e })
+            .collect();
+
+        Ok(versions)
+    }
+
+    async fn query_graph_history_meta_by_tid<F>(
+        &self,
+        otid: TID,
+        tid: TID,
+        kind_match: F,
+    ) -> AResult<Option<GraphMeta>>
+    where
+        F: Fn(&GraphKind) -> bool,
+    {
+        let meta = self
+            .po_otid_fetch_by_tid::<GraphMeta>(tid, OtidSearchType::Hist)
+            .await?;
+
+        Ok(meta.filter(|m| m.otid == otid && kind_match(&m.kind)))
+    }
 }
 
 impl KDbTx<'_> {
@@ -62,17 +144,23 @@ impl KDbTx<'_> {
         Ok(())
     }
 
-    pub async fn excalidraw_commit(&self, po: ExcalidrawDataV2Po, otid: TID) -> EResult {
+    async fn po_insert_graph_snapshot(
+        &self,
+        otid: TID,
+        kind: GraphKind,
+        meta_content: String,
+        data: BTreeMap<String, String>,
+    ) -> EResult {
         self.po_insert_graph_meta(GraphMeta {
             otid,
-            // TODO
             archor: false,
-            kind: super::GraphKind::ExcalidrawV2,
-            content: serde_json::to_string(&po.meta)?.into(),
+            kind,
+            content: meta_content.into(),
             tid: TID::now(),
         })
         .await?;
-        for (k, v) in po.data {
+
+        for (k, v) in data {
             self.po_insert_graph_data(GraphData {
                 sid: k.try_into()?,
                 tid: TID::now(),
@@ -80,6 +168,19 @@ impl KDbTx<'_> {
             })
             .await?;
         }
+
+        Ok(())
+    }
+
+    pub async fn excalidraw_commit(&self, po: ExcalidrawDataV2Po, otid: TID) -> EResult {
+        self.po_insert_graph_snapshot(
+            otid,
+            super::GraphKind::ExcalidrawV2,
+            serde_json::to_string(&po.meta)?,
+            po.data,
+        )
+        .await?;
+
         Ok(())
     }
 
@@ -155,39 +256,74 @@ impl GraphMapper for KDb {
         let Some(meta) = meta else {
             return Ok(ExcalidrawFetchRsp { data: None });
         };
-
-        let content: ExcalidrawDataV2<String> = serde_json::from_str(meta.content.as_str())?;
-        let keys = content.get_keys();
         let data = conn
             .as_executor()
-            .query_graph_data(keys.iter().map(|e| e.as_str()).collect())
+            .load_excalidraw_data_by_meta_content(meta.content.as_str())
             .await?;
-        let mut others: BTreeMap<String, Value> = BTreeMap::new();
-        for (k, v) in content.others {
-            others.insert(
-                k,
-                serde_json::from_str(
-                    data.get(&v)
-                        .ok_or(anyhow::anyhow!("unable to find {}", v))?
-                        .content
-                        .as_str(),
-                )?,
-            );
-        }
 
-        let mut elements = vec![];
-        for ele in content.elements {
-            elements.push(serde_json::from_str(
-                data.get(&ele)
-                    .ok_or(anyhow::anyhow!("unable to find {}", ele))?
-                    .content
-                    .as_str(),
-            )?);
-        }
+        Ok(ExcalidrawFetchRsp { data: Some(data) })
+    }
 
-        Ok(ExcalidrawFetchRsp {
-            data: Some(ExcalidrawDataV2Dto(ExcalidrawDataV2 { others, elements })),
-        })
+    async fn excalidraw_history_list(
+        &self,
+        req: KReq<GraphHistoryListReq>,
+    ) -> AResult<GraphHistoryListRsp> {
+        let conn = self.conn().await?;
+        let versions = conn
+            .as_executor()
+            .query_graph_history_versions(req.body.otid)
+            .await?;
+
+        Ok(GraphHistoryListRsp { versions })
+    }
+
+    async fn excalidraw_history_fetch(
+        &self,
+        req: KReq<ExcalidrawHistoryFetchReq>,
+    ) -> AResult<ExcalidrawHistoryFetchRsp> {
+        let conn = self.conn().await?;
+        let meta = conn
+            .as_executor()
+            .query_graph_history_meta_by_tid(req.body.otid, req.body.tid, |k| {
+                matches!(k, GraphKind::ExcalidrawV2)
+            })
+            .await?;
+        let Some(meta) = meta else {
+            return Ok(ExcalidrawHistoryFetchRsp { data: None });
+        };
+        let data = conn
+            .as_executor()
+            .load_excalidraw_data_by_meta_content(meta.content.as_str())
+            .await?;
+
+        Ok(ExcalidrawHistoryFetchRsp { data: Some(data) })
+    }
+
+    async fn excalidraw_history_apply(
+        &self,
+        req: KReq<ExcalidrawHistoryApplyReq>,
+    ) -> AResult<ExcalidrawHistoryApplyRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+
+        let history = tx
+            .as_executor()
+            .query_graph_history_meta_by_tid(req.body.otid, req.body.tid, |k| {
+                matches!(k, GraphKind::ExcalidrawV2)
+            })
+            .await?;
+        let Some(history) = history else {
+            return Ok(ExcalidrawHistoryApplyRsp { data: None });
+        };
+
+        let data = tx
+            .as_executor()
+            .load_excalidraw_data_by_meta_content(history.content.as_str())
+            .await?;
+        tx.po_otid_commit_by_tid::<GraphMeta>(history.tid).await?;
+        tx.cmt().await?;
+
+        Ok(ExcalidrawHistoryApplyRsp { data: Some(data) })
     }
 
     async fn excalidraw_commit(
@@ -254,19 +390,80 @@ impl GraphMapper for KDb {
         let Some(meta) = meta else {
             return Ok(MindElixirLoadRsp { data: None });
         };
-
-        let meta: MindElixirDataV1PoMeta = serde_json::from_str(meta.content.as_str())?;
-        let data = conn
+        let po = conn
             .as_executor()
-            .query_graph_data(meta.keys.iter().map(|e| e.as_str()).collect())
-            .await?
-            .into_iter()
-            .map(|(k, v)| (k, v.content.into()))
-            .collect();
-
-        let po = MindElixirDataV1Po { meta, data };
+            .load_mind_elixir_po_by_meta_content(meta.content.as_str())
+            .await?;
 
         Ok(MindElixirLoadRsp {
+            data: Some(po.try_into()?),
+        })
+    }
+
+    async fn mind_elixir_history_list(
+        &self,
+        req: KReq<GraphHistoryListReq>,
+    ) -> AResult<GraphHistoryListRsp> {
+        let conn = self.conn().await?;
+        let versions = conn
+            .as_executor()
+            .query_graph_history_versions(req.body.otid)
+            .await?;
+
+        Ok(GraphHistoryListRsp { versions })
+    }
+
+    async fn mind_elixir_history_fetch(
+        &self,
+        req: KReq<MindElixirHistoryFetchReq>,
+    ) -> AResult<MindElixirHistoryFetchRsp> {
+        let conn = self.conn().await?;
+        let meta = conn
+            .as_executor()
+            .query_graph_history_meta_by_tid(req.body.otid, req.body.tid, |k| {
+                matches!(k, GraphKind::MindElixirV1)
+            })
+            .await?;
+        let Some(meta) = meta else {
+            return Ok(MindElixirHistoryFetchRsp { data: None });
+        };
+
+        let po = conn
+            .as_executor()
+            .load_mind_elixir_po_by_meta_content(meta.content.as_str())
+            .await?;
+
+        Ok(MindElixirHistoryFetchRsp {
+            data: Some(po.try_into()?),
+        })
+    }
+
+    async fn mind_elixir_history_apply(
+        &self,
+        req: KReq<MindElixirHistoryApplyReq>,
+    ) -> AResult<MindElixirHistoryApplyRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+
+        let history = tx
+            .as_executor()
+            .query_graph_history_meta_by_tid(req.body.otid, req.body.tid, |k| {
+                matches!(k, GraphKind::MindElixirV1)
+            })
+            .await?;
+        let Some(history) = history else {
+            return Ok(MindElixirHistoryApplyRsp { data: None });
+        };
+
+        let po = tx
+            .as_executor()
+            .load_mind_elixir_po_by_meta_content(history.content.as_str())
+            .await?;
+
+        tx.po_otid_commit_by_tid::<GraphMeta>(history.tid).await?;
+        tx.cmt().await?;
+
+        Ok(MindElixirHistoryApplyRsp {
             data: Some(po.try_into()?),
         })
     }
@@ -280,23 +477,13 @@ impl GraphMapper for KDb {
 
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
-        tx.po_insert_graph_meta(GraphMeta {
+        tx.po_insert_graph_snapshot(
             otid,
-            // TODO
-            archor: false,
-            kind: super::GraphKind::MindElixirV1,
-            content: serde_json::to_string(&po.meta)?.into(),
-            tid: TID::now(),
-        })
+            super::GraphKind::MindElixirV1,
+            serde_json::to_string(&po.meta)?,
+            po.data,
+        )
         .await?;
-        for (k, v) in po.data {
-            tx.po_insert_graph_data(GraphData {
-                sid: k.try_into()?,
-                tid: TID::now(),
-                content: v.into(),
-            })
-            .await?;
-        }
         tx.cmt().await?;
 
         Ok(super::MindElixirCommitRsp {})

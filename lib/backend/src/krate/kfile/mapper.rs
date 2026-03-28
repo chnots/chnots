@@ -33,6 +33,21 @@ pub trait KFileMapper {
         req: KReq<InlineKFileDownloadReq>,
     ) -> anyhow::Result<InlineKFileDownloadRsp>;
 
+    async fn kfile_history_list(
+        &self,
+        req: KReq<KfileHistoryListReq>,
+    ) -> AResult<KfileHistoryListRsp>;
+
+    async fn kfile_history_fetch(
+        &self,
+        req: KReq<KfileHistoryFetchReq>,
+    ) -> AResult<KfileHistoryFetchRsp>;
+
+    async fn kfile_history_apply(
+        &self,
+        req: KReq<KfileHistoryApplyReq>,
+    ) -> AResult<KfileHistoryApplyRsp>;
+
     async fn ensure_table_kfile(&self) -> EResult;
 }
 
@@ -79,5 +94,26 @@ impl KFileMapper for MapperType {
         sid: Varchar<100>,
     ) -> anyhow::Result<KfileMetaFetchRsp> {
         expand_mt_branch!(self.query_kfile_meta_by_sid(sid))
+    }
+
+    async fn kfile_history_list(
+        &self,
+        req: KReq<KfileHistoryListReq>,
+    ) -> AResult<KfileHistoryListRsp> {
+        expand_mt_branch!(self.kfile_history_list(req))
+    }
+
+    async fn kfile_history_fetch(
+        &self,
+        req: KReq<KfileHistoryFetchReq>,
+    ) -> AResult<KfileHistoryFetchRsp> {
+        expand_mt_branch!(self.kfile_history_fetch(req))
+    }
+
+    async fn kfile_history_apply(
+        &self,
+        req: KReq<KfileHistoryApplyReq>,
+    ) -> AResult<KfileHistoryApplyRsp> {
+        expand_mt_branch!(self.kfile_history_apply(req))
     }
 }

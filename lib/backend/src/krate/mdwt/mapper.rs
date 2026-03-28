@@ -17,6 +17,19 @@ pub trait MdwtMapper {
     async fn ensure_table_mdwt(&self) -> EResult;
 
     async fn mdwt_list(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp>;
+
+    async fn mdwt_history_list(&self, req: KReq<MdwtHistoryListReq>)
+    -> AResult<MdwtHistoryListRsp>;
+
+    async fn mdwt_history_fetch(
+        &self,
+        req: KReq<MdwtHistoryFetchReq>,
+    ) -> AResult<MdwtHistoryFetchRsp>;
+
+    async fn mdwt_history_apply(
+        &self,
+        req: KReq<MdwtHistoryApplyReq>,
+    ) -> AResult<MdwtHistoryApplyRsp>;
 }
 
 impl MdwtMapper for MapperType {
@@ -45,5 +58,26 @@ impl MdwtMapper for MapperType {
 
     async fn mdwt_list(&self, req: KReq<MdwtRecordsReq>) -> AResult<MdwtRecordsRsp> {
         expand_mt_branch!(self.mdwt_list(req))
+    }
+
+    async fn mdwt_history_list(
+        &self,
+        req: KReq<MdwtHistoryListReq>,
+    ) -> AResult<MdwtHistoryListRsp> {
+        expand_mt_branch!(self.mdwt_history_list(req))
+    }
+
+    async fn mdwt_history_fetch(
+        &self,
+        req: KReq<MdwtHistoryFetchReq>,
+    ) -> AResult<MdwtHistoryFetchRsp> {
+        expand_mt_branch!(self.mdwt_history_fetch(req))
+    }
+
+    async fn mdwt_history_apply(
+        &self,
+        req: KReq<MdwtHistoryApplyReq>,
+    ) -> AResult<MdwtHistoryApplyRsp> {
+        expand_mt_branch!(self.mdwt_history_apply(req))
     }
 }

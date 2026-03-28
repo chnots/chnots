@@ -71,3 +71,62 @@ pub struct MindElixirLoadReq {
 pub struct MindElixirLoadRsp {
     pub data: Option<MindElixirDataV2Dto>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphHistoryListReq {
+    pub otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GraphHistoryVersion {
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct GraphHistoryListRsp {
+    pub versions: Vec<GraphHistoryVersion>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ExcalidrawHistoryFetchReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ExcalidrawHistoryFetchRsp {
+    pub data: Option<ExcalidrawDataV2Dto>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ExcalidrawHistoryApplyReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ExcalidrawHistoryApplyRsp {
+    pub data: Option<ExcalidrawDataV2Dto>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MindElixirHistoryFetchReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MindElixirHistoryFetchRsp {
+    pub data: Option<MindElixirDataV2Dto>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MindElixirHistoryApplyReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MindElixirHistoryApplyRsp {
+    pub data: Option<MindElixirDataV2Dto>,
+}

@@ -72,3 +72,40 @@ pub struct MdwtTagUpdateReq {
     pub content: Text,
     pub mdwt_otid: TID,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdwtHistoryListReq {
+    pub otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MdwtHistoryVersion {
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MdwtHistoryListRsp {
+    pub versions: Vec<MdwtHistoryVersion>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdwtHistoryFetchReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MdwtHistoryFetchRsp {
+    pub content: Option<Text>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdwtHistoryApplyReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MdwtHistoryApplyRsp {
+    pub content: Option<Text>,
+}

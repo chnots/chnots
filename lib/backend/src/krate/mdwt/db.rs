@@ -13,6 +13,7 @@ use crate::mapper::db::{
     KDbTransactionBehaiver, KDbTx,
 };
 use crate::model::dto::KReq;
+use crate::model::otid_table::OtidSearchType;
 use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
@@ -341,6 +342,59 @@ impl MdwtMapper for KDb {
 
         Ok(MdwtRecordsRsp {
             mdwt_map: recs.into_iter().map(|r| (r.otid, r)).collect(),
+        })
+    }
+
+    async fn mdwt_history_list(
+        &self,
+        req: KReq<MdwtHistoryListReq>,
+    ) -> AResult<MdwtHistoryListRsp> {
+        let conn = self.conn().await?;
+        let versions = conn
+            .as_executor()
+            .po_otid_tid_list::<MdwtRecord, _>([req.body.otid], OtidSearchType::Hist)
+            .await?
+            .iter()
+            .map(|e| MdwtHistoryVersion { tid: *e })
+            .collect();
+
+        Ok(MdwtHistoryListRsp { versions })
+    }
+
+    async fn mdwt_history_fetch(
+        &self,
+        req: KReq<MdwtHistoryFetchReq>,
+    ) -> AResult<MdwtHistoryFetchRsp> {
+        let record = self
+            .po_otid_fetch_by_tid::<MdwtRecord>(req.body.tid, OtidSearchType::Hist)
+            .await?;
+
+        Ok(MdwtHistoryFetchRsp {
+            content: record
+                .filter(|r| r.otid == req.body.otid)
+                .map(|r| r.content),
+        })
+    }
+
+    async fn mdwt_history_apply(
+        &self,
+        req: KReq<MdwtHistoryApplyReq>,
+    ) -> AResult<MdwtHistoryApplyRsp> {
+        let mut conn = self.conn().await?;
+        let tx = conn.transaction().await?;
+        let history = tx
+            .as_executor()
+            .po_otid_fetch_by_tid::<MdwtRecord>(req.body.tid, OtidSearchType::Hist)
+            .await?;
+        let Some(history) = history.filter(|r| r.otid == req.body.otid) else {
+            return Ok(MdwtHistoryApplyRsp { content: None });
+        };
+
+        let applied = tx.po_otid_commit_by_tid::<MdwtRecord>(history.tid).await?;
+        tx.cmt().await?;
+
+        Ok(MdwtHistoryApplyRsp {
+            content: Some(applied.content),
         })
     }
 

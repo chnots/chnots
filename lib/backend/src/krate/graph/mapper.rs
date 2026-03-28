@@ -27,6 +27,36 @@ pub trait GraphMapper {
         req: KReq<MindElixirCommitReq>,
     ) -> AResult<MindElixirCommitRsp>;
 
+    async fn excalidraw_history_list(
+        &self,
+        req: KReq<GraphHistoryListReq>,
+    ) -> AResult<GraphHistoryListRsp>;
+
+    async fn excalidraw_history_fetch(
+        &self,
+        req: KReq<ExcalidrawHistoryFetchReq>,
+    ) -> AResult<ExcalidrawHistoryFetchRsp>;
+
+    async fn excalidraw_history_apply(
+        &self,
+        req: KReq<ExcalidrawHistoryApplyReq>,
+    ) -> AResult<ExcalidrawHistoryApplyRsp>;
+
+    async fn mind_elixir_history_list(
+        &self,
+        req: KReq<GraphHistoryListReq>,
+    ) -> AResult<GraphHistoryListRsp>;
+
+    async fn mind_elixir_history_fetch(
+        &self,
+        req: KReq<MindElixirHistoryFetchReq>,
+    ) -> AResult<MindElixirHistoryFetchRsp>;
+
+    async fn mind_elixir_history_apply(
+        &self,
+        req: KReq<MindElixirHistoryApplyReq>,
+    ) -> AResult<MindElixirHistoryApplyRsp>;
+
     async fn ensure_table_graph(&self) -> EResult;
 }
 
@@ -76,6 +106,60 @@ impl GraphMapper for MapperType {
     ) -> AResult<MindElixirCommitRsp> {
         match self {
             MapperType::KDb(kdb) => kdb.mind_elixir_commit(req).await,
+        }
+    }
+
+    async fn excalidraw_history_list(
+        &self,
+        req: KReq<GraphHistoryListReq>,
+    ) -> AResult<GraphHistoryListRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.excalidraw_history_list(req).await,
+        }
+    }
+
+    async fn excalidraw_history_fetch(
+        &self,
+        req: KReq<ExcalidrawHistoryFetchReq>,
+    ) -> AResult<ExcalidrawHistoryFetchRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.excalidraw_history_fetch(req).await,
+        }
+    }
+
+    async fn excalidraw_history_apply(
+        &self,
+        req: KReq<ExcalidrawHistoryApplyReq>,
+    ) -> AResult<ExcalidrawHistoryApplyRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.excalidraw_history_apply(req).await,
+        }
+    }
+
+    async fn mind_elixir_history_list(
+        &self,
+        req: KReq<GraphHistoryListReq>,
+    ) -> AResult<GraphHistoryListRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.mind_elixir_history_list(req).await,
+        }
+    }
+
+    async fn mind_elixir_history_fetch(
+        &self,
+        req: KReq<MindElixirHistoryFetchReq>,
+    ) -> AResult<MindElixirHistoryFetchRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.mind_elixir_history_fetch(req).await,
+        }
+    }
+
+    async fn mind_elixir_history_apply(
+        &self,
+        req: KReq<MindElixirHistoryApplyReq>,
+    ) -> AResult<MindElixirHistoryApplyRsp> {
+        match self {
+            MapperType::KDb(kdb) => kdb.mind_elixir_history_apply(req).await,
         }
     }
 

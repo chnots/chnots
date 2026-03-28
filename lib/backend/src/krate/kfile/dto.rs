@@ -74,6 +74,45 @@ pub struct KfileMetaFetchRsp {
 
 pub const KFILE_ASSET_UPLOAD_BY_SID: &str = "/api/v1/kfile-asset-upload-by-sid";
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KfileHistoryListReq {
+    pub otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KfileHistoryVersion {
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KfileHistoryListRsp {
+    pub versions: Vec<KfileHistoryVersion>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KfileHistoryFetchReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KfileHistoryFetchRsp {
+    pub meta: Option<KFileMeta>,
+    pub file: Option<InlineKFile>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KfileHistoryApplyReq {
+    pub otid: TID,
+    pub tid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct KfileHistoryApplyRsp {
+    pub meta: Option<KFileMeta>,
+    pub file: Option<InlineKFile>,
+}
+
 #[test]
 fn tst() {
     let c = KfileMetaFetchReqId::Otid(100.try_into().unwrap());

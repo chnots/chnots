@@ -1,6 +1,5 @@
 use crate::controller::KResponse;
 use crate::krate::mdwt::mapper::MdwtMapper;
-use crate::krate::toent::ToentSearchReq;
 use crate::model::dto::kreq;
 use crate::{app::ShareAppState, krate::toent::cache::ToentCache};
 use axum::{Json, Router, extract::State, http::HeaderMap, routing::post};
@@ -12,6 +11,9 @@ pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/mdwt-commit", post(mdwt_commit))
         .route("/api/v1/mdwt-list", post(mdwt_list))
+        .route("/api/v1/mdwt-history-list", post(mdwt_history_list))
+        .route("/api/v1/mdwt-history-fetch", post(mdwt_history_fetch))
+        .route("/api/v1/mdwt-history-apply", post(mdwt_history_apply))
         .route("/api/v1/mdwt-tag-list", post(mdwt_tag_list))
         .route("/api/v1/mdwt-tag-name-list", post(mdwt_tag_name_list))
         .route("/api/v1/all-mdwt-tag-refresh", post(mdwt_tag_refresh))
@@ -44,6 +46,30 @@ async fn mdwt_list(
     Json(req): Json<MdwtRecordsReq>,
 ) -> KResponse<MdwtRecordsRsp> {
     state.mdwt_list(kreq(headers, req)).await.into()
+}
+
+async fn mdwt_history_list(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<MdwtHistoryListReq>,
+) -> KResponse<MdwtHistoryListRsp> {
+    state.mdwt_history_list(kreq(headers, req)).await.into()
+}
+
+async fn mdwt_history_fetch(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<MdwtHistoryFetchReq>,
+) -> KResponse<MdwtHistoryFetchRsp> {
+    state.mdwt_history_fetch(kreq(headers, req)).await.into()
+}
+
+async fn mdwt_history_apply(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<MdwtHistoryApplyReq>,
+) -> KResponse<MdwtHistoryApplyRsp> {
+    state.mdwt_history_apply(kreq(headers, req)).await.into()
 }
 
 async fn mdwt_tag_list(
