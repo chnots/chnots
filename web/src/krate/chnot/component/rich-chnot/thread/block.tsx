@@ -1,3 +1,5 @@
+import type { EditorView } from "@codemirror/view";
+
 import { useSortable } from "@dnd-kit/sortable";
 import {
   Captions,
@@ -12,7 +14,14 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReadableTID from "@/common/component/chnot-read-tid";
 import { Button } from "@/common/component/ui/button";
 import {
@@ -21,7 +30,11 @@ import {
   PopoverTrigger,
 } from "@/common/component/ui/popover";
 import { SaveState } from "@/common/types";
-import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
+import {
+  EditorCustomContext,
+  type EditorCustomization,
+  MdwtEditorMemo,
+} from "@/krate/mdwt/component/mdwt-editor";
 import { GEN_TITLE } from "@/krate/mdwt/constaints";
 import { mdwtCommit } from "@/krate/mdwt/service";
 import { genTID, type TID } from "@/lib/id_util";
@@ -51,6 +64,8 @@ const SortableRichBlock = ({
   kind: initialKind,
   isDragging: isItemDragging,
   saveState: initialSaveState,
+  onAppendBlock,
+  shouldAutoFocus,
 }: {
   otid: TID;
   index: number;
@@ -64,10 +79,13 @@ const SortableRichBlock = ({
   onPostSave: (arg: PostSaveArg) => Promise<void>;
   onToggleClosed: (index: number, closed: boolean) => void;
   isDragging?: boolean;
+  onAppendBlock?: (afterIndex: number) => void;
+  shouldAutoFocus?: boolean;
 }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
   const titleRef = useRef<string | null>(null);
   const captionRef = useRef<string>(content.replace(GEN_TITLE, ""));
+  const contentRef = useRef<string>(content);
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: otid,
   });
@@ -142,12 +160,40 @@ const SortableRichBlock = ({
   useEffect(() => {
     const normalizedTitle = content.replace(GEN_TITLE, "");
     captionRef.current = normalizedTitle;
+    contentRef.current = content;
     if (content.startsWith(GEN_TITLE)) {
       titleRef.current = content;
     } else if (!titleRef.current) {
       titleRef.current = normalizedTitle;
     }
   }, [content]);
+
+  const handleCtrlEnter = useCallback(
+    (view: EditorView): boolean => {
+      if (kind !== ChnotKind.MDWT) {
+        return false;
+      }
+      const currentContent = view.state.doc.toString();
+      if (!currentContent || currentContent.trim().length === 0) {
+        const todoText = "## [TODO] ";
+        view.dispatch(
+          view.state.update({
+            changes: {
+              from: view.state.doc.length,
+              insert: todoText,
+            },
+            selection: {
+              anchor: view.state.doc.length + todoText.length,
+            },
+          }),
+        );
+        return true;
+      }
+      onAppendBlock?.(index);
+      return true;
+    },
+    [kind, index, onAppendBlock],
+  );
 
   useEffect(() => {
     if (!fullscreen || kind === ChnotKind.MDWT) {
@@ -211,6 +257,14 @@ const SortableRichBlock = ({
       disableHeaderActions: !fullscreen,
     };
   }, [fullscreen, otid, handlePostSave]);
+
+  const editorCustom = useMemo<EditorCustomization>(
+    () => ({
+      onCtrlEnter: handleCtrlEnter,
+      autoFocus: shouldAutoFocus,
+    }),
+    [handleCtrlEnter, shouldAutoFocus],
+  );
 
   return (
     <div
@@ -328,9 +382,11 @@ const SortableRichBlock = ({
         </div>
       )}
       {closed || (
-        <div className="w-full ml-4">
-          <RichChnotMemo props={props} kind={kind} />
-        </div>
+        <EditorCustomContext.Provider value={editorCustom}>
+          <div className="w-full ml-4">
+            <RichChnotMemo props={props} kind={kind} content={content} />
+          </div>
+        </EditorCustomContext.Provider>
       )}
     </div>
   );
@@ -340,9 +396,11 @@ const RichChnotMemo = memo(
   ({
     kind,
     props,
+    content,
   }: {
     kind?: ChnotKind;
     props: RichPropProps & { showEditWhenEmpty: boolean };
+    content?: string;
   }) => {
     return kind === ChnotKind.ExcalidrawV1 ? (
       <ExcalidrawChnot {...props} />
@@ -355,7 +413,7 @@ const RichChnotMemo = memo(
     ) : kind === ChnotKind.MindMapV1 ? (
       <MindMapChnot {...props} />
     ) : (
-      <RichMdwt {...props} readonly={false} />
+      <RichMdwt {...props} content={content} readonly={false} />
     );
   },
 );

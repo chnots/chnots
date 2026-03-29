@@ -72,6 +72,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [activeId, setActiveId] = useState<TID | string | null>(null);
   const [overId, setOverId] = useState<TID | string | null>(null);
+  const [focusOtid, setFocusOtid] = useState<TID | null>(null);
   const { currentKSpace } = useKSpaceStore((s) => {
     return {
       currentKSpace: s.currentKSpace,
@@ -302,6 +303,26 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
     [],
   );
 
+  const handleAppendBlock = useCallback((afterIndex: number) => {
+    const newOtid = genTID();
+    setChnotOrders((prev) => {
+      const newOrders = [...prev];
+      newOrders.splice(afterIndex + 1, 0, {
+        otid: newOtid,
+        type: OrderType.Manual,
+        chnotKind: ChnotKind.MDWT,
+        closed: false,
+        saved: false,
+      });
+      return newOrders;
+    });
+    setMdwtMap((prev) => ({
+      ...prev,
+      [newOtid]: { otid: newOtid, content: "## [TODO] " },
+    }));
+    setFocusOtid(newOtid);
+  }, []);
+
   return (
     <div className="flex flex-col w-full h-full min-h-0 items-center overflow-y-auto">
       {loading ? (
@@ -354,6 +375,8 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                         saveState={
                           order.saved ? SaveState.Saved : SaveState.Initial
                         }
+                        onAppendBlock={handleAppendBlock}
+                        shouldAutoFocus={focusOtid === order.otid}
                       />
                     </React.Fragment>
                   ) : (

@@ -153,6 +153,15 @@ const chnotCompletions = async (
   };
 };
 
+export type EditorCustomization = {
+  onCtrlEnter?: (view: EditorView) => boolean;
+  autoFocus?: boolean;
+};
+
+export const EditorCustomContext = React.createContext<
+  EditorCustomization | undefined
+>(undefined);
+
 const MdwtEditor = ({
   content,
   foldGutter,
@@ -171,12 +180,29 @@ const MdwtEditor = ({
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
+  const editorCustom = React.useContext(EditorCustomContext);
 
   useEffect(() => {
     if (setCMRef) {
       setCMRef(codeMirror);
     }
   }, [setCMRef]);
+
+  useEffect(() => {
+    if (editorCustom?.autoFocus) {
+      const timer = setTimeout(() => {
+        const view = codeMirror.current?.view;
+        if (view) {
+          const end = view.state.doc.length;
+          view.dispatch({
+            selection: { anchor: end },
+          });
+          view.focus();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [editorCustom?.autoFocus]);
 
   const markdownExtension = markdown({
     base: markdownLanguage,
@@ -188,7 +214,7 @@ const MdwtEditor = ({
 
   const extensions = [
     markdownExtension,
-    generateKeybinding(),
+    generateKeybinding(editorCustom?.onCtrlEnter),
 
     EditorView.lineWrapping,
     wrappedLineIndent,

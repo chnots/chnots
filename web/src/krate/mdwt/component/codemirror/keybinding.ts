@@ -88,7 +88,9 @@ export const decreaseIndent: Command = (view: EditorView): boolean => {
   return true;
 };
 
-export const generateKeybinding = () => {
+export const generateKeybinding = (
+  onCtrlEnter?: (view: EditorView) => boolean,
+) => {
   const keyCommand = (
     key: string,
     run: Command,
@@ -97,8 +99,6 @@ export const generateKeybinding = () => {
     return {
       key,
       run: (editor) => {
-        // if (settings.ignoreModifiers && !alwaysActive) return false;
-
         return run(editor);
       },
     };
@@ -116,8 +116,6 @@ export const generateKeybinding = () => {
       keyCommand(
         "Shift-Tab",
         (view) => {
-          // When at the beginning of the editor, allow shift-tab to act
-          // normally.
           if (isCursorAtBeginning(view.state)) {
             return false;
           }
@@ -128,8 +126,11 @@ export const generateKeybinding = () => {
       ),
       keyCommand(
         "Mod-Enter",
-        (_: EditorView) => {
-          insertLineAfter(_);
+        (view: EditorView) => {
+          if (onCtrlEnter?.(view)) {
+            return true;
+          }
+          insertLineAfter(view);
           return true;
         },
         true,
