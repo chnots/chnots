@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Badge } from "@/common/component/ui/badge";
 import type { TID } from "@/lib/id_util";
 import type { TodoStateEnum } from "../toent-model";
@@ -9,6 +10,21 @@ import {
   formatLunarDate,
   getWeekdayShort,
 } from "./toent-page-shared";
+
+const cardVariants: Variants = {
+  initial: { opacity: 0, y: 6, scale: 0.97 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 400, damping: 30 },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    transition: { duration: 0.12 },
+  },
+};
 
 export function ToentWeekView({
   weekDates,
@@ -52,26 +68,44 @@ export function ToentWeekView({
               </Badge>
             </div>
             <div className="space-y-2">
-              {dayItems.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No events</p>
-              ) : (
-                dayItems.map((item) => {
-                  return (
-                    <ToentItemCard
-                      key={item.inst.tid}
-                      item={item}
-                      onOpen={onOpen}
-                      onStateChange={onStateChange}
-                      stateUpdating={isUpdatingTid(
-                        statusUpdatingTid,
-                        item.inst.tid,
-                      )}
-                      compact={true}
-                      showTime={false}
-                    />
-                  );
-                })
-              )}
+              <AnimatePresence mode="popLayout">
+                {dayItems.length === 0 ? (
+                  <motion.p
+                    key={`empty-${dayKey}`}
+                    className="text-xs text-muted-foreground"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    No events
+                  </motion.p>
+                ) : (
+                  dayItems.map((item) => {
+                    return (
+                      <motion.div
+                        key={item.inst.tid}
+                        layout
+                        variants={cardVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                      >
+                        <ToentItemCard
+                          item={item}
+                          onOpen={onOpen}
+                          onStateChange={onStateChange}
+                          stateUpdating={isUpdatingTid(
+                            statusUpdatingTid,
+                            item.inst.tid,
+                          )}
+                          compact={true}
+                          showTime={false}
+                        />
+                      </motion.div>
+                    );
+                  })
+                )}
+              </AnimatePresence>
             </div>
           </div>
         );

@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Brain,
   Calendar,
@@ -45,6 +46,7 @@ import {
   toentSearch,
   toentTodoStateCommit,
 } from "@/krate/toent/service";
+import { fadeInUp, fastTransition } from "@/lib/animations";
 import { tidToDate } from "@/lib/date-utils";
 import { genTID, type TID } from "@/lib/id_util";
 import { RoutePaths } from "@/router";
@@ -753,14 +755,7 @@ function ToentPage() {
                   </Button>
                 </AlertDescription>
               </Alert>
-            ) : loading ? (
-              <Alert>
-                <AlertTitle>Loading schedule</AlertTitle>
-                <AlertDescription>
-                  Please wait while Toent items are fetched.
-                </AlertDescription>
-              </Alert>
-            ) : searchedItems.length === 0 ? (
+            ) : !loading && searchedItems.length === 0 ? (
               <Alert>
                 <AlertTitle>No items found</AlertTitle>
                 <AlertDescription>
@@ -772,41 +767,52 @@ function ToentPage() {
             ) : null}
 
             {!loading && !loadError && searchedItems.length > 0 ? (
-              <>
-                {viewMode === "list" ? (
-                  <ToentListView
-                    listDayGroups={listDayGroups}
-                    listItems={searchedItems}
-                    groupByDay={activeMode !== "all" && activeMode !== "today"}
-                    onOpen={openItemEditor}
-                    onStateChange={updateItemTodoState}
-                    statusUpdatingTid={statusUpdatingTid}
-                  />
-                ) : null}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={viewMode}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  variants={fadeInUp}
+                  transition={fastTransition}
+                >
+                  {viewMode === "list" ? (
+                    <ToentListView
+                      listDayGroups={listDayGroups}
+                      listItems={searchedItems}
+                      groupByDay={
+                        activeMode !== "all" && activeMode !== "today"
+                      }
+                      onOpen={openItemEditor}
+                      onStateChange={updateItemTodoState}
+                      statusUpdatingTid={statusUpdatingTid}
+                    />
+                  ) : null}
 
-                {viewMode === "week" ? (
-                  <ToentWeekView
-                    weekDates={weekDates}
-                    groupedByDay={groupedByDay}
-                    onOpen={openItemEditor}
-                    onStateChange={updateItemTodoState}
-                    statusUpdatingTid={statusUpdatingTid}
-                  />
-                ) : null}
+                  {viewMode === "week" ? (
+                    <ToentWeekView
+                      weekDates={weekDates}
+                      groupedByDay={groupedByDay}
+                      onOpen={openItemEditor}
+                      onStateChange={updateItemTodoState}
+                      statusUpdatingTid={statusUpdatingTid}
+                    />
+                  ) : null}
 
-                {viewMode === "month" ? (
-                  <ToentMonthView
-                    monthDates={monthDates}
-                    currentMonth={monthStart.getMonth()}
-                    groupedByDay={groupedByDay}
-                    selectedDayKey={selectedMonthDayKey}
-                    onSelectDay={setSelectedMonthDayKey}
-                    onOpen={openItemEditor}
-                    onStateChange={updateItemTodoState}
-                    statusUpdatingTid={statusUpdatingTid}
-                  />
-                ) : null}
-              </>
+                  {viewMode === "month" ? (
+                    <ToentMonthView
+                      monthDates={monthDates}
+                      currentMonth={monthStart.getMonth()}
+                      groupedByDay={groupedByDay}
+                      selectedDayKey={selectedMonthDayKey}
+                      onSelectDay={setSelectedMonthDayKey}
+                      onOpen={openItemEditor}
+                      onStateChange={updateItemTodoState}
+                      statusUpdatingTid={statusUpdatingTid}
+                    />
+                  ) : null}
+                </motion.div>
+              </AnimatePresence>
             ) : null}
           </div>
         </div>
