@@ -14,7 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Heading, LinkIcon, Plus, Unlink } from "lucide-react";
+import { LinkIcon, Plus, Unlink } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
@@ -211,7 +211,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
         0,
         find
           ? {
-              otid: "find-" + genTID(),
+              otid: `find-${genTID()}`,
               type: OrderType.Search,
             }
           : {
@@ -328,11 +328,8 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
       {loading ? (
         <div />
       ) : (
-        <div className="flex flex-col p-4 m-2 w-full items-center max-w-4xl">
-          <div className="flex w-full">
-            <div className="py-2 pr-2">
-              <Heading className="w-6 h-6" />
-            </div>
+        <div className="flex flex-col w-full items-center max-w-2xl px-4 py-6">
+          <div className="flex w-full pb-4 mb-2 border-b border-border">
             <MdwtChnot
               otid={threadOtid}
               fullscreen={false}
@@ -349,7 +346,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
             onDragEnd={handleDragEnd}
             onDragOver={handleDragOver}
           >
-            <div className="flex flex-col w-full items-center">
+            <div className="flex flex-col w-full">
               <SortableContext
                 items={chnotOrders.map((e) => e.otid)}
                 strategy={verticalListSortingStrategy}
@@ -358,7 +355,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                   return order.type === OrderType.Manual ? (
                     <React.Fragment key={order.otid}>
                       {activeId !== null && overId === order.otid && (
-                        <div className="w-full h-0.5 bg-blue-500 my-1" />
+                        <div className="w-full h-1 bg-primary/30 rounded-full my-1" />
                       )}
                       <SortableRichMdwtMemo
                         otid={order.otid}
@@ -381,12 +378,12 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                     </React.Fragment>
                   ) : (
                     <React.Fragment key={order.otid}>
-                      <div className="flex items-center w-full">
-                        <div className="flex-1 border-t border-gray-200 my-2"></div>
+                      <div className="flex items-center w-full gap-2 py-2">
+                        <div className="flex-1 border-t border-dashed border-muted-foreground/30" />
                         <button
                           type="button"
                           onClick={() => handleRemoveBlock(order.otid)}
-                          className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
                           title="Stop Find"
                         >
                           <Unlink className="w-4 h-4" />
@@ -403,32 +400,33 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
                     </React.Fragment>
                   );
                 })}
-                <div className="flex text-gray-400 items-center w-full">
-                  <div className="flex-1 border-t border-gray-200 my-2"></div>
+                <div className="flex items-center gap-1.5 pt-3 pl-10">
                   <button
                     type="button"
                     onClick={() => handleAddBlock(chnotOrders.length + 1, true)}
-                    className="p-1 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
-                    title="Add"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
+                    title="Link existing chnot"
                   >
                     <LinkIcon className="w-4 h-4" />
+                    <span>Link</span>
                   </button>
                   <button
                     type="button"
                     onClick={() =>
                       handleAddBlock(chnotOrders.length + 1, false)
                     }
-                    className="p-1 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
-                    title="Add"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
+                    title="Add new chnot"
                   >
                     <Plus className="w-4 h-4" />
+                    <span>Add</span>
                   </button>
                 </div>
               </SortableContext>
             </div>
             <DragOverlay>
               {activeId !== null ? (
-                <div className="w-full h-0.5 bg-blue-500" />
+                <div className="w-full h-1 bg-primary/40 rounded-full" />
               ) : null}
             </DragOverlay>
           </DndContext>

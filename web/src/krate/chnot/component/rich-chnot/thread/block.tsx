@@ -6,22 +6,12 @@ import {
   CloudAlert,
   CloudCheck,
   CloudDrizzle,
-  Edit,
   Eye,
   EyeClosed,
   Hand,
-  LinkIcon,
-  Plus,
   Trash2,
 } from "lucide-react";
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReadableTID from "@/common/component/chnot-read-tid";
 import { Button } from "@/common/component/ui/button";
 import {
@@ -57,7 +47,6 @@ const SortableRichBlock = ({
   content,
   closed: initialClosed,
   onPostSave,
-  onAddBlock: handleAddBlock,
   onRemoveBlock: handleRemoveBlock,
   onToggleClosed,
   kspace,
@@ -270,106 +259,71 @@ const SortableRichBlock = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex flex-col w-full"
+      className="group flex flex-col w-full rounded-lg border border-border bg-card my-1"
       {...attributes}
     >
-      <div className="flex flex items-center justify-center mt-1 w-full items-center w-full text-gray-400">
-        {saveState === SaveState.Saved ? (
-          <>
-            <div
-              {...listeners}
-              className="p-1 cursor-grab active:cursor-grabbing hover:bg-gray-100 rounded transition-colors"
-              title="Drag Handler"
-            >
-              <ChnotKindIcon kind={kind} className="w-4 h-4" />
-            </div>
-            <button
-              type="button"
-              onClick={() => handleToggleCloses(!closed)}
-              className="p-1  hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
-              title="Remove"
-            >
-              {closed ? (
-                <EyeClosed className="w-4 h-4 cursor-pointer" />
-              ) : (
-                <Eye className="w-4 h-4 cursor-pointer" />
-              )}
-            </button>
-          </>
-        ) : (
-          <>
-            <div
-              {...listeners}
-              className="p-1 cursor-grab active:cursor-grabbing hover:bg-gray-100 rounded transition-colors"
-              title="Drag Handler"
-            >
-              <Hand className="w-4 h-4" />
-            </div>
-            <div className="flex border p-0.5 rounded text-gray-600">
-              {Object.values(ChnotKind).map((e) =>
-                e !== ChnotKind.ThreadV1 ? (
-                  <ChnotKindIcon
-                    className="w-4 h-4 mx-1 hover:cursor-pointer"
-                    kind={e}
-                    key={e}
-                    onClick={() => setKind(e)}
-                  />
-                ) : undefined,
-              )}
-            </div>
-          </>
-        )}
-        <button
-          type="button"
-          onClick={() => setFullscreen(true)}
-          className="p-1 hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
-          title="Edit"
+      <div className="flex items-center gap-0.5 px-1 py-1 text-muted-foreground">
+        <div
+          {...listeners}
+          className="p-1 cursor-grab active:cursor-grabbing hover:bg-accent rounded transition-colors"
+          title="Drag Handler"
         >
-          <Edit className="w-4 h-4 cursor-pointer" />
-        </button>
+          {saveState === SaveState.Saved ? (
+            <ChnotKindIcon kind={kind} className="w-4 h-4" />
+          ) : (
+            <Hand className="w-4 h-4" />
+          )}
+        </div>
+        {saveState !== SaveState.Saved && (
+          <div className="flex border border-dashed border-muted-foreground p-0.5 rounded text-muted-foreground">
+            {Object.values(ChnotKind).map((e) =>
+              e !== ChnotKind.ThreadV1 ? (
+                <ChnotKindIcon
+                  className="w-4 h-4 mx-0.5 hover:cursor-pointer"
+                  kind={e}
+                  key={e}
+                  onClick={() => setKind(e)}
+                />
+              ) : undefined,
+            )}
+          </div>
+        )}
+        {typeof otid === "number" && <ReadableTID tid={otid} />}
         {!!saveState && (
-          <span className="p-1 rounded">
+          <span className="inline-flex px-1">
             {saveState === SaveState.Saved ? (
-              <CloudCheck className="w-4 h-4" />
+              <CloudCheck className="w-3.5 h-3.5" />
             ) : saveState === SaveState.Dirty ? (
-              <CloudDrizzle className="w-4 h-4" />
+              <CloudDrizzle className="w-3.5 h-3.5 text-yellow-500" />
             ) : (
-              <CloudAlert className="w-4 h-4" />
+              <CloudAlert className="w-3.5 h-3.5 text-destructive" />
             )}
           </span>
         )}
-
-        <span className="flex-1 border-t border-gray-200 my-2 w-full" />
-
-        {typeof otid === "number" && <ReadableTID tid={otid} />}
-
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={() => handleToggleCloses(!closed)}
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-accent rounded transition-all text-muted-foreground hover:text-foreground"
+          title={closed ? "Show" : "Hide"}
+        >
+          {closed ? (
+            <EyeClosed className="w-3.5 h-3.5" />
+          ) : (
+            <Eye className="w-3.5 h-3.5" />
+          )}
+        </button>
         <button
           type="button"
           onClick={() => handleRemoveBlock(otid)}
-          className="p-1  hover:text-red-600 hover:bg-gray-100 rounded transition-colors"
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-accent rounded transition-all text-muted-foreground hover:text-destructive"
           title="Remove"
         >
-          <Trash2 className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => handleAddBlock(index, true)}
-          className="p-1  hover:text-blue-600 hover:bg-gray-100 rounded transition-colors"
-          title="Search And Add"
-        >
-          <LinkIcon className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => handleAddBlock(index, false)}
-          className="p-1  hover:text-green-600 hover:bg-gray-100 rounded transition-colors"
-          title="Add"
-        >
-          <Plus className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
       {kind !== ChnotKind.MDWT && (
-        <div className="w-full ml-4">
+        <div className="w-full px-2">
           <MdwtChnot
             otid={props.otid}
             fullscreen={false}
@@ -383,7 +337,7 @@ const SortableRichBlock = ({
       )}
       {closed || (
         <EditorCustomContext.Provider value={editorCustom}>
-          <div className="w-full ml-4">
+          <div className="w-full px-2 pb-1">
             <RichChnotMemo props={props} kind={kind} content={content} />
           </div>
         </EditorCustomContext.Provider>
