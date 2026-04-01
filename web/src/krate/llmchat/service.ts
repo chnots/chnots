@@ -12,6 +12,7 @@ import type {
   LLMChatTemplateListRsp,
 } from "./dto";
 import type { LLMChatBot, LLMChatTemplate } from "./po";
+import { parseContent, stringifyContent } from "./po";
 import type { LLMChatRecordVO, LLMChatSessionRecordFetchRspVO } from "./vo";
 
 export const llmchatBotArchive = async (
@@ -61,20 +62,8 @@ export const llmchatSessionRecordFetch = async (
   return {
     session: rsp.session,
     records: rsp.records.map((r) => {
-      let body: string, thinking: string;
-      try {
-        const parsed = JSON.parse(r.content);
-        body = parsed.body;
-        thinking = parsed.thinking;
-      } catch (_) {
-        body = r.content;
-        thinking = "";
-      }
-      return {
-        ...r,
-        body,
-        thinking,
-      };
+      const [body, thinking] = parseContent(r.content);
+      return { ...r, body, thinking };
     }),
   };
 };
@@ -95,10 +84,7 @@ export const llmchatRecordCommit = async (record: LLMChatRecordVO) => {
   await request.postJson("api/v1/llmchat-record-commit", {
     record: {
       ...record,
-      content: JSON.stringify({
-        body: record.body,
-        thinking: record.thinking,
-      }),
+      content: stringifyContent(record.body, record.thinking),
     },
   });
 };

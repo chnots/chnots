@@ -1,4 +1,5 @@
 pub mod v2;
+pub mod v8;
 
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -129,6 +130,9 @@ impl KDbTx<'_> {
                 }
                 if version == 2 {
                     self.v2_posthook().await?;
+                }
+                if version == 8 {
+                    v8::v8_posthook(self).await?;
                 }
                 self.set_version(version).await?;
                 max_version = max_version.max(version);
