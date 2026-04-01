@@ -11,6 +11,7 @@ const math = createMathPlugin({ singleDollarTextMath: true });
 import { Bot, Glasses, RotateCw, Sparkles } from "lucide-react";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot, LLMChatTemplate } from "@/krate/llmchat/po";
+import { getBlockContent } from "@/krate/llmchat/po";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
@@ -18,8 +19,7 @@ import { useLLMChatComStore } from "./session";
 import LLMChatTemplateList from "./template-list";
 
 const RecordCommon = ({
-  body,
-  thinking,
+  content,
   timestamp,
   name,
   logo,
@@ -36,6 +36,8 @@ const RecordCommon = ({
   viewMode: boolean;
   isAnimating?: boolean;
 } & Omit<LLMChatRecordVO, "role">) => {
+  const body = getBlockContent(content, "content");
+  const thinking = getBlockContent(content, "thinking");
   const onCopy = () => {
     navigator.clipboard.writeText(body);
   };
@@ -87,8 +89,7 @@ const RecordCommon = ({
 export const RecordSystem = ({
   otid,
   role_id,
-  body,
-  thinking,
+  content,
   logo,
   timestamp,
   session_otid,
@@ -134,8 +135,7 @@ export const RecordSystem = ({
         otid={otid}
         session_otid={session_otid}
         limitHeight={true}
-        body={body}
-        thinking={thinking}
+        content={content}
         tid={tid}
         buttons={
           records?.length === 1 &&
@@ -167,8 +167,7 @@ export const RecordSystem = ({
 const RecordAssistant = ({
   otid,
   role_id,
-  body,
-  thinking,
+  content,
   logo,
   timestamp,
   session_otid,
@@ -212,8 +211,7 @@ const RecordAssistant = ({
       viewMode={viewMode}
       otid={otid}
       session_otid={session_otid}
-      body={body}
-      thinking={thinking}
+      content={content}
       tid={tid}
       isAnimating={isAnimating}
       buttons={

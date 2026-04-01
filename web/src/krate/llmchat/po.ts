@@ -1,34 +1,47 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
 
-export type ContentBlockType = "thinking" | "content";
+export type ContentBlockType = "thinking" | "content" | "error";
 
 export type ContentBlock = {
   type: ContentBlockType;
   data: string;
 };
 
-export const parseContent = (content: string): [string, string] => {
-  try {
-    const blocks: ContentBlock[] = JSON.parse(content);
-    let body = "";
-    let thinking = "";
-    for (const block of blocks) {
-      if (block.type === "content") body = block.data;
-      else if (block.type === "thinking") thinking = block.data;
-    }
-    return [body, thinking];
-  } catch (_ex) {
-    return [content, ""];
-  }
-};
-
-export const stringifyContent = (body: string, thinking?: string): string => {
+export const buildContentBlocks = (
+  body: string,
+  thinking?: string,
+  error?: string,
+): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   if (thinking) {
     blocks.push({ type: "thinking", data: thinking });
   }
+  if (error) {
+    blocks.push({ type: "error", data: error });
+  }
   blocks.push({ type: "content", data: body });
+  return blocks;
+};
+
+export const getBlockContent = (
+  blocks: ContentBlock[],
+  type: ContentBlockType,
+): string => {
+  const block = blocks.find((b) => b.type === type);
+  return block?.data ?? "";
+};
+
+export const parseContent = (content: string): ContentBlock[] => {
+  try {
+    const blocks: ContentBlock[] = JSON.parse(content);
+    return blocks;
+  } catch (_ex) {
+    return [{ type: "content", data: content }];
+  }
+};
+
+export const stringifyContent = (blocks: ContentBlock[]): string => {
   return JSON.stringify(blocks);
 };
 

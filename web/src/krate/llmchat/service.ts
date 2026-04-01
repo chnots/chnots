@@ -62,8 +62,7 @@ export const llmchatSessionRecordFetch = async (
   return {
     session: rsp.session,
     records: rsp.records.map((r) => {
-      const [body, thinking] = parseContent(r.content);
-      return { ...r, body, thinking };
+      return { ...r, content: parseContent(r.content) };
     }),
   };
 };
@@ -84,7 +83,7 @@ export const llmchatRecordCommit = async (record: LLMChatRecordVO) => {
   await request.postJson("api/v1/llmchat-record-commit", {
     record: {
       ...record,
-      content: stringifyContent(record.body, record.thinking),
+      content: stringifyContent(record.content),
     },
   });
 };

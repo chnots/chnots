@@ -1,9 +1,8 @@
 import type { LLMChatSessionRecordFetchRsp } from "./dto";
-import type { LLMChatRecord } from "./po";
+import type { ContentBlock, LLMChatRecord } from "./po";
 
 export type LLMChatRecordVO = Omit<LLMChatRecord, "content"> & {
-  body: string;
-  thinking: string;
+  content: ContentBlock[];
 };
 
 export type LLMChatSessionRecordFetchRspVO = Omit<

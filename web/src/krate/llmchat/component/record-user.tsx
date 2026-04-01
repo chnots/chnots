@@ -1,6 +1,7 @@
 import { Edit3, Save } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "@/common/component/ui/textarea";
+import { getBlockContent } from "@/krate/llmchat/po";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
 import { useLLMChatComStore } from "./session";
@@ -12,7 +13,8 @@ const RecordUser = ({
   record: LLMChatRecordVO;
   viewMode: boolean;
 }) => {
-  const { body: initialContent, otid } = record;
+  const { content: blocks, otid } = record;
+  const initialContent = getBlockContent(blocks, "content");
 
   const [content, setContent] = useState(initialContent);
   const [editing, setEditing] = useState<boolean>(false);
@@ -39,9 +41,12 @@ const RecordUser = ({
             <RecordButton
               onClick={() => {
                 setEditing(false);
+                const newBlocks = blocks.map((b) =>
+                  b.type === "content" ? { ...b, data: content } : b,
+                );
                 updateRecord({
                   ...record,
-                  body: content,
+                  content: newBlocks,
                 });
               }}
             >

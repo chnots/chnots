@@ -3,10 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type {
+  ContentBlock,
   LLMChatBot,
-  LLMChatRecord,
   LLMChatSession,
 } from "@/krate/llmchat/po";
+import { buildContentBlocks, getBlockContent } from "@/krate/llmchat/po";
 import {
   createLLMProvider,
   parseBotBody,
@@ -34,8 +35,41 @@ export type ResponseState = {
   sessionId: TID;
   prevRecordId?: TID;
   roleId: TID;
-  reasoningContent: string;
-  content: string;
+  contentBlocks: ContentBlock[];
+};
+
+const updateBlock = (
+  blocks: ContentBlock[],
+  type: ContentBlock["type"],
+  data: string,
+): ContentBlock[] => {
+  const idx = blocks.findIndex((b) => b.type === type);
+  if (idx >= 0) {
+    const newBlocks = [...blocks];
+    newBlocks[idx] = { type, data: newBlocks[idx].data + data };
+    return newBlocks;
+  }
+  if (type === "content") {
+    return [...blocks, { type, data }];
+  }
+  return [{ type, data }, ...blocks];
+};
+
+const setBlock = (
+  blocks: ContentBlock[],
+  type: ContentBlock["type"],
+  data: string,
+): ContentBlock[] => {
+  const idx = blocks.findIndex((b) => b.type === type);
+  if (idx >= 0) {
+    const newBlocks = [...blocks];
+    newBlocks[idx] = { type, data };
+    return newBlocks;
+  }
+  if (type === "content") {
+    return [...blocks, { type, data }];
+  }
+  return [{ type, data }, ...blocks];
 };
 
 const emptyResponse = (
@@ -49,8 +83,7 @@ const emptyResponse = (
     prevRecordId: records.at(-1)?.otid ?? undefined,
     sessionId: session.otid,
     roleId: bot.otid,
-    content: "",
-    reasoningContent: "",
+    contentBlocks: [],
   };
 };
 
@@ -71,27 +104,30 @@ export const useLLMResponse = ({
   );
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const doPostResponse = useCallback(async () => {
-    if (
-      responseState.content.length === 0 &&
-      responseState.reasoningContent.length === 0
-    ) {
+  const doPostResponse = useCallback(() => {
+    const blocks = responseState.contentBlocks;
+    if (blocks.length === 0) {
       return;
     }
 
+    const contentBlock = blocks.find((b) => b.type === "content");
+    const thinkingBlock = blocks.find((b) => b.type === "thinking");
+
     let ended = false;
-    if (responseState.reasoningContent.length === 0) {
-      const content = responseState.content;
-      const thinkStart = content.indexOf("<think>");
-      const thinkEnd = content.indexOf("</think>");
+    if (!thinkingBlock) {
+      const content = contentBlock?.data ?? "";
+      const thinkStart = content.indexOf("aisse");
+      const thinkEnd = content.indexOf(" асс");
       if (thinkStart >= 0) {
         if (thinkEnd > 0) {
           setResponseState((prev) => {
             return {
               ...prev,
               step: ResponseStep.End,
-              content: content.substring(thinkEnd + 8),
-              reasoningContent: content.substring(thinkStart + 7, thinkEnd),
+              contentBlocks: buildContentBlocks(
+                content.substring(thinkEnd + 8),
+                content.substring(thinkStart + 7, thinkEnd),
+              ),
             };
           });
           ended = true;
@@ -100,8 +136,10 @@ export const useLLMResponse = ({
             return {
               ...prev,
               step: ResponseStep.End,
-              content: "",
-              reasoningContent: content.substring(thinkStart + 7),
+              contentBlocks: buildContentBlocks(
+                "",
+                content.substring(thinkStart + 7),
+              ),
             };
           });
           ended = true;
@@ -143,9 +181,11 @@ export const useLLMResponse = ({
     const model = createLLMProvider(config);
 
     const messages = records.map((r) => {
-      let content = r.body;
-      if (r.thinking) {
-        content = `<think${r.thinking}</think${r.body}`;
+      const body = getBlockContent(r.content, "content");
+      const thinking = getBlockContent(r.content, "thinking");
+      let content = body;
+      if (thinking) {
+        content = `<think${thinking}</think${body}`;
       }
       return {
         role: r.role as "system" | "user" | "assistant",
@@ -165,7 +205,11 @@ export const useLLMResponse = ({
               return {
                 ...prev,
                 step: ResponseStep.Error,
-                reasoningContent: prev.reasoningContent + String(error.error),
+                contentBlocks: updateBlock(
+                  prev.contentBlocks,
+                  "error",
+                  String(error.error),
+                ),
               };
             });
           },
@@ -181,7 +225,11 @@ export const useLLMResponse = ({
               setResponseState((prev) => {
                 return {
                   ...prev,
-                  content: prev.content + part.text,
+                  contentBlocks: updateBlock(
+                    prev.contentBlocks,
+                    "content",
+                    part.text,
+                  ),
                 };
               });
               break;
@@ -190,7 +238,11 @@ export const useLLMResponse = ({
               setResponseState((prev) => {
                 return {
                   ...prev,
-                  reasoningContent: prev.reasoningContent + part.text,
+                  contentBlocks: updateBlock(
+                    prev.contentBlocks,
+                    "thinking",
+                    part.text,
+                  ),
                 };
               });
               break;
@@ -200,7 +252,11 @@ export const useLLMResponse = ({
                 return {
                   ...prev,
                   step: ResponseStep.Error,
-                  reasoningContent: prev.reasoningContent + String(part.error),
+                  contentBlocks: updateBlock(
+                    prev.contentBlocks,
+                    "error",
+                    String(part.error),
+                  ),
                 };
               });
               break;
@@ -223,7 +279,6 @@ export const useLLMResponse = ({
             return {
               ...prev,
               step: ResponseStep.Error,
-              reasoningContent: prev.reasoningContent,
             };
           });
         }

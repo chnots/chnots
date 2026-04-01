@@ -12,10 +12,10 @@ import {
 } from "@/hooks/use-llm-response";
 import type { LLMChatBot } from "@/krate/llmchat/po";
 import { llmchatRecordCommit } from "@/krate/llmchat/service";
-import { genTID, type TID } from "@/lib/id_util";
 import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant from "./record-assistant";
 import { useLLMChatComStore } from "./session";
+import { type TID, genTID } from "@/lib/id_util";
 
 export const RecordAnswering = ({
   bot,
@@ -70,8 +70,7 @@ export const RecordAnswering = ({
         const record: LLMChatRecordVO = {
           otid: response.tid,
           session_otid: response.sessionId,
-          thinking: response.reasoningContent,
-          body: response.content,
+          content: response.contentBlocks,
           role: "assistant",
           role_id: response.roleId,
           pre_record_otid: response.prevRecordId,
@@ -87,8 +86,7 @@ export const RecordAnswering = ({
       const record: LLMChatRecordVO = {
         otid: responseState.tid,
         session_otid: responseState.sessionId,
-        body: responseState.content,
-        thinking: responseState.reasoningContent,
+        content: responseState.contentBlocks,
         role: "assistant",
         role_id: responseState.roleId,
         pre_record_otid: responseState.prevRecordId,
@@ -116,8 +114,7 @@ export const RecordAnswering = ({
         role_id={bot.otid}
         otid={otid.current}
         session_otid={response.sessionId}
-        body={response.content}
-        thinking={response.reasoningContent}
+        content={response.contentBlocks}
         tid={genTID()}
         timestamp={new Date(otid.current / 1e3).toISOString()}
         viewMode={false}

@@ -20,6 +20,7 @@ import {
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { genTID, type TID } from "@/lib/id_util";
 import type { LLMChatBot, LLMChatSession, LLMChatTemplate } from "../po";
+import { buildContentBlocks, getBlockContent } from "../po";
 import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant, { RecordSystem } from "./record-assistant";
 import { RecordAnswering } from "./record-response";
@@ -69,7 +70,8 @@ const buildSessionTitle = (records?: LLMChatRecordVO[]): string | undefined => {
     return undefined;
   }
 
-  const normalized = firstUserRecord.body.replaceAll(/\s+/g, " ").trim();
+  const body = getBlockContent(firstUserRecord.content, "content");
+  const normalized = body.replaceAll(/\s+/g, " ").trim();
   if (!normalized) {
     return undefined;
   }
@@ -180,8 +182,7 @@ export const newTemplateSession = (
   const record: LLMChatRecordVO = {
     otid: genTID(),
     session_otid: session.otid,
-    body: template.prompt,
-    thinking: "",
+    content: buildContentBlocks(template.prompt),
     role_id: template.otid,
     role: "system",
     tid: genTID(),
@@ -328,8 +329,7 @@ const SessionContainer = ({
           otid: genTID(),
           session_otid: session.otid,
           pre_record_otid: records.at(-1)?.otid,
-          body: content,
-          thinking: "",
+          content: buildContentBlocks(content),
           role: "user",
           tid: genTID(),
         };
