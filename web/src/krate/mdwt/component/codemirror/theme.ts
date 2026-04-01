@@ -220,38 +220,26 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
     "& .cm-h1": {
       ...baseHeadingStyle,
       fontSize: "1.5em",
-      marginTop: "1.5rem",
-      marginBottom: "0.75rem",
     },
     "& .cm-h2": {
       ...baseHeadingStyle,
       fontSize: "1.25em",
-      marginTop: "1.25rem",
-      marginBottom: "0.5rem",
     },
     "& .cm-h3": {
       ...baseHeadingStyle,
       fontSize: "1.125em",
-      marginTop: "1rem",
-      marginBottom: "0.5rem",
     },
     "& .cm-h4": {
       ...baseHeadingStyle,
       fontSize: "1.05em",
-      marginTop: "0.75rem",
-      marginBottom: "0.375rem",
     },
     "& .cm-h5": {
       ...baseHeadingStyle,
       fontSize: "1em",
-      marginTop: "0.5rem",
-      marginBottom: "0.25rem",
     },
     "& .cm-h6": {
       ...baseHeadingStyle,
       fontSize: "0.95em",
-      marginTop: "0.5rem",
-      marginBottom: "0.25rem",
       color: colors.mutedForeground,
     },
 
