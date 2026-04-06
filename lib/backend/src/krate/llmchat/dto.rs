@@ -81,6 +81,7 @@ pub struct LLMChatSessionRecordTruncateRsp {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionRecordFetchReq {
     pub session_otid: TID,
+    pub include_hist: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

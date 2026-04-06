@@ -12,6 +12,7 @@ use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbConnBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
     KDbTransactionBehaiver,
 };
+use crate::model::OtidTableSupport;
 use crate::model::dto::KReq;
 
 use super::mapper::LLMChatMapper;
@@ -217,11 +218,26 @@ impl LLMChatMapper for KDb {
             )]))
             .seg("order by tid desc");
 
-        let records: Vec<LLMChatRecord> = self
+        let mut records: Vec<LLMChatRecord> = self
             .conn()
             .await?
             .qry_list(query, |r| LLMChatRecord::try_from(&r))
             .await?;
+        if req.body.include_hist.unwrap_or_default() {
+            let query = SqlBuilder::read_all(LLMChatRecord::table_name(true))
+                .r#where(Wheres::and([Wheres::equal(
+                    LLMChatRecord::SESSION_OTID,
+                    req.session_otid,
+                )]))
+                .seg("order by tid desc");
+
+            let hist_recs: Vec<LLMChatRecord> = self
+                .conn()
+                .await?
+                .qry_list(query, |r| LLMChatRecord::try_from(&r))
+                .await?;
+            records.extend(hist_recs);
+        }
 
         Ok(LLMChatSessionRecordFetchRsp { session, records })
     }
@@ -285,6 +301,7 @@ impl LLMChatMapper for KDb {
             .llmchat_session_record_fetch(KReq {
                 body: LLMChatSessionRecordFetchReq {
                     session_otid: req.session_otid,
+                    include_hist: false.into(),
                 },
                 kspace: req.kspace.clone(),
                 mkspaces: vec![],
