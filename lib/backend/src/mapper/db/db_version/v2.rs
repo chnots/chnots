@@ -115,11 +115,15 @@ impl KDbTx<'_> {
         Ok(())
     }
 
-    pub async fn v2_posthook(&self) -> EResult {
-        self.sync_llm_chat_record(true).await?;
-        self.sync_llm_chat_record(false).await?;
+    pub async fn v2_sync_excalidraw(&self) -> EResult {
         self.sync_excalidraw(false).await?;
         self.sync_excalidraw(true).await?;
+
+        Ok(())
+    }
+    pub async fn v2_sync_llmchat(&self) -> EResult {
+        self.sync_llm_chat_record(true).await?;
+        self.sync_llm_chat_record(false).await?;
 
         Ok(())
     }

@@ -93,6 +93,9 @@ path = "../chin-tools/crates/chin-sql"
 [dependencies.actor-sqlite]
 path = "../chin-tools/crates/actor-sqlite"
 
+[dependencies.quick-xml]
+version = "0.37"
+
 [dependencies.anyhow]
 version = "1"
 features = [ "backtrace",]

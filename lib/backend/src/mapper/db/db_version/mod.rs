@@ -1,3 +1,4 @@
+pub(crate) mod sql_xml;
 pub mod v2;
 pub mod v8;
 
@@ -70,6 +71,18 @@ impl KDb {
 }
 
 impl KDbTx<'_> {
+    async fn execute_hook(&self, name: &str) -> EResult {
+        log::info!("execute hook: {}", name);
+        match name {
+            "v2_sync_llmchat" => self.v2_sync_llmchat().await?,
+            "v2_sync_excalidraw" => self.v2_sync_excalidraw().await?,
+            "v8_migrate_llmchat_content" => self.v8_migrate_llmchat_content().await?,
+            key => anyhow::bail!("Do not register this function: {}", key),
+        }
+
+        Ok(())
+    }
+
     async fn get_current_version(&self) -> AResult<Option<i64>> {
         let result = self
             .qry_opt(
@@ -114,7 +127,7 @@ impl KDbTx<'_> {
             return Ok(());
         }
 
-        let sql_files = Self::read_migration_sqls(db_type)?;
+        let sql_files = Self::read_migration_sqls()?;
         let mut max_version = db_version;
 
         for (version, sql) in sql_files {
@@ -122,18 +135,20 @@ impl KDbTx<'_> {
 
             if version > db_version && version <= program_version {
                 info!("Migrating database to version {}", version);
-                for stmt in sql.split(";\n") {
-                    let stmt = stmt.trim();
-                    if !stmt.is_empty() {
-                        self.exec(stmt).await?;
+
+                for frag in sql_xml::parse_sql_xml(&sql, db_type)? {
+                    match frag {
+                        sql_xml::Fragment::Sql(sql) => {
+                            let stmt = sql.trim();
+                            if !stmt.is_empty() {
+                                log::info!("exec sql: {}", stmt);
+                                self.exec(stmt).await?;
+                            }
+                        }
+                        sql_xml::Fragment::Exec(exec) => self.execute_hook(&exec).await?,
                     }
                 }
-                if version == 2 {
-                    self.v2_posthook().await?;
-                }
-                if version == 8 {
-                    v8::v8_posthook(self).await?;
-                }
+
                 self.set_version(version).await?;
                 max_version = max_version.max(version);
                 info!("Migrated to version {}", version);
@@ -158,30 +173,20 @@ impl KDbTx<'_> {
         Ok(())
     }
 
-    fn read_migration_sqls(db_type: DbType) -> AResult<BTreeMap<i64, String>> {
+    fn read_migration_sqls() -> AResult<BTreeMap<i64, String>> {
         let mut sqls = BTreeMap::new();
 
         for file in MigrationSqls::iter() {
             let file_path = Path::new(file.as_ref());
-            if file_path.extension().and_then(|e| e.to_str()) == Some("sql") {
+            if file_path.extension().and_then(|e| e.to_str()) == Some("xml") {
                 let filename = file_path
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .ok_or_else(|| anyhow::anyhow!("Invalid filename: {:?}", file))?;
-                let mut suffix = match db_type {
-                    DbType::Sqlite => "-sqlite",
-                    DbType::Postgres => "-postgres",
-                };
-
-                if filename.ends_with("-all") {
-                    suffix = "-all";
-                } else if !filename.ends_with(suffix) {
-                    continue;
-                }
 
                 if let Some(version_str) = filename
                     .strip_prefix('v')
-                    .and_then(|version| version.strip_suffix(suffix))
+                    .and_then(|version| version.strip_suffix("-sql"))
                     && let Ok(version) = version_str.parse::<i64>()
                 {
                     let embedded_file = MigrationSqls::get(&file).ok_or_else(|| {
@@ -198,6 +203,7 @@ impl KDbTx<'_> {
             }
         }
 
+        log::info!("last sql is: {:?}", sqls);
         Ok(sqls)
     }
 }
