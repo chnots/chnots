@@ -12,10 +12,10 @@ import {
 } from "@/hooks/use-llm-response";
 import type { LLMChatBot } from "@/krate/llmchat/po";
 import { llmchatRecordCommit } from "@/krate/llmchat/service";
+import { genTID, type TID } from "@/lib/id_util";
 import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant from "./record-assistant";
 import { useLLMChatComStore } from "./session";
-import { type TID, genTID } from "@/lib/id_util";
 
 export const RecordAnswering = ({
   bot,

@@ -11,7 +11,7 @@ import { EditorView } from "@codemirror/view";
 import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import { decoratorExtension } from "jolpin-codemirror";
+import { livePreview } from "jolpin-codemirror";
 import React, { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { chnotSearch } from "@/krate/chnot/service";
@@ -221,7 +221,7 @@ const MdwtEditor = ({
 
     todoHighlightPlugin,
 
-    decoratorExtension,
+    livePreview(),
     createCodemirrorTheme(),
 
     eventHandlers,

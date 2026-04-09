@@ -12,7 +12,12 @@ import {
   intersectsSyntaxNode,
   isCursorAtBeginning,
   renumberSelectedLists,
+  toggleBold,
+  toggleHighlight,
+  toggleInlineCode,
+  toggleItalic,
   toggleSelectedLinesStartWith,
+  toggleStrikethrough,
 } from "jolpin-codemirror";
 
 // Prepends the given editor's indentUnit to all lines of the current selection
@@ -88,6 +93,16 @@ export const decreaseIndent: Command = (view: EditorView): boolean => {
   return true;
 };
 
+const dispatchFormatToggle = (
+  view: EditorView,
+  toggleFn: (
+    state: import("@codemirror/state").EditorState,
+  ) => import("@codemirror/state").TransactionSpec,
+): boolean => {
+  view.dispatch(toggleFn(view.state));
+  return true;
+};
+
 export const generateKeybinding = (
   onCtrlEnter?: (view: EditorView) => boolean,
 ) => {
@@ -133,6 +148,31 @@ export const generateKeybinding = (
           insertLineAfter(view);
           return true;
         },
+        true,
+      ),
+      keyCommand(
+        "Mod-b",
+        (view: EditorView) => dispatchFormatToggle(view, toggleBold),
+        true,
+      ),
+      keyCommand(
+        "Mod-i",
+        (view: EditorView) => dispatchFormatToggle(view, toggleItalic),
+        true,
+      ),
+      keyCommand(
+        "Mod-Shift-s",
+        (view: EditorView) => dispatchFormatToggle(view, toggleStrikethrough),
+        true,
+      ),
+      keyCommand(
+        "Mod-e",
+        (view: EditorView) => dispatchFormatToggle(view, toggleInlineCode),
+        true,
+      ),
+      keyCommand(
+        "Mod-Shift-h",
+        (view: EditorView) => dispatchFormatToggle(view, toggleHighlight),
         true,
       ),
 

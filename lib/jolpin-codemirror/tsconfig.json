@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM"],
     "module": "ES2020",
     // https://stackoverflow.com/questions/71704754/typescript-yarn-workspaces-referenced-project-may-not-disable-emit
     // We should use emitDeclarationOnly instead of noEmit

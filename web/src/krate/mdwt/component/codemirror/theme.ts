@@ -327,6 +327,17 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       marginBottom: "1rem",
     },
 
+    // Live preview theme overrides
+    "& .cm-livePreview-hr": {
+      borderTop: `1px solid ${colors.border}`,
+    },
+    "& .cm-livePreview-image-error": {
+      color: colors.mutedForeground,
+    },
+    "& .cm-livePreview-math": {
+      color: isDarkTheme ? "#7dd3fc" : "#0369a1",
+    },
+
     // Lists
     "& .cm-list": {
       paddingLeft: "1.5rem",
