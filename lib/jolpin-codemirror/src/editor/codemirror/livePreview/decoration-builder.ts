@@ -168,12 +168,13 @@ export function buildDecorations(state: EditorState): DecorationSet {
 
       if (node.name === 'InlineMath' && !onActive) {
         const text = state.sliceDoc(nodeFrom, nodeTo);
-        const latex = text.replace(/^\$/, '').replace(/\$$/, '');
+        const isDisplay = text.startsWith('$$');
+        const latex = text.replace(/^\$+/, '').replace(/\$+$/, '');
         entries.push({
           from: nodeFrom,
           to: nodeTo,
           decoration: Decoration.replace({
-            widget: new InlineMathWidget(latex),
+            widget: new InlineMathWidget(latex, isDisplay),
           }),
         });
         return;

@@ -1,15 +1,18 @@
 import { type EditorView, WidgetType } from '@codemirror/view';
+import katex from 'katex';
 
 export class InlineMathWidget extends WidgetType {
   private readonly latex: string;
+  private readonly displayMode: boolean;
 
-  constructor(latex: string) {
+  constructor(latex: string, displayMode: boolean = false) {
     super();
     this.latex = latex;
+    this.displayMode = displayMode;
   }
 
   eq(other: InlineMathWidget) {
-    return other.latex === this.latex;
+    return other.latex === this.latex && other.displayMode === this.displayMode;
   }
 
   toDOM(_view: EditorView) {
@@ -18,16 +21,10 @@ export class InlineMathWidget extends WidgetType {
     span.setAttribute('aria-hidden', 'true');
 
     try {
-      const katex = (window as any).katex;
-      if (katex) {
-        katex.render(this.latex, span, {
-          throwOnError: false,
-          displayMode: false,
-        });
-      } else {
-        span.textContent = this.latex;
-        span.classList.add('cm-livePreview-math-raw');
-      }
+      katex.render(this.latex, span, {
+        throwOnError: false,
+        displayMode: this.displayMode,
+      });
     } catch {
       span.textContent = this.latex;
       span.classList.add('cm-livePreview-math-raw');
@@ -59,16 +56,10 @@ export class BlockMathWidget extends WidgetType {
     wrap.setAttribute('aria-hidden', 'true');
 
     try {
-      const katex = (window as any).katex;
-      if (katex) {
-        katex.render(this.latex, wrap, {
-          throwOnError: false,
-          displayMode: true,
-        });
-      } else {
-        wrap.textContent = this.latex;
-        wrap.classList.add('cm-livePreview-math-raw');
-      }
+      katex.render(this.latex, wrap, {
+        throwOnError: false,
+        displayMode: true,
+      });
     } catch {
       wrap.textContent = this.latex;
       wrap.classList.add('cm-livePreview-math-raw');

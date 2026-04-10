@@ -19,10 +19,12 @@ import { generateKeybinding } from "@/krate/mdwt/component/codemirror/keybinding
 import { toentTodoEventGuess } from "@/krate/toent/service";
 import { html2mdAsync } from "@/lib/markdown-utils";
 import { chnotTagNameList } from "../service";
+import "katex/dist/katex.min.css";
 import {
   Backlink,
   ChnotProps,
   Hashtag,
+  MathConfig,
   todoHighlightPlugin,
 } from "./codemirror/mdwt-extension";
 import { createCodemirrorTheme } from "./codemirror/theme";
@@ -209,7 +211,7 @@ const MdwtEditor = ({
     codeLanguages: languages,
     addKeymap: true,
     completeHTMLTags: false,
-    extensions: [Backlink, Hashtag, ChnotProps, GFM],
+    extensions: [Backlink, Hashtag, ChnotProps, GFM, MathConfig],
   });
 
   const extensions = [
