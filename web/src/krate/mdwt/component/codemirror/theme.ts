@@ -196,6 +196,26 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
     },
 
     "& .cm-tableHeader, & .cm-tableRow, & .cm-tableDelimiter": monospaceStyle,
+
+    "& .cm-livePreview-table-wrapper": {
+      overflowX: "auto",
+      margin: "0.5em 0",
+    },
+    "& .cm-livePreview-table": {
+      borderCollapse: "collapse",
+      width: "100%",
+      fontSize: "0.875em",
+      fontFamily:
+        'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    },
+    "& .cm-livePreview-table th, & .cm-livePreview-table td": {
+      border: `1px solid ${colors.border}`,
+      padding: "0.375rem 0.75rem",
+    },
+    "& .cm-livePreview-table th": {
+      backgroundColor: colors.muted,
+      fontWeight: "600",
+    },
     "& .cm-taskMarker": monospaceStyle,
 
     [`${editorNoGuttersSelector} .cm-line`]: theme.isDesktop

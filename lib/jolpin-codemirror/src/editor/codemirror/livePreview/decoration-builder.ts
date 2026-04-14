@@ -4,6 +4,7 @@ import { Decoration, type DecorationSet } from '@codemirror/view';
 import { ImageWidget, parseImage } from './widgets/image-widget';
 import { BlockMathWidget, InlineMathWidget } from './widgets/math-widget';
 import { CheckboxWidget, HorizontalRuleWidget } from './widgets/misc-widgets';
+import { TableWidget } from './widgets/table-widget';
 
 type DecorationEntry = {
   from: number;
@@ -149,6 +150,19 @@ export function buildDecorations(state: EditorState): DecorationSet {
           }),
         });
         return;
+      }
+
+      if (node.name === 'Table' && !onActive) {
+        const text = state.sliceDoc(nodeFrom, nodeTo);
+        entries.push({
+          from: nodeFrom,
+          to: nodeTo,
+          decoration: Decoration.replace({
+            widget: new TableWidget(text),
+            block: true,
+          }),
+        });
+        return false;
       }
 
       if (node.name === 'Image' && !onActive) {

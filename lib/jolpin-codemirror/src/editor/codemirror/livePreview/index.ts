@@ -1,6 +1,7 @@
 import { StateField, type Transaction } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import { buildDecorations } from './decoration-builder';
+import { tableNavigation } from './table-navigation';
 
 const livePreviewField = StateField.define<DecorationSet>({
   create(state) {
@@ -70,6 +71,34 @@ const livePreviewTheme = EditorView.baseTheme({
     margin: '0.75em 0',
   },
 
+  '.cm-livePreview-table-wrapper': {
+    overflowX: 'auto',
+    margin: '0.5em 0',
+  },
+  '.cm-livePreview-table': {
+    borderCollapse: 'collapse',
+    width: '100%',
+    fontSize: '0.875em',
+    fontFamily:
+      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+  '&light .cm-livePreview-table th, &light .cm-livePreview-table td': {
+    border: '1px solid #e5e5e5',
+    padding: '0.375rem 0.75rem',
+  },
+  '&dark .cm-livePreview-table th, &dark .cm-livePreview-table td': {
+    border: '1px solid #363636',
+    padding: '0.375rem 0.75rem',
+  },
+  '&light .cm-livePreview-table th': {
+    backgroundColor: '#f5f5f5',
+    fontWeight: '600',
+  },
+  '&dark .cm-livePreview-table th': {
+    backgroundColor: '#2a2a2a',
+    fontWeight: '600',
+  },
+
   '.cm-livePreview-checkbox': {
     marginRight: '0.25em',
     verticalAlign: 'middle',
@@ -88,6 +117,6 @@ const livePreviewTheme = EditorView.baseTheme({
   },
 });
 
-const livePreview = () => [livePreviewField, livePreviewTheme];
+const livePreview = () => [livePreviewField, livePreviewTheme, tableNavigation()];
 
 export default livePreview;
