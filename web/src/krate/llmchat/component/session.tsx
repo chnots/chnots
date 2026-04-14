@@ -271,7 +271,7 @@ const SessionContainer = ({
     };
   });
 
-  const { refreshTemplates, refreshBots } = useLLMChatStore();
+  const { refreshTemplates, refreshBots, templates } = useLLMChatStore();
   const [editingTemplate, setEditingTemplate] = useState<
     LLMChatTemplate | undefined
   >(undefined);
@@ -280,6 +280,15 @@ const SessionContainer = ({
     refreshTemplates();
     refreshBots();
   }, [refreshBots, refreshTemplates]);
+
+  useEffect(() => {
+    if (!template && !session && templates.size > 0) {
+      const first = templates.values().next().value;
+      if (first) {
+        setTemplate(first);
+      }
+    }
+  }, [templates, template, session, setTemplate]);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef<boolean>(false);
