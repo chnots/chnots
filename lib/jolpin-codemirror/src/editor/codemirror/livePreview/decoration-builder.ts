@@ -16,12 +16,14 @@ const noSpellCheck = { spellcheck: 'false', autocorrect: 'false' };
 
 const hideMarkDecoration = Decoration.mark({ class: 'cm-hiddenMark' });
 
+const codeBlockNodeNames = new Set(['FencedCode', 'CodeBlock']);
+
 const lineDecorations: Record<string, Decoration> = {
   FencedCode: Decoration.line({
-    attributes: { class: 'cm-codeBlock cm-regionFirstLine cm-regionLastLine', ...noSpellCheck },
+    attributes: { class: 'cm-codeBlock', ...noSpellCheck },
   }),
   CodeBlock: Decoration.line({
-    attributes: { class: 'cm-codeBlock cm-regionFirstLine cm-regionLastLine', ...noSpellCheck },
+    attributes: { class: 'cm-codeBlock', ...noSpellCheck },
   }),
   Blockquote: Decoration.line({
     attributes: { class: 'cm-blockQuote' },
@@ -230,7 +232,27 @@ export function buildDecorations(state: EditorState): DecorationSet {
         return;
       }
 
-      if (lineDecorations[node.name]) {
+      if (codeBlockNodeNames.has(node.name)) {
+        const firstLine = state.doc.lineAt(nodeFrom);
+        const lastLine = state.doc.lineAt(nodeTo);
+        let pos = nodeFrom;
+        while (pos <= nodeTo) {
+          const line = state.doc.lineAt(pos);
+          const isFirst = line.number === firstLine.number;
+          const isLast = line.number === lastLine.number;
+          const classes = ['cm-codeBlock'];
+          if (isFirst) classes.push('cm-regionFirstLine');
+          if (isLast) classes.push('cm-regionLastLine');
+          entries.push({
+            from: line.from,
+            to: line.from,
+            decoration: Decoration.line({
+              attributes: { class: classes.join(' '), ...noSpellCheck },
+            }),
+          });
+          pos = line.to + 1;
+        }
+      } else if (lineDecorations[node.name]) {
         let pos = nodeFrom;
         while (pos <= nodeTo) {
           const line = state.doc.lineAt(pos);

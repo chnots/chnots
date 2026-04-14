@@ -157,26 +157,22 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
     },
 
     "& .cm-codeBlock": {
-      "&.cm-regionFirstLine, &.cm-regionLastLine": {
-        borderRadius: "0.375rem",
-      },
-      "&:not(.cm-regionFirstLine)": {
-        borderTop: "none",
-        borderTopLeftRadius: 0,
-        borderTopRightRadius: 0,
-      },
-      "&:not(.cm-regionLastLine)": {
-        borderBottom: "none",
-        borderBottomLeftRadius: 0,
-        borderBottomRightRadius: 0,
-      },
-      borderWidth: "1px",
-      borderStyle: "solid",
-      borderColor: colors.border,
-      backgroundColor: colors.muted,
+      borderLeft: `1px solid ${colors.border}`,
+      borderRight: `1px solid ${colors.border}`,
       ...monospaceStyle,
       fontSize: "0.875em",
-      padding: "0.25rem 0.5rem",
+      padding: "0.125rem 0.75rem",
+      marginRight: "1em",
+      "&.cm-regionFirstLine": {
+        marginTop: "0.5em",
+        paddingTop: "0.5em",
+        borderTop: `1px solid ${colors.border}`,
+      },
+      "&.cm-regionLastLine": {
+        marginBottom: "0.5em",
+        paddingBottom: "0.5em",
+        borderBottom: `1px solid ${colors.border}`,
+      },
     },
 
     "& .cm-inlineCode": {
@@ -293,7 +289,9 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
         border: `1px solid ${colors.border}`,
         borderRadius: "0.375rem",
         padding: "0.375rem 0.75rem",
-        backgroundColor: colors.muted,
+        backgroundColor: isDarkTheme
+          ? `${colors.muted}cc`
+          : `${colors.muted}dd`,
         cursor: "pointer",
         transition: "all 0.15s ease",
         "&:hover": {
