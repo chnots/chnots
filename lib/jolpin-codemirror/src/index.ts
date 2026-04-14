@@ -29,3 +29,6 @@ export {
   intersectsSyntaxNode,
   renumberSelectedLists,
 };
+
+export { TABLE_EDIT_EVENT } from './editor/codemirror/livePreview/widgets/table-widget';
+export type { TableEditDetail, ColumnAlign } from './editor/codemirror/livePreview/widgets/table-widget';

@@ -1,8 +1,8 @@
 import { type EditorView, WidgetType } from '@codemirror/view';
 
-type ColumnAlign = 'left' | 'center' | 'right';
+export type ColumnAlign = 'left' | 'center' | 'right';
 
-function parseCells(line: string): string[] {
+export function parseCells(line: string): string[] {
   return line
     .replace(/^\|/, '')
     .replace(/\|$/, '')
@@ -10,7 +10,7 @@ function parseCells(line: string): string[] {
     .map((cell) => cell.trim());
 }
 
-function parseAlignment(delimiterLine: string): ColumnAlign[] {
+export function parseAlignment(delimiterLine: string): ColumnAlign[] {
   return delimiterLine
     .replace(/^\|/, '')
     .replace(/\|$/, '')
@@ -23,20 +23,32 @@ function parseAlignment(delimiterLine: string): ColumnAlign[] {
     });
 }
 
-function isDelimiterRow(line: string): boolean {
+export function isDelimiterRow(line: string): boolean {
   return /^\|?\s*[-:]+[-|\s:]*$/.test(line.trim());
 }
 
+export interface TableEditDetail {
+  rawText: string;
+  from: number;
+  to: number;
+}
+
+export const TABLE_EDIT_EVENT = 'cm-table-edit';
+
 export class TableWidget extends WidgetType {
   private readonly rawText: string;
+  private readonly from: number;
+  private readonly to: number;
 
-  constructor(rawText: string) {
+  constructor(rawText: string, from: number, to: number) {
     super();
     this.rawText = rawText;
+    this.from = from;
+    this.to = to;
   }
 
   eq(other: TableWidget) {
-    return other.rawText === this.rawText;
+    return other.rawText === this.rawText && other.from === this.from;
   }
 
   toDOM(_view: EditorView) {
@@ -45,6 +57,7 @@ export class TableWidget extends WidgetType {
 
     const table = document.createElement('table');
     table.className = 'cm-livePreview-table';
+    table.style.cursor = 'pointer';
 
     const lines = this.rawText.split('\n').filter((line) => line.trim());
 
@@ -93,10 +106,31 @@ export class TableWidget extends WidgetType {
     }
 
     wrapper.appendChild(table);
+
+    wrapper.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    wrapper.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      wrapper.dispatchEvent(
+        new CustomEvent<TableEditDetail>(TABLE_EDIT_EVENT, {
+          bubbles: true,
+          detail: {
+            rawText: this.rawText,
+            from: this.from,
+            to: this.to,
+          },
+        }),
+      );
+    });
+
     return wrapper;
   }
 
   ignoreEvent() {
-    return false;
+    return true;
   }
 }

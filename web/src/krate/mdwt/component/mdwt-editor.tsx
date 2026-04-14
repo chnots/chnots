@@ -11,8 +11,9 @@ import { EditorView } from "@codemirror/view";
 import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import { livePreview } from "jolpin-codemirror";
-import React, { useEffect, useRef } from "react";
+import type { TableEditDetail } from "jolpin-codemirror";
+import { livePreview, TABLE_EDIT_EVENT } from "jolpin-codemirror";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { chnotSearch } from "@/krate/chnot/service";
 import { generateKeybinding } from "@/krate/mdwt/component/codemirror/keybinding";
@@ -28,6 +29,8 @@ import {
   todoHighlightPlugin,
 } from "./codemirror/mdwt-extension";
 import { createCodemirrorTheme } from "./codemirror/theme";
+import { TableEditorDialog } from "./table-editor";
+import "./table-editor/table-editor.css";
 
 const eventHandlers = EditorView.domEventHandlers({
   paste(event, view) {
@@ -182,7 +185,41 @@ const MdwtEditor = ({
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const editorCustom = React.useContext(EditorCustomContext);
+
+  const [tableEditOpen, setTableEditOpen] = useState(false);
+  const [tableEditRawText, setTableEditRawText] = useState("");
+  const [tableEditFrom, setTableEditFrom] = useState(0);
+  const [tableEditTo, setTableEditTo] = useState(0);
+
+  const handleTableEdit = useCallback((e: Event) => {
+    const detail = (e as CustomEvent<TableEditDetail>).detail;
+    setTableEditRawText(detail.rawText);
+    setTableEditFrom(detail.from);
+    setTableEditTo(detail.to);
+    setTableEditOpen(true);
+  }, []);
+
+  const handleTableSave = useCallback(
+    (newText: string) => {
+      const view = codeMirror.current?.view;
+      if (!view) return;
+      view.dispatch({
+        changes: { from: tableEditFrom, to: tableEditTo, insert: newText },
+      });
+    },
+    [tableEditFrom, tableEditTo],
+  );
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.addEventListener(TABLE_EDIT_EVENT, handleTableEdit);
+    return () => {
+      container.removeEventListener(TABLE_EDIT_EVENT, handleTableEdit);
+    };
+  }, [handleTableEdit]);
 
   useEffect(() => {
     if (setCMRef) {
@@ -254,32 +291,40 @@ const MdwtEditor = ({
   ];
 
   return (
-    <CodeMirror
-      height={
-        fillParentHeight
-          ? "100%"
-          : typeof height === "number"
-            ? `${height}px`
-            : typeof height === "string"
-              ? height
-              : undefined
-      }
-      extensions={extensions}
-      ref={codeMirror}
-      style={{
-        font: "sans-serif",
-        height: "100%",
-      }}
-      value={content}
-      basicSetup={{
-        lineNumbers: false,
-        highlightActiveLineGutter: false,
-        foldGutter: foldGutter,
-        closeBrackets: false,
-      }}
-      placeholder={placeholder ?? "Take a chnot"}
-      onChange={(e) => onContentChange(e)}
-    />
+    <div ref={containerRef} style={{ height: "100%" }}>
+      <CodeMirror
+        height={
+          fillParentHeight
+            ? "100%"
+            : typeof height === "number"
+              ? `${height}px`
+              : typeof height === "string"
+                ? height
+                : undefined
+        }
+        extensions={extensions}
+        ref={codeMirror}
+        style={{
+          font: "sans-serif",
+          height: "100%",
+        }}
+        value={content}
+        basicSetup={{
+          lineNumbers: false,
+          highlightActiveLineGutter: false,
+          foldGutter: foldGutter,
+          closeBrackets: false,
+        }}
+        placeholder={placeholder ?? "Take a chnot"}
+        onChange={(e) => onContentChange(e)}
+      />
+      <TableEditorDialog
+        open={tableEditOpen}
+        rawText={tableEditRawText}
+        onOpenChange={setTableEditOpen}
+        onSave={handleTableSave}
+      />
+    </div>
   );
 };
 

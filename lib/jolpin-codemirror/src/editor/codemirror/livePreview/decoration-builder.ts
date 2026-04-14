@@ -158,7 +158,7 @@ export function buildDecorations(state: EditorState): DecorationSet {
           from: nodeFrom,
           to: nodeTo,
           decoration: Decoration.replace({
-            widget: new TableWidget(text),
+            widget: new TableWidget(text, nodeFrom, nodeTo),
             block: true,
           }),
         });
