@@ -1,3 +1,12 @@
+import type { TableEditDetail } from "@chnots/md-codemirror";
+import {
+  createCodemirrorTheme,
+  generateKeybinding,
+  Hashtag,
+  livePreview,
+  MathConfig,
+  TABLE_EDIT_EVENT,
+} from "@chnots/md-codemirror";
 import {
   autocompletion,
   type Completion,
@@ -11,15 +20,6 @@ import { EditorView } from "@codemirror/view";
 import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import type { TableEditDetail } from "@chnots/md-codemirror";
-import {
-  createCodemirrorTheme,
-  generateKeybinding,
-  Hashtag,
-  livePreview,
-  MathConfig,
-  TABLE_EDIT_EVENT,
-} from "@chnots/md-codemirror";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { chnotSearch } from "@/krate/chnot/service";

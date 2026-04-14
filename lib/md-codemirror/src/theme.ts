@@ -302,9 +302,17 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       },
     },
 
-    ".cm-hashtag-mark, .cm-hashtag-label": {
+    ".cm-hashtag-mark": {
       color: isDarkTheme ? "#f0abfc" : "#a21caf",
       fontWeight: "500",
+    },
+
+    ".cm-hashtag-label": {
+      color: isDarkTheme ? "#f0abfc" : "#a21caf",
+      fontWeight: "500",
+      backgroundColor: isDarkTheme ? "rgba(240, 171, 252, 0.12)" : "rgba(162, 28, 175, 0.1)",
+      borderRadius: "4px",
+      padding: "0 4px",
     },
 
     ".cm-backlink-mark, .cm-backlink-id": {

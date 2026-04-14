@@ -16,6 +16,10 @@ const noSpellCheck = { spellcheck: 'false', autocorrect: 'false' };
 
 const hideMarkDecoration = Decoration.mark({ class: 'cm-hiddenMark' });
 
+const hashtagMarkDecoration = Decoration.mark({ class: 'cm-hashtag-mark' });
+
+const hashtagLabelDecoration = Decoration.mark({ class: 'cm-hashtag-label' });
+
 const codeBlockNodeNames = new Set(['FencedCode', 'CodeBlock']);
 
 const lineDecorations: Record<string, Decoration> = {
@@ -228,6 +232,32 @@ export function buildDecorations(state: EditorState): DecorationSet {
           from: nodeFrom,
           to: nodeTo,
           decoration: hideMarkDecoration,
+        });
+        return;
+      }
+
+      if (node.name === 'HashtagMark') {
+        if (!onActive) {
+          entries.push({
+            from: nodeFrom,
+            to: nodeTo,
+            decoration: hideMarkDecoration,
+          });
+        } else {
+          entries.push({
+            from: nodeFrom,
+            to: nodeTo,
+            decoration: hashtagMarkDecoration,
+          });
+        }
+        return;
+      }
+
+      if (node.name === 'HashtagLabel') {
+        entries.push({
+          from: nodeFrom,
+          to: nodeTo,
+          decoration: hashtagLabelDecoration,
         });
         return;
       }
