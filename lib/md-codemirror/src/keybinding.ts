@@ -7,6 +7,7 @@ import {
   type KeyBinding,
   keymap,
 } from "@codemirror/view";
+
 import {
   insertLineAfter,
   intersectsSyntaxNode,
@@ -18,10 +19,8 @@ import {
   toggleItalic,
   toggleSelectedLinesStartWith,
   toggleStrikethrough,
-} from "jolpin-codemirror";
+} from "./index";
 
-// Prepends the given editor's indentUnit to all lines of the current selection
-// and re-numbers modified ordered lists (if any).
 export const increaseIndent: Command = (view: EditorView): boolean => {
   const matchEmpty = true;
   const matchNothing = /$ ^/;
@@ -29,22 +28,17 @@ export const increaseIndent: Command = (view: EditorView): boolean => {
 
   const changes = toggleSelectedLinesStartWith(
     view.state,
-    // Delete nothing
     matchNothing,
-    // ...and thus always add indentUnit.
     indentUnit,
     matchEmpty,
   );
   view.dispatch(changes);
 
-  // Fix any lists
   view.dispatch(renumberSelectedLists(view.state));
 
   return true;
 };
 
-// Like `increaseIndent`, but may insert tabs, rather than
-// indenting, in some instances.
 export const insertOrIncreaseIndent: Command = (view: EditorView): boolean => {
   const selection = view.state.selection;
   const mainSelection = selection.main;
@@ -60,7 +54,6 @@ export const insertOrIncreaseIndent: Command = (view: EditorView): boolean => {
   view.dispatch(
     view.state.changeByRange((selection) => {
       return {
-        // Move the selection to after the inserted text
         range: EditorSelection.cursor(selection.from + indentUnit.length),
         changes: {
           from: selection.from,
@@ -77,17 +70,13 @@ export const decreaseIndent: Command = (view: EditorView): boolean => {
   const matchEmpty = true;
   const changes = toggleSelectedLinesStartWith(
     view.state,
-    // Assume indentation is either a tab or in units
-    // of n spaces.
     new RegExp(`^(?:[\\t]|[ ]{1,${getIndentUnit(view.state)}})`),
-    // Don't add new text
     "",
     matchEmpty,
   );
 
   view.dispatch(changes);
 
-  // Fix any lists
   view.dispatch(renumberSelectedLists(view.state));
 
   return true;

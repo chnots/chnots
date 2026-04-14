@@ -33,7 +33,7 @@ sync-struct:
 
 build-web:
 	mkdir -p $(WEB_DIR)/public/static/favicon/ && cp data/icon/chnots.svg $(WEB_DIR)/public/static/favicon/
-	cd lib/jolpin-codemirror && pnpm install && pnpm run build
+	cd lib/md-codemirror && pnpm install && pnpm run build
 	cd lib/mind-elixir-core && pnpm install && pnpm run build
 	cd $(WEB_DIR) && pnpm install && pnpm run build
 

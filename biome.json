@@ -6,7 +6,7 @@
       "!**/*.test.js",
       "!web-dist",
       "!target",
-      "!lib/jolpin-codemirror",
+      "!lib/md-codemirror",
       "!lib/mind-elixir-core",
       "!**/*.yaml"
     ],

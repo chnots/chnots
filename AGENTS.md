@@ -11,7 +11,7 @@ Chnots is a note-taking application with Rust backend and React frontend, suppor
 - **Backend**: Rust with Axum web framework (lib/backend, server)
 - **Frontend**: React 19 + TypeScript + Rsbuild (web)
 - **Desktop**: Tauri v2 with Rust core (tauri, tauri/src-tauri)
-- **Libraries**: chin-tools (Rust utilities), mind-elixir-core (mind maps), jolpin-codemirror (editor)
+- **Libraries**: chin-tools (Rust utilities), mind-elixir-core (mind maps), @chnots/md-codemirror (editor)
 
 ## Build & Development Commands
 

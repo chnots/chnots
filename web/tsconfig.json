@@ -20,7 +20,7 @@
   "include": ["./src"],
   "references": [
     {
-      "path": "../lib/jolpin-codemirror"
+      "path": "../lib/md-codemirror"
     }
   ]
 }

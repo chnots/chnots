@@ -11,8 +11,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/common/component/ui/tooltip";
-import type { ParsedTable } from "./table-utils";
-import { generateMarkdownTable, parseMarkdownTable } from "./table-utils";
+import type { ParsedTable } from "@chnots/md-codemirror";
+import {
+  generateMarkdownTable,
+  parseMarkdownTable,
+} from "@chnots/md-codemirror";
 
 interface TableEditorDialogProps {
   open: boolean;

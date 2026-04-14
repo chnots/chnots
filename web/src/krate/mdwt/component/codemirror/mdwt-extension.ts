@@ -59,46 +59,6 @@ export const Backlink: MarkdownConfig = {
   ],
 };
 
-const hashtagRE =
-  /^[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~[\]\\\s]+/;
-
-export const Hashtag: MarkdownConfig = {
-  defineNodes: [
-    "Hashtag",
-    {
-      name: "HashtagLabel",
-      style: t.tagName,
-    },
-    {
-      name: "HashtagMark",
-      style: t.escape,
-    },
-  ],
-  parseInline: [
-    {
-      name: "Hashtag",
-      parse(cx: InlineContext, next: number, pos: number) {
-        if (next !== 35 /* # */) {
-          return -1;
-        }
-        const start = pos;
-        pos += 1;
-        const match = hashtagRE.exec(cx.text.slice(pos - cx.offset));
-        if (match && /\D/.test(match[0])) {
-          pos += match[0].length;
-          return cx.addElement(
-            cx.elt("Hashtag", start, pos, [
-              cx.elt("HashtagMark", start, start + 1),
-              cx.elt("HashtagLabel", start + 1, pos),
-            ]),
-          );
-        }
-        return -1;
-      },
-    },
-  ],
-};
-
 /**
  * We should use MarkdownConfig instead of Decoration.
  * Most of the parsing happens on the backend, so
@@ -183,81 +143,6 @@ const parseChnotProps = (cx: BlockContext, line: Line) => {
   cx.addElement(root);
   cx.nextLine();
   return true;
-};
-
-const blockMathRE = /^\s*\$\$\s*$/;
-const blankLineRE = /^\s*$/;
-
-const parseBlockMath = (cx: BlockContext, line: Line): boolean => {
-  if (!blockMathRE.test(line.text)) return false;
-
-  const blockStart = cx.lineStart;
-
-  while (cx.nextLine()) {
-    if (blankLineRE.test(line.text)) return false;
-    if (blockMathRE.test(line.text)) {
-      cx.addElement(
-        cx.elt("BlockMath", blockStart, cx.lineStart + line.text.length),
-      );
-      cx.nextLine();
-      return true;
-    }
-  }
-
-  return false;
-};
-
-export const MathConfig: MarkdownConfig = {
-  defineNodes: [
-    { name: "InlineMath", style: t.monospace },
-    { name: "BlockMath", block: true, style: t.monospace },
-  ],
-  parseInline: [
-    {
-      name: "InlineMath",
-      before: "Escape",
-      parse(cx: InlineContext, next: number, pos: number) {
-        if (next !== 36) return -1;
-
-        const isDouble = cx.char(pos + 1) === 36;
-        const delimLen = isDouble ? 2 : 1;
-
-        if (!isDouble && /\s/.test(cx.slice(pos + 1, pos + 2))) return -1;
-
-        let endPos = pos + delimLen;
-        const lineEnd = cx.offset + cx.text.length;
-
-        while (endPos < lineEnd) {
-          if (cx.char(endPos) === 36) {
-            if (isDouble) {
-              if (cx.char(endPos + 1) !== 36) {
-                endPos++;
-                continue;
-              }
-              return cx.addElement(cx.elt("InlineMath", pos, endPos + 2));
-            } else {
-              if (/\s/.test(cx.slice(endPos - 1, endPos))) {
-                endPos++;
-                continue;
-              }
-              return cx.addElement(cx.elt("InlineMath", pos, endPos + 1));
-            }
-          }
-          endPos++;
-        }
-        return -1;
-      },
-    },
-  ],
-  parseBlock: [
-    {
-      name: "BlockMath",
-      parse: parseBlockMath,
-      endLeaf(_cx: BlockContext, line: Line) {
-        return blockMathRE.test(line.text);
-      },
-    },
-  ],
 };
 
 export const ChnotProps: MarkdownConfig = {

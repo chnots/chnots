@@ -3,7 +3,6 @@ import { EditorView } from "@codemirror/view";
 export const createCodemirrorTheme = (isDarkTheme = false) => {
   const editorNoGuttersSelector = "&:not(:has(> .cm-scroller > .cm-gutters))";
 
-  // shadcn/ui color palette (oklch values converted to approximate hex for CodeMirror)
   const colors = isDarkTheme
     ? {
         background: "#242424",
@@ -323,7 +322,6 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       fontWeight: "600",
     },
 
-    // Line numbers styling
     "& .cm-gutters": {
       backgroundColor: "transparent",
       borderRight: `1px solid ${colors.border}`,
@@ -338,14 +336,12 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       color: colors.foreground,
     },
 
-    // Horizontal rule
     "& .cm-horizontalRule": {
       borderTop: `1px solid ${colors.border}`,
       marginTop: "1rem",
       marginBottom: "1rem",
     },
 
-    // Live preview theme overrides
     "& .cm-livePreview-hr": {
       borderTop: `1px solid ${colors.border}`,
     },
@@ -356,12 +352,10 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       color: isDarkTheme ? "#7dd3fc" : "#0369a1",
     },
 
-    // Lists
     "& .cm-list": {
       paddingLeft: "1.5rem",
     },
 
-    // Emphasis
     "& .cm-emphasis": {
       fontStyle: "italic",
     },
@@ -370,7 +364,6 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       fontWeight: "600",
     },
 
-    // Comments (for code blocks)
     "& .tok-comment": {
       color: colors.mutedForeground,
       fontStyle: "italic",
@@ -397,7 +390,6 @@ export const createCodemirrorTheme = (isDarkTheme = false) => {
       color: isDarkTheme ? "#c4b5fd" : "#7c3aed",
     },
 
-    // Focus ring for accessibility
     "&.cm-focused": {
       outline: "none",
     },

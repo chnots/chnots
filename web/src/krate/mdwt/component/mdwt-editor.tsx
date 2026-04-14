@@ -11,12 +11,18 @@ import { EditorView } from "@codemirror/view";
 import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import type { TableEditDetail } from "jolpin-codemirror";
-import { livePreview, TABLE_EDIT_EVENT } from "jolpin-codemirror";
+import type { TableEditDetail } from "@chnots/md-codemirror";
+import {
+  createCodemirrorTheme,
+  generateKeybinding,
+  Hashtag,
+  livePreview,
+  MathConfig,
+  TABLE_EDIT_EVENT,
+} from "@chnots/md-codemirror";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { chnotSearch } from "@/krate/chnot/service";
-import { generateKeybinding } from "@/krate/mdwt/component/codemirror/keybinding";
 import { toentTodoEventGuess } from "@/krate/toent/service";
 import { html2mdAsync } from "@/lib/markdown-utils";
 import { chnotTagNameList } from "../service";
@@ -24,11 +30,8 @@ import "katex/dist/katex.min.css";
 import {
   Backlink,
   ChnotProps,
-  Hashtag,
-  MathConfig,
   todoHighlightPlugin,
 } from "./codemirror/mdwt-extension";
-import { createCodemirrorTheme } from "./codemirror/theme";
 import { TableEditorDialog } from "./table-editor";
 import "./table-editor/table-editor.css";
 
