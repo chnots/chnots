@@ -332,3 +332,12 @@
     vertical-align: text-bottom;
   }
 }
+
+@keyframes token-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

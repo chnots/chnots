@@ -1,16 +1,13 @@
+import { useChat } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 import { Square } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Button as KButton } from "@/common/component/ui/button";
-
-import {
-  ResponseCtl,
-  type ResponseState,
-  ResponseStep,
-  useLLMResponse,
-} from "@/hooks/use-llm-response";
 import type { LLMChatBot } from "@/krate/llmchat/po";
 import { llmchatRecordCommit } from "@/krate/llmchat/service";
 import { genTID, type TID } from "@/lib/id_util";
+import { partsToContentBlocks, recordVOToUIMessages } from "../message-adapter";
+import { createTransport } from "../transport";
 import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant from "./record-assistant";
 import { useLLMChatComStore } from "./session";
@@ -22,106 +19,89 @@ const RecordAnsweringInner = ({
   onScrollToEnd,
 }: {
   bot: LLMChatBot;
-  session: NonNullable<Parameters<typeof useLLMResponse>[0]["session"]>;
-  records: NonNullable<Parameters<typeof useLLMResponse>[0]["records"]>;
+  session: { otid: TID };
+  records: LLMChatRecordVO[];
   onScrollToEnd?: () => void;
 }) => {
-  const { setResponsing, appendRecord, answering } = useLLMChatComStore(
-    (store) => {
-      return {
-        setResponsing: store.setResponsing,
-        appendRecord: store.appendRecord,
-        answering: store.responsing,
-      };
-    },
-  );
-
-  const responseStateRef = useRef<ResponseState>(undefined);
-  const otid = useRef<TID>(genTID());
-
-  const { response, setAnswerCtl } = useLLMResponse({
-    bot,
-    session,
-    records,
+  const { setResponsing, appendRecord } = useLLMChatComStore((store) => {
+    return {
+      setResponsing: store.setResponsing,
+      appendRecord: store.appendRecord,
+    };
   });
 
-  useEffect(() => {
-    if (setResponsing) {
-      setResponsing((response && response.step !== ResponseStep.End) ?? false);
-    }
-  }, [response, setResponsing]);
+  const initialMessages = useMemo(
+    () => recordVOToUIMessages(records) as UIMessage[],
+    [records],
+  );
+  const transport = useMemo(() => createTransport(bot.body), [bot.body]);
+  const assistantOtid = useRef<TID>(genTID());
 
-  useEffect(() => {
-    if (answering) {
-      setAnswerCtl(ResponseCtl.Trigger);
-    }
-
-    return () => {
-      setAnswerCtl(ResponseCtl.Abort);
-    };
-  }, [answering, setAnswerCtl]);
-
-  useEffect(() => {
-    return () => {
-      if (responseStateRef.current) {
-        const rsp = responseStateRef.current;
-        const record: LLMChatRecordVO = {
-          otid: rsp.tid,
-          session_otid: rsp.sessionId,
-          content: rsp.contentBlocks,
-          role: "assistant",
-          role_id: rsp.roleId,
-          pre_record_otid: rsp.prevRecordId,
-          tid: genTID(),
-        };
-        llmchatRecordCommit(record);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const buildRecord = (responseState: ResponseState) => {
+  const { messages, stop, status } = useChat({
+    transport: transport as never,
+    messages: initialMessages,
+    sendAutomaticallyWhen: ({ messages: msgs }) => {
+      const last = msgs.at(-1);
+      return last?.role === "user";
+    },
+    onFinish: ({ message, isAbort }) => {
+      const prevRecordOtid = records.at(-1)?.otid;
       const record: LLMChatRecordVO = {
-        otid: responseState.tid,
-        session_otid: responseState.sessionId,
-        content: responseState.contentBlocks,
+        otid: assistantOtid.current,
+        session_otid: session.otid,
+        pre_record_otid: prevRecordOtid,
+        content: partsToContentBlocks(message.parts),
         role: "assistant",
-        role_id: responseState.roleId,
-        pre_record_otid: responseState.prevRecordId,
+        role_id: bot.otid,
         tid: genTID(),
       };
 
-      return record;
-    };
+      if (!isAbort) {
+        appendRecord(record);
+      } else {
+        llmchatRecordCommit(record);
+      }
+    },
+  });
 
-    if (response && response.step === ResponseStep.End) {
-      appendRecord(buildRecord(response));
-      responseStateRef.current = undefined;
-    } else {
-      responseStateRef.current = response;
-    }
-    if (onScrollToEnd) {
-      onScrollToEnd();
-    }
-  }, [response, onScrollToEnd, appendRecord]);
+  useEffect(() => {
+    setResponsing(status === "submitted" || status === "streaming");
+  }, [status, setResponsing]);
+
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
+
+  useEffect(() => {
+    onScrollToEnd?.();
+  }, [messages, onScrollToEnd]);
+
+  const lastAssistantMsg = [...messages]
+    .reverse()
+    .find((m) => m.role === "assistant");
+  if (!lastAssistantMsg) {
+    return null;
+  }
 
   return (
     <>
       <RecordAssistant
         logo={bot.svg_logo}
         role_id={bot.otid}
-        otid={otid.current}
-        session_otid={response.sessionId}
-        content={response.contentBlocks}
+        otid={assistantOtid.current}
+        session_otid={session.otid}
+        content={partsToContentBlocks(lastAssistantMsg.parts)}
         tid={genTID()}
-        timestamp={new Date(otid.current / 1e3).toISOString()}
+        timestamp={new Date(assistantOtid.current / 1e3).toISOString()}
         viewMode={false}
         isAnimating={true}
       />
-      {response.step === ResponseStep.Answering && (
+      {(status === "submitted" || status === "streaming") && (
         <div className="flex justify-center">
           <KButton
-            onClick={() => setAnswerCtl(ResponseCtl.Abort)}
+            onClick={() => stop()}
             className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors flex mb-6"
             aria-label="Abort"
             tabIndex={0}
