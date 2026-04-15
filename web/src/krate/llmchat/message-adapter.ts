@@ -63,6 +63,22 @@ export function contentBlocksToParts(
           data: { error: block.data },
         } as never);
         break;
+      case "image":
+        parts.push({
+          type: "file",
+          mediaType: block.mediaType ?? "image/png",
+          url: block.data,
+          filename: block.filename,
+        });
+        break;
+      case "file":
+        parts.push({
+          type: "file",
+          mediaType: block.mediaType ?? "application/octet-stream",
+          url: block.data,
+          filename: block.filename,
+        });
+        break;
     }
   }
 
@@ -85,6 +101,14 @@ export function partsToContentBlocks(
         if (part.text) {
           blocks.push({ type: "content", data: part.text });
         }
+        break;
+      case "file":
+        blocks.push({
+          type: part.mediaType.startsWith("image/") ? "image" : "file",
+          data: part.url,
+          mediaType: part.mediaType,
+          filename: part.filename,
+        });
         break;
       default:
         if (part.type.startsWith("data-")) {

@@ -1,5 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
+import { isToolUIPart } from "ai";
 import { Square } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { Button as KButton } from "@/common/component/ui/button";
@@ -11,6 +12,7 @@ import { createTransport } from "../transport";
 import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant from "./record-assistant";
 import { useLLMChatComStore } from "./session";
+import { ToolCallBlock } from "./tool-call-block";
 
 const RecordAnsweringInner = ({
   bot,
@@ -85,6 +87,8 @@ const RecordAnsweringInner = ({
     return null;
   }
 
+  const toolParts = lastAssistantMsg.parts.filter((p) => isToolUIPart(p));
+
   return (
     <>
       <RecordAssistant
@@ -98,6 +102,41 @@ const RecordAnsweringInner = ({
         viewMode={false}
         isAnimating={true}
       />
+      {toolParts.length > 0 && (
+        <div className="mx-4">
+          {toolParts.map((part, i) => {
+            const tp = part as {
+              type: string;
+              toolCallId: string;
+              toolName?: string;
+              state: string;
+              input?: unknown;
+              output?: unknown;
+              errorText?: string;
+            };
+            return (
+              <ToolCallBlock
+                key={tp.toolCallId ?? i}
+                toolName={tp.toolName ?? tp.type.replace("tool-", "")}
+                toolCallId={tp.toolCallId}
+                state={
+                  tp.state as
+                    | "input-streaming"
+                    | "input-available"
+                    | "approval-requested"
+                    | "approval-responded"
+                    | "output-available"
+                    | "output-error"
+                    | "output-denied"
+                }
+                input={tp.input}
+                output={tp.output}
+                errorText={tp.errorText}
+              />
+            );
+          })}
+        </div>
+      )}
       {(status === "submitted" || status === "streaming") && (
         <div className="flex justify-center">
           <KButton

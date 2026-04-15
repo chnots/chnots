@@ -1,11 +1,18 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
 
-export type ContentBlockType = "thinking" | "content" | "error";
+export type ContentBlockType =
+  | "thinking"
+  | "content"
+  | "error"
+  | "image"
+  | "file";
 
 export type ContentBlock = {
   type: ContentBlockType;
   data: string;
+  mediaType?: string;
+  filename?: string;
 };
 
 export const buildContentBlocks = (

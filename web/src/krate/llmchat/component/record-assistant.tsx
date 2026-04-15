@@ -12,6 +12,7 @@ import { Bot, Glasses, RotateCw, Sparkles } from "lucide-react";
 import KSVG from "@/common/component/svg";
 import type { LLMChatBot, LLMChatTemplate } from "@/krate/llmchat/po";
 import { getBlockContent } from "@/krate/llmchat/po";
+import { contentBlocksToMarkdown } from "@/krate/llmchat/record-markdown";
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
@@ -41,7 +42,7 @@ const RecordCommon = memo(function RecordCommon({
   const body = getBlockContent(content, "content");
   const thinking = getBlockContent(content, "thinking");
   const onCopy = () => {
-    navigator.clipboard.writeText(body);
+    navigator.clipboard.writeText(contentBlocksToMarkdown(content));
   };
 
   return (

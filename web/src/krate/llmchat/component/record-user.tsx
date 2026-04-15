@@ -1,10 +1,44 @@
-import { Edit3, Save } from "lucide-react";
+import { Edit3, Paperclip, Save } from "lucide-react";
 import { memo, useState } from "react";
 import { Textarea } from "@/common/component/ui/textarea";
 import { getBlockContent } from "@/krate/llmchat/po";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
 import { useLLMChatComStore } from "./session";
+
+const AttachedFileList = ({
+  blocks,
+}: {
+  blocks: LLMChatRecordVO["content"];
+}) => {
+  const files = blocks.filter((b) => b.type === "image" || b.type === "file");
+  if (files.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-2">
+      {files.map((block, i) =>
+        block.type === "image" ? (
+          <img
+            key={i}
+            src={block.data}
+            alt={block.filename ?? "image"}
+            className="max-h-32 max-w-48 rounded-md object-contain border"
+          />
+        ) : (
+          <div
+            key={i}
+            className="flex items-center gap-1 rounded-md border bg-muted/50 px-2 py-1 text-xs"
+          >
+            <Paperclip className="h-3 w-3" />
+            <span className="max-w-32 truncate">
+              {block.filename ?? "file"}
+            </span>
+          </div>
+        ),
+      )}
+    </div>
+  );
+};
 
 const RecordUser = memo(function RecordUser({
   record,
@@ -58,6 +92,7 @@ const RecordUser = memo(function RecordUser({
       viewMode={viewMode}
     >
       <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap kc-accent">
+        <AttachedFileList blocks={blocks} />
         {!editing ? (
           <div>{content}</div>
         ) : (
