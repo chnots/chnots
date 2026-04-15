@@ -39,8 +39,11 @@
 
 ## Documents
 
-- [Database Design(Chinese)](./docs/database.md)
-- [Package And Release(Chinese)](./docs/release.md)
+- [Architecture & Build Commands](./docs/ARCHITECTURE.md)
+- [Reliability & Sync Protocol](./docs/RELIABILITY.md)
+- [Product Concepts](./docs/PRODUCT_SENSE.md)
+- [Package And Release(Chinese)](./docs/product-specs/release.md)
+- [Design Docs Index](./docs/DESIGN.md)
 
 ## Quick Start
 
