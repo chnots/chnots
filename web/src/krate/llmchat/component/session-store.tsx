@@ -161,6 +161,12 @@ export function LLMChatEditorProvider({
     createLLMChatStore(props),
   );
 
+  useEffect(() => {
+    if (props.records !== undefined) {
+      store.getState().setRecords(props.records);
+    }
+  }, [props.records, store]);
+
   return store ? (
     <LLMChatEditorContext.Provider value={store}>
       {children}
