@@ -2,9 +2,11 @@ import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { isToolUIPart } from "ai";
 import { useEffect, useMemo, useRef } from "react";
-import type { LLMChatBot } from "@/krate/llmchat/po";
+import type { LLMChatBot, RecordContent } from "@/krate/llmchat/po";
+import { buildRecordContentFromParts } from "@/krate/llmchat/po";
 import { genTID, type TID } from "@/lib/id_util";
 import { partsToContentBlocks, recordVOToUIMessages } from "../message-adapter";
+import type { LLMChatMessageMetadata } from "../transport";
 import { createTransport } from "../transport";
 import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant from "./record-assistant";
@@ -49,11 +51,15 @@ const RecordAnsweringInner = ({
     },
     onFinish: ({ message }) => {
       const prevRecordOtid = records.at(-1)?.otid;
+      const metadata = message.metadata as LLMChatMessageMetadata | undefined;
       const record: LLMChatRecordVO = {
         otid: assistantOtid.current,
         session_otid: session.otid,
         pre_record_otid: prevRecordOtid,
-        content: partsToContentBlocks(message.parts),
+        content: buildRecordContentFromParts(
+          partsToContentBlocks(message.parts),
+          metadata?.usage,
+        ),
         role: "assistant",
         role_id: bot.otid,
         tid: genTID(),
@@ -93,9 +99,16 @@ const RecordAnsweringInner = ({
     return null;
   }
 
-  const assistantContent = lastAssistantMsg
-    ? partsToContentBlocks(lastAssistantMsg.parts)
-    : [];
+  const usage = (
+    lastAssistantMsg?.metadata as LLMChatMessageMetadata | undefined
+  )?.usage;
+
+  const assistantContent: RecordContent = lastAssistantMsg
+    ? {
+        usage: usage ?? {},
+        parts: partsToContentBlocks(lastAssistantMsg.parts),
+      }
+    : { usage: {}, parts: [] };
   const toolParts = lastAssistantMsg
     ? lastAssistantMsg.parts.filter((p) => isToolUIPart(p))
     : [];

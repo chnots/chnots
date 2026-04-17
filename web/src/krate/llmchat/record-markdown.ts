@@ -1,14 +1,14 @@
-import type { ContentBlock } from "./po";
+import type { RecordContent } from "./po";
 import type { LLMChatRecordVO } from "./vo";
 
 export function recordToMarkdown(record: LLMChatRecordVO): string {
   return contentBlocksToMarkdown(record.content);
 }
 
-export function contentBlocksToMarkdown(blocks: ContentBlock[]): string {
+export function contentBlocksToMarkdown(content: RecordContent): string {
   const parts: string[] = [];
 
-  for (const block of blocks) {
+  for (const block of content.parts) {
     switch (block.type) {
       case "thinking":
         parts.push(

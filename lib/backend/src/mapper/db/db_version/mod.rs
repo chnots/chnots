@@ -1,6 +1,7 @@
 pub(crate) mod sql_xml;
 pub mod v2;
 pub mod v8;
+pub mod v9;
 
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -77,6 +78,7 @@ impl KDbTx<'_> {
             "v2_sync_llmchat" => self.v2_sync_llmchat().await?,
             "v2_sync_excalidraw" => self.v2_sync_excalidraw().await?,
             "v8_migrate_llmchat_content" => self.v8_migrate_llmchat_content().await?,
+            "v9_migrate_llmchat_record_content" => self.v9_migrate_llmchat_record_content().await?,
             key => anyhow::bail!("Do not register this function: {}", key),
         }
 

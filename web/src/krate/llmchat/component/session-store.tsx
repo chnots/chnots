@@ -190,7 +190,7 @@ export const newTemplateSession = (
   const record: LLMChatRecordVO = {
     otid: genTID(),
     session_otid: session.otid,
-    content: [{ type: "content", data: template.prompt }],
+    content: { usage: {}, parts: [{ type: "content", data: template.prompt }] },
     role_id: template.otid,
     role: "system",
     tid: genTID(),
@@ -222,7 +222,7 @@ export const buildSessionTitle = (
   }
 
   const body =
-    firstUserRecord.content.find((b) => b.type === "content")?.data ?? "";
+    firstUserRecord.content.parts.find((b) => b.type === "content")?.data ?? "";
   const normalized = body.replaceAll(/\s+/g, " ").trim();
   if (!normalized) {
     return undefined;

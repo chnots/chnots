@@ -11,7 +11,7 @@ import type {
   LLMChatTemplateArchiveReq,
   LLMChatTemplateListRsp,
 } from "./dto";
-import type { LLMChatBot, LLMChatTemplate } from "./po";
+import type { LLMChatBot, LLMChatTemplate, RecordContent } from "./po";
 import { parseContent, stringifyContent } from "./po";
 import type { LLMChatRecordVO, LLMChatSessionRecordFetchRspVO } from "./vo";
 

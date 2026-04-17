@@ -39,10 +39,23 @@ const RecordCommon = memo(function RecordCommon({
   viewMode,
   isAnimating,
 }: RecordCommonProps) {
+  const usage = content.usage;
   const body = getBlockContent(content, "content");
   const thinking = getBlockContent(content, "thinking");
   const onCopy = () => {
     navigator.clipboard.writeText(contentBlocksToMarkdown(content));
+  };
+  const onDownload = () => {
+    const md = contentBlocksToMarkdown(content);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = timestamp ? new Date(timestamp) : new Date();
+    const timeStr = ts.toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url;
+    a.download = `${name ?? "record"}-${timeStr}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -52,8 +65,10 @@ const RecordCommon = memo(function RecordCommon({
       logo={logo}
       limitHeight={limitHeight}
       onCopy={onCopy}
+      onDownload={onDownload}
       buttons={buttons}
       viewMode={viewMode}
+      usage={usage.inputTokens || usage.outputTokens ? usage : undefined}
     >
       <div className="flex flex-col">
         {thinking && !viewMode && (

@@ -1,17 +1,14 @@
 import { Edit3, Paperclip, Save } from "lucide-react";
 import { memo, useState } from "react";
 import { Textarea } from "@/common/component/ui/textarea";
+import type { ContentBlock } from "@/krate/llmchat/po";
 import { getBlockContent } from "@/krate/llmchat/po";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
 import { useLLMChatComStore } from "./session";
 
-const AttachedFileList = ({
-  blocks,
-}: {
-  blocks: LLMChatRecordVO["content"];
-}) => {
-  const files = blocks.filter((b) => b.type === "image" || b.type === "file");
+const AttachedFileList = ({ parts }: { parts: ContentBlock[] }) => {
+  const files = parts.filter((b) => b.type === "image" || b.type === "file");
   if (files.length === 0) return null;
 
   return (
@@ -47,10 +44,10 @@ const RecordUser = memo(function RecordUser({
   record: LLMChatRecordVO;
   viewMode: boolean;
 }) {
-  const { content: blocks, otid } = record;
-  const initialContent = getBlockContent(blocks, "content");
+  const { content: recordContent, otid } = record;
+  const initialContent = getBlockContent(recordContent, "content");
 
-  const [content, setContent] = useState(initialContent);
+  const [textContent, setTextContent] = useState(initialContent);
   const [editing, setEditing] = useState<boolean>(false);
   const { updateRecord } = useLLMChatComStore((store) => {
     return {
@@ -62,6 +59,7 @@ const RecordUser = memo(function RecordUser({
     <RecordFrame
       timestamp={new Date(otid / 1e3).toISOString()}
       justifyEnd={true}
+      maxWidth="max-w-[60%]"
       buttons={
         <>
           <RecordButton
@@ -75,12 +73,12 @@ const RecordUser = memo(function RecordUser({
             <RecordButton
               onClick={() => {
                 setEditing(false);
-                const newBlocks = blocks.map((b) =>
-                  b.type === "content" ? { ...b, data: content } : b,
+                const newParts = recordContent.parts.map((b) =>
+                  b.type === "content" ? { ...b, data: textContent } : b,
                 );
                 updateRecord({
                   ...record,
-                  content: newBlocks,
+                  content: { ...recordContent, parts: newParts },
                 });
               }}
             >
@@ -92,15 +90,15 @@ const RecordUser = memo(function RecordUser({
       viewMode={viewMode}
     >
       <div className="border border-cborder rounded-l-2xl rounded-br-2xl p-4 text-sm whitespace-pre-wrap kc-accent">
-        <AttachedFileList blocks={blocks} />
+        <AttachedFileList parts={recordContent.parts} />
         {!editing ? (
-          <div>{content}</div>
+          <div>{textContent}</div>
         ) : (
           <Textarea
             onChange={(changed) => {
-              setContent(changed.target.value);
+              setTextContent(changed.target.value);
             }}
-            defaultValue={content}
+            defaultValue={textContent}
           />
         )}
       </div>

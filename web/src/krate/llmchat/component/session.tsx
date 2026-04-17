@@ -6,7 +6,7 @@ import {
 import { useLLMChatStore } from "@/krate/llmchat/store";
 import { genTID } from "@/lib/id_util";
 import type { ContentBlock, LLMChatSession, LLMChatTemplate } from "../po";
-import { buildContentBlocks } from "../po";
+import { buildRecordContent } from "../po";
 import type { LLMChatRecordVO } from "../vo";
 import { RecordList } from "./record-list";
 import { RecordAnswering } from "./record-response";
@@ -103,12 +103,15 @@ const SessionContainer = ({
 
   const appendUserMsg = (content: string, attachments?: ContentBlock[]) => {
     if (records && records?.length > 0 && session) {
-      const textBlocks = buildContentBlocks(content);
+      const recordContent = buildRecordContent(content);
+      const finalParts = attachments
+        ? { ...recordContent, parts: [...attachments, ...recordContent.parts] }
+        : recordContent;
       const record: LLMChatRecordVO = {
         otid: genTID(),
         session_otid: session.otid,
         pre_record_otid: records.at(-1)?.otid,
-        content: attachments ? [...attachments, ...textBlocks] : textBlocks,
+        content: finalParts,
         role: "user",
         tid: genTID(),
       };

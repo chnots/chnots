@@ -1,6 +1,6 @@
 import type { UIMessage } from "ai";
 import type { TID } from "@/lib/id_util";
-import type { ContentBlock } from "./po";
+import type { ContentBlock, RecordContent, RecordUsage } from "./po";
 import type { LLMChatRecordVO } from "./vo";
 
 function tidToStr(tid: TID): string {
@@ -15,7 +15,7 @@ export function recordVOToUIMessages(records: LLMChatRecordVO[]): UIMessage[] {
   return records.map((record) => ({
     id: tidToStr(record.otid),
     role: record.role as "system" | "user" | "assistant",
-    parts: contentBlocksToParts(record.content),
+    parts: contentBlocksToParts(record.content.parts),
   }));
 }
 
@@ -24,12 +24,13 @@ export function uiMessageToRecordVO(
   sessionOtid: TID,
   preRecordOtid?: TID,
   roleId?: TID,
+  usage?: RecordUsage,
 ): LLMChatRecordVO {
   return {
     otid: strToTid(msg.id),
     session_otid: sessionOtid,
     pre_record_otid: preRecordOtid,
-    content: partsToContentBlocks(msg.parts),
+    content: { usage: usage ?? {}, parts: partsToContentBlocks(msg.parts) },
     role: msg.role,
     role_id: roleId,
     tid: strToTid(msg.id),

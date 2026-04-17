@@ -15,11 +15,21 @@ export type ContentBlock = {
   filename?: string;
 };
 
-export const buildContentBlocks = (
+export type RecordUsage = {
+  inputTokens?: number;
+  outputTokens?: number;
+};
+
+export type RecordContent = {
+  usage: RecordUsage;
+  parts: ContentBlock[];
+};
+
+export const buildRecordContent = (
   body: string,
   thinking?: string,
   error?: string,
-): ContentBlock[] => {
+): RecordContent => {
   const blocks: ContentBlock[] = [];
   if (thinking) {
     blocks.push({ type: "thinking", data: thinking });
@@ -28,28 +38,38 @@ export const buildContentBlocks = (
     blocks.push({ type: "error", data: error });
   }
   blocks.push({ type: "content", data: body });
-  return blocks;
+  return { usage: {}, parts: blocks };
+};
+
+export const buildRecordContentFromParts = (
+  parts: ContentBlock[],
+  usage?: RecordUsage,
+): RecordContent => {
+  return { usage: usage ?? {}, parts };
 };
 
 export const getBlockContent = (
-  blocks: ContentBlock[],
+  content: RecordContent,
   type: ContentBlockType,
 ): string => {
-  const block = blocks.find((b) => b.type === type);
+  const block = content.parts.find((b) => b.type === type);
   return block?.data ?? "";
 };
 
-export const parseContent = (content: string): ContentBlock[] => {
+export const parseContent = (content: string): RecordContent => {
   try {
-    const blocks: ContentBlock[] = JSON.parse(content);
-    return blocks;
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed)) {
+      return { usage: {}, parts: parsed as ContentBlock[] };
+    }
+    return parsed as RecordContent;
   } catch (_ex) {
-    return [{ type: "content", data: content }];
+    return { usage: {}, parts: [{ type: "content", data: content }] };
   }
 };
 
-export const stringifyContent = (blocks: ContentBlock[]): string => {
-  return JSON.stringify(blocks);
+export const stringifyContent = (content: RecordContent): string => {
+  return JSON.stringify(content);
 };
 
 // LLMChatBot structure
