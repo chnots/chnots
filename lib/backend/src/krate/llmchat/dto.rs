@@ -68,17 +68,6 @@ pub struct LLMChatUpdateSessionReq {
 pub struct LLMChatUpdateSessionRsp {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LLMChatSessionRecordTruncateReq {
-    pub remove_otid_included: TID,
-    pub session_otid: TID,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LLMChatSessionRecordTruncateRsp {
-    pub count: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMChatSessionRecordFetchReq {
     pub session_otid: TID,
     pub include_hist: Option<bool>,

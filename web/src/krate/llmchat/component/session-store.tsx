@@ -13,7 +13,6 @@ import LoadingPage from "@/common/pages/loading-page";
 import {
   llmchatRecordCommit,
   llmchatSessionCommit,
-  llmchatSessionRecordTruncate,
 } from "@/krate/llmchat/service";
 import { genTID, type TID } from "@/lib/id_util";
 import type { LLMChatBot, LLMChatSession, LLMChatTemplate } from "../po";
@@ -121,12 +120,6 @@ function createLLMChatStore(props: LLMChatContextProps) {
           return;
         }
 
-        if (self.persistedIds.current?.has(recordOtid)) {
-          await llmchatSessionRecordTruncate({
-            session_otid: session.otid,
-            remove_otid_included: recordOtid,
-          });
-        }
         const newRecs = sortedRecords.slice(0, recordIndex);
         set((prev) => {
           return { ...prev, records: newRecs, responsing: true };

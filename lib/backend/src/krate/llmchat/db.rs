@@ -1,10 +1,7 @@
-use std::collections::HashMap;
-
 use anyhow::Ok;
 use chin_sql::time_type::TID;
 use chin_sql::{SqlBuilder, Wheres};
 use chin_tools::{AResult, EResult};
-use itertools::Itertools;
 
 use crate::mapper::Curd;
 use crate::mapper::db::helper::{Ddls, print_ddls};
@@ -291,60 +288,6 @@ impl LLMChatMapper for KDb {
             self,
         )
         .await
-    }
-
-    async fn llmchat_session_record_truncate(
-        &self,
-        req: KReq<LLMChatSessionRecordTruncateReq>,
-    ) -> AResult<LLMChatSessionRecordTruncateRsp> {
-        let records = self
-            .llmchat_session_record_fetch(KReq {
-                body: LLMChatSessionRecordFetchReq {
-                    session_otid: req.session_otid,
-                    include_hist: false.into(),
-                },
-                kspace: req.kspace.clone(),
-                mkspaces: vec![],
-            })
-            .await?
-            .records;
-
-        let mut map: HashMap<TID, Vec<TID>> = HashMap::new();
-        for record in &records {
-            if let Some(prev) = record.pre_record_otid {
-                map.entry(prev).or_default().push(record.otid);
-            }
-        }
-
-        let mut to_omit_ids: Vec<TID> = vec![req.remove_otid_included];
-        let vec = vec![];
-        let mut queue: Vec<TID> = map.get(&req.remove_otid_included).unwrap_or(&vec).to_vec();
-
-        loop {
-            if queue.is_empty() {
-                break;
-            }
-            let mut tmp = vec![];
-
-            for r in queue {
-                to_omit_ids.push(r);
-                if let Some(v) = map.get(&r) {
-                    tmp.extend(v);
-                }
-            }
-            queue = tmp;
-        }
-
-        let mut conn = self.conn().await?;
-        let tx = conn.tx().await?;
-        tx.omit_rows::<LLMChatRecord>(Wheres::and([Wheres::r#in(
-            LLMChatRecord::OTID,
-            to_omit_ids,
-        )]))
-        .await?;
-        tx.cmt().await?;
-
-        Ok(LLMChatSessionRecordTruncateRsp { count: 0 })
     }
 }
 

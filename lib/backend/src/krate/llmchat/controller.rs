@@ -36,10 +36,6 @@ pub(crate) fn routes() -> Router<ShareAppState> {
             "/api/v1/llmchat-session-record-fetch",
             post(llmchat_session_record_fetch),
         )
-        .route(
-            "/api/v1/llmchat-session-record-truncate",
-            post(llmchat_session_record_truncate),
-        )
         .route("/api/v1/llmchat-record-commit", post(llmchat_record_commit))
 }
 
@@ -133,17 +129,6 @@ async fn llmchat_session_record_fetch(
 ) -> KResponse<LLMChatSessionRecordFetchRsp> {
     state
         .llmchat_session_record_fetch(kreq(headers, req))
-        .await
-        .into()
-}
-
-async fn llmchat_session_record_truncate(
-    headers: HeaderMap,
-    state: State<ShareAppState>,
-    Json(req): Json<LLMChatSessionRecordTruncateReq>,
-) -> KResponse<LLMChatSessionRecordTruncateRsp> {
-    state
-        .llmchat_session_record_truncate(kreq(headers, req))
         .await
         .into()
 }

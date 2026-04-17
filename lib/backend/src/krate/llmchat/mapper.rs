@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use anyhow::Ok;
-use chin_tools::{AResult, EResult, utils::sort_util};
+use chin_sql::time_type::TID;
+use chin_tools::{AResult, EResult};
 
 use crate::{expand_mt_branch, mapper::MapperType, model::dto::KReq};
 
@@ -42,11 +45,6 @@ pub trait LLMChatMapper {
         &self,
         req: KReq<LLMChatSessionRecordFetchReq>,
     ) -> AResult<LLMChatSessionRecordFetchRsp>;
-
-    async fn llmchat_session_record_truncate(
-        &self,
-        req: KReq<LLMChatSessionRecordTruncateReq>,
-    ) -> AResult<LLMChatSessionRecordTruncateRsp>;
 
     async fn llmchat_bot_archive(
         &self,
@@ -122,13 +120,23 @@ impl LLMChatMapper for MapperType {
     ) -> AResult<super::LLMChatSessionRecordFetchRsp> {
         let mut raw_result = expand_mt_branch!(self.llmchat_session_record_fetch(req))?;
 
-        sort_util::sort_by_prev(
-            &mut raw_result.records,
-            false,
-            |r| &r.otid,
-            |r| &r.pre_record_otid,
-            |e| &e.otid,
-        );
+        let records = &raw_result.records;
+        if !records.is_empty() {
+            let map: HashMap<TID, &LLMChatRecord> = records.iter().map(|r| (r.otid, r)).collect();
+
+            let mut chain = vec![];
+            let mut current = records[0].otid;
+            while let Some(record) = map.get(&current) {
+                chain.push((*record).clone());
+                current = match record.pre_record_otid {
+                    Some(prev) => prev,
+                    None => break,
+                };
+            }
+
+            chain.reverse();
+            raw_result.records = chain;
+        }
 
         Ok(raw_result)
     }
@@ -156,12 +164,5 @@ impl LLMChatMapper for MapperType {
 
     async fn ensure_table_llm_chat(&self) -> EResult {
         expand_mt_branch!(self.ensure_table_llm_chat())
-    }
-
-    async fn llmchat_session_record_truncate(
-        &self,
-        req: KReq<LLMChatSessionRecordTruncateReq>,
-    ) -> AResult<LLMChatSessionRecordTruncateRsp> {
-        expand_mt_branch!(self.llmchat_session_record_truncate(req))
     }
 }

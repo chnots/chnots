@@ -23,11 +23,6 @@ export type LLMChatSessionRecordFetchRsp = {
   records: LLMChatRecord[];
 };
 
-export type LLMChatSessionTruncateReq = {
-  session_otid: TID;
-  remove_otid_included: TID;
-};
-
 export type LLMChatBotCommitReq = {
   bot: LLMChatBot;
 };
@@ -58,15 +53,6 @@ export type LLMChatTemplateListReq = object;
 
 export type LLMChatSessionListReq = {
   session_otid?: TID;
-};
-
-export type LLMChatSessionRecordTruncateReq = {
-  remove_otid_included: TID;
-  session_otid: TID;
-};
-
-export type LLMChatSessionRecordTruncateRsp = {
-  count: number;
 };
 
 export type LLMChatSessionRecordFetchReq = {
