@@ -1,8 +1,9 @@
 import clsx from "clsx";
 import { Copy, Ellipsis } from "lucide-react";
 import type React from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/common/component/ui/button";
+import { formatRelativeTime } from "@/lib/date-utils";
 
 export const RecordButton = ({
   onClick,
@@ -60,18 +61,36 @@ const RecordFrame = ({
     initLimitHeight,
   );
 
+  const displayTime = useMemo(() => {
+    if (!timestamp) return "Now";
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return timestamp;
+    return formatRelativeTime(date);
+  }, [timestamp]);
+
+  const fullTime = useMemo(() => {
+    if (!timestamp) return undefined;
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return timestamp;
+    return date.toLocaleString();
+  }, [timestamp]);
+
   return (
     <div
       className={clsx(
-        "flex md:flex-row md:space-y-0 md:space-x-4 mx-4",
+        "flex md:flex-row md:space-y-0 md:space-x-3 mx-4",
         justifyEnd && "justify-end",
       )}
     >
-      {logo && <>{logo}</>}
-      <div className={clsx("flex-col")}>
-        <div className="text-gray-500 text-xs space-x-2">
-          <span>{name}</span>
-          <span>{timestamp ?? "Now"}</span>
+      {logo && (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+          {logo}
+        </div>
+      )}
+      <div className={clsx("flex-col min-w-0 flex-1")}>
+        <div className="text-muted-foreground text-xs space-x-2 mb-1">
+          {name && <span className="font-medium">{name}</span>}
+          <span title={fullTime}>{displayTime}</span>
         </div>
         {limitHeight !== undefined && limitHeight ? (
           <div className={"max-h-160 overflow-hidden"}>{children}</div>

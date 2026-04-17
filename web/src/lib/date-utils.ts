@@ -1,6 +1,26 @@
 // Adopted from https://github.com/angelxmoreno/axios-date-transformer/blob/main/src/index.ts
 
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
+export const formatRelativeTime = (date: Date): string => {
+  const now = dayjs();
+  const target = dayjs(date);
+  const diffMinutes = now.diff(target, "minute");
+
+  if (diffMinutes < 1) return "just now";
+  if (diffMinutes < 60) return target.fromNow();
+
+  const sameDay = now.startOf("day").isSame(target.startOf("day"));
+  if (sameDay) return target.format("HH:mm");
+
+  const sameYear = now.year() === target.year();
+  if (sameYear) return target.format("MM-DD HH:mm");
+
+  return target.format("YYYY-MM-DD HH:mm");
+};
 
 export const recursiveDateConversion = (data: any): any => {
   if (typeof data === "object") {

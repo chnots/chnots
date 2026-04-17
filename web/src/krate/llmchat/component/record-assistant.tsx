@@ -123,11 +123,11 @@ export const RecordSystem = memo(function RecordSystem({
   });
 
   const svgLogo = logo ? (
-    <KSVG src={logo} />
+    <KSVG src={logo} className="w-5 h-5" />
   ) : tmpl?.svg_logo ? (
-    <KSVG src={tmpl.svg_logo} />
+    <KSVG src={tmpl.svg_logo} className="w-5 h-5" />
   ) : (
-    <Sparkles />
+    <Sparkles className="w-5 h-5" />
   );
 
   return (
@@ -203,11 +203,11 @@ const RecordAssistant = memo(function RecordAssistant({
   });
 
   const svgLogo = logo ? (
-    <KSVG src={logo} />
+    <KSVG src={logo} className="w-5 h-5" />
   ) : bt?.svg_logo ? (
-    <KSVG src={bt.svg_logo} />
+    <KSVG src={bt.svg_logo} className="w-5 h-5" />
   ) : (
-    <Bot />
+    <Bot className="w-5 h-5" />
   );
 
   return (
