@@ -260,8 +260,8 @@ const BotForm = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-150 relative">
-        <form onSubmit={handleSubmit}>
+      <div className="bg-white rounded-lg shadow-lg w-150 relative flex flex-col max-h-[90vh]">
+        <form onSubmit={handleSubmit} className="overflow-y-auto p-6 flex-1">
           <div className="mb-4">
             <label htmlFor="name" className="block mb-2">
               Name
