@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Paperclip, Send, X } from "lucide-react";
+import { Image as ImageIcon, Paperclip, Send, Square, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/common/component/ui/button";
 import type { ContentBlock } from "@/krate/llmchat/po";
@@ -31,9 +31,11 @@ function readFileAsDataUrl(file: File): Promise<string> {
 const UserInput = ({
   disabled,
   onAppendRecord,
+  onStopGenerating,
 }: {
   disabled: boolean;
   onAppendRecord: (content: string, attachments?: ContentBlock[]) => boolean;
+  onStopGenerating?: (() => void) | null;
 }) => {
   const [message, setMessage] = useState<string>();
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -198,12 +200,18 @@ const UserInput = ({
               }}
             />
           </div>
-          <Button
-            onClick={handleSend}
-            disabled={disabled && attachments.length === 0}
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+          {onStopGenerating ? (
+            <Button variant="outline" onClick={() => onStopGenerating()}>
+              <Square className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSend}
+              disabled={disabled && attachments.length === 0}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
     </section>

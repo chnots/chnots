@@ -40,6 +40,7 @@ const SessionContainer = ({
     template,
     showTemplateForm,
     sessionOtid,
+    stopGenerating,
     setRecords,
     appendRecord,
     setSession,
@@ -56,6 +57,7 @@ const SessionContainer = ({
       template: store.template,
       showTemplateForm: store.showTemplateForm,
       sessionOtid: store.sessionOtid,
+      stopGenerating: store.stopGenerating,
       setShowTemplateForm: store.setShowTemplateForm,
       setSession: store.setSession,
       setRecords: store.setRecords,
@@ -177,6 +179,7 @@ const SessionContainer = ({
       {readonly || (
         <UserInput
           disabled={responsing || records?.at(-1)?.role === "user"}
+          onStopGenerating={stopGenerating}
           onAppendRecord={(content, attachments) => {
             return appendUserMsg(content, attachments);
           }}

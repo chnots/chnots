@@ -1,11 +1,8 @@
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { isToolUIPart } from "ai";
-import { Square } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
-import { Button as KButton } from "@/common/component/ui/button";
 import type { LLMChatBot } from "@/krate/llmchat/po";
-import { llmchatRecordCommit } from "@/krate/llmchat/service";
 import { genTID, type TID } from "@/lib/id_util";
 import { partsToContentBlocks, recordVOToUIMessages } from "../message-adapter";
 import { createTransport } from "../transport";
@@ -25,12 +22,15 @@ const RecordAnsweringInner = ({
   records: LLMChatRecordVO[];
   onScrollToEnd?: () => void;
 }) => {
-  const { setResponsing, appendRecord } = useLLMChatComStore((store) => {
-    return {
-      setResponsing: store.setResponsing,
-      appendRecord: store.appendRecord,
-    };
-  });
+  const { appendRecord, setResponsing, setStopGenerating } = useLLMChatComStore(
+    (store) => {
+      return {
+        appendRecord: store.appendRecord,
+        setResponsing: store.setResponsing,
+        setStopGenerating: store.setStopGenerating,
+      };
+    },
+  );
 
   const initialMessages = useMemo(
     () => recordVOToUIMessages(records) as UIMessage[],
@@ -38,15 +38,16 @@ const RecordAnsweringInner = ({
   );
   const transport = useMemo(() => createTransport(bot.body), [bot.body]);
   const assistantOtid = useRef<TID>(genTID());
+  const initialMsgCountRef = useRef(initialMessages.length);
 
-  const { messages, stop, status } = useChat({
+  const { messages, sendMessage, stop, status } = useChat({
     transport: transport as never,
     messages: initialMessages,
     sendAutomaticallyWhen: ({ messages: msgs }) => {
       const last = msgs.at(-1);
       return last?.role === "user";
     },
-    onFinish: ({ message, isAbort }) => {
+    onFinish: ({ message }) => {
       const prevRecordOtid = records.at(-1)?.otid;
       const record: LLMChatRecordVO = {
         otid: assistantOtid.current,
@@ -58,36 +59,46 @@ const RecordAnsweringInner = ({
         tid: genTID(),
       };
 
-      if (!isAbort) {
-        appendRecord(record);
-      } else {
-        llmchatRecordCommit(record);
-      }
+      appendRecord(record);
+      setResponsing(false);
     },
   });
 
+  const sentRef = useRef(false);
   useEffect(() => {
-    setResponsing(status === "submitted" || status === "streaming");
-  }, [status, setResponsing]);
+    if (!sentRef.current) {
+      sentRef.current = true;
+      sendMessage();
+    }
+  }, [sendMessage]);
 
   useEffect(() => {
+    setStopGenerating(stop);
     return () => {
-      stop();
+      setStopGenerating(null);
     };
-  }, [stop]);
+  }, [stop, setStopGenerating]);
 
   useEffect(() => {
     onScrollToEnd?.();
   }, [messages, onScrollToEnd]);
 
   const lastAssistantMsg = [...messages]
+    .slice(initialMsgCountRef.current)
     .reverse()
     .find((m) => m.role === "assistant");
-  if (!lastAssistantMsg) {
+  const isResponding = status === "submitted" || status === "streaming";
+
+  if (!lastAssistantMsg && !isResponding) {
     return null;
   }
 
-  const toolParts = lastAssistantMsg.parts.filter((p) => isToolUIPart(p));
+  const assistantContent = lastAssistantMsg
+    ? partsToContentBlocks(lastAssistantMsg.parts)
+    : [];
+  const toolParts = lastAssistantMsg
+    ? lastAssistantMsg.parts.filter((p) => isToolUIPart(p))
+    : [];
 
   return (
     <>
@@ -96,7 +107,7 @@ const RecordAnsweringInner = ({
         role_id={bot.otid}
         otid={assistantOtid.current}
         session_otid={session.otid}
-        content={partsToContentBlocks(lastAssistantMsg.parts)}
+        content={assistantContent}
         tid={genTID()}
         timestamp={new Date(assistantOtid.current / 1e3).toISOString()}
         viewMode={false}
@@ -135,19 +146,6 @@ const RecordAnsweringInner = ({
               />
             );
           })}
-        </div>
-      )}
-      {(status === "submitted" || status === "streaming") && (
-        <div className="flex justify-center">
-          <KButton
-            onClick={() => stop()}
-            className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors flex mb-6"
-            aria-label="Abort"
-            tabIndex={0}
-          >
-            <Square className="h-4 w-4 text-gray-700" />
-            <span>Stop Generate</span>
-          </KButton>
         </div>
       )}
     </>

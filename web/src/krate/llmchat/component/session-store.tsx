@@ -31,6 +31,7 @@ export type LLMChatContextProps = {
 export type LLMChatContextState = {
   bot?: LLMChatBot;
   responsing: boolean;
+  stopGenerating: (() => void) | null;
   setSession: (session: LLMChatSession) => void;
   setRecords: (records: LLMChatRecordVO[]) => void;
   pushPersisted: (recordOtid: TID) => void;
@@ -38,6 +39,7 @@ export type LLMChatContextState = {
   updateRecord: (record: LLMChatRecordVO) => void;
   regenrate: (recordOtid: TID) => Promise<void>;
   setResponsing: (flag: boolean) => void;
+  setStopGenerating: (fn: (() => void) | null) => void;
   setTemplate: (template: LLMChatTemplate) => void;
   setBot: (bot: LLMChatBot) => void;
   setShowTemplateForm: (flag: boolean) => void;
@@ -47,6 +49,7 @@ function createLLMChatStore(props: LLMChatContextProps) {
   return createStore<LLMChatContextState>()((set, get) => ({
     ...props,
     responsing: false,
+    stopGenerating: null,
     setSession: (session: LLMChatSession) => {
       set((prev) => {
         return { ...prev, session: session };
@@ -60,6 +63,11 @@ function createLLMChatStore(props: LLMChatContextProps) {
     setResponsing(flag) {
       set((prev) => {
         return { ...prev, responsing: flag };
+      });
+    },
+    setStopGenerating(fn) {
+      set((prev) => {
+        return { ...prev, stopGenerating: fn };
       });
     },
     setBot(bot) {
