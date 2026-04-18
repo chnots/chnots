@@ -134,7 +134,7 @@ const LLMChatChnot = ({
 
   const chatContent = (
     <SessionContainer
-      readonly={readonly}
+      readonly={readonly ?? false}
       onPostSave={
         readonly
           ? undefined
