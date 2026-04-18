@@ -31,7 +31,7 @@ docs/
 ├── SECURITY.md              # Security practices
 ├── design-docs/
 │   └── index.md             # Verified design docs catalog
-├── exec-plans/
+├── exec-plans/              # YOU MUST GENERATE the PLAN FILES before write code, DO NOT USE internal plan tools. ALL PLAN MUST write to the files.
 │   ├── active/              # Active task plans (yymm-dd-task-desc.md)
 │   ├── done/                # Completed plans
 │   └── tech-debt-tracker.md
@@ -48,3 +48,4 @@ docs/
 │   └── release.md           # Release & deploy process
 └── references/              # External references
 ```
+- Update product-specs and design-docs when needed.

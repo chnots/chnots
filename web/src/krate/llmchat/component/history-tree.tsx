@@ -127,6 +127,7 @@ function TreeNode({
   depth: number;
   onSelect: (otid: TID) => void;
 }) {
+  const isUser = node.record.role === "user";
   const isUserOrAssistant =
     node.record.role === "user" || node.record.role === "assistant";
   const isLeaf = node.children.length === 0;
@@ -135,20 +136,23 @@ function TreeNode({
     <div>
       <button
         type="button"
-        className="flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded-sm text-xs hover:bg-accent transition-colors"
-        style={{ paddingLeft: `${depth * 16 + 8}px` }}
-        onClick={() => onSelect(node.record.otid)}
+        className={`flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded-sm text-xs transition-colors ${
+          isUser ? "cursor-default" : "hover:bg-accent cursor-pointer"
+        }`}
+        style={{ paddingLeft: `${depth * 8 + 8}px` }}
+        onClick={() => {
+          if (!isUser) onSelect(node.record.otid);
+        }}
       >
         <RecordRoleIcon record={node.record} />
-        <span className="text-muted-foreground shrink-0">
-          {formatRecordTime(node.record.otid)}
-        </span>
         {isUserOrAssistant && (
-          <span className="truncate flex-1 min-w-0">
+          <span
+            className={`truncate flex-1 min-w-0 ${isUser ? "text-muted-foreground" : ""}`}
+          >
             {getRecordSummary(node.record)}
           </span>
         )}
-        {isLeaf && (
+        {isLeaf && !isUser && (
           <MessageSquare className="w-3 h-3 shrink-0 text-muted-foreground/50" />
         )}
       </button>

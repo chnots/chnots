@@ -57,6 +57,7 @@ export type LLMChatSessionListReq = {
 
 export type LLMChatSessionRecordFetchReq = {
   session_otid: TID;
+  include_hist?: boolean;
 };
 
 export type LLMChatBotArchiveReq = {

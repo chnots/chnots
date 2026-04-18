@@ -118,24 +118,29 @@ impl LLMChatMapper for MapperType {
         &self,
         req: KReq<super::LLMChatSessionRecordFetchReq>,
     ) -> AResult<super::LLMChatSessionRecordFetchRsp> {
+        let include_hist = req.body.include_hist.unwrap_or_default();
+
         let mut raw_result = expand_mt_branch!(self.llmchat_session_record_fetch(req))?;
 
-        let records = &raw_result.records;
-        if !records.is_empty() {
-            let map: HashMap<TID, &LLMChatRecord> = records.iter().map(|r| (r.otid, r)).collect();
+        if !include_hist {
+            let records = &raw_result.records;
+            if !records.is_empty() {
+                let map: HashMap<TID, &LLMChatRecord> =
+                    records.iter().map(|r| (r.otid, r)).collect();
 
-            let mut chain = vec![];
-            let mut current = records[0].otid;
-            while let Some(record) = map.get(&current) {
-                chain.push((*record).clone());
-                current = match record.pre_record_otid {
-                    Some(prev) => prev,
-                    None => break,
-                };
+                let mut chain = vec![];
+                let mut current = records[0].otid;
+                while let Some(record) = map.get(&current) {
+                    chain.push((*record).clone());
+                    current = match record.pre_record_otid {
+                        Some(prev) => prev,
+                        None => break,
+                    };
+                }
+
+                chain.reverse();
+                raw_result.records = chain;
             }
-
-            chain.reverse();
-            raw_result.records = chain;
         }
 
         Ok(raw_result)

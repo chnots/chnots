@@ -1,3 +1,4 @@
+import type { TID } from "@/lib/id_util";
 import request from "@/lib/request";
 import type {
   LLMChatBotArchiveReq,
@@ -64,6 +65,16 @@ export const llmchatSessionRecordFetch = async (
       return { ...r, content: parseContent(r.content) };
     }),
   };
+};
+
+export const llmchatSessionRecordFetchAll = async (
+  sessionOtid: TID,
+): Promise<LLMChatRecordVO[]> => {
+  const rsp = await llmchatSessionRecordFetch({
+    session_otid: sessionOtid,
+    include_hist: true,
+  });
+  return rsp.records;
 };
 
 export const llmchatSessionCommit = async (req: LLMChatSessionCommitReq) => {

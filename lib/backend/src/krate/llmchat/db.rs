@@ -131,7 +131,7 @@ impl LLMChatMapper for KDb {
             LLMChatRecord::ROLE_ID
         );
 
-        let bots = self
+        let mut bots: Vec<(i64, LLMChatBot)> = self
             .conn()
             .await?
             .qry_list(sql, |row| {
@@ -139,11 +139,9 @@ impl LLMChatMapper for KDb {
 
                 Ok((c.unwrap_or(0), (&row).try_into()?))
             })
-            .await?
-            .into_iter()
-            .sorted_by(|r1, r2| r2.0.cmp(&r1.0))
-            .map(|(_, bot)| bot)
-            .collect();
+            .await?;
+        bots.sort_by(|r1, r2| r2.0.cmp(&r1.0));
+        let bots: Vec<LLMChatBot> = bots.into_iter().map(|(_, bot)| bot).collect();
 
         Ok(LLMChatBotListRsp { bots })
     }
