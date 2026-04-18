@@ -2,7 +2,7 @@ import { code } from "@streamdown/code";
 import { createMathPlugin } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import type React from "react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Streamdown } from "streamdown";
 import "katex/dist/katex.min.css";
 
@@ -18,7 +18,17 @@ import RecordFrame, { RecordButton } from "./record-frame";
 import { useLLMChatComStore } from "./session";
 import LLMChatTemplateList from "./template-list";
 
-const RecordCommon = ({
+type RecordCommonProps = {
+  timestamp: string;
+  name: string;
+  logo: React.ReactElement;
+  buttons?: React.ReactNode;
+  limitHeight?: boolean;
+  viewMode: boolean;
+  isAnimating?: boolean;
+} & Omit<LLMChatRecordVO, "role">;
+
+const RecordCommon = memo(function RecordCommon({
   content,
   timestamp,
   name,
@@ -27,15 +37,7 @@ const RecordCommon = ({
   limitHeight,
   viewMode,
   isAnimating,
-}: {
-  timestamp: string;
-  name: string;
-  logo: React.ReactElement;
-  buttons?: React.ReactNode;
-  limitHeight?: boolean;
-  viewMode: boolean;
-  isAnimating?: boolean;
-} & Omit<LLMChatRecordVO, "role">) => {
+}: RecordCommonProps) {
   const body = getBlockContent(content, "content");
   const thinking = getBlockContent(content, "thinking");
   const onCopy = () => {
@@ -84,9 +86,15 @@ const RecordCommon = ({
       </div>
     </RecordFrame>
   );
-};
+});
 
-export const RecordSystem = ({
+type RecordSystemProps = {
+  logo?: string;
+  timestamp: string;
+  viewMode: boolean;
+} & LLMChatRecordVO;
+
+export const RecordSystem = memo(function RecordSystem({
   otid,
   role_id,
   content,
@@ -95,11 +103,7 @@ export const RecordSystem = ({
   session_otid,
   tid,
   viewMode,
-}: {
-  logo?: string;
-  timestamp: string;
-  viewMode: boolean;
-} & LLMChatRecordVO) => {
+}: RecordSystemProps) {
   const { templates } = useLLMChatStore();
   const [setTemplate, records, setShowTemplateForm] = useLLMChatComStore(
     (store) => {
@@ -162,9 +166,16 @@ export const RecordSystem = ({
       )}
     </>
   );
-};
+});
 
-const RecordAssistant = ({
+type RecordAssistantProps = {
+  logo?: string;
+  timestamp: string;
+  viewMode: boolean;
+  isAnimating?: boolean;
+} & Omit<LLMChatRecordVO, "role">;
+
+const RecordAssistant = memo(function RecordAssistant({
   otid,
   role_id,
   content,
@@ -174,12 +185,7 @@ const RecordAssistant = ({
   tid,
   viewMode,
   isAnimating,
-}: {
-  logo?: string;
-  timestamp: string;
-  viewMode: boolean;
-  isAnimating?: boolean;
-} & Omit<LLMChatRecordVO, "role">) => {
+}: RecordAssistantProps) {
   const { bots } = useLLMChatStore();
   const { onRegenrate } = useLLMChatComStore((store) => {
     return {
@@ -227,6 +233,6 @@ const RecordAssistant = ({
       }
     />
   );
-};
+});
 
 export default RecordAssistant;

@@ -23,11 +23,12 @@ const LLMChatChnot = ({
   const [props, setProps] = useState<LLMChatContextProps | undefined>(
     undefined,
   );
-  const { refreshTemplates } = useLLMChatStore();
+  const { refreshTemplates, refreshBots } = useLLMChatStore();
 
   useEffect(() => {
     refreshTemplates();
-  }, [refreshTemplates]);
+    refreshBots();
+  }, [refreshTemplates, refreshBots]);
 
   // Used to load from database.
 

@@ -1,18 +1,18 @@
 import { Edit3, Save } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Textarea } from "@/common/component/ui/textarea";
 import { getBlockContent } from "@/krate/llmchat/po";
 import type { LLMChatRecordVO } from "../vo";
 import RecordFrame, { RecordButton } from "./record-frame";
 import { useLLMChatComStore } from "./session";
 
-const RecordUser = ({
+const RecordUser = memo(function RecordUser({
   record,
   viewMode,
 }: {
   record: LLMChatRecordVO;
   viewMode: boolean;
-}) => {
+}) {
   const { content: blocks, otid } = record;
   const initialContent = getBlockContent(blocks, "content");
 
@@ -71,6 +71,6 @@ const RecordUser = ({
       </div>
     </RecordFrame>
   );
-};
+});
 
 export default RecordUser;

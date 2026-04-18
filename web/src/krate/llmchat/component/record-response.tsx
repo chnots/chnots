@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/correctness/useHookAtTopLevel: fully tested */
-
 import { Square } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button as KButton } from "@/common/component/ui/button";
@@ -17,26 +15,26 @@ import type { LLMChatRecordVO } from "../vo";
 import RecordAssistant from "./record-assistant";
 import { useLLMChatComStore } from "./session";
 
-export const RecordAnswering = ({
+const RecordAnsweringInner = ({
   bot,
+  session,
+  records,
   onScrollToEnd,
 }: {
   bot: LLMChatBot;
+  session: NonNullable<Parameters<typeof useLLMResponse>[0]["session"]>;
+  records: NonNullable<Parameters<typeof useLLMResponse>[0]["records"]>;
   onScrollToEnd?: () => void;
 }) => {
-  const { records, session, setResponsing, appendRecord, answering } =
-    useLLMChatComStore((store) => {
+  const { setResponsing, appendRecord, answering } = useLLMChatComStore(
+    (store) => {
       return {
-        records: store.records,
-        session: store.session,
         setResponsing: store.setResponsing,
         appendRecord: store.appendRecord,
         answering: store.responsing,
       };
-    });
-  if (!session || !records || records.length <= 0) {
-    return;
-  }
+    },
+  );
 
   const responseStateRef = useRef<ResponseState>(undefined);
   const otid = useRef<TID>(genTID());
@@ -66,14 +64,14 @@ export const RecordAnswering = ({
   useEffect(() => {
     return () => {
       if (responseStateRef.current) {
-        const response = responseStateRef.current;
+        const rsp = responseStateRef.current;
         const record: LLMChatRecordVO = {
-          otid: response.tid,
-          session_otid: response.sessionId,
-          content: response.contentBlocks,
+          otid: rsp.tid,
+          session_otid: rsp.sessionId,
+          content: rsp.contentBlocks,
           role: "assistant",
-          role_id: response.roleId,
-          pre_record_otid: response.prevRecordId,
+          role_id: rsp.roleId,
+          pre_record_otid: rsp.prevRecordId,
           tid: genTID(),
         };
         llmchatRecordCommit(record);
@@ -134,5 +132,33 @@ export const RecordAnswering = ({
         </div>
       )}
     </>
+  );
+};
+
+export const RecordAnswering = ({
+  bot,
+  onScrollToEnd,
+}: {
+  bot: LLMChatBot;
+  onScrollToEnd?: () => void;
+}) => {
+  const { records, session } = useLLMChatComStore((store) => {
+    return {
+      records: store.records,
+      session: store.session,
+    };
+  });
+
+  if (!session || !records || records.length <= 0) {
+    return null;
+  }
+
+  return (
+    <RecordAnsweringInner
+      bot={bot}
+      session={session}
+      records={records}
+      onScrollToEnd={onScrollToEnd}
+    />
   );
 };
