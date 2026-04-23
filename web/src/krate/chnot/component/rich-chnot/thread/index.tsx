@@ -1,4 +1,7 @@
-import { HEADING_OTID_RE, splitDocumentByBlocks } from "@chnots/md-codemirror";
+import {
+  normalizeBlockContent,
+  splitDocumentByBlocks,
+} from "@chnots/md-codemirror";
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { Plus } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -20,16 +23,7 @@ function joinMdwtBlocks(
   blocks: Array<{ otid: number; content: string }>,
 ): string {
   return blocks
-    .map((b) => {
-      const lines = b.content.split("\n");
-      const firstLine = lines[0] || "";
-      if (HEADING_OTID_RE.test(firstLine)) {
-        return b.content;
-      }
-      const cleaned = firstLine.replace(/^#{1,6}\s+/, "");
-      const rest = lines.slice(1);
-      return [`## [[${b.otid}]] ${cleaned}`, ...rest].join("\n");
-    })
+    .map((b) => normalizeBlockContent(b.otid, b.content))
     .join("\n\n");
 }
 
@@ -74,18 +68,7 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
 
         const savedMap = new Map<number, string>();
         for (const b of blocks) {
-          const lines = b.content.split("\n");
-          const firstLine = lines[0] || "";
-          if (HEADING_OTID_RE.test(firstLine)) {
-            savedMap.set(b.otid, b.content.trimEnd());
-          } else {
-            const cleaned = firstLine.replace(/^#{1,6}\s+/, "");
-            const rest = lines.slice(1);
-            const normalized = [`## [[${b.otid}]] ${cleaned}`, ...rest]
-              .join("\n")
-              .trimEnd();
-            savedMap.set(b.otid, normalized);
-          }
+          savedMap.set(b.otid, normalizeBlockContent(b.otid, b.content));
         }
         lastSavedContentRef.current = savedMap;
       } finally {
@@ -139,11 +122,12 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
         });
       }
 
-      for (const otid of [...added, ...changed]) {
-        const content = currentBlocks.get(otid);
-        if (content === undefined) continue;
-        await mdwtCommit({ mdwt: { otid, content } });
-      }
+      const dirty = [...added, ...changed]
+        .map((otid) => ({ otid, content: currentBlocks.get(otid)! }))
+        .filter((b) => b.content !== undefined);
+      await Promise.all(
+        dirty.map((b) => mdwtCommit({ mdwt: { otid: b.otid, content: b.content } })),
+      );
 
       await onPostSave({
         otid: threadOtid,

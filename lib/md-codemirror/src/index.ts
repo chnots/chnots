@@ -57,5 +57,6 @@ export {
   scrollToBlock,
   tidCompletion,
   HEADING_OTID_RE,
+  normalizeBlockContent,
 } from "./heading-block";
 export type { HeadingBlock } from "./heading-block";

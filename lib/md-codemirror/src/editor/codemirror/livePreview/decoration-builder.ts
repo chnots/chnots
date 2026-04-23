@@ -111,10 +111,11 @@ function hideHeadingPrefix(state: EditorState, nodeFrom: number, nodeTo: number,
   }
   const otidMatch = text.match(HEADING_OTID_RE);
   if (otidMatch) {
-    const otidPartLen = otidMatch[0].length - otidMatch[1].length - otidMatch[3].length;
+    const otidStart = nodeFrom + otidMatch[1].length;
+    const otidEnd = otidStart + `[[${otidMatch[2]}]]`.length + 1; // +1 for trailing space
     entries.push({
-      from: nodeFrom + otidMatch[1].length,
-      to: nodeFrom + otidMatch[1].length + otidPartLen,
+      from: otidStart,
+      to: otidEnd,
       decoration: Decoration.replace({}),
     });
   }

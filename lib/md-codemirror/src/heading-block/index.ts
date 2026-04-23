@@ -2,11 +2,10 @@ import type { Extension, EditorState } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import { headingBlockField } from "./block-field";
 import { blockDecorationField } from "./block-decorations";
-import { parseHeadings } from "./block-parser";
 import type { HeadingBlock } from "./block-model";
 
 export type { HeadingBlock } from "./block-model";
-export { HEADING_OTID_RE } from "./block-model";
+export { HEADING_OTID_RE, normalizeBlockContent } from "./block-model";
 export { tidCompletion } from "./block-completion";
 
 export function headingBlocks(): Extension {
@@ -18,8 +17,18 @@ export function getBlockAtPos(
   pos: number,
 ): HeadingBlock | null {
   const blocks = state.field(headingBlockField, false) ?? [];
-  for (const block of blocks) {
-    if (block.from <= pos && pos <= block.to) return block;
+  let lo = 0;
+  let hi = blocks.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    const block = blocks[mid];
+    if (pos < block.from) {
+      hi = mid - 1;
+    } else if (pos > block.to) {
+      lo = mid + 1;
+    } else {
+      return block;
+    }
   }
   return null;
 }
