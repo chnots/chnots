@@ -3,9 +3,11 @@ import {
   createCodemirrorTheme,
   generateKeybinding,
   Hashtag,
+  headingBlocks,
   livePreview,
   MathConfig,
   TABLE_EDIT_EVENT,
+  tidCompletion,
 } from "@chnots/md-codemirror";
 import {
   autocompletion,
@@ -20,10 +22,12 @@ import { EditorView } from "@codemirror/view";
 import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
+import { format } from "date-fns";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { chnotSearch } from "@/krate/chnot/service";
 import { toentTodoEventGuess } from "@/krate/toent/service";
+import { genTID } from "@/lib/id_util";
 import { html2mdAsync } from "@/lib/markdown-utils";
 import { chnotTagNameList } from "../service";
 import "katex/dist/katex.min.css";
@@ -109,9 +113,49 @@ const eventHandlers = EditorView.domEventHandlers({
   },
 });
 
+function getSlashCommands(): Completion[] {
+  return [
+    {
+      label: "/time",
+      displayLabel: "/time",
+      detail: "Insert current date & time",
+      apply: format(new Date(), "yyyy-MM-dd HH:mm"),
+      type: "keyword",
+      boost: 1,
+    },
+    {
+      label: "/date",
+      displayLabel: "/date",
+      detail: "Insert current date",
+      apply: format(new Date(), "yyyy-MM-dd"),
+      type: "keyword",
+      boost: 1,
+    },
+  ];
+}
+
+const slashCommandCompletions = (
+  context: CompletionContext,
+): CompletionResult | null => {
+  const word = context.matchBefore(/\/[a-zA-Z]*$/);
+  if (!word || (word.from === word.to && !context.explicit)) return null;
+  if (word.text === "/") {
+    return { from: word.from, options: getSlashCommands(), filter: false };
+  }
+  const query = word.text.toLowerCase();
+  const filtered = getSlashCommands().filter((c) =>
+    c.label.toLowerCase().startsWith(query),
+  );
+  if (filtered.length === 0) return null;
+  return { from: word.from, options: filtered, filter: false };
+};
+
 const chnotCompletions = async (
   context: CompletionContext,
 ): Promise<CompletionResult | null> => {
+  const slashResult = slashCommandCompletions(context);
+  if (slashResult) return slashResult;
+
   const word = context.matchBefore(/#[^# ]*|^#* \[|^[ ]*- \[|\[\[/);
   let options: Completion[];
   if (!word || (word?.from === word?.to && !context.explicit)) {
@@ -127,7 +171,6 @@ const chnotCompletions = async (
       return { label: name, type: "hashtag" };
     });
   } else if (word.text.startsWith("[[")) {
-    // [{ label: `[[backlink-ph]]`, type: "backlink" }]
     options = (
       await chnotSearch({
         query: word.text.substring(3),
@@ -264,13 +307,14 @@ const MdwtEditor = ({
     todoHighlightPlugin,
 
     livePreview(),
+    headingBlocks(),
     createCodemirrorTheme(),
 
     eventHandlers,
 
     indentOnInput(),
     autocompletion({
-      override: [chnotCompletions],
+      override: [tidCompletion({ genTID }), chnotCompletions],
     }),
     ...(fillParentHeight
       ? [

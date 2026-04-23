@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { type EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, type DecorationSet } from '@codemirror/view';
+import { HEADING_OTID_RE } from '../../../heading-block/block-model';
 import { ImageWidget, parseImage } from './widgets/image-widget';
 import { BlockMathWidget, InlineMathWidget } from './widgets/math-widget';
 import { CheckboxWidget, HorizontalRuleWidget } from './widgets/misc-widgets';
@@ -106,6 +107,15 @@ function hideHeadingPrefix(state: EditorState, nodeFrom: number, nodeTo: number,
       from: nodeFrom,
       to: nodeFrom + match[1].length,
       decoration: hideMarkDecoration,
+    });
+  }
+  const otidMatch = text.match(HEADING_OTID_RE);
+  if (otidMatch) {
+    const otidPartLen = otidMatch[0].length - otidMatch[1].length - otidMatch[3].length;
+    entries.push({
+      from: nodeFrom + otidMatch[1].length,
+      to: nodeFrom + otidMatch[1].length + otidPartLen,
+      decoration: Decoration.replace({}),
     });
   }
   entries.push({

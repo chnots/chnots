@@ -1,25 +1,10 @@
-import {
-  closestCorners,
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { LinkIcon, Plus, Unlink } from "lucide-react";
+import { HEADING_OTID_RE, splitDocumentByBlocks } from "@chnots/md-codemirror";
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
+import { Plus } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SaveState } from "@/common/types";
-import { useKSpaceStore } from "@/krate/kspace/store";
-import type { MdwtRecord } from "@/krate/mdwt/po";
-import { mdwtRecordList } from "@/krate/mdwt/service";
+import MdwtEditor from "@/krate/mdwt/component/mdwt-editor";
+import { mdwtCommit, mdwtRecordList } from "@/krate/mdwt/service";
 import { arraysAreEqual } from "@/lib/col-util";
 import { genTID, type TID } from "@/lib/id_util";
 import { ChnotKind } from "../../../po";
@@ -29,298 +14,177 @@ import {
   chnotThreadOrderCommit,
 } from "../../../service";
 import MdwtChnot from "../mdwt";
-import MdwtChnotSelector from "../mdwt-chnot-selector";
 import type { PostSaveArg, RichPropProps } from "../rich-mdwt-side";
-import SortableRichMdwtMemo from "./block";
 
-enum OrderType {
-  Manual,
-  Search,
+function joinMdwtBlocks(
+  blocks: Array<{ otid: number; content: string }>,
+): string {
+  return blocks
+    .map((b) => {
+      const lines = b.content.split("\n");
+      const firstLine = lines[0] || "";
+      if (HEADING_OTID_RE.test(firstLine)) {
+        return b.content;
+      }
+      const cleaned = firstLine.replace(/^#{1,6}\s+/, "");
+      const rest = lines.slice(1);
+      return [`## [[${b.otid}]] ${cleaned}`, ...rest].join("\n");
+    })
+    .join("\n\n");
 }
 
-type SavedChnotOrder = {
-  type: OrderType.Manual;
-  otid: TID;
-  chnotKind: ChnotKind;
-  closed: boolean;
-};
-
-type ManualChnotOrder = {
-  type: OrderType.Manual;
-  otid: TID;
-  chnotKind?: ChnotKind;
-  closed: boolean;
-  saved: boolean;
-};
-
-type ChnotOrder = ManualChnotOrder | { type: OrderType.Search; otid: string };
-
-/**
- * This is the main component for the `Chnots` app.
- *
- * - Initial State
- *   - If the first `chnot` is `mdwt` type, just use it as the first `chnot`, which is called as `HEAD_CHNOT`.
- *   - If the first `chnot` is any other type(FOO), make the first chnot is `mdwt`, and create a new chnot, which type is FOO.
- *     - When we save the FOO chnot, initialize the HEAD_CHNOT and save it
- * - Maintain State
- *   - Just edit and save that chnot.
- */
 const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
-  const savedChnotOrdersRef = useRef<ManualChnotOrder[]>([]);
-  const [chnotOrders, setChnotOrders] = useState<ChnotOrder[]>([]);
-  const [mdwtMap, setMdwtMap] = useState<Record<string, MdwtRecord>>({});
+  const cmRef = useRef<ReactCodeMirrorRef>(null);
+  const savedBlockOtidsRef = useRef<number[]>([]);
+  const lastSavedContentRef = useRef<Map<number, string>>(new Map());
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savingRef = useRef(false);
+  const [joinedDoc, setJoinedDoc] = useState<string>("");
+  const [threadContent, setThreadContent] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeId, setActiveId] = useState<TID | string | null>(null);
-  const [overId, setOverId] = useState<TID | string | null>(null);
-  const [focusOtid, setFocusOtid] = useState<TID | null>(null);
-  const { currentKSpace } = useKSpaceStore((s) => {
-    return {
-      currentKSpace: s.currentKSpace,
-    };
-  });
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
 
   useEffect(() => {
     (async () => {
       try {
-        const rsp = await chnotThreadMetaFetch({
-          otid: threadOtid,
+        const rsp = await chnotThreadMetaFetch({ otid: threadOtid });
+        const childOtids: TID[] = rsp.chnot_meta_sorted.map(
+          (cm) => cm.meta.otid,
+        );
+        const mdwtRsp = await mdwtRecordList({
+          mdwt_otids: [...childOtids, threadOtid],
         });
 
-        const chnotOtids: SavedChnotOrder[] = rsp.chnot_meta_sorted.map(
-          (cm) => {
-            return {
-              otid: cm.meta.otid,
-              chnotKind: cm.meta.kind,
-              closed: cm.closed,
-              type: OrderType.Manual,
-            };
-          },
-        );
+        setThreadContent(mdwtRsp.mdwt_map[threadOtid]?.content ?? "");
 
-        savedChnotOrdersRef.current = chnotOtids.map((e) => ({
-          ...e,
-          saved: true,
+        const blocks = childOtids.map((otid) => ({
+          otid,
+          content: mdwtRsp.mdwt_map[otid]?.content ?? "",
         }));
 
-        const mdwtMap = await mdwtRecordList({
-          mdwt_otids: [
-            ...savedChnotOrdersRef.current.map((e) => e.otid),
-            threadOtid,
-          ],
-        });
-        if (chnotOtids.length > 0) {
-          setChnotOrders(savedChnotOrdersRef.current);
-          setMdwtMap(mdwtMap.mdwt_map);
+        if (blocks.length > 0) {
+          const doc = joinMdwtBlocks(blocks);
+          setJoinedDoc(doc);
+          savedBlockOtidsRef.current = childOtids;
         } else {
-          setChnotOrders([
-            {
-              otid: genTID(),
-              type: OrderType.Manual,
-              closed: false,
-              saved: false,
-            },
-          ]);
+          const newOtid = genTID();
+          const doc = `## [[${newOtid}]] `;
+          setJoinedDoc(doc);
+          savedBlockOtidsRef.current = [];
         }
+
+        const savedMap = new Map<number, string>();
+        for (const b of blocks) {
+          const lines = b.content.split("\n");
+          const firstLine = lines[0] || "";
+          if (HEADING_OTID_RE.test(firstLine)) {
+            savedMap.set(b.otid, b.content.trimEnd());
+          } else {
+            const cleaned = firstLine.replace(/^#{1,6}\s+/, "");
+            const rest = lines.slice(1);
+            const normalized = [`## [[${b.otid}]] ${cleaned}`, ...rest]
+              .join("\n")
+              .trimEnd();
+            savedMap.set(b.otid, normalized);
+          }
+        }
+        lastSavedContentRef.current = savedMap;
       } finally {
         setLoading(false);
       }
     })();
   }, [threadOtid]);
 
-  useEffect(() => {
-    (async () => {
-      const toSaveChnotOrderOtids: ManualChnotOrder[] = chnotOrders
-        .filter((e) => e.type === OrderType.Manual)
-        .filter((e) => e.saved);
-      if (
-        !arraysAreEqual(
-          toSaveChnotOrderOtids,
-          savedChnotOrdersRef.current,
-          (v1, v2) => {
-            return (
-              v1.otid === v2.otid &&
-              v1.chnotKind === v2.chnotKind &&
-              v1.closed === v2.closed
-            );
-          },
-        )
-      ) {
-        await handlePostSave({
-          otid: threadOtid,
-          saveState: SaveState.Saved,
-          kind: ChnotKind.ThreadV1,
-        });
-        await chnotThreadOrderCommit({
-          thread_otid: threadOtid,
-          orders: toSaveChnotOrderOtids.map((e) => {
-            return { otid: e.otid, closed: e.closed };
-          }),
-        });
-        savedChnotOrdersRef.current = toSaveChnotOrderOtids;
-      }
-    })();
-  }, [threadOtid, chnotOrders]);
-
   const handlePostSave = useCallback(
     async (arg: PostSaveArg) => {
-      console.info("thread post save", arg.otid);
       await onPostSave({ ...arg, kind: ChnotKind.ThreadV1 });
     },
     [onPostSave],
   );
 
-  const handleDragStart = useCallback((event: DragEndEvent) => {
-    setActiveId(event.active.id as TID | string);
-  }, []);
+  const handleBlockSave = useCallback(async () => {
+    if (savingRef.current) return;
+    const view = cmRef.current?.view;
+    if (!view) return;
 
-  const handleDragOver = useCallback((event: DragEndEvent) => {
-    setOverId(event.over?.id as TID | string | null);
-  }, []);
+    savingRef.current = true;
+    try {
+      const currentBlocks = splitDocumentByBlocks(view.state);
+      const previousBlocks = lastSavedContentRef.current;
+      const previousOtids = savedBlockOtidsRef.current;
+      const currentOtids = [...currentBlocks.keys()];
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-
-    setActiveId(null);
-    setOverId(null);
-
-    if (active.id !== over?.id) {
-      setChnotOrders((items) => {
-        const oldIndex = items.findIndex((e) => e.otid === (active.id as TID));
-        const newIndex = items.findIndex((e) => e.otid === (over?.id as TID));
-
-        if (oldIndex !== undefined && newIndex !== undefined) {
-          return arrayMove(items, oldIndex, newIndex);
-        } else {
-          return items;
-        }
-      });
-    }
-  }, []);
-
-  const handleAddBlock = useCallback((position: number, find: boolean) => {
-    setChnotOrders((prev) => {
-      const newOrders = [...prev];
-      newOrders.splice(
-        position,
-        0,
-        find
-          ? {
-              otid: `find-${genTID()}`,
-              type: OrderType.Search,
-            }
-          : {
-              otid: genTID(),
-              type: OrderType.Manual,
-              closed: false,
-              saved: false,
-            },
+      const added = currentOtids.filter((otid) => !previousBlocks.has(otid));
+      const changed = currentOtids.filter(
+        (otid) =>
+          previousBlocks.has(otid) &&
+          previousBlocks.get(otid) !== currentBlocks.get(otid),
       );
-      return newOrders;
-    });
-  }, []);
+      const deleted = previousOtids.filter((otid) => !currentBlocks.has(otid));
 
-  const handleRemoveBlock = useCallback(
-    async (otid: TID | string) => {
-      if (typeof otid === "number") {
+      if (
+        added.length > 0 ||
+        deleted.length > 0 ||
+        !arraysAreEqual(currentOtids, previousOtids, (a, b) => a === b)
+      ) {
+        await chnotThreadOrderCommit({
+          thread_otid: threadOtid,
+          orders: currentOtids.map((otid) => ({ otid, closed: false })),
+        });
+      }
+
+      if (deleted.length > 0) {
         await chnotThreadOrderArchive({
           thread_otid: threadOtid,
-          otids: [otid],
+          otids: deleted,
         });
       }
-      setChnotOrders((prev) => {
-        const retained = prev.filter((e) => e.otid !== otid);
-        return retained;
-      });
-    },
-    [threadOtid],
-  );
 
-  const handleSearchAdd = useCallback(
-    async (old: string, otid: TID, kind: ChnotKind) => {
-      console.log("handle search add", old, otid);
-      const mdwtMap = await mdwtRecordList({
-        mdwt_otids: [otid],
-      });
-      setMdwtMap((prev) => {
-        return { ...prev, ...mdwtMap.mdwt_map };
-      });
-      setChnotOrders((prev) => {
-        return prev.map((e) => {
-          if (e.type === OrderType.Search && old === e.otid) {
-            return {
-              chnotKind: kind,
-              otid: otid,
-              closed: false,
-              type: OrderType.Manual,
-              saved: true,
-            };
-          } else {
-            return e;
-          }
-        });
-      });
-    },
-    [],
-  );
-
-  const handlePostSaveOnChnot = useCallback(
-    async (arg: PostSaveArg) => {
-      if (arg.saveState !== SaveState.Saved) {
-        return;
+      for (const otid of [...added, ...changed]) {
+        const content = currentBlocks.get(otid);
+        if (content === undefined) continue;
+        await mdwtCommit({ mdwt: { otid, content } });
       }
-      // force update.
-      setChnotOrders((prev) =>
-        prev.map((e) => {
-          if (e.type === OrderType.Manual && e.otid === arg.otid) {
-            return { ...e, saved: true };
-          } else {
-            return e;
-          }
-        }),
-      );
+
+      await onPostSave({
+        otid: threadOtid,
+        saveState: SaveState.Saved,
+        kind: ChnotKind.ThreadV1,
+      });
+
+      lastSavedContentRef.current = currentBlocks;
+      savedBlockOtidsRef.current = currentOtids;
+    } finally {
+      savingRef.current = false;
+    }
+  }, [threadOtid, onPostSave]);
+
+  const handleContentChange = useCallback(
+    (_content: string) => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        handleBlockSave();
+      }, 500);
     },
-    [chnotOrders, threadOtid],
+    [handleBlockSave],
   );
 
-  const handleToggleClosed = useCallback(
-    async (index: number, closed: boolean) => {
-      setChnotOrders((prev) =>
-        prev.map((co, id) => {
-          if (index === id) {
-            return { ...co, closed };
-          } else {
-            return co;
-          }
-        }),
-      );
-    },
-    [],
-  );
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
-  const handleAppendBlock = useCallback((afterIndex: number) => {
+  const handleAddBlock = useCallback(() => {
+    const view = cmRef.current?.view;
+    if (!view) return;
     const newOtid = genTID();
-    setChnotOrders((prev) => {
-      const newOrders = [...prev];
-      newOrders.splice(afterIndex + 1, 0, {
-        otid: newOtid,
-        type: OrderType.Manual,
-        chnotKind: ChnotKind.MDWT,
-        closed: false,
-        saved: false,
-      });
-      return newOrders;
+    const insertText = `\n\n## [[${newOtid}]] `;
+    const end = view.state.doc.length;
+    view.dispatch({
+      changes: { from: end, insert: insertText },
+      selection: { anchor: end + insertText.length },
     });
-    setMdwtMap((prev) => ({
-      ...prev,
-      [newOtid]: { otid: newOtid, content: "## [TODO] " },
-    }));
-    setFocusOtid(newOtid);
+    view.focus();
   }, []);
 
   return (
@@ -335,101 +199,33 @@ const ChnotThread = ({ otid: threadOtid, onPostSave }: RichPropProps) => {
               fullscreen={false}
               disableHeaderActions={true}
               onPostSave={handlePostSave}
-              content={mdwtMap[threadOtid]?.content ?? ""}
+              content={threadContent}
               placeholder="Thread Title"
             />
           </div>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-          >
-            <div className="flex flex-col w-full">
-              <SortableContext
-                items={chnotOrders.map((e) => e.otid)}
-                strategy={verticalListSortingStrategy}
+          <div className="flex flex-col w-full">
+            <MdwtEditor
+              content={joinedDoc}
+              foldGutter={false}
+              fillParentHeight={false}
+              onContentChange={handleContentChange}
+              setCodeMirrorRef={(ref) => {
+                cmRef.current = ref.current;
+              }}
+              placeholder="Add blocks with /tid on a heading line"
+            />
+            <div className="flex items-center gap-1.5 pt-3 pl-10">
+              <button
+                type="button"
+                onClick={handleAddBlock}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
+                title="Add new block"
               >
-                {chnotOrders.map((order, index) => {
-                  return order.type === OrderType.Manual ? (
-                    <React.Fragment key={order.otid}>
-                      {activeId !== null && overId === order.otid && (
-                        <div className="w-full h-1 bg-primary/30 rounded-full my-1" />
-                      )}
-                      <SortableRichMdwtMemo
-                        otid={order.otid}
-                        index={index}
-                        closed={order.closed}
-                        kind={order.chnotKind}
-                        onPostSave={handlePostSaveOnChnot}
-                        content={mdwtMap[order.otid]?.content ?? ""}
-                        kspace={currentKSpace}
-                        onAddBlock={handleAddBlock}
-                        onRemoveBlock={handleRemoveBlock}
-                        isDragging={activeId === order.otid}
-                        onToggleClosed={handleToggleClosed}
-                        saveState={
-                          order.saved ? SaveState.Saved : SaveState.Initial
-                        }
-                        onAppendBlock={handleAppendBlock}
-                        shouldAutoFocus={focusOtid === order.otid}
-                      />
-                    </React.Fragment>
-                  ) : (
-                    <React.Fragment key={order.otid}>
-                      <div className="flex items-center w-full gap-2 py-2">
-                        <div className="flex-1 border-t border-dashed border-muted-foreground/30" />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveBlock(order.otid)}
-                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
-                          title="Stop Find"
-                        >
-                          <Unlink className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <MdwtChnotSelector
-                        key={order.otid}
-                        onSelect={(tOtid, kind) =>
-                          typeof order.otid === "string" &&
-                          handleSearchAdd(order.otid, tOtid, kind)
-                        }
-                        excludeList={savedChnotOrdersRef.current}
-                      />
-                    </React.Fragment>
-                  );
-                })}
-                <div className="flex items-center gap-1.5 pt-3 pl-10">
-                  <button
-                    type="button"
-                    onClick={() => handleAddBlock(chnotOrders.length + 1, true)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
-                    title="Link existing chnot"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                    <span>Link</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleAddBlock(chnotOrders.length + 1, false)
-                    }
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
-                    title="Add new chnot"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add</span>
-                  </button>
-                </div>
-              </SortableContext>
+                <Plus className="w-4 h-4" />
+                <span>Add Block</span>
+              </button>
             </div>
-            <DragOverlay>
-              {activeId !== null ? (
-                <div className="w-full h-1 bg-primary/40 rounded-full" />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+          </div>
         </div>
       )}
     </div>

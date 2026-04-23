@@ -47,3 +47,15 @@ export { Hashtag } from "./hashtag";
 export { createCodemirrorTheme } from "./theme";
 export { parseMarkdownTable, generateMarkdownTable } from "./table-utils";
 export type { ParsedTable } from "./table-utils";
+
+export {
+  headingBlocks,
+  getBlockAtPos,
+  getBlockByOtid,
+  getAllBlocks,
+  splitDocumentByBlocks,
+  scrollToBlock,
+  tidCompletion,
+  HEADING_OTID_RE,
+} from "./heading-block";
+export type { HeadingBlock } from "./heading-block";
