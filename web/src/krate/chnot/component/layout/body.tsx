@@ -3,7 +3,6 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
@@ -20,7 +19,6 @@ import MindMapChnot from "../rich-chnot/mindmap";
 import RichMdwt from "../rich-chnot/rich-mdwt";
 import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import TableChnot from "../rich-chnot/table";
-import { ChnotThreadMemo } from "../rich-chnot/thread";
 
 const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);
@@ -65,7 +63,7 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
         (!savedTitle || savedTitle.startsWith(GEN_TITLE))
       ) {
         title = GEN_TITLE + arg.title;
-        if (arg.kind !== ChnotKind.MDWT && arg.kind !== ChnotKind.ThreadV1) {
+        if (arg.kind !== ChnotKind.MDWT) {
           await mdwtCommit({
             mdwt: {
               otid: arg.otid,
@@ -115,10 +113,6 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   ) : kind === ChnotKind.MindMapV1 ? (
     <div className="flex flex-col w-full items-center m-0 p-1 h-full">
       <MindMapChnot {...props} />
-    </div>
-  ) : kind === ChnotKind.ThreadV1 ? (
-    <div className="w-full h-full">
-      <ChnotThreadMemo {...props} />
     </div>
   ) : (
     <div className="flex flex-col w-full items-center m-0 p-1 h-full">

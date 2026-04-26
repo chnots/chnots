@@ -4,7 +4,6 @@ import {
   Brain,
   File,
   Flower,
-  LineSquiggle,
   Table,
   Text,
   TextCursor,
@@ -27,8 +26,6 @@ export const ChnotKindIcon = ({
     <Bot {...rest} />
   ) : kind === ChnotKind.MindMapV1 ? (
     <Brain {...rest} />
-  ) : kind === ChnotKind.ThreadV1 ? (
-    <LineSquiggle {...rest} />
   ) : (
     <TextCursor {...rest} />
   );
