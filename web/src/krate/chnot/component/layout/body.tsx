@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { SaveState } from "@/common/types";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { GEN_TITLE } from "@/krate/mdwt/constaints";
@@ -17,8 +12,8 @@ import KFileChnot from "../rich-chnot/kfile";
 import LLMChatChnot from "../rich-chnot/llmchat";
 import MindMapChnot from "../rich-chnot/mindmap";
 import RichMdwt from "../rich-chnot/rich-mdwt";
-import type { PostSaveArg } from "../rich-chnot/rich-mdwt-side";
 import TableChnot from "../rich-chnot/table";
+import type { PostSaveArg } from "../rich-chnot/types";
 
 const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
   const saveStateRef = useRef<SaveState>(SaveState.Initial);

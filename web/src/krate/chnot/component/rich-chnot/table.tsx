@@ -12,7 +12,7 @@ import {
 import { genTID, genUID } from "@/lib/id_util";
 import { ChnotKind } from "../../po";
 import Fullscreen from "./fullscreen";
-import type { RichPropProps } from "./rich-mdwt-side";
+import type { RichPropProps } from "./types";
 
 const TableChnot = ({
   otid,

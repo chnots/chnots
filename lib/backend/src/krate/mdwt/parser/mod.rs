@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::krate::toent::logic::{EventBuilder, timeevent::TimeEvent, todoevent::TodoEvent};
+use chin_sql::time_type::TID;
 use chrono::NaiveDateTime;
 use comrak::{
     arena_tree::Node,
@@ -13,6 +14,102 @@ use comrak::{
 use itertools::Itertools;
 use lazy_regex::Lazy;
 use regex::Regex;
+
+#[derive(Debug, Clone)]
+pub struct ParsedBlock {
+    pub otid: TID,
+    pub content: String,
+    pub order: usize,
+    pub title: String,
+}
+
+static HEADING_OTID_CAPTURE_RE: Lazy<Regex> =
+    lazy_regex::lazy_regex!(r"^(\s{0,3}#{1,6}\s+)\[\[(\d{13,20})\]\]\s*(.*)");
+
+static HEADING_PLAIN_RE: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\s{0,3}#{1,6}\s+)(.*)");
+
+pub fn parse_content_into_blocks(content: &str) -> (Vec<ParsedBlock>, String) {
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return (vec![], content.to_owned());
+    }
+
+    let mut heading_indices: Vec<usize> = vec![];
+    for (i, line) in lines.iter().enumerate() {
+        if HEADING_PLAIN_RE.is_match(line) {
+            heading_indices.push(i);
+        }
+    }
+
+    if heading_indices.is_empty() {
+        return (
+            vec![ParsedBlock {
+                otid: TID::now(),
+                content: content.to_owned(),
+                order: 0,
+                title: lines[0].to_owned(),
+            }],
+            content.to_owned(),
+        );
+    }
+
+    let mut updated_lines: Vec<String> = lines.iter().map(|l| l.to_owned()).collect();
+    let mut blocks: Vec<ParsedBlock> = Vec::with_capacity(heading_indices.len());
+
+    for (block_idx, &start_line) in heading_indices.iter().enumerate() {
+        let end_line = if block_idx + 1 < heading_indices.len() {
+            heading_indices[block_idx + 1]
+        } else {
+            lines.len()
+        };
+
+        let heading_line = lines[start_line];
+        let (otid, title, modified_heading) =
+            if let Some(caps) = HEADING_OTID_CAPTURE_RE.captures(heading_line) {
+                let prefix = caps.get(1).unwrap().as_str();
+                let otid_str = caps.get(2).unwrap().as_str();
+                let rest = caps.get(3).map(|m| m.as_str()).unwrap_or("");
+                let otid: TID = otid_str.parse().unwrap_or_else(|_| TID::now());
+                (otid, rest.to_owned(), None)
+            } else if let Some(caps) = HEADING_PLAIN_RE.captures(heading_line) {
+                let prefix = caps.get(1).unwrap().as_str();
+                let rest = caps.get(2).map(|m| m.as_str()).unwrap_or("");
+                let otid = TID::now();
+                let modified = format!("{}[[{}]] {}", prefix, otid, rest);
+                (otid, rest.to_owned(), Some(modified))
+            } else {
+                (TID::now(), heading_line.to_owned(), None)
+            };
+
+        if let Some(ref new_heading) = modified_heading {
+            updated_lines[start_line] = new_heading.clone();
+        }
+
+        let block_lines: Vec<&str> = if let Some(ref new_heading) = modified_heading {
+            let mut bl: Vec<&str> = lines[start_line + 1..end_line].to_vec();
+            bl
+        } else {
+            lines[start_line + 1..end_line].to_vec()
+        };
+
+        let mut content_parts = vec![];
+        let heading_for_content = modified_heading.unwrap_or_else(|| heading_line.to_owned());
+        content_parts.push(heading_for_content);
+        for l in &block_lines {
+            content_parts.push(l.to_string());
+        }
+        let block_content = content_parts.join("\n");
+
+        blocks.push(ParsedBlock {
+            otid,
+            content: block_content,
+            order: block_idx,
+            title,
+        });
+    }
+
+    (blocks, updated_lines.join("\n"))
+}
 
 #[derive(Debug, Clone)]
 enum ChnotBlockEnum {

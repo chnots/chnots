@@ -18,9 +18,17 @@ pub struct MdwtCommitReq {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct MdwtBlockRspData {
+    pub otid: TID,
+    pub title: SharedStr,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct MdwtCommitRsp {
     pub todo_event: Option<TodoEvent>,
     pub title: SharedStr,
+    pub blocks: Vec<MdwtBlockRspData>,
+    pub content: Option<Text>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

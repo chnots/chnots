@@ -20,7 +20,7 @@ import { tidToDate } from "@/lib/date-utils";
 import { ChnotKind } from "../../po";
 import HistoryHeaderActions from "../header/chnot-history-header-actions";
 import Fullscreen from "./fullscreen";
-import type { RichPropProps } from "./rich-mdwt-side";
+import type { RichPropProps } from "./types";
 
 const KFileChnot = ({
   otid,

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk git:*)",
+      "Bash(rtk ls:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm --filter @chnots/md-codemirror build)",
+      "Bash(pnpm --filter web exec tsc --noEmit)",
+      "Bash(pnpm exec:*)",
+      "Bash(rtk find:*)",
+      "Bash(git rm:*)",
+      "Bash(rtk tsc:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

@@ -1,3 +1,8 @@
+import {
+  normalizeBlockContent,
+  splitDocumentByBlocks,
+} from "@chnots/md-codemirror";
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -13,11 +18,18 @@ import {
   mdwtHistoryList,
   mdwtRecordList,
 } from "@/krate/mdwt/service";
+import { arraysAreEqual } from "@/lib/col-util";
 import { tidToDate } from "@/lib/date-utils";
+import type { TID } from "@/lib/id_util";
 import { ChnotKind } from "../../po";
+import {
+  chnotThreadMetaFetch,
+  chnotThreadOrderArchive,
+  chnotThreadOrderCommit,
+} from "../../service";
 import { chnotHeadStore } from "../../store";
 import HistoryHeaderActions from "../header/chnot-history-header-actions";
-import type { RichPropProps } from "./rich-mdwt-side";
+import type { RichPropProps } from "./types";
 
 const MarkdownViewer = ({
   content: initialContent,
@@ -39,6 +51,14 @@ const MarkdownViewer = ({
     </div>
   );
 };
+
+function joinMdwtBlocks(
+  blocks: Array<{ otid: number; content: string }>,
+): string {
+  return blocks
+    .map((b) => normalizeBlockContent(b.otid, b.content))
+    .join("\n\n");
+}
 
 /**
  *
@@ -74,26 +94,135 @@ const MdwtChnot = ({
   const [previewContent, setPreviewContent] = useState<string>("");
   const previewMode = previewTid !== undefined;
 
+  // Block tracking refs for thread-based save/load
+  const cmRef = useRef<ReactCodeMirrorRef>(null);
+  const savedBlockOtidsRef = useRef<TID[]>([]);
+  const lastSavedContentRef = useRef<Map<number, string>>(new Map());
+  const savingRef = useRef(false);
+
   useEffect(() => {
     if (initialContent === undefined) {
-      mdwtRecordList({
-        mdwt_otids: [otid],
-      }).then((rsp) => {
-        const mdwt = rsp.mdwt_map[otid];
-        if (mdwt?.content) {
-          setContent(mdwt.content);
-        } else {
-          setContent("");
+      (async () => {
+        try {
+          const threadRsp = await chnotThreadMetaFetch({ otid });
+          const childOtids = threadRsp.chnot_meta_sorted.map(
+            (cm) => cm.meta.otid,
+          );
+
+          if (childOtids.length > 0) {
+            const mdwtRsp = await mdwtRecordList({
+              mdwt_otids: [...childOtids],
+            });
+            const blocks = childOtids.map((otid) => ({
+              otid,
+              content: mdwtRsp.mdwt_map[otid]?.content ?? "",
+            }));
+            const joined = joinMdwtBlocks(blocks);
+            setContent(joined);
+            cachedContentRef.current = joined;
+            if (onContentChange) onContentChange(joined);
+
+            const savedMap = new Map<number, string>();
+            for (const b of blocks) {
+              savedMap.set(b.otid, normalizeBlockContent(b.otid, b.content));
+            }
+            lastSavedContentRef.current = savedMap;
+            savedBlockOtidsRef.current = childOtids;
+          } else {
+            const rsp = await mdwtRecordList({ mdwt_otids: [otid] });
+            const mdwt = rsp.mdwt_map[otid];
+            const c = mdwt?.content ?? "";
+            setContent(c);
+            cachedContentRef.current = c;
+            if (onContentChange && c) onContentChange(c);
+          }
+        } catch {
+          const rsp = await mdwtRecordList({ mdwt_otids: [otid] });
+          const mdwt = rsp.mdwt_map[otid];
+          const c = mdwt?.content ?? "";
+          setContent(c);
+          cachedContentRef.current = c;
+          if (onContentChange && c) onContentChange(c);
         }
-        if (onContentChange && mdwt?.content) {
-          onContentChange(mdwt.content);
-        }
-        cachedContentRef.current = mdwt?.content;
-      });
+      })();
     }
   }, [initialContent, otid]);
 
   const directlySave = async () => {
+    const view = cmRef.current?.view;
+
+    // Try block-based save via thread services
+    if (view && !savingRef.current) {
+      const currentBlocks = splitDocumentByBlocks(view.state);
+
+      if (currentBlocks.size > 0) {
+        savingRef.current = true;
+        try {
+          const previousBlocks = lastSavedContentRef.current;
+          const previousOtids = savedBlockOtidsRef.current;
+          const currentOtids = [...currentBlocks.keys()];
+
+          const added = currentOtids.filter(
+            (otid) => !previousBlocks.has(otid),
+          );
+          const changed = currentOtids.filter(
+            (otid) =>
+              previousBlocks.has(otid) &&
+              previousBlocks.get(otid) !== currentBlocks.get(otid),
+          );
+          const deleted = previousOtids.filter(
+            (otid) => !currentBlocks.has(otid),
+          );
+
+          if (
+            added.length > 0 ||
+            deleted.length > 0 ||
+            !arraysAreEqual(currentOtids, previousOtids, (a, b) => a === b)
+          ) {
+            await chnotThreadOrderCommit({
+              thread_otid: otid,
+              orders: currentOtids.map((o) => ({ otid: o, closed: false })),
+            });
+          }
+
+          if (deleted.length > 0) {
+            await chnotThreadOrderArchive({
+              thread_otid: otid,
+              otids: deleted,
+            });
+          }
+
+          const dirty = [...added, ...changed]
+            .map((otid) => ({
+              otid,
+              content: currentBlocks.get(otid)!,
+            }))
+            .filter((b) => b.content !== undefined);
+
+          await Promise.all(
+            dirty.map((b) =>
+              mdwtCommit({ mdwt: { otid: b.otid, content: b.content } }),
+            ),
+          );
+
+          lastSavedContentRef.current = currentBlocks;
+          savedBlockOtidsRef.current = currentOtids;
+
+          onPostSave({
+            otid,
+            saveState: SaveState.Saved,
+            kind: ChnotKind.MDWT,
+          });
+
+          toSaveArg.current = null;
+          return;
+        } finally {
+          savingRef.current = false;
+        }
+      }
+    }
+
+    // Fallback: single mdwt save
     if (toSaveArg.current) {
       try {
         onPostSave({
@@ -256,6 +385,9 @@ const MdwtChnot = ({
             onContentChange={handleContentChange}
             foldGutter={false}
             fillParentHeight={fillParentHeight}
+            setCodeMirrorRef={(ref) => {
+              cmRef.current = ref.current;
+            }}
           />
         </div>
       </div>

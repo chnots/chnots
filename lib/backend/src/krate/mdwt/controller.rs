@@ -30,7 +30,11 @@ async fn mdwt_commit(
 
     match rsp {
         Ok(rsp) => {
-            match ToentCache::refresh_chnots(&state, vec![otid]).await {
+            let mut otids_to_refresh = vec![otid];
+            for b in &rsp.blocks {
+                otids_to_refresh.push(b.otid);
+            }
+            match ToentCache::refresh_chnots(&state, otids_to_refresh).await {
                 Ok(_) => {}
                 Err(err) => return Err(err).into(),
             }

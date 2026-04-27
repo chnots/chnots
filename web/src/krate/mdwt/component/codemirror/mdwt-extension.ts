@@ -86,7 +86,7 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
     }
 
     findTodos(state: EditorState): DecorationSet {
-      const builder = new RangeSetBuilder<Decoration>();
+      const entries: { from: number; to: number }[] = [];
 
       syntaxTree(state).iterate({
         enter: (node) => {
@@ -99,13 +99,19 @@ export const todoHighlightPlugin = ViewPlugin.fromClass(
               const end = start + match[0].length;
 
               if (start !== end) {
-                builder.add(start, end, todoHighlight);
+                entries.push({ from: start, to: end });
               }
             }
           }
         },
       });
 
+      entries.sort((a, b) => a.from - b.from || a.to - b.to);
+
+      const builder = new RangeSetBuilder<Decoration>();
+      for (const { from, to } of entries) {
+        builder.add(from, to, todoHighlight);
+      }
       return builder.finish();
     }
   },

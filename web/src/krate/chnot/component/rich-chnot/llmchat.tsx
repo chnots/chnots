@@ -22,7 +22,7 @@ import type { TID } from "@/lib/id_util";
 import { ChnotKind } from "../../po";
 import { chnotHeadStore } from "../../store";
 import Fullscreen from "./fullscreen";
-import type { RichPropProps } from "./rich-mdwt-side";
+import type { RichPropProps } from "./types";
 
 const LLMChatChnot = ({
   otid,

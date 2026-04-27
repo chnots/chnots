@@ -8,24 +8,29 @@ function buildBlockLineDecorations(
   state: EditorState,
   blocks: HeadingBlock[],
 ): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
+  const entries: { from: number; deco: Decoration }[] = [];
 
   for (const block of blocks) {
     let pos = block.from;
     while (pos < block.to && pos <= state.doc.length) {
       const line = state.doc.lineAt(pos);
-      builder.add(
-        line.from,
-        line.from,
-        Decoration.line({
+      entries.push({
+        from: line.from,
+        deco: Decoration.line({
           attributes: { "data-block-otid": String(block.otid) },
         }),
-      );
+      });
       if (line.to >= state.doc.length) break;
       pos = line.to + 1;
     }
   }
 
+  entries.sort((a, b) => a.from - b.from);
+
+  const builder = new RangeSetBuilder<Decoration>();
+  for (const { from, deco } of entries) {
+    builder.add(from, from, deco);
+  }
   return builder.finish();
 }
 

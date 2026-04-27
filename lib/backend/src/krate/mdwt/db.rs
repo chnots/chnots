@@ -1,12 +1,16 @@
 use std::borrow::Cow;
 
 use super::*;
+use crate::krate::chnot::{
+    ChnotKind, ChnotMeta, ChnotMetaTable, ChnotThreadOrder, ChnotThreadOrderTable,
+};
 use crate::krate::mdwt::mapper::MdwtMapper;
-use crate::krate::mdwt::parser::MdwtParser;
+use crate::krate::mdwt::parser::{MdwtParser, parse_content_into_blocks};
 use crate::krate::toent::ToentDefiCommitReq;
 use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
 use crate::krate::toent::po::TimeEventField;
+use crate::mapper::Curd;
 use crate::mapper::db::helper::{Ddls, print_ddls};
 use crate::mapper::db::{
     HistCreateSql, KDb, KDbBehaiver, KDbExecutorBehaiver, KDbRow, KDbRowBehavier,
@@ -137,27 +141,164 @@ impl<'a> KDbTx<'a> {
 
     pub(super) async fn mdwt_commit(&self, req: KReq<MdwtCommitReq>) -> AResult<MdwtCommitRsp> {
         let MdwtCommitReq { mdwt } = req.body;
-        let title = mdwt.content.as_str().split('\n').take(1).join("");
-        let mdwt_parser = MdwtParser::new(mdwt.content.as_str());
-        let todo_event = mdwt_parser.get_outer_todo_event();
-        let time_events = mdwt_parser.get_outer_time_events();
-        let otid = mdwt.otid;
+        let thread_otid = mdwt.otid;
+        let raw_content = mdwt.content;
 
-        self.overwrite_mdwt_record(mdwt).await?;
-        self.toent_defi_commit(&ToentDefiCommitReq {
-            otid,
-            todo_event,
-            time_event_field: TimeEventField {
-                time_events: time_events.into_iter().collect(),
+        let parent_meta = self.fetch_chnot_meta(thread_otid).await?;
+        let kspace = parent_meta.kspace;
+
+        let (blocks, updated_content) = parse_content_into_blocks(raw_content.as_str());
+
+        let mut block_rsps: Vec<MdwtBlockRspData> = Vec::with_capacity(blocks.len());
+        let mut first_todo_event: Option<TodoEvent> = None;
+        let mut all_otids: Vec<TID> = Vec::with_capacity(blocks.len());
+
+        for block in &blocks {
+            self.ensure_chnot_meta(block.otid, ChnotKind::MarkdownWithToent, kspace.clone())
+                .await?;
+
+            self.overwrite_mdwt_record(MdwtCommitReqData {
+                otid: block.otid,
+                content: block.content.clone().into(),
+            })
+            .await?;
+
+            let mdwt_parser = MdwtParser::new(block.content.as_str());
+            let todo_event = mdwt_parser.get_outer_todo_event();
+            let time_events = mdwt_parser.get_outer_time_events();
+
+            if first_todo_event.is_none() {
+                first_todo_event = todo_event.clone();
             }
-            .into(),
-        })
-        .await?;
+
+            self.toent_defi_commit(&ToentDefiCommitReq {
+                otid: block.otid,
+                todo_event,
+                time_event_field: TimeEventField {
+                    time_events: time_events.into_iter().collect(),
+                }
+                .into(),
+            })
+            .await?;
+
+            self.chnot_tag_update_single_chnot(
+                MdwtTagUpdateReq {
+                    content: block.content.clone().into(),
+                    mdwt_otid: block.otid,
+                },
+                &mdwt_parser,
+            )
+            .await?;
+
+            all_otids.push(block.otid);
+            block_rsps.push(MdwtBlockRspData {
+                otid: block.otid,
+                title: block.title.clone().into(),
+            });
+        }
+
+        self.commit_thread_order_inner(thread_otid, &all_otids)
+            .await?;
+
+        let title = blocks
+            .first()
+            .map(|b| b.title.as_str())
+            .unwrap_or("")
+            .to_owned();
+
+        let content_changed = updated_content != raw_content.as_str();
 
         Ok(MdwtCommitRsp {
-            todo_event,
+            todo_event: first_todo_event,
             title: title.into(),
+            blocks: block_rsps,
+            content: if content_changed {
+                Some(updated_content.into())
+            } else {
+                None
+            },
         })
+    }
+
+    async fn fetch_chnot_meta(&self, otid: TID) -> AResult<ChnotMeta> {
+        let cm = ChnotMetaTable::new("cm");
+        let meta = self
+            .qry_opt(
+                SqlBuilder::read_all(&cm.nwa()).r#where(cm.otid().v_eq(otid)),
+                ChnotMeta::try_from,
+            )
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("chnot meta not found for otid {}", otid))?;
+        Ok(meta)
+    }
+
+    async fn ensure_chnot_meta(&self, otid: TID, kind: ChnotKind, kspace: Varchar<40>) -> EResult {
+        let cm = ChnotMetaTable::new("cm");
+        let exists = self
+            .qry_opt(
+                SqlBuilder::read(cm.otid(), &cm.nwa()).r#where(cm.otid().v_eq(otid)),
+                |row| row.try_get::<TID>(cm.otid().field_name()),
+            )
+            .await?;
+
+        if exists.is_none() {
+            let rec = ChnotMeta {
+                otid,
+                tid: TID::now(),
+                kind,
+                kspace,
+                archive_tid: None,
+                pin_tid: None,
+            };
+            self.omit_rows::<ChnotMeta>(rec.pkey()).await?;
+            self.exec(rec.to_sql_inserter()).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn commit_thread_order_inner(&self, thread_otid: TID, otids: &[TID]) -> EResult {
+        let cto = ChnotThreadOrderTable::new("cto");
+        let cto_otid = cto.otid().field_name();
+
+        let saved: Vec<TID> = self
+            .qry_list(
+                SqlReader::read(cto.otid(), &cto)
+                    .wheres(cto.thread_otid().v_eq(thread_otid))
+                    .build(),
+                |r| r.try_get(cto_otid),
+            )
+            .await?;
+
+        let to_remove: Vec<TID> = saved
+            .iter()
+            .filter(|s| !otids.contains(s))
+            .copied()
+            .collect();
+
+        if !to_remove.is_empty() {
+            self.omit_rows::<ChnotThreadOrder>(Wheres::and([
+                Wheres::equal(ChnotThreadOrder::THREAD_OTID, thread_otid),
+                Wheres::r#in(ChnotThreadOrder::OTID, to_remove),
+            ]))
+            .await?;
+        }
+
+        for (idx, &otid) in otids.iter().enumerate() {
+            let needs_insert = !saved.contains(&otid);
+            if needs_insert {
+                let rec = ChnotThreadOrder {
+                    otid,
+                    tid: TID::now(),
+                    thread_otid,
+                    korder: idx as i64,
+                    closed: false,
+                };
+                self.exec(rec.to_sql_inserter()).await?;
+            }
+        }
+
+        Ok(())
     }
 }
 

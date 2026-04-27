@@ -26,7 +26,7 @@ import { BASE_URL } from "@/lib/request";
 import { ChnotKind } from "../../po";
 import { chnotHeadStore } from "../../store";
 import HistoryHeaderActions from "../header/chnot-history-header-actions";
-import type { RichPropProps } from "./rich-mdwt-side";
+import type { RichPropProps } from "./types";
 
 const MindMapChnot = ({
   otid,
