@@ -37,9 +37,15 @@ export type ChnotThreadOrderCommitReq = {
   remove_others?: boolean;
 };
 export type ChnotThreadOrderCommitRsp = object;
+export type MdwtBlockRspData = {
+  otid: TID;
+  title: string;
+};
 export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
   title: string;
+  blocks: MdwtBlockRspData[];
+  content?: DbText;
 };
 
 export type ChnotMetaCommitReqData = {
