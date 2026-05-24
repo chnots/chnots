@@ -22,8 +22,8 @@ use crate::util::result_util::UnwrapOr;
 use chin_sql::str_type::Varchar;
 use chin_sql::time_type::TID;
 use chin_sql::{
-    ChinSqlError, GroupBy, Having, JoinTable, Joins, SqlBuilder, SqlField, SqlReader, SqlTable,
-    SqlTypedField,
+    ChinSqlError, GroupBy, Having, JoinTable, Joins, SqlBuilder, SqlField, SqlFieldTrait,
+    SqlReader, SqlTable, SqlTypedField,
 };
 use chin_sql::{LimitOffset, Wheres};
 use chin_tools::{AResult, EResult};
@@ -225,7 +225,7 @@ impl<'a> KDbTx<'a> {
         let meta = self
             .qry_opt(
                 SqlBuilder::read_all(&cm.nwa()).r#where(cm.otid().v_eq(otid)),
-                ChnotMeta::try_from,
+                |row| ChnotMeta::try_from(&row),
             )
             .await?
             .ok_or_else(|| anyhow::anyhow!("chnot meta not found for otid {}", otid))?;
@@ -234,10 +234,13 @@ impl<'a> KDbTx<'a> {
 
     async fn ensure_chnot_meta(&self, otid: TID, kind: ChnotKind, kspace: Varchar<40>) -> EResult {
         let cm = ChnotMetaTable::new("cm");
-        let exists = self
+        let otid_field = cm.otid().field_name();
+        let exists: Option<TID> = self
             .qry_opt(
-                SqlBuilder::read(cm.otid(), &cm.nwa()).r#where(cm.otid().v_eq(otid)),
-                |row| row.try_get::<TID>(cm.otid().field_name()),
+                SqlReader::read(cm.otid(), &cm)
+                    .wheres(cm.otid().v_eq(otid))
+                    .build(),
+                move |row| row.try_get(&otid_field),
             )
             .await?;
 
