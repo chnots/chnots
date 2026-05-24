@@ -147,7 +147,17 @@ impl<'a> KDbTx<'a> {
         let parent_meta = self.fetch_chnot_meta(thread_otid).await?;
         let kspace = parent_meta.kspace;
 
-        let (blocks, updated_content) = parse_content_into_blocks(raw_content.as_str());
+        let blocks = parse_content_into_blocks(raw_content.as_str())?;
+
+        if let Some(first) = blocks.first() {
+            if first.otid == thread_otid {
+                anyhow::bail!(
+                    "first heading OTID ({}) must differ from chnot OTID ({})",
+                    first.otid,
+                    thread_otid
+                );
+            }
+        }
 
         let mut block_rsps: Vec<MdwtBlockRspData> = Vec::with_capacity(blocks.len());
         let mut first_todo_event: Option<TodoEvent> = None;
@@ -206,17 +216,10 @@ impl<'a> KDbTx<'a> {
             .unwrap_or("")
             .to_owned();
 
-        let content_changed = updated_content != raw_content.as_str();
-
         Ok(MdwtCommitRsp {
             todo_event: first_todo_event,
             title: title.into(),
             blocks: block_rsps,
-            content: if content_changed {
-                Some(updated_content.into())
-            } else {
-                None
-            },
         })
     }
 

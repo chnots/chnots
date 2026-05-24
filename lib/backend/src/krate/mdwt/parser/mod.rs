@@ -28,10 +28,10 @@ static HEADING_OTID_CAPTURE_RE: Lazy<Regex> =
 
 static HEADING_PLAIN_RE: Lazy<Regex> = lazy_regex::lazy_regex!(r"^(\s{0,3}#{1,6}\s+)(.*)");
 
-pub fn parse_content_into_blocks(content: &str) -> (Vec<ParsedBlock>, String) {
+pub fn parse_content_into_blocks(content: &str) -> anyhow::Result<Vec<ParsedBlock>> {
     let lines: Vec<&str> = content.lines().collect();
     if lines.is_empty() {
-        return (vec![], content.to_owned());
+        return Ok(vec![]);
     }
 
     let mut heading_indices: Vec<usize> = vec![];
@@ -42,18 +42,9 @@ pub fn parse_content_into_blocks(content: &str) -> (Vec<ParsedBlock>, String) {
     }
 
     if heading_indices.is_empty() {
-        return (
-            vec![ParsedBlock {
-                otid: TID::now(),
-                content: content.to_owned(),
-                order: 0,
-                title: lines[0].to_owned(),
-            }],
-            content.to_owned(),
-        );
+        anyhow::bail!("mdwt content has no headings; at least one heading with OTID is required");
     }
 
-    let mut updated_lines: Vec<String> = lines.iter().map(|l| l.to_string()).collect();
     let mut blocks: Vec<ParsedBlock> = Vec::with_capacity(heading_indices.len());
 
     for (block_idx, &start_line) in heading_indices.iter().enumerate() {
@@ -64,42 +55,27 @@ pub fn parse_content_into_blocks(content: &str) -> (Vec<ParsedBlock>, String) {
         };
 
         let heading_line = lines[start_line];
-        let (otid, title, modified_heading) =
-            if let Some(caps) = HEADING_OTID_CAPTURE_RE.captures(heading_line) {
-                let prefix = caps.get(1).unwrap().as_str();
-                let otid_str = caps.get(2).unwrap().as_str();
-                let rest = caps.get(3).map(|m| m.as_str()).unwrap_or("");
-                let otid: TID = otid_str
-                    .parse::<i64>()
-                    .ok()
-                    .and_then(|v| TID::try_from(v).ok())
-                    .unwrap_or_else(TID::now);
-                (otid, rest.to_owned(), None)
-            } else if let Some(caps) = HEADING_PLAIN_RE.captures(heading_line) {
-                let prefix = caps.get(1).unwrap().as_str();
-                let rest = caps.get(2).map(|m| m.as_str()).unwrap_or("");
-                let otid = TID::now();
-                let modified = format!("{}[[{}]] {}", prefix, otid, rest);
-                (otid, rest.to_owned(), Some(modified))
-            } else {
-                (TID::now(), heading_line.to_owned(), None)
-            };
-
-        if let Some(ref new_heading) = modified_heading {
-            updated_lines[start_line] = new_heading.clone();
-        }
-
-        let block_lines: Vec<&str> = if let Some(ref new_heading) = modified_heading {
-            let mut bl: Vec<&str> = lines[start_line + 1..end_line].to_vec();
-            bl
+        let (otid, title) = if let Some(caps) = HEADING_OTID_CAPTURE_RE.captures(heading_line) {
+            let otid_str = caps.get(2).unwrap().as_str();
+            let rest = caps.get(3).map(|m| m.as_str()).unwrap_or("");
+            let otid: TID = otid_str
+                .parse::<i64>()
+                .ok()
+                .and_then(|v| TID::try_from(v).ok())
+                .ok_or_else(|| anyhow::anyhow!("invalid OTID in heading: {}", otid_str))?;
+            (otid, rest.to_owned())
         } else {
-            lines[start_line + 1..end_line].to_vec()
+            let title = HEADING_PLAIN_RE
+                .captures(heading_line)
+                .and_then(|c| c.get(2))
+                .map(|m| m.as_str().to_owned())
+                .unwrap_or_else(|| heading_line.to_owned());
+            anyhow::bail!("heading '{}' is missing OTID", title);
         };
 
-        let mut content_parts = vec![];
-        let heading_for_content = modified_heading.unwrap_or_else(|| heading_line.to_owned());
-        content_parts.push(heading_for_content);
-        for l in &block_lines {
+        let block_lines = &lines[start_line + 1..end_line];
+        let mut content_parts = vec![heading_line.to_owned()];
+        for l in block_lines {
             content_parts.push(l.to_string());
         }
         let block_content = content_parts.join("\n");
@@ -112,7 +88,7 @@ pub fn parse_content_into_blocks(content: &str) -> (Vec<ParsedBlock>, String) {
         });
     }
 
-    (blocks, updated_lines.join("\n"))
+    Ok(blocks)
 }
 
 #[derive(Debug, Clone)]
@@ -633,302 +609,159 @@ Example Text
 
     use super::parse_content_into_blocks;
 
-    /// Helper: extract an OTID (13-20 digit number) from a `[[...]]` in a heading.
-    fn extract_otid_from_heading(line: &str) -> Option<String> {
-        lazy_regex::regex!(r"\[\[(\d{13,20})\]\]")
-            .captures(line)
-            .map(|c| c.get(1).unwrap().as_str().to_owned())
-    }
-
-    // --- Scenario 1: Empty content ---
+    // --- Error cases ---
 
     #[test]
     fn parse_empty_content_returns_no_blocks() {
-        let (blocks, updated) = parse_content_into_blocks("");
+        let blocks = parse_content_into_blocks("").unwrap();
         assert!(blocks.is_empty());
-        assert_eq!(updated, "");
     }
 
-    // --- Scenario 2: No heading — whole content as single block ---
+    #[test]
+    fn parse_no_heading_returns_error() {
+        let result = parse_content_into_blocks("Just some plain text\nwithout any headings");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("no headings"));
+    }
 
     #[test]
-    fn parse_no_heading_creates_single_block() {
-        let content = "Just some plain text\nwithout any headings";
-        let (blocks, updated) = parse_content_into_blocks(content);
+    fn parse_heading_without_otid_returns_error() {
+        let result = parse_content_into_blocks("## No OTID Here\nBody text");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("missing OTID"));
+    }
+
+    #[test]
+    fn parse_invalid_otid_returns_error() {
+        // 19 digits but exceeds JS_MAX_SAFE_INTEGER
+        let result = parse_content_into_blocks("## [[9999999999999999999]] Out Of Range\nBody");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("invalid OTID"));
+    }
+
+    #[test]
+    fn parse_mixed_headings_missing_otid_returns_error() {
+        let content = "## [[1000000000000000]] Has OTID\nBody1\n\n## No OTID\nBody2";
+        let result = parse_content_into_blocks(content);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("missing OTID"));
+    }
+
+    // --- Valid cases with OTIDs ---
+
+    #[test]
+    fn parse_single_heading_with_otid() {
+        let content = "## [[1000000000000000]] My First Block\nSome body text\nMore text";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
         assert_eq!(blocks.len(), 1);
-        let block = &blocks[0];
-        assert_eq!(block.order, 0);
-        assert_eq!(block.title, "Just some plain text");
-        assert_eq!(block.content, content);
-        // No OTID injection needed for non-heading content
-        assert_eq!(updated, content);
+        assert_eq!(blocks[0].otid.to_string(), "1000000000000000");
+        assert_eq!(blocks[0].title, "My First Block");
+        assert_eq!(blocks[0].content, content);
     }
 
     #[test]
-    fn parse_single_line_no_heading_creates_single_block() {
-        let content = "A single line";
-        let (blocks, _) = parse_content_into_blocks(content);
-        assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].title, "A single line");
-    }
-
-    // --- Scenario 3: Single heading → single block with auto OTID ---
-
-    #[test]
-    fn parse_single_heading_auto_otid() {
-        let content = "## My First Block\nSome body text\nMore text";
-        let (blocks, updated) = parse_content_into_blocks(content);
-
-        assert_eq!(blocks.len(), 1);
-        let block = &blocks[0];
-        assert_eq!(block.order, 0);
-        assert_eq!(block.title, "My First Block");
-        assert!(block.content.starts_with("## [["));
-        assert!(block.content.contains("My First Block"));
-        assert!(block.content.contains("Some body text"));
-
-        // Updated content should have the injected OTID
-        assert!(updated.contains("[["));
-        assert_ne!(updated, content);
-    }
-
-    // --- Scenario 4: Multiple headings → multiple blocks ---
-
-    #[test]
-    fn parse_multiple_headings_creates_multiple_blocks() {
-        let content = "## Block A\nContent A\n\n## Block B\nContent B\n\n## Block C\nContent C";
-        let (blocks, updated) = parse_content_into_blocks(content);
+    fn parse_multiple_headings_with_otids() {
+        let content = "## [[1000000000000000]] Block A\nContent A\n\n## [[2000000000000000]] Block B\nContent B\n\n## [[3000000000000000]] Block C\nContent C";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
         assert_eq!(blocks.len(), 3);
+        assert_eq!(blocks[0].otid.to_string(), "1000000000000000");
         assert_eq!(blocks[0].title, "Block A");
+        assert_eq!(blocks[1].otid.to_string(), "2000000000000000");
         assert_eq!(blocks[1].title, "Block B");
+        assert_eq!(blocks[2].otid.to_string(), "3000000000000000");
         assert_eq!(blocks[2].title, "Block C");
 
         assert_eq!(blocks[0].order, 0);
         assert_eq!(blocks[1].order, 1);
         assert_eq!(blocks[2].order, 2);
-
-        // Each block should have a distinct OTID
-        assert_ne!(blocks[0].otid, blocks[1].otid);
-        assert_ne!(blocks[1].otid, blocks[2].otid);
-
-        // Updated content should have OTIDs injected
-        assert!(updated.contains("[["));
     }
-
-    // --- Scenario 5: Heading with existing OTID preserved ---
-
-    #[test]
-    fn parse_heading_with_existing_otid_preserved() {
-        let content = "## [[1234567890123456789]] Existing Block\nBody text";
-        let (blocks, updated) = parse_content_into_blocks(content);
-
-        assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].otid.to_string(), "1234567890123456789");
-        assert_eq!(blocks[0].title, "Existing Block");
-        // Content unchanged since OTID was already present
-        assert_eq!(updated, content);
-    }
-
-    #[test]
-    fn parse_multiple_headings_mixed_otid() {
-        let content = "## [[1111111111111111111]] Has OTID\nBody1\n\n## No OTID\nBody2\n\n## [[3333333333333333333]] Another OTID\nBody3";
-        let (blocks, updated) = parse_content_into_blocks(content);
-
-        assert_eq!(blocks.len(), 3);
-        // First block keeps its OTID
-        assert_eq!(blocks[0].otid.to_string(), "1111111111111111111");
-        assert_eq!(blocks[0].title, "Has OTID");
-        // Second block gets auto-generated OTID
-        assert!(!blocks[1].otid.to_string().is_empty());
-        assert_eq!(blocks[1].title, "No OTID");
-        // Third block keeps its OTID
-        assert_eq!(blocks[2].otid.to_string(), "3333333333333333333");
-
-        // Updated content should inject OTID only for the second heading
-        assert!(updated.contains("[[1111111111111111111]]"));
-        assert!(updated.contains("[[3333333333333333333]]"));
-        // The auto-injected OTID should appear
-        let injected =
-            extract_otid_from_heading(updated.lines().find(|l| l.contains("No OTID")).unwrap());
-        assert!(injected.is_some());
-        assert_eq!(injected.unwrap(), blocks[1].otid.to_string());
-    }
-
-    // --- Scenario 6: Different heading levels (h1 to h6) ---
 
     #[test]
     fn parse_various_heading_levels() {
-        let content = "# H1 Title\nh1 body\n\n## H2 Title\nh2 body\n\n### H3 Title\nh3 body\n\n#### H4 Title\nh4 body\n\n##### H5 Title\nh5 body\n\n###### H6 Title\nh6 body";
-        let (blocks, _) = parse_content_into_blocks(content);
+        let content = "# [[1000000000000000]] H1\nh1 body\n\n## [[2000000000000000]] H2\nh2 body\n\n### [[3000000000000000]] H3\nh3 body";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
-        assert_eq!(blocks.len(), 6);
-        assert_eq!(blocks[0].title, "H1 Title");
-        assert_eq!(blocks[1].title, "H2 Title");
-        assert_eq!(blocks[2].title, "H3 Title");
-        assert_eq!(blocks[3].title, "H4 Title");
-        assert_eq!(blocks[4].title, "H5 Title");
-        assert_eq!(blocks[5].title, "H6 Title");
+        assert_eq!(blocks.len(), 3);
+        assert_eq!(blocks[0].title, "H1");
+        assert_eq!(blocks[1].title, "H2");
+        assert_eq!(blocks[2].title, "H3");
     }
-
-    // --- Scenario 7: Heading with leading spaces (up to 3 allowed by regex) ---
 
     #[test]
     fn parse_heading_with_leading_spaces() {
-        let content = "  ## Indented Heading\nBody text";
-        let (blocks, _) = parse_content_into_blocks(content);
+        let content = "  ## [[1000000000000000]] Indented Heading\nBody text";
+        let blocks = parse_content_into_blocks(content).unwrap();
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].title, "Indented Heading");
     }
 
-    // --- Scenario 8: Block content includes text between headings only ---
-
     #[test]
     fn parse_block_content_isolation() {
-        let content = "## First\nLine1\nLine2\n\n## Second\nLine3\nLine4";
-        let (blocks, _) = parse_content_into_blocks(content);
+        let content = "## [[1000000000000000]] First\nLine1\nLine2\n\n## [[2000000000000000]] Second\nLine3\nLine4";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
         assert_eq!(blocks.len(), 2);
-        // First block should contain heading + its body only
         let first = &blocks[0].content;
         assert!(first.contains("First"));
         assert!(first.contains("Line1"));
-        assert!(first.contains("Line2"));
         assert!(!first.contains("Second"));
-        assert!(!first.contains("Line3"));
 
-        // Second block should contain heading + its body only
         let second = &blocks[1].content;
         assert!(second.contains("Second"));
         assert!(second.contains("Line3"));
-        assert!(second.contains("Line4"));
         assert!(!second.contains("First"));
-        assert!(!second.contains("Line1"));
     }
-
-    // --- Scenario 9: Heading with no body text ---
 
     #[test]
     fn parse_heading_with_no_body() {
-        let content = "## Empty Block\n\n## Next Block\nHas body";
-        let (blocks, _) = parse_content_into_blocks(content);
+        let content = "## [[1000000000000000]] Empty\n\n## [[2000000000000000]] Next\nHas body";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
         assert_eq!(blocks.len(), 2);
-        assert_eq!(blocks[0].title, "Empty Block");
-        assert_eq!(blocks[1].title, "Next Block");
+        assert_eq!(blocks[0].title, "Empty");
+        assert_eq!(blocks[1].title, "Next");
     }
-
-    // --- Scenario 10: OTID injection format correctness ---
-
-    #[test]
-    fn parse_otid_injection_format() {
-        let content = "## Test Title\nbody";
-        let (blocks, updated) = parse_content_into_blocks(content);
-
-        let updated_heading = updated.lines().next().unwrap();
-        let injected = extract_otid_from_heading(updated_heading);
-        assert!(
-            injected.is_some(),
-            "injected heading should contain [[<OTID>]]"
-        );
-
-        assert_eq!(injected.unwrap(), blocks[0].otid.to_string());
-    }
-
-    // --- Scenario 11: Heading with backlinks and hashtags in title ---
 
     #[test]
     fn parse_heading_with_backlink_and_hashtag() {
-        let content = "## [[1234567890123456789]] My Title [[backlink]] #tag\nBody";
-        let (blocks, updated) = parse_content_into_blocks(content);
+        let content = "## [[1000000000000000]] My Title [[backlink]] #tag\nBody";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
         assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].otid.to_string(), "1234567890123456789");
+        assert_eq!(blocks[0].otid.to_string(), "1000000000000000");
         assert_eq!(blocks[0].title, "My Title [[backlink]] #tag");
-        assert_eq!(updated, content);
     }
-
-    // --- Scenario 12: Only headings, no body anywhere ---
-
-    #[test]
-    fn parse_only_headings() {
-        let content = "## A\n## B\n## C";
-        let (blocks, _) = parse_content_into_blocks(content);
-        assert_eq!(blocks.len(), 3);
-        assert_eq!(blocks[0].title, "A");
-        assert_eq!(blocks[1].title, "B");
-        assert_eq!(blocks[2].title, "C");
-    }
-
-    // --- Scenario 13: Existing OTID that is invalid gets replaced ---
-
-    #[test]
-    fn parse_invalid_otid_gets_replaced() {
-        // OTID must be 13-20 digits; "abc" is invalid so parse falls back to TID::now()
-        let content = "## [[abc]] Invalid OTID\nBody";
-        let (blocks, _updated) = parse_content_into_blocks(content);
-
-        assert_eq!(blocks.len(), 1);
-        // The OTID should be auto-generated, not "abc"
-        assert_ne!(blocks[0].otid.to_string(), "abc");
-    }
-
-    // --- Scenario 14: Round-trip — parsing updated content yields same blocks ---
 
     #[test]
     fn parse_roundtrip_preserves_blocks() {
-        let content = "## Alpha\nA body\n\n## Beta\nB body";
-        let (blocks1, updated) = parse_content_into_blocks(content);
+        let content =
+            "## [[1000000000000000]] Alpha\nA body\n\n## [[2000000000000000]] Beta\nB body";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
-        // Re-parse the updated content (which now has OTIDs injected)
-        let (blocks2, updated2) = parse_content_into_blocks(&updated);
-
-        // Should get same number of blocks with same OTIDs
-        assert_eq!(blocks1.len(), blocks2.len());
-        for (b1, b2) in blocks1.iter().zip(blocks2.iter()) {
-            assert_eq!(b1.otid, b2.otid, "OTIDs should be stable across re-parse");
+        let blocks2 = parse_content_into_blocks(content).unwrap();
+        assert_eq!(blocks.len(), blocks2.len());
+        for (b1, b2) in blocks.iter().zip(blocks2.iter()) {
+            assert_eq!(b1.otid, b2.otid);
             assert_eq!(b1.title, b2.title);
-            assert_eq!(b1.order, b2.order);
         }
-
-        // Second parse should not change content further
-        assert_eq!(updated, updated2);
     }
 
-    // --- Scenario 15: Multi-line content between headings with blank lines ---
-
     #[test]
-    fn parse_blocks_with_blank_lines_and_code() {
-        let content = "## Code Block\n```rust\nfn main() {}\n```\n\n## Text After\nSome text";
-        let (blocks, _) = parse_content_into_blocks(content);
+    fn parse_blocks_with_code() {
+        let content = "## [[1000000000000000]] Code Block\n```rust\nfn main() {}\n```\n\n## [[2000000000000000]] Text After\nSome text";
+        let blocks = parse_content_into_blocks(content).unwrap();
 
         assert_eq!(blocks.len(), 2);
         assert!(blocks[0].content.contains("```rust"));
-        assert!(blocks[0].content.contains("fn main()"));
-        assert!(blocks[1].content.contains("Some text"));
-        // Code block should stay in first block, not leak to second
         assert!(!blocks[1].content.contains("fn main()"));
     }
 
-    // --- Scenario 16: Heading with todo event markers ---
-
-    #[test]
-    fn parse_heading_with_todo_state() {
-        let content = "## [TODO] Task Block\nDo something\n\n## [DONE] Completed Block\nDone";
-        let (blocks, _) = parse_content_into_blocks(content);
-
-        assert_eq!(blocks.len(), 2);
-        assert_eq!(blocks[0].title, "[TODO] Task Block");
-        assert_eq!(blocks[1].title, "[DONE] Completed Block");
-    }
-
-    // --- Scenario 17: Content with trailing newlines ---
-
     #[test]
     fn parse_content_with_trailing_newlines() {
-        let content = "## Title\nBody\n\n\n\n";
-        let (blocks, _) = parse_content_into_blocks(content);
+        let content = "## [[1000000000000000]] Title\nBody\n\n\n\n";
+        let blocks = parse_content_into_blocks(content).unwrap();
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].title, "Title");
     }

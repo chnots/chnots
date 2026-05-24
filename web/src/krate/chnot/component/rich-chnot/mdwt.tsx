@@ -145,13 +145,6 @@ const MdwtChnot = ({
       });
       const rsp = await mdwtCommit(toSaveArg.current);
 
-      if (rsp.content) {
-        const updated = rsp.content;
-        cachedContentRef.current = updated;
-        setContent(updated);
-        onContentChange?.(updated);
-      }
-
       onPostSave({
         otid,
         saveState: SaveState.Saved,

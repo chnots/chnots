@@ -7,7 +7,6 @@ import {
   livePreview,
   MathConfig,
   TABLE_EDIT_EVENT,
-  tidCompletion,
 } from "@chnots/md-codemirror";
 import {
   autocompletion,
@@ -313,14 +312,14 @@ const MdwtEditor = ({
     todoHighlightPlugin,
 
     livePreview(),
-    headingBlocks(),
+    headingBlocks({ genTID }),
     createCodemirrorTheme(),
 
     eventHandlers,
 
     indentOnInput(),
     autocompletion({
-      override: [tidCompletion({ genTID }), chnotCompletions],
+      override: [chnotCompletions],
     }),
     ...(fillParentHeight
       ? [

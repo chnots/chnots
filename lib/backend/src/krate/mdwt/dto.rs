@@ -28,7 +28,6 @@ pub struct MdwtCommitRsp {
     pub todo_event: Option<TodoEvent>,
     pub title: SharedStr,
     pub blocks: Vec<MdwtBlockRspData>,
-    pub content: Option<Text>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

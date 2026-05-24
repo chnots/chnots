@@ -55,7 +55,6 @@ export {
   getAllBlocks,
   splitDocumentByBlocks,
   scrollToBlock,
-  tidCompletion,
   HEADING_OTID_RE,
   normalizeBlockContent,
 } from "./heading-block";

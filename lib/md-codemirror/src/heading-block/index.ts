@@ -2,14 +2,14 @@ import type { Extension, EditorState } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import { headingBlockField } from "./block-field";
 import { blockDecorationField } from "./block-decorations";
+import { otidInjector } from "./otid-inject";
 import type { HeadingBlock } from "./block-model";
 
 export type { HeadingBlock } from "./block-model";
 export { HEADING_OTID_RE, normalizeBlockContent } from "./block-model";
-export { tidCompletion } from "./block-completion";
 
-export function headingBlocks(): Extension {
-  return [headingBlockField, blockDecorationField];
+export function headingBlocks(config: { genTID: () => number }): Extension {
+  return [otidInjector(config.genTID), headingBlockField, blockDecorationField];
 }
 
 export function getBlockAtPos(
