@@ -35,6 +35,7 @@ export type MdwtCommitReq = {
 export type MdwtCommitReqData = {
   otid: TID;
   content: DbText;
+  kspace?: string;
 };
 export type MdwtCommitRsp = {
   todo_event?: TodoEvent;
@@ -69,4 +70,12 @@ export type MdwtHistoryApplyReq = {
 
 export type MdwtHistoryApplyRsp = {
   content?: DbText;
+};
+
+export type MdwtContentLoadReq = {
+  otid: TID;
+};
+
+export type MdwtContentLoadRsp = {
+  content: string;
 };

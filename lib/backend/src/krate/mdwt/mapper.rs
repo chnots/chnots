@@ -30,6 +30,9 @@ pub trait MdwtMapper {
         &self,
         req: KReq<MdwtHistoryApplyReq>,
     ) -> AResult<MdwtHistoryApplyRsp>;
+
+    async fn mdwt_content_load(&self, req: KReq<MdwtContentLoadReq>)
+    -> AResult<MdwtContentLoadRsp>;
 }
 
 impl MdwtMapper for MapperType {
@@ -79,5 +82,12 @@ impl MdwtMapper for MapperType {
         req: KReq<MdwtHistoryApplyReq>,
     ) -> AResult<MdwtHistoryApplyRsp> {
         expand_mt_branch!(self.mdwt_history_apply(req))
+    }
+
+    async fn mdwt_content_load(
+        &self,
+        req: KReq<MdwtContentLoadReq>,
+    ) -> AResult<MdwtContentLoadRsp> {
+        expand_mt_branch!(self.mdwt_content_load(req))
     }
 }

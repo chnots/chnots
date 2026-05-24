@@ -15,6 +15,8 @@ pub struct ChnotSearchRspData {
 pub struct ChnotThreadOrderCommitReqData {
     pub otid: TID,
     pub closed: bool,
+    #[serde(default)]
+    pub heading_level: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,6 +93,8 @@ pub struct ChnotThreadMetaFetchReq {
 pub struct ChnotThreadMetaFetchRspData {
     pub meta: ChnotMeta,
     pub closed: bool,
+    #[serde(default)]
+    pub heading_level: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

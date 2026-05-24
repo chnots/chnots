@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use chin_sql::{str_type::Text, time_type::TID};
+use chin_sql::str_type::{Text, Varchar};
+use chin_sql::time_type::TID;
 use chin_tools::SharedStr;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +11,8 @@ use crate::krate::{mdwt::MdwtRecord, toent::logic::todoevent::TodoEvent};
 pub struct MdwtCommitReqData {
     pub otid: TID,
     pub content: Text,
+    #[serde(default)]
+    pub kspace: Option<Varchar<40>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,16 +21,9 @@ pub struct MdwtCommitReq {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct MdwtBlockRspData {
-    pub otid: TID,
-    pub title: SharedStr,
-}
-
-#[derive(Debug, Clone, Serialize)]
 pub struct MdwtCommitRsp {
     pub todo_event: Option<TodoEvent>,
     pub title: SharedStr,
-    pub blocks: Vec<MdwtBlockRspData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,4 +111,14 @@ pub struct MdwtHistoryApplyReq {
 #[derive(Debug, Clone, Serialize)]
 pub struct MdwtHistoryApplyRsp {
     pub content: Option<Text>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdwtContentLoadReq {
+    pub otid: TID,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MdwtContentLoadRsp {
+    pub content: String,
 }

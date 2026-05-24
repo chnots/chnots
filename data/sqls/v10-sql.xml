@@ -1,0 +1,4 @@
+alter table chnot_thread_order add column heading_level <dbtype>int4</dbtype> not null default 0;
+alter table chnot_thread_order_hist add column heading_level <dbtype>int4</dbtype> not null default 0;
+
+alter table mdwt_tag_hist drop column kspace;

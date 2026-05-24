@@ -72,6 +72,7 @@ export type ChnotMetaListRsp = {
 export type ChnotThreadMetaFetchRspData = {
   meta: ChnotMeta;
   closed: boolean;
+  heading_level?: number;
 };
 
 export type ChnotSearchRspData = {

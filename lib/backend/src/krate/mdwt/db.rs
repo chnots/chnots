@@ -1,11 +1,12 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 
 use super::*;
 use crate::krate::chnot::{
     ChnotKind, ChnotMeta, ChnotMetaTable, ChnotThreadOrder, ChnotThreadOrderTable,
 };
 use crate::krate::mdwt::mapper::MdwtMapper;
-use crate::krate::mdwt::parser::{MdwtParser, parse_content_into_blocks};
+use crate::krate::mdwt::parser::{MdwtParser, ParsedBlock, parse_content_into_blocks};
 use crate::krate::toent::ToentDefiCommitReq;
 use crate::krate::toent::logic::EventBuilder;
 use crate::krate::toent::logic::todoevent::TodoEvent;
@@ -144,36 +145,59 @@ impl<'a> KDbTx<'a> {
         let thread_otid = mdwt.otid;
         let raw_content = mdwt.content;
 
-        let parent_meta = self.fetch_chnot_meta(thread_otid).await?;
-        let kspace = parent_meta.kspace;
+        // Ensure thread meta exists (replaces fetch_chnot_meta)
+        let kspace = match self.fetch_chnot_meta(thread_otid).await {
+            Ok(meta) => meta.kspace,
+            Err(_) => {
+                let ks = mdwt
+                    .kspace
+                    .clone()
+                    .unwrap_or_else(|| "default".try_into().unwrap());
+                self.ensure_chnot_meta(thread_otid, ChnotKind::MarkdownWithToent, ks.clone())
+                    .await?;
+                ks
+            }
+        };
 
-        let blocks = parse_content_into_blocks(raw_content.as_str())?;
+        let blocks = parse_content_into_blocks(raw_content.as_str(), thread_otid)?;
 
-        if let Some(first) = blocks.first() {
-            if first.otid == thread_otid {
+        // Validate: heading blocks (level > 0) must not use thread_otid
+        if let Some(first_heading) = blocks.iter().find(|b| b.level > 0) {
+            if first_heading.otid == thread_otid {
                 anyhow::bail!(
-                    "first heading OTID ({}) must differ from chnot OTID ({})",
-                    first.otid,
+                    "heading OTID ({}) must differ from chnot OTID ({})",
+                    first_heading.otid,
                     thread_otid
                 );
             }
         }
 
-        let mut block_rsps: Vec<MdwtBlockRspData> = Vec::with_capacity(blocks.len());
         let mut first_todo_event: Option<TodoEvent> = None;
-        let mut all_otids: Vec<TID> = Vec::with_capacity(blocks.len());
 
         for block in &blocks {
             self.ensure_chnot_meta(block.otid, ChnotKind::MarkdownWithToent, kspace.clone())
                 .await?;
 
+            // Save body-only content
             self.overwrite_mdwt_record(MdwtCommitReqData {
                 otid: block.otid,
                 content: block.content.clone().into(),
+                kspace: Some(kspace.clone()),
             })
             .await?;
 
-            let mdwt_parser = MdwtParser::new(block.content.as_str());
+            // Reconstruct full content for MdwtParser (tags/events/backlinks extraction)
+            let full_for_parse = if block.level > 0 {
+                format!(
+                    "{} [[{}]] {}",
+                    "#".repeat(block.level as usize),
+                    block.otid,
+                    block.title
+                )
+            } else {
+                block.content.clone()
+            };
+            let mdwt_parser = MdwtParser::new(full_for_parse.as_str());
             let todo_event = mdwt_parser.get_outer_todo_event();
             let time_events = mdwt_parser.get_outer_time_events();
 
@@ -199,15 +223,11 @@ impl<'a> KDbTx<'a> {
                 &mdwt_parser,
             )
             .await?;
-
-            all_otids.push(block.otid);
-            block_rsps.push(MdwtBlockRspData {
-                otid: block.otid,
-                title: block.title.clone().into(),
-            });
         }
 
-        self.commit_thread_order_inner(thread_otid, &all_otids)
+        // Commit thread order with heading levels (only heading blocks, not preamble)
+        let heading_blocks: Vec<&ParsedBlock> = blocks.iter().filter(|b| b.level > 0).collect();
+        self.commit_thread_order_inner(thread_otid, &heading_blocks)
             .await?;
 
         let title = blocks
@@ -219,7 +239,6 @@ impl<'a> KDbTx<'a> {
         Ok(MdwtCommitRsp {
             todo_event: first_todo_event,
             title: title.into(),
-            blocks: block_rsps,
         })
     }
 
@@ -263,7 +282,11 @@ impl<'a> KDbTx<'a> {
         Ok(())
     }
 
-    async fn commit_thread_order_inner(&self, thread_otid: TID, otids: &[TID]) -> EResult {
+    async fn commit_thread_order_inner(
+        &self,
+        thread_otid: TID,
+        blocks: &[&ParsedBlock],
+    ) -> EResult {
         let cto = ChnotThreadOrderTable::new("cto");
         let cto_otid = cto.otid().field_name();
 
@@ -276,9 +299,10 @@ impl<'a> KDbTx<'a> {
             )
             .await?;
 
+        let block_otids: Vec<TID> = blocks.iter().map(|b| b.otid).collect();
         let to_remove: Vec<TID> = saved
             .iter()
-            .filter(|s| !otids.contains(s))
+            .filter(|s| !block_otids.contains(s))
             .copied()
             .collect();
 
@@ -290,7 +314,8 @@ impl<'a> KDbTx<'a> {
             .await?;
         }
 
-        for (idx, &otid) in otids.iter().enumerate() {
+        for (idx, block) in blocks.iter().enumerate() {
+            let otid = block.otid;
             let needs_insert = !saved.contains(&otid);
             if needs_insert {
                 let rec = ChnotThreadOrder {
@@ -299,6 +324,7 @@ impl<'a> KDbTx<'a> {
                     thread_otid,
                     korder: idx as i64,
                     closed: false,
+                    heading_level: block.level as i32,
                 };
                 self.exec(rec.to_sql_inserter()).await?;
             }
@@ -553,6 +579,85 @@ impl MdwtMapper for KDb {
             self,
         )
         .await
+    }
+
+    async fn mdwt_content_load(
+        &self,
+        req: KReq<MdwtContentLoadReq>,
+    ) -> AResult<MdwtContentLoadRsp> {
+        let thread_otid = req.body.otid;
+        let conn = self.conn().await?;
+
+        // 1. Query thread order for child blocks
+        let cto = ChnotThreadOrderTable::new("cto");
+        struct ChildBlock {
+            otid: TID,
+            korder: i64,
+            heading_level: i32,
+        }
+        let korder_name = cto.korder().field_name();
+        let hl_name = cto.heading_level().field_name();
+        let child_blocks: Vec<ChildBlock> = conn
+            .qry_list(
+                SqlReader::read((cto.otid(), cto.korder(), cto.heading_level()), &cto)
+                    .wheres(cto.thread_otid().v_eq(thread_otid))
+                    .build(),
+                move |r| {
+                    Ok(ChildBlock {
+                        otid: r.try_get(&cto.otid().field_name())?,
+                        korder: r.try_get(&korder_name)?,
+                        heading_level: r.try_get(&hl_name)?,
+                    })
+                },
+            )
+            .await?;
+        let mut sorted_children = child_blocks;
+        sorted_children.sort_by_key(|c| c.korder);
+
+        // 2. Collect all otids to query: thread_otid (preamble) + child otids
+        let mut all_otids: Vec<TID> = vec![thread_otid];
+        all_otids.extend(sorted_children.iter().map(|c| c.otid));
+
+        // 3. Fetch all MdwtRecords
+        let records: HashMap<TID, String> = conn
+            .qry_list(
+                SqlBuilder::read_all(MdwtRecord::TABLE)
+                    .r#where(Wheres::r#in(MdwtRecord::OTID, all_otids)),
+                |row| {
+                    let otid: TID = row.try_get(MdwtRecord::OTID)?;
+                    let content: String = row.try_get(MdwtRecord::CONTENT)?;
+                    Ok((otid, content))
+                },
+            )
+            .await?
+            .into_iter()
+            .collect();
+
+        // 4. Assemble full text
+        let mut parts: Vec<String> = Vec::new();
+
+        // Preamble (thread_otid record)
+        if let Some(preamble) = records.get(&thread_otid) {
+            if !preamble.is_empty() {
+                parts.push(preamble.clone());
+            }
+        }
+
+        // Child blocks with heading reconstruction
+        for child in &sorted_children {
+            if let Some(content) = records.get(&child.otid) {
+                if child.heading_level > 0 {
+                    let prefix = "#".repeat(child.heading_level as usize);
+                    parts.push(format!("{} [[{}]] {}", prefix, child.otid, content));
+                } else {
+                    parts.push(content.clone());
+                }
+            }
+        }
+
+        Ok(MdwtContentLoadRsp {
+            content: parts.join("\n\n"),
+        })
     }
 }
 

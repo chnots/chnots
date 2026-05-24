@@ -118,23 +118,29 @@ impl ChnotMapper for KDb {
         let cto_otid = cto.otid().field_name();
         let korder_name = cto.korder().field_name();
         let closed_name = cto.closed().field_name();
+        let heading_level_name = cto.heading_level().field_name();
 
         #[derive(Debug, PartialEq, Eq)]
         struct OtidAndOrder {
             otid: TID,
             korder: i64,
             closed: bool,
+            heading_level: i32,
         }
         let saved_orders = tx
             .qry_list(
-                SqlReader::read((cto.korder(), cto.otid(), cto.closed()), &cto)
-                    .wheres(cto.thread_otid().v_eq(thread_otid))
-                    .build(),
+                SqlReader::read(
+                    (cto.korder(), cto.otid(), cto.closed(), cto.heading_level()),
+                    &cto,
+                )
+                .wheres(cto.thread_otid().v_eq(thread_otid))
+                .build(),
                 |r| {
                     Ok(OtidAndOrder {
                         otid: r.try_get(cto_otid)?,
                         korder: r.try_get(korder_name)?,
                         closed: r.try_get(closed_name)?,
+                        heading_level: r.try_get(heading_level_name)?,
                     })
                 },
             )
@@ -150,6 +156,7 @@ impl ChnotMapper for KDb {
                         otid: data.otid,
                         korder: index as i64,
                         closed: data.closed,
+                        heading_level: data.heading_level,
                     },
                 )
             })
@@ -178,6 +185,7 @@ impl ChnotMapper for KDb {
                 thread_otid,
                 korder: oao.korder,
                 closed: oao.closed,
+                heading_level: oao.heading_level,
             };
 
             metas.push(rec.clone());
@@ -202,6 +210,7 @@ impl ChnotMapper for KDb {
                     &[
                         format!("{}.*", ChnotMeta::TABLE).as_str(),
                         ChnotThreadOrder::CLOSED,
+                        ChnotThreadOrder::HEADING_LEVEL,
                     ],
                 )
                 .seg(format!(
@@ -221,6 +230,7 @@ impl ChnotMapper for KDb {
                     Ok(ChnotThreadMetaFetchRspData {
                         meta: ChnotMeta::try_from(&row)?,
                         closed: row.try_get(ChnotThreadOrder::CLOSED)?,
+                        heading_level: row.try_get(ChnotThreadOrder::HEADING_LEVEL).unwrap_or(0),
                     })
                 },
             )
@@ -233,6 +243,7 @@ impl ChnotMapper for KDb {
                         &[
                             format!("{}.*", ChnotMeta::TABLE).as_str(),
                             ChnotThreadOrder::CLOSED,
+                            ChnotThreadOrder::HEADING_LEVEL,
                         ],
                     )
                     .seg(format!(
@@ -252,6 +263,9 @@ impl ChnotMapper for KDb {
                         Ok(ChnotThreadMetaFetchRspData {
                             meta: ChnotMeta::try_from(&row)?,
                             closed: row.try_get(ChnotThreadOrder::CLOSED)?,
+                            heading_level: row
+                                .try_get(ChnotThreadOrder::HEADING_LEVEL)
+                                .unwrap_or(0),
                         })
                     },
                 )

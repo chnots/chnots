@@ -2,6 +2,8 @@ import request from "@/lib/request";
 import type { MdwtCommitRsp } from "../chnot/dto";
 import type {
   MdwtCommitReq,
+  MdwtContentLoadReq,
+  MdwtContentLoadRsp,
   MdwtHistoryApplyReq,
   MdwtHistoryApplyRsp,
   MdwtHistoryFetchReq,
@@ -51,4 +53,10 @@ export const mdwtHistoryApply = async (
   req: MdwtHistoryApplyReq,
 ): Promise<MdwtHistoryApplyRsp> => {
   return await request.postJson(`api/v1/mdwt-history-apply`, req);
+};
+
+export const mdwtContentLoad = async (
+  req: MdwtContentLoadReq,
+): Promise<MdwtContentLoadRsp> => {
+  return await request.postJson(`api/v1/mdwt-content-load`, req);
 };

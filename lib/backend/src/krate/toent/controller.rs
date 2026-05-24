@@ -138,6 +138,7 @@ impl ShareAppState {
                 mdwt: MdwtCommitReqData {
                     otid: req.otid,
                     content: next_content.into(),
+                    kspace: None,
                 },
             }))
             .await?;

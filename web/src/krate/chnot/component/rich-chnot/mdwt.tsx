@@ -8,20 +8,18 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SaveState } from "@/common/types";
 import useDebounce from "@/hooks/use-debounce";
+import { useKSpaceStore } from "@/krate/kspace/store";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import type { MdwtCommitReq } from "@/krate/mdwt/dto";
 import {
   mdwtCommit,
+  mdwtContentLoad,
   mdwtHistoryApply,
   mdwtHistoryFetch,
   mdwtHistoryList,
-  mdwtRecordList,
 } from "@/krate/mdwt/service";
 import { tidToDate } from "@/lib/date-utils";
 import { ChnotKind } from "../../po";
-import {
-  chnotThreadMetaFetch,
-} from "../../service";
 import { chnotHeadStore } from "../../store";
 import HistoryHeaderActions from "../header/chnot-history-header-actions";
 import type { RichPropProps } from "./types";
@@ -47,19 +45,6 @@ const MarkdownViewer = ({
   );
 };
 
-function joinMdwtBlocks(
-  blocks: Array<{ otid: number; content: string }>,
-): string {
-  return blocks
-    .map((b) => normalizeBlockContent(b.otid, b.content))
-    .join("\n\n");
-}
-
-/**
- *
- * @param content if content is undefined, try to fetch mdwt, or just use it.
- * @returns
- */
 const MdwtChnot = ({
   otid,
   readonly,
@@ -91,42 +76,20 @@ const MdwtChnot = ({
 
   const cmRef = useRef<ReactCodeMirrorRef>(null);
 
+  const { kspace } = useKSpaceStore((s) => ({ kspace: s.currentKSpace }));
+
   useEffect(() => {
     if (initialContent === undefined) {
       (async () => {
         try {
-          const threadRsp = await chnotThreadMetaFetch({ otid });
-          const childOtids = threadRsp.chnot_meta_sorted.map(
-            (cm) => cm.meta.otid,
-          );
-
-          if (childOtids.length > 0) {
-            const mdwtRsp = await mdwtRecordList({
-              mdwt_otids: [...childOtids],
-            });
-            const blocks = childOtids.map((otid) => ({
-              otid,
-              content: mdwtRsp.mdwt_map[otid]?.content ?? "",
-            }));
-            const joined = joinMdwtBlocks(blocks);
-            setContent(joined);
-            cachedContentRef.current = joined;
-            if (onContentChange) onContentChange(joined);
-          } else {
-            const rsp = await mdwtRecordList({ mdwt_otids: [otid] });
-            const mdwt = rsp.mdwt_map[otid];
-            const c = mdwt?.content ?? "";
-            setContent(c);
-            cachedContentRef.current = c;
-            if (onContentChange && c) onContentChange(c);
-          }
-        } catch {
-          const rsp = await mdwtRecordList({ mdwt_otids: [otid] });
-          const mdwt = rsp.mdwt_map[otid];
-          const c = mdwt?.content ?? "";
+          const rsp = await mdwtContentLoad({ otid });
+          const c = rsp.content;
           setContent(c);
           cachedContentRef.current = c;
           if (onContentChange && c) onContentChange(c);
+        } catch {
+          setContent("");
+          cachedContentRef.current = "";
         }
       })();
     }
@@ -183,6 +146,7 @@ const MdwtChnot = ({
         mdwt: {
           otid: otid,
           content: content,
+          kspace: kspace,
         },
       };
       toSaveArg.current = req;

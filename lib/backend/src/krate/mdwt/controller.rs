@@ -11,6 +11,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
     Router::new()
         .route("/api/v1/mdwt-commit", post(mdwt_commit))
         .route("/api/v1/mdwt-list", post(mdwt_list))
+        .route("/api/v1/mdwt-content-load", post(mdwt_content_load))
         .route("/api/v1/mdwt-history-list", post(mdwt_history_list))
         .route("/api/v1/mdwt-history-fetch", post(mdwt_history_fetch))
         .route("/api/v1/mdwt-history-apply", post(mdwt_history_apply))
@@ -30,11 +31,7 @@ async fn mdwt_commit(
 
     match rsp {
         Ok(rsp) => {
-            let mut otids_to_refresh = vec![otid];
-            for b in &rsp.blocks {
-                otids_to_refresh.push(b.otid);
-            }
-            match ToentCache::refresh_chnots(&state, otids_to_refresh).await {
+            match ToentCache::refresh_chnots(&state, vec![otid]).await {
                 Ok(_) => {}
                 Err(err) => return Err(err).into(),
             }
@@ -94,4 +91,12 @@ async fn mdwt_tag_name_list(
 
 async fn mdwt_tag_refresh(_headers: HeaderMap, state: State<ShareAppState>) -> KResponse<()> {
     state.mdwt_tag_refresh().await.into()
+}
+
+async fn mdwt_content_load(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<MdwtContentLoadReq>,
+) -> KResponse<MdwtContentLoadRsp> {
+    state.mdwt_content_load(kreq(headers, req)).await.into()
 }
