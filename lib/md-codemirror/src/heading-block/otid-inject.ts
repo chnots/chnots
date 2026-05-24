@@ -49,8 +49,17 @@ export function otidInjector(genTID: () => number) {
         const view = update.view;
         queueMicrotask(() => {
           try {
+            const sel = view.state.selection.main;
+            let { anchor, head } = sel;
+            for (const c of [...changes].reverse()) {
+              const len = c.insert.length;
+              if (anchor >= c.from) anchor += len;
+              if (head >= c.from) head += len;
+            }
+
             view.dispatch({
               changes,
+              selection: { anchor, head },
               annotations: selfAnnotation.of(true),
             });
           } catch {

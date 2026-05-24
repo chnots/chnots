@@ -593,7 +593,7 @@ impl MdwtMapper for KDb {
         struct ChildBlock {
             otid: TID,
             korder: i64,
-            heading_level: i32,
+            heading_level: i64,
         }
         let korder_name = cto.korder().field_name();
         let hl_name = cto.heading_level().field_name();
