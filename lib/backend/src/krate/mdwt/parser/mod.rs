@@ -22,10 +22,18 @@ pub struct ParsedBlock {
     /// (includes title text + body lines). For preamble blocks (level=0), the raw text.
     pub content: String,
     pub order: usize,
-    /// First line of content (title text for heading blocks, empty for preamble)
-    pub title: String,
     /// Heading level: 0 = preamble, 1-6 = heading level
     pub level: u8,
+}
+
+impl ParsedBlock {
+    pub fn title(&self) -> &str {
+        &self
+            .content
+            .split("\n")
+            .find_or_first(|l| l.trim().len() > 0)
+            .unwrap_or("")
+    }
 }
 
 static HEADING_OTID_CAPTURE_RE: Lazy<Regex> =
@@ -37,83 +45,76 @@ pub fn parse_content_into_blocks(
     content: &str,
     thread_otid: TID,
 ) -> anyhow::Result<Vec<ParsedBlock>> {
-    let lines: Vec<&str> = content.lines().collect();
-    if lines.is_empty() {
+    if content.trim().is_empty() {
         return Ok(vec![]);
     }
 
-    let mut heading_indices: Vec<usize> = vec![];
-    for (i, line) in lines.iter().enumerate() {
-        if HEADING_PLAIN_RE.is_match(line) {
-            heading_indices.push(i);
+    // Use comrak AST to find headings — correctly ignores `###` inside code blocks
+    let arena = comrak::Arena::new();
+    let root = comrak::parse_document(&arena, content, &comrak::Options::default());
+
+    let mut heading_info: Vec<(usize, u8)> = vec![]; // (0-based line index, level)
+    for node in root.descendants() {
+        let data = node.data.borrow();
+        if let NodeValue::Heading(heading) = &data.value {
+            let line_0based = data.sourcepos.start.line - 1;
+            heading_info.push((line_0based, heading.level));
         }
     }
 
-    if heading_indices.is_empty() {
-        // No headings — entire content is preamble if non-empty
-        if content.trim().is_empty() {
-            return Ok(vec![]);
-        }
+    if heading_info.is_empty() {
         return Ok(vec![ParsedBlock {
             otid: thread_otid,
             content: content.to_owned(),
             order: 0,
-            title: String::new(),
             level: 0,
         }]);
     }
 
-    let mut blocks: Vec<ParsedBlock> = Vec::with_capacity(heading_indices.len() + 1);
+    let lines: Vec<&str> = content.lines().collect();
+    let mut blocks: Vec<ParsedBlock> = Vec::with_capacity(heading_info.len() + 1);
     let mut order = 0;
 
-    // Check for preamble (non-empty content before first heading)
-    if heading_indices[0] > 0 {
-        let preamble_lines = &lines[0..heading_indices[0]];
+    // Check for preamble (content before first heading)
+    if heading_info[0].0 > 0 {
+        let preamble_lines = &lines[0..heading_info[0].0];
         let preamble_text = preamble_lines.join("\n");
         if !preamble_text.trim().is_empty() {
             blocks.push(ParsedBlock {
                 otid: thread_otid,
                 content: preamble_text,
                 order,
-                title: String::new(),
                 level: 0,
             });
             order += 1;
         }
     }
 
-    for (block_idx, &start_line) in heading_indices.iter().enumerate() {
-        let end_line = if block_idx + 1 < heading_indices.len() {
-            heading_indices[block_idx + 1]
+    for (block_idx, &(start_line, level)) in heading_info.iter().enumerate() {
+        let end_line = if block_idx + 1 < heading_info.len() {
+            heading_info[block_idx + 1].0
         } else {
             lines.len()
         };
 
         let heading_line = lines[start_line];
-        let (otid, title, level) =
-            if let Some(caps) = HEADING_OTID_CAPTURE_RE.captures(heading_line) {
-                let otid_str = caps.get(2).unwrap().as_str();
-                let rest = caps.get(3).map(|m| m.as_str()).unwrap_or("");
-                let otid: TID = otid_str
-                    .parse::<i64>()
-                    .ok()
-                    .and_then(|v| TID::try_from(v).ok())
-                    .ok_or_else(|| anyhow::anyhow!("invalid OTID in heading: {}", otid_str))?;
-                let prefix = caps.get(1).unwrap().as_str();
-                let level = prefix
-                    .trim_start()
-                    .chars()
-                    .take_while(|c| *c == '#')
-                    .count() as u8;
-                (otid, rest.to_owned(), level)
-            } else {
-                let title = HEADING_PLAIN_RE
-                    .captures(heading_line)
-                    .and_then(|c| c.get(2))
-                    .map(|m| m.as_str().to_owned())
-                    .unwrap_or_else(|| heading_line.to_owned());
-                anyhow::bail!("heading '{}' is missing OTID", title);
-            };
+        let (otid, title) = if let Some(caps) = HEADING_OTID_CAPTURE_RE.captures(heading_line) {
+            let otid_str = caps.get(2).unwrap().as_str();
+            let rest = caps.get(3).map(|m| m.as_str()).unwrap_or("");
+            let otid: TID = otid_str
+                .parse::<i64>()
+                .ok()
+                .and_then(|v| TID::try_from(v).ok())
+                .ok_or_else(|| anyhow::anyhow!("invalid OTID in heading: {}", otid_str))?;
+            (otid, rest.to_owned())
+        } else {
+            let title = HEADING_PLAIN_RE
+                .captures(heading_line)
+                .and_then(|c| c.get(2))
+                .map(|m| m.as_str().to_owned())
+                .unwrap_or_else(|| heading_line.to_owned());
+            anyhow::bail!("heading '{}' is missing OTID", title);
+        };
 
         // Body-only: title text + remaining lines (strip the `## [[otid]] ` prefix)
         let block_lines = &lines[start_line + 1..end_line];
@@ -130,7 +131,6 @@ pub fn parse_content_into_blocks(
             otid,
             content: block_content,
             order,
-            title,
             level,
         });
         order += 1;
@@ -707,7 +707,7 @@ Example Text
         assert_eq!(blocks[0].otid, tid(THREAD_OTID));
         assert_eq!(blocks[0].level, 0);
         assert_eq!(blocks[0].content, content);
-        assert_eq!(blocks[0].title, "");
+        assert_eq!(blocks[0].title(), "");
     }
 
     #[test]
@@ -725,7 +725,7 @@ Example Text
         // Heading block
         assert_eq!(blocks[1].otid.to_string(), "1000000000000000");
         assert_eq!(blocks[1].level, 2);
-        assert_eq!(blocks[1].title, "First Heading");
+        assert_eq!(blocks[1].title(), "First Heading");
         assert_eq!(blocks[1].order, 1);
     }
 
@@ -735,7 +735,7 @@ Example Text
         let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].level, 2);
-        assert_eq!(blocks[0].title, "Heading");
+        assert_eq!(blocks[0].title(), "Heading");
     }
 
     // --- Valid cases with OTIDs (body-only content) ---
@@ -747,7 +747,7 @@ Example Text
 
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].otid.to_string(), "1000000000000000");
-        assert_eq!(blocks[0].title, "My First Block");
+        assert_eq!(blocks[0].title(), "My First Block");
         assert_eq!(blocks[0].level, 2);
         // Body-only: title + body lines, no heading prefix
         assert_eq!(
@@ -763,12 +763,12 @@ Example Text
 
         assert_eq!(blocks.len(), 3);
         assert_eq!(blocks[0].otid.to_string(), "1000000000000000");
-        assert_eq!(blocks[0].title, "Block A");
+        assert_eq!(blocks[0].title(), "Block A");
         assert_eq!(blocks[0].level, 2);
         assert_eq!(blocks[1].otid.to_string(), "2000000000000000");
-        assert_eq!(blocks[1].title, "Block B");
+        assert_eq!(blocks[1].title(), "Block B");
         assert_eq!(blocks[2].otid.to_string(), "3000000000000000");
-        assert_eq!(blocks[2].title, "Block C");
+        assert_eq!(blocks[2].title(), "Block C");
 
         assert_eq!(blocks[0].order, 0);
         assert_eq!(blocks[1].order, 1);
@@ -782,11 +782,11 @@ Example Text
 
         assert_eq!(blocks.len(), 3);
         assert_eq!(blocks[0].level, 1);
-        assert_eq!(blocks[0].title, "H1");
+        assert_eq!(blocks[0].title(), "H1");
         assert_eq!(blocks[1].level, 2);
-        assert_eq!(blocks[1].title, "H2");
+        assert_eq!(blocks[1].title(), "H2");
         assert_eq!(blocks[2].level, 3);
-        assert_eq!(blocks[2].title, "H3");
+        assert_eq!(blocks[2].title(), "H3");
     }
 
     #[test]
@@ -794,7 +794,7 @@ Example Text
         let content = "  ## [[1000000000000000]] Indented Heading\nBody text";
         let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
         assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].title, "Indented Heading");
+        assert_eq!(blocks[0].title(), "Indented Heading");
         assert_eq!(blocks[0].level, 2);
     }
 
@@ -821,10 +821,10 @@ Example Text
         let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
 
         assert_eq!(blocks.len(), 2);
-        assert_eq!(blocks[0].title, "A");
+        assert_eq!(blocks[0].title(), "A");
         // Title + empty line between headings
         assert_eq!(blocks[0].content, "A\n");
-        assert_eq!(blocks[1].title, "B");
+        assert_eq!(blocks[1].title(), "B");
     }
 
     #[test]
@@ -834,7 +834,7 @@ Example Text
 
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].otid.to_string(), "1000000000000000");
-        assert_eq!(blocks[0].title, "My Title [[backlink]] #tag");
+        assert_eq!(blocks[0].title(), "My Title [[backlink]] #tag");
     }
 
     #[test]
@@ -847,7 +847,7 @@ Example Text
         assert_eq!(blocks.len(), blocks2.len());
         for (b1, b2) in blocks.iter().zip(blocks2.iter()) {
             assert_eq!(b1.otid, b2.otid);
-            assert_eq!(b1.title, b2.title);
+            assert_eq!(b1.title(), b2.title());
             assert_eq!(b1.level, b2.level);
         }
     }
@@ -867,7 +867,7 @@ Example Text
         let content = "## [[1000000000000000]] Title\nBody\n\n\n\n";
         let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
         assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].title, "Title");
+        assert_eq!(blocks[0].title(), "Title");
     }
 
     #[test]
@@ -877,5 +877,40 @@ Example Text
         let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].level, 2);
+    }
+
+    #[test]
+    fn parse_heading_inside_code_block_ignored() {
+        let content = "## [[1000000000000000]] Title\n```\n### not a heading\n```\nSome text";
+        let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].title(), "Title");
+        assert!(blocks[0].content.contains("### not a heading"));
+    }
+
+    #[test]
+    fn parse_code_block_heading_with_preamble() {
+        let content = "Preamble text\n```\n### not a heading\n```\n\n## [[1000000000000000]] Real Heading\nBody";
+        let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
+        assert_eq!(blocks.len(), 2);
+        // Preamble
+        assert_eq!(blocks[0].level, 0);
+        assert_eq!(
+            blocks[0].content,
+            "Preamble text\n```\n### not a heading\n```\n"
+        );
+        // Real heading
+        assert_eq!(blocks[1].level, 2);
+        assert_eq!(blocks[1].title(), "Real Heading");
+    }
+
+    #[test]
+    fn parse_heading_inside_indented_code_block_ignored() {
+        let content =
+            "## [[1000000000000000]] Title\n    ### not a heading\n    more code\nReal text";
+        let blocks = parse_content_into_blocks(content, tid(THREAD_OTID)).unwrap();
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].title(), "Title");
+        assert!(blocks[0].content.contains("### not a heading"));
     }
 }

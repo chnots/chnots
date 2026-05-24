@@ -160,6 +160,10 @@ impl<'a> KDbTx<'a> {
         };
 
         let blocks = parse_content_into_blocks(raw_content.as_str(), thread_otid)?;
+        log::info!(
+            ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> blocks {:?}",
+            blocks
+        );
 
         // Validate: heading blocks (level > 0) must not use thread_otid
         if let Some(first_heading) = blocks.iter().find(|b| b.level > 0) {
@@ -192,7 +196,7 @@ impl<'a> KDbTx<'a> {
                     "{} [[{}]] {}",
                     "#".repeat(block.level as usize),
                     block.otid,
-                    block.title
+                    block.title()
                 )
             } else {
                 block.content.clone()
@@ -230,11 +234,7 @@ impl<'a> KDbTx<'a> {
         self.commit_thread_order_inner(thread_otid, &heading_blocks)
             .await?;
 
-        let title = blocks
-            .first()
-            .map(|b| b.title.as_str())
-            .unwrap_or("")
-            .to_owned();
+        let title = blocks.first().map(|b| b.title()).unwrap_or("").to_owned();
 
         Ok(MdwtCommitRsp {
             todo_event: first_todo_event,
