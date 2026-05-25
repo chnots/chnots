@@ -113,7 +113,6 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
     <div className="w-full h-full p-1">
       <MdwtChnot
         {...props}
-        fillParentHeight={true}
       />
     </div>
   );

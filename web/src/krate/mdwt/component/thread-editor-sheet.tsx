@@ -44,7 +44,7 @@ const ThreadEditorPanel = ({
 
     switch (item.kind) {
       case ChnotKind.MDWT:
-        return <MdwtChnot {...commonProps} fillParentHeight />;
+        return <MdwtChnot {...commonProps} />;
       case ChnotKind.LLMChat:
         return <LLMChatChnot {...commonProps} />;
       case ChnotKind.ExcalidrawV1:

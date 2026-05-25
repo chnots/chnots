@@ -37,13 +37,11 @@ const MdwtChnot = ({
   onPostSave,
   onContentChange,
   content: initialContent,
-  fillParentHeight,
   disableHeaderActions,
 }: RichPropProps & {
   placeholder?: string;
   content?: string;
   onContentChange?: (content: string) => void;
-  fillParentHeight?: boolean;
 }) => {
   const formatTid = useCallback((tid: number) => {
     const date = tidToDate(tid);
@@ -410,7 +408,6 @@ const MdwtChnot = ({
       content={editorContent}
       onContentChange={noop}
       foldGutter={false}
-      fillParentHeight={fillParentHeight}
       readonly={isReadonly}
       extraExtensions={[threadExtension]}
       headingCompletionConfig={headingCompletionConfig}
@@ -432,9 +429,7 @@ const MdwtChnot = ({
           className={
             selectedItem
               ? "flex-1 min-w-0 overflow-hidden"
-              : fillParentHeight
-                ? "flex-1 min-h-0 h-full max-w-[60%] mx-auto"
-                : "flex-1 min-h-0 max-w-[60%] mx-auto"
+              : "flex-1 min-h-0 h-full max-w-[60%] mx-auto"
           }
         >
           <MdwtEditorMemo
@@ -442,7 +437,6 @@ const MdwtChnot = ({
             content={content}
             onContentChange={handleContentChange}
             foldGutter={false}
-            fillParentHeight={fillParentHeight}
             extraExtensions={[threadExtension]}
             headingCompletionConfig={headingCompletionConfig}
             setCodeMirrorRef={(ref) => {

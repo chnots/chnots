@@ -226,8 +226,6 @@ export const EditorCustomContext = React.createContext<
 const MdwtEditor = ({
   content,
   foldGutter,
-  height,
-  fillParentHeight,
   onContentChange,
   placeholder,
   setCodeMirrorRef: setCMRef,
@@ -237,8 +235,6 @@ const MdwtEditor = ({
 }: {
   content?: string;
   foldGutter: boolean;
-  height?: number | string;
-  fillParentHeight?: boolean;
   placeholder?: string;
   onContentChange: (content: string) => void;
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
@@ -349,40 +345,28 @@ const MdwtEditor = ({
       ],
     }),
     ...(readonly ? [EditorState.readOnly.of(true)] : []),
-    ...(fillParentHeight
-      ? [
-          EditorView.theme({
-            "&": {
-              height: "100%",
-            },
-            "&.cm-editor": {
-              height: "100%",
-            },
-            ".cm-scroller": {
-              height: "100%",
-              overflow: "auto",
-            },
-            ".cm-content": {
-              minHeight: "100%",
-            },
-          }),
-        ]
-      : []),
+    EditorView.theme({
+      "&": {
+        height: "100%",
+      },
+      "&.cm-editor": {
+        height: "100%",
+      },
+      ".cm-scroller": {
+        height: "100%",
+        overflow: "auto",
+      },
+      ".cm-content": {
+        minHeight: "100%",
+      },
+    }),
     ...(extraExtensions ?? []),
   ];
 
   return (
     <div ref={containerRef} style={{ height: "100%" }}>
       <CodeMirror
-        height={
-          fillParentHeight
-            ? "100%"
-            : typeof height === "number"
-              ? `${height}px`
-              : typeof height === "string"
-                ? height
-                : undefined
-        }
+        height="100%"
         extensions={extensions}
         ref={codeMirror}
         style={{
