@@ -60,8 +60,10 @@ export function headingChnotCompletion(
         section: { name: "Create New" },
         apply: (view: EditorView, _c: Completion, _from: number, _to: number) => {
           const newOtid = genTID();
+          const insert = `[[${newOtid}]] `;
           view.dispatch({
-            changes: { from, to: context.pos, insert: `[[${newOtid}]] ` },
+            changes: { from, to: context.pos, insert },
+            selection: { anchor: from + insert.length },
           });
           void config.onCreateChnot(newOtid, kind);
         },
@@ -91,12 +93,10 @@ export function headingChnotCompletion(
             type: "variable",
             section: { name: "Reference Existing" },
             apply: (view: EditorView, _c: Completion, _from: number, _to: number) => {
+              const insert = `[[${d.meta.otid}]] `;
               view.dispatch({
-                changes: {
-                  from,
-                  to: context.pos,
-                  insert: `[[${d.meta.otid}]] `,
-                },
+                changes: { from, to: context.pos, insert },
+                selection: { anchor: from + insert.length },
               });
               config.onRefExisting(d.meta.otid, d.meta.kind);
             },
