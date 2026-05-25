@@ -2,6 +2,7 @@ import { Annotation, type Transaction } from "@codemirror/state";
 import { type PluginValue, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import { syntaxTree } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
+import { completionStatus } from "@codemirror/autocomplete";
 
 const HEADING_NODE_RE = /^ATXHeading([1-6])$/;
 const HEADING_OTID_RE = /^(\s{0,3}#{1,6}\s+)\[\[(\d{13,16})\]\]\s*(.*)/;
@@ -49,6 +50,7 @@ export function otidInjector(genTID: () => number) {
         const view = update.view;
         queueMicrotask(() => {
           try {
+            if (completionStatus(view.state) !== null) return;
             const sel = view.state.selection.main;
             let { anchor, head } = sel;
             for (const c of [...changes].reverse()) {

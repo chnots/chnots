@@ -22,13 +22,17 @@ import { GFM } from "@lezer/markdown";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
 import { format } from "date-fns";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { chnotSearch } from "@/krate/chnot/service";
 import { toentTodoEventGuess } from "@/krate/toent/service";
 import { genTID } from "@/lib/id_util";
 import { html2mdAsync } from "@/lib/markdown-utils";
 import { chnotTagNameList } from "../service";
+import {
+  headingChnotCompletion,
+  type HeadingCompletionConfig,
+} from "./heading-chnot-completion";
 import "katex/dist/katex.min.css";
 import {
   Backlink,
@@ -226,6 +230,8 @@ const MdwtEditor = ({
   onContentChange,
   placeholder,
   setCodeMirrorRef: setCMRef,
+  extraExtensions,
+  headingCompletionConfig,
 }: {
   content?: string;
   foldGutter: boolean;
@@ -234,10 +240,25 @@ const MdwtEditor = ({
   placeholder?: string;
   onContentChange: (content: string) => void;
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
+  extraExtensions?: import("@codemirror/state").Extension[];
+  headingCompletionConfig?: HeadingCompletionConfig;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editorCustom = React.useContext(EditorCustomContext);
+
+  const headingConfigRef = useRef<HeadingCompletionConfig | undefined>(
+    headingCompletionConfig,
+  );
+  headingConfigRef.current = headingCompletionConfig;
+
+  const headingSource = useMemo(
+    () =>
+      headingConfigRef.current
+        ? headingChnotCompletion(() => headingConfigRef.current!)
+        : null,
+    [],
+  );
 
   const [tableEditOpen, setTableEditOpen] = useState(false);
   const [tableEditRawText, setTableEditRawText] = useState("");
@@ -319,7 +340,10 @@ const MdwtEditor = ({
 
     indentOnInput(),
     autocompletion({
-      override: [chnotCompletions],
+      override: [
+        ...(headingSource ? [headingSource] : []),
+        chnotCompletions,
+      ],
     }),
     ...(fillParentHeight
       ? [
@@ -340,6 +364,7 @@ const MdwtEditor = ({
           }),
         ]
       : []),
+    ...(extraExtensions ?? []),
   ];
 
   return (
