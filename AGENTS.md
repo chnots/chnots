@@ -2,23 +2,8 @@
 
 Entry point for agentic coding agents working on the Chnots monorepo.
 
-## Quick Links
 
-| Topic | File |
-|---|---|
-| Architecture & Build Commands | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| Frontend Guide | [docs/FRONTEND.md](docs/FRONTEND.md) |
-| Product Concepts | [docs/PRODUCT_SENSE.md](docs/PRODUCT_SENSE.md) |
-| Reliability & Sync Protocol | [docs/RELIABILITY.md](docs/RELIABILITY.md) |
-| Quality & Testing | [docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md) |
-| Security | [docs/SECURITY.md](docs/SECURITY.md) |
-| Design Docs Index | [docs/DESIGN.md](docs/DESIGN.md) |
-| Plans Index | [docs/PLANS.md](docs/PLANS.md) |
-| DB Schema | [docs/generated/db-schema.md](docs/generated/db-schema.md) |
-| Tech Debt | [docs/exec-plans/tech-debt-tracker.md](docs/exec-plans/tech-debt-tracker.md) |
-
-## Docs Structure
-
+## Documents 
 ```
 docs/
 ├── ARCHITECTURE.md          # Tech stack, project structure, build commands, Rust code style
@@ -48,4 +33,4 @@ docs/
 │   └── release.md           # Release & deploy process
 └── references/              # External references
 ```
-- Update product-specs and design-docs when needed.
+- DO NOT use internal plan file, write them to exec-plans.
