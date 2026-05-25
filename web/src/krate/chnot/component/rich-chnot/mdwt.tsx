@@ -161,7 +161,9 @@ const MdwtChnot = ({
       await chnotMetaCommit({
         metas: [{ otid: childOtid, kind, kspace }],
       });
-      setSelectedItem({ otid: childOtid, kind });
+      if (kind !== ChnotKind.MDWT) {
+        setSelectedItem({ otid: childOtid, kind });
+      }
     },
     [kspace],
   );
