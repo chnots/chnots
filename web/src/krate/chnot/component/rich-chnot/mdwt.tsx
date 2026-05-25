@@ -426,11 +426,7 @@ const MdwtChnot = ({
         role="none"
       >
         <div
-          className={
-            selectedItem
-              ? "flex-1 min-w-0 overflow-hidden"
-              : "flex-1 min-h-0 h-full max-w-[60%] mx-auto"
-          }
+          className="flex-1 min-w-0"
         >
           <MdwtEditorMemo
             placeholder={placeholder}

@@ -355,9 +355,13 @@ const MdwtEditor = ({
       ".cm-scroller": {
         height: "100%",
         overflow: "auto",
+        justifyContent: "center",
       },
       ".cm-content": {
         minHeight: "100%",
+        maxWidth: "56rem",
+        width: "100%",
+        flex: "none",
       },
     }),
     ...(extraExtensions ?? []),
