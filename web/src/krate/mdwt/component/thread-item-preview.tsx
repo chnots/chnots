@@ -1,4 +1,3 @@
-import { createElement } from "react";
 import type { ChnotKind } from "@/krate/chnot/po";
 import ExcalidrawPreview from "@/krate/graph/excalidraw/component/excalidraw-preview";
 import type { ExcalidrawChnotState } from "@/krate/graph/excalidraw/service";
@@ -9,8 +8,6 @@ import type { TID } from "@/lib/id_util";
 import { MarkdownViewer } from "./markdown-viewer";
 import type { ThreadWidgetItem } from "./thread-widget-extension";
 
-const HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
-
 const ThreadItemPreview = ({
   item,
   onClick,
@@ -18,9 +15,6 @@ const ThreadItemPreview = ({
   item: ThreadWidgetItem;
   onClick: (otid: TID, kind: ChnotKind) => void;
 }) => {
-  const level = Math.min(Math.max(item.headingLevel, 1), 6);
-  const Tag = HEADING_TAGS[level - 1];
-
   const renderKindPreview = () => {
     if (!item.kindData) return null;
 
@@ -39,16 +33,15 @@ const ThreadItemPreview = ({
     }
   };
 
+  const kindPreview = renderKindPreview();
+
   return (
     <div
-      className="cm-thread-item-preview cursor-pointer hover:bg-accent/50 rounded p-2 border-b last:border-b-0"
+      className="cm-thread-item-preview cursor-pointer hover:bg-accent/50 rounded border p-3 my-2 mx-1"
       onClick={() => onClick(item.otid, item.kind)}
     >
-      {createElement(Tag, { className: "text-lg font-semibold" },
-        `[[${item.otid}]] ${item.titleLine}`,
-      )}
       {item.mdwtContent && <MarkdownViewer content={item.mdwtContent} />}
-      {renderKindPreview()}
+      {kindPreview}
     </div>
   );
 };

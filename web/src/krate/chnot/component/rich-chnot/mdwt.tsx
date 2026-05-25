@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SaveState } from "@/common/types";
 import useDebounce from "@/hooks/use-debounce";
 import { useKSpaceStore } from "@/krate/kspace/store";
-import { MarkdownViewer } from "@/krate/mdwt/component/markdown-viewer";
 import { MdwtEditorMemo } from "@/krate/mdwt/component/mdwt-editor";
 import {
   dispatchThreadData,
@@ -60,7 +59,7 @@ const MdwtChnot = ({
   const [previewContent, setPreviewContent] = useState<string>("");
   const previewMode = previewTid !== undefined;
 
-  const cmRef = useRef<ReactCodeMirrorRef>(null);
+  const cmRefObj = useRef<React.RefObject<ReactCodeMirrorRef | null> | null>(null);
 
   const { kspace } = useKSpaceStore((s) => ({ kspace: s.currentKSpace }));
 
@@ -70,6 +69,7 @@ const MdwtChnot = ({
   >();
   const threadItemsRef = useRef<ThreadWidgetItem[]>([]);
   const threadExtension = useMemo(() => threadWidgetExtension(), []);
+  const threadLoadTriggered = useRef(false);
 
   const handleThreadItemClick = useCallback(
     (otid: number, kind: ChnotKind) => {
@@ -105,7 +105,6 @@ const MdwtChnot = ({
             mdwtContent,
           };
 
-          // Load kind-specific data for previews
           if (threadMeta.meta.kind === ChnotKind.ExcalidrawV1) {
             try {
               const excState = await fetchExcalidraw(childOtid, new Map());
@@ -127,22 +126,40 @@ const MdwtChnot = ({
           onItemClick: handleThreadItemClick,
         });
       } catch {
-        // Thread data not available, skip silently
+        // Thread data not available
       }
     },
     [otid, handleThreadItemClick],
   );
 
+  const triggerLoadThreadData = useCallback(
+    (view: import("@codemirror/view").EditorView) => {
+      if (threadLoadTriggered.current) return;
+      threadLoadTriggered.current = true;
+      void loadThreadData(view);
+    },
+    [loadThreadData],
+  );
+
   // Load thread data when CM view is ready
   useEffect(() => {
     if (readonly) return;
-    const view = cmRef.current?.view;
-    if (!view) return;
-    void loadThreadData(view);
-  }, [readonly, content, loadThreadData]);
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      const view = cmRefObj.current?.current?.view;
+      if (view) {
+        clearInterval(interval);
+        triggerLoadThreadData(view);
+      } else if (count > 20) {
+        clearInterval(interval);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [readonly, content, triggerLoadThreadData]);
 
   const refreshThreadWidgets = useCallback(async () => {
-    const view = cmRef.current?.view;
+    const view = cmRefObj.current?.current?.view;
     if (!view) return;
     await loadThreadData(view);
   }, [loadThreadData]);
@@ -169,10 +186,49 @@ const MdwtChnot = ({
   );
 
   const handleRefExisting = useCallback(
-    (_otid: number, _kind: ChnotKind) => {
-      void refreshThreadWidgets();
+    async (childOtid: number, kind: ChnotKind) => {
+      const view = cmRefObj.current?.current?.view;
+      if (!view) return;
+
+      try {
+        const mdwtRsp = await mdwtRecordList({ mdwt_otids: [childOtid] });
+        const record = mdwtRsp.mdwt_map[childOtid];
+        const rawContent = record?.content ?? "";
+        const lines = rawContent.split("\n");
+        const titleLine = lines[0] ?? "";
+        const mdwtContent = lines.slice(1).join("\n");
+
+        const item: ThreadWidgetItem = {
+          otid: childOtid,
+          kind,
+          headingLevel: 2,
+          titleLine,
+          mdwtContent,
+        };
+
+        if (kind === ChnotKind.ExcalidrawV1) {
+          try {
+            const excState = await fetchExcalidraw(childOtid, new Map());
+            if (excState) item.kindData = excState;
+          } catch {}
+        } else if (kind === ChnotKind.MindMapV1) {
+          try {
+            const mindData = await fetchMindExilir(childOtid);
+            if (mindData) item.kindData = mindData;
+          } catch {}
+        }
+
+        const items = [...threadItemsRef.current, item];
+        threadItemsRef.current = items;
+        dispatchThreadData(view, {
+          items,
+          onItemClick: handleThreadItemClick,
+        });
+      } catch {
+        // failed to load preview data
+      }
     },
-    [refreshThreadWidgets],
+    [handleThreadItemClick],
   );
 
   const headingCompletionConfig = useMemo<
@@ -347,10 +403,24 @@ const MdwtChnot = ({
     leavePreview,
   ]);
 
+  const noop = useCallback(() => {}, []);
+
+  const renderEditor = (editorContent: string | undefined, isReadonly: boolean) => (
+    <MdwtEditorMemo
+      content={editorContent}
+      onContentChange={noop}
+      foldGutter={false}
+      fillParentHeight={fillParentHeight}
+      readonly={isReadonly}
+      extraExtensions={[threadExtension]}
+      headingCompletionConfig={headingCompletionConfig}
+    />
+  );
+
   return previewMode ? (
-    <MarkdownViewer content={previewContent} keepBreak={true} />
+    renderEditor(previewContent, true)
   ) : readonly ? (
-    <MarkdownViewer content={cachedContentRef.current ?? ""} keepBreak={true} />
+    renderEditor(cachedContentRef.current ?? "", true)
   ) : (
     content !== undefined && (
       <div
@@ -361,10 +431,10 @@ const MdwtChnot = ({
         <div
           className={
             selectedItem
-              ? "w-1/2 min-h-0 overflow-hidden"
+              ? "flex-1 min-w-0 overflow-hidden"
               : fillParentHeight
-                ? "flex-1 min-h-0 h-full overflow-hidden"
-                : "flex-1 min-h-0 overflow-hidden"
+                ? "flex-1 min-h-0 h-full max-w-[60%] mx-auto"
+                : "flex-1 min-h-0 max-w-[60%] mx-auto"
           }
         >
           <MdwtEditorMemo
@@ -376,15 +446,18 @@ const MdwtChnot = ({
             extraExtensions={[threadExtension]}
             headingCompletionConfig={headingCompletionConfig}
             setCodeMirrorRef={(ref) => {
-              cmRef.current = ref.current;
+              cmRefObj.current = ref;
             }}
           />
         </div>
         {selectedItem && (
           <ThreadEditorPanel
             item={selectedItem}
-            onClose={() => setSelectedItem(undefined)}
-            onSaved={refreshThreadWidgets}
+            onClose={() => {
+              setSelectedItem(undefined);
+              void refreshThreadWidgets();
+            }}
+            onSaved={() => {}}
           />
         )}
       </div>

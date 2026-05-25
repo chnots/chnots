@@ -11,7 +11,7 @@ import ExcalidrawChnot from "../rich-chnot/excalidraw";
 import KFileChnot from "../rich-chnot/kfile";
 import LLMChatChnot from "../rich-chnot/llmchat";
 import MindMapChnot from "../rich-chnot/mindmap";
-import RichMdwt from "../rich-chnot/rich-mdwt";
+import MdwtChnot from "../rich-chnot/mdwt";
 import TableChnot from "../rich-chnot/table";
 import type { PostSaveArg } from "../rich-chnot/types";
 
@@ -110,8 +110,11 @@ const ChnotBody = ({ otid, kind }: { otid: TID; kind: ChnotKind }) => {
       <MindMapChnot {...props} />
     </div>
   ) : (
-    <div className="flex flex-col w-full items-center m-0 p-1 h-full">
-      <RichMdwt {...props} />
+    <div className="w-full h-full p-1">
+      <MdwtChnot
+        {...props}
+        fillParentHeight={true}
+      />
     </div>
   );
 };

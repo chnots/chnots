@@ -14,6 +14,7 @@ import {
   type CompletionContext,
   type CompletionResult,
 } from "@codemirror/autocomplete";
+import { EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { indentOnInput } from "@codemirror/language";
 import { languages } from "@codemirror/language-data";
@@ -232,6 +233,7 @@ const MdwtEditor = ({
   setCodeMirrorRef: setCMRef,
   extraExtensions,
   headingCompletionConfig,
+  readonly,
 }: {
   content?: string;
   foldGutter: boolean;
@@ -242,6 +244,7 @@ const MdwtEditor = ({
   setCodeMirrorRef?: (ref: React.RefObject<ReactCodeMirrorRef | null>) => void;
   extraExtensions?: import("@codemirror/state").Extension[];
   headingCompletionConfig?: HeadingCompletionConfig;
+  readonly?: boolean;
 }) => {
   const codeMirror = useRef<ReactCodeMirrorRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -345,6 +348,7 @@ const MdwtEditor = ({
         chnotCompletions,
       ],
     }),
+    ...(readonly ? [EditorState.readOnly.of(true)] : []),
     ...(fillParentHeight
       ? [
           EditorView.theme({

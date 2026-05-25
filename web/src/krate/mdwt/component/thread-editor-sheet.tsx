@@ -70,7 +70,7 @@ const ThreadEditorPanel = ({
           <X className="size-4" />
         </Button>
       </div>
-      <div className="flex-1 min-h-0 overflow-auto">
+      <div className="flex-1 min-h-0">
         {renderEditor()}
       </div>
     </div>

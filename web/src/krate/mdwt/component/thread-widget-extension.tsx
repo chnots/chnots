@@ -47,7 +47,8 @@ class ThreadItemWidget extends WidgetType {
   eq(other: ThreadItemWidget): boolean {
     return (
       other.item.otid === this.item.otid &&
-      other.item.mdwtContent === this.item.mdwtContent
+      other.item.mdwtContent === this.item.mdwtContent &&
+      other.item.kindData === this.item.kindData
     );
   }
 
@@ -101,6 +102,20 @@ const threadDecorations = StateField.define<DecorationSet>({
   provide: (f) => EditorView.decorations.from(f),
 });
 
+function findOtidSectionEnd(state: EditorState, headingLine: number): number {
+  const lineCount = state.doc.lines;
+  for (let i = headingLine + 1; i <= lineCount; i++) {
+    const line = state.doc.line(i);
+    if (/^\s{0,3}#{1,6}\s/.test(line.text)) {
+      return state.doc.line(i - 1).to;
+    }
+    if (line.text.trim() === "") {
+      return state.doc.line(i - 1).to;
+    }
+  }
+  return state.doc.line(lineCount).to;
+}
+
 function buildThreadDecorations(state: EditorState): DecorationSet {
   const data = state.field(threadDataField, false) as
     | ThreadWidgetData
@@ -108,15 +123,43 @@ function buildThreadDecorations(state: EditorState): DecorationSet {
   if (!data?.items.length) return Decoration.none;
 
   const endPos = state.doc.length;
-  const widgets = data.items.map((item, i) =>
-    Decoration.widget({
-      widget: new ThreadItemWidget(item, data.onItemClick),
-      block: true,
-      side: 1,
-    }).range(endPos + i),
-  );
+  const widgets: import("@codemirror/state").Range<Decoration>[] = [];
+  const inlineItems: ThreadWidgetItem[] = [];
 
-  return Decoration.set(widgets, true);
+  for (const item of data.items) {
+    const otidStr = String(item.otid);
+    let found = false;
+    for (let i = 1; i <= state.doc.lines; i++) {
+      const line = state.doc.line(i);
+      if (line.text.includes(`[[${otidStr}]]`)) {
+        const pos = findOtidSectionEnd(state, i);
+        widgets.push(
+          Decoration.widget({
+            widget: new ThreadItemWidget(item, data.onItemClick),
+            block: true,
+            side: 1,
+          }).range(pos),
+        );
+        found = true;
+        break;
+      }
+    }
+    if (!found) inlineItems.push(item);
+  }
+
+  for (let i = 0; i < inlineItems.length; i++) {
+    widgets.push(
+      Decoration.widget({
+        widget: new ThreadItemWidget(inlineItems[i], data.onItemClick),
+        block: true,
+        side: 1,
+      }).range(endPos + i),
+    );
+  }
+
+  return widgets.length
+    ? Decoration.set(widgets, true)
+    : Decoration.none;
 }
 
 export function threadWidgetExtension(): Extension {
