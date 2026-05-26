@@ -1,4 +1,3 @@
-// @ts-nocheck
 // adopted from https://github.com/docmost/docmost/blob/main/apps/server/src/integrations/export/turndown-utils.ts
 
 import TurndownService from "@joplin/turndown";
@@ -37,7 +36,7 @@ export function html2md(html: string): string {
 function listParagraph(turndownService: TurndownService) {
   turndownService.addRule("paragraph", {
     filter: ["p"],
-    replacement: (content: any, node: HTMLInputElement) => {
+    replacement: (content, node) => {
       if (node.parentElement?.nodeName === "LI") {
         return content;
       }
@@ -49,9 +48,9 @@ function listParagraph(turndownService: TurndownService) {
 
 function callout(turndownService: TurndownService) {
   turndownService.addRule("callout", {
-    filter: (node: HTMLInputElement) =>
+    filter: (node) =>
       node.nodeName === "DIV" && node.getAttribute("data-type") === "callout",
-    replacement: (content: any, node: HTMLInputElement) => {
+    replacement: (content, node) => {
       const calloutType = node.getAttribute("data-callout-type");
       return `\n\n:::${calloutType}\n${content.trim()}\n:::\n\n`;
     },
@@ -60,10 +59,10 @@ function callout(turndownService: TurndownService) {
 
 function taskList(turndownService: TurndownService) {
   turndownService.addRule("taskListItem", {
-    filter: (node: HTMLInputElement) =>
+    filter: (node) =>
       node.getAttribute("data-type") === "taskItem" &&
-      node.parentNode.nodeName === "UL",
-    replacement: (content: any, node: HTMLInputElement) => {
+      node.parentNode?.nodeName === "UL",
+    replacement: (content, node) => {
       const checkbox = node.querySelector(
         'input[type="checkbox"]',
       ) as HTMLInputElement;
@@ -76,9 +75,8 @@ function taskList(turndownService: TurndownService) {
 
 function preserveDetail(turndownService: TurndownService) {
   turndownService.addRule("preserveDetail", {
-    filter: (node: HTMLInputElement) => node.nodeName === "DETAILS",
-    replacement: (_content: any, node: HTMLInputElement) => {
-      // TODO: preserve summary of nested details
+    filter: (node) => node.nodeName === "DETAILS",
+    replacement: (_content, node) => {
       const summary = node.querySelector(":scope > summary");
       let detailSummary = "";
 
@@ -95,18 +93,17 @@ function preserveDetail(turndownService: TurndownService) {
 
 function mathInline(turndownService: TurndownService) {
   turndownService.addRule("mathInline", {
-    filter: (node: HTMLInputElement) =>
+    filter: (node) =>
       node.nodeName === "SPAN" &&
       node.getAttribute("data-type") === "mathInline",
-    replacement: (content: any, _node: HTMLInputElement) => `$${content}$`,
+    replacement: (content) => `$${content}$`,
   });
 }
 
 function mathBlock(turndownService: TurndownService) {
   turndownService.addRule("mathBlock", {
-    filter: (node: HTMLInputElement) =>
+    filter: (node) =>
       node.nodeName === "DIV" && node.getAttribute("data-type") === "mathBlock",
-    replacement: (content: any, _node: HTMLInputElement) =>
-      `\n$$${content}$$\n`,
+    replacement: (content) => `\n$$${content}$$\n`,
   });
 }

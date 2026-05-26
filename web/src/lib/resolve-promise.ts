@@ -6,13 +6,15 @@ export type ResolvablePromise<T> = Promise<T> & {
 };
 
 export const resolvablePromise = <T>() => {
-  let resolve!: any;
-  let reject!: any;
-  const promise = new Promise((_resolve, _reject) => {
+  let resolve: (value: T) => void;
+  let reject: (error: Error) => void;
+  const promise = new Promise<T>((_resolve, _reject) => {
     resolve = _resolve;
     reject = _reject;
   });
-  (promise as any).resolve = resolve;
-  (promise as any).reject = reject;
-  return promise as ResolvablePromise<T>;
+  const result = promise as ResolvablePromise<T>;
+  // Conditional type requires assertion — runtime signature is correct
+  result.resolve = resolve! as typeof result.resolve;
+  result.reject = reject!;
+  return result;
 };
