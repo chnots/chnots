@@ -4,10 +4,7 @@
   "version": "0.0.122",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "tauri": "tauri"
   },
   "dependencies": {
     "@tauri-apps/plugin-fs": "catalog:",
