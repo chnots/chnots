@@ -3,7 +3,6 @@ use crate::krate::mdwt::mapper::MdwtMapper;
 use crate::model::dto::kreq;
 use crate::{app::ShareAppState, krate::toent::cache::ToentCache};
 use axum::{Json, Router, extract::State, http::HeaderMap, routing::post};
-use chin_sql::time_type::TID;
 
 use super::*;
 

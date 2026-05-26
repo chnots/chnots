@@ -562,9 +562,11 @@ fn first_non_empty_line(content: &str) -> String {
         .unwrap_or_default()
 }
 
+#[cfg(test)]
 mod toent_db {
     use crate::krate::toent::po::{ToentDefi, ToentInst};
     use crate::krate::toent::{ToentSearchReq, logic::todoevent::TodoStateEnum};
+    use crate::mapper::db::kdb::HistCreateSql;
     use chin_sql::time_type::TID;
 
     use super::{calc_next_finished_count, match_toent_filters};
