@@ -4,10 +4,8 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
-use chin_sql::time_type::TID;
 use chin_tools::AResult;
 use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, Timelike, Utc};
-use log::info;
 use serde::{Deserialize, Serialize};
 
 use crate::krate::toent::{

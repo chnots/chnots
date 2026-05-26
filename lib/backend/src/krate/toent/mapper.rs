@@ -1,4 +1,3 @@
-use anyhow::bail;
 use chin_sql::str_type::Varchar;
 use chin_tools::AResult;
 

@@ -1,7 +1,6 @@
 use anyhow::{anyhow, bail};
 use chin_sql::time_type::TID;
 use chin_tools::AResult;
-use log::info;
 use serde::{Deserialize, Serialize};
 use timeenum::{Timestamp, westen::WesTime};
 
@@ -9,7 +8,7 @@ use crate::krate::toent::{
     dto::GuessElem,
     timeevent::{
         repeater::{RepeatType, endconditon::EndCondition, interval::TimeInterval},
-        timeenum::{UtcWithOffset, chinese::ChnTime},
+        timeenum::UtcWithOffset,
     },
 };
 
@@ -177,7 +176,7 @@ impl TimeEvent {
         };
 
         if let Some((interval, _)) = self.interval {
-            for c in 0..end_count {
+            for _c in 0..end_count {
                 let point_utc = point.to_utc_timestamp()?;
                 let alert_tid = if let Some(interval) = self.alert {
                     Some(
@@ -697,12 +696,8 @@ mod test_guess {
 
 #[cfg(test)]
 mod test_generate {
-    use chin_sql::time_type::TID;
-    use chrono::{NaiveDate, NaiveTime};
-
     use crate::krate::toent::{
-        EventBuilder,
-        logic::timeevent::{TimeEvent, TimeEventInst},
+        logic::timeevent::TimeEvent,
         timeevent::{
             repeater::{RepeatType, interval::TimeInterval},
             timeenum::{

@@ -2,7 +2,6 @@ use std::ops::{Add, Deref};
 
 use chin_tools::AResult;
 use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, Offset, Timelike};
-use log::info;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
