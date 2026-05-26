@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 
-use chin_sql::str_type::Text;
 use chin_sql::time_type::TID;
 use chin_tools::score::PossibleScore;
 use serde::{Deserialize, Serialize};
