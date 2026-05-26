@@ -21,7 +21,6 @@ use crate::{
             mapper::ToentMapper,
             po::{ToentDefi, ToentDefiTable, ToentInst, ToentInstTable},
             timeevent::timeenum::UtcWithOffset,
-            todoevent::TodoEvent,
         },
     },
     mapper::db::{
@@ -564,11 +563,8 @@ fn first_non_empty_line(content: &str) -> String {
 }
 
 mod toent_db {
-    use crate::{
-        krate::toent::po::{ToentDefi, ToentInst},
-        krate::toent::{ToentSearchReq, logic::todoevent::TodoStateEnum},
-        mapper::db::HistCreateSql,
-    };
+    use crate::krate::toent::po::{ToentDefi, ToentInst};
+    use crate::krate::toent::{ToentSearchReq, logic::todoevent::TodoStateEnum};
     use chin_sql::time_type::TID;
 
     use super::{calc_next_finished_count, match_toent_filters};
