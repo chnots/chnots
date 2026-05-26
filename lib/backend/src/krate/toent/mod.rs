@@ -7,6 +7,5 @@ pub(crate) mod logic;
 pub(crate) mod mapper;
 pub(crate) mod po;
 
-pub(crate) use db::*;
 pub use dto::*;
 pub use logic::*;

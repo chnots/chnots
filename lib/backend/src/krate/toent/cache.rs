@@ -161,7 +161,8 @@ impl ToentCache {
     }
 
     pub(crate) fn remove_chnot(&mut self, chnot_otid: TID) -> EResult {
-        self.otid_inst_map.retain(|k, v| v.chnot_otid != chnot_otid);
+        self.otid_inst_map
+            .retain(|_k, v| v.chnot_otid != chnot_otid);
         Ok(())
     }
 }
