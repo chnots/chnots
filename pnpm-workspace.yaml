@@ -1,7 +1,6 @@
 packages:
   - web
   - tauri
-  - lib/mind-elixir-core
 
 catalog:
   "@codemirror/autocomplete": ^6.20.1
