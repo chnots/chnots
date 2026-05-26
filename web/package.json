@@ -16,7 +16,6 @@
     "@ai-sdk/openai": "^3.0.34",
     "@ai-sdk/openai-compatible": "^2.0.30",
     "@ai-sdk/react": "^3.0.163",
-    "@chnots/md-codemirror": "workspace:*",
     "@codemirror/autocomplete": "catalog:",
     "@codemirror/commands": "catalog:",
     "@codemirror/lang-css": "^6.3.1",

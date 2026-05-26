@@ -1,8 +1,8 @@
-import type { ParsedTable } from "@chnots/md-codemirror";
+import type { ParsedTable } from "../../codemirror";
 import {
   generateMarkdownTable,
   parseMarkdownTable,
-} from "@chnots/md-codemirror";
+} from "../../codemirror";
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {

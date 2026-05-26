@@ -1,7 +1,6 @@
 packages:
   - web
   - tauri
-  - lib/md-codemirror
   - lib/mind-elixir-core
 
 catalog:
