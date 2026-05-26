@@ -52,7 +52,7 @@ mkdir chnots
 git clone https://github.com/chnots/chnots.git
 cd chnots
 
-make init
+make init-workflow
 make build-web
 make run-server-sqlite
 ```

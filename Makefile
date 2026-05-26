@@ -19,7 +19,6 @@ run-tauri-desktop:
 
 init-workflow:
 	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/chin-tools
-	cd $(LIB_DIR)	&& git clone https://github.com/wzhchin/mind-elixir-core -b feat/image-controls
 	echo $(TOOLS_DIR)/_impl/git-pre-commit >> .git/hooks/pre-commit
 	chmod a+x .git/hooks/pre-commit
 	echo $(TOOLS_DIR)/_impl/git-post-commit >> .git/hooks/post-commit
@@ -33,7 +32,6 @@ sync-struct:
 
 build-web:
 	mkdir -p $(WEB_DIR)/public/static/favicon/ && cp data/icon/chnots.svg $(WEB_DIR)/public/static/favicon/
-	cd lib/mind-elixir-core && pnpm install && pnpm run build
 	cd $(WEB_DIR) && pnpm install && pnpm run build
 
 check-web:
