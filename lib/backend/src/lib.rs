@@ -24,7 +24,7 @@ pub async fn run(config: Config) -> EResult {
     let mapper = AResult::<MapperType>::from(config.mapper.clone().try_into())?;
     mapper.ensure_tables().await?;
     let instance_id = match mapper.fetch_chnot_meta_value(CLIENT_ID_KEY).await? {
-        Some(instancd_id) => instancd_id,
+        Some(instance_id) => instance_id,
         None => {
             let instance_id = generate_uuid();
             mapper
