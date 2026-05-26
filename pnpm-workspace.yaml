@@ -3,25 +3,25 @@ packages:
   - tauri
 
 catalog:
-  "@codemirror/autocomplete": ^6.20.1
+  "@codemirror/autocomplete": ^6.20.2
   "@codemirror/commands": ^6.10.3
-  "@codemirror/lang-markdown": 6.3.4
-  "@codemirror/language": ^6.12.2
-  "@codemirror/language-data": ^6.5.1
+  "@codemirror/lang-markdown": 6.5.0
+  "@codemirror/language": ^6.12.3
+  "@codemirror/language-data": ^6.5.2
   "@codemirror/state": ^6.6.0
-  "@codemirror/view": ^6.40.0
-  "@joplin/turndown": ^4.0.80
-  "@joplin/turndown-plugin-gfm": ^1.0.62
-  "@lezer/common": ^1.5.1
-  "@lezer/highlight": ^1.2.1
-  "@lezer/markdown": 1.4.3
-  "@tauri-apps/plugin-fs": ~2.4.0
-  "@tauri-apps/plugin-http": ^2.5.1
-  "@tauri-apps/plugin-opener": ~2.4.0
-  "react": "^19.2.3"
-  "react-dom": "^19.2.3"
-  "@types/react": "^19.2.3"
+  "@codemirror/view": ^6.43.0
+  "@joplin/turndown": ^4.0.85
+  "@joplin/turndown-plugin-gfm": ^1.0.67
+  "@lezer/common": ^1.5.2
+  "@lezer/highlight": ^1.2.3
+  "@lezer/markdown": 1.6.3
+  "@tauri-apps/plugin-fs": ~2.5.1
+  "@tauri-apps/plugin-http": ^2.5.9
+  "@tauri-apps/plugin-opener": ~2.5.4
+  "@types/react": "^19.2.15"
   "@types/react-dom": "^19.2.3"
+  "react": "^19.2.6"
+  "react-dom": "^19.2.6"
 
 onlyBuiltDependencies:
   - "@tailwindcss/oxide"
