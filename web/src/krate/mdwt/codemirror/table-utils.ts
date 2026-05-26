@@ -1,4 +1,4 @@
-import type { ColumnAlign } from "./editor/codemirror/livePreview/widgets/table-widget";
+import type { ColumnAlign } from "./livePreview/widgets/table-widget";
 
 export interface ParsedTable {
   headers: string[];

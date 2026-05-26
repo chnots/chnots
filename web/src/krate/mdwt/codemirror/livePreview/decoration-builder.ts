@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { type EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, type DecorationSet } from '@codemirror/view';
-import { HEADING_OTID_RE } from '../../../heading-block/block-model';
+import { HEADING_OTID_RE } from '../mdwt/heading-block/block-model';
 import { ImageWidget, parseImage } from './widgets/image-widget';
 import { BlockMathWidget, InlineMathWidget } from './widgets/math-widget';
 import { CheckboxWidget, HorizontalRuleWidget } from './widgets/misc-widgets';

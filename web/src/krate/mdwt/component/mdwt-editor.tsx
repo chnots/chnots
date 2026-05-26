@@ -6,7 +6,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import {
   headingChnotCompletion,
   type HeadingCompletionConfig,
-} from "./heading-chnot-completion";
+} from "../codemirror/mdwt/heading-chnot-completion";
 import { buildEditorExtensions } from "./editor-extensions";
 import { TableEditorDialog } from "./table-editor";
 import "./table-editor/table-editor.css";

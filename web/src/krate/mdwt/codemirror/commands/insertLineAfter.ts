@@ -1,7 +1,7 @@
 import { insertNewlineAndIndent } from '@codemirror/commands';
 import { EditorSelection, type SelectionRange } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
-import insertNewlineContinueMarkup from '../makrdown/insertNewlineContinueMarkup';
+import insertNewlineContinueMarkup from '../markdown/insertNewlineContinueMarkup';
 
 const insertLineAfter = (view: EditorView) => {
   const state = view.state;

@@ -28,7 +28,7 @@ import { ChnotKind } from "../../po";
 import { chnotHeadStore } from "../../store";
 import HistoryHeaderActions from "../header/chnot-history-header-actions";
 import type { RichPropProps } from "./types";
-import type { HeadingCompletionConfig } from "@/krate/mdwt/component/heading-chnot-completion";
+import type { HeadingCompletionConfig } from "@/krate/mdwt/codemirror/mdwt/heading-chnot-completion";
 
 const MdwtChnot = ({
   otid,

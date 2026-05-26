@@ -8,7 +8,7 @@ import {
 } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNodeRef } from '@lezer/common';
-import tabsToSpaces from '../makrdown/utils/tabsToSpaces';
+import tabsToSpaces from '../markdown/utils/tabsToSpaces';
 import stripBlockquote from './formatting/stripBlockquote';
 
 // Ensures that ordered lists within [sel] are numbered in ascending order.

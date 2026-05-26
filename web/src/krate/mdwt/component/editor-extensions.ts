@@ -5,6 +5,10 @@ import {
   headingBlocks,
   livePreview,
   MathConfig,
+  generateKeybinding,
+  Backlink,
+  ChnotProps,
+  todoHighlightPlugin,
 } from "../codemirror";
 import {
   autocompletion,
@@ -18,11 +22,9 @@ import { languages } from "@codemirror/language-data";
 import { EditorView } from "@codemirror/view";
 import { GFM } from "@lezer/markdown";
 import { wrappedLineIndent } from "codemirror-wrapped-line-indent";
-import { generateKeybinding } from "../codemirror";
 import { genTID } from "@/lib/id_util";
-import { Backlink, ChnotProps, todoHighlightPlugin } from "../codemirror/mdwt-extension";
-import { chnotCompletions } from "./chnot-completions";
-import { eventHandlers } from "./paste-handler";
+import { chnotCompletions } from "../codemirror/mdwt/chnot-completions";
+import { eventHandlers } from "../codemirror/mdwt/paste-handler";
 
 export function buildEditorExtensions(config: {
   onCtrlEnter?: (view: EditorView) => boolean;

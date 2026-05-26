@@ -1,6 +1,6 @@
-import decoratorExtension from "./editor/codemirror/decoratorExtension";
-import insertLineAfter from "./editor/codemirror/editorCommands/insertLineAfter";
-import livePreview from "./editor/codemirror/livePreview";
+import decoratorExtension from "./decoratorExtension";
+import insertLineAfter from "./commands/insertLineAfter";
+import livePreview from "./livePreview";
 import {
   toggleInlineFormat,
   toggleBold,
@@ -8,11 +8,11 @@ import {
   toggleStrikethrough,
   toggleInlineCode,
   toggleHighlight,
-} from "./editor/codemirror/utils/formatting/toggleInlineFormat";
-import toggleSelectedLinesStartWith from "./editor/codemirror/utils/formatting/toggleSelectedLinesStartWith";
-import isCursorAtBeginning from "./editor/codemirror/utils/isCursorAtBeginning";
-import intersectsSyntaxNode from "./editor/codemirror/utils/isInSyntaxNode";
-import renumberSelectedLists from "./editor/codemirror/utils/renumberSelectedLists";
+} from "./utils/formatting/toggleInlineFormat";
+import toggleSelectedLinesStartWith from "./utils/formatting/toggleSelectedLinesStartWith";
+import isCursorAtBeginning from "./utils/isCursorAtBeginning";
+import intersectsSyntaxNode from "./utils/isInSyntaxNode";
+import renumberSelectedLists from "./utils/renumberSelectedLists";
 
 export {
   decoratorExtension,
@@ -30,11 +30,11 @@ export {
   renumberSelectedLists,
 };
 
-export { TABLE_EDIT_EVENT } from "./editor/codemirror/livePreview/widgets/table-widget";
+export { TABLE_EDIT_EVENT } from "./livePreview/widgets/table-widget";
 export type {
   TableEditDetail,
   ColumnAlign,
-} from "./editor/codemirror/livePreview/widgets/table-widget";
+} from "./livePreview/widgets/table-widget";
 
 export {
   generateKeybinding,
@@ -49,6 +49,12 @@ export { parseMarkdownTable, generateMarkdownTable } from "./table-utils";
 export type { ParsedTable } from "./table-utils";
 
 export {
+  Backlink,
+  ChnotProps,
+  todoHighlightPlugin,
+} from "./mdwt/mdwt-extension";
+
+export {
   headingBlocks,
   getBlockAtPos,
   getBlockByOtid,
@@ -57,5 +63,5 @@ export {
   scrollToBlock,
   HEADING_OTID_RE,
   normalizeBlockContent,
-} from "./heading-block";
-export type { HeadingBlock } from "./heading-block";
+} from "./mdwt/heading-block";
+export type { HeadingBlock } from "./mdwt/heading-block";
