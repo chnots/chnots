@@ -67,6 +67,10 @@ const MindElixirReact = React.forwardRef(
     ref,
   ) => {
     const mindElixirInstance = useRef<MindElixirInstance>(null);
+    const imageProxyRef = useRef(imageProxy);
+    imageProxyRef.current = imageProxy;
+    const onPasteRef = useRef(onPaste);
+    onPasteRef.current = onPaste;
     const data = initialData ?? {
       direction: 1,
       nodeData: {
@@ -101,8 +105,8 @@ const MindElixirReact = React.forwardRef(
           editable: true,
           allowUndo: true,
           contextMenu: true,
-          imageProxy,
-          pasteHandler: onPaste,
+          imageProxy: imageProxyRef.current,
+          pasteHandler: onPasteRef.current,
         });
 
         plugins.forEach((plugin) => {
@@ -116,7 +120,7 @@ const MindElixirReact = React.forwardRef(
         console.error("Failed to initialize MindElixir:", error);
         return null;
       }
-    }, [onHandleImage, imageProxy, plugins]);
+    }, [plugins]);
 
     const setupEventListeners = useCallback(
       (instance: MindElixirInstance) => {
