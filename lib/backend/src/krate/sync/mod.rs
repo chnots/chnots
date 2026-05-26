@@ -1,3 +1,8 @@
+//! Sync module — file backup and network synchronization.
+//!
+//! Orchestrates backup/restore of all krate modules to local files
+//! and network endpoints. Coordinates across all domain modules.
+
 pub(crate) mod controller;
 pub(crate) mod db;
 pub mod dto;

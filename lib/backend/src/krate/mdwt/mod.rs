@@ -1,3 +1,8 @@
+//! Mdwt module — markdown with time events (rich text editor backend).
+//!
+//! Handles markdown content storage, history, and tag-based search.
+//! Integrates with `toent` for time event parsing in markdown content.
+
 pub(crate) mod controller;
 pub(crate) mod db;
 pub(crate) mod dto;

@@ -41,6 +41,51 @@ Chnots is a note-taking application with Rust backend and React frontend, suppor
 - DTOs sync via `make sync-struct` (Rust -> TypeScript)
 - Shared types: `TID`, `Varchar<N>`, `DbText`
 - Domain isolation: each domain self-contained
+- Each krate module exposes a barrel export (`index.ts` frontend / `mod.rs` backend)
+
+### Module Dependency Graph
+
+```
+                    ┌─────────┐
+                    │  kspace │ (workspace — no krate deps)
+                    └────┬────┘
+                         │
+              ┌──────────┼──────────┐
+              │          │          │
+         ┌────┴───┐ ┌───┴───┐ ┌───┴────┐
+         │  ktab  │ │  kkv  │ │  sync  │ (leaf modules)
+         └────┬───┘ └───────┘ └────────┘
+              │
+         ┌────┴───┐
+    ┌────┤  chnot ├────┐         ┌──────────┐
+    │    └───┬────┘    │         │  toent   │
+    │        │         │         └──┬───┬───┘
+    │   ┌────┴────┐   │            │   │
+    │   │   mdwt  │───┼────────────┘   │
+    │   └────┬────┘   │                │
+    │        │        │                │
+    │   ┌────┴────┐   │
+    │   │  graph  │   │
+    │   └─────────┘   │
+    │                 │
+    │   ┌─────────┐   │
+    └───┤  kfile  ├───┘
+        └─────────┘
+        ┌─────────┐
+        │ llmchat │─── chnot (session records in threads)
+        └─────────┘
+
+    All modules → mapper (database abstraction)
+    All modules → sync (backup/restore orchestration)
+```
+
+**Key dependency rules:**
+- `kspace`, `ktab`, `kkv`, `sync` are leaf modules with no krate dependencies
+- `chnot` is the central hub, importing from most other modules
+- `mdwt` depends on `chnot` and `toent` (time events in markdown)
+- `graph` depends on `kfile` (inline file handling)
+- `llmchat` depends on `chnot` (session records in threads)
+- Cross-module imports go through barrel exports only
 
 ### Platform Matrix
 

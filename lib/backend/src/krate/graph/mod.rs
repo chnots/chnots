@@ -1,3 +1,8 @@
+//! Graph module — Excalidraw and MindElixir visualization.
+//!
+//! Supports two graph formats: Excalidraw (drawing) and MindElixir (mind map).
+//! Depends on `kfile` for inline file handling of embedded images.
+
 pub(crate) mod backup;
 pub(crate) mod controller;
 pub(crate) mod db;
