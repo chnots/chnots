@@ -21,10 +21,8 @@ const MindElixirPreview = ({ data }: { data: MindElixirData }) => {
         const instance = new MindElixir({
           el: container,
           direction: 2 as const,
-          draggable: false,
           toolBar: false,
           keypress: false,
-          locale: "en" as const,
           editable: false,
           allowUndo: false,
           contextMenu: false,

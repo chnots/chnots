@@ -11,6 +11,7 @@ import React, {
   useRef,
 } from "react";
 import "mind-elixir/style.css";
+import imageControls from "./plugins/image-controls";
 
 type MindElixirPlugin = (instance: MindElixirInstance) => void;
 
@@ -66,6 +67,10 @@ const MindElixirReact = React.forwardRef(
     ref,
   ) => {
     const mindElixirInstance = useRef<MindElixirInstance>(null);
+    const imageProxyRef = useRef(imageProxy);
+    imageProxyRef.current = imageProxy;
+    const onPasteRef = useRef(onPaste);
+    onPasteRef.current = onPaste;
     const data = initialData ?? {
       direction: 1,
       nodeData: {
@@ -94,16 +99,14 @@ const MindElixirReact = React.forwardRef(
         const instance = new MindElixir({
           ...restProps,
           el: containerRef.current,
-          direction: 2 as const, // 0 left, 1 right, 2 both sides
-          draggable: true,
+          direction: 2 as const,
           toolBar: true,
           keypress: true,
-          locale: "en" as const,
           editable: true,
           allowUndo: true,
           contextMenu: true,
-          imageProxy,
-          pasteHandler: onPaste,
+          imageProxy: imageProxyRef.current,
+          pasteHandler: onPasteRef.current,
         });
 
         plugins.forEach((plugin) => {
@@ -117,7 +120,7 @@ const MindElixirReact = React.forwardRef(
         console.error("Failed to initialize MindElixir:", error);
         return null;
       }
-    }, [onHandleImage, imageProxy, plugins]);
+    }, [plugins]);
 
     const setupEventListeners = useCallback(
       (instance: MindElixirInstance) => {

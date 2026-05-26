@@ -14,7 +14,7 @@ Use this skill when the user asks to:
 - write a plan document
 - convert requirements into an implementation plan
 - create a task file before coding
-- create a `docs/yymm-dd-*.md` task note
+- create a `docs/exec-plans/active/yymm-dd-*.md` task note
 
 ## Inputs to collect
 
@@ -30,7 +30,7 @@ If some fields are missing, infer reasonable defaults from existing `docs/*.md` 
 
 ## File placement and naming
 
-1. Create the plan under `docs/` (not `docs/done/`).
+1. Create the plan under `docs/exec-plan/active`.
 2. Filename format must follow repo convention from `docs/develop.md`:
 
    - `yymm-dd-task-desc.md`

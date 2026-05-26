@@ -33,4 +33,4 @@ docs/
 │   └── release.md           # Release & deploy process
 └── references/              # External references
 ```
-- DO NOT use internal plan file, write them to exec-plans.
+- DO NOT use internal plan file, use /requirement-to-plan skill to create plan.

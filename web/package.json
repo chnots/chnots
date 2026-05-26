@@ -85,7 +85,7 @@
     "lucide-react": "1.0.1",
     "marked": "^17.0.1",
     "mermaid": "^11.12.3",
-    "mind-elixir": "workspace:*",
+    "mind-elixir": "^5.12.2",
     "next-themes": "^0.4.6",
     "postcss": "^8.5.6",
     "react": "catalog:",

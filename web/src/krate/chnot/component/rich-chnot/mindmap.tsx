@@ -19,6 +19,7 @@ import MindElixirReact, {
   type MindElixirReactRef,
 } from "@/krate/graph/mind-elixir";
 import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
+import imageControls from "@/krate/graph/mind-elixir/plugins/image-controls";
 import { kfileUpload } from "@/krate/kfile/service";
 import { tidToDate } from "@/lib/date-utils";
 import { genTID, genUID } from "@/lib/id_util";
@@ -250,7 +251,7 @@ const MindMapChnot = ({
           data,
         });
       },
-      plugins: [],
+      plugins: [imageControls],
       onPaste: async (clipboardEvent) => {
         const items = clipboardEvent.clipboardData?.items;
         if (!items) return false;
