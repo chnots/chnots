@@ -35,7 +35,7 @@ import {
 } from "@/common/component/ui/sidebar";
 import { Switch } from "@/common/component/ui/switch";
 import { Toggle } from "@/common/component/ui/toggle";
-import type { MdwtTagSearchType } from "@/krate/chnot/dto";
+import type { MdwtTagSearchType } from "@/krate/mdwt/dto";
 import { KSpaceSelect } from "@/krate/kspace/component/kspace-select";
 import { useKSpaceStore } from "@/krate/kspace/store";
 import { chnotTagNameList } from "@/krate/mdwt/service";

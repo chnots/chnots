@@ -1,17 +1,9 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
+import type { MdwtTagSearchType } from "../mdwt/dto";
 import type { TodoEvent } from "../toent/toent-model";
 import type { ChnotKind, ChnotMeta } from "./po";
 
-export type MdwtTagSearchType = {
-  id: "Inset";
-  data: string[];
-};
-
-export type MdwtCommitReqData = {
-  otid: TID;
-  content: DbText;
-};
 export type ChnotThreadOrderCommitReqData = {
   otid: TID;
   closed: boolean;
@@ -37,16 +29,6 @@ export type ChnotThreadOrderCommitReq = {
   remove_others?: boolean;
 };
 export type ChnotThreadOrderCommitRsp = object;
-export type MdwtBlockRspData = {
-  otid: TID;
-  title: string;
-};
-export type MdwtCommitRsp = {
-  todo_event?: TodoEvent;
-  title: string;
-  blocks: MdwtBlockRspData[];
-  content?: DbText;
-};
 
 export type ChnotMetaCommitReqData = {
   otid: TID;

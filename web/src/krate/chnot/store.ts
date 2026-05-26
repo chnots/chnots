@@ -6,7 +6,8 @@ import type { PageRsp } from "@/common/types";
 import type { TID } from "@/lib/id_util";
 import { insertMapAtIndex } from "@/lib/map-utils";
 import { kspaceStore } from "../kspace/store";
-import type { ChnotSearchRspData, MdwtTagSearchType } from "./dto";
+import type { ChnotSearchRspData } from "./dto";
+import type { MdwtTagSearchType } from "../mdwt/dto";
 import type { ChnotKind, ChnotMeta } from "./po";
 import { chnotSearch } from "./service";
 

@@ -1,5 +1,5 @@
 import type { TID } from "@/lib/id_util";
-import type { MdwtTagSearchType } from "../chnot/dto";
+import type { MdwtTagSearchType } from "../mdwt/dto";
 import type {
   MdwtToent,
   TimeEventField,

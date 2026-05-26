@@ -1,5 +1,4 @@
 import request from "@/lib/request";
-import type { MdwtCommitRsp } from "../chnot/dto";
 import type {
   MdwtCommitReq,
   MdwtContentLoadReq,
@@ -14,6 +13,7 @@ import type {
   MdwtRecordsRsp,
   MdwtTagListReq,
   MdwtTagListRsp,
+  MdwtCommitRsp
 } from "./dto";
 
 export const mdwtCommit = async (

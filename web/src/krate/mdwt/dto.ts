@@ -1,6 +1,5 @@
 import type { TID } from "@/lib/id_util";
 import type { DbText, Varchar } from "@/lib/types";
-import type { MdwtTagSearchType } from "../chnot/dto";
 import type { TodoEvent } from "../toent/toent-model";
 import type { MdwtRecord } from "./po";
 
@@ -36,10 +35,6 @@ export type MdwtCommitReqData = {
   otid: TID;
   content: DbText;
   kspace?: string;
-};
-export type MdwtCommitRsp = {
-  todo_event?: TodoEvent;
-  title: string;
 };
 
 export type MdwtHistoryListReq = {
@@ -78,4 +73,22 @@ export type MdwtContentLoadReq = {
 
 export type MdwtContentLoadRsp = {
   content: string;
+};
+
+
+export type MdwtTagSearchType = {
+  id: "Inset";
+  data: string[];
+};
+
+
+export type MdwtBlockRspData = {
+  otid: TID;
+  title: string;
+};
+export type MdwtCommitRsp = {
+  todo_event?: TodoEvent;
+  title: string;
+  blocks: MdwtBlockRspData[];
+  content?: DbText;
 };
