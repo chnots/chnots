@@ -7,7 +7,6 @@
       "!web-dist",
       "!target",
       "!lib/md-codemirror",
-      "!lib/mind-elixir-core",
       "!**/*.yaml"
     ],
     "ignoreUnknown": false
