@@ -6,14 +6,14 @@ This file contains development guidelines and commands for agentic coding agents
 
 ### Build & Development
 
-- **Start development server**: `npm run dev` (runs on host 0.0.0.0)
-- **Build for production**: `npm run build` (TypeScript compilation + Rsbuild build)
-- **Preview production build**: `npm run preview`
+- **Start development server**: `pnpm run dev` (runs on host 0.0.0.0)
+- **Build for production**: `pnpm run build` (TypeScript compilation + Rsbuild build)
+- **Preview production build**: `pnpm run preview`
 
 ### Code Quality
 
-- **Lint and format**: `npm run lint` (Biome linter with auto-fix)
-- **Full check**: `npm run check` (Biome check with auto-fix)
+- **Lint and format**: `pnpm run lint` (Biome linter with auto-fix)
+- **Full check**: `pnpm run check` (Biome check with auto-fix)
 
 ### Testing
 
@@ -23,7 +23,7 @@ This file contains development guidelines and commands for agentic coding agents
 
 ### Tech Stack
 
-- **Frontend**: React 18 + TypeScript
+- **Frontend**: React 19 + TypeScript
 - **Build Tool**: Rsbuild
 - **Styling**: Tailwind CSS 4.0 with Emotion for styled components
 - **UI Components**: Radix UI primitives with custom components
@@ -157,9 +157,9 @@ function Button({
 
 ### Before Submitting Changes
 
-1. Run `npm run lint` to fix formatting issues
-2. Run `npm run check` for full code quality check
-3. Run `npm run build` to ensure TypeScript compilation
+1. Run `pnpm run lint` to fix formatting issues
+2. Run `pnpm run check` for full code quality check
+3. Run `pnpm run build` to ensure TypeScript compilation
 4. Test functionality manually in development mode
 
 ### Adding New Features
