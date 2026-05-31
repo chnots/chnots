@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { SaveState } from "@/common/types";
-import { DataTable } from "@/krate/ktab/component/data-table";
-import type { KTabRowData } from "@/krate/ktab/component/editable-cell";
+import { KTabTable as DataTable } from "@/krate/ktab/component/ktab-table";
+import type { KTabRowData } from "@/krate/ktab/component/ktab-table";
 import { ktabGetViewValue } from "@/krate/ktab/dto";
 import type { KTabMeta } from "@/krate/ktab/po";
 import {
@@ -42,6 +42,8 @@ const TableChnot = ({
       }
     })();
   }, [otid]);
+
+  if (!meta) return null;
 
   return (
     meta &&

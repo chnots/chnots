@@ -21,5 +21,5 @@ export { ktabGetViewValue } from "./dto";
 export { ktabCellList, ktabMetaCommit, ktabMetaFetch } from "./service";
 
 // Components
-export { DataTable } from "./component/data-table";
-export type { KTabRowData } from "./component/editable-cell";
+export { KTabTable as DataTable } from "./component/ktab-table";
+export type { KTabRowData } from "./component/ktab-table";

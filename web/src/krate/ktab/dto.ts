@@ -29,15 +29,24 @@ export const ktabToStoreValue = (
   kind: string,
   value: unknown,
 ): KTabStoreValue | undefined => {
-  if (!value) {
+  if (value == null || value === "") {
     return undefined;
   }
   switch (kind.toLowerCase()) {
+    case "text":
     case "string":
-      return { Text: value as string };
+      return { Text: String(value) };
+    case "multi_select":
+    case "image":
+      return { Text: JSON.stringify(value) };
+    case "number":
+    case "integer":
+    case "checkbox":
+      return { Decimal: String(value) };
     case "demical":
       return { Decimal: value as string };
     case "date":
+    case "datetime":
       return { Date: value as Date };
     default:
       throw new Error();

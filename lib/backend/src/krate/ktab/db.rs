@@ -112,10 +112,12 @@ impl KTabMapper for KDb {
         let table_otid = table_meta.otid;
 
         let columns = table_meta.columns;
+        log::info!("columns {:?}", columns);
 
         for ele in cells {
             let column_index = columns
-                .get(ele.column_name.as_str())
+                .values()
+                .find(|c| c.name.as_str() == ele.column_name.as_str())
                 .context("the column is not existed")?
                 .idx;
 
