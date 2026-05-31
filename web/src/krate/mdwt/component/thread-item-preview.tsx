@@ -3,8 +3,10 @@ import ExcalidrawPreview from "@/krate/graph/excalidraw/component/excalidraw-pre
 import type { ExcalidrawChnotState } from "@/krate/graph/excalidraw/service";
 import MindElixirPreview from "@/krate/graph/mind-elixir/preview";
 import type { MindElixirData } from "@/krate/graph/mind-elixir";
+import type { KTabMeta } from "@/krate/ktab/po";
 import type { TID } from "@/lib/id_util";
 
+import KTabInlineWidget from "./ktab-inline-widget";
 import { MarkdownViewer } from "./markdown-viewer";
 import type { ThreadWidgetItem } from "./thread-widget-extension";
 
@@ -15,6 +17,23 @@ const ThreadItemPreview = ({
   item: ThreadWidgetItem;
   onClick: (otid: TID, kind: ChnotKind) => void;
 }) => {
+  if (item.kind === "ktabv1") {
+    if (!item.kindData) {
+      return (
+        <div className="cm-thread-item-preview rounded border p-3 my-2 mx-1">
+          {item.mdwtContent && <MarkdownViewer content={item.mdwtContent} />}
+        </div>
+      );
+    }
+    return (
+      <KTabInlineWidget
+        otid={item.otid}
+        kindData={item.kindData as KTabMeta}
+        onItemClick={onClick}
+      />
+    );
+  }
+
   const renderKindPreview = () => {
     if (!item.kindData) return null;
 

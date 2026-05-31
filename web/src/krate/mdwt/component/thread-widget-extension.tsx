@@ -47,8 +47,7 @@ class ThreadItemWidget extends WidgetType {
   eq(other: ThreadItemWidget): boolean {
     return (
       other.item.otid === this.item.otid &&
-      other.item.mdwtContent === this.item.mdwtContent &&
-      other.item.kindData === this.item.kindData
+      other.item.mdwtContent === this.item.mdwtContent
     );
   }
 
@@ -68,7 +67,13 @@ class ThreadItemWidget extends WidgetType {
     root?.unmount();
   }
 
-  ignoreEvent() {
+  ignoreEvent(event: Event): boolean {
+    if (
+      (event instanceof KeyboardEvent || event instanceof MouseEvent) &&
+      this.item.kind === "ktabv1"
+    ) {
+      return true;
+    }
     return false;
   }
 }

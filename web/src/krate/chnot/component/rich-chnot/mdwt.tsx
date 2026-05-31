@@ -11,6 +11,7 @@ import {
   type ThreadWidgetItem,
 } from "@/krate/mdwt/component/thread-widget-extension";
 import ThreadEditorPanel from "@/krate/mdwt/component/thread-editor-sheet";
+import { useMdwtThreadStore } from "@/krate/mdwt/component/mdwt-thread-store";
 import type { MdwtCommitReq } from "@/krate/mdwt/dto";
 import {
   mdwtCommit,
@@ -22,6 +23,7 @@ import {
 } from "@/krate/mdwt/service";
 import { fetchExcalidraw } from "@/krate/graph/excalidraw/service";
 import { fetchMindExilir } from "@/krate/graph/mind-elixir/service";
+import { ktabMetaFetch } from "@/krate/ktab/service";
 import { tidToDate } from "@/lib/date-utils";
 import { chnotMetaCommit, chnotThreadMetaFetch } from "../../service";
 import { ChnotKind } from "../../po";
@@ -62,9 +64,8 @@ const MdwtChnot = ({
   const { kspace } = useKSpaceStore((s) => ({ kspace: s.currentKSpace }));
 
   // Thread widget state
-  const [selectedItem, setSelectedItem] = useState<
-    { otid: number; kind: ChnotKind } | undefined
-  >();
+  const selectedItem = useMdwtThreadStore((s) => s.selectedItem);
+  const setSelectedItem = useMdwtThreadStore((s) => s.setSelectedItem);
   const threadItemsRef = useRef<ThreadWidgetItem[]>([]);
   const threadExtension = useMemo(() => threadWidgetExtension(), []);
   const threadLoadTriggered = useRef(false);
@@ -112,6 +113,11 @@ const MdwtChnot = ({
             try {
               const mindData = await fetchMindExilir(childOtid);
               if (mindData) item.kindData = mindData;
+            } catch {}
+          } else if (threadMeta.meta.kind === ChnotKind.KTab) {
+            try {
+              const metaRsp = await ktabMetaFetch({ table_id: childOtid });
+              if (metaRsp.meta) item.kindData = metaRsp.meta;
             } catch {}
           }
 
@@ -213,6 +219,11 @@ const MdwtChnot = ({
           try {
             const mindData = await fetchMindExilir(childOtid);
             if (mindData) item.kindData = mindData;
+          } catch {}
+        } else if (kind === ChnotKind.KTab) {
+          try {
+            const metaRsp = await ktabMetaFetch({ table_id: childOtid });
+            if (metaRsp.meta) item.kindData = metaRsp.meta;
           } catch {}
         }
 
@@ -422,7 +433,11 @@ const MdwtChnot = ({
     content !== undefined && (
       <div
         className="flex w-full h-full min-h-0 break-all"
-        onBlur={() => directlySave()}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            directlySave();
+          }
+        }}
         role="none"
       >
         <div

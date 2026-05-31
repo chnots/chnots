@@ -62,6 +62,7 @@ export interface KTabTableProps {
   readonly: boolean;
   onMetaChange: (meta: KTabMeta) => void | Promise<void>;
   compact?: boolean;
+  hideExport?: boolean;
 }
 
 const PAGE_SIZE = 500;
@@ -109,6 +110,7 @@ export function KTabTable({
   readonly,
   onMetaChange,
   compact = false,
+  hideExport = false,
 }: KTabTableProps) {
   const [rows, setRows] = useState<KTabRowData[]>([]);
   const [transposed, setTransposed] = useState(false);
@@ -503,7 +505,7 @@ export function KTabTable({
     return (
       <div className="flex flex-col h-full">
         {!compact && toolbar(true)}
-        {compact && !readonly && compactExport}
+        {compact && !readonly && !hideExport && compactExport}
         <div className="overflow-auto flex-1">
           <table className="w-full border-collapse table-fixed text-sm">
             <colgroup>
@@ -551,7 +553,7 @@ export function KTabTable({
   return (
     <div className="flex flex-col h-full">
       {!compact && toolbar()}
-      {compact && !readonly && compactExport}
+      {compact && !readonly && !hideExport && compactExport}
 
       <div className="overflow-auto flex-1">
         <table className="w-full border-collapse table-fixed text-sm">
