@@ -12,7 +12,7 @@ import {
 } from "@codemirror/view";
 import { createRoot } from "react-dom/client";
 
-import type { ChnotKind } from "@/krate/chnot/po";
+import { ChnotKind } from "@/krate/chnot/po";
 import type { TID } from "@/lib/id_util";
 
 import ThreadItemPreview from "./thread-item-preview";
@@ -127,14 +127,17 @@ function buildThreadDecorations(state: EditorState): DecorationSet {
     | undefined;
   if (!data?.items.length) return Decoration.none;
 
+  const lineCount = state.doc.lines;
   const endPos = state.doc.length;
   const widgets: import("@codemirror/state").Range<Decoration>[] = [];
   const inlineItems: ThreadWidgetItem[] = [];
 
   for (const item of data.items) {
+    if (item.kind === ChnotKind.MDWT) continue;
+
     const otidStr = String(item.otid);
     let found = false;
-    for (let i = 1; i <= state.doc.lines; i++) {
+    for (let i = 1; i <= lineCount; i++) {
       const line = state.doc.line(i);
       if (line.text.includes(`[[${otidStr}]]`)) {
         const pos = findOtidSectionEnd(state, i);
@@ -152,13 +155,19 @@ function buildThreadDecorations(state: EditorState): DecorationSet {
     if (!found) inlineItems.push(item);
   }
 
+  // Place inline items before the trailing empty line so there's always a
+  // navigable line after each widget. The trailing empty line is guaranteed
+  // by dispatchThreadData.
+  const inlinePos = lineCount >= 2
+    ? state.doc.line(lineCount - 1).to
+    : endPos;
   for (let i = 0; i < inlineItems.length; i++) {
     widgets.push(
       Decoration.widget({
         widget: new ThreadItemWidget(inlineItems[i], data.onItemClick),
         block: true,
         side: 1,
-      }).range(endPos + i),
+      }).range(inlinePos),
     );
   }
 
@@ -175,6 +184,25 @@ export function dispatchThreadData(
   view: EditorView,
   data: ThreadWidgetData,
 ) {
+  const doc = view.state.doc;
+  if (data.items.length > 0) {
+    // Ensure at least one trailing empty line so block widgets aren't placed
+    // at the absolute end of the document, which would block cursor navigation.
+    const trailing = doc.sliceString(Math.max(0, doc.length - 2));
+    let insert: string | undefined;
+    if (!trailing.endsWith("\n")) {
+      insert = "\n\n";
+    } else if (trailing !== "\n\n") {
+      insert = "\n";
+    }
+    if (insert) {
+      view.dispatch({
+        effects: [setThreadDataEffect.of(data)],
+        changes: { from: doc.length, insert },
+      });
+      return;
+    }
+  }
   view.dispatch({
     effects: [setThreadDataEffect.of(data)],
   });
