@@ -41,10 +41,10 @@ export const ktabToStoreValue = (
       return { Text: JSON.stringify(value) };
     case "number":
     case "integer":
+    case "decimal":
+    case "progress":
     case "checkbox":
-      return { Decimal: String(value) };
-    case "demical":
-      return { Decimal: value as string };
+      return { Text: String(value) };
     case "date":
     case "datetime":
       return { Date: value as Date };

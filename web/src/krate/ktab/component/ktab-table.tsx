@@ -1,10 +1,21 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, type FC } from "react";
 import {
   PlusIcon,
   ArrowLeftRightIcon,
   DownloadIcon,
   Trash2Icon,
   PencilIcon,
+  TypeIcon,
+  HashIcon,
+  CalendarIcon,
+  CalendarClockIcon,
+  BarChart3Icon,
+  CheckSquareIcon,
+  TagsIcon,
+  ImageIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CopyIcon,
 } from "lucide-react";
 import { Button } from "@/common/component/ui/button";
 import { Input } from "@/common/component/ui/input";
@@ -25,14 +36,11 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/common/component/ui/context-menu";
 import { genTID } from "@/lib/id_util";
 import type { KTabMeta, KTabColumnMeta, KTabColumnViewKind } from "../po";
-import { ktabViewToStoreKind, KTAB_DISPLAY_AS_MENU } from "../po";
+import { ktabViewToStoreKind } from "../po";
 import { ktabCellCommit } from "../service";
 import { ktabToStoreValue } from "../dto";
 import type { KTabViewCell } from "../dto";
@@ -58,19 +66,42 @@ export interface KTabTableProps {
 
 const PAGE_SIZE = 500;
 
-const VIEW_KIND_LABELS: Record<string, string> = {
-  text: "Text",
-  string: "Text",
-  number: "数字",
-  integer: "数字",
-  decimal: "数字",
-  progress: "进度",
-  checkbox: "Checkbox",
-  multi_select: "枚举",
-  date: "日期",
-  datetime: "日期时间",
-  image: "图片",
+const VIEW_KIND_ICONS: Record<string, FC<{ className?: string }>> = {
+  text: TypeIcon,
+  string: TypeIcon,
+  number: HashIcon,
+  integer: HashIcon,
+  decimal: HashIcon,
+  date: CalendarIcon,
+  datetime: CalendarClockIcon,
+  progress: BarChart3Icon,
+  checkbox: CheckSquareIcon,
+  multi_select: TagsIcon,
+  image: ImageIcon,
 };
+
+const ADD_COL_TYPE_OPTIONS: { value: KTabColumnViewKind; label: string }[] = [
+  { value: "text", label: "文本" },
+  { value: "number", label: "数字" },
+  { value: "date", label: "日期" },
+  { value: "datetime", label: "日期时间" },
+  { value: "checkbox", label: "复选框" },
+  { value: "multi_select", label: "枚举" },
+  { value: "progress", label: "进度" },
+];
+
+function makeNewRow(columns: KTabColumnMeta[]): KTabRowData {
+  const row: KTabRowData = { row_tid: genTID() };
+  const now = new Date();
+  for (const col of columns) {
+    if (col.view_kind === "date") {
+      row[col.name] = now.toISOString().split("T")[0];
+    } else if (col.view_kind === "datetime") {
+      row[col.name] = now.toISOString();
+    }
+  }
+  return row;
+}
 
 export function KTabTable({
   tableMeta,
@@ -86,6 +117,20 @@ export function KTabTable({
   const [addColumnOpen, setAddColumnOpen] = useState(false);
   const [newColName, setNewColName] = useState("");
   const [newColKind, setNewColKind] = useState<KTabColumnViewKind>("text");
+
+  // Insert column dialog state
+  const [insertColTarget, setInsertColTarget] = useState<{
+    col: KTabColumnMeta;
+    direction: "left" | "right";
+  } | null>(null);
+  const [insertColName, setInsertColName] = useState("");
+  const [insertColKind, setInsertColKind] =
+    useState<KTabColumnViewKind>("text");
+
+  // Delete row confirmation state
+  const [deleteRowTarget, setDeleteRowTarget] = useState<KTabRowData | null>(
+    null,
+  );
 
   const columns = useMemo(() => {
     return Object.values(tableMeta.columns).sort(
@@ -121,23 +166,23 @@ export function KTabTable({
     [tableMeta.otid],
   );
 
-  // --- Column operations ---
-
   const updateColumn = useCallback(
-    async (colIdx: string, patch: Partial<KTabColumnMeta>) => {
-      const col = tableMeta.columns[colIdx];
+    async (colName: string, patch: Partial<KTabColumnMeta>) => {
+      const col = tableMeta.columns[colName];
       if (!col) return;
       const newMeta = {
         ...tableMeta,
         columns: {
           ...tableMeta.columns,
-          [colIdx]: { ...col, ...patch },
+          [colName]: { ...col, ...patch },
         },
       };
       await onMetaChange(newMeta);
     },
     [tableMeta, onMetaChange],
   );
+
+  // --- Column operations ---
 
   const handleRename = useCallback(async () => {
     if (!renaming || !renameDraft.trim()) return;
@@ -180,17 +225,6 @@ export function KTabTable({
     [tableMeta, onMetaChange],
   );
 
-  const handleDisplayAs = useCallback(
-    async (colName: string, viewKind: KTabColumnViewKind) => {
-      if (!tableMeta.columns[colName]) return;
-      await updateColumn(colName, {
-        view_kind: viewKind,
-        store_kind: ktabViewToStoreKind(viewKind),
-      });
-    },
-    [tableMeta.columns, updateColumn],
-  );
-
   const handleAddColumn = useCallback(async () => {
     if (!newColName.trim()) return;
     const idx = genTID();
@@ -214,9 +248,114 @@ export function KTabTable({
     setNewColKind("text");
   }, [newColName, newColKind, columns, tableMeta, onMetaChange]);
 
+  const handleInsertColumn = useCallback(async () => {
+    if (!insertColTarget || !insertColName.trim()) return;
+    const { col, direction } = insertColTarget;
+    const sortedCols = [...columns];
+    const targetIndex = sortedCols.findIndex((c) => c.idx === col.idx);
+
+    let newOrder: number;
+    if (direction === "left") {
+      const leftOrder =
+        targetIndex > 0 ? sortedCols[targetIndex - 1].order_by : undefined;
+      newOrder =
+        leftOrder !== undefined
+          ? (leftOrder + col.order_by) / 2
+          : col.order_by - 1;
+    } else {
+      const rightOrder =
+        targetIndex < sortedCols.length - 1
+          ? sortedCols[targetIndex + 1].order_by
+          : undefined;
+      newOrder =
+        rightOrder !== undefined
+          ? (col.order_by + rightOrder) / 2
+          : col.order_by + 1;
+    }
+
+    const idx = genTID();
+    const name = insertColName.trim();
+    const newCol: KTabColumnMeta = {
+      idx,
+      name,
+      comment: "",
+      store_kind: ktabViewToStoreKind(insertColKind),
+      view_kind: insertColKind,
+      required: false,
+      order_by: newOrder,
+    };
+    const newMeta = {
+      ...tableMeta,
+      columns: { ...tableMeta.columns, [name]: newCol },
+    };
+    await onMetaChange(newMeta);
+    setInsertColTarget(null);
+    setInsertColName("");
+    setInsertColKind("text");
+  }, [insertColTarget, insertColName, insertColKind, columns, tableMeta, onMetaChange]);
+
+  const handleMoveColumn = useCallback(
+    async (col: KTabColumnMeta, direction: "left" | "right") => {
+      const sortedCols = [...columns];
+      const targetIndex = sortedCols.findIndex((c) => c.idx === col.idx);
+      if (direction === "left" && targetIndex === 0) return;
+      if (direction === "right" && targetIndex === sortedCols.length - 1)
+        return;
+
+      const swapCol =
+        direction === "left"
+          ? sortedCols[targetIndex - 1]
+          : sortedCols[targetIndex + 1];
+
+      const colKey = Object.keys(tableMeta.columns).find(
+        (k) => tableMeta.columns[k].name === col.name,
+      );
+      const swapKey = Object.keys(tableMeta.columns).find(
+        (k) => tableMeta.columns[k].name === swapCol.name,
+      );
+      if (!colKey || !swapKey) return;
+
+      const newMeta = {
+        ...tableMeta,
+        columns: {
+          ...tableMeta.columns,
+          [colKey]: { ...tableMeta.columns[colKey], order_by: swapCol.order_by },
+          [swapKey]: {
+            ...tableMeta.columns[swapKey],
+            order_by: col.order_by,
+          },
+        },
+      };
+      await onMetaChange(newMeta);
+    },
+    [columns, tableMeta, onMetaChange],
+  );
+
+  // --- Row operations ---
+
   const handleAddRow = useCallback(() => {
-    const newRowTid = genTID();
-    setRows((prev) => [...prev, { row_tid: newRowTid }]);
+    setRows((prev) => [...prev, makeNewRow(columns)]);
+  }, [columns]);
+
+  const handleInsertRow = useCallback(
+    (targetRow: KTabRowData, position: "above" | "below") => {
+      const newRow = makeNewRow(columns);
+      setRows((prev) => {
+        const idx = prev.findIndex((r) => r.row_tid === targetRow.row_tid);
+        const insertAt = position === "above" ? idx : idx + 1;
+        return [...prev.slice(0, insertAt), newRow, ...prev.slice(insertAt)];
+      });
+    },
+    [columns],
+  );
+
+  const handleCopyCell = useCallback(async (value: unknown) => {
+    await navigator.clipboard.writeText(String(value ?? ""));
+  }, []);
+
+  const handleDeleteRow = useCallback((row: KTabRowData) => {
+    setRows((prev) => prev.filter((r) => r.row_tid !== row.row_tid));
+    setDeleteRowTarget(null);
   }, []);
 
   const handleExport = useCallback(async () => {
@@ -240,50 +379,91 @@ export function KTabTable({
     };
   }, [transposed, columns, rows]);
 
-  // --- Context menu for column header ---
-  const columnContextMenu = (col: KTabColumnMeta) => (
+  // --- Context menus ---
+
+  const columnContextMenu = (col: KTabColumnMeta) => {
+    const sortedCols = [...columns];
+    const colIndex = sortedCols.findIndex((c) => c.idx === col.idx);
+    const canMoveLeft = colIndex > 0;
+    const canMoveRight = colIndex < sortedCols.length - 1;
+
+    return (
+      <ContextMenuContent>
+        <ContextMenuItem
+          onClick={() =>
+            setInsertColTarget({ col, direction: "left" })
+          }
+        >
+          <PlusIcon className="h-3.5 w-3.5 mr-2" />
+          向左插入
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() =>
+            setInsertColTarget({ col, direction: "right" })
+          }
+        >
+          <PlusIcon className="h-3.5 w-3.5 mr-2" />
+          向后插入
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          disabled={!canMoveLeft}
+          onClick={() => handleMoveColumn(col, "left")}
+        >
+          <ArrowLeftIcon className="h-3.5 w-3.5 mr-2" />
+          左移
+        </ContextMenuItem>
+        <ContextMenuItem
+          disabled={!canMoveRight}
+          onClick={() => handleMoveColumn(col, "right")}
+        >
+          <ArrowRightIcon className="h-3.5 w-3.5 mr-2" />
+          右移
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          onClick={() => {
+            setRenameDraft(col.name);
+            setRenaming(col.name);
+          }}
+        >
+          <PencilIcon className="h-3.5 w-3.5 mr-2" />
+          重命名
+        </ContextMenuItem>
+        <ContextMenuItem
+          variant="destructive"
+          onClick={() => handleDeleteColumn(col.name)}
+        >
+          <Trash2Icon className="h-3.5 w-3.5 mr-2" />
+          删除
+        </ContextMenuItem>
+      </ContextMenuContent>
+    );
+  };
+
+  const cellContextMenu = (row: KTabRowData) => (
     <ContextMenuContent>
-      <ContextMenuItem
-        onClick={() => {
-          setRenameDraft(col.name);
-          setRenaming(col.name);
-        }}
-      >
-        <PencilIcon className="h-3.5 w-3.5 mr-2" />
-        重命名
+      <ContextMenuItem onClick={() => handleInsertRow(row, "above")}>
+        <PlusIcon className="h-3.5 w-3.5 mr-2" />
+        上面插入一行
       </ContextMenuItem>
-      <ContextMenuItem
-        variant="destructive"
-        onClick={() => handleDeleteColumn(col.name)}
-      >
-        <Trash2Icon className="h-3.5 w-3.5 mr-2" />
-        删除
+      <ContextMenuItem onClick={() => handleInsertRow(row, "below")}>
+        <PlusIcon className="h-3.5 w-3.5 mr-2" />
+        下面插入一行
       </ContextMenuItem>
       <ContextMenuSeparator />
-      {/* 显示为 submenu */}
-      {KTAB_DISPLAY_AS_MENU.map(
-        (group: {
-          group: string;
-          items: { viewKind: KTabColumnViewKind; label: string }[];
-        }) => (
-          <ContextMenuSub key={group.group}>
-            <ContextMenuSubTrigger>{group.group}</ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              {group.items.map(
-                (item: { viewKind: KTabColumnViewKind; label: string }) => (
-                  <ContextMenuItem
-                    key={item.viewKind + item.label}
-                    onClick={() => handleDisplayAs(col.name, item.viewKind)}
-                  >
-                    {col.view_kind === item.viewKind && "✓ "}
-                    {item.label}
-                  </ContextMenuItem>
-                ),
-              )}
-            </ContextMenuSubContent>
-          </ContextMenuSub>
-        ),
-      )}
+      <ContextMenuItem onClick={() => handleCopyCell(row)}>
+        <CopyIcon className="h-3.5 w-3.5 mr-2" />
+        复制单元格
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
+        variant="destructive"
+        onClick={() => setDeleteRowTarget(row)}
+      >
+        <Trash2Icon className="h-3.5 w-3.5 mr-2" />
+        删除行
+      </ContextMenuItem>
     </ContextMenuContent>
   );
 
@@ -386,24 +566,25 @@ export function KTabTable({
               <th className="border px-2 py-1 text-center font-medium text-muted-foreground">
                 #
               </th>
-              {columns.map((col) => (
-                <th
-                  key={col.idx}
-                  className="border px-2 py-1 text-left font-medium select-none overflow-hidden text-ellipsis whitespace-nowrap"
-                >
-                  <ContextMenu>
-                    <ContextMenuTrigger asChild>
-                      <div className="flex items-center gap-1 cursor-default">
-                        <span className="text-xs text-muted-foreground">
-                          {VIEW_KIND_LABELS[col.view_kind]}
-                        </span>
-                        <span>{col.name}</span>
-                      </div>
-                    </ContextMenuTrigger>
-                    {columnContextMenu(col)}
-                  </ContextMenu>
-                </th>
-              ))}
+              {columns.map((col) => {
+                const Icon = VIEW_KIND_ICONS[col.view_kind] || TypeIcon;
+                return (
+                  <th
+                    key={col.idx}
+                    className="border px-2 py-1 text-left font-medium select-none overflow-hidden text-ellipsis whitespace-nowrap"
+                  >
+                    <ContextMenu>
+                      <ContextMenuTrigger asChild>
+                        <div className="flex items-center gap-1 cursor-default">
+                          <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span>{col.name}</span>
+                        </div>
+                      </ContextMenuTrigger>
+                      {columnContextMenu(col)}
+                    </ContextMenu>
+                  </th>
+                );
+              })}
               {!readonly && (
                 <th className="border w-10 min-w-10">
                   <Popover open={addColumnOpen} onOpenChange={setAddColumnOpen}>
@@ -426,16 +607,16 @@ export function KTabTable({
                           className="w-full border rounded px-2 py-1 text-sm bg-background"
                           value={newColKind}
                           onChange={(e) =>
-                            setNewColKind(e.target.value as KTabColumnViewKind)
+                            setNewColKind(
+                              e.target.value as KTabColumnViewKind,
+                            )
                           }
                         >
-                          {Object.entries(VIEW_KIND_LABELS).map(
-                            ([kind, label]) => (
-                              <option key={kind} value={kind}>
-                                {label}
-                              </option>
-                            ),
-                          )}
+                          {ADD_COL_TYPE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </select>
                         <Button
                           size="sm"
@@ -459,17 +640,30 @@ export function KTabTable({
                 </td>
                 {columns.map((col) => {
                   const Renderer = getCellRenderer(col.view_kind);
+                  const inner = (
+                    <Renderer
+                      value={row[col.name]}
+                      columnMeta={col}
+                      readonly={readonly}
+                      onCommit={(val) => commitCell(row, col, val)}
+                      onColumnChange={(patch) => updateColumn(col.name, patch)}
+                    />
+                  );
                   return (
                     <td
                       key={col.idx}
                       className="border px-0 py-0 overflow-hidden break-words"
                     >
-                      <Renderer
-                        value={row[col.name]}
-                        columnMeta={col}
-                        readonly={readonly}
-                        onCommit={(val) => commitCell(row, col, val)}
-                      />
+                      {readonly ? (
+                        inner
+                      ) : (
+                        <ContextMenu>
+                          <ContextMenuTrigger asChild>
+                            <div className="w-full h-full">{inner}</div>
+                          </ContextMenuTrigger>
+                          {cellContextMenu(row)}
+                        </ContextMenu>
+                      )}
                     </td>
                   );
                 })}
@@ -521,6 +715,83 @@ export function KTabTable({
               取消
             </Button>
             <Button onClick={handleRename}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Insert column dialog */}
+      <Dialog
+        open={insertColTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setInsertColTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              向{insertColTarget?.direction === "left" ? "左" : "后"}插入列
+            </DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="列名"
+            value={insertColName}
+            onChange={(e) => setInsertColName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleInsertColumn();
+            }}
+            autoFocus
+          />
+          <select
+            className="w-full border rounded px-2 py-1 text-sm bg-background"
+            value={insertColKind}
+            onChange={(e) =>
+              setInsertColKind(e.target.value as KTabColumnViewKind)
+            }
+          >
+            {ADD_COL_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setInsertColTarget(null)}
+            >
+              取消
+            </Button>
+            <Button onClick={handleInsertColumn}>插入</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete row confirmation dialog */}
+      <Dialog
+        open={deleteRowTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteRowTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            确定要删除此行吗？此操作无法撤销。
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteRowTarget(null)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                deleteRowTarget && handleDeleteRow(deleteRowTarget)
+              }
+            >
+              删除
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

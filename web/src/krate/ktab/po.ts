@@ -25,13 +25,14 @@ export const ktabViewToStoreKind = (
   switch (kind.toLowerCase()) {
     case "text":
     case "string":
+    case "multi_select":
+    case "progress":
       return "str";
     case "number":
     case "integer":
-      return "i64";
     case "float":
     case "decimal":
-      return "f64";
+      return "str";
     case "date":
     case "datetime":
       return "date";
@@ -66,45 +67,6 @@ export type KTabMeta = {
   real_table: boolean;
   tid: TID;
 };
-
-export type KTabDisplayAsGroup = {
-  group: string;
-  items: { viewKind: KTabColumnViewKind; label: string }[];
-};
-
-export const KTAB_DISPLAY_AS_MENU: KTabDisplayAsGroup[] = [
-  {
-    group: "文本",
-    items: [
-      { viewKind: "text", label: "Text" },
-      { viewKind: "string", label: "String" },
-    ],
-  },
-  {
-    group: "数字",
-    items: [
-      { viewKind: "number", label: "Number" },
-      { viewKind: "integer", label: "Integer" },
-      { viewKind: "decimal", label: "Decimal" },
-    ],
-  },
-  {
-    group: "日期",
-    items: [
-      { viewKind: "date", label: "日期" },
-      { viewKind: "datetime", label: "日期时间" },
-    ],
-  },
-  {
-    group: "其他",
-    items: [
-      { viewKind: "progress", label: "进度" },
-      { viewKind: "checkbox", label: "Checkbox" },
-      { viewKind: "multi_select", label: "枚举" },
-      { viewKind: "image", label: "图片" },
-    ],
-  },
-];
 
 export type KTabCell = {
   table_id: number;

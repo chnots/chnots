@@ -22,8 +22,21 @@ use super::{mapper::KTabMapper, *};
 
 impl KDb {
     async fn ktab_overwrite_cell(&self, cell: KTabCell) -> chin_tools::AResult<usize> {
-        macro_rules! overwrite {
+        macro_rules! overwrite_if_changed {
             ($table:tt, $c:expr, $v:expr) => {
+                let pkey = $table::pkey_cond($c.table_otid, $c.col_otid, $c.row_otid);
+                let ssb = SqlBuilder::read_all($table::TABLE).r#where(pkey);
+                let existing: Option<$table> = self
+                    .conn()
+                    .await?
+                    .qry_opt(ssb, |row| (&row).try_into())
+                    .await?;
+                if let Some(existing) = existing {
+                    if existing.cell_data == *$v {
+                        return Ok(0);
+                    }
+                }
+
                 let csql = SqlInserter::new($table::TABLE)
                     .field($table::TABLE_OTID, $c.table_otid)
                     .field($table::COL_OTID, $c.col_otid)
@@ -41,13 +54,13 @@ impl KDb {
 
         match &cell.cell_data {
             KTabStoreValue::Text(c) => {
-                overwrite!(KTabCellText, cell, c);
+                overwrite_if_changed!(KTabCellText, cell, c);
             }
             KTabStoreValue::Decimal(c) => {
-                overwrite!(KTabCellDecimal, cell, c);
+                overwrite_if_changed!(KTabCellDecimal, cell, c);
             }
             KTabStoreValue::Date(c) => {
-                overwrite!(KTabCellDate, cell, c);
+                overwrite_if_changed!(KTabCellDate, cell, c);
             }
         }
 

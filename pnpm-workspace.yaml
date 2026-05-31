@@ -2,6 +2,9 @@ packages:
   - web
   - tauri
 
+allowBuilds:
+  core-js: true
+
 catalog:
   "@codemirror/autocomplete": ^6.20.2
   "@codemirror/commands": ^6.10.3
