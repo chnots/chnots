@@ -28,7 +28,7 @@ macro_rules! sid_enum_to_generic {
     }};
 }
 
-pub(crate) trait SidTableSupport: KSerde + Curd {
+pub trait SidTableSupport: KSerde + Curd {
     fn get_sid_enum() -> SidTableEnum;
 
     fn table_name() -> &'static str;

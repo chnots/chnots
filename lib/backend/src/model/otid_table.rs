@@ -86,7 +86,7 @@ impl<E, T> Deref for OtidWithGeneric<E, T> {
     }
 }
 
-pub(crate) trait OtidTableSupport: KSerde + Curd {
+pub trait OtidTableSupport: KSerde + Curd {
     fn get_otid_enum() -> OtidTableEnum;
     fn table_name(hist: bool) -> &'static str;
     fn all_columns() -> &'static [&'static str];
