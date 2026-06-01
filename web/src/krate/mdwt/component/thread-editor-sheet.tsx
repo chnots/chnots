@@ -1,5 +1,7 @@
-import { X } from "lucide-react";
+import { Expand, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { TID } from "@/lib/id_util";
+import { RoutePaths } from "@/router";
 import { Button } from "@/common/component/ui/button";
 import { ChnotKind } from "@/krate/chnot/po";
 import ExcalidrawChnot from "@/krate/chnot/component/rich-chnot/excalidraw";
@@ -28,6 +30,12 @@ const ThreadEditorPanel = ({
   onClose: () => void;
   onSaved: () => void;
 }) => {
+  const navigate = useNavigate();
+
+  const handleFullscreen = () => {
+    navigate(`${RoutePaths.Chnots}?otid=${item.otid}`);
+  };
+
   const handlePostSave = async (_arg: PostSaveArg) => {
     onSaved();
   };
@@ -65,9 +73,19 @@ const ThreadEditorPanel = ({
         <span className="text-sm font-medium">
           {KIND_LABELS[item.kind] ?? item.kind}
         </span>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleFullscreen}
+            title="Open fullscreen"
+          >
+            <Expand className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="size-4" />
+          </Button>
+        </div>
       </div>
       <div className="flex-1 min-h-0">
         {renderEditor()}

@@ -24,6 +24,8 @@ import {
 import { fetchExcalidraw } from "@/krate/graph/excalidraw/service";
 import { fetchMindExilir } from "@/krate/graph/mind-elixir/service";
 import { ktabMetaFetch } from "@/krate/ktab/service";
+import { llmchatSessionRecordFetch } from "@/krate/llmchat/service";
+import { buildLLMChatPreviewData } from "@/krate/mdwt/component/llmchat-inline-preview";
 import { tidToDate } from "@/lib/date-utils";
 import { chnotMetaCommit, chnotThreadMetaFetch } from "../../service";
 import { ChnotKind } from "../../po";
@@ -118,6 +120,16 @@ const MdwtChnot = ({
             try {
               const metaRsp = await ktabMetaFetch({ table_id: childOtid });
               if (metaRsp.meta) item.kindData = metaRsp.meta;
+            } catch {}
+          } else if (threadMeta.meta.kind === ChnotKind.LLMChat) {
+            try {
+              const rsp = await llmchatSessionRecordFetch({
+                session_otid: childOtid,
+                include_hist: true,
+              });
+              if (rsp.session && rsp.records) {
+                item.kindData = buildLLMChatPreviewData(rsp);
+              }
             } catch {}
           }
 
@@ -224,6 +236,16 @@ const MdwtChnot = ({
           try {
             const metaRsp = await ktabMetaFetch({ table_id: childOtid });
             if (metaRsp.meta) item.kindData = metaRsp.meta;
+          } catch {}
+        } else if (kind === ChnotKind.LLMChat) {
+          try {
+            const rsp = await llmchatSessionRecordFetch({
+              session_otid: childOtid,
+              include_hist: true,
+            });
+            if (rsp.session && rsp.records) {
+              item.kindData = buildLLMChatPreviewData(rsp);
+            }
           } catch {}
         }
 

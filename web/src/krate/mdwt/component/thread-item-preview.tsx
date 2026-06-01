@@ -7,6 +7,8 @@ import type { KTabMeta } from "@/krate/ktab/po";
 import type { TID } from "@/lib/id_util";
 
 import KTabInlineWidget from "./ktab-inline-widget";
+import LLMChatInlineWidget from "./llmchat-inline-preview";
+import type { LLMChatPreviewData } from "./llmchat-inline-preview";
 import { MarkdownViewer } from "./markdown-viewer";
 import type { ThreadWidgetItem } from "./thread-widget-extension";
 
@@ -29,6 +31,23 @@ const ThreadItemPreview = ({
       <KTabInlineWidget
         otid={item.otid}
         kindData={item.kindData as KTabMeta}
+        onItemClick={onClick}
+      />
+    );
+  }
+
+  if (item.kind === "llm_chat") {
+    if (!item.kindData) {
+      return (
+        <div className="cm-thread-item-preview rounded border p-3 my-2 mx-1">
+          {item.mdwtContent && <MarkdownViewer content={item.mdwtContent} />}
+        </div>
+      );
+    }
+    return (
+      <LLMChatInlineWidget
+        otid={item.otid}
+        kindData={item.kindData as LLMChatPreviewData}
         onItemClick={onClick}
       />
     );

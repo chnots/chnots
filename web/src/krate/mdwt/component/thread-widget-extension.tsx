@@ -70,7 +70,7 @@ class ThreadItemWidget extends WidgetType {
   ignoreEvent(event: Event): boolean {
     if (
       (event instanceof KeyboardEvent || event instanceof MouseEvent) &&
-      this.item.kind === "ktabv1"
+      (this.item.kind === "ktabv1" || this.item.kind === "llm_chat")
     ) {
       return true;
     }
