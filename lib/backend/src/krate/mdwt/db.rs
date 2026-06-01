@@ -593,7 +593,7 @@ impl MdwtMapper for KDb {
         struct ChildBlock {
             otid: TID,
             korder: i64,
-            heading_level: i64,
+            heading_level: i32,
         }
         let korder_name = cto.korder().field_name();
         let hl_name = cto.heading_level().field_name();
@@ -603,6 +603,7 @@ impl MdwtMapper for KDb {
                     .wheres(cto.thread_otid().v_eq(thread_otid))
                     .build(),
                 move |r| {
+                    info!(">>>>>>>>>>>>>>>>>>>>>> {}", hl_name);
                     Ok(ChildBlock {
                         otid: r.try_get(&cto.otid().field_name())?,
                         korder: r.try_get(&korder_name)?,

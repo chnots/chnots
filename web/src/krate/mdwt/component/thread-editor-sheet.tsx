@@ -17,7 +17,6 @@ const KIND_LABELS: Record<ChnotKind, string> = {
   [ChnotKind.KTab]: "Table",
   [ChnotKind.LLMChat]: "LLM Chat",
   [ChnotKind.MindMapV1]: "Mind Map",
-  [ChnotKind.ThreadV1]: "Thread",
 };
 
 const ThreadEditorPanel = ({

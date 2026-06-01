@@ -21,7 +21,6 @@ pub enum ChnotKind {
     KTabV1,
     LLMChat,
     MindMapV1,
-    ThreadV1,
 }
 
 impl ChnotKind {
@@ -33,7 +32,6 @@ impl ChnotKind {
             ChnotKind::KTabV1 => "ktabv1",
             ChnotKind::LLMChat => "llm_chat",
             ChnotKind::MindMapV1 => "mindmapv1",
-            ChnotKind::ThreadV1 => "threadv1",
         }
     }
 }

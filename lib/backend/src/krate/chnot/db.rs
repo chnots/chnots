@@ -386,7 +386,7 @@ impl ChnotMapper for KDb {
                 }
             }),
             if !search_every_chnot {
-                Wheres::or([cto.otid().v_is_null(), cm.kind().v_eq(ChnotKind::ThreadV1)])
+                Wheres::or([cto.otid().v_is_null()])
             } else {
                 Wheres::None
             },
