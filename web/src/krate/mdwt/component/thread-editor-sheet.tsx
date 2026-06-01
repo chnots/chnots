@@ -9,6 +9,7 @@ import MdwtChnot from "@/krate/chnot/component/rich-chnot/mdwt";
 import MindMapChnot from "@/krate/chnot/component/rich-chnot/mindmap";
 import TableChnot from "@/krate/chnot/component/rich-chnot/table";
 import type { PostSaveArg } from "@/krate/chnot/component/rich-chnot/types";
+import { chnotHeadStore } from "@/krate/chnot/store";
 import { useMdwtThreadStore } from "./mdwt-thread-store";
 
 const KIND_LABELS: Record<ChnotKind, string> = {
@@ -32,6 +33,10 @@ const ThreadEditorPanel = ({
   const setFullscreenItem = useMdwtThreadStore((s) => s.setFullscreenItem);
 
   const handleFullscreen = () => {
+    // Clear parent's header actions so only the child chnot's appear
+    for (const a of chnotHeadStore.getState().headerActions) {
+      chnotHeadStore.getState().unregisterHeaderActions(a.key);
+    }
     setFullscreenItem({ otid: item.otid, kind: item.kind });
     onClose();
   };
