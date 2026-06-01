@@ -102,6 +102,11 @@ const threadDecorations = StateField.define<DecorationSet>({
         return buildThreadDecorations(tr.state);
       }
     }
+    // Rebuild decorations when selection changes, so widgets that
+    // overlap the selection are hidden until the selection is cleared.
+    if (tr.selection) {
+      return buildThreadDecorations(tr.state);
+    }
     return decos.map(tr.changes);
   },
   provide: (f) => EditorView.decorations.from(f),
@@ -121,6 +126,12 @@ function findOtidSectionEnd(state: EditorState, headingLine: number): number {
   return state.doc.line(lineCount).to;
 }
 
+function overlapsSelection(state: EditorState, from: number, to: number): boolean {
+  return state.selection.ranges.some(
+    (r) => !r.empty && r.from < to && r.to > from,
+  );
+}
+
 function buildThreadDecorations(state: EditorState): DecorationSet {
   const data = state.field(threadDataField, false) as
     | ThreadWidgetData
@@ -131,6 +142,7 @@ function buildThreadDecorations(state: EditorState): DecorationSet {
   const endPos = state.doc.length;
   const widgets: import("@codemirror/state").Range<Decoration>[] = [];
   const inlineItems: ThreadWidgetItem[] = [];
+  const hasSelection = state.selection.ranges.some((r) => !r.empty);
 
   for (const item of data.items) {
     if (item.kind === ChnotKind.MDWT) continue;
@@ -140,13 +152,21 @@ function buildThreadDecorations(state: EditorState): DecorationSet {
     for (let i = 1; i <= lineCount; i++) {
       const line = state.doc.line(i);
       if (line.text.includes(`[[${otidStr}]]`)) {
-        const pos = findOtidSectionEnd(state, i);
+        const sectionStart = line.from;
+        const sectionEnd = findOtidSectionEnd(state, i);
+
+        // Skip this widget if the selection overlaps its section
+        if (hasSelection && overlapsSelection(state, sectionStart, sectionEnd)) {
+          found = true;
+          break;
+        }
+
         widgets.push(
           Decoration.widget({
             widget: new ThreadItemWidget(item, data.onItemClick),
             block: true,
             side: 1,
-          }).range(pos),
+          }).range(sectionEnd),
         );
         found = true;
         break;

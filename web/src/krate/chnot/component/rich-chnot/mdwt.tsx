@@ -488,51 +488,51 @@ const MdwtChnot = ({
     [setFullscreenItem],
   );
 
-  return previewMode ? (
-    renderEditor(previewContent, true)
-  ) : readonly ? (
-    renderEditor(cachedContentRef.current ?? "", true)
-  ) : (
-    content !== undefined && (
-      <>
-        <div
-          className="flex w-full h-full min-h-0 break-all"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-              directlySave();
-            }
-          }}
-          role="none"
-        >
+  return (
+    <>
+      {previewMode ? (
+        renderEditor(previewContent, true)
+      ) : readonly ? (
+        renderEditor(cachedContentRef.current ?? "", true)
+      ) : (
+        content !== undefined && (
           <div
-            className="flex-1 min-w-0"
+            className="flex w-full h-full min-h-0 break-all"
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                directlySave();
+              }
+            }}
+            role="none"
           >
-            <MdwtEditorMemo
-              placeholder={placeholder}
-              content={content}
-              onContentChange={handleContentChange}
-              foldGutter={false}
-              extraExtensions={[threadExtension]}
-              headingCompletionConfig={headingCompletionConfig}
-              setCodeMirrorRef={(ref) => {
-                cmRefObj.current = ref;
-              }}
-            />
+            <div className="flex-1 min-w-0">
+              <MdwtEditorMemo
+                placeholder={placeholder}
+                content={content}
+                onContentChange={handleContentChange}
+                foldGutter={false}
+                extraExtensions={[threadExtension]}
+                headingCompletionConfig={headingCompletionConfig}
+                setCodeMirrorRef={(ref) => {
+                  cmRefObj.current = ref;
+                }}
+              />
+            </div>
+            {selectedItem && (
+              <ThreadEditorPanel
+                item={selectedItem}
+                onClose={() => {
+                  setSelectedItem(undefined);
+                  void refreshThreadWidgets();
+                }}
+                onSaved={() => {}}
+              />
+            )}
           </div>
-          {selectedItem && (
-            <ThreadEditorPanel
-              item={selectedItem}
-              onClose={() => {
-                setSelectedItem(undefined);
-                void refreshThreadWidgets();
-              }}
-              onSaved={() => {}}
-            />
-          )}
-        </div>
-        {fullscreenItem && renderFullscreenEditor(fullscreenItem)}
-      </>
-    )
+        )
+      )}
+      {fullscreenItem && renderFullscreenEditor(fullscreenItem)}
+    </>
   );
 };
 
