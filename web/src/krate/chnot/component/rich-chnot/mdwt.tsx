@@ -12,6 +12,12 @@ import {
 } from "@/krate/mdwt/component/thread-widget-extension";
 import ThreadEditorPanel from "@/krate/mdwt/component/thread-editor-sheet";
 import { useMdwtThreadStore } from "@/krate/mdwt/component/mdwt-thread-store";
+import type { MdwtThreadItem } from "@/krate/mdwt/component/mdwt-thread-store";
+import ExcalidrawChnot from "./excalidraw";
+import KFileChnot from "./kfile";
+import LLMChatChnot from "./llmchat";
+import MindMapChnot from "./mindmap";
+import TableChnot from "./table";
 import type { MdwtCommitReq } from "@/krate/mdwt/dto";
 import {
   mdwtCommit,
@@ -68,6 +74,8 @@ const MdwtChnot = ({
   // Thread widget state
   const selectedItem = useMdwtThreadStore((s) => s.selectedItem);
   const setSelectedItem = useMdwtThreadStore((s) => s.setSelectedItem);
+  const fullscreenItem = useMdwtThreadStore((s) => s.fullscreenItem);
+  const setFullscreenItem = useMdwtThreadStore((s) => s.setFullscreenItem);
   const threadItemsRef = useRef<ThreadWidgetItem[]>([]);
   const threadExtension = useMemo(() => threadWidgetExtension(), []);
   const threadLoadTriggered = useRef(false);
@@ -447,47 +455,83 @@ const MdwtChnot = ({
     />
   );
 
+  const renderFullscreenEditor = useCallback(
+    (item: MdwtThreadItem) => {
+      const commonProps = {
+        otid: item.otid,
+        readonly: false,
+        fullscreen: true,
+        onSetFullscreen: (flag: boolean) => {
+          if (!flag) setFullscreenItem(undefined);
+        },
+        onPostSave: async () => {},
+        disableHeaderActions: false,
+      };
+
+      switch (item.kind) {
+        case ChnotKind.MDWT:
+          return <MdwtChnot {...commonProps} />;
+        case ChnotKind.LLMChat:
+          return <LLMChatChnot {...commonProps} />;
+        case ChnotKind.ExcalidrawV1:
+          return <ExcalidrawChnot {...commonProps} showEditWhenEmpty />;
+        case ChnotKind.KTab:
+          return <TableChnot {...commonProps} />;
+        case ChnotKind.KFileV1:
+          return <KFileChnot {...commonProps} />;
+        case ChnotKind.MindMapV1:
+          return <MindMapChnot {...commonProps} showEditWhenEmpty />;
+        default:
+          return null;
+      }
+    },
+    [setFullscreenItem],
+  );
+
   return previewMode ? (
     renderEditor(previewContent, true)
   ) : readonly ? (
     renderEditor(cachedContentRef.current ?? "", true)
   ) : (
     content !== undefined && (
-      <div
-        className="flex w-full h-full min-h-0 break-all"
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            directlySave();
-          }
-        }}
-        role="none"
-      >
+      <>
         <div
-          className="flex-1 min-w-0"
+          className="flex w-full h-full min-h-0 break-all"
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+              directlySave();
+            }
+          }}
+          role="none"
         >
-          <MdwtEditorMemo
-            placeholder={placeholder}
-            content={content}
-            onContentChange={handleContentChange}
-            foldGutter={false}
-            extraExtensions={[threadExtension]}
-            headingCompletionConfig={headingCompletionConfig}
-            setCodeMirrorRef={(ref) => {
-              cmRefObj.current = ref;
-            }}
-          />
+          <div
+            className="flex-1 min-w-0"
+          >
+            <MdwtEditorMemo
+              placeholder={placeholder}
+              content={content}
+              onContentChange={handleContentChange}
+              foldGutter={false}
+              extraExtensions={[threadExtension]}
+              headingCompletionConfig={headingCompletionConfig}
+              setCodeMirrorRef={(ref) => {
+                cmRefObj.current = ref;
+              }}
+            />
+          </div>
+          {selectedItem && (
+            <ThreadEditorPanel
+              item={selectedItem}
+              onClose={() => {
+                setSelectedItem(undefined);
+                void refreshThreadWidgets();
+              }}
+              onSaved={() => {}}
+            />
+          )}
         </div>
-        {selectedItem && (
-          <ThreadEditorPanel
-            item={selectedItem}
-            onClose={() => {
-              setSelectedItem(undefined);
-              void refreshThreadWidgets();
-            }}
-            onSaved={() => {}}
-          />
-        )}
-      </div>
+        {fullscreenItem && renderFullscreenEditor(fullscreenItem)}
+      </>
     )
   );
 };

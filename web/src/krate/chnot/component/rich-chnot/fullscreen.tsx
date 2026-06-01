@@ -1,4 +1,4 @@
-import { Fullscreen as FullscreenIcon } from "lucide-react";
+import { Minimize2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/common/component/ui/button";
 import { useChnotStore } from "../../store";
@@ -17,8 +17,12 @@ const Fullscreen = ({
   });
 
   return (
-    <div className="w-screen h-screen z-50 flex flex-col fixed bottom-0 left-0 m-0 p-0 bg-background">
-      <div className="w-full flex items-center justify-end gap-1 border-b px-2 py-1">
+    <div
+      className="inset-0 z-50 flex flex-col fixed bg-background"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="flex items-center justify-end gap-1 border-b px-2 py-1 shrink-0">
         {headerActions.map((ha) => (
           <div key={ha.key}>{ha.actions}</div>
         ))}
@@ -27,12 +31,13 @@ const Fullscreen = ({
             variant="ghost"
             size="icon"
             onClick={() => onSetFullscreen(false)}
+            title="Exit fullscreen"
           >
-            <FullscreenIcon />
+            <Minimize2 className="size-4" />
           </Button>
         )}
       </div>
-      <div className="flex-1 min-h-0 w-full overflow-auto p-2">{children}</div>
+      <div className="flex-1 min-h-0 overflow-auto p-2">{children}</div>
     </div>
   );
 };

@@ -1,7 +1,5 @@
 import { Expand, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import type { TID } from "@/lib/id_util";
-import { RoutePaths } from "@/router";
 import { Button } from "@/common/component/ui/button";
 import { ChnotKind } from "@/krate/chnot/po";
 import ExcalidrawChnot from "@/krate/chnot/component/rich-chnot/excalidraw";
@@ -11,6 +9,7 @@ import MdwtChnot from "@/krate/chnot/component/rich-chnot/mdwt";
 import MindMapChnot from "@/krate/chnot/component/rich-chnot/mindmap";
 import TableChnot from "@/krate/chnot/component/rich-chnot/table";
 import type { PostSaveArg } from "@/krate/chnot/component/rich-chnot/types";
+import { useMdwtThreadStore } from "./mdwt-thread-store";
 
 const KIND_LABELS: Record<ChnotKind, string> = {
   [ChnotKind.MDWT]: "Markdown",
@@ -30,10 +29,11 @@ const ThreadEditorPanel = ({
   onClose: () => void;
   onSaved: () => void;
 }) => {
-  const navigate = useNavigate();
+  const setFullscreenItem = useMdwtThreadStore((s) => s.setFullscreenItem);
 
   const handleFullscreen = () => {
-    navigate(`${RoutePaths.Chnots}?otid=${item.otid}`);
+    setFullscreenItem({ otid: item.otid, kind: item.kind });
+    onClose();
   };
 
   const handlePostSave = async (_arg: PostSaveArg) => {

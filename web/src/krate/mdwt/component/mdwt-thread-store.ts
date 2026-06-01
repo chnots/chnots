@@ -4,18 +4,23 @@ import { create } from "zustand";
 import type { ChnotKind } from "@/krate/chnot/po";
 import type { TID } from "@/lib/id_util";
 
-type SelectedItem = { otid: TID; kind: ChnotKind };
+export type MdwtThreadItem = { otid: TID; kind: ChnotKind };
 
 type State = {
-  selectedItem: SelectedItem | undefined;
+  selectedItem: MdwtThreadItem | undefined;
+  fullscreenItem: MdwtThreadItem | undefined;
 };
 
 const getDefaultState = (): State => ({
   selectedItem: undefined,
+  fullscreenItem: undefined,
 });
 
 export const useMdwtThreadStore = create(
   combine(getDefaultState(), (set) => ({
-    setSelectedItem: (item: SelectedItem | undefined) => set({ selectedItem: item }),
+    setSelectedItem: (item: MdwtThreadItem | undefined) =>
+      set({ selectedItem: item }),
+    setFullscreenItem: (item: MdwtThreadItem | undefined) =>
+      set({ fullscreenItem: item }),
   })),
 );
