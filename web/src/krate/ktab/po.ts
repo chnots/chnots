@@ -65,6 +65,7 @@ export type KTabMeta = {
   table_comment: Varchar<1000>;
   update_time?: Date;
   real_table: boolean;
+  wrap_enabled?: boolean;
   tid: TID;
 };
 

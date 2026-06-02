@@ -48,6 +48,7 @@ pub struct KTabMeta {
     pub table_comment: Varchar<1000>,
     pub update_time: Option<DateTime<FixedOffset>>,
     pub real_table: bool,
+    pub wrap_enabled: Option<bool>,
 
     #[gts_unique]
     #[gts_type = "i64"]
