@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { memo, useState, useMemo, useEffect } from "react";
 import { CheckIcon, ChevronDownIcon, PlusIcon } from "lucide-react";
 import {
   Popover,
@@ -33,24 +33,37 @@ function getOptions(comment: string): string[] {
     .filter(Boolean);
 }
 
-export const MultiSelectCell = ({
+export const MultiSelectCell = memo(function MultiSelectCell({
   value,
   columnMeta,
   readonly,
+  isActive,
+  onActivate,
+  onNavigate,
   onCommit,
   onColumnChange,
-}: CellRendererProps) => {
+}: CellRendererProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string[]>([]);
   const [newOption, setNewOption] = useState("");
   const [localAdds, setLocalAdds] = useState<string[]>([]);
+
+  // Sync popover with isActive
+  useEffect(() => {
+    if (isActive && !readonly) {
+      setDraft([...parseTags(value)]);
+      setOpen(true);
+    } else if (!isActive) {
+      setOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   const propOptions = useMemo(
     () => getOptions(columnMeta.comment),
     [columnMeta.comment],
   );
 
-  // Options from localAdds that haven't yet been persisted to propOptions
   const pendingOptions = useMemo(
     () => localAdds.filter((a) => !propOptions.includes(a)),
     [localAdds, propOptions],
@@ -94,6 +107,18 @@ export const MultiSelectCell = ({
     setNewOption("");
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      handleOpenChange(false);
+      onNavigate(e.shiftKey ? "prev" : "next");
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleOpenChange(false);
+      onNavigate("down");
+    }
+  };
+
   if (readonly) {
     return (
       <div className="flex flex-wrap gap-1 px-1 py-0.5 min-h-[28px]">
@@ -109,7 +134,11 @@ export const MultiSelectCell = ({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <div className="flex items-center gap-1 px-1 py-0.5 min-h-[28px] cursor-pointer hover:bg-accent/30">
+        <div
+          className="flex items-center gap-1 px-1 py-0.5 min-h-[28px] cursor-pointer hover:bg-accent/30"
+          onClick={() => onActivate()}
+          onKeyDown={handleKeyDown}
+        >
           <div className="flex flex-wrap gap-1 flex-1 min-w-0">
             {selected.length === 0 && (
               <span className="text-muted-foreground text-xs px-1">—</span>
@@ -123,7 +152,11 @@ export const MultiSelectCell = ({
           <ChevronDownIcon className="h-3 w-3 text-muted-foreground shrink-0" />
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-52 p-1" align="start">
+      <PopoverContent
+        className="w-52 p-1"
+        align="start"
+        onKeyDown={handleKeyDown}
+      >
         {options.length > 0 && (
           <div className="max-h-48 overflow-auto">
             {options.map((opt) => {
@@ -166,4 +199,4 @@ export const MultiSelectCell = ({
       </PopoverContent>
     </Popover>
   );
-};
+});

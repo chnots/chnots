@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/common/component/ui/calendar";
 import {
@@ -10,14 +10,26 @@ import type { CellRendererProps } from "./types";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-export const DateCell = ({
+export const DateCell = memo(function DateCell({
   value,
   columnMeta,
   readonly,
+  isActive,
+  onActivate,
+  onNavigate,
   onCommit,
-}: CellRendererProps) => {
+}: CellRendererProps) {
   const [open, setOpen] = useState(false);
   const isDatetime = columnMeta.view_kind === "datetime";
+
+  // Sync popover open state with isActive
+  useEffect(() => {
+    if (isActive && !readonly) {
+      setOpen(true);
+    } else if (!isActive) {
+      setOpen(false);
+    }
+  }, [isActive, readonly]);
 
   let dateValue: Date | undefined;
   if (value instanceof Date) {
@@ -74,17 +86,45 @@ export const DateCell = ({
     ? `${pad2(dateValue.getHours())}:${pad2(dateValue.getMinutes())}`
     : "00:00";
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      // Popover was dismissed, navigate away if this cell is still active
+      // The isActive will be cleared by the parent
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      setOpen(false);
+      onNavigate(e.shiftKey ? "prev" : "next");
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      setOpen(false);
+      onNavigate("down");
+    }
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <div className="flex items-center gap-1 px-2 py-1 min-h-[28px] cursor-pointer hover:bg-accent/30">
+        <div
+          className="flex items-center gap-1 px-2 py-1 min-h-[28px] cursor-pointer hover:bg-accent/30"
+          onClick={() => onActivate()}
+          onKeyDown={handleKeyDown}
+        >
           <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className={display ? "" : "text-muted-foreground"}>
             {display || (isDatetime ? "选择日期时间" : "选择日期")}
           </span>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent
+        className="w-auto p-0"
+        align="start"
+        onKeyDown={handleKeyDown}
+      >
         <Calendar
           mode="single"
           selected={dateValue}
@@ -105,4 +145,4 @@ export const DateCell = ({
       </PopoverContent>
     </Popover>
   );
-};
+});

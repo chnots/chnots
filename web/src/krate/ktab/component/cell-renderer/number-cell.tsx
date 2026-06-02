@@ -1,10 +1,32 @@
-import { useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect, useCallback } from "react";
 import type { CellRendererProps } from "./types";
 
-export const NumberCell = ({ value, readonly, onCommit }: CellRendererProps) => {
+export const NumberCell = memo(function NumberCell({
+  value,
+  readonly,
+  isActive,
+  onActivate,
+  onNavigate,
+  onCommit,
+}: CellRendererProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  useEffect(() => {
+    if (isActive && !readonly) {
+      setDraft(String(valueRef.current ?? ""));
+      setEditing(true);
+    } else if (!isActive && editing) {
+      if (draft !== String(valueRef.current ?? "")) {
+        commitValue(draft);
+      }
+      setEditing(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -13,16 +35,23 @@ export const NumberCell = ({ value, readonly, onCommit }: CellRendererProps) => 
     }
   }, [editing]);
 
+  const commitValue = (v: string) => {
+    if (v !== "" && !isNaN(Number(v))) {
+      onCommit(v);
+    } else if (v === "") {
+      onCommit("");
+    }
+  };
+
+  const handleClick = useCallback(() => {
+    if (!readonly) onActivate();
+  }, [readonly, onActivate]);
+
   if (readonly || !editing) {
     return (
       <div
         className="px-2 py-1 min-h-[28px] cursor-default tabular-nums"
-        onClick={() => {
-          if (!readonly) {
-            setDraft(String(value ?? ""));
-            setEditing(true);
-          }
-        }}
+        onClick={handleClick}
       >
         {String(value ?? "")}
       </div>
@@ -43,23 +72,25 @@ export const NumberCell = ({ value, readonly, onCommit }: CellRendererProps) => 
         }
       }}
       onBlur={() => {
-        if (draft !== "" && !isNaN(Number(draft))) {
-          onCommit(draft);
-        } else if (draft === "") {
-          onCommit("");
-        }
+        commitValue(draft);
         setEditing(false);
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
-          if (draft !== "" && !isNaN(Number(draft))) {
-            onCommit(draft);
-          }
+          e.preventDefault();
+          commitValue(draft);
           setEditing(false);
+          onNavigate("down");
+        } else if (e.key === "Tab") {
+          e.preventDefault();
+          commitValue(draft);
+          setEditing(false);
+          onNavigate(e.shiftKey ? "prev" : "next");
         } else if (e.key === "Escape") {
+          onCommit(String(valueRef.current ?? ""));
           setEditing(false);
         }
       }}
     />
   );
-};
+});

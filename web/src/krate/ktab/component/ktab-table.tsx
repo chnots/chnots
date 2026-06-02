@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, type FC } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef, type FC } from "react";
 import {
   PlusIcon,
   ArrowLeftRightIcon,
@@ -16,6 +16,7 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CopyIcon,
+  WrapTextIcon,
 } from "lucide-react";
 import { Button } from "@/common/component/ui/button";
 import { Input } from "@/common/component/ui/input";
@@ -45,6 +46,7 @@ import { ktabCellCommit } from "../service";
 import { ktabToStoreValue } from "../dto";
 import type { KTabViewCell } from "../dto";
 import { getCellRenderer } from "./cell-renderer";
+import type { NavigateDirection } from "./cell-renderer/types";
 import { exportCsv } from "./csv-export";
 
 export type KTabRowData = {
@@ -116,6 +118,14 @@ export function KTabTable({
   const [transposed, setTransposed] = useState(false);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const [activeCell, setActiveCell] = useState<{
+    rowIdx: number;
+    colName: string;
+  } | null>(null);
+  const [wrapEnabled, setWrapEnabled] = useState(
+    () => !!tableMeta.wrap_enabled,
+  );
+  const pendingRowTidsRef = useRef<Set<number>>(new Set());
   const [addColumnOpen, setAddColumnOpen] = useState(false);
   const [newColName, setNewColName] = useState("");
   const [newColKind, setNewColKind] = useState<KTabColumnViewKind>("text");
@@ -151,13 +161,46 @@ export function KTabTable({
 
   const commitCell = useCallback(
     async (row: KTabRowData, col: KTabColumnMeta, value: unknown) => {
-      const storeValue = ktabToStoreValue(col.view_kind, value);
-      const cell: KTabViewCell = {
-        row_tid: row.row_tid,
-        column_name: col.name,
-        value: storeValue,
-      };
-      await ktabCellCommit({ table_id: tableMeta.otid, cells: [cell] });
+      const cells: KTabViewCell[] = [];
+
+      if (pendingRowTidsRef.current.has(row.row_tid)) {
+        // Batch commit all default values + the edited cell
+        for (const c of columns) {
+          let cellValue: unknown;
+          if (c.name === col.name) {
+            cellValue = value;
+          } else if (c.view_kind === "date" && row[c.name] != null) {
+            cellValue = row[c.name];
+          } else if (c.view_kind === "datetime" && row[c.name] != null) {
+            cellValue = row[c.name];
+          } else {
+            continue; // skip empty/non-default columns
+          }
+          const storeValue = ktabToStoreValue(c.view_kind, cellValue);
+          if (storeValue) {
+            cells.push({
+              row_tid: row.row_tid,
+              column_name: c.name,
+              value: storeValue,
+            });
+          }
+        }
+        pendingRowTidsRef.current.delete(row.row_tid);
+      } else {
+        const storeValue = ktabToStoreValue(col.view_kind, value);
+        if (storeValue) {
+          cells.push({
+            row_tid: row.row_tid,
+            column_name: col.name,
+            value: storeValue,
+          });
+        }
+      }
+
+      if (cells.length > 0) {
+        await ktabCellCommit({ table_id: tableMeta.otid, cells });
+      }
+
       const stored = value instanceof Date ? value.toISOString() : value;
       setRows((prev) =>
         prev.map((r) =>
@@ -165,7 +208,7 @@ export function KTabTable({
         ),
       );
     },
-    [tableMeta.otid],
+    [tableMeta.otid, columns],
   );
 
   const updateColumn = useCallback(
@@ -336,12 +379,15 @@ export function KTabTable({
   // --- Row operations ---
 
   const handleAddRow = useCallback(() => {
-    setRows((prev) => [...prev, makeNewRow(columns)]);
+    const newRow = makeNewRow(columns);
+    pendingRowTidsRef.current.add(newRow.row_tid);
+    setRows((prev) => [...prev, newRow]);
   }, [columns]);
 
   const handleInsertRow = useCallback(
     (targetRow: KTabRowData, position: "above" | "below") => {
       const newRow = makeNewRow(columns);
+      pendingRowTidsRef.current.add(newRow.row_tid);
       setRows((prev) => {
         const idx = prev.findIndex((r) => r.row_tid === targetRow.row_tid);
         const insertAt = position === "above" ? idx : idx + 1;
@@ -350,6 +396,76 @@ export function KTabTable({
     },
     [columns],
   );
+
+  // --- Navigation ---
+
+  const getColumnNames = useCallback(
+    () => columns.map((c) => c.name),
+    [columns],
+  );
+
+  const navigateCell = useCallback(
+    (fromRowIdx: number, fromColName: string, dir: NavigateDirection) => {
+      const colNames = getColumnNames();
+      const colIdx = colNames.indexOf(fromColName);
+      if (colIdx === -1) return;
+
+      let nextRowIdx = fromRowIdx;
+      let nextColIdx = colIdx;
+
+      switch (dir) {
+        case "next": // Tab
+          nextColIdx = colIdx + 1;
+          if (nextColIdx >= colNames.length) {
+            nextColIdx = 0;
+            nextRowIdx = fromRowIdx + 1;
+          }
+          break;
+        case "prev": // Shift+Tab
+          nextColIdx = colIdx - 1;
+          if (nextColIdx < 0) {
+            nextColIdx = colNames.length - 1;
+            nextRowIdx = fromRowIdx - 1;
+          }
+          break;
+        case "down": // Enter
+          nextColIdx = colIdx; // Stay in same column
+          nextRowIdx = fromRowIdx + 1;
+          break;
+        case "up": // Shift+Enter
+          nextColIdx = colIdx; // Stay in same column
+          nextRowIdx = fromRowIdx - 1;
+          break;
+      }
+
+      if (nextRowIdx < 0) {
+        setActiveCell(null);
+        return;
+      }
+
+      // If past the last row, create a new one
+      if (nextRowIdx >= rows.length) {
+        const newRow = makeNewRow(columns);
+        pendingRowTidsRef.current.add(newRow.row_tid);
+        setRows((prev) => [...prev, newRow]);
+      }
+
+      setActiveCell({
+        rowIdx: nextRowIdx,
+        colName: colNames[nextColIdx],
+      });
+    },
+    [columns, getColumnNames, rows.length],
+  );
+
+  // --- Wrap toggle ---
+
+  const toggleWrap = useCallback(async () => {
+    const next = !wrapEnabled;
+    setWrapEnabled(next);
+    const newMeta = { ...tableMeta, wrap_enabled: next };
+    await onMetaChange(newMeta);
+  }, [wrapEnabled, tableMeta, onMetaChange]);
 
   const handleCopyCell = useCallback(async (value: unknown) => {
     await navigator.clipboard.writeText(String(value ?? ""));
@@ -480,6 +596,10 @@ export function KTabTable({
         <ArrowLeftRightIcon className="h-3.5 w-3.5 mr-1" />
         {untranspose ? "Untranspose" : "Transpose"}
       </Button>
+      <Button variant="ghost" size="sm" onClick={toggleWrap}>
+        <WrapTextIcon className="h-3.5 w-3.5 mr-1" />
+        {wrapEnabled ? "No Wrap" : "Wrap"}
+      </Button>
       <Button variant="ghost" size="sm" onClick={handleExport}>
         <DownloadIcon className="h-3.5 w-3.5 mr-1" />
         CSV
@@ -489,6 +609,14 @@ export function KTabTable({
 
   const compactExport = (
     <div className="flex justify-end px-2 py-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6"
+        onClick={toggleWrap}
+      >
+        <WrapTextIcon className="h-3.5 w-3.5" />
+      </Button>
       <Button
         variant="ghost"
         size="icon"
@@ -642,20 +770,46 @@ export function KTabTable({
                 </td>
                 {columns.map((col) => {
                   const Renderer = getCellRenderer(col.view_kind);
+                  const isActive =
+                    activeCell?.rowIdx === rowIdx &&
+                    activeCell?.colName === col.name;
                   const inner = (
                     <Renderer
                       value={row[col.name]}
                       columnMeta={col}
                       readonly={readonly}
+                      isActive={isActive}
+                      onActivate={() =>
+                        setActiveCell({
+                          rowIdx,
+                          colName: col.name,
+                        })
+                      }
+                      onNavigate={(dir) =>
+                        navigateCell(rowIdx, col.name, dir)
+                      }
                       onCommit={(val) => commitCell(row, col, val)}
-                      onColumnChange={(patch) => updateColumn(col.name, patch)}
+                      onColumnChange={(patch) =>
+                        updateColumn(col.name, patch)
+                      }
                     />
                   );
+                  const tdClasses = [
+                    "border",
+                    "px-0",
+                    "py-0",
+                    "overflow-hidden",
+                    wrapEnabled
+                      ? "whitespace-pre-wrap break-all"
+                      : "text-ellipsis whitespace-nowrap",
+                    isActive
+                      ? "ring-2 ring-primary ring-inset bg-primary/5"
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
                   return (
-                    <td
-                      key={col.idx}
-                      className="border px-0 py-0 overflow-hidden break-words"
-                    >
+                    <td key={col.idx} className={tdClasses}>
                       {readonly ? (
                         inner
                       ) : (
