@@ -80,6 +80,7 @@ impl KTabMapper for KDb {
             table_comment,
             update_time: _,
             real_table,
+            wrap_enabled,
             tid: _,
         } = &req.meta;
         let full = columns.values().map(|e| e.idx).collect_vec();
@@ -94,6 +95,7 @@ impl KTabMapper for KDb {
             .field(KTabMeta::TABLE_NAME, table_name.clone())
             .field(KTabMeta::TABLE_COMMENT, table_comment.clone())
             .field(KTabMeta::REAL_TABLE, *real_table)
+            .field(KTabMeta::WRAP_ENABLED, *wrap_enabled)
             .on_conflict(chin_sql::OnConflict::Replace([KTabMeta::OTID].join(", ")));
         let mut conn = self.conn().await?;
         let tx = conn.tx().await?;
@@ -268,6 +270,7 @@ impl TryFrom<&KDbRow> for KTabMeta {
             table_comment: row.try_get(KTabMeta::TABLE_COMMENT)?,
             update_time: row.try_get(KTabMeta::UPDATE_TIME)?,
             real_table: row.try_get(KTabMeta::REAL_TABLE)?,
+            wrap_enabled: row.try_get(KTabMeta::WRAP_ENABLED).ok().flatten(),
             otid: row.try_get(KTabMeta::OTID)?,
             tid: row.try_get(KTabMeta::TID)?,
         })
