@@ -1,4 +1,4 @@
-alter table ktab_meta add column wrap_enabled
+alter table k_tab_meta add column wrap_enabled
 <dbtype>bool</dbtype>;
-alter table ktab_meta_hist add column wrap_enabled
+alter table k_tab_meta_hist add column wrap_enabled
 <dbtype>bool</dbtype>;
