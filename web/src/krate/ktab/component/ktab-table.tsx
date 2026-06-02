@@ -733,7 +733,7 @@ export function KTabTable({
                 <th className="border w-10 min-w-10">
                   <Popover open={addColumnOpen} onOpenChange={setAddColumnOpen}>
                     <PopoverTrigger asChild>
-                      <button className="w-full h-full flex items-center justify-center hover:bg-accent/50">
+                      <button type="button" className="w-full h-full flex items-center justify-center hover:bg-accent/50">
                         <PlusIcon className="h-4 w-4 text-muted-foreground" />
                       </button>
                     </PopoverTrigger>
@@ -848,6 +848,7 @@ export function KTabTable({
                   className="border border-dashed"
                 >
                   <button
+                    type="button"
                     className="w-full py-1 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/30 transition-colors"
                     onClick={handleAddRow}
                   >
