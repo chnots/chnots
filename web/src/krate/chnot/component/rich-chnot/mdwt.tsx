@@ -462,7 +462,10 @@ const MdwtChnot = ({
         readonly: false,
         fullscreen: true,
         onSetFullscreen: (flag: boolean) => {
-          if (!flag) setFullscreenItem(undefined);
+          if (!flag) {
+            setFullscreenItem(undefined);
+            void refreshThreadWidgets();
+          }
         },
         onPostSave: async () => {},
         disableHeaderActions: false,
@@ -485,7 +488,7 @@ const MdwtChnot = ({
           return null;
       }
     },
-    [setFullscreenItem],
+    [setFullscreenItem, refreshThreadWidgets],
   );
 
   return (

@@ -1,5 +1,5 @@
 import { DownloadIcon, Maximize2Icon, TableIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/common/component/ui/button";
 import { ChnotKind } from "@/krate/chnot/po";
 import { KTabTable } from "@/krate/ktab/component/ktab-table";
@@ -29,6 +29,11 @@ const KTabInlineWidget = ({
   const selectedItem = useMdwtThreadStore((s) => s.selectedItem);
   const isSelected = selectedItem?.otid === otid;
   const [meta, setMeta] = useState<KTabMeta>(kindData);
+
+  // Sync kindData prop when it changes (e.g., after fullscreen edit triggers refresh)
+  useEffect(() => {
+    setMeta(kindData);
+  }, [kindData]);
 
   const handleExpand = useCallback(() => {
     onItemClick(otid, ChnotKind.KTab);
