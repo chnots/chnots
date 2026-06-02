@@ -8,6 +8,8 @@ import type {
   KTabMetaFetchRsp,
   KTabOverwriteCellsRsp,
   KTabOverwriteMetaReq,
+  KTabRowDeleteReq,
+  KTabRowDeleteRsp,
 } from "./dto";
 
 export const ktabMetaFetch = async (
@@ -32,4 +34,10 @@ export const ktabCellCommit = async (
   req: KTabCellCommitReq,
 ): Promise<KTabOverwriteCellsRsp> => {
   return await request.postJson(`/api/v1/ktab-cell-commit`, req);
+};
+
+export const ktabRowDelete = async (
+  req: KTabRowDeleteReq,
+): Promise<KTabRowDeleteRsp> => {
+  return await request.postJson(`/api/v1/ktab-row-delete`, req);
 };

@@ -12,6 +12,7 @@ pub(crate) fn routes() -> Router<ShareAppState> {
         .route("/api/v1/ktab-meta-commit", post(ktab_meta_commit))
         .route("/api/v1/ktab-cell-list", post(ktab_cell_list))
         .route("/api/v1/ktab-cell-commit", post(ktab_cell_commit))
+        .route("/api/v1/ktab-row-delete", post(ktab_row_delete))
 }
 
 async fn ktab_meta_fetch(
@@ -48,4 +49,16 @@ async fn ktab_cell_list(
     Json(req): Json<KTabCellListReq>,
 ) -> KResponse<KTabCellListRsp> {
     state.mapper.ktab_cell_list(kreq(headers, req)).await.into()
+}
+
+async fn ktab_row_delete(
+    headers: HeaderMap,
+    state: State<ShareAppState>,
+    Json(req): Json<KTabRowDeleteReq>,
+) -> KResponse<KTabRowDeleteRsp> {
+    state
+        .mapper
+        .ktab_row_delete(kreq(headers, req))
+        .await
+        .into()
 }

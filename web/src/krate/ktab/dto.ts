@@ -129,3 +129,10 @@ export type KTabCell = {
   row_otid: TID;
   cell_data: KTabStoreValue;
 };
+
+export type KTabRowDeleteReq = {
+  table_id: TID;
+  row_tid: TID;
+};
+
+export type KTabRowDeleteRsp = object;

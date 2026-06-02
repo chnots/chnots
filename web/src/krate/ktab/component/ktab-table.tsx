@@ -42,7 +42,7 @@ import {
 import { genTID } from "@/lib/id_util";
 import type { KTabMeta, KTabColumnMeta, KTabColumnViewKind } from "../po";
 import { ktabViewToStoreKind } from "../po";
-import { ktabCellCommit } from "../service";
+import { ktabCellCommit, ktabRowDelete } from "../service";
 import { ktabToStoreValue } from "../dto";
 import type { KTabViewCell } from "../dto";
 import { getCellRenderer } from "./cell-renderer";
@@ -471,10 +471,24 @@ export function KTabTable({
     await navigator.clipboard.writeText(String(value ?? ""));
   }, []);
 
-  const handleDeleteRow = useCallback((row: KTabRowData) => {
-    setRows((prev) => prev.filter((r) => r.row_tid !== row.row_tid));
-    setDeleteRowTarget(null);
-  }, []);
+  const handleDeleteRow = useCallback(
+    async (row: KTabRowData) => {
+      await ktabRowDelete({
+        table_id: tableMeta.otid,
+        row_tid: row.row_tid,
+      });
+      setRows((prev) => prev.filter((r) => r.row_tid !== row.row_tid));
+      setDeleteRowTarget(null);
+      // Clear active cell if it was on the deleted row
+      setActiveCell((prev) => {
+        if (prev && rows.findIndex((r) => r.row_tid === row.row_tid) === prev.rowIdx) {
+          return null;
+        }
+        return prev;
+      });
+    },
+    [tableMeta.otid, rows],
+  );
 
   const handleExport = useCallback(async () => {
     await exportCsv(tableMeta, fetchData);

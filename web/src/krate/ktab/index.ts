@@ -14,11 +14,19 @@ export type {
   KTabCellCommitReq,
   KTabCellListReq,
   KTabCellListRsp,
+  KTabRowDeleteReq,
+  KTabRowDeleteRsp,
 } from "./dto";
 export { ktabGetViewValue } from "./dto";
 
 // Services
-export { ktabCellList, ktabMetaCommit, ktabMetaFetch } from "./service";
+export {
+  ktabCellList,
+  ktabCellCommit,
+  ktabMetaCommit,
+  ktabMetaFetch,
+  ktabRowDelete,
+} from "./service";
 
 // Components
 export { KTabTable as DataTable } from "./component/ktab-table";

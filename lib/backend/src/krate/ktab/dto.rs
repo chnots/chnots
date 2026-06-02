@@ -37,6 +37,15 @@ pub struct KTabCellCommitReq {
 pub struct KTabCellCommitRsp {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct KTabRowDeleteReq {
+    pub table_id: TID,
+    pub row_tid: TID,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct KTabRowDeleteRsp {}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum KTabCellListReqFilter {
     OneRowByIdx {
         row_tid: usize,

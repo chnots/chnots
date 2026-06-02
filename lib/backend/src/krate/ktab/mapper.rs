@@ -13,6 +13,8 @@ pub trait KTabMapper {
 
     async fn ktab_cell_list(&self, req: KReq<KTabCellListReq>) -> AResult<KTabCellListRsp>;
 
+    async fn ktab_row_delete(&self, req: KReq<KTabRowDeleteReq>) -> AResult<KTabRowDeleteRsp>;
+
     async fn ensure_ktab_tables(&self) -> EResult;
 }
 
@@ -31,6 +33,10 @@ impl KTabMapper for MapperType {
 
     async fn ktab_cell_list(&self, req: KReq<KTabCellListReq>) -> AResult<KTabCellListRsp> {
         expand_mt_branch!(self.ktab_cell_list(req))
+    }
+
+    async fn ktab_row_delete(&self, req: KReq<KTabRowDeleteReq>) -> AResult<KTabRowDeleteRsp> {
+        expand_mt_branch!(self.ktab_row_delete(req))
     }
 
     async fn ensure_ktab_tables(&self) -> EResult {

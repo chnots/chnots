@@ -244,6 +244,24 @@ impl KTabMapper for KDb {
         Ok(KTabCellListRsp { rows: result })
     }
 
+    async fn ktab_row_delete(
+        &self,
+        req: KReq<KTabRowDeleteReq>,
+    ) -> chin_tools::AResult<KTabRowDeleteRsp> {
+        let KTabRowDeleteReq { table_id, row_tid } = req.body;
+        let row_cond = Wheres::and([
+            Wheres::equal(KTabCellText::TABLE_OTID, table_id),
+            Wheres::equal(KTabCellText::ROW_OTID, row_tid),
+        ]);
+        let mut conn = self.conn().await?;
+        let tx = conn.tx().await?;
+        tx.omit_rows::<KTabCellText>(row_cond.clone()).await?;
+        tx.omit_rows::<KTabCellDate>(row_cond.clone()).await?;
+        tx.omit_rows::<KTabCellDecimal>(row_cond).await?;
+        tx.cmt().await?;
+        Ok(KTabRowDeleteRsp {})
+    }
+
     async fn ensure_ktab_tables(&self) -> chin_tools::EResult {
         print_ddls(
             Ddls::new()
