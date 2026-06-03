@@ -199,8 +199,11 @@ export function buildDecorations(state: EditorState): DecorationSet {
 
       if (node.name === 'InlineMath' && !onActive) {
         const text = state.sliceDoc(nodeFrom, nodeTo);
+        const isBracket = text.startsWith('\\(');
         const isDisplay = text.startsWith('$$');
-        const latex = text.replace(/^\$+/, '').replace(/\$+$/, '');
+        const latex = isBracket
+          ? text.slice(2, -2)
+          : text.replace(/^\$+/, '').replace(/\$+$/, '');
         entries.push({
           from: nodeFrom,
           to: nodeTo,
@@ -213,7 +216,10 @@ export function buildDecorations(state: EditorState): DecorationSet {
 
       if (node.name === 'BlockMath' && !onActive) {
         const text = state.sliceDoc(nodeFrom, nodeTo);
-        const latex = text.replace(/^\$\$/, '').replace(/\$\$$/, '').trim();
+        const isBracket = text.trimStart().startsWith('\\[');
+        const latex = isBracket
+          ? text.replace(/\\\[/, '').replace(/\\\]/, '').trim()
+          : text.replace(/^\$\$/, '').replace(/\$\$$/, '').trim();
         entries.push({
           from: nodeFrom,
           to: nodeTo,
@@ -319,6 +325,8 @@ export function buildDecorations(state: EditorState): DecorationSet {
   entries.sort((a, b) => {
     const posCmp = a.from - b.from;
     if (posCmp !== 0) return posCmp;
+    const sideCmp = a.decoration.startSide - b.decoration.startSide;
+    if (sideCmp !== 0) return sideCmp;
     return (a.to - a.from) - (b.to - b.from);
   });
 

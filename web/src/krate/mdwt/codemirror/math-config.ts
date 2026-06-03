@@ -7,23 +7,45 @@ import type {
   MarkdownConfig,
 } from "@lezer/markdown";
 
-const blockMathRE = /^\s*\$\$\s*$/;
+const blockMathDollarRE = /^\s*\$\$\s*$/;
+const blockMathBracketOpenRE = /^\s*\\\[/
+const blockMathBracketCloseRE = /^\s*\\\]/
 const blankLineRE = /^\s*$/;
 
 const parseBlockMath = (cx: BlockContext, line: Line): boolean => {
-  if (!blockMathRE.test(line.text)) return false;
+  // $$ ... $$ style
+  if (blockMathDollarRE.test(line.text)) {
+    const blockStart = cx.lineStart;
 
-  const blockStart = cx.lineStart;
-
-  while (cx.nextLine()) {
-    if (blankLineRE.test(line.text)) return false;
-    if (blockMathRE.test(line.text)) {
-      cx.addElement(
-        cx.elt("BlockMath", blockStart, cx.lineStart + line.text.length),
-      );
-      cx.nextLine();
-      return true;
+    while (cx.nextLine()) {
+      if (blankLineRE.test(line.text)) return false;
+      if (blockMathDollarRE.test(line.text)) {
+        cx.addElement(
+          cx.elt("BlockMath", blockStart, cx.lineStart + line.text.length),
+        );
+        cx.nextLine();
+        return true;
+      }
     }
+
+    return false;
+  }
+
+  // \[ ... \] style
+  if (blockMathBracketOpenRE.test(line.text)) {
+    const blockStart = cx.lineStart;
+
+    while (cx.nextLine()) {
+      if (blockMathBracketCloseRE.test(line.text)) {
+        cx.addElement(
+          cx.elt("BlockMath", blockStart, cx.lineStart + line.text.length),
+        );
+        cx.nextLine();
+        return true;
+      }
+    }
+
+    return false;
   }
 
   return false;
@@ -39,34 +61,51 @@ export const MathConfig: MarkdownConfig = {
       name: "InlineMath",
       before: "Escape",
       parse(cx: InlineContext, next: number, pos: number) {
-        if (next !== 36) return -1;
+        // $ ... $ and $$ ... $$ style
+        if (next === 36) {
+          const isDouble = cx.char(pos + 1) === 36;
+          const delimLen = isDouble ? 2 : 1;
 
-        const isDouble = cx.char(pos + 1) === 36;
-        const delimLen = isDouble ? 2 : 1;
+          if (!isDouble && /\s/.test(cx.slice(pos + 1, pos + 2))) return -1;
 
-        if (!isDouble && /\s/.test(cx.slice(pos + 1, pos + 2))) return -1;
+          let endPos = pos + delimLen;
+          const lineEnd = cx.offset + cx.text.length;
 
-        let endPos = pos + delimLen;
-        const lineEnd = cx.offset + cx.text.length;
-
-        while (endPos < lineEnd) {
-          if (cx.char(endPos) === 36) {
-            if (isDouble) {
-              if (cx.char(endPos + 1) !== 36) {
-                endPos++;
-                continue;
+          while (endPos < lineEnd) {
+            if (cx.char(endPos) === 36) {
+              if (isDouble) {
+                if (cx.char(endPos + 1) !== 36) {
+                  endPos++;
+                  continue;
+                }
+                return cx.addElement(cx.elt("InlineMath", pos, endPos + 2));
+              } else {
+                if (/\s/.test(cx.slice(endPos - 1, endPos))) {
+                  endPos++;
+                  continue;
+                }
+                return cx.addElement(cx.elt("InlineMath", pos, endPos + 1));
               }
-              return cx.addElement(cx.elt("InlineMath", pos, endPos + 2));
-            } else {
-              if (/\s/.test(cx.slice(endPos - 1, endPos))) {
-                endPos++;
-                continue;
-              }
-              return cx.addElement(cx.elt("InlineMath", pos, endPos + 1));
             }
+            endPos++;
           }
-          endPos++;
+          return -1;
         }
+
+        // \( ... \) style
+        if (next === 92 && cx.char(pos + 1) === 40) {
+          let endPos = pos + 2;
+          const lineEnd = cx.offset + cx.text.length;
+
+          while (endPos < lineEnd) {
+            if (cx.char(endPos) === 92 && cx.char(endPos + 1) === 41) {
+              return cx.addElement(cx.elt("InlineMath", pos, endPos + 2));
+            }
+            endPos++;
+          }
+          return -1;
+        }
+
         return -1;
       },
     },
@@ -76,7 +115,7 @@ export const MathConfig: MarkdownConfig = {
       name: "BlockMath",
       parse: parseBlockMath,
       endLeaf(_cx: BlockContext, line: Line) {
-        return blockMathRE.test(line.text);
+        return blockMathDollarRE.test(line.text) || blockMathBracketOpenRE.test(line.text);
       },
     },
   ],
