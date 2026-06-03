@@ -461,7 +461,9 @@ impl ChnotMapper for KDb {
                 .data
                 .into_iter()
                 .map(|m| ChnotSearchRspData {
-                    title: titiles.remove(&m.otid),
+                    title: titiles
+                        .remove(&m.otid)
+                        .map(|c| c.split("\n").next().unwrap_or("").to_string()),
                     meta: m,
                 })
                 .collect(),
